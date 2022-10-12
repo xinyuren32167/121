@@ -29,11 +29,13 @@ void AddSC_warlock_spell_scripts();
 void AddSC_warrior_spell_scripts();
 void AddSC_quest_spell_scripts();
 void AddSC_item_spell_scripts();
-
+void AddSC_mage_perks_scripts();
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddSpellsScripts()
 {
+
+    AddSC_mage_perks_scripts();
     AddSC_deathknight_spell_scripts();
     AddSC_druid_spell_scripts();
     AddSC_generic_spell_scripts();

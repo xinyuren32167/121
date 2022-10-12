@@ -447,6 +447,7 @@ class spell_hun_chimera_shot : public SpellScript
                 if (AuraEffect* aurEff = aura->GetEffect(0))
                 {
                     // Serpent Sting - Instantly deals 40% of the damage done by your Serpent Sting.
+                    // 1 8
                     if (familyFlag[0] & 0x4000)
                     {
                         int32 TickCount = aurEff->GetTotalTicks();
