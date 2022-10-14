@@ -404,6 +404,53 @@ class spell_gen_bg_preparation : public AuraScript
     }
 };
 
+
+class spell_unstable_power : public AuraScript
+{
+    PrepareAuraScript(spell_unstable_power)
+
+    uint32 health;
+    uint32 timer;
+
+    void RemoveStack() {
+        Unit::AuraApplicationMap const& auras = GetCaster()->GetAppliedAuras();
+        for (Unit::AuraApplicationMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+                if (auraInfo && (
+                    auraInfo->Id == 200049  ||
+                    auraInfo->Id == 200051  ||
+                    auraInfo->Id == 200053  ||
+                    auraInfo->Id == 200055  ||
+                    auraInfo->Id == 200057 ||
+                    auraInfo->Id == 200059))
+                {
+                    aura->ModStackAmount(-1, AURA_REMOVE_BY_EXPIRE);
+                    break;
+                }
+            }
+        }
+    }
+
+    void Update(AuraEffect*  effect )
+    {
+        RemoveStack();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+       
+    }
+
+    void Register() override
+    {
+        OnEffectUpdatePeriodic += AuraEffectUpdatePeriodicFn(spell_unstable_power::Update, EFFECT_2, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+    }
+};
+
+
 /* 27867 - Freeze            (spell_gen_disabled_above_70)
    59917 - Minor Mount Speed (spell_gen_disabled_above_70)
    46629 - Deathfrost        (spell_gen_disabled_above_73) */
@@ -1251,6 +1298,8 @@ class spell_gen_adaptive_warding : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_gen_adaptive_warding::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
+
 
 /* 45822 - Iceblood Warmaster
    45823 - Tower Point Warmaster

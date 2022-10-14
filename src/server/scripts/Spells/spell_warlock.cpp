@@ -752,6 +752,46 @@ class spell_warl_siphon_life : public AuraScript
     }
 };
 
+class spell_vampirism : public AuraScript
+{
+    PrepareAuraScript(spell_vampirism);
+
+    uint32 healPct;
+    uint32 spellId;
+
+    bool Load() override
+    {
+        healPct = GetSpellInfo()->Effects[EFFECT_1].CalcValue(GetCaster());
+        spellId = GetSpellInfo()->Effects[EFFECT_0].TriggerSpell;
+        return true;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+        return GetTarget()->IsAlive();
+    }
+
+    void TriggerHeal(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (DamageInfo* damageInfo = eventInfo.GetDamageInfo()) {
+            int32 amount = CalculatePct(static_cast<int32>(eventInfo.GetDamageInfo()->GetDamage()), healPct);
+            GetCaster()->CastCustomSpell(spellId, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_vampirism::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_vampirism::TriggerHeal, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+
 // -1454 - Life Tap
 #define LIFE_TAP_COEFFICIENT 0.9F
 class spell_warl_life_tap : public SpellScript
