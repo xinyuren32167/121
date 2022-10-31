@@ -830,53 +830,37 @@ class spell_arcano_shatter : public AuraScript
 {
     PrepareAuraScript(spell_arcano_shatter);
 
-    bool HasPerkArcanoShatter()
-    {
-        return (GetCaster()->HasAura(300486) ||
-            GetCaster()->HasAura(300487) ||
-            GetCaster()->HasAura(300488) ||
-            GetCaster()->HasAura(300489) ||
-            GetCaster()->HasAura(300490) ||
-            GetCaster()->HasAura(300491));
-    }
-
     Aura* GetPerkAura()
     {
-        if (HasPerkArcanoShatter())
-        {
-            if (GetCaster()->HasAura(300486))
-                return GetCaster()->GetAura(300486);
+        if (GetCaster()->HasAura(300486))
+            return GetCaster()->GetAura(300486);
 
-            if (GetCaster()->HasAura(300487))
-                return GetCaster()->GetAura(300487);
+        if (GetCaster()->HasAura(300487))
+            return GetCaster()->GetAura(300487);
 
-            if (GetCaster()->HasAura(300488))
-                return GetCaster()->GetAura(300488);
+        if (GetCaster()->HasAura(300488))
+            return GetCaster()->GetAura(300488);
 
-            if (GetCaster()->HasAura(300489))
-                return GetCaster()->GetAura(300489);
+        if (GetCaster()->HasAura(300489))
+            return GetCaster()->GetAura(300489);
 
-            if (GetCaster()->HasAura(300490))
-                return GetCaster()->GetAura(300490);
+        if (GetCaster()->HasAura(300490))
+            return GetCaster()->GetAura(300490);
 
-            if (GetCaster()->HasAura(300491))
-                return GetCaster()->GetAura(300491);
-        }
-        else
-            return nullptr;
+        if (GetCaster()->HasAura(300491))
+            return GetCaster()->GetAura(300491);
+
+        return nullptr;
     }
 
     int GetTriggerSpell()
     {
-        if (GetPerkAura())
-            return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-        else
-            return 0;
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (GetTriggerSpell() != 0)
+        if (GetPerkAura())
             GetCaster()->CastSpell(GetCaster(), GetTriggerSpell(), TRIGGERED_FULL_MASK);
     }
 
@@ -1088,7 +1072,7 @@ class spell_nether_precision : public AuraScript
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (GetPerkAura())
-            GetCaster()->AddAura(GetTriggeredSpell(),GetCaster());
+            GetCaster()->AddAura(GetTriggeredSpell(), GetCaster());
     }
 
     void Register() override
@@ -1136,6 +1120,54 @@ class spell_resonance : public SpellScript
     }
 };
 
+class spell_light_missile : public SpellScript
+{
+    PrepareSpellScript(spell_light_missile);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300574))
+            return GetCaster()->GetAura(300574);
+
+        if (GetCaster()->HasAura(300575))
+            return GetCaster()->GetAura(300575);
+
+        if (GetCaster()->HasAura(300576))
+            return GetCaster()->GetAura(300576);
+
+        if (GetCaster()->HasAura(300577))
+            return GetCaster()->GetAura(300577);
+
+        if (GetCaster()->HasAura(300578))
+            return GetCaster()->GetAura(300578);
+
+        if (GetCaster()->HasAura(300579))
+            return GetCaster()->GetAura(300579);
+
+        return nullptr;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
+    }
+
+    void HandleProc()
+    {
+        if (GetPerkAura())
+        {
+            uint32 random = urand(0, 100);
+
+            if (random < GetProcPct())
+                GetCaster()->AddAura(44401, GetCaster());
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_light_missile::HandleProc);
+    }
+};
 
 void AddSC_mage_perks_scripts()
 {
@@ -1170,6 +1202,7 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_touch_of_the_magi_explosion);
     RegisterSpellScript(spell_nether_precision);
     RegisterSpellScript(spell_resonance);
+    RegisterSpellScript(spell_light_missile);
 }
 
 
