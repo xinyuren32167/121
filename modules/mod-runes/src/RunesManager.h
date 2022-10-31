@@ -2,22 +2,20 @@
 #include "Player/Player.h"
 #include "DatabaseEnv.h"
 
-
-
-enum PerkMessage {
+enum RuneMessage {
     LEARN_OK = 0,
-    LEARN_ALREALDY_HAVE_THIS_PERK = 1,
-    LEARN_TOO_MUCH_OF_THIS_PERK = 2,
-    TOO_MUCH_PERKS_ACTIVATED = 3,
+    LEARN_ALREALDY_HAVE_THIS_RUNE = 1,
+    LEARN_TOO_MUCH_OF_THIS_RUNE = 2,
+    TOO_MUCH_Runes_ACTIVATED = 3,
     REFUND_OK = 4,
-    DONT_HAVE_THIS_PERK = 5,
+    DONT_HAVE_THIS_RUNE = 5,
     UPGRADE_OK = 6,
-    NOT_ENOUGH_OF_SIMILAR_PERK = 7,
-    ACTIVATE_PERK_OK = 8,
+    NOT_ENOUGH_OF_SIMILAR_RUNE = 7,
+    ACTIVATE_RUNE_OK = 8,
     ACTIVATE_LOADOUT_OK = 9,
 };
 
-struct Perk {
+struct Rune {
     uint32 spellId;
     uint32 groupId;
     int allowableClass;
@@ -26,7 +24,7 @@ struct Perk {
     uint8 maxStack;
 };
 
-struct PlayerPerk {
+struct PlayerRune {
     uint8 slotId;
     uint32 accountId;
     uint32 spellId;
@@ -42,34 +40,44 @@ struct Loadout {
 
 struct AccountProgression {
     uint32 accountId;
-    uint8 slotCountAvailable;
+    uint8 slotRuneCountAvailable;
     uint8 loadoutCountAvailable;
     uint64 runesDust;
 };
 
-class PerksManager {
+
+struct SwitchSpellRune {
+    uint32 runeSpellId;
+    uint32 oldSpellId;
+    uint32 newSpellId;
+};
+
+class RunesManager {
 
 private:
-    static std::map<int, Perk> m_Perks;
-    static std::map<uint32 /* accountId */, std::vector<PlayerPerk>> m_accountPerks;
+    static std::map<int, Rune> m_Runes;
+    static std::map<uint32 /* accountId */, std::vector<PlayerRune>> m_accountRunes;
     static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadouts;
     static std::map<uint32 /* accountId */, AccountProgression> m_AccountsProgression;
+    static std::vector<SwitchSpellRune> m_SwitchSpellRune;
 public:
-    static void LoadAllPerks();
-    static void LoadAccountsPerks();
+    static void LoadAllRunes();
+    static void LoadAccountsRunes();
     static void LoadAllLoadout();
     static void LoadAllAccountProgression();
+    static void LoadAllSpellsSwitch();
     static void SavePlayer(Player* player);
-    static PerkMessage LearnRandomPerk(Player* player);
-    static PerkMessage LearnSpecificPerk(Player* player, uint32 spellId);
-    static PerkMessage UpgradePerk(Player* player, uint32 spellId);
-    static PerkMessage RefundPerk(Player* player, uint32 spellId);
-    static PerkMessage ActivatePerk(Player* player, uint32 spellId);
-    static PerkMessage ActivateLoadout(Player* player, uint8 slotId);
+    static RuneMessage LearnRandomRune(Player* player);
+    static RuneMessage LearnSpecificRune(Player* player, uint32 spellId);
+    static RuneMessage UpgradeRune(Player* player, uint32 spellId);
+    static RuneMessage RefundRune(Player* player, uint32 spellId);
+    static RuneMessage ActivateRune(Player* player, uint32 spellId);
+    static RuneMessage DeactivateRune(Player* player, uint32 spellId);
+    static RuneMessage ActivateLoadout(Player* player, uint8 slotId);
     // Return messsage string(slotCountAvailable;loadoutCountAvailable;RunesCountDust)
     static std::string GetAccountProgressionCachingForClient(Player* player, uint32 spellId);
     // Return messsage string(spellId;quality)
-    static std::string GetLearningPerkForClient(Player* player, uint32 spellId);
+    static std::string GetLearningRuneForClient(Player* player, uint32 spellId);
     // Return messsage array(spellId;unlocked(0-1);count;quality;can be upgraded(0-1);can be refunded(0-1))
     static std::vector<std::string> GetCollectionCachingForClient(Player* player);
     // Return messsage array(slotId, spellId);

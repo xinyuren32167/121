@@ -8,22 +8,19 @@
 #include "Chat.h"
 
 // Add player scripts
-class MyPlayer : public PlayerScript
+class Runes_PlayerScripts: public PlayerScript
 {
 public:
-    MyPlayer() : PlayerScript("MyPlayer") { }
+    Runes_PlayerScripts() : PlayerScript("Runes_PlayerScripts") { }
 
     void OnLogin(Player* player) override
     {
-        if (sConfigMgr->GetOption<bool>("MyModule.Enable", false))
-        {
-            ChatHandler(player->GetSession()).SendSysMessage("Hello World from Skeleton-Module!");
-        }
+       
     }
 };
 
 // Add all scripts in one
-void AddMyPlayerScripts()
+void RunePlayerScripts()
 {
-    new MyPlayer();
+    new Runes_PlayerScripts();
 }
