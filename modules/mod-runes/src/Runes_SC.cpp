@@ -20,7 +20,7 @@ public:
 };
 
 // Add all scripts in one
-void RunePlayerScripts()
+void Addmod_runesScripts()
 {
     new Runes_PlayerScripts();
 }
