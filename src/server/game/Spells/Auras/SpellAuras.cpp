@@ -1444,8 +1444,23 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                             if (Aura* aur = target->GetAura(74396))
                             {
                                 // Aura already there. Refresh duration and set original charges
-                                aur->SetCharges(2);
-                                aur->RefreshDuration();
+                                if (GetCaster()->HasAura(300396) || GetCaster()->HasAura(300397) || GetCaster()->HasAura(300398) || GetCaster()->HasAura(300399) || GetCaster()->HasAura(300400) || GetCaster()->HasAura(300401))
+                                {
+                                    if (aur->GetCharges() < 8)
+                                    {
+                                        aur->SetCharges(aur->GetCharges() + 2);
+                                    }
+                                    else if (aur->GetCharges() >= 8)
+                                    {
+                                        aur->SetCharges(10);
+                                    }
+                                    aur->RefreshDuration();
+                                }
+                                else
+                                {
+                                    aur->SetCharges(2);
+                                    aur->RefreshDuration();
+                                }                          
                             }
                             else
                                 target->AddAura(74396, target);
@@ -1661,6 +1676,18 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         if (removeMode != AURA_REMOVE_BY_EXPIRE)
                             break;
                         target->CastSpell(target, 32612, true, nullptr, GetEffect(1));
+                        if (target->HasAura(300093))
+                            target->CastSpell(target, 300099, true);
+                        if (target->HasAura(300094))
+                            target->CastSpell(target, 300100, true);
+                        if (target->HasAura(300095))
+                            target->CastSpell(target, 300101, true);
+                        if (target->HasAura(300096))
+                            target->CastSpell(target, 300102, true);
+                        if (target->HasAura(300097))
+                            target->CastSpell(target, 300103, true);
+                        if (target->HasAura(300098))
+                            target->CastSpell(target, 300104, true);
                         target->CombatStop();
                         break;
                     case 74396: // Fingers of Frost

@@ -104,6 +104,8 @@ bool PetAI::_canMeleeAttack()
         case ENTRY_IMP:
         case ENTRY_WATER_ELEMENTAL:
         case ENTRY_WATER_ELEMENTAL_PERM:
+        case ENTRY_POWERFUL_WATER_ELEMENTAL:
+        case ENTRY_POWERFUL_WATER_ELEMENTAL_PERM:
             {
                 for (uint8 i = 0; i < me->GetPetAutoSpellSize(); ++i)
                 {
@@ -121,6 +123,7 @@ bool PetAI::_canMeleeAttack()
                         case IMP_FIREBOLT_RANK_9:
                         case WATER_ELEMENTAL_WATERBOLT_1:
                         case WATER_ELEMENTAL_WATERBOLT_2:
+                        case POWERFUL_WATER_ELEMENTAL_EBONBOLT:
                             {
                                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellID);
                                 int32 mana = me->GetPower(POWER_MANA);

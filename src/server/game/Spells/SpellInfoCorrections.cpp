@@ -253,7 +253,7 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->ProcCharges = 1;
     });
 
-    // Fireball
+    // Fireball!
     ApplySpellFix({ 57761 }, [](SpellInfo* spellInfo)
     {
         spellInfo->ProcCharges = 1;

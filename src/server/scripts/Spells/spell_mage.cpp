@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_MAGE and SPELLFAMILY_GENERIC spells used by mage players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_mage_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_MAGE and SPELLFAMILY_GENERIC spells used by mage players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_mage_".
+  */
 
 #include "Pet.h"
 #include "Player.h"
@@ -32,30 +32,30 @@
 enum MageSpells
 {
     // Ours
-    SPELL_MAGE_BURNOUT_TRIGGER                   = 44450,
-    SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED         = 12486,
-    SPELL_MAGE_COMBUSTION                        = 11129,
+    SPELL_MAGE_BURNOUT_TRIGGER = 44450,
+    SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED = 12486,
+    SPELL_MAGE_COMBUSTION = 11129,
 
     // Theirs
-    SPELL_MAGE_COLD_SNAP                         = 11958,
-    SPELL_MAGE_FOCUS_MAGIC_PROC                  = 54648,
-    SPELL_MAGE_FROST_WARDING_R1                  = 11189,
-    SPELL_MAGE_FROST_WARDING_TRIGGERED           = 57776,
-    SPELL_MAGE_INCANTERS_ABSORBTION_R1           = 44394,
-    SPELL_MAGE_INCANTERS_ABSORBTION_TRIGGERED    = 44413,
-    SPELL_MAGE_IGNITE                            = 12654,
-    SPELL_MAGE_MASTER_OF_ELEMENTS_ENERGIZE       = 29077,
-    SPELL_MAGE_SQUIRREL_FORM                     = 32813,
-    SPELL_MAGE_GIRAFFE_FORM                      = 32816,
-    SPELL_MAGE_SERPENT_FORM                      = 32817,
-    SPELL_MAGE_DRAGONHAWK_FORM                   = 32818,
-    SPELL_MAGE_WORGEN_FORM                       = 32819,
-    SPELL_MAGE_SHEEP_FORM                        = 32820,
-    SPELL_MAGE_GLYPH_OF_ETERNAL_WATER            = 70937,
-    SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT  = 70908,
-    SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY  = 70907,
-    SPELL_MAGE_GLYPH_OF_BLAST_WAVE               = 62126,
-    SPELL_MAGE_FINGERS_OF_FROST                  = 44543
+    SPELL_MAGE_COLD_SNAP = 11958,
+    SPELL_MAGE_FOCUS_MAGIC_PROC = 54648,
+    SPELL_MAGE_FROST_WARDING_R1 = 11189,
+    SPELL_MAGE_FROST_WARDING_TRIGGERED = 57776,
+    SPELL_MAGE_INCANTERS_ABSORBTION_R1 = 44394,
+    SPELL_MAGE_INCANTERS_ABSORBTION_TRIGGERED = 44413,
+    SPELL_MAGE_IGNITE = 12654,
+    SPELL_MAGE_MASTER_OF_ELEMENTS_ENERGIZE = 29077,
+    SPELL_MAGE_SQUIRREL_FORM = 32813,
+    SPELL_MAGE_GIRAFFE_FORM = 32816,
+    SPELL_MAGE_SERPENT_FORM = 32817,
+    SPELL_MAGE_DRAGONHAWK_FORM = 32818,
+    SPELL_MAGE_WORGEN_FORM = 32819,
+    SPELL_MAGE_SHEEP_FORM = 32820,
+    SPELL_MAGE_GLYPH_OF_ETERNAL_WATER = 70937,
+    SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT = 70908,
+    SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY = 70907,
+    SPELL_MAGE_GLYPH_OF_BLAST_WAVE = 62126,
+    SPELL_MAGE_FINGERS_OF_FROST = 44543
 };
 
 class spell_mage_arcane_blast : public SpellScript
@@ -160,7 +160,7 @@ class spell_mage_mirror_image : public AuraScript
 {
     PrepareAuraScript(spell_mage_mirror_image)
 
-    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         GetTarget()->CastSpell((Unit*)nullptr, GetSpellInfo()->Effects[aurEff->GetEffIndex()].TriggerSpell, true);
     }
@@ -382,25 +382,25 @@ class spell_mage_glyph_of_eternal_water : public AuraScript
     }
 };
 
-    class spell_mage_combustion_proc : public AuraScript
-    {
-        PrepareAuraScript(spell_mage_combustion_proc);
+class spell_mage_combustion_proc : public AuraScript
+{
+    PrepareAuraScript(spell_mage_combustion_proc);
 
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_MAGE_COMBUSTION });
     }
 
-        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-        {
-            GetTarget()->RemoveAurasDueToSpell(SPELL_MAGE_COMBUSTION);
-        }
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetTarget()->RemoveAurasDueToSpell(SPELL_MAGE_COMBUSTION);
+    }
 
-        void Register() override
-        {
-            AfterEffectRemove += AuraEffectRemoveFn(spell_mage_combustion_proc::OnRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
-        }
-    };
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_combustion_proc::OnRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
 
 // Incanter's Absorbtion
 class spell_mage_incanters_absorbtion_base_AuraScript : public AuraScript
@@ -845,7 +845,7 @@ private:
 
 enum SilvermoonPolymorph
 {
-    NPC_AUROSALIA   = 18744,
+    NPC_AUROSALIA = 18744,
 };
 
 /// @todo move out of here and rename - not a mage spell
@@ -892,7 +892,7 @@ const uint32 spell_mage_polymorph_cast_visual::spell_mage_polymorph_cast_visual:
 class spell_mage_summon_water_elemental : public SpellScript
 {
     PrepareSpellScript(spell_mage_summon_water_elemental)
-    bool Validate(SpellInfo const* /*spellEntry*/) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
     {
         return ValidateSpellInfo(
             {
@@ -900,6 +900,26 @@ class spell_mage_summon_water_elemental : public SpellScript
                 SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY,
                 SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT
             });
+    }
+
+    bool HasPerkEternalWater()
+    {
+        return (GetCaster()->HasAura(300409) ||
+            GetCaster()->HasAura(300410) ||
+            GetCaster()->HasAura(300411) ||
+            GetCaster()->HasAura(300412) ||
+            GetCaster()->HasAura(300413) ||
+            GetCaster()->HasAura(300414));
+    }
+
+    bool HasPerkPowerfulElemental(Unit* caster)
+    {
+        return (caster->HasAura(300415) ||
+            caster->HasAura(300416) ||
+            caster->HasAura(300417) ||
+            caster->HasAura(300418) ||
+            caster->HasAura(300419) ||
+            caster->HasAura(300420));
     }
 
     void HandleDummy(SpellEffIndex /*effIndex*/)
@@ -910,13 +930,33 @@ class spell_mage_summon_water_elemental : public SpellScript
             if (!pet->IsAlive())
                 pet->ToTempSummon()->UnSummon();
 
-        // Glyph of Eternal Water
-        if (caster->HasAura(SPELL_MAGE_GLYPH_OF_ETERNAL_WATER))
-            caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT, true);
-        else
-            caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY, true);
 
-        if (Creature* pet = ObjectAccessor::GetCreature(*caster, caster->GetPetGUID()))
+        // Glyph of Eternal Water
+        if (HasPerkPowerfulElemental(caster))
+        {
+            if (caster->HasAura(SPELL_MAGE_GLYPH_OF_ETERNAL_WATER) || HasPerkEternalWater())
+                caster->CastSpell(caster, 300425, true);
+            else
+                caster->CastSpell(caster, 300424, true);
+        }
+        else
+        {
+            if (caster->HasAura(SPELL_MAGE_GLYPH_OF_ETERNAL_WATER) || HasPerkEternalWater())
+                caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT, true);
+            else
+                caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY, true);
+        }
+
+
+        if (Creature* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*caster, caster->GetPetGUID()))
+        {
+
+            if (HasPerkPowerfulElemental(caster))
+            {
+                SpellInfo const* spell = sSpellMgr->GetSpellInfo(300421);
+                Aura::TryRefreshStackOrCreate(spell, MAX_EFFECT_MASK, pet, pet);
+            }
+
             if (pet->GetCharmInfo() && caster->ToPlayer())
             {
                 pet->m_CreatureSpellCooldowns.clear();
@@ -925,6 +965,8 @@ class spell_mage_summon_water_elemental : public SpellScript
                 pet->GetCharmInfo()->SetSpellAutocast(spellEntry, true);
                 caster->ToPlayer()->CharmSpellInitialize();
             }
+        }
+
     }
 
     void Register() override
@@ -935,7 +977,8 @@ class spell_mage_summon_water_elemental : public SpellScript
 
 #define FingersOfFrostScriptName "spell_mage_fingers_of_frost_proc_aura"
 class spell_mage_fingers_of_frost_proc_aura : public AuraScript
-{   PrepareAuraScript(spell_mage_fingers_of_frost_proc_aura);
+{
+    PrepareAuraScript(spell_mage_fingers_of_frost_proc_aura);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {

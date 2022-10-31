@@ -1235,6 +1235,12 @@ void Guardian::UpdateMaxHealth()
         case NPC_WATER_ELEMENTAL_PERM:
             multiplicator = 7.5f;
             break;
+        case NPC_POWERFUL_WATER_ELEMENTAL:
+            multiplicator = 7.5f;
+            break;
+        case NPC_POWERFUL_WATER_ELEMENTAL_PERM:
+            multiplicator = 7.5f;
+            break;
         case NPC_VOIDWALKER:
             multiplicator = 11.0f;
             break;
@@ -1274,9 +1280,11 @@ void Guardian::UpdateMaxPower(Powers power)
     {
         case NPC_IMP:
         case NPC_WATER_ELEMENTAL_TEMP:
+        case NPC_POWERFUL_WATER_ELEMENTAL:
+        case NPC_POWERFUL_WATER_ELEMENTAL_PERM:
         case NPC_WATER_ELEMENTAL_PERM:
             multiplicator = 4.95f;
-            break;
+            break;   
         case NPC_VOIDWALKER:
         case NPC_SUCCUBUS:
         case NPC_FELHUNTER:
