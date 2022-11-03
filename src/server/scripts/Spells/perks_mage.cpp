@@ -1028,7 +1028,7 @@ class spell_touch_of_the_magi_explosion : public AuraScript
 
         int damageFinal = int(CalculatePct(damage, DamagePct(player)));
 
-        GetTarget()->CastCustomSpell(300529, SPELLVALUE_BASE_POINT0, damageFinal, GetTarget(), true);
+        GetCaster()->CastCustomSpell(300529, SPELLVALUE_BASE_POINT0, damageFinal, GetTarget(), true);
     }
 
     void Register() override
@@ -1169,6 +1169,124 @@ class spell_light_missile : public SpellScript
     }
 };
 
+class spell_powerful_missile : public SpellScript
+{
+    PrepareSpellScript(spell_powerful_missile);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300580))
+            return GetCaster()->GetAura(300580);
+
+        if (GetCaster()->HasAura(300581))
+            return GetCaster()->GetAura(300581);
+
+        if (GetCaster()->HasAura(300582))
+            return GetCaster()->GetAura(300582);
+
+        if (GetCaster()->HasAura(300583))
+            return GetCaster()->GetAura(300583);
+
+        if (GetCaster()->HasAura(300584))
+            return GetCaster()->GetAura(300584);
+
+        if (GetCaster()->HasAura(300585))
+            return GetCaster()->GetAura(300585);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc()
+    {
+        if (GetPerkAura())
+        {
+            if (GetCaster()->HasAura(44401))
+            {
+                if (!GetCaster()->HasAura(GetProcSpell()))
+                    GetCaster()->AddAura(GetProcSpell(), GetCaster());
+            }
+            else
+            {
+                if (GetCaster()->HasAura(GetProcSpell()))
+                    GetCaster()->RemoveAura(GetProcSpell());
+            }
+        }
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_powerful_missile::HandleProc);
+    }
+};
+
+class spell_arcane_knowledge : public AuraScript
+{
+    PrepareAuraScript(spell_arcane_knowledge);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+            if (Player* target = GetTarget()->ToPlayer())
+                target->ModifySpellCooldown(12051, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_arcane_knowledge::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_arcanic_unstability : public AuraScript
+{
+    PrepareAuraScript(spell_arcanic_unstability);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300634))
+            return GetCaster()->GetAura(300634);
+
+        if (GetCaster()->HasAura(300635))
+            return GetCaster()->GetAura(300635);
+
+        if (GetCaster()->HasAura(300636))
+            return GetCaster()->GetAura(300636);
+
+        if (GetCaster()->HasAura(300637))
+            return GetCaster()->GetAura(300637);
+
+        if (GetCaster()->HasAura(300638))
+            return GetCaster()->GetAura(300638);
+
+        if (GetCaster()->HasAura(300639))
+            return GetCaster()->GetAura(300639);
+
+        return nullptr;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetProcPct()));
+
+        GetCaster()->CastCustomSpell(300640, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_arcanic_unstability::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+
 void AddSC_mage_perks_scripts()
 {
     RegisterSpellScript(spell_tempest_barrier);
@@ -1203,6 +1321,9 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_nether_precision);
     RegisterSpellScript(spell_resonance);
     RegisterSpellScript(spell_light_missile);
+    RegisterSpellScript(spell_powerful_missile);
+    RegisterSpellScript(spell_arcane_knowledge);
+    RegisterSpellScript(spell_arcanic_unstability);
 }
 
 
