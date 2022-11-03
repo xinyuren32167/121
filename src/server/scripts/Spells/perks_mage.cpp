@@ -1230,8 +1230,8 @@ class spell_arcane_knowledge : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-            if (Player* target = GetTarget()->ToPlayer())
-                target->ModifySpellCooldown(12051, -aurEff->GetAmount());
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(12051, -aurEff->GetAmount());
     }
 
     void Register() override
@@ -1285,7 +1285,262 @@ class spell_arcanic_unstability : public AuraScript
     }
 };
 
+class spell_arcane_bombardment : public SpellScript
+{
+    PrepareSpellScript(spell_arcane_bombardment);
 
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300641))
+            return GetCaster()->GetAura(300641);
+
+        if (GetCaster()->HasAura(300642))
+            return GetCaster()->GetAura(300642);
+
+        if (GetCaster()->HasAura(300643))
+            return GetCaster()->GetAura(300643);
+
+        if (GetCaster()->HasAura(300644))
+            return GetCaster()->GetAura(300644);
+
+        if (GetCaster()->HasAura(300645))
+            return GetCaster()->GetAura(300645);
+
+        if (GetCaster()->HasAura(300646))
+            return GetCaster()->GetAura(300646);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc()
+    {
+        if (GetExplTargetUnit()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT) && GetPerkAura())
+            GetCaster()->AddAura(GetProcSpell(), GetCaster());
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_arcane_bombardment::HandleProc);
+    }
+};
+
+class spell_pyroshatter : public AuraScript
+{
+    PrepareAuraScript(spell_pyroshatter);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300666))
+            return GetCaster()->GetAura(300666);
+
+        if (GetCaster()->HasAura(300667))
+            return GetCaster()->GetAura(300667);
+
+        if (GetCaster()->HasAura(300668))
+            return GetCaster()->GetAura(300668);
+
+        if (GetCaster()->HasAura(300669))
+            return GetCaster()->GetAura(300669);
+
+        if (GetCaster()->HasAura(300670))
+            return GetCaster()->GetAura(300670);
+
+        if (GetCaster()->HasAura(300671))
+            return GetCaster()->GetAura(300671);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (GetPerkAura())
+        {
+            uint32 random = urand(0, 100);
+
+            if (random < 26)
+                GetCaster()->AddAura(GetProcSpell(), GetCaster());
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_pyroshatter::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_devastating_blasts : public AuraScript
+{
+    PrepareAuraScript(spell_devastating_blasts);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300678))
+            return GetCaster()->GetAura(300678);
+
+        if (GetCaster()->HasAura(300679))
+            return GetCaster()->GetAura(300679);
+
+        if (GetCaster()->HasAura(300680))
+            return GetCaster()->GetAura(300680);
+
+        if (GetCaster()->HasAura(300681))
+            return GetCaster()->GetAura(300681);
+
+        if (GetCaster()->HasAura(300682))
+            return GetCaster()->GetAura(300682);
+
+        if (GetCaster()->HasAura(300683))
+            return GetCaster()->GetAura(300683);
+
+        return nullptr;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (GetPerkAura())
+        {
+            uint32 random = urand(0, 100);
+
+            if (random < GetProcPct())
+                GetCaster()->AddAura(48108, GetCaster());
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_devastating_blasts::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_sun_king_amaterasu : public AuraScript
+{
+    PrepareAuraScript(spell_sun_king_amaterasu);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300684))
+            return GetCaster()->GetAura(300684);
+
+        if (GetCaster()->HasAura(300685))
+            return GetCaster()->GetAura(300685);
+
+        if (GetCaster()->HasAura(300686))
+            return GetCaster()->GetAura(300686);
+
+        if (GetCaster()->HasAura(300687))
+            return GetCaster()->GetAura(300687);
+
+        if (GetCaster()->HasAura(300688))
+            return GetCaster()->GetAura(300688);
+
+        if (GetCaster()->HasAura(300689))
+            return GetCaster()->GetAura(300689);
+
+        return nullptr;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (GetPerkAura())
+        {
+            uint32 random = urand(0, 100);
+
+            if (random < GetProcPct())
+                GetCaster()->AddAura(300696, GetCaster());
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_sun_king_amaterasu::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_sun_king_amaterasu_proc : public SpellScript
+{
+    PrepareSpellScript(spell_sun_king_amaterasu_proc);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300684))
+            return GetCaster()->GetAura(300684);
+
+        if (GetCaster()->HasAura(300685))
+            return GetCaster()->GetAura(300685);
+
+        if (GetCaster()->HasAura(300686))
+            return GetCaster()->GetAura(300686);
+
+        if (GetCaster()->HasAura(300687))
+            return GetCaster()->GetAura(300687);
+
+        if (GetCaster()->HasAura(300688))
+            return GetCaster()->GetAura(300688);
+
+        if (GetCaster()->HasAura(300689))
+            return GetCaster()->GetAura(300689);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc()
+    {
+        if (GetCaster()->HasAura(300696) && !GetCaster()->HasAura(48108) && GetPerkAura())
+        {
+            GetCaster()->AddAura(GetProcSpell(),GetCaster());
+            GetCaster()->RemoveAura(300696);
+        }
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_sun_king_amaterasu_proc::HandleProc);
+    }
+};
+
+class spell_desintegration : public AuraScript
+{
+    PrepareAuraScript(spell_desintegration);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (!GetCaster()->HasAura(28682))
+        {
+            if (Player* target = GetTarget()->ToPlayer())
+                target->ModifySpellCooldown(11129, -aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_desintegration::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_mage_perks_scripts()
 {
@@ -1324,6 +1579,12 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_powerful_missile);
     RegisterSpellScript(spell_arcane_knowledge);
     RegisterSpellScript(spell_arcanic_unstability);
+    RegisterSpellScript(spell_arcane_bombardment);
+    RegisterSpellScript(spell_pyroshatter);
+    RegisterSpellScript(spell_devastating_blasts);
+    RegisterSpellScript(spell_sun_king_amaterasu);
+    RegisterSpellScript(spell_sun_king_amaterasu_proc);
+    RegisterSpellScript(spell_desintegration);
 }
 
 
