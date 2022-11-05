@@ -6,7 +6,6 @@
 #include "Player.h"
 #include "Config.h"
 #include "Chat.h"
-
 // Add player scripts
 class Runes_PlayerScripts: public PlayerScript
 {
@@ -19,8 +18,21 @@ public:
     }
 };
 
+class Runes_WorldScript : public WorldScript
+{
+public:
+    Runes_WorldScript() : WorldScript("Runes_WorldScript") { }
+
+    void OnBeforeConfigLoad(bool reload) override
+    {
+        // sEluna->OnConfigLoad(reload, true);
+    }
+};
+
+
 // Add all scripts in one
 void Addmod_runesScripts()
 {
     new Runes_PlayerScripts();
+    new Runes_WorldScript();
 }

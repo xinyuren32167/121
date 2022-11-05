@@ -46,7 +46,7 @@ struct AccountProgression {
 };
 
 
-struct SwitchSpellRune {
+struct SpellRunes {
     uint32 runeSpellId;
     uint32 oldSpellId;
     uint32 newSpellId;
@@ -59,13 +59,13 @@ private:
     static std::map<uint32 /* accountId */, std::vector<PlayerRune>> m_accountRunes;
     static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadouts;
     static std::map<uint32 /* accountId */, AccountProgression> m_AccountsProgression;
-    static std::vector<SwitchSpellRune> m_SwitchSpellRune;
+    static std::vector<SpellRunes> m_SpellRune;
 public:
     static void LoadAllRunes();
     static void LoadAccountsRunes();
     static void LoadAllLoadout();
     static void LoadAllAccountProgression();
-    static void LoadAllSpellsSwitch();
+    static void LoadAllSpells();
     static void SavePlayer(Player* player);
     static RuneMessage LearnRandomRune(Player* player);
     static RuneMessage LearnSpecificRune(Player* player, uint32 spellId);
@@ -84,5 +84,6 @@ public:
     static std::vector<std::string> GetSlotRunesCachingForClient(Player* player, uint8 slotId);
     // Return messsage array(uint8 slotId, title, active (0-1));
     static std::vector<std::string> GetLoadoutCachingForClient(Player* player);
+    static void ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes);
     static uint32 GetNextRankSpellId(uint32 spellId);
 };

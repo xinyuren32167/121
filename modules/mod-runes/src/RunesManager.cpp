@@ -1,4 +1,5 @@
 #include "RunesManager.h"
+#include "boost/bind.hpp"
 
 void RunesManager::LoadAllRunes()
 {
@@ -6,22 +7,27 @@ void RunesManager::LoadAllRunes()
 
 void RunesManager::LoadAccountsRunes()
 {
+
 }
 
 void RunesManager::LoadAllLoadout()
 {
+
 }
 
 void RunesManager::LoadAllAccountProgression()
 {
+
 }
 
-void RunesManager::LoadAllSpellsSwitch()
+void RunesManager::LoadAllSpells()
 {
+
 }
 
 void RunesManager::SavePlayer(Player* player)
 {
+
 }
 
 RuneMessage RunesManager::LearnRandomRune(Player* player)
@@ -83,6 +89,34 @@ std::vector<std::string> RunesManager::GetLoadoutCachingForClient(Player* player
 {
     return std::vector<std::string>();
 }
+
+void RunesManager::ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes)
+{
+    auto it = std::find_if(m_SpellRune.begin(), m_SpellRune.end(), [spellId](const SpellRunes& e)
+    { return e.runeSpellId == spellId; });
+
+    if (it == std::end(m_SpellRune))
+        return;
+
+    uint32 newSpellId = it->newSpellId;
+    uint32 oldSpellId = it->oldSpellId;
+
+    if (unlearnRunes) {
+        if (oldSpellId)
+            player->learnSpell(oldSpellId, false, false, false);
+
+        if (newSpellId)
+            player->removeSpell(newSpellId, SPEC_MASK_ALL, false, false);
+    }
+    else {
+        if (newSpellId)
+            player->learnSpell(newSpellId, false, false, false);
+
+        if (oldSpellId)
+            player->removeSpell(oldSpellId, SPEC_MASK_ALL, false, false);
+    }
+}
+
 
 uint32 RunesManager::GetNextRankSpellId(uint32 spellId)
 {
