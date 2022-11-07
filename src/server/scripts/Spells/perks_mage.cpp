@@ -362,7 +362,6 @@ class spell_icicle_ice_lance_aura : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
             GetCaster()->CastSpell(GetTarget(), GetAuraTriggerSpell(), TRIGGERED_FULL_MASK);
-            LOG_ERROR("error", "proc");
     }
 
     void Register() override
@@ -1816,7 +1815,71 @@ class spell_empowered_fire : public SpellScript
 
     void Register() override
     {
-        AfterCast += SpellCastFn(spell_empowered_fire::HandleProc);
+        OnHit += SpellHitFn(spell_empowered_fire::HandleProc);
+    }
+};
+
+class spell_burning_touch : public SpellScript
+{
+    PrepareSpellScript(spell_burning_touch);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300741))
+            return GetCaster()->GetAura(300741);
+
+        if (GetCaster()->HasAura(300742))
+            return GetCaster()->GetAura(300742);
+
+        if (GetCaster()->HasAura(300743))
+            return GetCaster()->GetAura(300743);
+
+        if (GetCaster()->HasAura(300744))
+            return GetCaster()->GetAura(300744);
+
+        if (GetCaster()->HasAura(300745))
+            return GetCaster()->GetAura(300745);
+
+        if (GetCaster()->HasAura(300746))
+            return GetCaster()->GetAura(300746);
+
+        return nullptr;
+    }
+
+    int GetProcValue()
+    {
+        auto playerAuras = GetCaster()->GetAppliedAuras();
+        int procValue = 0;
+
+        for (auto itr = playerAuras.begin(); itr != playerAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x00100000)
+                {
+                    procValue += aura->GetEffect(EFFECT_0)->GetAmount();
+                }
+            }
+        }
+        return procValue;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc()
+    {
+        if (GetExplTargetUnit()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT) && GetPerkAura())
+            GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, GetProcValue(), GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_burning_touch::HandleProc);
     }
 };
 
@@ -1869,6 +1932,7 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_fiery_mind);
     RegisterSpellScript(spell_burning_talons);
     RegisterSpellScript(spell_empowered_fire);
+    RegisterSpellScript(spell_burning_touch);
 }
 
 
