@@ -505,10 +505,10 @@ class spell_mage_fire_frost_ward : public spell_mage_incanters_absorbtion_base_A
         if (Unit* caster = GetCaster())
         {
             // +80.68% from sp bonus
-            float bonus = 0.8068f;
+            float bonus = 2.0f;
 
             bonus *= caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask());
-            bonus *= caster->CalculateLevelPenalty(GetSpellInfo());
+            //bonus *= caster->CalculateLevelPenalty(GetSpellInfo());
 
             amount += int32(bonus);
         }
@@ -595,7 +595,7 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
     static int32 CalculateSpellAmount(Unit* caster, int32 amount, SpellInfo const* spellInfo, const AuraEffect* aurEff)
     {
         // +80.68% from sp bonus
-        float bonus = 0.8068f;
+        float bonus = 2.0f;
 
         bonus *= caster->SpellBaseDamageBonusDone(spellInfo->GetSchoolMask());
 
@@ -603,7 +603,7 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
         // Glyph of Ice Barrier is only applied at the spell damage bonus because it was already applied to the base value in CalculateSpellDamage
         bonus = caster->ApplyEffectModifiers(spellInfo, aurEff->GetEffIndex(), bonus);
 
-        bonus *= caster->CalculateLevelPenalty(spellInfo);
+        //bonus *= caster->CalculateLevelPenalty(spellInfo);
 
         amount += int32(bonus);
         return amount;
@@ -761,10 +761,10 @@ class spell_mage_mana_shield : public spell_mage_incanters_absorbtion_base_AuraS
         if (Unit* caster = GetCaster())
         {
             // +80.53% from sp bonus
-            float bonus = 0.8053f;
+            float bonus = 2.0f;
 
             bonus *= caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask());
-            bonus *= caster->CalculateLevelPenalty(GetSpellInfo());
+            //bonus *= caster->CalculateLevelPenalty(GetSpellInfo());
 
             amount += int32(bonus);
         }

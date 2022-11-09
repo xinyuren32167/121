@@ -943,7 +943,6 @@ void AuraEffect::UpdatePeriodic(Unit* caster)
                         case 43183:
                         case 46755:
                         case 49472: // Drink Coffee
-                        case 57073:
                         case 61830:
                             if (!caster || caster->GetTypeId() != TYPEID_PLAYER)
                                 return;
