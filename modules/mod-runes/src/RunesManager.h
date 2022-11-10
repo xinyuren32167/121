@@ -45,7 +45,6 @@ struct AccountProgression {
     uint64 runesDust;
 };
 
-
 struct SpellRunes {
     uint32 runeSpellId;
     uint32 oldSpellId;
