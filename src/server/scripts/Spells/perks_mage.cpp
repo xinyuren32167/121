@@ -361,7 +361,7 @@ class spell_icicle_ice_lance_aura : public AuraScript
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-            GetCaster()->CastSpell(GetTarget(), GetAuraTriggerSpell(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetTarget(), GetAuraTriggerSpell(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1883,6 +1883,169 @@ class spell_burning_touch : public SpellScript
     }
 };
 
+class spell_controlled_destruction : public SpellScript
+{
+    PrepareSpellScript(spell_controlled_destruction);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300974))
+            return GetCaster()->GetAura(300974);
+
+        if (GetCaster()->HasAura(300975))
+            return GetCaster()->GetAura(300975);
+
+        if (GetCaster()->HasAura(300976))
+            return GetCaster()->GetAura(300976);
+
+        if (GetCaster()->HasAura(300977))
+            return GetCaster()->GetAura(300977);
+
+        if (GetCaster()->HasAura(300978))
+            return GetCaster()->GetAura(300978);
+
+        if (GetCaster()->HasAura(300979))
+            return GetCaster()->GetAura(300979);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc()
+    {
+        if (GetPerkAura())
+        {
+            if (GetExplTargetUnit()->GetHealthPct() >= 70 || GetExplTargetUnit()->GetHealthPct() <= 30)
+                GetCaster()->AddAura(GetProcSpell(), GetCaster());
+        }
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_controlled_destruction::HandleProc);
+    }
+};
+
+class spell_incendiary_eruptions : public AuraScript
+{
+    PrepareAuraScript(spell_incendiary_eruptions);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300986))
+            return GetCaster()->GetAura(300986);
+
+        if (GetCaster()->HasAura(300987))
+            return GetCaster()->GetAura(300987);
+
+        if (GetCaster()->HasAura(300988))
+            return GetCaster()->GetAura(300988);
+
+        if (GetCaster()->HasAura(300990))
+            return GetCaster()->GetAura(300990);
+
+        if (GetCaster()->HasAura(300991))
+            return GetCaster()->GetAura(300991);
+
+        if (GetCaster()->HasAura(300992))
+            return GetCaster()->GetAura(300992);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        if (GetPerkAura())
+        {
+            if (!GetTarget()->HasAura(GetProcSpell()))
+            {
+                uint32 random = urand(1, 100);
+
+                if (random <= GetProcPct())
+                    GetCaster()->AddAura(GetProcSpell(), GetTarget());
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_incendiary_eruptions::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
+class spell_fervent_flickering : public AuraScript
+{
+    PrepareAuraScript(spell_fervent_flickering);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(300992))
+            return GetCaster()->GetAura(300992);
+
+        if (GetCaster()->HasAura(300993))
+            return GetCaster()->GetAura(300993);
+
+        if (GetCaster()->HasAura(300994))
+            return GetCaster()->GetAura(300994);
+
+        if (GetCaster()->HasAura(300995))
+            return GetCaster()->GetAura(300995);
+
+        if (GetCaster()->HasAura(300996))
+            return GetCaster()->GetAura(300996);
+
+        if (GetCaster()->HasAura(300997))
+            return GetCaster()->GetAura(300997);
+
+        return nullptr;
+    }
+
+    int GetProcAmount()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+    }
+
+    int GetProcChance()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        if (GetPerkAura())
+        {
+            uint32 random = urand(1, 100);
+
+            if (random <= GetProcChance())
+                GetCaster()->ToPlayer()->ModifySpellCooldown(GetProcSpell(), -GetProcAmount());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_fervent_flickering::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
 void AddSC_mage_perks_scripts()
 {
     RegisterSpellScript(spell_tempest_barrier);
@@ -1933,6 +2096,9 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_burning_talons);
     RegisterSpellScript(spell_empowered_fire);
     RegisterSpellScript(spell_burning_touch);
+    RegisterSpellScript(spell_controlled_destruction);
+    RegisterSpellScript(spell_incendiary_eruptions);
+    RegisterSpellScript(spell_fervent_flickering);
 }
 
 
