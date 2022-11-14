@@ -819,7 +819,7 @@ class spell_cone_of_blizzard : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         if (Player* target = GetTarget()->ToPlayer())
-            target->RemoveSpellCooldown(42931, true);
+            target->ModifySpellCooldown(42931, -1000);
     }
 
     void Register() override
