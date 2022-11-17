@@ -128,7 +128,47 @@ class spell_diverted_energy : public AuraScript
     void Register() override
     {
         AfterEffectAbsorb += AuraEffectAbsorbFn(spell_diverted_energy::Absorb, EFFECT_0);
-        OnEffectManaShield += AuraEffectManaShieldFn(spell_diverted_energy::Absorb, EFFECT_0);
+    }
+};
+
+class spell_diverted_energy_mana : public AuraScript
+{
+    PrepareAuraScript(spell_diverted_energy_mana);
+
+    uint32 absorbPct;
+
+    int HealPct()
+    {
+        auto playerAuras = GetCaster()->GetAppliedAuras();
+        int healPct = 0;
+
+        for (auto itr = playerAuras.begin(); itr != playerAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x00000080)
+                {
+                    healPct = aura->GetEffect(EFFECT_0)->GetAmount();
+                    break;
+                }
+            }
+        }
+
+        return healPct;
+    }
+
+    void Absorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        int32 heal = int32(CalculatePct(absorbAmount, HealPct()));
+
+        GetCaster()->CastCustomSpell(300142, SPELLVALUE_BASE_POINT0, heal, GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        OnEffectManaShield += AuraEffectManaShieldFn(spell_diverted_energy_mana::Absorb, EFFECT_0);
     }
 };
 
@@ -191,7 +231,7 @@ class spell_spiritual_armor_remove : public AuraScript
 
     void Register() override
     {
-        AfterEffectRemove += AuraEffectRemoveFn(spell_spiritual_armor_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_RESISTANCE, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_spiritual_armor_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_PCT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2045,11 +2085,13 @@ class spell_fervent_flickering : public AuraScript
     }
 };
 
+
 void AddSC_mage_perks_scripts()
 {
     RegisterSpellScript(spell_tempest_barrier);
     RegisterSpellScript(spell_cryo_freeze);
     RegisterSpellScript(spell_diverted_energy);
+    RegisterSpellScript(spell_diverted_energy_mana);
     RegisterSpellScript(spell_spiritual_armor);
     RegisterSpellScript(spell_spiritual_armor_remove);
     RegisterSpellScript(spell_triune_armor);
