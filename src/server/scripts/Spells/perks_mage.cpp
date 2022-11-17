@@ -9,7 +9,6 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-
 class spell_tempest_barrier : public SpellScript
 {
     PrepareSpellScript(spell_tempest_barrier);
@@ -361,7 +360,7 @@ class spell_icicle_ice_lance_aura : public AuraScript
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-            GetCaster()->CastSpell(GetTarget(), GetAuraTriggerSpell(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetTarget(), GetAuraTriggerSpell(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override

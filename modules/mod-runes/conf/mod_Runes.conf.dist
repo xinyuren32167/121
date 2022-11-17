@@ -1,0 +1,6 @@
+[worldserver]
+
+RuneManager.Enabled = true
+RuneManager.EnabledLearningRunes = true
+RuneManager.EnabledLoadout = true
+RuneManager.MaxRunesSlotsAvailable = 10

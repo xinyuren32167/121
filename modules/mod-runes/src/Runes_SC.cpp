@@ -16,6 +16,13 @@ public:
     {
        
     }
+
+
+    void OnCreate(Player* player)
+    {
+        // 
+    }
+
 };
 
 class Runes_WorldScript : public WorldScript
@@ -25,7 +32,7 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
-        // sEluna->OnConfigLoad(reload, true);
+        LOG_INFO("Runes", "Initialize Runes...");
     }
 };
 
