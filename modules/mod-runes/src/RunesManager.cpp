@@ -89,26 +89,6 @@ RuneMessage RunesManager::ActivateLoadout(Player* player, uint8 slotId)
     return RuneMessage();
 }
 
-std::string RunesManager::GetAccountProgressionCachingForClient(Player* player, uint32 spellId)
-{
-    return std::string();
-}
-
-std::vector<std::string> RunesManager::GetCollectionCachingForClient(Player* player)
-{
-    return std::vector<std::string>();
-}
-
-std::vector<std::string> RunesManager::GetSlotRunesCachingForClient(Player* player, uint8 slotId)
-{
-    return std::vector<std::string>();
-}
-
-std::vector<std::string> RunesManager::GetLoadoutCachingForClient(Player* player)
-{
-    return std::vector<std::string>();
-}
-
 void RunesManager::ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes)
 {
   
