@@ -1783,6 +1783,21 @@ class spell_burning_talons : public AuraScript
 
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / talonsDot->GetMaxTicks());
 
+            if (eventInfo.GetProcTarget()->HasAura(GetProcSpell()))
+            {
+                Aura* enemyIgniteAura = eventInfo.GetProcTarget()->GetAura(GetProcSpell());
+
+                int32 damageAmountPerTick = enemyIgniteAura->GetEffect(EFFECT_0)->GetAmount() / talonsDot->GetMaxTicks();
+                int32 remainingTicks = enemyIgniteAura->GetDuration() / enemyIgniteAura->GetEffect(EFFECT_0)->GetAmplitude();
+                int32 remainingAmount = damageAmountPerTick * remainingTicks;
+                int32 remainingAmountPerTick = remainingAmount / talonsDot->GetMaxTicks();
+
+                amount += remainingAmountPerTick;
+
+                if (amount > (GetCaster()->GetMaxHealth() * 0.5))
+                    amount = (GetCaster()->GetMaxHealth() * 0.5);
+            }
+
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount);
         }
     }

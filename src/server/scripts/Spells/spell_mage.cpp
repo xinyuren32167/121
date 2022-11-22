@@ -707,8 +707,22 @@ class spell_mage_ignite : public AuraScript
 
         SpellInfo const* igniteDot = sSpellMgr->AssertSpellInfo(SPELL_MAGE_IGNITE);
         int32 pct = 8 * GetSpellInfo()->GetRank();
-
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / igniteDot->GetMaxTicks());
+
+        if (eventInfo.GetProcTarget()->HasAura(SPELL_MAGE_IGNITE))
+        {
+            Aura* enemyIgniteAura = eventInfo.GetProcTarget()->GetAura(SPELL_MAGE_IGNITE);
+
+            int32 damageAmountPerTick = enemyIgniteAura->GetEffect(EFFECT_0)->GetAmount() / igniteDot->GetMaxTicks();
+            int32 remainingTicks = enemyIgniteAura->GetDuration() / enemyIgniteAura->GetEffect(EFFECT_0)->GetAmplitude();
+            int32 remainingAmount = damageAmountPerTick * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / igniteDot->GetMaxTicks();
+
+            amount += remainingAmountPerTick;
+
+            if (amount > (GetCaster()->GetMaxHealth() * 0.5))
+                amount = (GetCaster()->GetMaxHealth() * 0.5);
+        }
 
         // Xinef: implement ignite bug
         eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), SPELL_MAGE_IGNITE, SPELL_AURA_PERIODIC_DAMAGE, amount);

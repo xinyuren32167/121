@@ -602,6 +602,106 @@ class spell_echo_of_light : public AuraScript
     }
 };
 
+class spell_mittelschmerz : public AuraScript
+{
+    PrepareAuraScript(spell_mittelschmerz);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100121))
+            return GetCaster()->GetAura(100121);
+
+        if (GetCaster()->HasAura(100122))
+            return GetCaster()->GetAura(100122);
+
+        if (GetCaster()->HasAura(100123))
+            return GetCaster()->GetAura(100123);
+
+        if (GetCaster()->HasAura(100124))
+            return GetCaster()->GetAura(100124);
+
+        if (GetCaster()->HasAura(100125))
+            return GetCaster()->GetAura(100125);
+
+        if (GetCaster()->HasAura(100126))
+            return GetCaster()->GetAura(100126);
+
+        return nullptr;
+    }
+
+    int GetDamagePct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetDamagePct()));
+
+        GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mittelschmerz::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_blood_magic : public AuraScript
+{
+    PrepareAuraScript(spell_blood_magic);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100127))
+            return GetCaster()->GetAura(100127);
+
+        if (GetCaster()->HasAura(100128))
+            return GetCaster()->GetAura(100128);
+
+        if (GetCaster()->HasAura(100129))
+            return GetCaster()->GetAura(100129);
+
+        if (GetCaster()->HasAura(100130))
+            return GetCaster()->GetAura(100130);
+
+        if (GetCaster()->HasAura(100131))
+            return GetCaster()->GetAura(100131);
+
+        if (GetCaster()->HasAura(100132))
+            return GetCaster()->GetAura(100132);
+
+        return nullptr;
+    }
+
+    int GetDamagePct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetDamagePct()));
+
+        GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_blood_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_generals_perks_scripts()
 {
     RegisterSpellScript(spell_vampirism);
@@ -616,4 +716,6 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_ysera_s_gift);
     RegisterSpellScript(spell_ysera_s_gift_target);
     RegisterSpellScript(spell_echo_of_light);
+    RegisterSpellScript(spell_mittelschmerz);
+    RegisterSpellScript(spell_blood_magic);
 }
