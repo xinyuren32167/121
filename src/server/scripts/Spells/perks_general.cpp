@@ -849,63 +849,60 @@ class spell_shadow_pact : public AuraScript
     }
 };
 
-class spell_ysera_s_gift : public AuraScript
+class spell_rampart : public AuraScript
 {
-    PrepareAuraScript(spell_ysera_s_gift);
+    PrepareAuraScript(spell_rampart);
 
     Aura* GetPerkAura()
     {
-        if (GetCaster()->HasAura(100106))
-            return GetCaster()->GetAura(100106);
+        if (GetCaster()->HasAura(100232))
+            return GetCaster()->GetAura(100232);
 
-        if (GetCaster()->HasAura(100107))
-            return GetCaster()->GetAura(100107);
+        if (GetCaster()->HasAura(100233))
+            return GetCaster()->GetAura(100233);
 
-        if (GetCaster()->HasAura(100108))
-            return GetCaster()->GetAura(100108);
+        if (GetCaster()->HasAura(100234))
+            return GetCaster()->GetAura(100234);
 
-        if (GetCaster()->HasAura(100109))
-            return GetCaster()->GetAura(100109);
+        if (GetCaster()->HasAura(100235))
+            return GetCaster()->GetAura(100235);
 
-        if (GetCaster()->HasAura(100110))
-            return GetCaster()->GetAura(100110);
+        if (GetCaster()->HasAura(100236))
+            return GetCaster()->GetAura(100236);
 
-        if (GetCaster()->HasAura(100111))
-            return GetCaster()->GetAura(100111);
+        if (GetCaster()->HasAura(100237))
+            return GetCaster()->GetAura(100237);
 
         return nullptr;
     }
 
-    int GetProcPct()
+    int GetDamageCheckSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
-    int GetSelfHealSpell()
+    int GetProcSpell()
     {
         return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
     }
 
-    int GetAllyHealSpell()
+    int GetProcAmount()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetProcPct()));
-
-        if (GetCaster()->GetHealth() < GetCaster()->GetMaxHealth())
-            GetCaster()->CastCustomSpell(GetSelfHealSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
-        else
-            GetCaster()->CastCustomSpell(GetAllyHealSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+        if (!GetCaster()->HasAura(GetDamageCheckSpell()) && !GetCaster()->HasAura(GetProcSpell()))
+            GetCaster()->AddAura(GetProcSpell(), GetCaster());
     }
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_ysera_s_gift::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_rampart::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
+
 
 void AddSC_generals_perks_scripts()
 {
@@ -926,4 +923,5 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_killing_spree);
     RegisterSpellScript(spell_holy_aegis);
     RegisterSpellScript(spell_shadow_pact);
+    RegisterSpellScript(spell_rampart);
 }
