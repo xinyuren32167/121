@@ -705,27 +705,22 @@ class spell_mage_ignite : public AuraScript
     {
         PreventDefaultAction();
 
-        SpellInfo const* igniteDot = sSpellMgr->AssertSpellInfo(SPELL_MAGE_IGNITE);
         int32 pct = 8 * GetSpellInfo()->GetRank();
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / igniteDot->GetMaxTicks());
+        int32 totalTicks = sSpellMgr->AssertSpellInfo(SPELL_MAGE_IGNITE)->GetMaxTicks();
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
+        int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
 
-        if (eventInfo.GetProcTarget()->HasAura(SPELL_MAGE_IGNITE))
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(SPELL_MAGE_IGNITE, 0))
         {
-            Aura* enemyIgniteAura = eventInfo.GetProcTarget()->GetAura(SPELL_MAGE_IGNITE);
+            int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / totalTicks;
 
-            int32 damageAmountPerTick = enemyIgniteAura->GetEffect(EFFECT_0)->GetAmount() / igniteDot->GetMaxTicks();
-            int32 remainingTicks = enemyIgniteAura->GetDuration() / enemyIgniteAura->GetEffect(EFFECT_0)->GetAmplitude();
-            int32 remainingAmount = damageAmountPerTick * remainingTicks;
-            int32 remainingAmountPerTick = remainingAmount / igniteDot->GetMaxTicks();
-
-            amount += remainingAmountPerTick;
-
-            if (amount > (GetCaster()->GetMaxHealth() * 0.5))
-                amount = (GetCaster()->GetMaxHealth() * 0.5);
+            amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
         }
 
         // Xinef: implement ignite bug
-        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), SPELL_MAGE_IGNITE, SPELL_AURA_PERIODIC_DAMAGE, amount);
+        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), SPELL_MAGE_IGNITE, SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         //GetTarget()->CastCustomSpell(SPELL_MAGE_IGNITE, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true, nullptr, aurEff);
     }
 

@@ -577,23 +577,17 @@ class spell_echo_of_light : public AuraScript
     {
         int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
         int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), GetHealPct()) / totalTicks);
+        int32 maxAmount = int32(CalculatePct(eventInfo.GetProcTarget()->GetMaxHealth(), 30));
 
-        if (eventInfo.GetProcTarget()->HasAura(GetProcSpell()))
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
         {
-            Aura* allyHealAura = eventInfo.GetProcTarget()->GetAura(GetProcSpell());
-
-            int32 healAmountPerTick = allyHealAura->GetEffect(EFFECT_0)->GetAmount() / totalTicks;
-            int32 remainingTicks = allyHealAura->GetDuration() / allyHealAura->GetEffect(EFFECT_0)->GetAmplitude();
-            int32 remainingAmount = healAmountPerTick * remainingTicks;
+            int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
             int32 remainingAmountPerTick = remainingAmount / totalTicks;
 
-            amount += remainingAmountPerTick;
-
-            if (amount > (GetCaster()->GetMaxHealth() * 0.35))
-                amount = (GetCaster()->GetMaxHealth() * 0.35);
+            amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
         }
-
-        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_HEAL, amount);
+        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_HEAL, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
@@ -602,9 +596,9 @@ class spell_echo_of_light : public AuraScript
     }
 };
 
-class spell_mittelschmerz : public AuraScript
+class spell_mittelschmerz_blood_magic : public AuraScript
 {
-    PrepareAuraScript(spell_mittelschmerz);
+    PrepareAuraScript(spell_mittelschmerz_blood_magic);
 
     Aura* GetPerkAura()
     {
@@ -626,38 +620,6 @@ class spell_mittelschmerz : public AuraScript
         if (GetCaster()->HasAura(100126))
             return GetCaster()->GetAura(100126);
 
-        return nullptr;
-    }
-
-    int GetDamagePct()
-    {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    int GetProcSpell()
-    {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetDamagePct()));
-
-        GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_mittelschmerz::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-class spell_blood_magic : public AuraScript
-{
-    PrepareAuraScript(spell_blood_magic);
-
-    Aura* GetPerkAura()
-    {
         if (GetCaster()->HasAura(100127))
             return GetCaster()->GetAura(100127);
 
@@ -691,14 +653,257 @@ class spell_blood_magic : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetDamagePct()));
+        uint32 damage = CalculatePct(GetCaster()->GetMaxHealth(), GetDamagePct());
+
+        GetCaster()->DealDamage(GetCaster(), GetCaster(), damage);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mittelschmerz_blood_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_azerite_veins : public AuraScript
+{
+    PrepareAuraScript(spell_azerite_veins);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100135))
+            return GetCaster()->GetAura(100135);
+
+        if (GetCaster()->HasAura(100136))
+            return GetCaster()->GetAura(100136);
+
+        if (GetCaster()->HasAura(100137))
+            return GetCaster()->GetAura(100137);
+
+        if (GetCaster()->HasAura(100138))
+            return GetCaster()->GetAura(100138);
+
+        if (GetCaster()->HasAura(100139))
+            return GetCaster()->GetAura(100139);
+
+        if (GetCaster()->HasAura(100140))
+            return GetCaster()->GetAura(100140);
+
+        return nullptr;
+    }
+
+    int GetHealPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetHealPct()));
 
         GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_blood_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_azerite_veins::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_killing_spree : public AuraScript
+{
+    PrepareAuraScript(spell_killing_spree);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetInstanceId())
+            return false;
+
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_killing_spree::CheckProc);
+    }
+};
+
+class spell_holy_aegis : public AuraScript
+{
+    PrepareAuraScript(spell_holy_aegis);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100211))
+            return GetCaster()->GetAura(100211);
+
+        if (GetCaster()->HasAura(100212))
+            return GetCaster()->GetAura(100212);
+
+        if (GetCaster()->HasAura(100213))
+            return GetCaster()->GetAura(100213);
+
+        if (GetCaster()->HasAura(100214))
+            return GetCaster()->GetAura(100214);
+
+        if (GetCaster()->HasAura(100215))
+            return GetCaster()->GetAura(100215);
+
+        if (GetCaster()->HasAura(100216))
+            return GetCaster()->GetAura(100216);
+
+        return nullptr;
+    }
+
+    int GetShieldPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 absorb = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), GetShieldPct()));
+
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
+        {
+            int32 maxShield = CalculatePct(eventInfo.GetProcTarget()->GetMaxHealth(), 30);
+            protEff->SetAmount(std::min<int32>(protEff->GetAmount() + absorb, maxShield));
+            protEff->GetBase()->RefreshDuration();
+        }
+        else
+            GetTarget()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, absorb, eventInfo.GetProcTarget(), true, nullptr, aurEff);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_holy_aegis::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_shadow_pact : public AuraScript
+{
+    PrepareAuraScript(spell_shadow_pact);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100218))
+            return GetCaster()->GetAura(100218);
+
+        if (GetCaster()->HasAura(100219))
+            return GetCaster()->GetAura(100219);
+
+        if (GetCaster()->HasAura(100220))
+            return GetCaster()->GetAura(100220);
+
+        if (GetCaster()->HasAura(100221))
+            return GetCaster()->GetAura(100221);
+
+        if (GetCaster()->HasAura(100222))
+            return GetCaster()->GetAura(100222);
+
+        if (GetCaster()->HasAura(100223))
+            return GetCaster()->GetAura(100223);
+
+        return nullptr;
+    }
+
+    int GetDamagePct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 maxTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
+        uint32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / maxTicks;
+
+        if (AuraEffect* protEff = GetCaster()->GetAuraEffect(GetProcSpell(), 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+        }
+
+         GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount,  TRIGGERED_IGNORE_AURA_SCALING);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_shadow_pact::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_ysera_s_gift : public AuraScript
+{
+    PrepareAuraScript(spell_ysera_s_gift);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100106))
+            return GetCaster()->GetAura(100106);
+
+        if (GetCaster()->HasAura(100107))
+            return GetCaster()->GetAura(100107);
+
+        if (GetCaster()->HasAura(100108))
+            return GetCaster()->GetAura(100108);
+
+        if (GetCaster()->HasAura(100109))
+            return GetCaster()->GetAura(100109);
+
+        if (GetCaster()->HasAura(100110))
+            return GetCaster()->GetAura(100110);
+
+        if (GetCaster()->HasAura(100111))
+            return GetCaster()->GetAura(100111);
+
+        return nullptr;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetSelfHealSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+    }
+
+    int GetAllyHealSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetProcPct()));
+
+        if (GetCaster()->GetHealth() < GetCaster()->GetMaxHealth())
+            GetCaster()->CastCustomSpell(GetSelfHealSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+        else
+            GetCaster()->CastCustomSpell(GetAllyHealSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_ysera_s_gift::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -716,6 +921,9 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_ysera_s_gift);
     RegisterSpellScript(spell_ysera_s_gift_target);
     RegisterSpellScript(spell_echo_of_light);
-    RegisterSpellScript(spell_mittelschmerz);
-    RegisterSpellScript(spell_blood_magic);
+    RegisterSpellScript(spell_mittelschmerz_blood_magic);
+    RegisterSpellScript(spell_azerite_veins);
+    RegisterSpellScript(spell_killing_spree);
+    RegisterSpellScript(spell_holy_aegis);
+    RegisterSpellScript(spell_shadow_pact);
 }

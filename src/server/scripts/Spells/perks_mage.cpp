@@ -1778,27 +1778,20 @@ class spell_burning_talons : public AuraScript
     {
         if (GetPerkAura())
         {
-            SpellInfo const* talonsDot = sSpellMgr->AssertSpellInfo(GetProcSpell());
-            int32 pct = GetDamagePct();
+            int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
+            int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
 
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / talonsDot->GetMaxTicks());
-
-            if (eventInfo.GetProcTarget()->HasAura(GetProcSpell()))
+            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
             {
-                Aura* enemyIgniteAura = eventInfo.GetProcTarget()->GetAura(GetProcSpell());
+                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+                int32 remainingAmountPerTick = remainingAmount / totalTicks;
 
-                int32 damageAmountPerTick = enemyIgniteAura->GetEffect(EFFECT_0)->GetAmount() / talonsDot->GetMaxTicks();
-                int32 remainingTicks = enemyIgniteAura->GetDuration() / enemyIgniteAura->GetEffect(EFFECT_0)->GetAmplitude();
-                int32 remainingAmount = damageAmountPerTick * remainingTicks;
-                int32 remainingAmountPerTick = remainingAmount / talonsDot->GetMaxTicks();
-
-                amount += remainingAmountPerTick;
-
-                if (amount > (GetCaster()->GetMaxHealth() * 0.5))
-                    amount = (GetCaster()->GetMaxHealth() * 0.5);
+                amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
 
-            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount);
+            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
     }
 
