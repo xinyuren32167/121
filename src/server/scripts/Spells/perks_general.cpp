@@ -14,32 +14,9 @@ class spell_vampirism : public AuraScript
 {
     PrepareAuraScript(spell_vampirism);
 
-    Aura* GetPerkAura()
-    {
-        if (GetCaster()->HasAura(100000))
-            return GetCaster()->GetAura(100000);
-
-        if (GetCaster()->HasAura(100001))
-            return GetCaster()->GetAura(100001);
-
-        if (GetCaster()->HasAura(100002))
-            return GetCaster()->GetAura(100002);
-
-        if (GetCaster()->HasAura(100003))
-            return GetCaster()->GetAura(100003);
-
-        if (GetCaster()->HasAura(100004))
-            return GetCaster()->GetAura(100004);
-
-        if (GetCaster()->HasAura(100005))
-            return GetCaster()->GetAura(100005);
-
-        return nullptr;
-    }
-
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRankRune(100000)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)

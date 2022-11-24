@@ -1256,6 +1256,24 @@ SpellCastResult Unit::CastCustomSpell(uint32 spellId, CustomSpellValues const& v
     return CastSpell(targets, spellInfo, &value, triggerFlags, castItem, triggeredByAura, originalCaster);
 }
 
+SpellCastResult Unit::CastCustomSpellPct(uint32 spellId, SpellValueMod mod, int32 value, int32 pct, bool scale, bool overlap, bool refresh, uint32 max, Unit* victim, Item* castItem, AuraEffect const* triggeredByAura, ObjectGuid originalCaster)
+{
+    CustomSpellValues values;
+    int32 amount = int32(CalculatePct(value, pct));
+    if (overlap) {
+        if (AuraEffect* protEff = GetAuraEffect(spellId, 0/*, eventInfo.GetActor()->GetGUID()*/))
+        {
+            protEff->SetAmount(std::min<int32>(protEff->GetAmount() + amount, max));
+            if(refresh)
+                protEff->GetBase()->RefreshDuration();
+        }
+        return SPELL_CAST_OK;
+    }
+    values.AddSpellMod(mod, amount);
+    return CastCustomSpell(spellId, values, victim, scale ? TRIGGERED_FULL_MASK : TRIGGERED_IGNORE_AURA_SCALING, castItem, triggeredByAura, originalCaster);
+
+}
+
 SpellCastResult Unit::CastSpell(float x, float y, float z, uint32 spellId, bool triggered, Item* castItem, AuraEffect const* triggeredByAura, ObjectGuid originalCaster)
 {
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
