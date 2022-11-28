@@ -7,7 +7,7 @@
 struct MasterySpell
 {
     uint32 spellId;
-    uint32 modifierPerPoint;
+    float modifierPerPoint;
 };
 
 

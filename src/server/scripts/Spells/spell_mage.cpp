@@ -704,11 +704,12 @@ class spell_mage_ignite : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
-
-        int32 pct = aurEff->GetAmount();
+        const float masteryPct = GetCaster()->ToPlayer()->GetMastery();
+        float pct = aurEff->GetAmount() + masteryPct;
         int32 totalTicks = sSpellMgr->AssertSpellInfo(SPELL_MAGE_IGNITE)->GetMaxTicks();
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
         int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
+
 
         if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(SPELL_MAGE_IGNITE, 0))
         {

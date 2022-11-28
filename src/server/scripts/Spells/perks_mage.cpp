@@ -36,11 +36,8 @@ class spell_tempest_barrier : public SpellScript
 
     void HandleProc()
     {
-
         int playerMaxHealth = GetCaster()->GetMaxHealth();
-
         int32 absorb = int32(CalculatePct(playerMaxHealth, ShieldPct()));
-
         GetCaster()->CastCustomSpell(300135, SPELLVALUE_BASE_POINT0, absorb, GetCaster(), true);
     }
 

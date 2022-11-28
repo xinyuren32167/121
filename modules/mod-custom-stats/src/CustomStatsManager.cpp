@@ -14,7 +14,7 @@ void CustomStatsManager::LoadSpellsMastery()
     {
         Field* fields = result->Fetch();
         uint32 spellId = fields[0].Get<uint32>();
-        uint32 ratingPerPointPct = fields[1].Get<uint32>();
+        float ratingPerPointPct = fields[1].Get<float>();
         m_spellsMastery.push_back({ spellId, ratingPerPointPct });
     } while (result->NextRow());
 }
