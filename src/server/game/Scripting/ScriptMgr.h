@@ -1211,6 +1211,8 @@ public:
     virtual void OnAfterUpdateMaxPower(Player* /*player*/, Powers& /*power*/, float& /*value*/) { }
 
     virtual void OnAfterUpdateMaxHealth(Player* /*player*/, float& /*value*/) { }
+    virtual void OnUpdateMastery(Player* /*player*/, uint32 /*value*/) { }
+    virtual void OnUpdateVersatility(Player* /*player*/, uint32 /*value*/) { }
 
     virtual void OnBeforeUpdateAttackPowerAndDamage(Player* /*player*/, float& /*level*/, float& /*val2*/, bool /*ranged*/) { }
     virtual void OnAfterUpdateAttackPowerAndDamage(Player* /*player*/, float& /*level*/, float& /*base_attPower*/, float& /*attPowerMod*/, float& /*attPowerMultiplier*/, bool /*ranged*/) { }
@@ -2285,6 +2287,8 @@ public: /* PlayerScript */
     void OnAfterStoreOrEquipNewItem(Player* player, uint32 vendorslot, Item* item, uint8 count, uint8 bag, uint8 slot, ItemTemplate const* pProto, Creature* pVendor, VendorItem const* crItem, bool bStore);
     void OnAfterUpdateMaxPower(Player* player, Powers& power, float& value);
     void OnAfterUpdateMaxHealth(Player* player, float& value);
+    void OnUpdateMastery(Player* player, uint32 value);
+    void OnUpdateVersatility(Player* player, uint32 value);
     void OnBeforeUpdateAttackPowerAndDamage(Player* player, float& level, float& val2, bool ranged);
     void OnAfterUpdateAttackPowerAndDamage(Player* player, float& level, float& base_attPower, float& attPowerMod, float& attPowerMultiplier, bool ranged);
     void OnBeforeInitTalentForLevel(Player* player, uint8& level, uint32& talentPointsForLevel);

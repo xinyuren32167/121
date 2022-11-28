@@ -38,7 +38,7 @@ public:
 
 
 // Add all scripts in one
-void Addmod_runesScripts()
+void AddSC_runesScripts()
 {
     new Runes_PlayerScripts();
     new Runes_WorldScript();

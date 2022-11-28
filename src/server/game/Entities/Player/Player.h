@@ -1926,14 +1926,14 @@ public:
     void UpdateAllCritPercentages();
     void UpdateParryPercentage();
     void UpdateDodgePercentage();
-    void UpdateMeleeHitChances();
-    void UpdateRangedHitChances();
-    void UpdateSpellHitChances();
+
+    /* Mastery */
+    void UpdateMastery();
 
     void UpdateAllSpellCritChances();
     void UpdateSpellCritChance(uint32 school);
     void UpdateArmorPenetration(int32 amount);
-    void UpdateExpertise(WeaponAttackType attType);
+    void UpdateVersatility();
     void ApplyManaRegenBonus(int32 amount, bool apply);
     void ApplyHealthRegenBonus(int32 amount, bool apply);
     void UpdateManaRegen();

@@ -126,6 +126,9 @@ enum Classes
 // max+1 for player class
 #define MAX_CLASSES       12
 
+const uint32 VERSATILITY_SPELL = 1000001;
+
+
 #define CLASSMASK_ALL_PLAYABLE \
     ((1<<(CLASS_WARRIOR-1))|(1<<(CLASS_PALADIN-1))|(1<<(CLASS_HUNTER-1))| \
     (1<<(CLASS_ROGUE-1))  |(1<<(CLASS_PRIEST-1)) |(1<<(CLASS_SHAMAN-1))| \

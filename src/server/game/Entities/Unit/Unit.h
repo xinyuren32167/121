@@ -2074,9 +2074,7 @@ public:
 
     [[nodiscard]] bool IsInDisallowedMountForm() const;
 
-    float m_modMeleeHitChance;
-    float m_modRangedHitChance;
-    float m_modSpellHitChance;
+
     int32 m_baseSpellCritChance;
 
     float m_threatModifier[MAX_SPELL_SCHOOL];

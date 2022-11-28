@@ -605,13 +605,7 @@ void Player::UpdateRating(CombatRating cr)
         UpdateBlockPercentage();
         break;
     case CR_HIT_MELEE:
-        UpdateMeleeHitChances();
-        break;
-    case CR_HIT_RANGED:
-        UpdateRangedHitChances();
-        break;
-    case CR_HIT_SPELL:
-        UpdateSpellHitChances();
+        UpdateMastery();
         break;
     case CR_CRIT_MELEE:
         if (affectStats)
@@ -650,11 +644,7 @@ void Player::UpdateRating(CombatRating cr)
     case CR_WEAPON_SKILL_RANGED:
         break;
     case CR_EXPERTISE:
-        if (affectStats)
-        {
-            UpdateExpertise(BASE_ATTACK);
-            UpdateExpertise(OFF_ATTACK);
-        }
+            UpdateVersatility();
         break;
     case CR_ARMOR_PENETRATION:
         if (affectStats)

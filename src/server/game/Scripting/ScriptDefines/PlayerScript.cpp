@@ -723,6 +723,22 @@ void ScriptMgr::OnAfterUpdateMaxHealth(Player* player, float& value)
     });
 }
 
+void ScriptMgr::OnUpdateMastery(Player* player, uint32 value)
+{
+    ExecuteScript<PlayerScript>([&](PlayerScript* script)
+    {
+        script->OnUpdateMastery(player, value);
+    });
+}
+
+void ScriptMgr::OnUpdateVersatility(Player* player, uint32 value)
+{
+    ExecuteScript<PlayerScript>([&](PlayerScript* script)
+    {
+        script->OnUpdateVersatility(player, value);
+    });
+}
+
 void ScriptMgr::OnBeforeUpdateAttackPowerAndDamage(Player* player, float& level, float& val2, bool ranged)
 {
     ExecuteScript<PlayerScript>([&](PlayerScript* script)

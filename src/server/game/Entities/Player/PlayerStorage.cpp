@@ -2804,12 +2804,6 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
 
         // update expertise and armor penetration - passive auras may need it
 
-        if (slot == EQUIPMENT_SLOT_MAINHAND)
-            UpdateExpertise(BASE_ATTACK);
-
-        else if (slot == EQUIPMENT_SLOT_OFFHAND)
-            UpdateExpertise(OFF_ATTACK);
-
         switch (slot)
         {
             case EQUIPMENT_SLOT_MAINHAND:
@@ -2963,14 +2957,8 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update, bool swap)
                 }
 
                 // remove held enchantments, update expertise
-                if (slot == EQUIPMENT_SLOT_MAINHAND)
-                {
-                    UpdateExpertise(BASE_ATTACK);
-                }
-                else if (slot == EQUIPMENT_SLOT_OFFHAND)
-                {
-                    UpdateExpertise(OFF_ATTACK);
-                }
+                UpdateVersatility();
+                UpdateMastery();
 
                 // update armor penetration - passive auras may need it
                 switch (slot)
@@ -3112,11 +3100,6 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
                     default:
                         break;
                 }
-
-                if (slot == EQUIPMENT_SLOT_MAINHAND)
-                    UpdateExpertise(BASE_ATTACK);
-                else if (slot == EQUIPMENT_SLOT_OFFHAND)
-                    UpdateExpertise(OFF_ATTACK);
 
                 // equipment visual show
                 SetVisibleItemSlot(slot, nullptr);

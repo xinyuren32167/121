@@ -701,11 +701,11 @@ class spell_mage_ignite : public AuraScript
         return true;
     }
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
 
-        int32 pct = 8 * GetSpellInfo()->GetRank();
+        int32 pct = aurEff->GetAmount();
         int32 totalTicks = sSpellMgr->AssertSpellInfo(SPELL_MAGE_IGNITE)->GetMaxTicks();
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
         int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));

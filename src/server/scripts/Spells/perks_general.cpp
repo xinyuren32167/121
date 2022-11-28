@@ -21,9 +21,9 @@ class spell_vampirism : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetProcPct()));
-
-        GetCaster()->CastCustomSpell(100006, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        GetCaster()->CastCustomSpellPct(100006, SPELLVALUE_BASE_POINT0,
+            damage, GetProcPct(), false, false, false, 0, GetCaster());
     }
 
     void Register() override

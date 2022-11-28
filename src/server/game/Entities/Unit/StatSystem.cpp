@@ -208,8 +208,6 @@ bool Player::UpdateAllStats()
     UpdateShieldBlockValue();
     UpdateSpellDamageAndHealingBonus();
     UpdateManaRegen();
-    UpdateExpertise(BASE_ATTACK);
-    UpdateExpertise(OFF_ATTACK);
     RecalculateRating(CR_ARMOR_PENETRATION);
     UpdateAllResistances();
 
@@ -857,22 +855,10 @@ void Player::UpdateArmorPenetration(int32 amount)
     SetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_ARMOR_PENETRATION), amount);
 }
 
-void Player::UpdateMeleeHitChances()
+void Player::UpdateMastery()
 {
-    m_modMeleeHitChance = (float)GetTotalAuraModifier(SPELL_AURA_MOD_HIT_CHANCE);
-    m_modMeleeHitChance += GetRatingBonusValue(CR_HIT_MELEE);
-}
-
-void Player::UpdateRangedHitChances()
-{
-    m_modRangedHitChance = (float)GetTotalAuraModifier(SPELL_AURA_MOD_HIT_CHANCE);
-    m_modRangedHitChance += GetRatingBonusValue(CR_HIT_RANGED);
-}
-
-void Player::UpdateSpellHitChances()
-{
-    m_modSpellHitChance = (float)GetTotalAuraModifier(SPELL_AURA_MOD_SPELL_HIT_CHANCE);
-    m_modSpellHitChance += GetRatingBonusValue(CR_HIT_SPELL);
+   uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
+   sScriptMgr->OnUpdateMastery(this, amount);
 }
 
 void Player::UpdateAllSpellCritChances()
@@ -881,40 +867,15 @@ void Player::UpdateAllSpellCritChances()
         UpdateSpellCritChance(i);
 }
 
-void Player::UpdateExpertise(WeaponAttackType attack)
+void Player::UpdateVersatility()
 {
-    if (attack == RANGED_ATTACK)
-        return;
+    uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_EXPERTISE);
 
-    int32 expertise = int32(GetRatingBonusValue(CR_EXPERTISE));
+    if (amount < 0)
+        amount = 0;
 
-    Item* weapon = GetWeaponForAttack(attack, true);
-
-    AuraEffectList const& expAuras = GetAuraEffectsByType(SPELL_AURA_MOD_EXPERTISE);
-    for (AuraEffectList::const_iterator itr = expAuras.begin(); itr != expAuras.end(); ++itr)
-    {
-        // item neutral spell
-        if ((*itr)->GetSpellInfo()->EquippedItemClass == -1)
-            expertise += (*itr)->GetAmount();
-        // item dependent spell
-        else if (weapon && weapon->IsFitToSpellRequirements((*itr)->GetSpellInfo()))
-            expertise += (*itr)->GetAmount();
-    }
-
-    if (expertise < 0)
-        expertise = 0;
-
-    switch (attack)
-    {
-        case BASE_ATTACK:
-            SetUInt32Value(PLAYER_EXPERTISE, expertise);
-            break;
-        case OFF_ATTACK:
-            SetUInt32Value(PLAYER_OFFHAND_EXPERTISE, expertise);
-            break;
-        default:
-            break;
-    }
+    SetUInt32Value(PLAYER_EXPERTISE, amount);
+    sScriptMgr->OnUpdateVersatility(this, amount);
 }
 
 void Player::ApplyManaRegenBonus(int32 amount, bool apply)

@@ -494,12 +494,12 @@ class spell_pet_hit_expertise_scalling : public AuraScript
     {
         if (Player* modOwner = GetUnitOwner()->GetSpellModOwner())
         {
-            if (modOwner->getClass() == CLASS_HUNTER)
+           /* if (modOwner->getClass() == CLASS_HUNTER)
                 amount = CalculatePercent(modOwner->m_modRangedHitChance, 8.0f, 8.0f);
             else if (modOwner->getPowerType() == POWER_MANA)
                 amount = CalculatePercent(modOwner->m_modSpellHitChance, 17.0f, 8.0f);
             else
-                amount = CalculatePercent(modOwner->m_modMeleeHitChance, 8.0f, 8.0f);
+                amount = CalculatePercent(modOwner->m_modMeleeHitChance, 8.0f, 8.0f); */
         }
     }
 
@@ -507,12 +507,12 @@ class spell_pet_hit_expertise_scalling : public AuraScript
     {
         if (Player* modOwner = GetUnitOwner()->GetSpellModOwner())
         {
-            if (modOwner->getClass() == CLASS_HUNTER)
+            /* if (modOwner->getClass() == CLASS_HUNTER)
                 amount = CalculatePercent(modOwner->m_modRangedHitChance, 8.0f, 17.0f);
             else if (modOwner->getPowerType() == POWER_MANA)
                 amount = CalculatePercent(modOwner->m_modSpellHitChance, 17.0f, 17.0f);
             else
-                amount = CalculatePercent(modOwner->m_modMeleeHitChance, 8.0f, 17.0f);
+                amount = CalculatePercent(modOwner->m_modMeleeHitChance, 8.0f, 17.0f); */
         }
     }
 
@@ -520,12 +520,12 @@ class spell_pet_hit_expertise_scalling : public AuraScript
     {
         if (Player* modOwner = GetUnitOwner()->GetSpellModOwner())
         {
-            if (modOwner->getClass() == CLASS_HUNTER)
+            /* if (modOwner->getClass() == CLASS_HUNTER)
                 amount = CalculatePercent(modOwner->m_modRangedHitChance, 8.0f, 26.0f);
             else if (modOwner->getPowerType() == POWER_MANA)
                 amount = CalculatePercent(modOwner->m_modSpellHitChance, 17.0f, 26.0f);
             else
-                amount = CalculatePercent(modOwner->m_modMeleeHitChance, 8.0f, 26.0f);
+                amount = CalculatePercent(modOwner->m_modMeleeHitChance, 8.0f, 26.0f); */
         }
     }
 
