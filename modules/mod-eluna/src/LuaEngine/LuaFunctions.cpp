@@ -41,9 +41,7 @@ extern "C"
 
 luaL_Reg GlobalMethods[] =
 {
-
     // Custom
-
     { "GetAllRunes", &LuaGlobalFunctions::GetAllRunes },
 
     // Hooks
