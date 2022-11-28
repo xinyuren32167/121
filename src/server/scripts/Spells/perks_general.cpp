@@ -817,7 +817,7 @@ class spell_shadow_pact : public AuraScript
             amount += remainingAmountPerTick;
         }
 
-         GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount,  TRIGGERED_IGNORE_AURA_SCALING);
+        GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
@@ -871,7 +871,7 @@ class spell_rampart : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         if (!GetCaster()->HasAura(GetDamageCheckSpell()) && !GetCaster()->HasAura(GetProcSpell()))
-            GetCaster()->AddAura(GetProcSpell(), GetCaster());
+            GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, GetProcAmount(), GetCaster(), true);
     }
 
     void Register() override
@@ -880,6 +880,206 @@ class spell_rampart : public AuraScript
     }
 };
 
+class spell_rampart_remove : public AuraScript
+{
+    PrepareAuraScript(spell_rampart_remove);
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (!GetCaster()->HasAura(100238))
+            GetCaster()->AddAura(100238, GetCaster());
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rampart_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_last_defender : public SpellScript
+{
+    PrepareSpellScript(spell_last_defender);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100240))
+            return GetCaster()->GetAura(100240);
+
+        if (GetCaster()->HasAura(100241))
+            return GetCaster()->GetAura(100241);
+
+        if (GetCaster()->HasAura(100242))
+            return GetCaster()->GetAura(100242);
+
+        if (GetCaster()->HasAura(100243))
+            return GetCaster()->GetAura(100243);
+
+        if (GetCaster()->HasAura(100244))
+            return GetCaster()->GetAura(100244);
+
+        if (GetCaster()->HasAura(100245))
+            return GetCaster()->GetAura(100245);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+    }
+
+    void FindTargets(std::list<WorldObject*>& targets)
+    {
+        if (targets.size() > 0)
+        {
+            if (!GetCaster()->HasAura(GetProcSpell()))
+                GetCaster()->AddAura(GetProcSpell(), GetCaster());
+
+            Aura* aura = GetCaster()->GetAura(GetProcSpell());
+
+            if (aura->GetStackAmount() != targets.size())
+                aura->SetStackAmount(targets.size());
+
+        }
+        else if (GetCaster()->HasAura(GetProcSpell()))
+            GetCaster()->RemoveAura(GetProcSpell());
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_last_defender::FindTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class spell_juggling_balance : public AuraScript
+{
+    PrepareAuraScript(spell_juggling_balance);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100253))
+            return GetCaster()->GetAura(100253);
+
+        if (GetCaster()->HasAura(100254))
+            return GetCaster()->GetAura(100254);
+
+        if (GetCaster()->HasAura(100255))
+            return GetCaster()->GetAura(100255);
+
+        if (GetCaster()->HasAura(100256))
+            return GetCaster()->GetAura(100256);
+
+        if (GetCaster()->HasAura(100257))
+            return GetCaster()->GetAura(100257);
+
+        if (GetCaster()->HasAura(100258))
+            return GetCaster()->GetAura(100258);
+
+        return nullptr;
+    }
+
+    int GetHasteProc()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+    }
+
+    int GetCritProc()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* player = GetCaster();
+
+        if (!player || !GetPerkAura())
+            return;
+
+        float playerPowerPct = player->GetPowerPct(player->getPowerType());     
+
+        if (playerPowerPct >= 50)
+        {
+            if (player->HasAura(GetCritProc()))
+                player->RemoveAura(GetCritProc());
+
+            if (!player->HasAura(GetHasteProc()))
+                player->AddAura(GetHasteProc(), player);
+        }
+
+        if (playerPowerPct < 50)
+        {
+            if (player->HasAura(GetHasteProc()))
+                player->RemoveAura(GetHasteProc());
+
+            if (!player->HasAura(GetCritProc()))
+                player->AddAura(GetCritProc(), player);
+        }
+
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_juggling_balance::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_mana_filled_wounds : public AuraScript
+{
+    PrepareAuraScript(spell_mana_filled_wounds);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(100271))
+            return GetCaster()->GetAura(100271);
+
+        if (GetCaster()->HasAura(100272))
+            return GetCaster()->GetAura(100272);
+
+        if (GetCaster()->HasAura(100273))
+            return GetCaster()->GetAura(100273);
+
+        if (GetCaster()->HasAura(100274))
+            return GetCaster()->GetAura(100274);
+
+        if (GetCaster()->HasAura(100275))
+            return GetCaster()->GetAura(100275);
+
+        if (GetCaster()->HasAura(100276))
+            return GetCaster()->GetAura(100276);
+
+        return nullptr;
+    }
+
+    int GetProcPct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+    }
+
+    int GetCheckSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasAura(GetCheckSpell()))
+        {
+            int32 amount = int32(CalculatePct(GetCaster()->GetCreateMana(), GetProcPct()));
+            GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true, nullptr);
+            GetCaster()->AddAura(GetCheckSpell(), GetCaster());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mana_filled_wounds::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_generals_perks_scripts()
 {
@@ -901,4 +1101,8 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_holy_aegis);
     RegisterSpellScript(spell_shadow_pact);
     RegisterSpellScript(spell_rampart);
+    RegisterSpellScript(spell_rampart_remove);
+    RegisterSpellScript(spell_last_defender);
+    RegisterSpellScript(spell_juggling_balance);
+    RegisterSpellScript(spell_mana_filled_wounds);
 }
