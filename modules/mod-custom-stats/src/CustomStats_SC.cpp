@@ -24,6 +24,14 @@ public:
     {
         CustomStatsManager::UpdateVersatility(player, value);
     }
+
+    void OnLogin(Player* player)
+    {
+        uint32 amount = player->GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
+        if (amount < 0)
+            amount = 0;
+        CustomStatsManager::UpdateMastery(player, amount);
+    }
 };
 
 class CustomStats_WorldScript : public WorldScript

@@ -105,6 +105,7 @@ public:
     static RuneMessage DeactivateRune(Player* player, uint32 spellId);
     static RuneMessage UpdateLoadout(Player* player, uint8 slotId);
     static RuneMessage ActivateLoadout(Player* player, uint8 slotId);
+    static std::vector<std::string> AllRunesCachingForClient();
     static void ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes);
     static uint32 GetNextRankSpellId(uint32 spellId);
     static Rune GetRuneById(uint32 runeId);

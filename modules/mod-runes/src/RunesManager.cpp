@@ -6,6 +6,7 @@ std::map<uint32, std::vector<RuneAccount>> RunesManager::m_accountRunes = {};
 
 void RunesManager::SetupConfig(Config config)
 {
+
 }
 
 void RunesManager::LoadAllRunes()
@@ -126,11 +127,19 @@ RuneMessage RunesManager::ActivateLoadout(Player* player, uint8 slotId)
     return RuneMessage();
 }
 
-void RunesManager::ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes)
+std::vector<std::string> RunesManager::AllRunesCachingForClient()
 {
-  
+    std::vector<std::string > elements = {};
+    for (auto it = m_Runes.begin(); it != m_Runes.end(); it++)
+    {
+        Rune rune = it->second;
+        auto s = std::format("{}{}{}", rune.spellId, rune.quality);
+    }
 }
 
+void RunesManager::ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes)
+{
+}
 
 uint32 RunesManager::GetNextRankSpellId(uint32 spellId)
 {
