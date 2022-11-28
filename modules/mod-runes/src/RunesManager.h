@@ -24,11 +24,13 @@ enum RuneMessage {
 struct Rune {
     uint32 spellId;
     uint32 groupId;
-    int allowableClass;
-    int allowableRaces;
-    uint32 quality;
-    uint32 nextRankSpellId;
-    uint8 maxStack;
+    int32 allowableClass;
+    int32 allowableRaces;
+    int8 quality;
+    int8 maxStack;
+    uint32 refundItemId;
+    uint32 refundDusts;
+    std::string keywords;
 };
 
 struct SlotRune {
@@ -64,6 +66,12 @@ struct Config {
     float chanceDropRuneQualityRed = 0;
 };
 
+struct RuneAccount {
+    uint64 accountId;
+    uint64 id;
+    Rune rune;
+};
+
 struct LearnRune {
     uint32 runeId;
     RuneMessage message;
@@ -73,7 +81,7 @@ class RunesManager {
 
 private:
     static std::map<uint32, Rune> m_Runes;
-    static std::map<uint32 /* accountId */, std::vector<uint32 /* runeId */>> m_accountRunes;
+    static std::map<uint32 /* accountId */, std::vector<RuneAccount>> m_accountRunes;
     static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadouts;
     static std::map<uint64 /* guid */, std::vector<SlotRune>> m_SlotsRune;
     static std::vector<SpellRunes> m_SpellRune;
@@ -99,4 +107,5 @@ public:
     static RuneMessage ActivateLoadout(Player* player, uint8 slotId);
     static void ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes);
     static uint32 GetNextRankSpellId(uint32 spellId);
+    static Rune GetRuneById(uint32 runeId);
 };

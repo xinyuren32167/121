@@ -858,6 +858,10 @@ void Player::UpdateArmorPenetration(int32 amount)
 void Player::UpdateMastery()
 {
    uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
+
+   if (amount < 0)
+       amount = 0;
+
    sScriptMgr->OnUpdateMastery(this, amount);
 }
 

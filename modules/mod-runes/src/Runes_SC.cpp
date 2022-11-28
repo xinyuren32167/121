@@ -6,6 +6,8 @@
 #include "Player.h"
 #include "Config.h"
 #include "Chat.h"
+#include "RunesManager.h"
+
 // Add player scripts
 class Runes_PlayerScripts: public PlayerScript
 {
@@ -33,6 +35,8 @@ public:
     void OnBeforeConfigLoad(bool reload) override
     {
         LOG_INFO("Runes", "Initialize Runes...");
+        RunesManager::LoadAllRunes();
+        RunesManager::LoadAccountsRunes();
     }
 };
 

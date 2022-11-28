@@ -1,17 +1,54 @@
 #include "RunesManager.h"
 #include "boost/bind.hpp"
 
+std::map<uint32, Rune> RunesManager::m_Runes = {};
+std::map<uint32, std::vector<RuneAccount>> RunesManager::m_accountRunes = {};
+
 void RunesManager::SetupConfig(Config config)
 {
 }
 
 void RunesManager::LoadAllRunes()
 {
+    QueryResult result = WorldDatabase.Query("SELECT * FROM runes");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 id = fields[0].Get<uint32>();
+        uint32 groupId = fields[1].Get<uint32>();
+        int32 allowableClass = fields[2].Get<int32>();
+        int32 allowableRace = fields[3].Get<int32>();
+        int8 quality = fields[4].Get<int8>();
+        int8 maxStacks = fields[5].Get<int8>();
+        uint32 refundItemId = fields[6].Get<uint32>();
+        uint32 refundDusts = fields[7].Get<uint32>();
+        std::string keywords = fields[8].Get<std::string>();
+        Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, refundItemId, refundDusts, keywords };
+        m_Runes.insert(std::make_pair(id, rune));
+    } while (result->NextRow());
 }
 
 void RunesManager::LoadAccountsRunes()
 {
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM account_runes");
 
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 accountId = fields[0].Get<uint32>();
+        uint32 id = fields[1].Get<uint32>();
+        uint32 runeId = fields[2].Get<uint32>();
+        Rune rune = GetRuneById(runeId);
+        RuneAccount runeAccount = { accountId, id, rune };
+        m_accountRunes[accountId].push_back(runeAccount);
+    } while (result->NextRow());
 }
 
 void RunesManager::LoadAllLoadout()
@@ -98,4 +135,14 @@ void RunesManager::ProcessSpellFromRune(Player* player, uint32 spellId, bool unl
 uint32 RunesManager::GetNextRankSpellId(uint32 spellId)
 {
     return uint32();
+}
+
+Rune RunesManager::GetRuneById(uint32 runeId)
+{
+    auto it = m_Runes.find(runeId);
+
+    if (it != m_Runes.end())
+        return it->second;
+
+    return {};
 }

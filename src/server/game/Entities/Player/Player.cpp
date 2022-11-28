@@ -320,6 +320,7 @@ Player::Player(WorldSession* session): Unit(true), m_mover(this)
     m_baseManaRegen = 0;
     m_baseHealthRegen = 0;
     m_spellPenetrationItemMod = 0;
+    m_Mastery = 0;
 
     // Honor System
     m_lastHonorUpdateTime = GameTime::GetGameTime().count();

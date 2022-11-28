@@ -1929,6 +1929,9 @@ public:
 
     /* Mastery */
     void UpdateMastery();
+    void SetMastery(float pct) { m_Mastery = pct;  };
+    float GetMastery() { return m_Mastery; };
+    float m_Mastery;
 
     void UpdateAllSpellCritChances();
     void UpdateSpellCritChance(uint32 school);

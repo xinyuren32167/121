@@ -23,15 +23,8 @@ void CustomStatsManager::UpdateMastery(Player* player, uint32 rating)
 {
     for (auto& mastery : m_spellsMastery)
         if (Aura* aura = player->GetAura(mastery.spellId)) {
-            for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i) {
-                int32 base = sSpellMgr->AssertSpellInfo(mastery.spellId)->Effects[i].BasePoints - 1;
-                if (AuraEffect* aurEff = aura->GetEffect(i))
-                {
-                    const uint32 pct = round(rating / mastery.modifierPerPoint);
-                    aurEff->SetAmount(base + pct);
-                }
-            }
-            break;
+            const float value = rating / mastery.modifierPerPoint;
+            player->SetMastery(value);
         }
 }
 
