@@ -41,6 +41,11 @@ extern "C"
 
 luaL_Reg GlobalMethods[] =
 {
+
+    // Custom
+
+    { "GetAllRunes", &LuaGlobalFunctions::GetAllRunes },
+
     // Hooks
     { "RegisterPacketEvent", &LuaGlobalFunctions::RegisterPacketEvent },
     { "RegisterServerEvent", &LuaGlobalFunctions::RegisterServerEvent },

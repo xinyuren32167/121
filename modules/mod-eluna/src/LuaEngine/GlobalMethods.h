@@ -14,6 +14,8 @@
 #include "BanMgr.h"
 #include "GameTime.h"
 
+#include "RunesManager.h"
+
 enum BanMode
 {
     BAN_ACCOUNT = 1,
@@ -28,6 +30,27 @@ enum BanMode
  */
 namespace LuaGlobalFunctions
 {
+
+    /*
+        Custom
+    */
+
+    int GetAllRunes(lua_State* L)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        auto runes = RunesManager::AllRunesCachingForClient();
+        for(const auto &rune : runes)
+        {
+            Eluna::Push(L, rune);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
     /**
      * Returns Lua engine's name.
      *

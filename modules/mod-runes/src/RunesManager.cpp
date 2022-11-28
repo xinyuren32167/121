@@ -133,8 +133,11 @@ std::vector<std::string> RunesManager::AllRunesCachingForClient()
     for (auto it = m_Runes.begin(); it != m_Runes.end(); it++)
     {
         Rune rune = it->second;
-        auto s = std::format("{}{}{}", rune.spellId, rune.quality);
+        auto runestring = std::format("{};{};{};{};{};{}", rune.spellId, rune.quality, rune.maxStack,
+            rune.refundItemId, rune.refundDusts, rune.keywords);
+        elements.push_back(runestring);
     }
+    return elements;
 }
 
 void RunesManager::ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes)
