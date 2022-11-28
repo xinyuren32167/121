@@ -11,7 +11,7 @@
  Target Server Version : 50737
  File Encoding         : 65001
 
- Date: 05/11/2022 14:20:23
+ Date: 28/11/2022 16:19:55
 */
 
 SET NAMES utf8mb4;
@@ -35,7 +35,7 @@ CREATE TABLE `spell_proc_event`  (
   `CustomChance` float NOT NULL DEFAULT 0,
   `Cooldown` int(10) UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`entry`) USING BTREE
-) ENGINE = MyISAM CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = FIXED;
 
 -- ----------------------------
 -- Records of spell_proc_event
@@ -201,7 +201,7 @@ INSERT INTO `spell_proc_event` VALUES (-11255, 0, 3, 16384, 0, 0, 0, 0, 0, 0, 0,
 INSERT INTO `spell_proc_event` VALUES (-11213, 0, 3, 0, 0, 0, 0, 2359299, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (-11185, 0, 3, 128, 0, 0, 327680, 0, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (-11180, 16, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (-11119, 4, 3, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (-11119, 4, 3, 0, 0, 0, 65536, 2, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (-11095, 0, 3, 16, 0, 0, 0, 0, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (-9799, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (-5952, 0, 8, 0, 1, 0, 0, 0, 0, 0, 0, 0);
@@ -220,7 +220,7 @@ INSERT INTO `spell_proc_event` VALUES (8178, 0, 0, 0, 0, 0, 0, 65536, 0, 0, 0, 0
 INSERT INTO `spell_proc_event` VALUES (9452, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (9782, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (9784, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (11129, 4, 3, 12582935, 200768, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300933, 127, 3, 65536, 0, 0, 0, 0, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (12169, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (12322, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (12999, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0);
@@ -877,11 +877,6 @@ INSERT INTO `spell_proc_event` VALUES (300058, 0, 3, 536870944, 0, 64, 65536, 0,
 INSERT INTO `spell_proc_event` VALUES (300059, 0, 3, 536870944, 0, 64, 65536, 0, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300060, 0, 3, 536870944, 0, 64, 65536, 0, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300105, 127, 3, 32, 0, 0, 65536, 0, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300106, 127, 3, 32, 0, 0, 65536, 0, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300107, 127, 3, 32, 0, 0, 65536, 0, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300108, 127, 3, 32, 0, 0, 65536, 0, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300109, 127, 3, 32, 0, 0, 65536, 0, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300110, 127, 3, 32, 0, 0, 65536, 0, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300194, 127, 3, 0, 0, 16, 65536, 2, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300195, 127, 3, 0, 0, 16, 65536, 2, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300196, 127, 3, 0, 0, 16, 65536, 2, 0, 0, 0, 0);
@@ -997,10 +992,117 @@ INSERT INTO `spell_proc_event` VALUES (300706, 127, 3, 4194304, 0, 0, 65536, 2, 
 INSERT INTO `spell_proc_event` VALUES (300707, 127, 3, 4194304, 0, 0, 65536, 2, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300708, 127, 3, 4194304, 0, 0, 65536, 2, 0, 0, 0, 0);
 INSERT INTO `spell_proc_event` VALUES (300728, 4, 3, 1, 0, 64, 0, 2, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300729, 4, 3, 0, 0, 64, 65536, 2, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300730, 4, 3, 0, 0, 64, 65536, 2, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300731, 4, 3, 0, 0, 64, 65536, 2, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300732, 4, 3, 0, 0, 64, 65536, 2, 0, 0, 0, 0);
-INSERT INTO `spell_proc_event` VALUES (300733, 4, 3, 0, 0, 64, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300729, 4, 3, 1, 0, 64, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300730, 4, 3, 1, 0, 64, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300731, 4, 3, 1, 0, 64, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300732, 4, 3, 1, 0, 64, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300733, 4, 3, 1, 0, 64, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300748, 127, 3, 0, 64, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300749, 127, 3, 0, 64, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300750, 127, 3, 0, 64, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300751, 127, 3, 0, 64, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300752, 127, 3, 0, 64, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300753, 127, 3, 0, 64, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300760, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300761, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300762, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300763, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300764, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300765, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300772, 127, 3, 8388608, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300773, 127, 3, 8388608, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300774, 127, 3, 8388608, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300775, 127, 3, 8388608, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300776, 127, 3, 8388608, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300777, 127, 3, 8388608, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300784, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300785, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300786, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300787, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300788, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300789, 127, 3, 4, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300932, 127, 3, 65536, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300934, 127, 3, 65536, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300935, 127, 3, 65536, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300936, 127, 3, 65536, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300937, 127, 3, 65536, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300944, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300945, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300946, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300947, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300948, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300949, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300998, 0, 0, 16, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (300999, 0, 0, 16, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (301000, 0, 0, 16, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (301001, 0, 0, 16, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (301002, 0, 0, 16, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (301003, 0, 0, 16, 0, 0, 65536, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (11069, 0, 0, 1, 0, 64, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (12338, 0, 0, 1, 0, 64, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (12339, 0, 0, 1, 0, 64, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (12340, 0, 0, 1, 0, 64, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (12341, 0, 0, 1, 0, 64, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (11070, 0, 0, 32, 0, 0, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (12473, 0, 0, 32, 0, 0, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (16763, 0, 0, 32, 0, 0, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (16765, 0, 0, 32, 0, 0, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (16766, 0, 0, 32, 0, 0, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100000, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100027, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100028, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100029, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100030, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100031, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100032, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100034, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100035, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100036, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100037, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100038, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100039, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100041, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100042, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100043, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100044, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100045, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100046, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100091, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100092, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100093, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100094, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100095, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100096, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100114, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100115, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100116, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100117, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100118, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100119, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100121, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100122, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100123, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100124, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100125, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100126, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100127, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100128, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100129, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100130, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100131, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100132, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100145, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30000);
+INSERT INTO `spell_proc_event` VALUES (100146, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25000);
+INSERT INTO `spell_proc_event` VALUES (100147, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20000);
+INSERT INTO `spell_proc_event` VALUES (100148, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15000);
+INSERT INTO `spell_proc_event` VALUES (100149, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10000);
+INSERT INTO `spell_proc_event` VALUES (100150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (100239, 0, 0, 0, 0, 0, 0, 8955, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (100271, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (100272, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (100273, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (100274, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (100275, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (100276, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
 
 SET FOREIGN_KEY_CHECKS = 1;
