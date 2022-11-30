@@ -447,11 +447,11 @@ class spell_warr_concussion_blow : public SpellScript
 };
 
 // 23881 - Bloodthirst
-class spell_warr_bloodthirst : public SpellScript
+/*class spell_warr_bloodthirst : public SpellScript
 {
     PrepareSpellScript(spell_warr_bloodthirst);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
+    bool Validate(SpellInfo const* /*spellInfo/) override
     {
         return ValidateSpellInfo({ SPELL_WARRIOR_BLOODTHIRST });
     }
@@ -469,7 +469,7 @@ class spell_warr_bloodthirst : public SpellScript
         SetHitDamage(damage);
     }
 
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleDummy(SpellEffIndex /*effIndex/)
     {
         int32 damage = GetEffectValue();
         GetCaster()->CastCustomSpell(GetCaster(), SPELL_WARRIOR_BLOODTHIRST, &damage, nullptr, nullptr, true, nullptr);
@@ -480,14 +480,14 @@ class spell_warr_bloodthirst : public SpellScript
         OnEffectHitTarget += SpellEffectFn(spell_warr_bloodthirst::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
         OnEffectHit += SpellEffectFn(spell_warr_bloodthirst::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
-};
+};*/
 
 // 23880 - Bloodthirst (Heal)
-class spell_warr_bloodthirst_heal : public SpellScript
+/*class spell_warr_bloodthirst_heal : public SpellScript
 {
     PrepareSpellScript(spell_warr_bloodthirst_heal);
 
-    void HandleHeal(SpellEffIndex /*effIndex*/)
+    void HandleHeal(SpellEffIndex /*effIndex/)
     {
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_WARRIOR_BLOODTHIRST_DAMAGE))
             SetEffectValue(GetCaster()->CountPctFromMaxHealth(spellInfo->Effects[EFFECT_1].CalcValue(GetCaster())));
@@ -498,6 +498,7 @@ class spell_warr_bloodthirst_heal : public SpellScript
         OnEffectLaunchTarget += SpellEffectFn(spell_warr_bloodthirst_heal::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
     }
 };
+*/
 
 // 7384, 7887, 11584, 11585 - Overpower
 class spell_warr_overpower : public SpellScript
@@ -891,8 +892,8 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_improved_spell_reflection);
     RegisterSpellAndAuraScriptPair(spell_warr_improved_spell_reflection_trigger, spell_warr_improved_spell_reflection_trigger_aura);
     RegisterSpellScript(spell_warr_victory_rush);
-    RegisterSpellScript(spell_warr_bloodthirst);
-    RegisterSpellScript(spell_warr_bloodthirst_heal);
+    //RegisterSpellScript(spell_warr_bloodthirst);
+    //RegisterSpellScript(spell_warr_bloodthirst_heal);
     RegisterSpellScript(spell_warr_charge);
     RegisterSpellScript(spell_warr_concussion_blow);
     RegisterSpellScript(spell_warr_damage_shield);

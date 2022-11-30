@@ -109,9 +109,78 @@ class spell_icicle_frostbolt : public SpellScript
     }
 };
 
+class spell_mastery_ignite : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_ignite);
+
+    int GetDamagePct()
+    {
+        return GetCaster()->GetAura(300109)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float pct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
+        int32 totalTicks = sSpellMgr->AssertSpellInfo(300110)->GetMaxTicks();
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
+        //int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
+
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0))
+        {
+            int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / totalTicks;
+
+            amount = amount + remainingAmountPerTick;
+           // amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
+        }
+        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), 300110, SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_ignite::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_savant : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_savant);
+
+    int GetManaPct()
+    {
+        return GetCaster()->GetAura(300111)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetDamagePct()
+    {
+        return GetCaster()->GetAura(300111)->GetSpellInfo()->GetEffect(EFFECT_2).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float manaPct = GetManaPct() + GetCaster()->ToPlayer()->GetMastery();
+        float dmgPct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
+        int32 manaAmount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), manaPct));
+        int32 dmgAmount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), dmgPct));
+
+        if (GetCaster()->HasAura(300112))
+            GetCaster()->RemoveAura(300112);
+
+        //GetCaster()->CastCustomSpell(GetCaster(), 300112, manaAmount, manaAmount, dmgAmount, true, nullptr, TRIGGERED_FULL_MASK, GetCasterGUID());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_savant::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
     RegisterSpellScript(spell_icicle_frostbolt);
     RegisterSpellScript(spell_icicle_ice_lance_aura);
+    RegisterSpellScript(spell_mastery_ignite);
+    RegisterSpellScript(spell_mastery_savant);
 }
