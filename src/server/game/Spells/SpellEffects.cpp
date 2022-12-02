@@ -3387,7 +3387,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                         if (m_caster->HasAura(58388))
                             aur->ModStackAmount(1);
 
-                        spell_bonus += (aur->GetStackAmount() - 1) * CalculateSpellDamage(2, unitTarget);
+                        //spell_bonus += (aur->GetStackAmount() - 1) * CalculateSpellDamage(2, unitTarget);
                     }
                 }
                 break;
