@@ -39,6 +39,7 @@ enum WarriorSpells
     SPELL_WARRIOR_BLADESTORM_WHIRLWIND = 50622,
     SPELL_WARRIOR_CHARGE = 34846,
     SPELL_WARRIOR_CHARGE_DAMAGE = 7921,
+    SPELL_WARRIOR_INTERCEPT_DAMAGE = 20248,
     SPELL_WARRIOR_DAMAGE_SHIELD_DAMAGE = 59653,
     SPELL_WARRIOR_DEEP_WOUNDS_RANK_1 = 12162,
     SPELL_WARRIOR_DEEP_WOUNDS_RANK_2 = 12850,
@@ -51,6 +52,7 @@ enum WarriorSpells
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_TALENT = 64976,
     SPELL_WARRIOR_LAST_STAND_TRIGGERED = 12976,
     SPELL_WARRIOR_COMMANDING_SHOUT_TRIGGERED = 47461,
+    SPELL_WARRIOR_REND = 47465,
     SPELL_WARRIOR_RETALIATION_DAMAGE = 22858,
     SPELL_WARRIOR_SLAM = 50783,
     SPELL_WARRIOR_SUNDER_ARMOR = 58567,
@@ -364,6 +366,25 @@ class spell_warr_charge_damage : public SpellScript
     }
 };
 
+// 20252 - Intercept
+class spell_warr_intercept : public SpellScript
+{
+    PrepareSpellScript(spell_warr_intercept);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        GetCaster()->CastCustomSpell(SPELL_WARRIOR_INTERCEPT_DAMAGE, SPELLVALUE_BASE_POINT0, damage, GetHitUnit(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_intercept::HandleDummy, EFFECT_2, SPELL_EFFECT_DUMMY);
+    }
+};
+
 // -1464 - Slam
 class spell_warr_slam : public SpellScript
 {
@@ -390,8 +411,12 @@ class spell_warr_slam : public SpellScript
 
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
+        int32 damage = GetEffectValue();
+
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
         if (GetHitUnit())
-            GetCaster()->CastCustomSpell(SPELL_WARRIOR_SLAM, SPELLVALUE_BASE_POINT0, GetEffectValue(), GetHitUnit(), TRIGGERED_FULL_MASK);
+            GetCaster()->CastCustomSpell(SPELL_WARRIOR_SLAM, SPELLVALUE_BASE_POINT0, damage, GetHitUnit(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -579,11 +604,19 @@ class spell_warr_overpower : public SpellScript
         if (Player* target = GetHitPlayer())
             if (target->HasUnitState(UNIT_STATE_CASTING))
                 target->CastSpell(target, spellId, true, 0, 0, GetCaster()->GetGUID());
+
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void HandleDamage(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
     }
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warr_overpower::HandleEffect, EFFECT_0, SPELL_EFFECT_ANY);
+        OnEffectHitTarget += SpellEffectFn(spell_warr_overpower::HandleDamage, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -615,32 +648,34 @@ class spell_warr_rend : public AuraScript
         {
             canBeRecalculated = false;
 
-            // $0.2 * (($MWB + $mwb) / 2 + $AP / 14 * $MWS) bonus per tick
-            float ap = (caster->GetTotalAttackPowerValue(BASE_ATTACK) * 1.075) / sSpellMgr->AssertSpellInfo(47465)->GetMaxTicks();
-            /*int32 mws = caster->GetAttackTime(BASE_ATTACK);
-            float mwbMin = 0.f;
-            float mwbMax = 0.f;
-            for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
-            {
-                mwbMin += caster->GetWeaponDamageRange(BASE_ATTACK, MINDAMAGE, i);
-                mwbMax += caster->GetWeaponDamageRange(BASE_ATTACK, MAXDAMAGE, i);
-            }
+            int32 dotDamageRatio = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_REND)->GetEffect(EFFECT_0).CalcValue();
+            int32 maxTicks = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_REND)->GetMaxTicks();
 
-            float mwb = ((mwbMin + mwbMax) / 2 + ap * mws / 14000) * 0.2f;*/
+            float ap = (caster->GetTotalAttackPowerValue(BASE_ATTACK) * dotDamageRatio / maxTicks);
+
             amount += int32(caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), ap));
 
             // "If used while your target is above 75% health, Rend does 35% more damage."
-            // as for 3.1.3 only ranks above 9 (wrong tooltip?)
-            if (GetSpellInfo()->GetRank() >= 9)
-            {
-                if (GetUnitOwner()->HasAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, GetSpellInfo(), caster))
-                    AddPct(amount, GetSpellInfo()->Effects[EFFECT_2].CalcValue(caster));
-            }
+
+            if (GetUnitOwner()->HasAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, GetSpellInfo(), caster))
+                AddPct(amount, GetSpellInfo()->Effects[EFFECT_2].CalcValue(caster));
+        }
+    }
+
+    void DealDamage(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        if (Unit* caster = GetCaster())
+        {
+            int32 damage = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_REND)->GetEffect(EFFECT_1).CalcValue();
+
+            ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+            GetCaster()->DealDamage(GetCaster(), GetTarget(), damage);
         }
     }
 
     void Register() override
     {
+        OnEffectProc += AuraEffectProcFn(spell_warr_rend::DealDamage, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_rend::CalculateAmount, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
     }
 };
@@ -659,9 +694,15 @@ class spell_warr_shattering_throw : public SpellScript
             target->RemoveAurasWithMechanic(1 << MECHANIC_IMMUNE_SHIELD, AURA_REMOVE_BY_ENEMY_SPELL);
     }
 
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_warr_shattering_throw::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+        OnEffectHitTarget += SpellEffectFn(spell_warr_shattering_throw::HandleScript, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
+        OnEffectHitTarget += SpellEffectFn(spell_warr_shattering_throw::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -844,6 +885,40 @@ class spell_warr_vigilance_trigger : public SpellScript
     }
 };
 
+// 47498 - Devastate
+class spell_warr_devastate : public SpellScript
+{
+    PrepareSpellScript(spell_warr_devastate);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Aura* aureff = GetExplTargetUnit()->GetAura(58567))
+        {
+            int32 addedDamages = (GetEffectValue() / 5) * aureff->GetStackAmount();
+            ApplyPct(addedDamages, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+            damage += addedDamages;
+        }
+
+        /*if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }*/
+
+        GetCaster()->AddAura(SPELL_WARRIOR_SUNDER_ARMOR, GetExplTargetUnit());
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_devastate::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 // 58387 - Glyph of Sunder Armor
 class spell_warr_glyph_of_sunder_armor : public AuraScript
 {
@@ -869,8 +944,103 @@ class spell_warr_glyph_of_sunder_armor : public AuraScript
     }
 };
 
-// Spell 28845 - Cheat Death
+// 47450 - Heroic Strike
+class spell_warr_heroic_strike : public SpellScript
+{
+    PrepareSpellScript(spell_warr_heroic_strike);
 
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_heroic_strike::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 47450 - Heroic Throw
+class spell_warr_heroic_throw : public SpellScript
+{
+    PrepareSpellScript(spell_warr_heroic_throw);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_heroic_throw::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 47486 - Mortal Strike
+class spell_warr_mortal_strike : public SpellScript
+{
+    PrepareSpellScript(spell_warr_mortal_strike);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_mortal_strike::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 57823 - Revenge
+class spell_warr_revenge : public SpellScript
+{
+    PrepareSpellScript(spell_warr_revenge);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_revenge::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 47502 - Thunder Clap
+class spell_warr_thunder_clap : public SpellScript
+{
+    PrepareSpellScript(spell_warr_thunder_clap);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_thunder_clap::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 1680 - Whirlwind
+class spell_warr_whirlwind : public SpellScript
+{
+    PrepareSpellScript(spell_warr_whirlwind);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_whirlwind::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// Spell 28845 - Cheat Death
 enum CheatDeath
 {
     SPELL_CHEAT_DEATH_TRIGGER = 28846
@@ -945,6 +1115,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_bloodthirst);
     RegisterSpellScript(spell_warr_charge);
     RegisterSpellScript(spell_warr_charge_damage);
+    RegisterSpellScript(spell_warr_intercept);
     RegisterSpellScript(spell_warr_concussion_blow);
     RegisterSpellScript(spell_warr_bladestorm);
     RegisterSpellScript(spell_warr_damage_shield);
@@ -963,5 +1134,12 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_vigilance);
     RegisterSpellScript(spell_warr_vigilance_trigger);
     RegisterSpellScript(spell_warr_t3_prot_8p_bonus);
-
+    RegisterSpellScript(spell_warr_devastate);
+    RegisterSpellScript(spell_warr_heroic_strike);
+    RegisterSpellScript(spell_warr_heroic_throw);
+    RegisterSpellScript(spell_warr_mortal_strike);
+    RegisterSpellScript(spell_warr_revenge);
+    RegisterSpellScript(spell_warr_thunder_clap);
+    RegisterSpellScript(spell_warr_whirlwind);
+    
 }
