@@ -33,18 +33,10 @@ struct Rune {
     std::string keywords;
 };
 
-struct SlotRune {
-    uint64 guid;
-    uint32 runeId;
-    uint32 slotId;
-    bool unlocked;
-};
-
 struct Loadout {
     uint64 guid;
-    uint32 id;
+    uint64 id;
     std::string title;
-    std::string data;
     bool active;
 };
 
@@ -66,10 +58,23 @@ struct Config {
     float chanceDropRuneQualityRed = 0;
 };
 
-struct RuneAccount {
+struct KnownRune {
     uint64 accountId;
     uint64 id;
     Rune rune;
+};
+
+struct SlotRune {
+    uint64 id;
+    uint64 runeId;
+    uint64 runeSpellId;
+    uint32 order;
+};
+
+struct AccountProgression {
+    uint32 dusts;
+    uint32 unlockedLoadoutCount;
+    uint32 unlockedSlotRunes;
 };
 
 struct LearnRune {
@@ -81,9 +86,10 @@ class RunesManager {
 
 private:
     static std::map<uint32, Rune> m_Runes;
-    static std::map<uint32 /* accountId */, std::vector<RuneAccount>> m_accountRunes;
-    static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadouts;
-    static std::map<uint64 /* guid */, std::vector<SlotRune>> m_SlotsRune;
+    static std::map<uint32 /* accountId */, std::vector<KnownRune>> m_KnownRunes;
+    static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadout;
+    static std::map<uint64 /* slotId */, std::vector<SlotRune>> m_SlotRune;
+    static std::map<uint32 /* accountId */, AccountProgression> m_Progression;
     static std::vector<SpellRunes> m_SpellRune;
     static Config config;
 public:
@@ -91,22 +97,16 @@ public:
     static void LoadAllRunes();
     static void LoadAccountsRunes();
     static void LoadAllLoadout();
-    static void LoadAllAccountProgression();
-    static void LoadAllSpells();
+    static void LoadAllSlotRune();
     static void SavePlayer(Player* player);
-    static void CreateSlotRunes(Player* player);
-    static LearnRune LearnRandomRune(Player* player, uint8 quality);
-    static RuneMessage LearnSpecificRune(Player* player, uint32 spellId);
-    static RuneMessage UpgradeRune(Player* player, uint32 spellId);
-    static RuneMessage UnlockSlotRune(Player* player);
-    static RuneMessage RefundRune(Player* player, uint32 spellId);
-    static RuneMessage ConvertRuneToItem(Player* player, uint32 runeId);
-    static RuneMessage ActivateRune(Player* player, uint32 spellId);
-    static RuneMessage DeactivateRune(Player* player, uint32 spellId);
-    static RuneMessage UpdateLoadout(Player* player, uint8 slotId);
-    static RuneMessage ActivateLoadout(Player* player, uint8 slotId);
-    static std::vector<std::string> AllRunesCachingForClient();
+    static void CreateDefaultCharacter(Player* player);
+    static std::vector<std::string> AllRunesCachingForClient(Player* player);
+    static std::vector<std::string> LoadoutCachingForClient(Player* player);
+    static std::vector<std::string> SlotsCachingForClient(Player* player);
     static void ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes);
-    static uint32 GetNextRankSpellId(uint32 spellId);
     static Rune GetRuneById(uint32 runeId);
+    static bool KnowRuneId(Player* player, uint32 runeId);
+    static bool RuneAlreadyActivated(Player* player, uint64 runeId);
+    static uint64 GetActiveLoadoutId(Player* player);
+    static uint32 GetCountActivatedRune(Player* player, uint32 spellId);
 };

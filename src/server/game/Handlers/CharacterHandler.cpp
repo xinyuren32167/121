@@ -113,7 +113,7 @@ bool LoginQueryHolder::Initialize()
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SEASONAL_QUEST_STATUS, stmt);
 
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_REPUTATION);
-    stmt->SetData(0, lowGuid);
+    stmt->SetData(0, GetAccountId());
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_REPUTATION, stmt);
 
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_INVENTORY);
@@ -2442,7 +2442,7 @@ void WorldSession::HandleCharFactionOrRaceChangeCallback(std::shared_ptr<Charact
                 // select old standing set in db
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_REP_BY_FACTION);
                 stmt->SetData(0, oldReputation);
-                stmt->SetData(1, lowGuid);
+                stmt->SetData(1, GetAccountId());
 
                 PreparedQueryResult result = CharacterDatabase.Query(stmt);
                 if (!result)
@@ -2464,14 +2464,14 @@ void WorldSession::HandleCharFactionOrRaceChangeCallback(std::shared_ptr<Charact
 
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_REP_BY_FACTION);
                 stmt->SetData(0, newReputation);
-                stmt->SetData(1, lowGuid);
+                stmt->SetData(1, GetAccountId());
                 trans->Append(stmt);
 
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_REP_FACTION_CHANGE);
                 stmt->SetData(0, uint16(newReputation));
                 stmt->SetData(1, newDBRep);
                 stmt->SetData(2, uint16(oldReputation));
-                stmt->SetData(3, lowGuid);
+                stmt->SetData(3, GetAccountId());
                 trans->Append(stmt);
             }
 
