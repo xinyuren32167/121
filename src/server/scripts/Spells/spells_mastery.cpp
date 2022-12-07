@@ -9,7 +9,7 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-
+// Mage
 class spell_icicle_ice_lance : public SpellScript
 {
     PrepareSpellScript(spell_icicle_ice_lance);
@@ -176,6 +176,52 @@ class spell_mastery_savant : public AuraScript
     }
 };
 
+// Warrior
+class spell_mastery_deep_wounds : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_deep_wounds);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
+
+        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), 200001, SPELL_AURA_PERIODIC_DAMAGE, amount);
+    }
+
+    void HandleBuff(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+
+        GetCaster()->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_deep_wounds::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_deep_wounds::HandleBuff, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_unshackled_fury : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_unshackled_fury);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->HasAura(200004))
+            GetCaster()->RemoveAura(200004);
+
+        float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+
+        GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_unshackled_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
@@ -183,4 +229,6 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_icicle_ice_lance_aura);
     RegisterSpellScript(spell_mastery_ignite);
     RegisterSpellScript(spell_mastery_savant);
+    RegisterSpellScript(spell_mastery_deep_wounds);
+    RegisterSpellScript(spell_mastery_unshackled_fury);
 }
