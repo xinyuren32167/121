@@ -14,6 +14,54 @@
  */
 namespace LuaPlayer
 {
+    int GetAllRunes(lua_State* L, Player* player)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        auto runes = RunesManager::AllRunesCachingForClient(player);
+        for (const auto& rune : runes)
+        {
+            Eluna::Push(L, rune);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
+    int GetLoadouts(lua_State* L, Player* player)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        auto loadouts = RunesManager::LoadoutCachingForClient(player);
+        for (const auto& loadout: loadouts)
+        {
+            Eluna::Push(L, loadout);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
+    int GetSlotsRune(lua_State* L, Player* player)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        auto slots = RunesManager::SlotsCachingForClient(player);
+        for (const auto& slot : slots)
+        {
+            Eluna::Push(L, slot);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
 #if (!defined(TBC) && !defined(CLASSIC))
     /**
      * Returns 'true' if the [Player] can Titan Grip, 'false' otherwise.

@@ -297,7 +297,6 @@ void ReputationMgr::Initialize()
 bool ReputationMgr::SetReputation(FactionEntry const* factionEntry, float standing, bool incremental, bool noSpillOver, Optional<ReputationRank> repMaxCap)
 {
     bool res = false;
-
     if (!noSpillOver)
     {
         // if spillover definition exists in DB, override DBC
@@ -565,6 +564,8 @@ void ReputationMgr::LoadFromDB(PreparedQueryResult result)
 
     //QueryResult* result = CharacterDatabase.Query("SELECT faction, standing, flags FROM character_reputation WHERE guid = '{}'", GetGUID().GetCounter());
 
+    LOG_ERROR("CALLED", "CALLED");
+
     if (result)
     {
         do
@@ -605,6 +606,14 @@ void ReputationMgr::LoadFromDB(PreparedQueryResult result)
                         SetAtWar(faction, false);            // have internal checks for FACTION_FLAG_PEACE_FORCED
                 }
 
+                if (faction->Flags & FACTION_FLAG_HIDDEN) {
+                    faction->Standing = 0;
+                    BaseRep = 0;
+                    new_rank = REP_HOSTILE;
+                    faction->needSend = false;
+                    faction->needSave = false;
+                }
+
                 // set atWar for hostile
                 if (GetRank(factionEntry) <= REP_HOSTILE)
                     SetAtWar(faction, true);
@@ -629,12 +638,12 @@ void ReputationMgr::SaveToDB(CharacterDatabaseTransaction trans)
         if (itr->second.needSave)
         {
             CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_REPUTATION_BY_FACTION);
-            stmt->SetData(0, _player->GetGUID().GetCounter());
+            stmt->SetData(0, _player->GetSession()->GetAccountId());
             stmt->SetData(1, uint16(itr->second.ID));
             trans->Append(stmt);
 
             stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_REPUTATION_BY_FACTION);
-            stmt->SetData(0, _player->GetGUID().GetCounter());
+            stmt->SetData(0, _player->GetSession()->GetAccountId());
             stmt->SetData(1, uint16(itr->second.ID));
             stmt->SetData(2, itr->second.Standing);
             stmt->SetData(3, uint16(itr->second.Flags));

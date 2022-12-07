@@ -35,21 +35,7 @@ namespace LuaGlobalFunctions
         Custom
     */
 
-    int GetAllRunes(lua_State* L)
-    {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
-        uint32 counter = 1;
-        auto runes = RunesManager::AllRunesCachingForClient();
-        for(const auto &rune : runes)
-        {
-            Eluna::Push(L, rune);
-            lua_rawseti(L, tbl, counter);
-            counter++;
-        }
-        lua_settop(L, tbl);
-        return 1;
-    }
+ 
 
     /**
      * Returns Lua engine's name.
@@ -216,8 +202,8 @@ namespace LuaGlobalFunctions
         uint32 i = 0;
 
 #if defined(MANGOS)
-        eObjectAccessor()DoForAllPlayers([&](Player* player){
-            if(player->IsInWorld())
+        eObjectAccessor()DoForAllPlayers([&](Player* player) {
+            if (player->IsInWorld())
             {
                 if ((team == TEAM_NEUTRAL || player->GetTeamId() == team) && (!onlyGM || player->isGameMaster()))
                 {
@@ -2032,28 +2018,28 @@ namespace LuaGlobalFunctions
 
         switch (banMode)
         {
-            case BAN_ACCOUNT:
+        case BAN_ACCOUNT:
 #if defined TRINITY || AZEROTHCORE
-                if (!Utf8ToUpperOnlyLatin(nameOrIP))
-                    return luaL_argerror(L, 2, "invalid account name");
+            if (!Utf8ToUpperOnlyLatin(nameOrIP))
+                return luaL_argerror(L, 2, "invalid account name");
 #else
-                if (!AccountMgr::normalizeString(nameOrIP))
-                    return luaL_argerror(L, 2, "invalid account name");
+            if (!AccountMgr::normalizeString(nameOrIP))
+                return luaL_argerror(L, 2, "invalid account name");
 #endif
-                mode = BanMode::BAN_ACCOUNT;
-                break;
-            case BAN_CHARACTER:
-                if (!normalizePlayerName(nameOrIP))
-                    return luaL_argerror(L, 2, "invalid character name");
-                mode = BanMode::BAN_CHARACTER;
-                break;
-            case BAN_IP:
-                if (!IsIPAddress(nameOrIP.c_str()))
-                    return luaL_argerror(L, 2, "invalid ip");
-                mode = BanMode::BAN_IP;
-                break;
-            default:
-                return luaL_argerror(L, 1, "unknown banmode");
+            mode = BanMode::BAN_ACCOUNT;
+            break;
+        case BAN_CHARACTER:
+            if (!normalizePlayerName(nameOrIP))
+                return luaL_argerror(L, 2, "invalid character name");
+            mode = BanMode::BAN_CHARACTER;
+            break;
+        case BAN_IP:
+            if (!IsIPAddress(nameOrIP.c_str()))
+                return luaL_argerror(L, 2, "invalid ip");
+            mode = BanMode::BAN_IP;
+            break;
+        default:
+            return luaL_argerror(L, 1, "unknown banmode");
         }
 
         BanReturn result;
@@ -2062,14 +2048,14 @@ namespace LuaGlobalFunctions
 #else
         switch (banMode)
         {
-            case BAN_ACCOUNT:
-                result = sBan->BanAccount(nameOrIP, std::to_string(duration) + "s", reason, whoBanned);
+        case BAN_ACCOUNT:
+            result = sBan->BanAccount(nameOrIP, std::to_string(duration) + "s", reason, whoBanned);
             break;
-            case BAN_CHARACTER:
-                result = sBan->BanCharacter(nameOrIP, std::to_string(duration) + "s", reason, whoBanned);
+        case BAN_CHARACTER:
+            result = sBan->BanCharacter(nameOrIP, std::to_string(duration) + "s", reason, whoBanned);
             break;
-            case BAN_IP:
-                result = sBan->BanIP(nameOrIP, std::to_string(duration) + "s", reason, whoBanned);
+        case BAN_IP:
+            result = sBan->BanIP(nameOrIP, std::to_string(duration) + "s", reason, whoBanned);
             break;
         }
 #endif

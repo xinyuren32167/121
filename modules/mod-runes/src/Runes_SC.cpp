@@ -22,7 +22,7 @@ public:
 
     void OnCreate(Player* player)
     {
-        // 
+        RunesManager::CreateDefaultCharacter(player);
     }
 
 };
@@ -37,6 +37,8 @@ public:
         LOG_INFO("Runes", "Initialize Runes...");
         RunesManager::LoadAllRunes();
         RunesManager::LoadAccountsRunes();
+        RunesManager::LoadAllLoadout();
+        RunesManager::LoadAllSlotRune();
     }
 };
 

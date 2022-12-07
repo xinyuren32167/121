@@ -42,7 +42,6 @@ extern "C"
 luaL_Reg GlobalMethods[] =
 {
     // Custom
-    { "GetAllRunes", &LuaGlobalFunctions::GetAllRunes },
 
     // Hooks
     { "RegisterPacketEvent", &LuaGlobalFunctions::RegisterPacketEvent },
@@ -453,6 +452,10 @@ ElunaRegister<Unit> UnitMethods[] =
 ElunaRegister<Player> PlayerMethods[] =
 {
     // Getters
+    { "GetAllRunes", &LuaPlayer::GetAllRunes },
+    { "GetLoadouts", &LuaPlayer::GetLoadouts },
+    { "GetSlots", &LuaPlayer::GetSlotsRune },
+
     { "GetSelection", &LuaPlayer::GetSelection },
     { "GetGMRank", &LuaPlayer::GetGMRank },
     { "GetGuildId", &LuaPlayer::GetGuildId },
