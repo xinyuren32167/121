@@ -27,6 +27,8 @@ void CharacterDatabaseConnection::DoPrepareStatements()
 
     PrepareStatement(CHAR_INS_FIRST_LOADOUT, "INSERT INTO character_rune_loadout (guid, id, title, active) VALUES (?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_MAXID_LOADOUT, "SELECT MAX(id) FROM character_rune_loadout", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_INS_PROGESSION, "INSERT INTO character_rune_progression (accountId, dusts, slotsUnlocked, loadoutUnlocked) VALUES (?, 0, ?, 0)", CONNECTION_ASYNC);
+
 
     PrepareStatement(CHAR_DEL_QUEST_POOL_SAVE, "DELETE FROM pool_quest_save WHERE pool_id = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_QUEST_POOL_SAVE, "INSERT INTO pool_quest_save (pool_id, quest_id) VALUES (?, ?)", CONNECTION_ASYNC);

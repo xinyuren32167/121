@@ -564,8 +564,6 @@ void ReputationMgr::LoadFromDB(PreparedQueryResult result)
 
     //QueryResult* result = CharacterDatabase.Query("SELECT faction, standing, flags FROM character_reputation WHERE guid = '{}'", GetGUID().GetCounter());
 
-    LOG_ERROR("CALLED", "CALLED");
-
     if (result)
     {
         do

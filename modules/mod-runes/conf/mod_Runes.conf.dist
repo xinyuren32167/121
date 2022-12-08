@@ -1,6 +1,11 @@
 [worldserver]
-
-RuneManager.Enabled = true
-RuneManager.EnabledLearningRunes = true
-RuneManager.EnabledLoadout = true
-RuneManager.MaxRunesSlotsAvailable = 10
+RuneManager.enabled = true
+RuneManager.debug = false
+RuneManager.maxSlots = 10
+RuneManager.defaultSlot = 8
+RuneManager.chanceDropRuneQualityWhite = 90.0;
+RuneManager.chanceDropRuneQualityGreen = 10.0;
+RuneManager.chanceDropRuneQualityBlue = 0.2;
+RuneManager.chanceDropRuneQualityEpic = 0;
+RuneManager.chanceDropRuneQualityLegendary = 0;
+RuneManager.chanceDropRuneQualityRed = 0;

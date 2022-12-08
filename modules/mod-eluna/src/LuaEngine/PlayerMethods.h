@@ -62,6 +62,13 @@ namespace LuaPlayer
         return 1;
     }
 
+    int GetProgression(lua_State* L, Player* player)
+    {
+        auto progression = RunesManager::ProgressionCachingForClient(player);
+        Eluna::Push(L, progression);
+        return 1;
+    }
+
 #if (!defined(TBC) && !defined(CLASSIC))
     /**
      * Returns 'true' if the [Player] can Titan Grip, 'false' otherwise.

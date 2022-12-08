@@ -46,16 +46,17 @@ struct SpellRunes {
     uint32 newSpellId;
 };
 
-struct Config {
-    bool isEnabled;
-    bool debugEnabled;
-    uint32 maxSlotRunes;
-    float chanceDropRuneQualityWhite = 90.0f;
-    float chanceDropRuneQualityGreen = 10.0f;
-    float chanceDropRuneQualityBlue = 0.2f;
-    float chanceDropRuneQualityEpic = 0;
-    float chanceDropRuneQualityLegendary = 0;
-    float chanceDropRuneQualityRed = 0;
+struct RuneConfig {
+    bool enabled;
+    bool debug;
+    uint32 maxSlots;
+    uint32 defaultSlot;
+    float chanceDropRuneQualityWhite;
+    float chanceDropRuneQualityGreen;
+    float chanceDropRuneQualityBlue;
+    float chanceDropRuneQualityEpic;
+    float chanceDropRuneQualityLegendary;
+    float chanceDropRuneQualityRed;
 };
 
 struct KnownRune {
@@ -91,22 +92,24 @@ private:
     static std::map<uint64 /* slotId */, std::vector<SlotRune>> m_SlotRune;
     static std::map<uint32 /* accountId */, AccountProgression> m_Progression;
     static std::vector<SpellRunes> m_SpellRune;
-    static Config config;
+    static RuneConfig config;
 public:
-    static void SetupConfig(Config config);
+    static void SetupConfig();
     static void LoadAllRunes();
     static void LoadAccountsRunes();
     static void LoadAllLoadout();
     static void LoadAllSlotRune();
-    static void SavePlayer(Player* player);
+    static void LoadAllProgression();
     static void CreateDefaultCharacter(Player* player);
     static std::vector<std::string> AllRunesCachingForClient(Player* player);
     static std::vector<std::string> LoadoutCachingForClient(Player* player);
     static std::vector<std::string> SlotsCachingForClient(Player* player);
-    static void ProcessSpellFromRune(Player* player, uint32 spellId, bool unlearnRunes);
+    static std::string ProgressionCachingForClient(Player* player);
     static Rune GetRuneById(uint32 runeId);
     static bool KnowRuneId(Player* player, uint32 runeId);
     static bool RuneAlreadyActivated(Player* player, uint64 runeId);
     static uint64 GetActiveLoadoutId(Player* player);
-    static uint32 GetCountActivatedRune(Player* player, uint32 spellId);
+    static uint32 GetCountActivatedRuneById(Player* player, uint32 spellId);
+    static uint32 GetCountActivatedRune(Player* player);
+    static bool CanActivateMoreRune(Player* player);
 };

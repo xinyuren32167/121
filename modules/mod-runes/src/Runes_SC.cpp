@@ -35,10 +35,12 @@ public:
     void OnBeforeConfigLoad(bool reload) override
     {
         LOG_INFO("Runes", "Initialize Runes...");
+        RunesManager::SetupConfig();
         RunesManager::LoadAllRunes();
         RunesManager::LoadAccountsRunes();
         RunesManager::LoadAllLoadout();
         RunesManager::LoadAllSlotRune();
+        RunesManager::LoadAllProgression();
     }
 };
 
