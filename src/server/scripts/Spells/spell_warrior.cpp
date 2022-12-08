@@ -513,9 +513,17 @@ class spell_warr_concussion_blow : public SpellScript
 {
     PrepareSpellScript(spell_warr_concussion_blow);
 
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleDummy(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -604,13 +612,19 @@ class spell_warr_overpower : public SpellScript
         if (Player* target = GetHitPlayer())
             if (target->HasUnitState(UNIT_STATE_CASTING))
                 target->CastSpell(target, spellId, true, 0, 0, GetCaster()->GetGUID());
-
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
     }
 
-    void HandleDamage(SpellEffIndex /*effIndex*/)
+    void HandleDamage(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -646,37 +660,45 @@ class spell_warr_rend : public AuraScript
     {
         if (Unit* caster = GetCaster())
         {
-            canBeRecalculated = false;
-
             int32 dotDamageRatio = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_REND)->GetEffect(EFFECT_0).CalcValue();
-            int32 maxTicks = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_REND)->GetMaxTicks();
-
-            float ap = (caster->GetTotalAttackPowerValue(BASE_ATTACK) * dotDamageRatio / maxTicks);
-
-            amount += int32(caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), ap));
 
             // "If used while your target is above 75% health, Rend does 35% more damage."
-
             if (GetUnitOwner()->HasAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, GetSpellInfo(), caster))
-                AddPct(amount, GetSpellInfo()->Effects[EFFECT_2].CalcValue(caster));
-        }
-    }
+                AddPct(dotDamageRatio, GetSpellInfo()->Effects[EFFECT_2].CalcValue(caster));
 
-    void DealDamage(AuraEffect const* aurEff, ProcEventInfo& procInfo)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            int32 damage = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_REND)->GetEffect(EFFECT_1).CalcValue();
+            float ap = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), dotDamageRatio);
 
-            ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
-            GetCaster()->DealDamage(GetCaster(), GetTarget(), damage);
+            amount = int32(caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), ap));       
         }
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_warr_rend::DealDamage, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_rend::CalculateAmount, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
+// 47465 - Rend
+class spell_warr_rend_direct_damage : public SpellScript
+{
+    PrepareSpellScript(spell_warr_rend_direct_damage);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_rend_direct_damage::HandleDamage, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -696,7 +718,15 @@ class spell_warr_shattering_throw : public SpellScript
 
     void HandleDamage(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -910,6 +940,11 @@ class spell_warr_devastate : public SpellScript
 
         GetCaster()->AddAura(SPELL_WARRIOR_SUNDER_ARMOR, GetExplTargetUnit());
 
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
         SetHitDamage(damage);
     }
 
@@ -949,9 +984,17 @@ class spell_warr_heroic_strike : public SpellScript
 {
     PrepareSpellScript(spell_warr_heroic_strike);
 
-    void HandleHit(SpellEffIndex /*effIndex*/)
+    void HandleHit(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -965,9 +1008,17 @@ class spell_warr_heroic_throw : public SpellScript
 {
     PrepareSpellScript(spell_warr_heroic_throw);
 
-    void HandleHit(SpellEffIndex /*effIndex*/)
+    void HandleHit(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -981,9 +1032,17 @@ class spell_warr_mortal_strike : public SpellScript
 {
     PrepareSpellScript(spell_warr_mortal_strike);
 
-    void HandleHit(SpellEffIndex /*effIndex*/)
+    void HandleHit(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -992,14 +1051,46 @@ class spell_warr_mortal_strike : public SpellScript
     }
 };
 
+// 47520 - Cleave
+class spell_warr_cleave : public SpellScript
+{
+    PrepareSpellScript(spell_warr_cleave);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_cleave::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 // 57823 - Revenge
 class spell_warr_revenge : public SpellScript
 {
     PrepareSpellScript(spell_warr_revenge);
 
-    void HandleHit(SpellEffIndex /*effIndex*/)
+    void HandleHit(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -1013,9 +1104,17 @@ class spell_warr_thunder_clap : public SpellScript
 {
     PrepareSpellScript(spell_warr_thunder_clap);
 
-    void HandleHit(SpellEffIndex /*effIndex*/)
+    void HandleHit(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -1029,9 +1128,17 @@ class spell_warr_whirlwind : public SpellScript
 {
     PrepareSpellScript(spell_warr_whirlwind);
 
-    void HandleHit(SpellEffIndex /*effIndex*/)
+    void HandleHit(SpellEffIndex effIndex)
     {
-        SetHitDamage(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -1127,6 +1234,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_commanding_shout);
     RegisterSpellScript(spell_warr_overpower);
     RegisterSpellScript(spell_warr_rend);
+    RegisterSpellScript(spell_warr_rend_direct_damage);
     RegisterSpellScript(spell_warr_retaliation);
     RegisterSpellScript(spell_warr_shattering_throw);
     RegisterSpellScript(spell_warr_slam);
@@ -1138,6 +1246,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_heroic_strike);
     RegisterSpellScript(spell_warr_heroic_throw);
     RegisterSpellScript(spell_warr_mortal_strike);
+    RegisterSpellScript(spell_warr_cleave);
     RegisterSpellScript(spell_warr_revenge);
     RegisterSpellScript(spell_warr_thunder_clap);
     RegisterSpellScript(spell_warr_whirlwind);
