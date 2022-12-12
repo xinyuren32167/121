@@ -495,9 +495,11 @@ class spell_warr_execute : public SpellScript
             // Glyph of Execution bonus
             if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
                 rageUsed += aurEff->GetAmount() * 10;
-
-            int32 bp = GetEffectValue() + int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier + caster->GetTotalAttackPowerValue(BASE_ATTACK) * 1.953f);
+            
+            //int32 bp = int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier +caster->GetTotalAttackPowerValue(BASE_ATTACK) * GetEffectValue());
+            int32 bp = int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
             caster->CastCustomSpell(target, SPELL_WARRIOR_EXECUTE, &bp, nullptr, nullptr, true, nullptr, nullptr, GetOriginalCaster()->GetGUID());
+            //caster->CastCustomSpell(SPELL_WARRIOR_EXECUTE, SPELLVALUE_BASE_POINT0, bp, GetCaster(), true);
         }
     }
 
@@ -668,7 +670,7 @@ class spell_warr_rend : public AuraScript
 
             float ap = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), dotDamageRatio);
 
-            amount = int32(caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), ap));       
+            amount = int32(caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), ap));
         }
     }
 
@@ -737,74 +739,67 @@ class spell_warr_shattering_throw : public SpellScript
 };
 
 // 12328, 18765, 35429 - Sweeping Strikes
-//class spell_warr_sweeping_strikes : public AuraScript
-//{
-//    PrepareAuraScript(spell_warr_sweeping_strikes);
-//
-//    bool Validate(SpellInfo const* /*spellInfo*/) override
-//    {
-//        return ValidateSpellInfo({ SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1, SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2 });
-//    }
-//
-//    bool Load() override
-//    {
-//        _procTarget = nullptr;
-//        return true;
-//    }
-//
-//    bool CheckProc(ProcEventInfo& eventInfo)
-//    {
-//        Unit* actor = eventInfo.GetActor();
-//        if (!actor)
-//        {
-//            return false;
-//        }
-//
-//        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
-//        {
-//            switch (spellInfo->Id)
-//            {
-//                case SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1:
-//                case SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2:
-//                case SPELL_WARRIOR_WHIRLWIND_OFF:
-//                    return false;
-//                default:
-//                    break;
-//            }
-//        }
-//
-//        _procTarget = eventInfo.GetActor()->SelectNearbyNoTotemTarget(eventInfo.GetProcTarget());
-//        return _procTarget != nullptr;
-//    }
-//
-//    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-//    {
-//        PreventDefaultAction();
-//        if (DamageInfo* damageInfo = eventInfo.GetDamageInfo())
-//        {
-//            SpellInfo const* spellInfo = damageInfo->GetSpellInfo();
-//            if (spellInfo && spellInfo->Id == SPELL_WARRIOR_EXECUTE && !_procTarget->HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
-//            {
-//                // If triggered by Execute (while target is not under 20% hp) deals normalized weapon damage
-//                GetTarget()->CastSpell(_procTarget, SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2, aurEff);
-//            }
-//            else
-//            {
-//                int32 damage = damageInfo->GetUnmitigatedDamage();
-//                GetTarget()->CastCustomSpell(_procTarget, SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1, &damage, 0, 0, true, nullptr, aurEff);
-//            }
-//        }
-//    }
-//
-//    void Register() override
-//    {
-//        DoCheckProc += AuraCheckProcFn(spell_warr_sweeping_strikes::CheckProc);
-//        OnEffectProc += AuraEffectProcFn(spell_warr_sweeping_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-//    }
-//
-//private:
-//    Unit* _procTarget = nullptr;
-//};
+class spell_warr_sweeping_strikes : public AuraScript
+{
+    PrepareAuraScript(spell_warr_sweeping_strikes);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1, SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2 });
+    }
+
+    bool Load() override
+    {
+        _procTarget = nullptr;
+        return true;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* actor = eventInfo.GetActor();
+        if (!actor)
+        {
+            return false;
+        }
+
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+        {
+            switch (spellInfo->Id)
+            {
+            case SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1:
+            case SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2:
+            case SPELL_WARRIOR_WHIRLWIND_OFF:
+                return false;
+            default:
+                break;
+            }
+        }
+
+        _procTarget = eventInfo.GetActor()->SelectNearbyNoTotemTarget(eventInfo.GetProcTarget());
+        return _procTarget != nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        if (DamageInfo* damageInfo = eventInfo.GetDamageInfo())
+        {
+            SpellInfo const* spellInfo = damageInfo->GetSpellInfo();
+            int32 damage = damageInfo->GetUnmitigatedDamage();
+
+            GetTarget()->CastCustomSpell(_procTarget, SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1, &damage, 0, 0, true, nullptr, aurEff);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warr_sweeping_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warr_sweeping_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+
+private:
+    Unit* _procTarget = nullptr;
+};
 
 // 50720 - Vigilance
 class spell_warr_vigilance : public AuraScript
@@ -1212,6 +1207,54 @@ class spell_warr_retaliation : public AuraScript
     }
 };
 
+// 47488 - Shield Slam
+class spell_warr_shield_slam : public SpellScript
+{
+    PrepareSpellScript(spell_warr_shield_slam);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_shield_slam::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 46968 - Shockwave
+class spell_warr_shockwave : public SpellScript
+{
+    PrepareSpellScript(spell_warr_shockwave);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_shockwave::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -1238,7 +1281,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_retaliation);
     RegisterSpellScript(spell_warr_shattering_throw);
     RegisterSpellScript(spell_warr_slam);
-    //RegisterSpellScript(spell_warr_sweeping_strikes);
+    RegisterSpellScript(spell_warr_sweeping_strikes);
     RegisterSpellScript(spell_warr_vigilance);
     RegisterSpellScript(spell_warr_vigilance_trigger);
     RegisterSpellScript(spell_warr_t3_prot_8p_bonus);
@@ -1250,5 +1293,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_revenge);
     RegisterSpellScript(spell_warr_thunder_clap);
     RegisterSpellScript(spell_warr_whirlwind);
+    RegisterSpellScript(spell_warr_shield_slam);
+    RegisterSpellScript(spell_warr_shockwave);
     
 }

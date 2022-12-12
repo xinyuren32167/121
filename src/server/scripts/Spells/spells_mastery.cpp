@@ -88,7 +88,7 @@ class spell_icicle_frostbolt : public SpellScript
 
     int GetProcPct()
     {
-        return GetCaster()->GetAura(300105)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetCaster()->GetAura(300105)->GetEffect(EFFECT_0)->GetAmount();
     }
 
     void HandleProc()
@@ -208,17 +208,58 @@ class spell_mastery_unshackled_fury : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(200004))
-            GetCaster()->RemoveAura(200004);
-
         float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
 
-        GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(200007, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_mastery_unshackled_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_unshackled_fury_enrage : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_unshackled_fury_enrage);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (AuraEffect* aureff = GetCaster()->GetAura(200007)->GetEffect(EFFECT_0))
+        {
+            int32 amount = aureff->GetAmount();
+
+            GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_unshackled_fury_enrage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_critical_block : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_critical_block);
+
+    int GetEffectAmount(SpellEffIndex effect)
+    {
+        return GetCaster()->GetAura(200005)->GetSpellInfo()->GetEffect(effect).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 blockAmount = GetEffectAmount(EFFECT_0) + GetCaster()->ToPlayer()->GetMastery();
+        int32 critBlockChance = GetEffectAmount(EFFECT_1) + GetCaster()->ToPlayer()->GetMastery() + GetCaster()->GetFloatValue(PLAYER_CRIT_PERCENTAGE);
+        int32 powerAmount = GetEffectAmount(EFFECT_2) + GetCaster()->ToPlayer()->GetMastery();
+
+        GetCaster()->CastCustomSpell(GetCaster(), 200006, &blockAmount, &critBlockChance, &powerAmount, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_critical_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -231,4 +272,6 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_savant);
     RegisterSpellScript(spell_mastery_deep_wounds);
     RegisterSpellScript(spell_mastery_unshackled_fury);
+    RegisterSpellScript(spell_mastery_unshackled_fury_enrage);
+    RegisterSpellScript(spell_mastery_critical_block);
 }
