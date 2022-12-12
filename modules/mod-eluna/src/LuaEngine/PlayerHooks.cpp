@@ -10,6 +10,7 @@
 #include "BindingMap.h"
 #include "ElunaIncludes.h"
 #include "ElunaTemplate.h"
+#include "RunesManager.h"
 
 using namespace Hooks;
 
@@ -183,6 +184,62 @@ void Eluna::OnLevelChanged(Player* pPlayer, uint8 oldLevel)
     START_HOOK(PLAYER_EVENT_ON_LEVEL_CHANGE);
     Push(pPlayer);
     Push(oldLevel);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::OnRuneMessage(Player* pPlayer, std::string message)
+{
+    START_HOOK(PLAYER_EVENT_ON_RUNE_MESSAGE);
+    Push(pPlayer);
+    Push(message);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
+void Eluna::OnActivateRune(Player* pPlayer, std::string message, uint32 index)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    Push(message);
+    Push(index);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::OnDisableRune(Player* pPlayer, std::string message, uint32 index, bool success)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_REMOVE_RUNE);
+    Push(pPlayer);
+    Push(message);
+    Push(index);
+    Push(success);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::RefreshSlotsRune(Player* pPlayer)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_REMOVE_RUNE);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
+void Eluna::OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId, bool success)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_UPGRADE_RUNE);
+    Push(pPlayer);
+    Push(message);
+    Push(spellId);
+    Push(success);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::OnRefundRune(Player* pPlayer, std::string message, uint32 spellId, bool success)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_REFUND_RUNE);
+    Push(pPlayer);
+    Push(message);
+    Push(spellId);
+    Push(success);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
