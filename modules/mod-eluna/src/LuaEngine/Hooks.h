@@ -210,6 +210,13 @@ namespace Hooks
         PLAYER_EVENT_ON_FFAPVP_CHANGE           =     46,       // (event, player, hasFfaPvp)
         PLAYER_EVENT_ON_UPDATE_AREA             =     47,       // (event, player, oldArea, newArea)
 
+        PLAYER_EVENT_ON_RUNE_MESSAGE = 48,       // (event, player, oldLevel)
+
+        PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE = 49,       // (event, player, oldLevel)
+        PLAYER_EVENT_CALLBACK_REMOVE_RUNE = 50,       // (event, player, oldLevel)
+        PLAYER_EVENT_CALLBACK_UPGRADE_RUNE = 51,       // (event, player, oldLevel)
+        PLAYER_EVENT_CALLBACK_REFUND_RUNE = 52,       // (event, player, oldLevel)
+
         PLAYER_EVENT_COUNT
     };
 

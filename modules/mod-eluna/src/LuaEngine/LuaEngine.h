@@ -24,6 +24,7 @@
 #include "HttpManager.h"
 #include <mutex>
 #include <memory>
+#include "RunesManager.h"
 
 extern "C"
 {
@@ -447,6 +448,12 @@ public:
     void OnCreatureKill(Player* pKiller, Creature* pKilled);
     void OnPlayerKilledByCreature(Creature* pKiller, Player* pKilled);
     void OnLevelChanged(Player* pPlayer, uint8 oldLevel);
+    void RefreshSlotsRune(Player* pPlayer);
+    void OnRuneMessage(Player* pPlayer, std::string message);
+    void OnActivateRune(Player* pPlayer, std::string message, uint32 index);
+    void OnDisableRune(Player* pPlayer, std::string message, uint32 spellId, bool success);
+    void OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId, bool success);
+    void OnRefundRune(Player* pPlayer, std::string message, uint32 spellId, bool success);
     void OnFreeTalentPointsChanged(Player* pPlayer, uint32 newPoints);
     void OnTalentsReset(Player* pPlayer, bool noCost);
     void OnMoneyChanged(Player* pPlayer, int32& amount);

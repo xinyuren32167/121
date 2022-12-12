@@ -1,11 +1,13 @@
 #include "RunesManager.h"
 #include "boost/bind.hpp"
 #include "Config.h"
+#include "ElunaIncludes.h"
+#include "LuaEngine.h"
 
 std::map<uint32 /* SpellId */, Rune> RunesManager::m_Runes = {};
 std::map<uint32 /* accountId */, std::vector<KnownRune>> RunesManager::m_KnownRunes = {};
 std::map<uint64 /* guid */, std::vector<Loadout>> RunesManager::m_Loadout = {};
-std::map<uint64 /* slotId */, std::vector<SlotRune>> RunesManager::m_SlotRune = {};
+std::map<uint64 /* LoadoutId */, std::vector<SlotRune>> RunesManager::m_SlotRune = {};
 std::map<uint32 /* accountId */, AccountProgression> RunesManager::m_Progression = {};
 RuneConfig RunesManager::config = {};
 
@@ -61,7 +63,7 @@ void RunesManager::LoadAccountsRunes()
         uint32 accountId = fields[0].Get<uint32>();
         uint32 id = fields[1].Get<uint32>();
         uint32 runeId = fields[2].Get<uint32>();
-        Rune rune = GetRuneById(runeId);
+        Rune rune = GetRuneBySpellId(runeId);
         KnownRune knowRune = { accountId, id, rune };
         m_KnownRunes[accountId].push_back(knowRune);
     } while (result->NextRow());
@@ -86,18 +88,18 @@ void RunesManager::LoadAllLoadout()
 
 void RunesManager::LoadAllSlotRune()
 {
-    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_slots");
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_slots ORDER BY `order`");
     if (!result)
         return;
     do
     {
         Field* fields = result->Fetch();
-        uint64 slotId = fields[0].Get<uint64>();
+        uint64 loadoutId = fields[0].Get<uint64>();
         uint64 runeId = fields[1].Get<uint64>();
         uint64 runeSpellId = fields[2].Get<uint64>();
         uint32 order = fields[3].Get<uint32>();
-        SlotRune slot = { slotId, runeId, runeSpellId, order };
-        m_SlotRune[slotId].push_back(slot);
+        SlotRune slot = { loadoutId, runeId, runeSpellId, order };
+        m_SlotRune[loadoutId].push_back(slot);
     } while (result->NextRow());
 }
 
@@ -114,7 +116,7 @@ void RunesManager::LoadAllProgression()
         uint32 loadoutUnlocked  = fields[2].Get<uint32>();
         uint32 slotsUnlocked = fields[3].Get<uint32>();
         AccountProgression progression = { dusts, loadoutUnlocked, slotsUnlocked };
-        m_Progression.insert(std::make_pair(accountId, accountId));
+        m_Progression.insert(std::make_pair(accountId, progression));
     } while (result->NextRow());
 }
 
@@ -142,18 +144,6 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     stmt->SetData(2, slotDefault);
     stmt->SetData(3, active);
     CharacterDatabase.Execute(stmt);
-
-
-    stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_PROGESSION);
-    stmt->SetData(0, player->GetSession()->GetAccountId());
-    stmt->SetData(1, config.defaultSlot);
-    CharacterDatabase.Execute(stmt);
-
-    Loadout loadout = { guid, startIdSlot, slotDefault, active };
-    m_Loadout[guid].push_back(loadout);
-
-    AccountProgression progress = { 0, 0, config.defaultSlot };
-    m_Progression[accountId] = progress;
 }
 
 std::vector<std::string> RunesManager::AllRunesCachingForClient(Player* player)
@@ -161,10 +151,9 @@ std::vector<std::string> RunesManager::AllRunesCachingForClient(Player* player)
     std::vector<uint32> runeIds = {};
     std::vector<std::string > elements = {};
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
-
-    auto pushRune = [&elements](Rune rune, uint32 id, bool kwown, bool activable) {
+    auto pushRune = [&elements](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
         auto runestring = std::format(
-            "{};{};{};{};{};{};{};{};{}",
+            "{};{};{};{};{};{};{};{};{};{}",
             rune.spellId,
             rune.quality,
             rune.maxStack,
@@ -173,7 +162,8 @@ std::vector<std::string> RunesManager::AllRunesCachingForClient(Player* player)
             rune.keywords,
             kwown,
             id,
-            activable
+            activable,
+            activated
         );
         elements.push_back(runestring);
     };
@@ -181,18 +171,20 @@ std::vector<std::string> RunesManager::AllRunesCachingForClient(Player* player)
     if (known != m_KnownRunes.end())
         for (auto const& kwownRune : known->second) {
             runeIds.push_back(kwownRune.rune.spellId);
-            Rune rune = GetRuneById(kwownRune.rune.spellId);
-            const uint32 count = GetCountActivatedRuneById(player, rune.spellId);
+            Rune rune = GetRuneBySpellId(kwownRune.rune.spellId);
+            const uint32 count = GetCoutSameGroupRune(player, rune.spellId);
             bool haveLessThanMaxStack = count < rune.maxStack;
-            bool activable = bool(RuneAlreadyActivated(player, kwownRune.id) || haveLessThanMaxStack);
-            pushRune(rune, kwownRune.id, true, activable);
+            bool activable = bool(!RuneAlreadyActivated(player, kwownRune.id) || haveLessThanMaxStack) ||
+                GetCountActivatedRune(player) < config.maxSlots;
+            bool activated = RuneAlreadyActivated(player, kwownRune.id);
+            pushRune(rune, kwownRune.id, true, activable, activated);
         }
 
     for (auto it = m_Runes.begin(); it != m_Runes.end(); it++)
     {
         Rune rune = it->second;
         if (std::find(runeIds.begin(), runeIds.end(), rune.spellId) == runeIds.end()) {
-            pushRune(rune, 0, false, false);
+            pushRune(rune, 0, false, false, false);
         }
     }
     return elements;
@@ -226,16 +218,17 @@ std::vector<std::string> RunesManager::SlotsCachingForClient(Player* player)
     if (activeId <= 0)
         return elements;
 
-    auto match = m_SlotRune.find(player->GetGUID().GetCounter());
+    auto match = m_SlotRune.find(activeId);
 
     if (match != m_SlotRune.end())
         for (auto const& slot : match->second) {
-            Rune rune = GetRuneById(slot.runeSpellId);
+            Rune rune = GetRuneBySpellId(slot.runeSpellId);
             auto runestring = std::format(
-                "{};{};{};{}",
+                "{};{};{};{};{}",
                 slot.id,
                 slot.runeId,
                 slot.runeSpellId,
+                slot.order,
                 rune.quality
             );
             elements.push_back(runestring);
@@ -247,7 +240,6 @@ std::vector<std::string> RunesManager::SlotsCachingForClient(Player* player)
 std::string RunesManager::ProgressionCachingForClient(Player* player)
 {
     std::string value = "";
-
     auto progression = m_Progression.find(player->GetSession()->GetAccountId());
 
     if (progression != m_Progression.end()) {
@@ -264,7 +256,7 @@ std::string RunesManager::ProgressionCachingForClient(Player* player)
 }
 
 
-Rune RunesManager::GetRuneById(uint32 runeId)
+Rune RunesManager::GetRuneBySpellId(uint32 runeId)
 {
     auto it = m_Runes.find(runeId);
 
@@ -274,7 +266,7 @@ Rune RunesManager::GetRuneById(uint32 runeId)
     return {};
 }
 
-bool RunesManager::KnowRuneId(Player* player, uint32 runeId)
+bool RunesManager::KnowRuneId(Player* player, uint64 runeId)
 {
     if (!player)
         return false;
@@ -283,7 +275,7 @@ bool RunesManager::KnowRuneId(Player* player, uint32 runeId)
 
     if (it != m_KnownRunes.end()) {
         auto match = std::find_if(it->second.begin(), it->second.end(), [runeId](const KnownRune& account) {
-            return account.rune.spellId == runeId;
+            return account.id == runeId;
         });
         if (match != it->second.end())
             return true;
@@ -293,14 +285,36 @@ bool RunesManager::KnowRuneId(Player* player, uint32 runeId)
     return false;
 }
 
+Rune RunesManager::GetRuneById(Player* player, uint64 id)
+{
+    if (!player)
+        return {};
+
+    auto it = m_KnownRunes.find(player->GetSession()->GetAccountId());
+
+    if (it != m_KnownRunes.end()) {
+        auto match = std::find_if(it->second.begin(), it->second.end(), [id](const KnownRune& account) {
+            return account.id == id;
+        });
+        if (match != it->second.end())
+            return match->rune;
+        else
+            return {};
+    }
+    return {};
+}
+
 bool RunesManager::RuneAlreadyActivated(Player* player, uint64 runeId)
 {
     uint64 activeId = GetActiveLoadoutId(player);
 
     if (activeId <= 0)
-        return true;
+        return false;
 
-    auto match = m_SlotRune.find(player->GetGUID().GetCounter());
+    LOG_ERROR("Loading Rune...", "Rune already activated, get active loadout {}", activeId);
+    LOG_ERROR("Loading Rune...", "Rune already activated, runeId {}", runeId);
+
+    auto match = m_SlotRune.find(activeId);
 
     if (match != m_SlotRune.end())
         for (auto const& slot : match->second)
@@ -322,7 +336,7 @@ uint64 RunesManager::GetActiveLoadoutId(Player* player)
     return 0;
 }
 
-uint32 RunesManager::GetCountActivatedRuneById(Player* player, uint32 spellId)
+uint32 RunesManager::GetCoutSameGroupRune(Player* player, uint32 spellId)
 {
     uint64 activeId = GetActiveLoadoutId(player);
     uint32 count = 0;
@@ -333,8 +347,13 @@ uint32 RunesManager::GetCountActivatedRuneById(Player* player, uint32 spellId)
     auto match = m_SlotRune.find(activeId);
 
     if (match != m_SlotRune.end()) {
+        Rune rune = GetRuneBySpellId(spellId);
         count = std::count_if(match->second.begin(), match->second.end(),
-            [&](const SlotRune& s) { return s.runeSpellId == spellId; });
+            [&](const SlotRune& s)
+        {
+            Rune runeToCompare = GetRuneBySpellId(s.runeSpellId);
+            return runeToCompare.groupId == rune.groupId;
+        });
     }
     return count;
 }
@@ -355,7 +374,101 @@ uint32 RunesManager::GetCountActivatedRune(Player* player)
     return count;
 }
 
-bool RunesManager::CanActivateMoreRune(Player* player)
+
+void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 {
-    return false;
+
+    Rune rune = GetRuneById(player, runeId);
+
+    if (!rune) {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    if (RuneAlreadyActivated(player, runeId))
+    {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    if (GetCountActivatedRune(player) >= config.maxSlots)
+    {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    const uint32 count = GetCoutSameGroupRune(player, rune.spellId);
+    bool tooMuchStack = count >= rune.maxStack;
+
+    if (tooMuchStack)
+    {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    uint32 newSlotIndex = 0;
+    player->AddAura(rune.spellId, player);
+    sEluna->OnActivateRune(player, "", index);
+    sEluna->RefreshSlotsRune(player);
 }
+
+void RunesManager::DisableRune(Player* player, uint64 runeId)
+{
+    Rune rune = GetRuneById(player, runeId);
+
+    if (!rune) {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    if (!RuneAlreadyActivated(player, runeId))
+    {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    RemoveRuneFromSlots(player, rune);
+    sEluna->OnDisableRune(player, "", runeId, true);
+}
+
+void RunesManager::RefundRune(Player* player, uint64 runeId)
+{
+    Rune rune = GetRuneById(player, runeId);
+
+    if (!rune) {
+        sEluna->OnRuneMessage(player, "");
+        return;
+    }
+
+    RemoveRuneFromSlots(player, rune);
+    player->AddItem(1000000, rune.refundDusts);
+    sEluna->OnRefundRune(player, "", runeId, true);
+}
+
+
+void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
+{
+    player->RemoveAura(rune.spellId);
+
+    uint64 activeId = GetActiveLoadoutId(player);
+    uint32 count = 0;
+
+    if (activeId <= 0)
+        return;
+
+    auto match = m_SlotRune.find(activeId);
+
+    if (match == m_SlotRune.end())
+        return;
+
+    auto runeToFind = std::find_if(match->second.begin(), match->second.end(), [&](const SlotRune& slot) {
+        return slot.runeSpellId == rune.spellId;
+    });
+
+    if (runeToFind == match->second.end())
+        return;
+
+    match->second.erase(runeToFind);
+    sEluna->RefreshSlotsRune(player);
+}
+
