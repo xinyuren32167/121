@@ -32,7 +32,7 @@ void AddSC_item_spell_scripts();
 void AddSC_mage_perks_scripts();
 void AddSC_generals_perks_scripts();
 void AddSC_spells_mastery_scripts();
-
+void AddSC_warrior_perks_scripts();
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddSpellsScripts()
@@ -54,4 +54,5 @@ void AddSpellsScripts()
     AddSC_item_spell_scripts();
     AddSC_generals_perks_scripts();
     AddSC_spells_mastery_scripts();
+    AddSC_warrior_perks_scripts();
 }
