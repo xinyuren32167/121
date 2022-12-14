@@ -11,7 +11,7 @@
  Target Server Version : 50737
  File Encoding         : 65001
 
- Date: 28/11/2022 16:19:55
+ Date: 12/12/2022 18:14:50
 */
 
 SET NAMES utf8mb4;
@@ -1104,5 +1104,9 @@ INSERT INTO `spell_proc_event` VALUES (100273, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 500
 INSERT INTO `spell_proc_event` VALUES (100274, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
 INSERT INTO `spell_proc_event` VALUES (100275, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
 INSERT INTO `spell_proc_event` VALUES (100276, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000);
+INSERT INTO `spell_proc_event` VALUES (300109, 4, 3, 0, 0, 0, 65536, 2, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (200000, 0, 4, 574619776, 4, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (200203, 0, 4, 0, 268435456, 0, 0, 0, 1, 0, 0, 0);
+INSERT INTO `spell_proc_event` VALUES (12328, 0, 4, 706756708, 1856, 0, 0, 0, 0, 0, 0, 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

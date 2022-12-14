@@ -495,10 +495,19 @@ class spell_warr_execute : public SpellScript
             // Glyph of Execution bonus
             if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
                 rageUsed += aurEff->GetAmount() * 10;
-            
-            //int32 bp = int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier +caster->GetTotalAttackPowerValue(BASE_ATTACK) * GetEffectValue());
+
+            /*int32 damage = int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
+
+            if (Unit* target = GetHitUnit())
+            {
+                damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+                damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+            }
+            SetHitDamage(damage);*/
+
             int32 bp = int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
             caster->CastCustomSpell(target, SPELL_WARRIOR_EXECUTE, &bp, nullptr, nullptr, true, nullptr, nullptr, GetOriginalCaster()->GetGUID());
+
             //caster->CastCustomSpell(SPELL_WARRIOR_EXECUTE, SPELLVALUE_BASE_POINT0, bp, GetCaster(), true);
         }
     }

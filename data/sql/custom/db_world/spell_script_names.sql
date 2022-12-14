@@ -11,7 +11,7 @@
  Target Server Version : 50737
  File Encoding         : 65001
 
- Date: 28/11/2022 16:19:45
+ Date: 12/12/2022 18:15:03
 */
 
 SET NAMES utf8mb4;
@@ -149,6 +149,7 @@ INSERT INTO `spell_script_names` VALUES (1038, 'spell_pal_hand_of_salvation');
 INSERT INTO `spell_script_names` VALUES (1090, 'spell_item_magic_dust');
 INSERT INTO `spell_script_names` VALUES (1178, 'spell_dru_bear_form_passive');
 INSERT INTO `spell_script_names` VALUES (1515, 'spell_hun_tame_beast');
+INSERT INTO `spell_script_names` VALUES (1680, 'spell_warr_whirlwind');
 INSERT INTO `spell_script_names` VALUES (1742, 'spell_hun_cower');
 INSERT INTO `spell_script_names` VALUES (2825, 'spell_sha_bloodlust');
 INSERT INTO `spell_script_names` VALUES (3411, 'spell_warr_intervene');
@@ -172,6 +173,7 @@ INSERT INTO `spell_script_names` VALUES (7215, 'spell_item_with_mount_speed');
 INSERT INTO `spell_script_names` VALUES (7384, 'spell_warr_overpower');
 INSERT INTO `spell_script_names` VALUES (7434, 'spell_item_fate_rune_of_unsurpassed_vigor');
 INSERT INTO `spell_script_names` VALUES (7887, 'spell_warr_overpower');
+INSERT INTO `spell_script_names` VALUES (7921, 'spell_warr_charge_damage');
 INSERT INTO `spell_script_names` VALUES (7932, 'spell_item_anti_venom');
 INSERT INTO `spell_script_names` VALUES (7933, 'spell_item_strong_anti_venom');
 INSERT INTO `spell_script_names` VALUES (8063, 'spell_item_deviate_fish');
@@ -223,6 +225,7 @@ INSERT INTO `spell_script_names` VALUES (13280, 'spell_item_gnomish_death_ray');
 INSERT INTO `spell_script_names` VALUES (13567, 'spell_gen_dummy_trigger');
 INSERT INTO `spell_script_names` VALUES (13877, 'spell_rog_blade_flurry');
 INSERT INTO `spell_script_names` VALUES (14185, 'spell_rog_preparation');
+INSERT INTO `spell_script_names` VALUES (14204, 'spell_mastery_unshackled_fury_enrage');
 INSERT INTO `spell_script_names` VALUES (14537, 'spell_item_six_demon_bag');
 INSERT INTO `spell_script_names` VALUES (15366, 'spell_gen_disabled_above_63');
 INSERT INTO `spell_script_names` VALUES (15600, 'spell_gen_proc_reduced_above_60');
@@ -294,6 +297,7 @@ INSERT INTO `spell_script_names` VALUES (20154, 'spell_pal_seal_of_righteousness
 INSERT INTO `spell_script_names` VALUES (20165, 'spell_pal_seal_of_light');
 INSERT INTO `spell_script_names` VALUES (20166, 'spell_pal_seal_of_light');
 INSERT INTO `spell_script_names` VALUES (20230, 'spell_warr_retaliation');
+INSERT INTO `spell_script_names` VALUES (20252, 'spell_warr_intercept');
 INSERT INTO `spell_script_names` VALUES (20271, 'spell_pal_judgement_of_light');
 INSERT INTO `spell_script_names` VALUES (20375, 'spell_pal_seal_of_command');
 INSERT INTO `spell_script_names` VALUES (20424, 'spell_pal_seal_of_command');
@@ -366,7 +370,6 @@ INSERT INTO `spell_script_names` VALUES (23696, 'spell_gen_bandage');
 INSERT INTO `spell_script_names` VALUES (23780, 'spell_item_aegis_of_preservation');
 INSERT INTO `spell_script_names` VALUES (23786, 'spell_item_powerful_anti_venom');
 INSERT INTO `spell_script_names` VALUES (23878, 'spell_random_aggro');
-INSERT INTO `spell_script_names` VALUES (23880, 'spell_warr_bloodthirst_heal');
 INSERT INTO `spell_script_names` VALUES (23881, 'spell_warr_bloodthirst');
 INSERT INTO `spell_script_names` VALUES (23970, 'spell_batrider_bomb');
 INSERT INTO `spell_script_names` VALUES (23989, 'spell_hun_readiness');
@@ -961,6 +964,8 @@ INSERT INTO `spell_script_names` VALUES (46739, 'spell_item_goblin_weather_machi
 INSERT INTO `spell_script_names` VALUES (46740, 'spell_item_goblin_weather_machine');
 INSERT INTO `spell_script_names` VALUES (46747, 'spell_midsummer_fling_torch');
 INSERT INTO `spell_script_names` VALUES (46771, 'spell_eredar_twins_apply_flame_touched');
+INSERT INTO `spell_script_names` VALUES (46924, 'spell_warr_bladestorm');
+INSERT INTO `spell_script_names` VALUES (46968, 'spell_warr_shockwave');
 INSERT INTO `spell_script_names` VALUES (47110, 'spell_image_of_drakuru_reagent_check');
 INSERT INTO `spell_script_names` VALUES (47130, 'spell_q12014_steady_as_a_rock');
 INSERT INTO `spell_script_names` VALUES (47170, 'spell_item_impale_leviroth');
@@ -971,7 +976,15 @@ INSERT INTO `spell_script_names` VALUES (47369, 'spell_send_mug_control_aura');
 INSERT INTO `spell_script_names` VALUES (47370, 'spell_send_mug_target_picker');
 INSERT INTO `spell_script_names` VALUES (47407, 'spell_direbrew_disarm');
 INSERT INTO `spell_script_names` VALUES (47422, 'spell_warl_everlasting_affliction');
+INSERT INTO `spell_script_names` VALUES (47440, 'spell_warr_commanding_shout');
+INSERT INTO `spell_script_names` VALUES (47450, 'spell_warr_heroic_strike');
+INSERT INTO `spell_script_names` VALUES (47465, 'spell_warr_rend_direct_damage');
+INSERT INTO `spell_script_names` VALUES (47486, 'spell_warr_mortal_strike');
+INSERT INTO `spell_script_names` VALUES (47488, 'spell_warr_shield_slam');
 INSERT INTO `spell_script_names` VALUES (47496, 'spell_dk_ghoul_explode');
+INSERT INTO `spell_script_names` VALUES (47498, 'spell_warr_devastate');
+INSERT INTO `spell_script_names` VALUES (47502, 'spell_warr_thunder_clap');
+INSERT INTO `spell_script_names` VALUES (47520, 'spell_warr_cleave');
 INSERT INTO `spell_script_names` VALUES (47530, 'spell_q12096_q12092_bark');
 INSERT INTO `spell_script_names` VALUES (47575, 'spell_q12096_q12092_dummy');
 INSERT INTO `spell_script_names` VALUES (47610, 'spell_flurry_proc');
@@ -1287,6 +1300,7 @@ INSERT INTO `spell_script_names` VALUES (57761, 'spell_brain_fire');
 INSERT INTO `spell_script_names` VALUES (57761, 'spell_flurry');
 INSERT INTO `spell_script_names` VALUES (57761, 'spell_improved_brain_freeze');
 INSERT INTO `spell_script_names` VALUES (57762, 'spell_twisted_visage_lifebloom');
+INSERT INTO `spell_script_names` VALUES (57823, 'spell_warr_revenge');
 INSERT INTO `spell_script_names` VALUES (57934, 'spell_rog_tricks_of_the_trade');
 INSERT INTO `spell_script_names` VALUES (58040, 'spell_destroy_door_seal');
 INSERT INTO `spell_script_names` VALUES (58387, 'spell_warr_glyph_of_sunder_armor');
@@ -2259,6 +2273,8 @@ INSERT INTO `spell_script_names` VALUES (100273, 'spell_mana_filled_wounds');
 INSERT INTO `spell_script_names` VALUES (100274, 'spell_mana_filled_wounds');
 INSERT INTO `spell_script_names` VALUES (100275, 'spell_mana_filled_wounds');
 INSERT INTO `spell_script_names` VALUES (100276, 'spell_mana_filled_wounds');
+INSERT INTO `spell_script_names` VALUES (200000, 'spell_mastery_deep_wounds');
+INSERT INTO `spell_script_names` VALUES (200003, 'spell_mastery_unshackled_fury');
 INSERT INTO `spell_script_names` VALUES (300012, 'spell_tempest_barrier');
 INSERT INTO `spell_script_names` VALUES (300056, 'spell_unstable_magic');
 INSERT INTO `spell_script_names` VALUES (300057, 'spell_unstable_magic');
@@ -2267,6 +2283,7 @@ INSERT INTO `spell_script_names` VALUES (300059, 'spell_unstable_magic');
 INSERT INTO `spell_script_names` VALUES (300060, 'spell_unstable_magic');
 INSERT INTO `spell_script_names` VALUES (300061, 'spell_unstable_magic');
 INSERT INTO `spell_script_names` VALUES (300108, 'spell_icicle_ice_lance_aura');
+INSERT INTO `spell_script_names` VALUES (300109, 'spell_mastery_ignite');
 INSERT INTO `spell_script_names` VALUES (300117, 'spell_slick_ice');
 INSERT INTO `spell_script_names` VALUES (300118, 'spell_slick_ice');
 INSERT INTO `spell_script_names` VALUES (300119, 'spell_slick_ice');
