@@ -14,12 +14,12 @@
  */
 namespace LuaPlayer
 {
-    int GetAllRunes(lua_State* L, Player* player)
+    int GetRunes(lua_State* L, Player* player)
     {
         lua_newtable(L);
         int tbl = lua_gettop(L);
         uint32 counter = 1;
-        auto runes = RunesManager::AllRunesCachingForClient(player);
+        auto runes = RunesManager::RunesForClients(player);
         for (const auto& rune : runes)
         {
             Eluna::Push(L, rune);
@@ -60,6 +60,35 @@ namespace LuaPlayer
         }
         lua_settop(L, tbl);
         return 1;
+    }
+
+    int ActivateRune(lua_State* L, Player* player)
+    {
+        uint32 index = Eluna::CHECKVAL<uint32>(L, 2);
+        uint64 runeId = Eluna::CHECKVAL<uint64>(L, 3);
+        RunesManager::ActivateRune(player, index, runeId);
+        return 0;
+    }
+
+    int DisableRune(lua_State* L, Player* player)
+    {
+        uint64 runeId = Eluna::CHECKVAL<uint64>(L, 2);
+        RunesManager::DisableRune(player, runeId);
+        return 0;
+    }
+
+    int RefundRune(lua_State* L, Player* player)
+    {
+        uint64 runeId = Eluna::CHECKVAL<uint64>(L, 2);
+        RunesManager::RefundRune(player, runeId);
+        return 0;
+    }
+
+    int UpgradeRune(lua_State* L, Player* player)
+    {
+        uint64 runeId = Eluna::CHECKVAL<uint64>(L, 2);
+        RunesManager::UpgradeRune(player, runeId);
+        return 0;
     }
 
     int GetProgression(lua_State* L, Player* player)
@@ -3916,6 +3945,8 @@ namespace LuaPlayer
         player->PlayerTalkClass->ClearMenus();
         return 0;
     }
+
+
 
     /**
      * Attempts to start the taxi/flying to the given pathID

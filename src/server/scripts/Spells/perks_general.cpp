@@ -23,7 +23,7 @@ class spell_vampirism : public AuraScript
     {
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         GetCaster()->CastCustomSpellPct(100006, SPELLVALUE_BASE_POINT0,
-            damage, GetProcPct(), false, false, false, 0, GetCaster());
+            std::max(1, damage), GetProcPct(), false, false, false, 0, GetCaster());
     }
 
     void Register() override

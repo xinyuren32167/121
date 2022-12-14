@@ -205,41 +205,38 @@ void Eluna::OnActivateRune(Player* pPlayer, std::string message, uint32 index)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
-void Eluna::OnDisableRune(Player* pPlayer, std::string message, uint32 index, bool success)
+void Eluna::OnDisableRune(Player* pPlayer, std::string message, uint32 index)
 {
     START_HOOK(PLAYER_EVENT_CALLBACK_REMOVE_RUNE);
     Push(pPlayer);
     Push(message);
     Push(index);
-    Push(success);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void Eluna::RefreshSlotsRune(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_REMOVE_RUNE);
+    START_HOOK(PLAYER_EVENT_REFRESH_SLOT_RUNE);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 
-void Eluna::OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId, bool success)
+void Eluna::OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId)
 {
     START_HOOK(PLAYER_EVENT_CALLBACK_UPGRADE_RUNE);
     Push(pPlayer);
     Push(message);
     Push(spellId);
-    Push(success);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
-void Eluna::OnRefundRune(Player* pPlayer, std::string message, uint32 spellId, bool success)
+void Eluna::OnRefundRune(Player* pPlayer, std::string message, uint32 spellId)
 {
     START_HOOK(PLAYER_EVENT_CALLBACK_REFUND_RUNE);
     Push(pPlayer);
     Push(message);
     Push(spellId);
-    Push(success);
     CallAllFunctions(PlayerEventBindings, key);
 }
 

@@ -216,6 +216,7 @@ namespace Hooks
         PLAYER_EVENT_CALLBACK_REMOVE_RUNE = 50,       // (event, player, oldLevel)
         PLAYER_EVENT_CALLBACK_UPGRADE_RUNE = 51,       // (event, player, oldLevel)
         PLAYER_EVENT_CALLBACK_REFUND_RUNE = 52,       // (event, player, oldLevel)
+        PLAYER_EVENT_REFRESH_SLOT_RUNE = 53,       // (event, player, oldLevel)
 
         PLAYER_EVENT_COUNT
     };

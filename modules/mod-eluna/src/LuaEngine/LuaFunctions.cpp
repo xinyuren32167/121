@@ -452,10 +452,14 @@ ElunaRegister<Unit> UnitMethods[] =
 ElunaRegister<Player> PlayerMethods[] =
 {
     // Getters
-    { "GetAllRunes", &LuaPlayer::GetAllRunes },
+    { "GetRunes", &LuaPlayer::GetRunes },
     { "GetLoadouts", &LuaPlayer::GetLoadouts },
     { "GetSlots", &LuaPlayer::GetSlotsRune },
     { "GetProgression", &LuaPlayer::GetProgression },
+    { "ActivateRune", &LuaPlayer::ActivateRune },
+    { "DisableRune", &LuaPlayer::DisableRune },
+    { "RefundRune", &LuaPlayer::RefundRune },
+    { "UpgradeRune", &LuaPlayer::UpgradeRune },
 
     { "GetSelection", &LuaPlayer::GetSelection },
     { "GetGMRank", &LuaPlayer::GetGMRank },

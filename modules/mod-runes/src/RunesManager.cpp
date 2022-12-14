@@ -122,10 +122,9 @@ void RunesManager::LoadAllProgression()
 
 void RunesManager::CreateDefaultCharacter(Player* player)
 {
-
     CharacterDatabasePreparedStatement* stmt = nullptr;
     uint64 startIdSlot = 1;
-    bool active = 1;
+    bool active = true;
     std::string slotDefault = "Default";
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAXID_LOADOUT);
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
@@ -133,7 +132,8 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     if (result)
     {
         Field* fields = result->Fetch();
-        startIdSlot = fields[0].Get<uint64>() + 1;
+        startIdSlot = fields[0].Get<uint64>();
+        LOG_ERROR("startIdSlot", "startIdSlot {}", startIdSlot);
     }
 
     uint64 guid = player->GetGUID().GetCounter();
@@ -146,7 +146,7 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     CharacterDatabase.Execute(stmt);
 }
 
-std::vector<std::string> RunesManager::AllRunesCachingForClient(Player* player)
+std::vector<std::string> RunesManager::RunesForClients(Player* player)
 {
     std::vector<uint32> runeIds = {};
     std::vector<std::string > elements = {};
@@ -174,8 +174,8 @@ std::vector<std::string> RunesManager::AllRunesCachingForClient(Player* player)
             Rune rune = GetRuneBySpellId(kwownRune.rune.spellId);
             const uint32 count = GetCoutSameGroupRune(player, rune.spellId);
             bool haveLessThanMaxStack = count < rune.maxStack;
-            bool activable = bool(!RuneAlreadyActivated(player, kwownRune.id) || haveLessThanMaxStack) ||
-                GetCountActivatedRune(player) < config.maxSlots;
+            bool activable = bool(!RuneAlreadyActivated(player, kwownRune.id) && haveLessThanMaxStack &&
+                (GetCountActivatedRune(player) < config.maxSlots));
             bool activated = RuneAlreadyActivated(player, kwownRune.id);
             pushRune(rune, kwownRune.id, true, activable, activated);
         }
@@ -311,9 +311,6 @@ bool RunesManager::RuneAlreadyActivated(Player* player, uint64 runeId)
     if (activeId <= 0)
         return false;
 
-    LOG_ERROR("Loading Rune...", "Rune already activated, get active loadout {}", activeId);
-    LOG_ERROR("Loading Rune...", "Rune already activated, runeId {}", runeId);
-
     auto match = m_SlotRune.find(activeId);
 
     if (match != m_SlotRune.end())
@@ -358,6 +355,25 @@ uint32 RunesManager::GetCoutSameGroupRune(Player* player, uint32 spellId)
     return count;
 }
 
+bool RunesManager::HasEnoughToUpgrade(Player* player, uint32 spellId)
+{
+    if (!player)
+        return false;
+
+    auto it = m_KnownRunes.find(player->GetSession()->GetAccountId());
+
+    if (it != m_KnownRunes.end())
+    {
+        auto count = std::count_if(it->second.begin(), it->second.end(), [&](const KnownRune& account) {
+            return account.rune.spellId == spellId;
+        });
+
+        return count >= 3;
+    }
+
+    return false;
+}
+
 uint32 RunesManager::GetCountActivatedRune(Player* player)
 {
     uint64 activeId = GetActiveLoadoutId(player);
@@ -377,23 +393,22 @@ uint32 RunesManager::GetCountActivatedRune(Player* player)
 
 void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 {
-
     Rune rune = GetRuneById(player, runeId);
 
     if (!rune) {
-        sEluna->OnRuneMessage(player, "");
+        sEluna->OnRuneMessage(player, "You don't have this rune.");
         return;
     }
 
     if (RuneAlreadyActivated(player, runeId))
     {
-        sEluna->OnRuneMessage(player, "");
+        sEluna->OnRuneMessage(player, "This rune is already activated.");
         return;
     }
 
     if (GetCountActivatedRune(player) >= config.maxSlots)
     {
-        sEluna->OnRuneMessage(player, "");
+        sEluna->OnRuneMessage(player, "You have reach the maximum rune.");
         return;
     }
 
@@ -402,33 +417,32 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 
     if (tooMuchStack)
     {
-        sEluna->OnRuneMessage(player, "");
+        sEluna->OnRuneMessage(player, "You can't activate more of this rune.");
         return;
     }
 
-    uint32 newSlotIndex = 0;
     player->AddAura(rune.spellId, player);
-    sEluna->OnActivateRune(player, "", index);
-    sEluna->RefreshSlotsRune(player);
+    AddRuneToSlot(player, rune, runeId);
+    sEluna->OnActivateRune(player, "Rune successfully activated!", index);
 }
 
 void RunesManager::DisableRune(Player* player, uint64 runeId)
 {
     Rune rune = GetRuneById(player, runeId);
 
-    if (!rune) {
-        sEluna->OnRuneMessage(player, "");
+    if (!rune)
+    {
+        sEluna->OnRuneMessage(player, "You don't have this rune.");
         return;
     }
 
     if (!RuneAlreadyActivated(player, runeId))
     {
-        sEluna->OnRuneMessage(player, "");
+        sEluna->OnRuneMessage(player, "This rune is not activated.");
         return;
     }
 
     RemoveRuneFromSlots(player, rune);
-    sEluna->OnDisableRune(player, "", runeId, true);
 }
 
 void RunesManager::RefundRune(Player* player, uint64 runeId)
@@ -436,13 +450,48 @@ void RunesManager::RefundRune(Player* player, uint64 runeId)
     Rune rune = GetRuneById(player, runeId);
 
     if (!rune) {
-        sEluna->OnRuneMessage(player, "");
+        sEluna->OnRuneMessage(player, "You don't have this rune.");
         return;
     }
 
     RemoveRuneFromSlots(player, rune);
     player->AddItem(1000000, rune.refundDusts);
-    sEluna->OnRefundRune(player, "", runeId, true);
+}
+
+void RunesManager::UpgradeRune(Player* player, uint64 runeId)
+{
+    Rune rune = GetRuneById(player, runeId);
+
+    if (!rune) {
+        sEluna->OnRuneMessage(player, "You don't have this rune.");
+        return;
+    }
+
+    if (!HasEnoughToUpgrade(player, rune.spellId)) {
+        sEluna->OnRuneMessage(player, "You don't have enough of this similar rune to upgrade.");
+        return;
+    }
+}
+
+void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
+{
+    uint64 activeId = GetActiveLoadoutId(player);
+
+    if (activeId <= 0)
+        return;
+
+    auto match = m_SlotRune.find(activeId);
+    SlotRune slot = { activeId, runeId, rune.spellId, 1 };
+
+    if (match != m_SlotRune.end()) {
+        const uint32 size = match->second.size();
+        slot.order = size + 1;
+        match->second.push_back(slot);
+    }
+    else
+        m_SlotRune[activeId].push_back(slot);
+
+    sEluna->RefreshSlotsRune(player);
 }
 
 
@@ -451,7 +500,6 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     player->RemoveAura(rune.spellId);
 
     uint64 activeId = GetActiveLoadoutId(player);
-    uint32 count = 0;
 
     if (activeId <= 0)
         return;

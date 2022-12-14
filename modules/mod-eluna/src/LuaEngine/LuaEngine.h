@@ -451,9 +451,9 @@ public:
     void RefreshSlotsRune(Player* pPlayer);
     void OnRuneMessage(Player* pPlayer, std::string message);
     void OnActivateRune(Player* pPlayer, std::string message, uint32 index);
-    void OnDisableRune(Player* pPlayer, std::string message, uint32 spellId, bool success);
-    void OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId, bool success);
-    void OnRefundRune(Player* pPlayer, std::string message, uint32 spellId, bool success);
+    void OnDisableRune(Player* pPlayer, std::string message, uint32 spellId);
+    void OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId);
+    void OnRefundRune(Player* pPlayer, std::string message, uint32 spellId);
     void OnFreeTalentPointsChanged(Player* pPlayer, uint32 newPoints);
     void OnTalentsReset(Player* pPlayer, bool noCost);
     void OnMoneyChanged(Player* pPlayer, int32& amount);

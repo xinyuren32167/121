@@ -22,7 +22,7 @@ struct Rune {
 
     bool operator !()
     {
-        return this;
+        return !spellId;
     }
 };
 
@@ -94,7 +94,7 @@ public:
     static void LoadAllSlotRune();
     static void LoadAllProgression();
     static void CreateDefaultCharacter(Player* player);
-    static std::vector<std::string> AllRunesCachingForClient(Player* player);
+    static std::vector<std::string> RunesForClients(Player* player);
     static std::vector<std::string> LoadoutCachingForClient(Player* player);
     static std::vector<std::string> SlotsCachingForClient(Player* player);
     static std::string ProgressionCachingForClient(Player* player);
@@ -109,5 +109,7 @@ public:
     static void DisableRune(Player* player, uint64 runeId);
     static void RefundRune(Player* player, uint64 runeId);
     static void UpgradeRune(Player* player, uint64 runeId);
+    static void AddRuneToSlot(Player* player, Rune rune, uint64 runeId);
     static void RemoveRuneFromSlots(Player* player, Rune rune);
+    static bool HasEnoughToUpgrade(Player* player, uint32 spellId);
 };

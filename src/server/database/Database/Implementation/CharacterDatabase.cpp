@@ -26,7 +26,7 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     // Custom
 
     PrepareStatement(CHAR_INS_FIRST_LOADOUT, "INSERT INTO character_rune_loadout (guid, id, title, active) VALUES (?, ?, ?, ?)", CONNECTION_ASYNC);
-    PrepareStatement(CHAR_SEL_MAXID_LOADOUT, "SELECT MAX(id) FROM character_rune_loadout", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_SEL_MAXID_LOADOUT, "SELECT MAX(id) + 1 FROM character_rune_loadout", CONNECTION_SYNCH);
     PrepareStatement(CHAR_INS_PROGESSION, "INSERT INTO character_rune_progression (accountId, dusts, slotsUnlocked, loadoutUnlocked) VALUES (?, 0, ?, 0)", CONNECTION_ASYNC);
 
 
