@@ -47,8 +47,10 @@ class spell_cut_the_veins : public AuraScript
         return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
-    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
+        if (GetPerkAura())
+        {
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
             int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
@@ -61,8 +63,9 @@ class spell_cut_the_veins : public AuraScript
 
                 amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
-            LOG_ERROR("error", "{} , {} , {} , {}", GetProcSpell(),eventInfo.GetDamageInfo()->GetDamage(), amount, maxAmount);
+            LOG_ERROR("error", "{} , {} , {} , {}", GetProcSpell(), eventInfo.GetDamageInfo()->GetDamage(), amount, maxAmount);
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+        }
     }
 
     void Register() override
