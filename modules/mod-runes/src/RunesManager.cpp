@@ -133,7 +133,6 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     {
         Field* fields = result->Fetch();
         startIdSlot = fields[0].Get<uint64>();
-        LOG_ERROR("startIdSlot", "startIdSlot {}", startIdSlot);
     }
 
     uint64 guid = player->GetGUID().GetCounter();
@@ -153,7 +152,7 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
     auto pushRune = [&elements](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
         auto runestring = std::format(
-            "{};{};{};{};{};{};{};{};{};{}",
+            "{};{};{};{};{};{};{};{};{};{};{}",
             rune.spellId,
             rune.quality,
             rune.maxStack,
@@ -163,7 +162,8 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
             kwown,
             id,
             activable,
-            activated
+            activated,
+            rune.allowableClass
         );
         elements.push_back(runestring);
     };
@@ -367,7 +367,6 @@ bool RunesManager::HasEnoughToUpgrade(Player* player, uint32 spellId)
         auto count = std::count_if(it->second.begin(), it->second.end(), [&](const KnownRune& account) {
             return account.rune.spellId == spellId;
         });
-
         return count >= 3;
     }
 
@@ -484,8 +483,10 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
     SlotRune slot = { activeId, runeId, rune.spellId, 1 };
 
     if (match != m_SlotRune.end()) {
-        const uint32 size = match->second.size();
-        slot.order = size + 1;
+        auto max = *std::max_element(match->second.begin(),
+            match->second.end(),
+            [](const SlotRune& a, const SlotRune& b) { return a.order < b.order; });
+        slot.order = max.order > 1 ? 1 : max.order + 1;
         match->second.push_back(slot);
     }
     else

@@ -632,7 +632,7 @@ class spell_rog_tricks_of_the_trade : public AuraScript
             GetTarget()->ResetRedirectThreat();
     }
 
-    bool CheckProc(ProcEventInfo& /*eventInfo*/)
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
         _redirectTarget = GetTarget()->GetRedirectThreatTarget();
         return _redirectTarget;

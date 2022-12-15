@@ -37,7 +37,6 @@ void AddSC_warrior_perks_scripts();
 // void Add${NameOfDirectory}Scripts()
 void AddSpellsScripts()
 {
-
     AddSC_mage_perks_scripts();
     AddSC_deathknight_spell_scripts();
     AddSC_druid_spell_scripts();
