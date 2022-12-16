@@ -14,7 +14,7 @@ class spell_cut_the_veins : public AuraScript
 {
     PrepareAuraScript(spell_cut_the_veins);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(200038))
             return GetCaster()->GetAura(200038);
@@ -39,17 +39,17 @@ class spell_cut_the_veins : public AuraScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
     }
 
     int GetDamagePct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
@@ -77,7 +77,7 @@ class spell_the_art_of_war : public AuraScript
 {
     PrepareAuraScript(spell_the_art_of_war);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(200087))
             return GetCaster()->GetAura(200087);
@@ -102,20 +102,20 @@ class spell_the_art_of_war : public AuraScript
 
     int GetRagePct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        Aura* aura = GetPerkAura();
+        Aura* aura = GetRuneAura();
 
         if (!aura)
             return;
 
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
-            int32 rageAccumulated = GetPerkAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+            int32 rageAccumulated = GetRuneAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
 
             if (spellRage <= 0)
                 return;
@@ -123,11 +123,11 @@ class spell_the_art_of_war : public AuraScript
             if (rageAccumulated >= GetRagePct())
             {
                 GetCaster()->CastSpell(GetCaster(), 200093, TRIGGERED_FULL_MASK);
-                GetPerkAura()->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
+                GetRuneAura()->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
             }
             else
             {
-                GetPerkAura()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
+                GetRuneAura()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
             }
         }
     }
@@ -142,7 +142,7 @@ class spell_tide_of_blood : public AuraScript
 {
     PrepareAuraScript(spell_tide_of_blood);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(200100))
             return GetCaster()->GetAura(200100);
@@ -169,7 +169,7 @@ class spell_tide_of_blood : public AuraScript
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
 
-        Aura* aura = GetPerkAura();
+        Aura* aura = GetRuneAura();
         Unit* unit = GetCaster();
         Unit* target = GetTarget();
 
@@ -179,7 +179,11 @@ class spell_tide_of_blood : public AuraScript
         if (!aura)
             return;
 
-       uint32 stacksAmount = unit->GetAura(200107)->GetStackAmount();
+        Aura* auraStack = unit->GetAura(200107);
+
+        if (!auraStack)
+            return;
+       uint32 stacksAmount = auraStack->GetStackAmount();
        uint32 requireStacks = aura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
 
        if (stacksAmount < requireStacks)
@@ -205,7 +209,7 @@ class spell_vein_cutter : public AuraScript
 {
     PrepareAuraScript(spell_vein_cutter);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(200108))
             return GetCaster()->GetAura(200108);
@@ -230,17 +234,17 @@ class spell_vein_cutter : public AuraScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
     }
 
     int GetDamagePct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
