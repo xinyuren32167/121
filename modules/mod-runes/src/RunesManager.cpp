@@ -27,6 +27,9 @@ void RunesManager::SetupConfig()
 
 void RunesManager::LoadAllRunes()
 {
+
+    RunesManager::m_Runes = {};
+
     QueryResult result = WorldDatabase.Query("SELECT * FROM runes");
 
     if (!result)
@@ -52,6 +55,9 @@ void RunesManager::LoadAllRunes()
 
 void RunesManager::LoadAccountsRunes()
 {
+
+    RunesManager::m_KnownRunes = {};
+
     QueryResult result = CharacterDatabase.Query("SELECT * FROM account_know_runes");
 
     if (!result)
@@ -71,7 +77,10 @@ void RunesManager::LoadAccountsRunes()
 
 void RunesManager::LoadAllLoadout()
 {
-    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_loadout");
+
+    RunesManager::m_Loadout = {};
+
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_loadout ORDER BY `active` DESC");
     if (!result)
         return;
     do
@@ -88,7 +97,10 @@ void RunesManager::LoadAllLoadout()
 
 void RunesManager::LoadAllSlotRune()
 {
-    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_slots ORDER BY `order`");
+
+    RunesManager::m_SlotRune = {};
+
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_slots ORDER BY `order` DESC");
     if (!result)
         return;
     do
@@ -105,6 +117,9 @@ void RunesManager::LoadAllSlotRune()
 
 void RunesManager::LoadAllProgression()
 {
+
+    RunesManager::m_Progression = {};
+
     QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_progression");
     if (!result)
         return;
@@ -161,7 +176,7 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
             rune.keywords,
             kwown,
             id,
-            activable,
+            config.debug ? true : activable,
             activated,
             rune.allowableClass
         );

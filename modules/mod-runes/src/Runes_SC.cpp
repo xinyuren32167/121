@@ -7,6 +7,7 @@
 #include "Config.h"
 #include "Chat.h"
 #include "RunesManager.h"
+#include "LuaEngine.h"
 
 // Add player scripts
 class Runes_PlayerScripts: public PlayerScript
@@ -25,6 +26,39 @@ public:
         RunesManager::CreateDefaultCharacter(player);
     }
 
+};
+
+
+using namespace Acore::ChatCommands;
+
+class Runes_CommandsScript : public CommandScript
+{
+public:
+    Runes_CommandsScript() : CommandScript("Runes_CommandsScript") { }
+
+    ChatCommandTable GetCommands() const override
+    {
+        static ChatCommandTable commandTable =
+        {
+            { "reload runes",  HandleReloadCommand, SEC_MODERATOR,     Console::No },
+        };
+        return commandTable;
+    }
+
+    static bool HandleReloadCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    {
+        LOG_INFO("Runes", "Reload Runes...");
+
+        RunesManager::SetupConfig();
+        RunesManager::LoadAllRunes();
+        RunesManager::LoadAccountsRunes();
+        RunesManager::LoadAllLoadout();
+        RunesManager::LoadAllSlotRune();
+        RunesManager::LoadAllProgression();
+        Eluna::ReloadEluna();
+
+        return true;
+    }
 };
 
 class Runes_WorldScript : public WorldScript
@@ -50,4 +84,5 @@ void AddSC_runesScripts()
 {
     new Runes_PlayerScripts();
     new Runes_WorldScript();
+    new Runes_CommandsScript();
 }

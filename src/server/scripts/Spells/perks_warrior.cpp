@@ -54,7 +54,7 @@ class spell_cut_the_veins : public AuraScript
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
             int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
-
+            
             if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
             {
                 int32 remainingTicks = totalTicks - protEff->GetTickNumber();
