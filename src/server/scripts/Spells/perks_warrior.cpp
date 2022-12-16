@@ -188,11 +188,11 @@ class spell_tide_of_blood : public AuraScript
         int32 damage = aura->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
         ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
 
-        damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
-        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        damage = unit->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
+        damage = target->SpellDamageBonusTaken(unit, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
-        GetCaster()->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
-        GetCaster()->RemoveAura(200107);
+        unit->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+        unit->RemoveAura(200107);
      }
 
     void Register() override
