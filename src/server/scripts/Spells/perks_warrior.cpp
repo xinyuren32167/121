@@ -63,7 +63,6 @@ class spell_cut_the_veins : public AuraScript
 
                 amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
-            LOG_ERROR("error", "{} , {} , {} , {}", GetProcSpell(), eventInfo.GetDamageInfo()->GetDamage(), amount, maxAmount);
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
     }
@@ -183,7 +182,7 @@ class spell_tide_of_blood : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        if (GetPerkAura())
+        if (GetPerkAura() && GetBuffAura())
         {
             if (GetCurrentStacks() >= GetProcStacks())
             {
@@ -208,9 +207,73 @@ class spell_tide_of_blood : public AuraScript
     }
 };
 
+class spell_vein_cutter : public AuraScript
+{
+    PrepareAuraScript(spell_vein_cutter);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(200108))
+            return GetCaster()->GetAura(200108);
+
+        if (GetCaster()->HasAura(200109))
+            return GetCaster()->GetAura(200109);
+
+        if (GetCaster()->HasAura(200110))
+            return GetCaster()->GetAura(200110);
+
+        if (GetCaster()->HasAura(200111))
+            return GetCaster()->GetAura(200111);
+
+        if (GetCaster()->HasAura(200112))
+            return GetCaster()->GetAura(200112);
+
+        if (GetCaster()->HasAura(200113))
+            return GetCaster()->GetAura(200113);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
+    }
+
+    int GetDamagePct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (GetPerkAura())
+        {
+            int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
+            int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
+
+            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
+            {
+                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+                int32 remainingAmountPerTick = remainingAmount / totalTicks;
+
+                amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
+            }
+            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_vein_cutter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);
     RegisterSpellScript(spell_the_art_of_war);
     RegisterSpellScript(spell_tide_of_blood);
+    RegisterSpellScript(spell_vein_cutter);
 }
