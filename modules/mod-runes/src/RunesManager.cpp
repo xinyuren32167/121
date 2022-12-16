@@ -14,7 +14,7 @@ RuneConfig RunesManager::config = {};
 void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
-    config.debug = sConfigMgr->GetOption<bool>("RuneManager.debug", false);
+    config.debug = true;
     config.maxSlots  = sConfigMgr->GetOption<uint32>("RuneManager.maxSlots", 10);
     config.defaultSlot = sConfigMgr->GetOption<uint32>("RuneManager.defaultSlot", 8);
     config.chanceDropRuneQualityWhite = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityWhite", 90.0f);
@@ -165,7 +165,8 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
     std::vector<uint32> runeIds = {};
     std::vector<std::string > elements = {};
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
-    auto pushRune = [&elements](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
+    uint32 tempId = 1;
+    auto pushRune = [&](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
         auto runestring = std::format(
             "{};{};{};{};{};{};{};{};{};{};{}",
             rune.spellId,
@@ -174,13 +175,14 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
             rune.refundItemId,
             rune.refundDusts,
             rune.keywords,
-            kwown,
-            id,
+            config.debug ? true : kwown,
+            config.debug ? rune.spellId : id,
             config.debug ? true : activable,
             activated,
             rune.allowableClass
         );
         elements.push_back(runestring);
+        tempId += 1;
     };
 
     if (known != m_KnownRunes.end())
@@ -409,6 +411,9 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 {
     Rune rune = GetRuneById(player, runeId);
 
+    if (config.debug)
+        rune = GetRuneBySpellId(runeId);
+
     if (!rune) {
         sEluna->OnRuneMessage(player, "You don't have this rune.");
         return;
@@ -429,7 +434,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     const uint32 count = GetCoutSameGroupRune(player, rune.spellId);
     bool tooMuchStack = count >= rune.maxStack;
 
-    if (tooMuchStack)
+    if (tooMuchStack && !config.debug)
     {
         sEluna->OnRuneMessage(player, "You can't activate more of this rune.");
         return;
@@ -443,6 +448,9 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 void RunesManager::DisableRune(Player* player, uint64 runeId)
 {
     Rune rune = GetRuneById(player, runeId);
+
+    if (config.debug)
+        rune = GetRuneBySpellId(runeId);
 
     if (!rune)
     {
@@ -501,7 +509,7 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
         auto max = *std::max_element(match->second.begin(),
             match->second.end(),
             [](const SlotRune& a, const SlotRune& b) { return a.order < b.order; });
-        slot.order = max.order > 1 ? 1 : max.order + 1;
+        slot.order = max.order == 2 ? 1 : max.order + 1;
         match->second.push_back(slot);
     }
     else

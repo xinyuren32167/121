@@ -107,6 +107,11 @@ class spell_the_art_of_war : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
+        Aura* aura = GetPerkAura();
+
+        if (!aura)
+            return;
+
         if (GetPerkAura())
         {
             int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
@@ -160,46 +165,35 @@ class spell_tide_of_blood : public AuraScript
         return nullptr;
     }
 
-    int GetProcStacks()
-    {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    int GetBuffAura()
-    {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-    }
-
-    int GetCurrentStacks()
-    {
-        return GetCaster()->GetAura(GetBuffAura())->GetStackAmount();
-    }
-
-    int GetDamagePct()
-    {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
-    }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        if (GetPerkAura() && GetBuffAura())
-        {
-            if (GetCurrentStacks() >= GetProcStacks())
-            {
-                int32 damage = GetDamagePct();
-                ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
 
-                if (Unit* target = GetTarget())
-                {
-                    damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
-                    damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-                }
+        Aura* aura = GetPerkAura();
+        Unit* unit = GetCaster();
+        Unit* target = GetTarget();
 
-                GetCaster()->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
-                GetCaster()->RemoveAura(GetBuffAura());
-            }  
-        }
-    }
+        if (!target)
+            return;
+
+        if (!aura)
+            return;
+
+       uint32 stacksAmount = unit->GetAura(200107)->GetStackAmount();
+       uint32 requireStacks = aura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+
+       if (stacksAmount < requireStacks)
+           return;
+
+        int32 damage = aura->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
+        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+        GetCaster()->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->RemoveAura(200107);
+     }
 
     void Register() override
     {
