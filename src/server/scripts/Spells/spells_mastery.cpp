@@ -42,7 +42,7 @@ class spell_icicle_ice_lance_aura : public AuraScript
 {
     PrepareAuraScript(spell_icicle_ice_lance_aura);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300105))
             return GetCaster()->GetAura(300105);
@@ -52,7 +52,7 @@ class spell_icicle_ice_lance_aura : public AuraScript
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandlePeriodic(AuraEffect const* aurEff)

@@ -659,7 +659,7 @@ class spell_powerful_water_elemental : public AuraScript
 {
     PrepareAuraScript(spell_powerful_water_elemental);
 
-    Aura* GetPerkAura(Unit* player)
+    Aura* GetRuneAura(Unit* player)
     {
         if (player->HasAura(300415))
             return player->GetAura(300415);
@@ -686,12 +686,12 @@ class spell_powerful_water_elemental : public AuraScript
     {
         Unit* player = GetCaster()->GetCharmerOrOwner();
 
-        if (!player || !GetPerkAura(player))
+        if (!player || !GetRuneAura(player))
             return;
 
         float crit = player->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + static_cast<uint8>(SPELL_SCHOOL_FROST));
         float haste = player->GetFloatValue(UNIT_MOD_CAST_SPEED);
-        float spellPowerPct = GetPerkAura(player)->GetEffect(EFFECT_0)->GetAmount();
+        float spellPowerPct = GetRuneAura(player)->GetEffect(EFFECT_0)->GetAmount();
         float spellPowerRaw = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST);
         float spellPowerFinal = CalculatePct(std::max<int32>(0, spellPowerRaw), spellPowerPct);
 
@@ -758,7 +758,7 @@ class spell_arcano_shatter : public AuraScript
 {
     PrepareAuraScript(spell_arcano_shatter);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300486))
             return GetCaster()->GetAura(300486);
@@ -783,12 +783,12 @@ class spell_arcano_shatter : public AuraScript
 
     int GetTriggerSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
             GetCaster()->CastSpell(GetCaster(), GetTriggerSpell(), TRIGGERED_FULL_MASK);
     }
 
@@ -802,7 +802,7 @@ class spell_equipose : public AuraScript
 {
     PrepareAuraScript(spell_equipose);
 
-    Aura* GetPerkAura(Unit* player)
+    Aura* GetRuneAura(Unit* player)
     {
         if (player->HasAura(300504))
             return player->GetAura(300504);
@@ -827,19 +827,19 @@ class spell_equipose : public AuraScript
 
     int GetDamageProc()
     {
-        return GetPerkAura(GetCaster())->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        return GetRuneAura(GetCaster())->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
     }
 
     int GetManaReductionProc()
     {
-        return GetPerkAura(GetCaster())->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+        return GetRuneAura(GetCaster())->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
     }
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* player = GetCaster();
 
-        if (!player || !GetPerkAura(player))
+        if (!player || !GetRuneAura(player))
             return;
 
         float playerManaPct = player->GetPowerPct(POWER_MANA);
@@ -918,7 +918,7 @@ class spell_touch_of_the_magi_explosion : public AuraScript
 {
     PrepareAuraScript(spell_touch_of_the_magi_explosion);
 
-    Aura* GetPerkAura(Unit* player)
+    Aura* GetRuneAura(Unit* player)
     {
         if (player->HasAura(300522))
             return player->GetAura(300522);
@@ -943,7 +943,7 @@ class spell_touch_of_the_magi_explosion : public AuraScript
 
     int DamagePct(Unit* player)
     {
-        return GetPerkAura(player)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura(player)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -969,7 +969,7 @@ class spell_nether_precision : public AuraScript
 {
     PrepareAuraScript(spell_nether_precision);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300538))
             return GetCaster()->GetAura(300538);
@@ -994,12 +994,12 @@ class spell_nether_precision : public AuraScript
 
     int GetTriggeredSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
             GetCaster()->AddAura(GetTriggeredSpell(), GetCaster());
     }
 
@@ -1013,7 +1013,7 @@ class spell_resonance : public SpellScript
 {
     PrepareSpellScript(spell_resonance);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300562))
             return GetCaster()->GetAura(300562);
@@ -1038,8 +1038,8 @@ class spell_resonance : public SpellScript
 
     void HandleProc()
     {
-        if (GetPerkAura())
-            GetCaster()->RemoveAura(GetPerkAura());
+        if (GetRuneAura())
+            GetCaster()->RemoveAura(GetRuneAura());
     }
 
     void Register() override
@@ -1052,7 +1052,7 @@ class spell_light_missile : public SpellScript
 {
     PrepareSpellScript(spell_light_missile);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300574))
             return GetCaster()->GetAura(300574);
@@ -1077,12 +1077,12 @@ class spell_light_missile : public SpellScript
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
     }
 
     void HandleProc()
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(0, 100);
 
@@ -1101,7 +1101,7 @@ class spell_powerful_missile : public SpellScript
 {
     PrepareSpellScript(spell_powerful_missile);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300580))
             return GetCaster()->GetAura(300580);
@@ -1126,12 +1126,12 @@ class spell_powerful_missile : public SpellScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleProc()
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             if (GetCaster()->HasAura(44401))
             {
@@ -1172,7 +1172,7 @@ class spell_arcanic_unstability : public AuraScript
 {
     PrepareAuraScript(spell_arcanic_unstability);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300634))
             return GetCaster()->GetAura(300634);
@@ -1197,7 +1197,7 @@ class spell_arcanic_unstability : public AuraScript
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
@@ -1217,7 +1217,7 @@ class spell_arcane_bombardment : public SpellScript
 {
     PrepareSpellScript(spell_arcane_bombardment);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300641))
             return GetCaster()->GetAura(300641);
@@ -1242,12 +1242,12 @@ class spell_arcane_bombardment : public SpellScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleProc()
     {
-        if (GetExplTargetUnit()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT) && GetPerkAura())
+        if (GetExplTargetUnit()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT) && GetRuneAura())
             GetCaster()->AddAura(GetProcSpell(), GetCaster());
     }
 
@@ -1261,7 +1261,7 @@ class spell_pyroshatter : public AuraScript
 {
     PrepareAuraScript(spell_pyroshatter);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300666))
             return GetCaster()->GetAura(300666);
@@ -1286,12 +1286,12 @@ class spell_pyroshatter : public AuraScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(0, 100);
 
@@ -1310,7 +1310,7 @@ class spell_devastating_blasts : public AuraScript
 {
     PrepareAuraScript(spell_devastating_blasts);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300678))
             return GetCaster()->GetAura(300678);
@@ -1335,12 +1335,12 @@ class spell_devastating_blasts : public AuraScript
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(0, 100);
 
@@ -1359,7 +1359,7 @@ class spell_sun_king_amaterasu : public AuraScript
 {
     PrepareAuraScript(spell_sun_king_amaterasu);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300684))
             return GetCaster()->GetAura(300684);
@@ -1384,12 +1384,12 @@ class spell_sun_king_amaterasu : public AuraScript
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(0, 100);
 
@@ -1408,7 +1408,7 @@ class spell_sun_king_amaterasu_proc : public SpellScript
 {
     PrepareSpellScript(spell_sun_king_amaterasu_proc);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300684))
             return GetCaster()->GetAura(300684);
@@ -1433,12 +1433,12 @@ class spell_sun_king_amaterasu_proc : public SpellScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleProc()
     {
-        if (GetCaster()->HasAura(300696) && !GetCaster()->HasAura(48108) && GetPerkAura())
+        if (GetCaster()->HasAura(300696) && !GetCaster()->HasAura(48108) && GetRuneAura())
         {
             GetCaster()->AddAura(GetProcSpell(), GetCaster());
             GetCaster()->RemoveAura(300696);
@@ -1497,7 +1497,7 @@ class spell_hot_knowledge : public AuraScript
 {
     PrepareAuraScript(spell_hot_knowledge);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300709))
             return GetCaster()->GetAura(300709);
@@ -1522,17 +1522,17 @@ class spell_hot_knowledge : public AuraScript
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(0, 100);
 
@@ -1551,7 +1551,7 @@ class spell_fiery_mind : public AuraScript
 {
     PrepareAuraScript(spell_fiery_mind);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300716))
             return GetCaster()->GetAura(300716);
@@ -1576,12 +1576,12 @@ class spell_fiery_mind : public AuraScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             GetCaster()->AddAura(GetProcSpell(), GetCaster());
         }
@@ -1597,7 +1597,7 @@ class spell_burning_talons : public AuraScript
 {
     PrepareAuraScript(spell_burning_talons);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300728))
             return GetCaster()->GetAura(300728);
@@ -1622,17 +1622,17 @@ class spell_burning_talons : public AuraScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     int GetDamagePct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
@@ -1661,7 +1661,7 @@ class spell_empowered_fire : public SpellScript
 {
     PrepareSpellScript(spell_empowered_fire);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300735))
             return GetCaster()->GetAura(300735);
@@ -1706,7 +1706,7 @@ class spell_empowered_fire : public SpellScript
 
     void HandleProc()
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(1, 100);
 
@@ -1726,7 +1726,7 @@ class spell_burning_touch : public SpellScript
 {
     PrepareSpellScript(spell_burning_touch);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300741))
             return GetCaster()->GetAura(300741);
@@ -1771,12 +1771,12 @@ class spell_burning_touch : public SpellScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleProc()
     {
-        if (GetExplTargetUnit()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT) && GetPerkAura())
+        if (GetExplTargetUnit()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT) && GetRuneAura())
             GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, GetProcValue(), GetCaster(), true);
     }
 
@@ -1790,7 +1790,7 @@ class spell_controlled_destruction : public SpellScript
 {
     PrepareSpellScript(spell_controlled_destruction);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300974))
             return GetCaster()->GetAura(300974);
@@ -1815,12 +1815,12 @@ class spell_controlled_destruction : public SpellScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleProc()
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             if (GetExplTargetUnit()->GetHealthPct() >= 70 || GetExplTargetUnit()->GetHealthPct() <= 30)
                 GetCaster()->AddAura(GetProcSpell(), GetCaster());
@@ -1837,7 +1837,7 @@ class spell_incendiary_eruptions : public AuraScript
 {
     PrepareAuraScript(spell_incendiary_eruptions);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300986))
             return GetCaster()->GetAura(300986);
@@ -1862,17 +1862,17 @@ class spell_incendiary_eruptions : public AuraScript
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     int GetProcPct()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const* aurEff)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             if (!GetTarget()->HasAura(GetProcSpell()))
             {
@@ -1894,7 +1894,7 @@ class spell_fervent_flickering : public AuraScript
 {
     PrepareAuraScript(spell_fervent_flickering);
 
-    Aura* GetPerkAura()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300992))
             return GetCaster()->GetAura(300992);
@@ -1919,22 +1919,22 @@ class spell_fervent_flickering : public AuraScript
 
     int GetProcAmount()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
     }
 
     int GetProcChance()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     int GetProcSpell()
     {
-        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
 
     void HandleProc(AuraEffect const* aurEff)
     {
-        if (GetPerkAura())
+        if (GetRuneAura())
         {
             uint32 random = urand(1, 100);
 
