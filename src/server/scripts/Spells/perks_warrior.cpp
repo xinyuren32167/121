@@ -169,30 +169,31 @@ class spell_tide_of_blood : public AuraScript
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
 
-        Aura* aura = GetPerkAura();
-        Unit* unit = GetCaster();
+        Aura* runeAura = GetPerkAura();
+        Unit* caster = GetCaster();
         Unit* target = GetTarget();
 
         if (!target)
             return;
 
-        if (!aura)
+        if (!runeAura)
             return;
 
-       uint32 stacksAmount = unit->GetAura(200107)->GetStackAmount();
-       uint32 requireStacks = aura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+       uint32 stacksAmount = caster->GetAura(200107)->GetStackAmount();
+       uint32 requireStacks = runeAura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
 
        if (stacksAmount < requireStacks)
            return;
 
-        int32 damage = aura->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
-        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+        int32 damage = runeAura->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
+        ApplyPct(damage, caster->GetTotalAttackPowerValue(BASE_ATTACK));
 
-        damage = unit->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
-        damage = target->SpellDamageBonusTaken(unit, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
-        unit->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
-        unit->RemoveAura(200107);
+        damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
+        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+        caster->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
+        caster->RemoveAura(200107);
      }
 
     void Register() override
