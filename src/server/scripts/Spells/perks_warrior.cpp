@@ -74,7 +74,143 @@ class spell_cut_the_veins : public AuraScript
     }
 };
 
+class spell_the_art_of_war : public AuraScript
+{
+    PrepareAuraScript(spell_the_art_of_war);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(200087))
+            return GetCaster()->GetAura(200087);
+
+        if (GetCaster()->HasAura(200088))
+            return GetCaster()->GetAura(200088);
+
+        if (GetCaster()->HasAura(200089))
+            return GetCaster()->GetAura(200089);
+
+        if (GetCaster()->HasAura(200090))
+            return GetCaster()->GetAura(200090);
+
+        if (GetCaster()->HasAura(200091))
+            return GetCaster()->GetAura(200091);
+
+        if (GetCaster()->HasAura(200092))
+            return GetCaster()->GetAura(200092);
+
+        return nullptr;
+    }
+
+    int GetRagePct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (GetPerkAura())
+        {
+            int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+            int32 rageAccumulated = GetPerkAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+
+            if (spellRage <= 0)
+                return;
+
+            if (rageAccumulated >= GetRagePct())
+            {
+                GetCaster()->CastSpell(GetCaster(), 200093, TRIGGERED_FULL_MASK);
+                GetPerkAura()->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
+            }
+            else
+            {
+                GetPerkAura()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_the_art_of_war::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_tide_of_blood : public AuraScript
+{
+    PrepareAuraScript(spell_tide_of_blood);
+
+    Aura* GetPerkAura()
+    {
+        if (GetCaster()->HasAura(200100))
+            return GetCaster()->GetAura(200100);
+
+        if (GetCaster()->HasAura(200101))
+            return GetCaster()->GetAura(200101);
+
+        if (GetCaster()->HasAura(200102))
+            return GetCaster()->GetAura(200102);
+
+        if (GetCaster()->HasAura(200103))
+            return GetCaster()->GetAura(200103);
+
+        if (GetCaster()->HasAura(200104))
+            return GetCaster()->GetAura(200104);
+
+        if (GetCaster()->HasAura(200105))
+            return GetCaster()->GetAura(200105);
+
+        return nullptr;
+    }
+
+    int GetProcStacks()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+    }
+
+    int GetBuffAura()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    int GetCurrentStacks()
+    {
+        return GetCaster()->GetAura(GetBuffAura())->GetStackAmount();
+    }
+
+    int GetDamagePct()
+    {
+        return GetPerkAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (GetPerkAura())
+        {
+            if (GetCurrentStacks() >= GetProcStacks())
+            {
+                int32 damage = GetDamagePct();
+                ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+                if (Unit* target = GetTarget())
+                {
+                    damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
+                    damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+                }
+
+                GetCaster()->CastCustomSpell(200106, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+                GetCaster()->RemoveAura(GetBuffAura());
+            }  
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_tide_of_blood::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);
+    RegisterSpellScript(spell_the_art_of_war);
+    RegisterSpellScript(spell_tide_of_blood);
 }

@@ -11,7 +11,7 @@
  Target Server Version : 50737
  File Encoding         : 65001
 
- Date: 12/12/2022 18:15:03
+ Date: 16/12/2022 15:59:57
 */
 
 SET NAMES utf8mb4;
@@ -2275,6 +2275,25 @@ INSERT INTO `spell_script_names` VALUES (100275, 'spell_mana_filled_wounds');
 INSERT INTO `spell_script_names` VALUES (100276, 'spell_mana_filled_wounds');
 INSERT INTO `spell_script_names` VALUES (200000, 'spell_mastery_deep_wounds');
 INSERT INTO `spell_script_names` VALUES (200003, 'spell_mastery_unshackled_fury');
+INSERT INTO `spell_script_names` VALUES (200005, 'spell_mastery_critical_block');
+INSERT INTO `spell_script_names` VALUES (200038, 'spell_cut_the_veins');
+INSERT INTO `spell_script_names` VALUES (200039, 'spell_cut_the_veins');
+INSERT INTO `spell_script_names` VALUES (200040, 'spell_cut_the_veins');
+INSERT INTO `spell_script_names` VALUES (200041, 'spell_cut_the_veins');
+INSERT INTO `spell_script_names` VALUES (200042, 'spell_cut_the_veins');
+INSERT INTO `spell_script_names` VALUES (200043, 'spell_cut_the_veins');
+INSERT INTO `spell_script_names` VALUES (200087, 'spell_the_art_of_war');
+INSERT INTO `spell_script_names` VALUES (200088, 'spell_the_art_of_war');
+INSERT INTO `spell_script_names` VALUES (200089, 'spell_the_art_of_war');
+INSERT INTO `spell_script_names` VALUES (200090, 'spell_the_art_of_war');
+INSERT INTO `spell_script_names` VALUES (200091, 'spell_the_art_of_war');
+INSERT INTO `spell_script_names` VALUES (200092, 'spell_the_art_of_war');
+INSERT INTO `spell_script_names` VALUES (200100, 'spell_tide_of_blood');
+INSERT INTO `spell_script_names` VALUES (200101, 'spell_tide_of_blood');
+INSERT INTO `spell_script_names` VALUES (200102, 'spell_tide_of_blood');
+INSERT INTO `spell_script_names` VALUES (200103, 'spell_tide_of_blood');
+INSERT INTO `spell_script_names` VALUES (200104, 'spell_tide_of_blood');
+INSERT INTO `spell_script_names` VALUES (200105, 'spell_tide_of_blood');
 INSERT INTO `spell_script_names` VALUES (300012, 'spell_tempest_barrier');
 INSERT INTO `spell_script_names` VALUES (300056, 'spell_unstable_magic');
 INSERT INTO `spell_script_names` VALUES (300057, 'spell_unstable_magic');
