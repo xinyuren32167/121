@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "ElunaIncludes.h"
 #include "LuaEngine.h"
+#include "boost/iterator/counting_iterator.hpp"
 
 std::map<uint32 /* SpellId */, Rune> RunesManager::m_Runes = {};
 std::map<uint32 /* accountId */, std::vector<KnownRune>> RunesManager::m_KnownRunes = {};
@@ -165,7 +166,6 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
     std::vector<uint32> runeIds = {};
     std::vector<std::string > elements = {};
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
-    uint32 tempId = 1;
     auto pushRune = [&](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
         auto runestring = std::format(
             "{};{};{};{};{};{};{};{};{};{};{}",
@@ -182,7 +182,6 @@ std::vector<std::string> RunesManager::RunesForClients(Player* player)
             rune.allowableClass
         );
         elements.push_back(runestring);
-        tempId += 1;
     };
 
     if (known != m_KnownRunes.end())
@@ -425,7 +424,9 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
         return;
     }
 
-    if (GetCountActivatedRune(player) >= config.maxSlots)
+    auto progression = m_Progression.find(player->GetSession()->GetAccountId());
+
+    if (GetCountActivatedRune(player) >= progression->second.unlockedSlotRunes)
     {
         sEluna->OnRuneMessage(player, "You have reach the maximum rune.");
         return;
@@ -506,10 +507,7 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
     SlotRune slot = { activeId, runeId, rune.spellId, 1 };
 
     if (match != m_SlotRune.end()) {
-        auto max = *std::max_element(match->second.begin(),
-            match->second.end(),
-            [](const SlotRune& a, const SlotRune& b) { return a.order < b.order; });
-        slot.order = max.order == 2 ? 1 : max.order + 1;
+        slot.order = GetMissingSlotNumber(match->second, player);
         match->second.push_back(slot);
     }
     else
@@ -544,3 +542,13 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     sEluna->RefreshSlotsRune(player);
 }
 
+uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p)
+{
+    auto progression = m_Progression.find(p->GetSession()->GetAccountId());
+
+    for (int i = 0; i < progression->second.unlockedSlotRunes; i++) {
+        if (slots[i].order != (i + 1))
+            return (i + 1);
+    }
+    return -1;
+}

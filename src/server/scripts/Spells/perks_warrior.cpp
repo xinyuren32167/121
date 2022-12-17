@@ -184,7 +184,6 @@ class spell_tide_of_blood : public AuraScript
         if (!auraStack)
             return;
 
-
         uint32 stacksAmount = auraStack->GetStackAmount();
         uint32 requireStacks = aura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
 

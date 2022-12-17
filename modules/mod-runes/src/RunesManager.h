@@ -63,6 +63,10 @@ struct SlotRune {
     uint64 runeId;
     uint64 runeSpellId;
     uint32 order;
+    bool operator !()
+    {
+        return !order;
+    }
 };
 
 struct AccountProgression {
@@ -86,6 +90,7 @@ private:
     static std::map<uint32 /* accountId */, AccountProgression> m_Progression;
     static std::vector<SpellRunes> m_SpellRune;
     static RuneConfig config;
+    static uint32 GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p);
 public:
     static void SetupConfig();
     static void LoadAllRunes();
