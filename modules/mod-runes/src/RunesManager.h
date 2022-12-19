@@ -2,13 +2,6 @@
 #include "Player/Player.h"
 #include "DatabaseEnv.h"
 
-enum RuneMessage {
-    RUNE_ACTIVATE_OK = 1,
-    RUNE_ALREADY_ACTIVATED = 2,
-    RUNE_TOO_MUCH_RUNE_ACTIVATED = 3,
-    RUNE_NOT_KNOW = 4,
-};
-
 struct Rune {
     uint32 spellId;
     uint32 groupId;
@@ -75,10 +68,6 @@ struct AccountProgression {
     uint32 unlockedSlotRunes;
 };
 
-struct LearnRune {
-    uint32 runeId;
-    RuneMessage message;
-};
 
 class RunesManager {
 
@@ -111,6 +100,8 @@ public:
     static uint32 GetCoutSameGroupRune(Player* player, uint32 spellId);
     static uint32 GetCountActivatedRune(Player* player);
     static void ActivateRune(Player* player, uint32 index, uint64 runeId);
+    static void CastActivateLoadout(Player* player, uint64 loadoutId);
+    static void OnCastActivateLoadout(Player* player, uint64 loadoutId);
     static void DisableRune(Player* player, uint64 runeId);
     static void RefundRune(Player* player, uint64 runeId);
     static void UpgradeRune(Player* player, uint64 runeId);

@@ -8,7 +8,7 @@
 #include "Chat.h"
 #include "RunesManager.h"
 #include "LuaEngine.h"
-
+#include "Spell.h"
 // Add player scripts
 class Runes_PlayerScripts: public PlayerScript
 {
@@ -24,6 +24,14 @@ public:
     void OnCreate(Player* player)
     {
         RunesManager::CreateDefaultCharacter(player);
+    }
+
+    void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/) {
+
+        if (spell->GetSpellInfo()->Id != 5000000)
+            return;
+
+        const int32 loadoutId = spell->GetSpellValue()->EffectBasePoints[EFFECT_0];
     }
 
 };

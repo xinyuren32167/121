@@ -158,7 +158,11 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     stmt->SetData(1, startIdSlot);
     stmt->SetData(2, slotDefault);
     stmt->SetData(3, active);
+
     CharacterDatabase.Execute(stmt);
+
+    Loadout loadout = { guid, startIdSlot, slotDefault, active };
+    m_Loadout[guid].push_back(loadout);
 }
 
 std::vector<std::string> RunesManager::RunesForClients(Player* player)
@@ -435,7 +439,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     const uint32 count = GetCoutSameGroupRune(player, rune.spellId);
     bool tooMuchStack = count >= rune.maxStack;
 
-    if (tooMuchStack && !config.debug)
+    if (tooMuchStack)
     {
         sEluna->OnRuneMessage(player, "You can't activate more of this rune.");
         return;
@@ -507,7 +511,9 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
     SlotRune slot = { activeId, runeId, rune.spellId, 1 };
 
     if (match != m_SlotRune.end()) {
-        slot.order = GetMissingSlotNumber(match->second, player);
+        if(match->second.size() > 0)
+            slot.order = GetMissingSlotNumber(match->second, player);
+
         match->second.push_back(slot);
     }
     else
