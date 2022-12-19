@@ -269,10 +269,97 @@ class spell_vein_cutter : public AuraScript
     }
 };
 
+class spell_striking_master : public AuraScript
+{
+    PrepareAuraScript(spell_striking_master);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* caster = GetTarget()->ToPlayer())
+            caster->ModifySpellCooldown(47486, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_striking_master::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_battlelord : public AuraScript
+{
+    PrepareAuraScript(spell_battlelord);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* caster = GetTarget()->ToPlayer())
+        {
+            caster->ModifySpellCooldown(47486, -aurEff->GetAmount());
+            caster->ModifySpellCooldown(47520, -aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_battlelord::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_tactician : public AuraScript
+{
+    PrepareAuraScript(spell_tactician);
+
+    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
+    {
+            int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+            float procPctPerRagePoint = aurEff->GetSpellInfo()->Effects[EFFECT_0].DamageMultiplier;
+
+            if (spellRage <= 0)
+                return;
+
+            float procChance = spellRage * procPctPerRagePoint;
+            uint32 random = urand(1, 100);
+
+            if (random <= procChance)
+                GetCaster()->ToPlayer()->ModifySpellCooldown(7384, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_tactician::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dreadnaught : public SpellScript
+{
+    PrepareSpellScript(spell_dreadnaught);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dreadnaught::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);
     RegisterSpellScript(spell_the_art_of_war);
     RegisterSpellScript(spell_tide_of_blood);
     RegisterSpellScript(spell_vein_cutter);
+    RegisterSpellScript(spell_striking_master);
+    RegisterSpellScript(spell_battlelord);
+    RegisterSpellScript(spell_tactician);
+    RegisterSpellScript(spell_dreadnaught);
 }
