@@ -386,44 +386,28 @@ class spell_warr_intercept : public SpellScript
     }
 };
 
-// -1464 - Slam
+// 47475 - Slam
 class spell_warr_slam : public SpellScript
 {
     PrepareSpellScript(spell_warr_slam);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ SPELL_WARRIOR_SLAM });
-    }
-
-    void SendMiss(SpellMissInfo missInfo)
-    {
-        if (missInfo != SPELL_MISS_NONE)
-        {
-            if (Unit* caster = GetCaster())
-            {
-                if (Unit* target = GetHitUnit())
-                {
-                    caster->SendSpellMiss(target, SPELL_WARRIOR_SLAM, missInfo);
-                }
-            }
-        }
-    }
-
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleDummy(SpellEffIndex effIndex)
     {
         int32 damage = GetEffectValue();
-
         ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
 
-        if (GetHitUnit())
-            GetCaster()->CastCustomSpell(SPELL_WARRIOR_SLAM, SPELLVALUE_BASE_POINT0, damage, GetHitUnit(), TRIGGERED_FULL_MASK);
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
     }
 
     void Register() override
     {
-        BeforeHit += BeforeSpellHitFn(spell_warr_slam::SendMiss);
-        OnEffectHitTarget += SpellEffectFn(spell_warr_slam::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        OnEffectHitTarget += SpellEffectFn(spell_warr_slam::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 

@@ -608,6 +608,77 @@ class spell_charging_for_blood : public AuraScript
     }
 };
 
+class spell_bloodcraze : public AuraScript
+{
+    PrepareAuraScript(spell_bloodcraze);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), 23881, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_bloodcraze::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_tornado : public AuraScript
+{
+    PrepareAuraScript(spell_tornado);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        LOG_ERROR("error", "proc");
+        GetCaster()->CastSpell(GetCaster(), 1680, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_tornado::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_fervor_of_battle : public AuraScript
+{
+    PrepareAuraScript(spell_fervor_of_battle);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), 47475, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_fervor_of_battle::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_storm_of_swords : public AuraScript
+{
+    PrepareAuraScript(spell_storm_of_swords);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->HasAura(1719))
+        {
+            float remainingDuration = GetCaster()->GetAura(1719)->GetDuration();
+            GetCaster()->GetAura(1719)->SetDuration(remainingDuration + 5000);
+        }
+        else
+        {
+            GetCaster()->CastSpell(GetCaster(), 1719, TRIGGERED_FULL_MASK);
+            GetCaster()->GetAura(1719)->SetDuration(5000);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_storm_of_swords::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);
@@ -627,4 +698,8 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_collateral_damage_proc);
     RegisterSpellScript(spell_vicious_comtempt);
     RegisterSpellScript(spell_charging_for_blood);
+    RegisterSpellScript(spell_bloodcraze);
+    RegisterSpellScript(spell_tornado);
+    RegisterSpellScript(spell_fervor_of_battle);
+    RegisterSpellScript(spell_storm_of_swords);
 }
