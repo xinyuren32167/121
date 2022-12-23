@@ -524,7 +524,7 @@ class spell_collateral_damage : public AuraScript
     {
         return GetCaster()->HasAura(12328);
     }
-   
+
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_collateral_damage::CheckProc);
@@ -678,6 +678,36 @@ class spell_storm_of_swords : public AuraScript
     }
 };
 
+class spell_spinning_grip : public SpellScript
+{
+    PrepareSpellScript(spell_spinning_grip);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        float casterZ = GetCaster()->GetPositionZ(); // for Ring of Valor
+        WorldLocation gripPos = *GetExplTargetDest();
+        if (Unit* target = GetHitUnit())
+            if (!target->HasAuraType(SPELL_AURA_DEFLECT_SPELLS) || target->HasUnitState(UNIT_STATE_STUNNED)) // Deterrence
+            {
+                if (target != GetCaster())
+                {
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
+                    if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
+                        target->InterruptNonMeleeSpells(false, 0, false);
+                }
+
+                if (target->GetMapId() == 618) // for Ring of Valor
+                    gripPos.m_positionZ = std::max(casterZ + 0.2f, 28.5f);
+
+                target->CastSpell(gripPos.GetPositionX(), gripPos.GetPositionY(), gripPos.GetPositionZ(), 57604, true);
+            }
+    }
+
+    void Register() override
+    {
+            OnEffectHitTarget += SpellEffectFn(spell_spinning_grip::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
 
 void AddSC_warrior_perks_scripts()
 {
@@ -702,4 +732,5 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_tornado);
     RegisterSpellScript(spell_fervor_of_battle);
     RegisterSpellScript(spell_storm_of_swords);
+    RegisterSpellScript(spell_spinning_grip);
 }
