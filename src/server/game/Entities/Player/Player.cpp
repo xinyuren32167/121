@@ -5084,15 +5084,6 @@ float Player::GetRatingBonusValue(CombatRating cr) const
 
 float Player::GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const
 {
-    switch (attType)
-    {
-        case BASE_ATTACK:
-            return GetUInt32Value(PLAYER_EXPERTISE) / 4.0f;
-        case OFF_ATTACK:
-            return GetUInt32Value(PLAYER_OFFHAND_EXPERTISE) / 4.0f;
-        default:
-            break;
-    }
     return 0.0f;
 }
 
@@ -7638,7 +7629,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
     Loot* loot = 0;
     PermissionTypes permission = ALL_PERMISSION;
 
-    LOG_DEBUG("loot", "Player::SendLoot");
+    LOG_ERROR("loot", "Player::SendLoot");
 
     // remove FD and invisibility at all loots
     constexpr std::array<AuraType, 2> toRemove = {SPELL_AURA_MOD_INVISIBILITY, SPELL_AURA_FEIGN_DEATH};

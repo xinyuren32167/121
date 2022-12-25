@@ -184,14 +184,12 @@ class spell_mastery_deep_wounds : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         int32 amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
-
         eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), 200001, SPELL_AURA_PERIODIC_DAMAGE, amount);
     }
 
     void HandleBuff(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-
         GetCaster()->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 

@@ -2800,12 +2800,6 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(Unit const* victim, WeaponAttackTy
     // Xinef: do not allow to dodge with CREATURE_FLAG_EXTRA_NO_DODGE flag
     else if (victim->GetTypeId() == TYPEID_PLAYER || !(victim->ToCreature()->GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_NO_DODGE))
     {
-        // Reduce dodge chance by attacker expertise rating
-        if (GetTypeId() == TYPEID_PLAYER)
-            dodge_chance -= int32(ToPlayer()->GetExpertiseDodgeOrParryReduction(attType) * 100);
-        else
-            dodge_chance -= GetTotalAuraModifier(SPELL_AURA_MOD_EXPERTISE) * 25;
-
         // Modify dodge chance by attacker SPELL_AURA_MOD_COMBAT_RESULT_CHANCE
         dodge_chance += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_COMBAT_RESULT_CHANCE, VICTIMSTATE_DODGE) * 100;
         dodge_chance = int32 (float (dodge_chance) * GetTotalAuraMultiplier(SPELL_AURA_MOD_ENEMY_DODGE));
@@ -9332,20 +9326,6 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
     // Custom triggered spells
     switch (auraSpellInfo->Id)
     {
-        // Deep Wounds
-        case 12834:
-        case 12849:
-        case 12867:
-            {
-                if (GetTypeId() != TYPEID_PLAYER)
-                    return false;
-
-                if (procFlags & PROC_FLAG_DONE_OFFHAND_ATTACK)
-                    basepoints0 = int32((GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE) + GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE)) / 2.0f);
-                else
-                    basepoints0 = int32((GetFloatValue(UNIT_FIELD_MAXDAMAGE) + GetFloatValue(UNIT_FIELD_MINDAMAGE)) / 2.0f);
-                break;
-            }
         // Persistent Shield (Scarab Brooch trinket)
         // This spell originally trigger 13567 - Dummy Trigger (vs dummy efect)
         case 26467:

@@ -857,7 +857,14 @@ void Player::UpdateArmorPenetration(int32 amount)
 
 void Player::UpdateMastery()
 {
+    float bonusPct = 0;
+    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_HIT_CHANCE);
+    for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
+       bonusPct += (*itr)->GetAmount();
+
    uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
+   int pct = 1 + (bonusPct / 100);
+   amount *= pct;
 
    if (amount < 0)
        amount = 0;

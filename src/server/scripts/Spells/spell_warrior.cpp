@@ -1040,6 +1040,30 @@ class spell_warr_mortal_strike : public SpellScript
     }
 };
 
+class spell_ap_to_hit_damage : public SpellScript
+{
+    PrepareSpellScript(spell_ap_to_hit_damage);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_ap_to_hit_damage::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
 // 47520 - Cleave
 class spell_warr_cleave : public SpellScript
 {
@@ -1249,6 +1273,22 @@ class spell_warr_shockwave : public SpellScript
     }
 };
 
+class spell_healing_deep_wound : public AuraScript
+{
+    PrepareAuraScript(spell_healing_deep_wound);
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 50));
+        GetCaster()->CastCustomSpell(80003, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_healing_deep_wound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -1274,20 +1314,11 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_rend_direct_damage);
     RegisterSpellScript(spell_warr_retaliation);
     RegisterSpellScript(spell_warr_shattering_throw);
-    RegisterSpellScript(spell_warr_slam);
     RegisterSpellScript(spell_warr_sweeping_strikes);
     RegisterSpellScript(spell_warr_vigilance);
     RegisterSpellScript(spell_warr_vigilance_trigger);
     RegisterSpellScript(spell_warr_t3_prot_8p_bonus);
-    RegisterSpellScript(spell_warr_devastate);
-    RegisterSpellScript(spell_warr_heroic_strike);
     RegisterSpellScript(spell_warr_heroic_throw);
-    RegisterSpellScript(spell_warr_mortal_strike);
-    RegisterSpellScript(spell_warr_cleave);
-    RegisterSpellScript(spell_warr_revenge);
-    RegisterSpellScript(spell_warr_thunder_clap);
-    RegisterSpellScript(spell_warr_whirlwind);
-    RegisterSpellScript(spell_warr_shield_slam);
-    RegisterSpellScript(spell_warr_shockwave);
-    
+    RegisterSpellScript(spell_ap_to_hit_damage);
+    RegisterSpellScript(spell_healing_deep_wound);
 }

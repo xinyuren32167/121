@@ -6175,11 +6175,9 @@ SpellCastResult Spell::CheckCast(bool strict)
                         return SPELL_FAILED_DONT_REPORT;
                     }
 
-                    if (m_spellInfo->SpellFamilyName == SPELLFAMILY_WARRIOR)
+                    if (m_spellInfo->Id == 3411)
                     {
-                        // Warbringer - can't be handled in proc system - should be done before checkcast root check and charge effect process
-                        if (strict && m_caster->IsScriptOverriden(m_spellInfo, 6953))
-                            m_caster->RemoveMovementImpairingAuras(true);
+                        m_caster->RemoveMovementImpairingAuras(true);
                     }
                     if (m_caster->HasUnitState(UNIT_STATE_ROOT))
                     {
