@@ -397,8 +397,6 @@ class spell_anger_management : public AuraScript
         if (spellRage <= 0)
             return;
 
-        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
-
         if (rageAccumulated >= rageThreshold)
         {
             GetCaster()->ToPlayer()->ModifySpellCooldown(46924, -aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
@@ -406,7 +404,6 @@ class spell_anger_management : public AuraScript
         }
         else
             aurEff->GetBase()->GetEffect(EFFECT_2)->SetAmount(rageAccumulated);
-        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
     }
 
     void Register() override
@@ -476,7 +473,7 @@ class spell_sweeping_rage : public AuraScript
 
         int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
         int32 rageThreshold = aurEff->GetAmount();
-        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
+
         if (rageAccumulated >= rageThreshold)
         {
             GetCaster()->CastSpell(GetCaster(), 200244, TRIGGERED_FULL_MASK);
@@ -484,7 +481,6 @@ class spell_sweeping_rage : public AuraScript
         }
         else
             aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
-        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
     }
 
     void Register() override
@@ -507,7 +503,6 @@ class spell_sweeping_rage_proc : public AuraScript
         GetCaster()->RemoveAura(200244);
         GetCaster()->CastSpell(GetCaster(), 200245, TRIGGERED_FULL_MASK);
         GetCaster()->GetAura(200245)->SetStackAmount(stackAmount);
-        LOG_ERROR("error", "{}", GetCaster()->GetAura(200245)->GetStackAmount());
     }
 
     void Register() override
@@ -565,11 +560,10 @@ class spell_collateral_damage_proc : public AuraScript
 
         int32 stackAmount = GetCaster()->GetAura(200252)->GetStackAmount();
         int32 damageAmount = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
-        LOG_ERROR("error", "{} , {}", stackAmount, damageAmount);
+
         GetCaster()->RemoveAura(200252);
         GetCaster()->CastCustomSpell(200253, SPELLVALUE_BASE_POINT0, damageAmount, GetCaster(), TRIGGERED_FULL_MASK);
         GetCaster()->GetAura(200253)->SetStackAmount(stackAmount);
-        LOG_ERROR("error", "{}", GetCaster()->GetAura(200253)->GetStackAmount());
     }
 
     void Register() override
@@ -629,7 +623,6 @@ class spell_tornado : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "proc");
         GetCaster()->CastSpell(GetCaster(), 1680, TRIGGERED_FULL_MASK);
     }
 
@@ -682,30 +675,205 @@ class spell_spinning_grip : public SpellScript
 {
     PrepareSpellScript(spell_spinning_grip);
 
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleSpecial(SpellEffIndex effIndex)
     {
-        float casterZ = GetCaster()->GetPositionZ(); // for Ring of Valor
-        WorldLocation gripPos = *GetExplTargetDest();
-        if (Unit* target = GetHitUnit())
-            if (!target->HasAuraType(SPELL_AURA_DEFLECT_SPELLS) || target->HasUnitState(UNIT_STATE_STUNNED)) // Deterrence
-            {
-                if (target != GetCaster())
-                {
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
-                    if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
-                        target->InterruptNonMeleeSpells(false, 0, false);
-                }
+        PreventHitDefaultEffect(effIndex);
 
-                if (target->GetMapId() == 618) // for Ring of Valor
-                    gripPos.m_positionZ = std::max(casterZ + 0.2f, 28.5f);
+        float x = GetHitUnit()->GetPositionX();
+        float y = GetHitUnit()->GetPositionY();
+        float z = GetHitUnit()->GetPositionZ() + 0.1f;
+        float speedXY, speedZ;
 
-                target->CastSpell(gripPos.GetPositionX(), gripPos.GetPositionY(), gripPos.GetPositionZ(), 57604, true);
-            }
+        if (GetSpellInfo()->Effects[effIndex].MiscValue)
+            speedZ = float(GetSpellInfo()->Effects[effIndex].MiscValue) / 10;
+        else if (GetSpellInfo()->Effects[effIndex].MiscValueB)
+            speedZ = float(GetSpellInfo()->Effects[effIndex].MiscValueB) / 10;
+        else
+            speedZ = 10.0f;
+        speedXY = GetCaster()->GetExactDist2d(x, y) * 10.0f / speedZ;
+
+        GetExplTargetUnit()->GetMotionMaster()->MoveJump(x, y, z, speedXY, speedZ);
     }
 
     void Register() override
     {
-            OnEffectHitTarget += SpellEffectFn(spell_spinning_grip::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        OnEffectLaunchTarget += SpellEffectFn(spell_spinning_grip::HandleSpecial, EFFECT_0, SPELL_EFFECT_JUMP);
+    }
+};
+
+class spell_depths_of_insanity : public AuraScript
+{
+    PrepareAuraScript(spell_depths_of_insanity);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (spellRage <= 0)
+            return;
+
+        int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+        int32 rageThreshold = aurEff->GetAmount();
+        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
+        if (rageAccumulated >= rageThreshold)
+        {
+            GetCaster()->ToPlayer()->ModifySpellCooldown(1719, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
+            aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated - rageThreshold);
+        }
+        else
+            aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
+        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_depths_of_insanity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_berserkers_tourment : public AuraScript
+{
+    PrepareAuraScript(spell_berserkers_tourment);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200401))
+            return GetCaster()->GetAura(200401);
+
+        if (GetCaster()->HasAura(200402))
+            return GetCaster()->GetAura(200402);
+
+        if (GetCaster()->HasAura(200403))
+            return GetCaster()->GetAura(200403);
+
+        if (GetCaster()->HasAura(200404))
+            return GetCaster()->GetAura(200404);
+
+        if (GetCaster()->HasAura(200405))
+            return GetCaster()->GetAura(200405);
+
+        if (GetCaster()->HasAura(200406))
+            return GetCaster()->GetAura(200406);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (!GetRuneAura())
+            return;
+        LOG_ERROR("error", "recklessness proc");
+        int32 damagePct = GetRuneAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        GetCaster()->CastCustomSpell(200407, SPELLVALUE_BASE_POINT0, damagePct, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster()->HasAura(200407))
+            return;
+        LOG_ERROR("error", "recklessness removed");
+        GetCaster()->RemoveAura(200407);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_berserkers_tourment::HandleProc, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT);
+        OnEffectRemove += AuraEffectRemoveFn(spell_berserkers_tourment::HandleRemove, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_berserkers_tourment_proc : public AuraScript
+{
+    PrepareAuraScript(spell_berserkers_tourment_proc);
+
+    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        LOG_ERROR("error", "damage proc");
+        GetCaster()->DealDamage(GetCaster(), GetCaster(), damage);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_berserkers_tourment_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_reckless_abandon : public AuraScript
+{
+    PrepareAuraScript(spell_reckless_abandon);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasAura(1719))
+            return;
+
+        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (spellRage <= 0)
+            return;
+
+        int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+        int32 rageThreshold = aurEff->GetAmount();
+
+        if (rageAccumulated >= rageThreshold)
+        {
+            GetCaster()->CastSpell(GetCaster(), 200414, TRIGGERED_FULL_MASK);
+            aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated - rageThreshold);
+        }
+        else
+            aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_reckless_abandon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_reckless_abandon_proc : public AuraScript
+{
+    PrepareAuraScript(spell_reckless_abandon_proc);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster()->HasAura(200414))
+            return;
+
+        int32 stackAmount = GetCaster()->GetAura(200414)->GetStackAmount();
+
+        GetCaster()->RemoveAura(200414);
+        GetCaster()->CastSpell(GetCaster(), 200415, TRIGGERED_FULL_MASK);
+        GetCaster()->GetAura(200415)->SetStackAmount(stackAmount);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_reckless_abandon_proc::HandleProc, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_true_rage : public AuraScript
+{
+    PrepareAuraScript(spell_true_rage);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->HasAura(14204))
+        {
+            float remainingDuration = GetCaster()->GetAura(14204)->GetDuration();
+            GetCaster()->GetAura(14204)->SetDuration(remainingDuration + 4000);
+        }
+        else
+        {
+            GetCaster()->CastSpell(GetCaster(), 14204, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_true_rage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -733,4 +901,10 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_fervor_of_battle);
     RegisterSpellScript(spell_storm_of_swords);
     RegisterSpellScript(spell_spinning_grip);
+    RegisterSpellScript(spell_depths_of_insanity);
+    RegisterSpellScript(spell_berserkers_tourment);
+    RegisterSpellScript(spell_berserkers_tourment_proc);
+    RegisterSpellScript(spell_reckless_abandon);
+    RegisterSpellScript(spell_reckless_abandon_proc);
+    RegisterSpellScript(spell_true_rage);
 }
