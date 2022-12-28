@@ -606,8 +606,7 @@ class spell_warr_overpower : public SpellScript
             return;
 
         if (Player* target = GetHitPlayer())
-            if (target->HasUnitState(UNIT_STATE_CASTING))
-                target->CastSpell(target, spellId, true, 0, 0, GetCaster()->GetGUID());
+             target->CastSpell(target, spellId, true, 0, 0, GetCaster()->GetGUID());
     }
 
     void HandleDamage(SpellEffIndex effIndex)
@@ -1273,6 +1272,24 @@ class spell_warr_shockwave : public SpellScript
     }
 };
 
+class spell_berserker_rage : public SpellScript
+{
+    PrepareSpellScript(spell_berserker_rage);
+
+    void HandleProc()
+    {
+        if (GetCaster()->HasAura(20500) || GetCaster()->HasAura(20501)) {
+            int32 amount = 11 + GetCaster()->ToPlayer()->GetMastery();
+            GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_berserker_rage::HandleProc);
+    }
+};
+
 class spell_healing_deep_wound : public AuraScript
 {
     PrepareAuraScript(spell_healing_deep_wound);
@@ -1321,4 +1338,5 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_heroic_throw);
     RegisterSpellScript(spell_ap_to_hit_damage);
     RegisterSpellScript(spell_healing_deep_wound);
+    RegisterSpellScript(spell_berserker_rage);
 }

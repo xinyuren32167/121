@@ -16116,6 +16116,9 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* target, uint32 procFlag, u
                         ModifyAuraState(AURA_STATE_DEFENSE, true);
                         StartReactiveTimer(REACTIVE_DEFENSE);
                     }
+
+                    if (getClass() == CLASS_WARRIOR && HasSpell(57826))
+                        CastSpell(this, 57830);
                 }
                 // if victim and parry attack
                 if (procExtra & PROC_EX_PARRY)
@@ -16131,12 +16134,19 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* target, uint32 procFlag, u
                         ModifyAuraState(AURA_STATE_DEFENSE, true);
                         StartReactiveTimer(REACTIVE_DEFENSE);
                     }
+
+                    if (getClass() == CLASS_WARRIOR && HasSpell(57826))
+                        CastSpell(this, 57830);
+
                 }
                 // if and victim block attack
                 if (procExtra & PROC_EX_BLOCK)
                 {
                     ModifyAuraState(AURA_STATE_DEFENSE, true);
                     StartReactiveTimer(REACTIVE_DEFENSE);
+
+                    if (getClass() == CLASS_WARRIOR && HasSpell(57826))
+                        CastSpell(this, 57830);
                 }
             }
             else // For attacker

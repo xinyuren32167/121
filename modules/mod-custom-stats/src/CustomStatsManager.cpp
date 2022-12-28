@@ -25,8 +25,6 @@ void CustomStatsManager::UpdateMastery(Player* player, uint32 rating)
         if (Aura* aura = player->GetAura(mastery.spellId)) {
             const float value = rating / mastery.modifierPerPoint;
             player->SetMastery(value);
-            player->RemoveAura(mastery.spellId);
-            player->CastSpell(player, mastery.spellId);
         }
 }
 

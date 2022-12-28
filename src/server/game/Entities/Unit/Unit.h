@@ -406,9 +406,9 @@ enum CombatRating
     CR_DODGE                    = 2,
     CR_PARRY                    = 3,
     CR_BLOCK                    = 4,
-    CR_HIT_MELEE                = 5,
-    CR_HIT_RANGED               = 6,
-    CR_HIT_SPELL                = 7,
+    CR_HIT_MELEE                = 5, // Aka Mastery
+    CR_HIT_RANGED               = 6, // Aka Mastery
+    CR_HIT_SPELL                = 7, // Aka Mastery
     CR_CRIT_MELEE               = 8,
     CR_CRIT_RANGED              = 9,
     CR_CRIT_SPELL               = 10,

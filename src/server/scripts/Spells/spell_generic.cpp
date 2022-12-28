@@ -4642,6 +4642,25 @@ class spell_gen_basic_campfire : public SpellScript
     }
 };
 
+
+class spell_reset_overpower : public AuraScript
+{
+    PrepareAuraScript(spell_reset_overpower);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* player = GetCaster()->ToPlayer()) {
+            int32 triggerSpell = aurEff->GetMiscValue();
+            player->RemoveSpellCooldown(7384, true);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_reset_overpower::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_generic_spell_scripts()
 {
     RegisterSpellScript(spell_silithyst);
@@ -4780,4 +4799,5 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScriptWithArgs(spell_gen_apply_aura_after_expiration, "spell_itch_aq20", SPELL_HIVEZARA_CATALYST, EFFECT_0, SPELL_AURA_DUMMY);
     RegisterSpellScriptWithArgs(spell_gen_apply_aura_after_expiration, "spell_itch_aq40", SPELL_VEKNISS_CATALYST, EFFECT_0, SPELL_AURA_DUMMY);
     RegisterSpellScript(spell_gen_basic_campfire);
+    RegisterSpellScript(spell_reset_overpower);
 }

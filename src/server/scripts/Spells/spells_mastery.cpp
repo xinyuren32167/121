@@ -206,34 +206,13 @@ class spell_mastery_unshackled_fury : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-
-        GetCaster()->CastCustomSpell(200007, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        int32 amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+        GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_mastery_unshackled_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-class spell_mastery_unshackled_fury_enrage : public AuraScript
-{
-    PrepareAuraScript(spell_mastery_unshackled_fury_enrage);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        if (AuraEffect* aureff = GetCaster()->GetAura(200007)->GetEffect(EFFECT_0))
-        {
-            int32 amount = aureff->GetAmount();
-
-            GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_mastery_unshackled_fury_enrage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -270,6 +249,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_savant);
     RegisterSpellScript(spell_mastery_deep_wounds);
     RegisterSpellScript(spell_mastery_unshackled_fury);
-    RegisterSpellScript(spell_mastery_unshackled_fury_enrage);
     RegisterSpellScript(spell_mastery_critical_block);
 }

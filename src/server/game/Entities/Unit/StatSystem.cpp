@@ -863,13 +863,15 @@ void Player::UpdateMastery()
        bonusPct += (*itr)->GetAmount();
 
    uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
-   int pct = 1 + (bonusPct / 100);
+   float pct = 1 + (bonusPct / 100);
    amount *= pct;
 
    if (amount < 0)
        amount = 0;
 
    SetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + static_cast<uint16>(CR_HIT_MELEE), uint32(amount));
+   SetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + static_cast<uint16>(CR_HIT_SPELL), uint32(amount));
+   SetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + static_cast<uint16>(CR_HIT_RANGED), uint32(amount));
    sScriptMgr->OnUpdateMastery(this, amount);
 }
 
