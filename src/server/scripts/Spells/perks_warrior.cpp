@@ -714,7 +714,7 @@ class spell_depths_of_insanity : public AuraScript
 
         int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
         int32 rageThreshold = aurEff->GetAmount();
-        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
+
         if (rageAccumulated >= rageThreshold)
         {
             GetCaster()->ToPlayer()->ModifySpellCooldown(1719, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
@@ -722,7 +722,6 @@ class spell_depths_of_insanity : public AuraScript
         }
         else
             aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
-        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
     }
 
     void Register() override
@@ -787,7 +786,7 @@ class spell_berserkers_tourment_proc : public AuraScript
 {
     PrepareAuraScript(spell_berserkers_tourment_proc);
 
-    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
         LOG_ERROR("error", "damage proc");
@@ -877,6 +876,99 @@ class spell_true_rage : public AuraScript
     }
 };
 
+class spell_relentless : public AuraScript
+{
+    PrepareAuraScript(spell_relentless);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200428))
+            return GetCaster()->GetAura(200428);
+
+        if (GetCaster()->HasAura(200429))
+            return GetCaster()->GetAura(200429);
+
+        if (GetCaster()->HasAura(200430))
+            return GetCaster()->GetAura(200430);
+
+        if (GetCaster()->HasAura(200431))
+            return GetCaster()->GetAura(200431);
+
+        if (GetCaster()->HasAura(200432))
+            return GetCaster()->GetAura(200432);
+
+        if (GetCaster()->HasAura(200433))
+            return GetCaster()->GetAura(200433);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (!GetRuneAura())
+            return;
+        LOG_ERROR("error", "relentless proc");
+        int32 stackThreshold = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        GetCaster()->CastSpell(GetCaster(), 200434, TRIGGERED_FULL_MASK);
+
+        if (GetCaster()->GetAura(200434)->GetStackAmount() < stackThreshold)
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), 200435, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_relentless::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+    }
+};
+
+class spell_raging_death : public AuraScript
+{
+    PrepareAuraScript(spell_raging_death);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (spellRage <= 0)
+            return;
+
+        int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+        int32 rageThreshold = aurEff->GetAmount();
+        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
+        if (rageAccumulated >= rageThreshold)
+        {
+            GetCaster()->ToPlayer()->ModifySpellCooldown(12292, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
+            aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated - rageThreshold);
+        }
+        else
+            aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
+        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_raging_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_son_of_thunder : public AuraScript
+{
+    PrepareAuraScript(spell_son_of_thunder);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetCaster(), 47502, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_son_of_thunder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);
@@ -907,4 +999,7 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_reckless_abandon);
     RegisterSpellScript(spell_reckless_abandon_proc);
     RegisterSpellScript(spell_true_rage);
+    RegisterSpellScript(spell_relentless);
+    RegisterSpellScript(spell_raging_death);
+    //RegisterSpellScript(spell_son_of_thunder);
 }
