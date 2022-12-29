@@ -969,6 +969,257 @@ class spell_son_of_thunder : public AuraScript
     }
 };
 
+class spell_best_served_cold : public AuraScript
+{
+    PrepareAuraScript(spell_best_served_cold);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetTarget();
+
+        if (!target)
+            return;
+
+        uint32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+
+        Aura* shield = caster->GetAura(200496);
+
+        if (shield)
+            amount += shield->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->CastCustomSpell(200496, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_best_served_cold::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_side_step : public AuraScript
+{
+    PrepareAuraScript(spell_side_step);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200510))
+            return GetCaster()->GetAura(200510);
+
+        if (GetCaster()->HasAura(200511))
+            return GetCaster()->GetAura(200511);
+
+        if (GetCaster()->HasAura(200512))
+            return GetCaster()->GetAura(200512);
+
+        if (GetCaster()->HasAura(200513))
+            return GetCaster()->GetAura(200513);
+
+        if (GetCaster()->HasAura(200514))
+            return GetCaster()->GetAura(200514);
+
+        if (GetCaster()->HasAura(200515))
+            return GetCaster()->GetAura(200515);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_side_step::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_shield_parry : public AuraScript
+{
+    PrepareAuraScript(spell_shield_parry);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200522))
+            return GetCaster()->GetAura(200522);
+
+        if (GetCaster()->HasAura(200523))
+            return GetCaster()->GetAura(200523);
+
+        if (GetCaster()->HasAura(200524))
+            return GetCaster()->GetAura(200524);
+
+        if (GetCaster()->HasAura(200525))
+            return GetCaster()->GetAura(200525);
+
+        if (GetCaster()->HasAura(200526))
+            return GetCaster()->GetAura(200526);
+
+        if (GetCaster()->HasAura(200527))
+            return GetCaster()->GetAura(200527);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_shield_parry::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_magic_barrier : public AuraScript
+{
+    PrepareAuraScript(spell_magic_barrier);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200534))
+            return GetCaster()->GetAura(200534);
+
+        if (GetCaster()->HasAura(200535))
+            return GetCaster()->GetAura(200535);
+
+        if (GetCaster()->HasAura(200536))
+            return GetCaster()->GetAura(200536);
+
+        if (GetCaster()->HasAura(200537))
+            return GetCaster()->GetAura(200537);
+
+        if (GetCaster()->HasAura(200538))
+            return GetCaster()->GetAura(200538);
+
+        if (GetCaster()->HasAura(200539))
+            return GetCaster()->GetAura(200539);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        uint32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        if (GetCaster()->HasAura(buffAura))
+            GetCaster()->RemoveAura(buffAura);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_magic_barrier::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_magic_barrier::HandleRemove, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_enduring_defenses_shield_block : public AuraScript
+{
+    PrepareAuraScript(spell_enduring_defenses_shield_block);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200546))
+            return GetCaster()->GetAura(200546);
+
+        if (GetCaster()->HasAura(200547))
+            return GetCaster()->GetAura(200547);
+
+        if (GetCaster()->HasAura(200548))
+            return GetCaster()->GetAura(200548);
+
+        if (GetCaster()->HasAura(200549))
+            return GetCaster()->GetAura(200549);
+
+        if (GetCaster()->HasAura(200550))
+            return GetCaster()->GetAura(200550);
+
+        if (GetCaster()->HasAura(200551))
+            return GetCaster()->GetAura(200551);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        uint32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+
+        if (GetCaster()->HasAura(buffAura))
+            GetCaster()->RemoveAura(buffAura);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_enduring_defenses_shield_block::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_enduring_defenses_shield_block::HandleRemove, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_enduring_defenses_shield_slam : public AuraScript
+{
+    PrepareAuraScript(spell_enduring_defenses_shield_slam);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Aura* shieldBlock = GetCaster()->GetAura(2565);
+
+        if (!shieldBlock)
+            return;
+
+        shieldBlock->SetDuration(shieldBlock->GetDuration() + aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_enduring_defenses_shield_slam::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_barrier_lord : public AuraScript
+{
+    PrepareAuraScript(spell_barrier_lord);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(2565, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_barrier_lord::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);
@@ -1002,4 +1253,11 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_relentless);
     RegisterSpellScript(spell_raging_death);
     //RegisterSpellScript(spell_son_of_thunder);
+    RegisterSpellScript(spell_best_served_cold);
+    RegisterSpellScript(spell_side_step);
+    RegisterSpellScript(spell_shield_parry);
+    RegisterSpellScript(spell_magic_barrier);
+    RegisterSpellScript(spell_enduring_defenses_shield_block);
+    RegisterSpellScript(spell_enduring_defenses_shield_slam);
+    RegisterSpellScript(spell_barrier_lord);
 }
