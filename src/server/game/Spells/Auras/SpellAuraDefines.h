@@ -355,7 +355,7 @@ enum AuraType
     SPELL_AURA_OPEN_STABLE                                  = 292,
     SPELL_AURA_OVERRIDE_SPELLS                              = 293,
     SPELL_AURA_PREVENT_REGENERATE_POWER                     = 294,
-    SPELL_AURA_295                                          = 295,
+    SPELL_AURA_MOD_VERSATILITY_PCT                          = 295,
     SPELL_AURA_SET_VEHICLE_ID                               = 296,
     SPELL_AURA_BLOCK_SPELL_FAMILY                           = 297,
     SPELL_AURA_STRANGULATE                                  = 298,

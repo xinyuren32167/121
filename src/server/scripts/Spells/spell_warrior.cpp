@@ -1279,7 +1279,7 @@ class spell_berserker_rage : public SpellScript
     void HandleProc()
     {
         if (GetCaster()->HasAura(20500) || GetCaster()->HasAura(20501)) {
-            int32 amount = 11 + GetCaster()->ToPlayer()->GetMastery();
+            int32 amount = 11.0f + GetCaster()->ToPlayer()->GetMastery();
             GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
         }
     }
@@ -1303,6 +1303,53 @@ class spell_healing_deep_wound : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_healing_deep_wound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_reset_overpower : public AuraScript
+{
+    PrepareAuraScript(spell_reset_overpower);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 spellId = eventInfo.GetSpellInfo()->Id;
+
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        if (player->HasSpellCooldown(spellId))
+            return;
+
+        player->AddSpellCooldown(spellId, 0, 5500);
+        player->RemoveSpellCooldown(7384, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_reset_overpower::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+class spell_reset_shield_slam : public AuraScript
+{
+    PrepareAuraScript(spell_reset_shield_slam);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        player->RemoveSpellCooldown(47488, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_reset_shield_slam::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1339,4 +1386,5 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_ap_to_hit_damage);
     RegisterSpellScript(spell_healing_deep_wound);
     RegisterSpellScript(spell_berserker_rage);
+    RegisterSpellScript(spell_reset_overpower);
 }
