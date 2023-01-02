@@ -27,6 +27,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "SpellScript.h"
+#include "Object.h"
 
 enum WarriorSpells
 {
@@ -1353,6 +1354,65 @@ class spell_reset_shield_slam : public AuraScript
     }
 };
 
+class spell_thunderlord : public AuraScript
+{
+    PrepareAuraScript(spell_thunderlord);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(47437, -1000);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_thunderlord::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_ignore_pain : public SpellScript
+{
+    PrepareSpellScript(spell_ignore_pain);
+
+    void OnCastSpell()
+    {
+        int32 ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 value = round(ap * 3.5);
+        GetCaster()->CastCustomSpell(80005, SPELLVALUE_BASE_POINT0, value, GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_ignore_pain::OnCastSpell);
+    }
+};
+
+class spell_ignore_pain_absorbe : public AuraScript
+{
+    PrepareAuraScript(spell_ignore_pain_absorbe);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        uint32 maxDamageAbsorbe = aurEff->GetAmount();
+        AuraEffect* protEff1 = GetCaster()->GetAuraEffect(80005, EFFECT_1);
+        if ((damage + protEff1->GetAmount()) >= maxDamageAbsorbe) {
+            GetCaster()->RemoveAura(80005);
+            GetCaster()->RemoveAura(80004);
+        }
+        else {
+            if (AuraEffect* protEff = GetCaster()->GetAuraEffect(80005, EFFECT_1))
+                protEff->SetAmount(protEff->GetAmount() + damage);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_ignore_pain_absorbe::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -1387,4 +1447,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_healing_deep_wound);
     RegisterSpellScript(spell_berserker_rage);
     RegisterSpellScript(spell_reset_overpower);
+    RegisterSpellScript(spell_thunderlord);
+    RegisterSpellScript(spell_ignore_pain);
+    RegisterSpellScript(spell_ignore_pain_absorbe);
 }

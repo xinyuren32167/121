@@ -93,14 +93,18 @@ class spell_icicle_frostbolt : public SpellScript
 
     void HandleProc()
     {
-        if (GetCaster()->HasAura(300106) && GetCaster()->ToPlayer())
-            if (GetStackIcicle() == 5)
-            {
-                float pct = GetCaster()->ToPlayer()->GetMastery() + GetProcPct();
-                int32 amount = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct));
+        Player* player = GetCaster()->ToPlayer();
 
-                GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), true);
+        if (!player)
+            return;
+
+        if (player->HasAura(300106)) {
+            if (GetStackIcicle() == 5) {
+                float pct = player->GetMastery() + GetProcPct();
+                int32 amount = int32(CalculatePct(player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct));
+                player->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), true);
             }
+        }
     }
 
     void Register() override
@@ -123,17 +127,15 @@ class spell_mastery_ignite : public AuraScript
         float pct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
         int32 totalTicks = sSpellMgr->AssertSpellInfo(300110)->GetMaxTicks();
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
-        //int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
 
         if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0))
         {
             int32 remainingTicks = totalTicks - protEff->GetTickNumber();
             int32 remainingAmount = protEff->GetAmount() * remainingTicks;
             int32 remainingAmountPerTick = remainingAmount / totalTicks;
-
             amount = amount + remainingAmountPerTick;
-           // amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
         }
+
         eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), 300110, SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
@@ -143,36 +145,35 @@ class spell_mastery_ignite : public AuraScript
     }
 };
 
-class spell_mastery_savant : public AuraScript
+class spell_mastery_savant : public SpellScript
 {
-    PrepareAuraScript(spell_mastery_savant);
+    PrepareSpellScript(spell_mastery_savant);
 
     int GetManaPct()
     {
-        return GetCaster()->GetAura(300111)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetCaster()->GetAura(300111)->GetEffect(EFFECT_1)->GetAmount();
     }
 
     int GetDamagePct()
     {
-        return GetCaster()->GetAura(300111)->GetSpellInfo()->GetEffect(EFFECT_2).BasePoints + 1;
+        return GetCaster()->GetAura(300111)->GetEffect(EFFECT_2)->GetAmount();
     }
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void HandleCast()
     {
-        float manaPct = GetManaPct() + GetCaster()->ToPlayer()->GetMastery();
-        float dmgPct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
-        int32 manaAmount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), manaPct));
-        int32 dmgAmount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), dmgPct));
+        Unit* caster = GetCaster();
 
-        if (GetCaster()->HasAura(300112))
-            GetCaster()->RemoveAura(300112);
+        if (!caster)
+            return;
 
-        //GetCaster()->CastCustomSpell(GetCaster(), 300112, manaAmount, manaAmount, dmgAmount, true, nullptr, TRIGGERED_FULL_MASK, GetCasterGUID());
+        int32 manaPct = GetManaPct() + caster->ToPlayer()->GetMastery();
+        int32 dmgPct = GetDamagePct() + caster->ToPlayer()->GetMastery();
+        caster->CastCustomSpell(caster, 300112, &manaPct, &manaPct, &dmgPct, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_mastery_savant::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnCast += SpellCastFn(spell_mastery_savant::HandleCast);
     }
 };
 
@@ -206,8 +207,13 @@ class spell_mastery_unshackled_fury : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-        GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster)
+            return;
+
+        int32 amount = aurEff->GetAmount() + caster->GetMastery();
+        caster->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -216,29 +222,31 @@ class spell_mastery_unshackled_fury : public AuraScript
     }
 };
 
-class spell_mastery_critical_block : public AuraScript
+class spell_mastery_critical_block : public SpellScript
 {
-    PrepareAuraScript(spell_mastery_critical_block);
+    PrepareSpellScript(spell_mastery_critical_block);
 
     int GetEffectAmount(SpellEffIndex effect)
     {
-        return GetCaster()->GetAura(200005)->GetSpellInfo()->GetEffect(effect).BasePoints + 1;
+        return GetCaster()->GetAura(200005)->GetEffect(effect)->GetAmount();
     }
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void HandleCast()
     {
         int32 blockAmount = GetEffectAmount(EFFECT_0) + GetCaster()->ToPlayer()->GetMastery();
         int32 critBlockChance = GetEffectAmount(EFFECT_1) + GetCaster()->ToPlayer()->GetMastery() + GetCaster()->GetFloatValue(PLAYER_CRIT_PERCENTAGE);
         int32 powerAmount = GetEffectAmount(EFFECT_2) + GetCaster()->ToPlayer()->GetMastery();
-
+        GetCaster()->RemoveAura(200006);
         GetCaster()->CastCustomSpell(GetCaster(), 200006, &blockAmount, &critBlockChance, &powerAmount, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_mastery_critical_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnCast += SpellCastFn(spell_mastery_critical_block::HandleCast);
     }
 };
+
+
 
 void AddSC_spells_mastery_scripts()
 {

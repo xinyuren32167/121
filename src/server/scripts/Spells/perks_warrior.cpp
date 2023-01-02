@@ -372,6 +372,7 @@ class spell_blood_and_thunder : public SpellScript
 
         if (targets.size() > 0)
         {
+            targets.find
             for (auto const& target : targets)
                 if (Unit* unit = target->ToUnit())
                     GetCaster()->CastSpell(unit, 200237, TRIGGERED_FULL_MASK);
@@ -937,7 +938,6 @@ class spell_raging_death : public AuraScript
 
         int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
         int32 rageThreshold = aurEff->GetAmount();
-        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
         if (rageAccumulated >= rageThreshold)
         {
             GetCaster()->ToPlayer()->ModifySpellCooldown(12292, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
@@ -945,7 +945,6 @@ class spell_raging_death : public AuraScript
         }
         else
             aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
-        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
     }
 
     void Register() override

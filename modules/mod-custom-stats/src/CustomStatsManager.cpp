@@ -13,18 +13,24 @@ void CustomStatsManager::LoadSpellsMastery()
     do
     {
         Field* fields = result->Fetch();
-        uint32 spellId = fields[0].Get<uint32>();
+        uint32 talentId = fields[0].Get<uint32>();
         float ratingPerPointPct = fields[1].Get<float>();
-        m_spellsMastery.push_back({ spellId, ratingPerPointPct });
+        bool update = fields[2].Get<bool>();
+        uint32 auraId = fields[3].Get<uint32>();
+        m_spellsMastery.push_back({ talentId, ratingPerPointPct, update, auraId });
     } while (result->NextRow());
 }
 
 void CustomStatsManager::UpdateMastery(Player* player, uint32 rating)
 {
     for (auto& mastery : m_spellsMastery)
-        if (Aura* aura = player->GetAura(mastery.spellId)) {
+        if (Aura* aura = player->GetAura(mastery.talentId)) {
             const float value = rating / mastery.modifierPerPoint;
             player->SetMastery(value);
+            if (mastery.update) {
+                player->RemoveAura(mastery.castSpellId);
+                player->CastSpell(player, mastery.castSpellId);
+            }
         }
 }
 
