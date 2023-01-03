@@ -372,7 +372,6 @@ class spell_blood_and_thunder : public SpellScript
 
         if (targets.size() > 0)
         {
-            targets.find
             for (auto const& target : targets)
                 if (Unit* unit = target->ToUnit())
                     GetCaster()->CastSpell(unit, 200237, TRIGGERED_FULL_MASK);
@@ -997,7 +996,7 @@ class spell_relentless : public AuraScript
     {
         if (!GetRuneAura())
             return;
-        LOG_ERROR("error", "relentless proc");
+
         int32 stackThreshold = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
 
         GetCaster()->CastSpell(GetCaster(), 200434, TRIGGERED_FULL_MASK);
