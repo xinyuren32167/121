@@ -671,12 +671,10 @@ class spell_fervor_of_battle : public SpellScript
                 if (Unit* unit = target->ToUnit())
                 {
                     GetCaster()->CastSpell(unit, 47475, TRIGGERED_FULL_MASK);
-
                     return;
                 }
         }
     }
-
 
     void Register() override
     {
@@ -1636,6 +1634,154 @@ class spell_inspiring_wall_heal : public AuraScript
     }
 };
 
+class spell_defensive_quickness : public AuraScript
+{
+    PrepareAuraScript(spell_defensive_quickness);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->GetShapeshiftForm() == FORM_DEFENSIVESTANCE;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_defensive_quickness::CheckProc);
+    }
+};
+
+class spell_undying_will : public AuraScript
+{
+    PrepareAuraScript(spell_undying_will);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->GetShapeshiftForm() == FORM_DEFENSIVESTANCE;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_undying_will::CheckProc);
+    }
+};
+
+class spell_rumbling_earth : public SpellScript
+{
+    PrepareSpellScript(spell_rumbling_earth);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200714))
+            return GetCaster()->GetAura(200714);
+
+        if (GetCaster()->HasAura(200715))
+            return GetCaster()->GetAura(200715);
+
+        if (GetCaster()->HasAura(200716))
+            return GetCaster()->GetAura(200716);
+
+        if (GetCaster()->HasAura(200717))
+            return GetCaster()->GetAura(200717);
+
+        if (GetCaster()->HasAura(200718))
+            return GetCaster()->GetAura(200718);
+
+        if (GetCaster()->HasAura(200719))
+            return GetCaster()->GetAura(200719);
+
+        return nullptr;
+    }
+
+    void FindTargets(std::list<WorldObject*>& targets)
+    {
+        if (!GetRuneAura())
+            return;
+        LOG_ERROR("error", "proc");
+        if (targets.size() < 3)
+            return;
+        LOG_ERROR("error", "3 target or more");
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            caster->ModifySpellCooldown(46968, -GetRuneAura()->GetEffect(EFFECT_2)->GetAmount());
+            LOG_ERROR("error", "caster ?");
+        }
+
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_rumbling_earth::FindTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_104);
+    }
+};
+
+class spell_blade_turning : public AuraScript
+{
+    PrepareAuraScript(spell_blade_turning);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float blockValue = eventInfo.GetDamageInfo()->GetBlock();
+
+        if (blockValue <= 0)
+            return;
+
+        uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+
+        if (GetCaster()->HasAura(200726))
+            amount += GetCaster()->GetAura(200726)->GetEffect(EFFECT_0)->GetAmount();
+
+        GetCaster()->CastCustomSpell(200726, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_blade_turning::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_block_spike : public AuraScript
+{
+    PrepareAuraScript(spell_block_spike);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float blockValue = eventInfo.GetDamageInfo()->GetBlock();
+
+        if (blockValue <= 0)
+            return;
+
+        uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(200733, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_block_spike::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_healing_block : public AuraScript
+{
+    PrepareAuraScript(spell_healing_block);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float blockValue = eventInfo.GetDamageInfo()->GetBlock();
+
+        if (blockValue <= 0)
+            return;
+
+        uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(200740, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_healing_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 void AddSC_warrior_perks_scripts()
 {
@@ -1688,4 +1834,11 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_preparation);
     RegisterSpellScript(spell_inspiring_wall);
     RegisterSpellScript(spell_inspiring_wall_heal);
+    RegisterSpellScript(spell_defensive_quickness);
+    RegisterSpellScript(spell_undying_will);
+    RegisterSpellScript(spell_rumbling_earth);
+    RegisterSpellScript(spell_blade_turning);
+    RegisterSpellScript(spell_block_spike);
+    RegisterSpellScript(spell_healing_block);
+    
 }
