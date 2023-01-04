@@ -2052,7 +2052,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
                         }
                     }
                     if (target->GetPower(POWER_RAGE) > Rage_val)
-                        target->SetPower(POWER_RAGE, Rage_val);
+                        // target->SetPower(POWER_RAGE, Rage_val);
                     break;
                 }
             default:
