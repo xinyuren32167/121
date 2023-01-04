@@ -1668,6 +1668,8 @@ class spell_rumbling_earth : public SpellScript
 {
     PrepareSpellScript(spell_rumbling_earth);
 
+    uint32 auraShockwaveStack = 80009;
+
     Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(200714))
@@ -1691,25 +1693,39 @@ class spell_rumbling_earth : public SpellScript
         return nullptr;
     }
 
-    void FindTargets(std::list<WorldObject*>& targets)
+    void HandleOnHit()
     {
         if (!GetRuneAura())
             return;
-        LOG_ERROR("error", "proc");
-        if (targets.size() < 3)
-            return;
-        LOG_ERROR("error", "3 target or more");
-        if (Player* caster = GetCaster()->ToPlayer())
-        {
-            caster->ModifySpellCooldown(46968, -GetRuneAura()->GetEffect(EFFECT_2)->GetAmount());
-            LOG_ERROR("error", "caster ?");
-        }
 
+        if (GetHitUnit() && GetHitUnit()->GetTypeId() == TYPEID_UNIT && GetCaster()) {
+            if (Aura* aura = GetCaster()->GetAura(auraShockwaveStack))
+            {
+                if (aura->GetStackAmount() >= 3)
+                {
+                    int32 cooldown = aura->GetDuration();
+                    GetCaster()->ToPlayer()->ModifySpellCooldown(46968, -GetRuneAura()->GetEffect(EFFECT_2)->GetAmount());
+                    GetCaster()->RemoveAura(auraShockwaveStack);
+                    return;
+                }
+                aura->ModStackAmount(1);
+            }
+            else {
+                GetCaster()->AddAura(auraShockwaveStack, GetCaster());
+            }
+        }
+    }
+
+    void HandleOnCast()
+    {
+        if (Aura* aura = GetCaster()->GetAura(auraShockwaveStack))
+            GetCaster()->RemoveAura(auraShockwaveStack);
     }
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_rumbling_earth::FindTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_104);
+        OnHit += SpellHitFn(spell_rumbling_earth::HandleOnHit);
+        OnCast += SpellCastFn(spell_rumbling_earth::HandleOnCast);
     }
 };
 
