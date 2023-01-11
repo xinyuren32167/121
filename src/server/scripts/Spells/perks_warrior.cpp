@@ -617,22 +617,6 @@ class spell_bloodcraze : public AuraScript
     }
 };
 
-class spell_tornado : public AuraScript
-{
-    PrepareAuraScript(spell_tornado);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        GetCaster()->CastSpell(GetCaster(), 1680, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_tornado::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
-    }
-};
-
-
 class spell_fervor_of_battle : public SpellScript
 {
     PrepareSpellScript(spell_fervor_of_battle);
@@ -1701,7 +1685,7 @@ class spell_rumbling_earth : public SpellScript
         if (GetHitUnit() && GetHitUnit()->GetTypeId() == TYPEID_UNIT && GetCaster()) {
             if (Aura* aura = GetCaster()->GetAura(auraShockwaveStack))
             {
-                if (aura->GetStackAmount() >= 3)
+                if (aura->GetStackAmount() >= 2)
                 {
                     int32 cooldown = aura->GetDuration();
                     GetCaster()->ToPlayer()->ModifySpellCooldown(46968, -GetRuneAura()->GetEffect(EFFECT_2)->GetAmount());
@@ -1798,6 +1782,61 @@ class spell_healing_block : public AuraScript
     }
 };
 
+class spell_hurricane : public AuraScript
+{
+    PrepareAuraScript(spell_hurricane);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200796))
+            return GetCaster()->GetAura(200796);
+
+        if (GetCaster()->HasAura(200797))
+            return GetCaster()->GetAura(200797);
+
+        if (GetCaster()->HasAura(200798))
+            return GetCaster()->GetAura(200798);
+
+        if (GetCaster()->HasAura(200799))
+            return GetCaster()->GetAura(200799);
+
+        if (GetCaster()->HasAura(200800))
+            return GetCaster()->GetAura(200800);
+
+        if (GetCaster()->HasAura(200801))
+            return GetCaster()->GetAura(200801);
+
+        return nullptr;
+    }
+
+    int GetProcAura()
+    {
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->AddAura(GetProcAura(), GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster()->HasAura(GetProcAura()))
+            return;
+
+        GetCaster()->RemoveAura(GetProcAura());
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hurricane::HandleProc, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hurricane::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 void AddSC_warrior_perks_scripts()
 {
@@ -1819,7 +1858,6 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_vicious_comtempt);
     RegisterSpellScript(spell_charging_for_blood);
     RegisterSpellScript(spell_bloodcraze);
-    RegisterSpellScript(spell_tornado);
     RegisterSpellScript(spell_fervor_of_battle);
     RegisterSpellScript(spell_storm_of_swords);
     RegisterSpellScript(spell_spinning_grip);
@@ -1856,5 +1894,5 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_blade_turning);
     RegisterSpellScript(spell_block_spike);
     RegisterSpellScript(spell_healing_block);
-    
+    RegisterSpellScript(spell_hurricane);
 }

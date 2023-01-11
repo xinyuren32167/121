@@ -178,6 +178,39 @@ private:
     uint32 _triggerSpellId;
 };
 
+// 44781 - Arcane Barrage
+class spell_mage_arcane_barrage : public SpellScript
+{
+    PrepareSpellScript(spell_mage_arcane_barrage);
+
+    void HandleBeforeCast()
+    {
+        if (!GetCaster()->HasAura(36032))
+            return;
+
+        uint32 arcaneCharge = GetCaster()->GetAura(36032)->GetStackAmount();
+        uint32 damagePct = sSpellMgr->AssertSpellInfo(44781)->GetEffect(EFFECT_1).BasePoints + 1;
+        uint32 amount = arcaneCharge * damagePct;
+
+        GetCaster()->CastCustomSpell(44782, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+    }
+
+    void HandleAfterHit()
+    {
+        if (GetCaster()->HasAura(36032))
+            GetCaster()->RemoveAura(36032);
+
+        if (GetCaster()->HasAura(44782))
+            GetCaster()->RemoveAura(44782);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_mage_arcane_barrage::HandleBeforeCast);
+        AfterHit += SpellHitFn(spell_mage_arcane_barrage::HandleAfterHit);
+    }
+};
+
 class spell_mage_burning_determination : public AuraScript
 {
     PrepareAuraScript(spell_mage_burning_determination);
@@ -1004,16 +1037,6 @@ class spell_mage_summon_water_elemental : public SpellScript
             });
     }
 
-    bool HasPerkEternalWater()
-    {
-        return (GetCaster()->HasAura(300409) ||
-            GetCaster()->HasAura(300410) ||
-            GetCaster()->HasAura(300411) ||
-            GetCaster()->HasAura(300412) ||
-            GetCaster()->HasAura(300413) ||
-            GetCaster()->HasAura(300414));
-    }
-
     bool HasPerkPowerfulElemental(Unit* caster)
     {
         return (caster->HasAura(300415) ||
@@ -1035,19 +1058,9 @@ class spell_mage_summon_water_elemental : public SpellScript
 
         // Glyph of Eternal Water
         if (HasPerkPowerfulElemental(caster))
-        {
-            if (caster->HasAura(SPELL_MAGE_GLYPH_OF_ETERNAL_WATER) || HasPerkEternalWater())
                 caster->CastSpell(caster, 300425, true);
-            else
-                caster->CastSpell(caster, 300424, true);
-        }
         else
-        {
-            if (caster->HasAura(SPELL_MAGE_GLYPH_OF_ETERNAL_WATER) || HasPerkEternalWater())
                 caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT, true);
-            else
-                caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY, true);
-        }
 
 
         if (Creature* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*caster, caster->GetPetGUID()))
@@ -1068,7 +1081,6 @@ class spell_mage_summon_water_elemental : public SpellScript
                 caster->ToPlayer()->CharmSpellInitialize();
             }
         }
-
     }
 
     void Register() override
@@ -1212,6 +1224,8 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_summon_water_elemental);
     RegisterSpellScript(spell_mage_fingers_of_frost_proc_aura);
     RegisterSpellScript(spell_mage_fingers_of_frost_proc);
+    RegisterSpellScript(spell_mage_arcane_barrage);
     RegisterSpellScript(spell_mage_fireblast_charge);
     RegisterSpellScript(spell_cast_frozen_orbs);
+    
 }

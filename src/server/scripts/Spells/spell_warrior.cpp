@@ -1471,6 +1471,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_vigilance_trigger);
     RegisterSpellScript(spell_warr_t3_prot_8p_bonus);
     RegisterSpellScript(spell_warr_heroic_throw);
+    RegisterSpellScript(spell_warr_mortal_strike);
     RegisterSpellScript(spell_ap_to_hit_damage);
     RegisterSpellScript(spell_healing_deep_wound);
     RegisterSpellScript(spell_berserker_rage);

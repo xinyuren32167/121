@@ -51,39 +51,45 @@ class spell_cryo_freeze : public AuraScript
 {
     PrepareAuraScript(spell_cryo_freeze);
 
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(300019))
+            return GetCaster()->GetAura(300019);
+
+        if (GetCaster()->HasAura(300020))
+            return GetCaster()->GetAura(300020);
+
+        if (GetCaster()->HasAura(300021))
+            return GetCaster()->GetAura(300021);
+
+        if (GetCaster()->HasAura(300022))
+            return GetCaster()->GetAura(300022);
+
+        if (GetCaster()->HasAura(300023))
+            return GetCaster()->GetAura(300023);
+
+        if (GetCaster()->HasAura(300024))
+            return GetCaster()->GetAura(300024);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-        PreventDefaultAction();
+        if (!GetRuneAura())
+            return;
 
-        if (GetCaster()->HasAura(300019))
-        {
-            GetCaster()->CastSpell(GetCaster(), 300013, TRIGGERED_IGNORE_CASTER_AURAS);
-        }
-        if (GetCaster()->HasAura(300020))
-        {
-            GetCaster()->CastSpell(GetCaster(), 300014, TRIGGERED_IGNORE_CASTER_AURAS);
-        }
-        if (GetCaster()->HasAura(300021))
-        {
-            GetCaster()->CastSpell(GetCaster(), 300015, TRIGGERED_IGNORE_CASTER_AURAS);
-        }
-        if (GetCaster()->HasAura(300022))
-        {
-            GetCaster()->CastSpell(GetCaster(), 300016, TRIGGERED_IGNORE_CASTER_AURAS);
-        }
-        if (GetCaster()->HasAura(300023))
-        {
-            GetCaster()->CastSpell(GetCaster(), 300017, TRIGGERED_IGNORE_CASTER_AURAS);
-        }
-        if (GetCaster()->HasAura(300024))
-        {
-            GetCaster()->CastSpell(GetCaster(), 300018, TRIGGERED_IGNORE_CASTER_AURAS);
-        }
+        GetCaster()->CastSpell(GetCaster(), GetProcSpell(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_cryo_freeze::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_cryo_freeze::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -270,25 +276,40 @@ class spell_arcanic_gems : public SpellScript
 {
     PrepareSpellScript(spell_arcanic_gems);
 
-    void HandleProc()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300043))
-            GetCaster()->CastSpell(GetCaster(), 300152, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300043);
 
         if (GetCaster()->HasAura(300044))
-            GetCaster()->CastSpell(GetCaster(), 300153, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300044);
 
         if (GetCaster()->HasAura(300045))
-            GetCaster()->CastSpell(GetCaster(), 300154, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300045);
 
         if (GetCaster()->HasAura(300046))
-            GetCaster()->CastSpell(GetCaster(), 300155, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300046);
 
         if (GetCaster()->HasAura(300047))
-            GetCaster()->CastSpell(GetCaster(), 300156, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300047);
 
         if (GetCaster()->HasAura(300048))
-            GetCaster()->CastSpell(GetCaster(), 300157, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300048);
+
+        return nullptr;
+    }
+
+    int GetProcSpell()
+    {
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc()
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), GetProcSpell(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -313,6 +334,61 @@ class spell_unstable_magic : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_unstable_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_greater_invisibility : public AuraScript
+{
+    PrepareAuraScript(spell_greater_invisibility);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(300093))
+            return GetCaster()->GetAura(300093);
+
+        if (GetCaster()->HasAura(300094))
+            return GetCaster()->GetAura(300094);
+
+        if (GetCaster()->HasAura(300095))
+            return GetCaster()->GetAura(300095);
+
+        if (GetCaster()->HasAura(300096))
+            return GetCaster()->GetAura(300096);
+
+        if (GetCaster()->HasAura(300097))
+            return GetCaster()->GetAura(300097);
+
+        if (GetCaster()->HasAura(300098))
+            return GetCaster()->GetAura(300098);
+
+        return nullptr;
+    }
+
+    int GetProcAura()
+    {
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->AddAura(GetProcAura(), GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster()->HasAura(GetProcAura()))
+            return;
+
+        GetCaster()->RemoveAura(GetProcAura());
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_greater_invisibility::HandleProc, EFFECT_1, SPELL_AURA_MOD_INVISIBILITY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_greater_invisibility::HandleRemove, EFFECT_1, SPELL_AURA_MOD_INVISIBILITY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1457,11 +1533,8 @@ class spell_desintegration : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-        if (!GetCaster()->HasAura(11129))
-        {
-            if (Player* target = GetTarget()->ToPlayer())
-                target->ModifySpellCooldown(11129, -aurEff->GetAmount());
-        }
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(11129, -aurEff->GetAmount());
     }
 
     void Register() override
@@ -2001,6 +2074,8 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_controlled_destruction);
     RegisterSpellScript(spell_incendiary_eruptions);
     RegisterSpellScript(spell_fervent_flickering);
+    RegisterSpellScript(spell_greater_invisibility);
+
 }
 
 
