@@ -1555,6 +1555,7 @@ public:
 
     void CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, WeaponAttackType attackType = BASE_ATTACK, const bool sittingVictim = false);
     void DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss);
+    uint32 UpgradeDamage(Unit* attacker, Unit* victim, uint32 damage);
 
     void HandleProcExtraAttackFor(Unit* victim, uint32 count);
     void SetLastExtraAttackSpell(uint32 spellId) { _lastExtraAttackSpell = spellId; }

@@ -8,7 +8,7 @@
 #define PLAYERMETHODS_H
 
 #include "GameTime.h"
-
+#include "PlayerSpecialization.h"
 /***
  * Inherits all methods from: [Object], [WorldObject], [Unit]
  */
@@ -19,7 +19,7 @@ namespace LuaPlayer
         lua_newtable(L);
         int tbl = lua_gettop(L);
         uint32 counter = 1;
-        auto runes = RunesManager::RunesForClients(player);
+        auto runes = RunesManager::RunesForClient(player);
         for (const auto& rune : runes)
         {
             Eluna::Push(L, rune);
@@ -62,11 +62,34 @@ namespace LuaPlayer
         return 1;
     }
 
+    int GetSpecializations(lua_State* L, Player* player)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        auto specs = PlayerSpecialization::GetSpecializations(player);
+        for (const auto& spec : specs)
+        {
+            Eluna::Push(L, spec);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
     int ActivateRune(lua_State* L, Player* player)
     {
         uint32 index = Eluna::CHECKVAL<uint32>(L, 2);
         uint64 runeId = Eluna::CHECKVAL<uint64>(L, 3);
         RunesManager::ActivateRune(player, index, runeId);
+        return 0;
+    }
+
+    int ActivateSpec(lua_State* L, Player* player)
+    {
+        uint32 specId = Eluna::CHECKVAL<uint32>(L, 2);
+        PlayerSpecialization::ActivateSpecialization(player, specId);
         return 0;
     }
 

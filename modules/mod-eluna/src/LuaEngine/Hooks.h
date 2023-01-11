@@ -218,6 +218,8 @@ namespace Hooks
         PLAYER_EVENT_CALLBACK_REFUND_RUNE = 52,       // (event, player, oldLevel)
         PLAYER_EVENT_REFRESH_SLOT_RUNE = 53,       // (event, player, oldLevel)
 
+        PLAYER_EVENT_ON_ACTIVATION_SPEC = 54,       // (event, player, oldLevel)
+
         PLAYER_EVENT_COUNT
     };
 

@@ -865,7 +865,7 @@ class spell_rampart : public AuraScript
 
     int GetProcAmount()
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
     }
 
     void HandlePeriodic(AuraEffect const* aurEff)

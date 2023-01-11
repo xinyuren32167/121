@@ -545,6 +545,7 @@ void Player::AddQuest(Quest const* quest, Object* questGiver)
             GetReputationMgr().SetVisible(factionEntry);
 
     uint32 qtime = 0;
+    // Timed quest
     if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_TIMED))
     {
         uint32 timeAllowed = quest->GetTimeAllowed();

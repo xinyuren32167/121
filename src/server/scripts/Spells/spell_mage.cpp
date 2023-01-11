@@ -58,6 +58,98 @@ enum MageSpells
     SPELL_MAGE_FINGERS_OF_FROST = 44543
 };
 
+
+class npc_spell_frozen_orb : public CreatureScript
+{
+public:
+    npc_spell_frozen_orb() : CreatureScript("npc_spell_frozen_orb") { }
+
+    struct npc_spell_frozen_orbAI : public ScriptedAI
+    {
+        npc_spell_frozen_orbAI(Creature* creature) : ScriptedAI(creature)
+        {
+        }
+
+        uint32 time = 1000;
+
+        void Reset() override
+        {
+            Position pos = me->GetFirstCollisionPosition(40.0f, 0);
+            me->GetMotionMaster()->MovePoint(0, pos);
+            me->CastSpell(me, 72067, true); // VISUAL
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (time <= diff) {
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), 84.6f));
+                    me->CastCustomSpell(80012, SPELLVALUE_BASE_POINT0, amount); // DMG
+                    time = 1000;
+                }
+            }
+            time -= diff;
+        }
+
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_spell_frozen_orbAI(creature);
+    }
+};
+
+class spell_mage_fireblast_charge : public SpellScript
+{
+    PrepareSpellScript(spell_mage_fireblast_charge);
+
+    void HandleAfterCast()
+    {
+        GetCaster()->RemoveAuraFromStack(80007);
+    }
+
+    SpellCastResult CheckStack()
+    {
+        if (!GetCaster()->HasAura(80007))
+            return SPELL_FAILED_NO_CHARGES_REMAIN;
+
+        return SPELL_CAST_OK;
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mage_fireblast_charge::HandleAfterCast);
+        OnCheckCast += SpellCheckCastFn(spell_mage_fireblast_charge::CheckStack);
+    }
+};
+
+class spell_cast_frozen_orbs : public SpellScript
+{
+    PrepareSpellScript(spell_cast_frozen_orbs);
+
+    void HandleSummon()
+    {
+        Position pos = *GetCaster();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = GetCaster()->SummonCreature(500500, pos, TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
+
+        if (!summon)
+            return;
+
+        summon->SetOwnerGUID(GetCaster()->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetTarget();
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_cast_frozen_orbs::HandleSummon);
+    }
+};
+
+
 class spell_mage_arcane_blast : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_blast);
@@ -1096,6 +1188,7 @@ class spell_mage_fingers_of_frost_proc : public AuraScript
 
 void AddSC_mage_spell_scripts()
 {
+    new npc_spell_frozen_orb();
     RegisterSpellScript(spell_mage_arcane_blast);
     RegisterSpellScript(spell_mage_burning_determination);
     RegisterSpellScript(spell_mage_molten_armor);
@@ -1119,4 +1212,6 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_summon_water_elemental);
     RegisterSpellScript(spell_mage_fingers_of_frost_proc_aura);
     RegisterSpellScript(spell_mage_fingers_of_frost_proc);
+    RegisterSpellScript(spell_mage_fireblast_charge);
+    RegisterSpellScript(spell_cast_frozen_orbs);
 }

@@ -808,6 +808,8 @@ void Unit::DealDamageMods(Unit const* victim, uint32& damage, uint32* absorb)
 
 uint32 Unit::DealDamage(Unit* attacker, Unit* victim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellInfo const* spellProto, bool durabilityLoss, bool /*allowGM*/, Spell const* damageSpell /*= nullptr*/)
 {
+    damage = attacker->UpgradeDamage(attacker, victim, damage);
+
     // Xinef: initialize damage done for rage calculations
     // Xinef: its rare to modify damage in hooks, however training dummy's sets damage to 0
     uint32 rage_damage = damage + ((cleanDamage != nullptr) ? cleanDamage->absorbed_damage : 0);
@@ -1104,24 +1106,9 @@ uint32 Unit::DealDamage(Unit* attacker, Unit* victim, uint32 damage, CleanDamage
                         {
                             uint32 interruptFlags = spell->m_spellInfo->InterruptFlags;
                             if (interruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
-                            {
                                 victim->InterruptNonMeleeSpells(false);
-                            }
-                            else if (interruptFlags & SPELL_INTERRUPT_FLAG_PUSH_BACK)
-                            {
-                                spell->Delayed();
-                            }
                         }
                     }
-
-                    if (Spell* spell = victim->m_currentSpells[CURRENT_CHANNELED_SPELL])
-                        if (spell->getState() == SPELL_STATE_CASTING)
-                        {
-                            if ((spell->m_spellInfo->ChannelInterruptFlags & CHANNEL_FLAG_DELAY) != 0)
-                            {
-                                spell->DelayedChannel();
-                            }
-                        }
                 }
             }
         }
@@ -1146,7 +1133,7 @@ uint32 Unit::DealDamage(Unit* attacker, Unit* victim, uint32 damage, CleanDamage
         }
     }
 
-    LOG_DEBUG("entities.unit", "DealDamageEnd returned {} damage", damage);
+    // LOG_ERROR("entities.unit", "DealDamageEnd returned {} damage", damage);
 
     return damage;
 }
@@ -1966,6 +1953,31 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
     }
 }
 
+uint32 Unit::UpgradeDamage(Unit* attacker, Unit* victim, uint32 damage)
+{
+    uint32 tpDamage = damage;
+
+    if (attacker->GetTypeId() != TYPEID_PLAYER)
+        return tpDamage;
+
+    int32 damageIncrease = 0;
+
+    auto auras = victim->GetAuraEffectsByType(SPELL_AURA_DAMAGE_INCREASE_BY_PLAYER);
+
+    for (AuraEffectList::const_iterator aura = auras.begin(); aura != auras.end(); ++aura) {
+        uint64 casterGUID = (*aura)->GetCasterGUID().GetCounter();
+        uint64 attackerGUID = attacker->GetGUID().GetCounter();
+        int32 amount = (*aura)->GetAmount();
+        if ((casterGUID == attackerGUID) && amount > 0)
+            damageIncrease += (*aura)->GetAmount();
+    }
+
+    if (damageIncrease > 0)
+        AddPct(tpDamage, damageIncrease);
+
+    return tpDamage;
+}
+
 void Unit::HandleEmoteCommand(uint32 emoteId)
 {
     WorldPackets::Chat::Emote packet;
@@ -2592,7 +2604,7 @@ void Unit::AttackerStateUpdate(Unit* victim, WeaponAttackType attType /*= BASE_A
             Unit::DealDamageMods(victim, damageInfo.damages[i].damage, &damageInfo.damages[i].absorb);
         }
 
-        SendAttackStateUpdate(&damageInfo);
+        SendAttackStateUpdate(&damageInfo); // Upgrade the damage
 
         //TriggerAurasProcOnEvent(damageInfo);
 
@@ -6182,6 +6194,8 @@ void Unit::SendSpellNonMeleeDamageLog(SpellNonMeleeDamage* log)
 {
     WorldPacket data(SMSG_SPELLNONMELEEDAMAGELOG, (16 + 4 + 4 + 4 + 1 + 4 + 4 + 1 + 1 + 4 + 4 + 1)); // we guess size
     //IF we are in cheat mode we swap absorb with damage and set damage to 0, this way we can still debug damage but our hp bar will not drop
+
+
     uint32 damage = log->damage;
     uint32 absorb = log->absorb;
     if (log->target->GetTypeId() == TYPEID_PLAYER && log->target->ToPlayer()->GetCommandStatus(CHEAT_GOD))
@@ -6189,6 +6203,9 @@ void Unit::SendSpellNonMeleeDamageLog(SpellNonMeleeDamage* log)
         absorb = damage;
         damage = 0;
     }
+
+    damage = UpgradeDamage(log->attacker, log->target, damage);
+
     data << log->target->GetPackGUID();
     data << log->attacker->GetPackGUID();
     data << uint32(log->spellInfo->Id);
@@ -6346,11 +6363,15 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo* damageInfo)
     }
 
     size_t const maxsize = 4 + 5 + 5 + 4 + 4 + 1 + count * (4 + 4 + 4 + 4 + 4) + 1 + 4 + 4 + 4 + 4 + 4 * 12;
+
+    uint32 damage = tmpDamage[0] + tmpDamage[1];
+    damage = UpgradeDamage(damageInfo->attacker, damageInfo->target, damage);
+
     WorldPacket data(SMSG_ATTACKERSTATEUPDATE, maxsize);            // we guess size
     data << uint32(damageInfo->HitInfo);
     data << damageInfo->attacker->GetPackGUID();
     data << damageInfo->target->GetPackGUID();
-    data << uint32(tmpDamage[0] + tmpDamage[1]);                    // Full damage
+    data << uint32(damage);                    // Full damage
     int32 overkill = tmpDamage[0] + tmpDamage[1] - damageInfo->target->GetHealth();
     data << uint32(overkill < 0 ? 0 : overkill);                    // Overkill
     data << uint8(count);                                           // Sub damage count

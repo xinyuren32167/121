@@ -550,7 +550,7 @@ class spell_pet_hit_expertise_scalling : public AuraScript
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pet_hit_expertise_scalling::CalculateHitAmount, EFFECT_0, SPELL_AURA_MOD_HIT_CHANCE);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pet_hit_expertise_scalling::CalculateHitAmount, EFFECT_0, SPELL_AURA_MOD_MASTERY_PCT);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pet_hit_expertise_scalling::CalculateSpellHitAmount, EFFECT_1, SPELL_AURA_MOD_SPELL_HIT_CHANCE);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pet_hit_expertise_scalling::CalculateExpertiseAmount, EFFECT_2, SPELL_AURA_MOD_EXPERTISE);
 

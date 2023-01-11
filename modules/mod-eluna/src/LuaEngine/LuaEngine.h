@@ -450,6 +450,7 @@ public:
     void OnLevelChanged(Player* pPlayer, uint8 oldLevel);
     void RefreshSlotsRune(Player* pPlayer);
     void OnRuneMessage(Player* pPlayer, std::string message);
+    void OnActivateSpec(Player* pPlayer, std::string message, bool activated);
     void OnActivateRune(Player* pPlayer, std::string message, uint32 index);
     void OnDisableRune(Player* pPlayer, std::string message, uint32 spellId);
     void OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId);

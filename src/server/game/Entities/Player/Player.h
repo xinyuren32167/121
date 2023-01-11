@@ -1116,6 +1116,9 @@ public:
     [[nodiscard]] uint8 GetChatTag() const;
     std::string autoReplyMsg;
 
+
+    // Specializations
+
     uint32 GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair, BarberShopStyleEntry const* newSkin = nullptr);
 
     PlayerSocial* GetSocial() { return m_social; }

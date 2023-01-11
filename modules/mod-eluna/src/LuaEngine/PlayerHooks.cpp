@@ -195,6 +195,15 @@ void Eluna::OnRuneMessage(Player* pPlayer, std::string message)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::OnActivateSpec(Player* pPlayer, std::string message, bool activated)
+{
+    START_HOOK(PLAYER_EVENT_ON_ACTIVATION_SPEC);
+    Push(pPlayer);
+    Push(message);
+    Push(activated);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
 
 void Eluna::OnActivateRune(Player* pPlayer, std::string message, uint32 index)
 {

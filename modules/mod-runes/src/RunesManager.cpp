@@ -165,7 +165,7 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     m_Loadout[guid].push_back(loadout);
 }
 
-std::vector<std::string> RunesManager::RunesForClients(Player* player)
+std::vector<std::string> RunesManager::RunesForClient(Player* player)
 {
     std::vector<uint32> runeIds = {};
     std::vector<std::string > elements = {};

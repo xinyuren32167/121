@@ -460,6 +460,8 @@ ElunaRegister<Player> PlayerMethods[] =
     { "DisableRune", &LuaPlayer::DisableRune },
     { "RefundRune", &LuaPlayer::RefundRune },
     { "UpgradeRune", &LuaPlayer::UpgradeRune },
+    { "GetSpecializations", &LuaPlayer::GetSpecializations },
+    { "ActivateSpec", &LuaPlayer::ActivateSpec },
 
     { "GetSelection", &LuaPlayer::GetSelection },
     { "GetGMRank", &LuaPlayer::GetGMRank },

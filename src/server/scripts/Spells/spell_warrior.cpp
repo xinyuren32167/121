@@ -779,7 +779,7 @@ class spell_warr_sweeping_strikes : public AuraScript
         if (DamageInfo* damageInfo = eventInfo.GetDamageInfo())
         {
             SpellInfo const* spellInfo = damageInfo->GetSpellInfo();
-            int32 damage = damageInfo->GetUnmitigatedDamage();
+            int32 damage = damageInfo->GetDamageType() != DIRECT_DAMAGE ? damageInfo->GetUnmitigatedDamage() : damageInfo->GetDamage();
 
             GetTarget()->CastCustomSpell(_procTarget, SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1, &damage, 0, 0, true, nullptr, aurEff);
         }
@@ -921,12 +921,6 @@ class spell_warr_devastate : public SpellScript
             damage += addedDamages;
         }
 
-        /*if (Unit* target = GetHitUnit())
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }*/
-
         GetCaster()->AddAura(SPELL_WARRIOR_SUNDER_ARMOR, GetExplTargetUnit());
 
         if (Unit* target = GetHitUnit())
@@ -992,10 +986,9 @@ class spell_warr_heroic_strike : public SpellScript
     }
 };
 
-// 47450 - Heroic Throw
-class spell_warr_heroic_throw : public SpellScript
+class spell_war_damage_heroic_leap : public SpellScript
 {
-    PrepareSpellScript(spell_warr_heroic_throw);
+    PrepareSpellScript(spell_war_damage_heroic_leap);
 
     void HandleHit(SpellEffIndex effIndex)
     {
@@ -1007,6 +1000,24 @@ class spell_warr_heroic_throw : public SpellScript
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_war_damage_heroic_leap::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 47450 - Heroic Throw
+class spell_warr_heroic_throw : public SpellScript
+{
+    PrepareSpellScript(spell_warr_heroic_throw);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
         SetHitDamage(damage);
     }
 
@@ -1291,6 +1302,23 @@ class spell_berserker_rage : public SpellScript
     }
 };
 
+class spell_rampage_proc_rage : public SpellScript
+{
+    PrepareSpellScript(spell_rampage_proc_rage);
+
+    void HandleProc()
+    {
+        int32 amount = 11.0f + GetCaster()->ToPlayer()->GetMastery();
+        GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_rampage_proc_rage::HandleProc);
+    }
+};
+
+
 class spell_healing_deep_wound : public AuraScript
 {
     PrepareAuraScript(spell_healing_deep_wound);
@@ -1450,4 +1478,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_thunderlord);
     RegisterSpellScript(spell_ignore_pain);
     RegisterSpellScript(spell_ignore_pain_absorbe);
+    RegisterSpellScript(spell_rampage_proc_rage);
+    RegisterSpellScript(spell_warr_devastate);
+    RegisterSpellScript(spell_war_damage_heroic_leap);
 }

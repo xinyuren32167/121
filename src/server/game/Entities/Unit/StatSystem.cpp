@@ -858,7 +858,7 @@ void Player::UpdateArmorPenetration(int32 amount)
 void Player::UpdateMastery()
 {
     float bonusPct = 0;
-    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_HIT_CHANCE);
+    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
     for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
        bonusPct += (*itr)->GetAmount();
 
@@ -937,9 +937,7 @@ void Player::UpdateManaRegen()
     }
 
     // Set regen rate in cast state apply only on spirit based regen
-    int32 modManaRegenInterrupt = GetTotalAuraModifier(SPELL_AURA_MOD_MANA_REGEN_INTERRUPT);
-    if (modManaRegenInterrupt > 100)
-        modManaRegenInterrupt = 100;
+    int32 modManaRegenInterrupt = 100;
     SetStatFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER, power_regen_mp5 + CalculatePct(power_regen, modManaRegenInterrupt));
 
     SetStatFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER, power_regen_mp5 + power_regen);

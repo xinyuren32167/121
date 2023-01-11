@@ -88,7 +88,7 @@ public:
     static void LoadAllSlotRune();
     static void LoadAllProgression();
     static void CreateDefaultCharacter(Player* player);
-    static std::vector<std::string> RunesForClients(Player* player);
+    static std::vector<std::string> RunesForClient(Player* player);
     static std::vector<std::string> LoadoutCachingForClient(Player* player);
     static std::vector<std::string> SlotsCachingForClient(Player* player);
     static std::string ProgressionCachingForClient(Player* player);

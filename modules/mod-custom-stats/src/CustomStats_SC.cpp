@@ -29,7 +29,7 @@ public:
     void OnLogin(Player* player)
     {
         float bonusPct = 0;
-        auto armorPenAuras = player->GetAuraEffectsByType(SPELL_AURA_MOD_HIT_CHANCE);
+        auto armorPenAuras = player->GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
         for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
             bonusPct += (*itr)->GetAmount();
 
