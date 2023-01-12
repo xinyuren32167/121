@@ -1219,6 +1219,113 @@ class spell_mage_fingers_of_frost_proc : public AuraScript
     }
 };
 
+class spell_mage_rule_of_threes : public AuraScript
+{
+    PrepareAuraScript(spell_mage_rule_of_threes);
+
+    Aura* GetTalent()
+    {
+        if (GetCaster()->HasAura(11237))
+            return GetCaster()->GetAura(11237);
+
+        if (GetCaster()->HasAura(12463))
+            return GetCaster()->GetAura(12463);
+
+        if (GetCaster()->HasAura(12464))
+            return GetCaster()->GetAura(12464);
+
+        if (GetCaster()->HasAura(16769))
+            return GetCaster()->GetAura(16769);
+
+        if (GetCaster()->HasAura(16770))
+            return GetCaster()->GetAura(16770);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetTalent())
+            return;
+
+        if (aurEff->GetBase()->GetStackAmount() != 2)
+            return;
+
+        uint32 amount = GetTalent()->GetEffect(EFFECT_0)->GetAmount();
+
+        GetCaster()->CastCustomSpell(16771, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_rule_of_threes::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+class spell_mage_arcane_meditation : public AuraScript
+{
+    PrepareAuraScript(spell_mage_arcane_meditation);
+
+    Aura* GetTalent()
+    {
+        if (GetCaster()->HasAura(18462))
+            return GetCaster()->GetAura(18462);
+
+        if (GetCaster()->HasAura(18463))
+            return GetCaster()->GetAura(18463);
+
+        if (GetCaster()->HasAura(18464))
+            return GetCaster()->GetAura(18464);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetTalent())
+            return;
+
+        int32 amount = CalculatePct(int32(GetCaster()->GetMaxPower(POWER_MANA)), aurEff->GetAmount());
+        
+        GetCaster()->CastCustomSpell(18465, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_arcane_meditation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_improved_fireball : public AuraScript
+{
+    PrepareAuraScript(spell_mage_improved_fireball);
+
+    void HandleDummy(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        if (procInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
+            GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+        else
+            if (GetCaster()->HasAura(procSpell))
+                GetCaster()->RemoveAura(procSpell);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
+    {
+        uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        if (GetCaster()->HasAura(procSpell))
+            GetCaster()->RemoveAura(procSpell);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_improved_fireball::HandleDummy, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_improved_fireball::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new npc_spell_frozen_orb();
@@ -1249,4 +1356,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_fireblast_charge);
     RegisterSpellScript(spell_cast_frozen_orbs);
     RegisterSpellScript(spell_mage_frozen_orb_damage);
+    RegisterSpellScript(spell_mage_rule_of_threes);
+    RegisterSpellScript(spell_mage_arcane_meditation);
+    RegisterSpellScript(spell_mage_improved_fireball);
 }
