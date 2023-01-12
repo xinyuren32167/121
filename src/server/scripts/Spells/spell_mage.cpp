@@ -68,6 +68,7 @@ public:
     {
         npc_spell_frozen_orbAI(Creature* creature) : ScriptedAI(creature)
         {
+
         }
 
         uint32 time = 1000;
@@ -77,6 +78,9 @@ public:
             Position pos = me->GetFirstCollisionPosition(40.0f, 0);
             me->GetMotionMaster()->MovePoint(0, pos);
             me->CastSpell(me, 72067, true); // VISUAL
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
         }
 
         void UpdateAI(uint32 diff) override
@@ -120,6 +124,23 @@ class spell_mage_fireblast_charge : public SpellScript
     {
         AfterCast += SpellCastFn(spell_mage_fireblast_charge::HandleAfterCast);
         OnCheckCast += SpellCheckCastFn(spell_mage_fireblast_charge::CheckStack);
+    }
+};
+
+
+class spell_mage_frozen_orb_damage : public SpellScript
+{
+    PrepareSpellScript(spell_mage_frozen_orb_damage);
+
+    void HandleAfterHit()
+    {
+        GetCaster()->SetSpeed(MOVE_WALK, 0.25);
+        GetCaster()->SetSpeed(MOVE_RUN, 0.25);
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_mage_frozen_orb_damage::HandleAfterHit);
     }
 };
 
@@ -1227,5 +1248,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcane_barrage);
     RegisterSpellScript(spell_mage_fireblast_charge);
     RegisterSpellScript(spell_cast_frozen_orbs);
-    
+    RegisterSpellScript(spell_mage_frozen_orb_damage);
 }
