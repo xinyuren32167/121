@@ -1058,9 +1058,9 @@ class spell_mage_summon_water_elemental : public SpellScript
 
         // Glyph of Eternal Water
         if (HasPerkPowerfulElemental(caster))
-                caster->CastSpell(caster, 300425, true);
+            caster->CastSpell(caster, 300425, true);
         else
-                caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT, true);
+            caster->CastSpell(caster, SPELL_MAGE_SUMMON_WATER_ELEMENTAL_PERMANENT, true);
 
 
         if (Creature* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*caster, caster->GetPetGUID()))
@@ -1227,5 +1227,4 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcane_barrage);
     RegisterSpellScript(spell_mage_fireblast_charge);
     RegisterSpellScript(spell_cast_frozen_orbs);
-    
 }
