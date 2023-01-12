@@ -70,7 +70,7 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 
     Specialization newSpec = m_Specializations[newSpecId];
 
-    if (newSpec.classInfo != player->getClass()) {
+    if (newSpec.classInfo != player->getClassMask()) {
         sEluna->OnActivateSpec(player, "You can't do that", false);
         return;
     }
@@ -104,11 +104,11 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
 
     for (auto const& spec : m_Specializations) {
         Specialization specialization = spec.second;
-        if (spec.second.classInfo == player->getClass()) {
+        if (spec.second.classInfo == player->getClassMask()) {
             std::string spellsIds = "#";
-            for (auto const& spellId : m_SpecSpells[spec.second.id]) {
+            for (auto const& spellId : m_SpecSpells[spec.second.id])
                 spellsIds += std::to_string(spellId) + "#";
-            }
+
             auto string = std::format(
                 "{};{};{};{}",
                 specialization.id,
