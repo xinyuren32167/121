@@ -209,6 +209,8 @@ bool Player::UpdateAllStats()
     UpdateSpellDamageAndHealingBonus();
     UpdateManaRegen();
     RecalculateRating(CR_ARMOR_PENETRATION);
+    UpdateVersatility();
+    UpdateMastery();
     UpdateAllResistances();
 
     return true;

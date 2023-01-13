@@ -175,6 +175,22 @@ class spell_mage_fireblast_charge : public SpellScript
     }
 };
 
+class spell_mage_proc_aoe_pheonix_flame : public SpellScript
+{
+    PrepareSpellScript(spell_mage_proc_aoe_pheonix_flame);
+
+    void HandleAfterHit()
+    {
+        GetCaster()->CastSpell(GetExplTargetUnit(), 80030, true);
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_mage_proc_aoe_pheonix_flame::HandleAfterHit);
+    }
+};
+
+
 
 class spell_mage_frozen_orb_damage : public SpellScript
 {
@@ -189,7 +205,7 @@ class spell_mage_frozen_orb_damage : public SpellScript
 
         if (Unit* unit = GetExplTargetUnit()) {
 
-            if (std::find(hits.begin(), hits.end(), unit->GetGUID()) == hits.end())
+            if (std::find(hits.begin(), hits.end(), unit->GetGUID()) != hits.end())
                 return;
 
             hits.push_back(unit->GetGUID());
@@ -1496,4 +1512,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_cast_arcane_orbs);
     RegisterSpellScript(spell_arcane_orb_damage);
     RegisterSpellScript(spell_aura_proc_raging_winds);
+    RegisterSpellScript(spell_mage_proc_aoe_pheonix_flame);
 }
