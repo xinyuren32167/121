@@ -5420,6 +5420,24 @@ AuraEffect* Unit::GetAuraEffect(AuraType type, SpellFamilyNames name, uint32 ico
     return nullptr;
 }
 
+std::vector<AuraEffect*> Unit::GetAurasEffect(AuraType type, SpellFamilyNames family, uint32 familyFlag1, uint32 familyFlag2, uint32 familyFlag3, ObjectGuid casterGUID) const
+{
+    std::vector<AuraEffect*> auraEffects = {};
+    AuraEffectList const& auras = GetAuraEffectsByType(type);
+    for (AuraEffectList::const_iterator i = auras.begin(); i != auras.end(); ++i)
+    {
+        SpellInfo const* spell = (*i)->GetSpellInfo();
+        if (spell->SpellFamilyName == uint32(family) && spell->SpellFamilyFlags.HasFlag(familyFlag1, familyFlag2, familyFlag3))
+        {
+            if (casterGUID && (*i)->GetCasterGUID() != casterGUID)
+                continue;
+            auraEffects.push_back((*i));
+        }
+    }
+    return {};
+}
+
+
 AuraEffect* Unit::GetAuraEffect(AuraType type, SpellFamilyNames family, uint32 familyFlag1, uint32 familyFlag2, uint32 familyFlag3, ObjectGuid casterGUID) const
 {
     AuraEffectList const& auras = GetAuraEffectsByType(type);

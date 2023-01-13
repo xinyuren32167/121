@@ -54,9 +54,9 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[WARRIOR_FURY] = { 2, 20375, "Fury", 1 };
     m_Specializations[WARRIOR_PROTECTION] = { 3, 12809, "Protection", 1 };
 
-    m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 128 };
-    m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 128 };
-    m_Specializations[MAGE_FROST] = { 6, 42842, "Frost", 128 };
+    m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 8 };
+    m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 8 };
+    m_Specializations[MAGE_FROST] = { 6, 42842, "Frost", 8 };
 }
 
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
@@ -70,7 +70,7 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 
     Specialization newSpec = m_Specializations[newSpecId];
 
-    if (newSpec.classInfo != player->getClassMask()) {
+    if (newSpec.classInfo != player->getClass()) {
         sEluna->OnActivateSpec(player, "You can't do that", false);
         return;
     }
@@ -104,7 +104,7 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
 
     for (auto const& spec : m_Specializations) {
         Specialization specialization = spec.second;
-        if (spec.second.classInfo == player->getClassMask()) {
+        if (spec.second.classInfo == player->getClass()) {
             std::string spellsIds = "#";
             for (auto const& spellId : m_SpecSpells[spec.second.id])
                 spellsIds += std::to_string(spellId) + "#";

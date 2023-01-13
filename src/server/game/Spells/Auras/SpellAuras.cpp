@@ -1712,10 +1712,27 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 {
                     // Shattered Barrier
                     if (AuraEffect* absorb = GetEffect(EFFECT_0))
-                        if (absorb->GetAmount() <= 0) // removed by damage, not dispel
-                            if (AuraEffect* dummy = caster->GetDummyAuraEffect(SPELLFAMILY_MAGE, 2945, 0))
-                                if (roll_chance_i(dummy->GetSpellInfo()->ProcChance))
+                        if (absorb->GetAmount() <= 0) {
+                            if (AuraEffect* dummy = caster->GetDummyAuraEffect(SPELLFAMILY_MAGE, 2945, 0)) {
+                                if (roll_chance_i(dummy->GetSpellInfo()->ProcChance)) {
                                     caster->CastSpell(target, 55080, true, nullptr, GetEffect(0));
+
+                                    auto itr = caster->ToPlayer()->GetSpellCooldownMap().find(43039);
+
+                                    if (itr == caster->ToPlayer()->GetSpellCooldownMap().end())
+                                        return;
+
+                                    uint32 remaningCooldown = itr->second.end;
+
+                                    if (dummy->GetSpellInfo()->GetRank() == 1) { // Rank 1 Reduce the remaning cooldown by 15%
+                                        caster->ToPlayer()->ModifySpellCooldown(43039, -(remaningCooldown * 0.15));
+                                    }
+                                    if (dummy->GetSpellInfo()->GetRank() == 2) { // Rank 1 Reduce the remaning cooldown by 30%
+                                        caster->ToPlayer()->ModifySpellCooldown(43039, -(remaningCooldown * 0.30));
+                                    }
+                                }
+                            }
+                        }
                 }
                 break;
             }
