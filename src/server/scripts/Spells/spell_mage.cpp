@@ -1427,7 +1427,7 @@ class spell_mage_improved_fireball : public AuraScript
 
     void HandleDummy(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
 
         if (procInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
             GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
@@ -1438,7 +1438,7 @@ class spell_mage_improved_fireball : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
     {
-        uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
 
         if (GetCaster()->HasAura(procSpell))
             GetCaster()->RemoveAura(procSpell);
@@ -1448,6 +1448,24 @@ class spell_mage_improved_fireball : public AuraScript
     {
         OnEffectProc += AuraEffectProcFn(spell_mage_improved_fireball::HandleDummy, EFFECT_0, SPELL_AURA_DUMMY);
         OnEffectRemove += AuraEffectRemoveFn(spell_mage_improved_fireball::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_mage_empowered_fire : public AuraScript
+{
+    PrepareAuraScript(spell_mage_empowered_fire);
+
+    void HandleDummy(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        LOG_ERROR("error", "proc");
+        int32 amount = CalculatePct(int32(GetCaster()->GetMaxPower(POWER_MANA)), aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(67545, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_empowered_fire::HandleDummy, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1488,4 +1506,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_arcane_orb_damage);
     RegisterSpellScript(spell_aura_proc_raging_winds);
     RegisterSpellScript(spell_mage_proc_aoe_pheonix_flame);
+    RegisterSpellScript(spell_mage_empowered_fire); 
 }
