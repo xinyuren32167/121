@@ -151,30 +151,6 @@ public:
     }
 };
 
-class spell_mage_fireblast_charge : public SpellScript
-{
-    PrepareSpellScript(spell_mage_fireblast_charge);
-
-    void HandleAfterCast()
-    {
-        GetCaster()->RemoveAuraFromStack(80007);
-    }
-
-    SpellCastResult CheckStack()
-    {
-        if (!GetCaster()->HasAura(80007))
-            return SPELL_FAILED_NO_CHARGES_REMAIN;
-
-        return SPELL_CAST_OK;
-    }
-
-    void Register() override
-    {
-        AfterCast += SpellCastFn(spell_mage_fireblast_charge::HandleAfterCast);
-        OnCheckCast += SpellCheckCastFn(spell_mage_fireblast_charge::CheckStack);
-    }
-};
-
 class spell_mage_proc_aoe_pheonix_flame : public SpellScript
 {
     PrepareSpellScript(spell_mage_proc_aoe_pheonix_flame);
@@ -1503,7 +1479,6 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_fingers_of_frost_proc_aura);
     RegisterSpellScript(spell_mage_fingers_of_frost_proc);
     RegisterSpellScript(spell_mage_arcane_barrage);
-    RegisterSpellScript(spell_mage_fireblast_charge);
     RegisterSpellScript(spell_cast_frozen_orbs);
     RegisterSpellScript(spell_mage_frozen_orb_damage);
     RegisterSpellScript(spell_mage_rule_of_threes);

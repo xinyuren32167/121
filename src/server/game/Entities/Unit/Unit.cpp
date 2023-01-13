@@ -8738,7 +8738,6 @@ bool Unit::HandleAuraProc(Unit* victim, uint32 damage, Aura* triggeredByAura, Sp
 
                             return procEx & PROC_EX_CRITICAL_HIT;
                         }
-                    // Empowered Fire
                 }
                 break;
             }
