@@ -190,19 +190,15 @@ class spell_mage_combustion_on_remove : public AuraScript
 {
     PrepareAuraScript(spell_mage_combustion_on_remove);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
+    void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        return ValidateSpellInfo({ SPELL_MAGE_COMBUSTION });
-    }
-
-    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
+        GetCaster()->RemoveAura(11129);
         GetCaster()->ToPlayer()->UpdateMastery();
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_mage_combustion_on_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_combustion_on_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1533,10 +1529,10 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_rule_of_threes);
     RegisterSpellScript(spell_mage_arcane_meditation);
     RegisterSpellScript(spell_mage_improved_fireball); 
-    RegisterSpellScript(spell_cast_arcane_orbs);
-    RegisterSpellScript(spell_arcane_orb_damage);
-    RegisterSpellScript(spell_aura_proc_raging_winds);
-    RegisterSpellScript(spell_mage_proc_aoe_pheonix_flame);
+    RegisterSpellScript(spell_mage_arcane_orb);
+    RegisterSpellScript(spell_mage_arcane_orb_damage);
+    RegisterSpellScript(spell_mage_raging_winds);
+    RegisterSpellScript(spell_mage_pheonix_flame);
     RegisterSpellScript(spell_mage_empowered_fire);
     RegisterSpellScript(spell_mage_mastery_combustion);
     RegisterSpellScript(spell_mage_combustion_on_remove);

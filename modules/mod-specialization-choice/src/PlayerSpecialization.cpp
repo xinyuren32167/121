@@ -70,6 +70,8 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 
     Specialization newSpec = m_Specializations[newSpecId];
 
+    LOG_ERROR("CLASS", "CLASS {} {}", player->getClass(), newSpec.classInfo);
+
     if (newSpec.classInfo != player->getClass()) {
         sEluna->OnActivateSpec(player, "You can't do that", false);
         return;

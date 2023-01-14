@@ -861,9 +861,9 @@ void Player::UpdateMastery()
 
     AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
 
-    for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr) {
-        amount = AddPct(amount, (*itr)->GetAmount());
-    }
+    for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
+        if (HasAura((*itr)->GetBase()->GetId()))
+            amount = AddPct(amount, (*itr)->GetAmount());
 
     if (amount < 0)
         amount = 0;

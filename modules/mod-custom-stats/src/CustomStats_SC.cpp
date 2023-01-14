@@ -28,11 +28,11 @@ public:
 
     void OnLogin(Player* player)
     {
-       // player->UpdateMastery();
     }
 
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)
     {
+        player->UpdateMastery();
     }
 };
 
