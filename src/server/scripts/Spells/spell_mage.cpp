@@ -1533,10 +1533,10 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_rule_of_threes);
     RegisterSpellScript(spell_mage_arcane_meditation);
     RegisterSpellScript(spell_mage_improved_fireball); 
-    RegisterSpellScript(spell_cast_arcane_orbs);
-    RegisterSpellScript(spell_arcane_orb_damage);
-    RegisterSpellScript(spell_aura_proc_raging_winds);
-    RegisterSpellScript(spell_mage_proc_aoe_pheonix_flame);
+    RegisterSpellScript(spell_mage_arcane_orb);
+    RegisterSpellScript(spell_mage_arcane_orb_damage);
+    RegisterSpellScript(spell_mage_raging_winds);
+    RegisterSpellScript(spell_mage_pheonix_flame);
     RegisterSpellScript(spell_mage_empowered_fire);
     RegisterSpellScript(spell_mage_mastery_combustion);
     RegisterSpellScript(spell_mage_combustion_on_remove);
