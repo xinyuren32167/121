@@ -606,6 +606,7 @@ void Player::UpdateRating(CombatRating cr)
         UpdateBlockPercentage();
         break;
     case CR_HIT_MELEE:
+        totalMastery = GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE));
         UpdateMastery();
         break;
     case CR_CRIT_MELEE:

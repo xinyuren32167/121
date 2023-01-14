@@ -1932,9 +1932,12 @@ public:
 
     /* Mastery */
     void UpdateMastery();
+    void UpdateValueMastery(uint32 amount);
     void SetMastery(float pct) { m_Mastery = pct;  };
     float GetMastery() { return m_Mastery; };
     float m_Mastery;
+
+    uint32 totalMastery = 0;
 
     void UpdateAllSpellCritChances();
     void UpdateSpellCritChance(uint32 school);

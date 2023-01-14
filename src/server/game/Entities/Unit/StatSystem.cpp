@@ -209,8 +209,6 @@ bool Player::UpdateAllStats()
     UpdateSpellDamageAndHealingBonus();
     UpdateManaRegen();
     RecalculateRating(CR_ARMOR_PENETRATION);
-    UpdateVersatility();
-    UpdateMastery();
     UpdateAllResistances();
 
     return true;
@@ -859,22 +857,20 @@ void Player::UpdateArmorPenetration(int32 amount)
 
 void Player::UpdateMastery()
 {
-    float bonusPct = 0;
+    uint32 amount = totalMastery;
+
     AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
-    for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
-       bonusPct += (*itr)->GetAmount();
 
-   uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
-   float pct = 1 + (bonusPct / 100);
-   amount *= pct;
+    for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr) {
+        amount = AddPct(amount, (*itr)->GetAmount());
+    }
 
-   if (amount < 0)
-       amount = 0;
+    if (amount < 0)
+        amount = 0;
 
-   SetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + static_cast<uint16>(CR_HIT_MELEE), uint32(amount));
-   SetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + static_cast<uint16>(CR_HIT_SPELL), uint32(amount));
-   SetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + static_cast<uint16>(CR_HIT_RANGED), uint32(amount));
-   sScriptMgr->OnUpdateMastery(this, amount);
+    SetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE), amount);
+
+    sScriptMgr->OnUpdateMastery(this, amount);
 }
 
 void Player::UpdateAllSpellCritChances()

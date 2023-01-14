@@ -90,7 +90,7 @@ public:
         {
             if (time <= diff) {
                 if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                    int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), 84.6f));
+                    int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), 11.0f));
                     me->CastCustomSpell(80012, SPELLVALUE_BASE_POINT0, amount); // DMG
                     time = 1000;
                 }
@@ -166,7 +166,45 @@ class spell_mage_proc_aoe_pheonix_flame : public SpellScript
     }
 };
 
+class spell_mage_mastery_combustion : public SpellScript
+{
+    PrepareSpellScript(spell_mage_mastery_combustion);
 
+    void HandleAfterCast()
+    {
+        GetCaster()->ToPlayer()->UpdateMastery();
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+       
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mage_mastery_combustion::HandleAfterCast);
+    }
+};
+
+class spell_mage_combustion_on_remove : public AuraScript
+{
+    PrepareAuraScript(spell_mage_combustion_on_remove);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_MAGE_COMBUSTION });
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->ToPlayer()->UpdateMastery();
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_combustion_on_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
 
 class spell_mage_frozen_orb_damage : public SpellScript
 {
@@ -176,8 +214,8 @@ class spell_mage_frozen_orb_damage : public SpellScript
 
     void HandleAfterHit()
     {
-        GetCaster()->SetSpeed(MOVE_WALK, 0.25);
-        GetCaster()->SetSpeed(MOVE_RUN, 0.25);
+        GetCaster()->SetSpeed(MOVE_WALK, 0.10);
+        GetCaster()->SetSpeed(MOVE_RUN, 0.10);
 
         if (Unit* unit = GetExplTargetUnit()) {
 
@@ -1220,11 +1258,11 @@ class spell_aura_proc_raging_winds : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         if (Player* caster = GetCaster()->ToPlayer()) {
-            if (caster->HasAura(80019))
+            if (caster->HasSpell(80019))
                 caster->ModifySpellCooldown(80013, -200);
-            if (caster->HasAura(80020))
+            if (caster->HasSpell(80020))
                 caster->ModifySpellCooldown(80013, -400);
-            if (caster->HasAura(80021))
+            if (caster->HasSpell(80021))
                 caster->ModifySpellCooldown(80013, -600);
         }
     }
@@ -1457,9 +1495,7 @@ class spell_mage_empowered_fire : public AuraScript
 
     void HandleDummy(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        LOG_ERROR("error", "proc");
         int32 amount = CalculatePct(int32(GetCaster()->GetMaxPower(POWER_MANA)), aurEff->GetAmount());
-
         GetCaster()->CastCustomSpell(67545, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -1506,5 +1542,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_arcane_orb_damage);
     RegisterSpellScript(spell_aura_proc_raging_winds);
     RegisterSpellScript(spell_mage_proc_aoe_pheonix_flame);
-    RegisterSpellScript(spell_mage_empowered_fire); 
+    RegisterSpellScript(spell_mage_empowered_fire);
+    RegisterSpellScript(spell_mage_mastery_combustion);
+    RegisterSpellScript(spell_mage_combustion_on_remove);
 }

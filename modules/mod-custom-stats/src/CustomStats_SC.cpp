@@ -28,19 +28,11 @@ public:
 
     void OnLogin(Player* player)
     {
-        float bonusPct = 0;
-        auto armorPenAuras = player->GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
-        for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
-            bonusPct += (*itr)->GetAmount();
+       // player->UpdateMastery();
+    }
 
-        uint32 amount = player->GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_HIT_MELEE);
-        float pct = 1 + (bonusPct / 100);
-        amount *= pct;
-
-        if (amount < 0)
-            amount = 0;
-
-        CustomStatsManager::UpdateMastery(player, amount);
+    void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)
+    {
     }
 };
 
