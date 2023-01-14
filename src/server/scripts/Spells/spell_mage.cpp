@@ -151,9 +151,9 @@ public:
     }
 };
 
-class spell_mage_proc_aoe_pheonix_flame : public SpellScript
+class spell_mage_pheonix_flame : public SpellScript
 {
-    PrepareSpellScript(spell_mage_proc_aoe_pheonix_flame);
+    PrepareSpellScript(spell_mage_pheonix_flame);
 
     void HandleAfterHit()
     {
@@ -162,7 +162,7 @@ class spell_mage_proc_aoe_pheonix_flame : public SpellScript
 
     void Register() override
     {
-        AfterHit += SpellHitFn(spell_mage_proc_aoe_pheonix_flame::HandleAfterHit);
+        AfterHit += SpellHitFn(spell_mage_pheonix_flame::HandleAfterHit);
     }
 };
 
@@ -241,9 +241,9 @@ class spell_mage_frozen_orb_damage : public SpellScript
     }
 };
 
-class spell_arcane_orb_damage : public SpellScript
+class spell_mage_arcane_orb_damage : public SpellScript
 {
-    PrepareSpellScript(spell_arcane_orb_damage);
+    PrepareSpellScript(spell_mage_arcane_orb_damage);
 
     void HandleAfterHit()
     {
@@ -253,13 +253,13 @@ class spell_arcane_orb_damage : public SpellScript
 
     void Register() override
     {
-        AfterHit += SpellHitFn(spell_arcane_orb_damage::HandleAfterHit);
+        AfterHit += SpellHitFn(spell_mage_arcane_orb_damage::HandleAfterHit);
     }
 };
 
-class spell_cast_frozen_orbs : public SpellScript
+class spell_mage_frozen_orbs : public SpellScript
 {
-    PrepareSpellScript(spell_cast_frozen_orbs);
+    PrepareSpellScript(spell_mage_frozen_orbs);
 
     void HandleSummon()
     {
@@ -279,13 +279,13 @@ class spell_cast_frozen_orbs : public SpellScript
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_cast_frozen_orbs::HandleSummon);
+        OnCast += SpellCastFn(spell_mage_frozen_orbs::HandleSummon);
     }
 };
 
-class spell_cast_arcane_orbs : public SpellScript
+class spell_mage_arcane_orb : public SpellScript
 {
-    PrepareSpellScript(spell_cast_arcane_orbs);
+    PrepareSpellScript(spell_mage_arcane_orb);
 
     void HandleSummon()
     {
@@ -306,7 +306,7 @@ class spell_cast_arcane_orbs : public SpellScript
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_cast_arcane_orbs::HandleSummon);
+        OnCast += SpellCastFn(spell_mage_arcane_orb::HandleSummon);
     }
 };
 
@@ -1251,25 +1251,20 @@ class spell_mage_summon_water_elemental : public SpellScript
     }
 };
 
-class spell_aura_proc_raging_winds : public AuraScript
+class spell_mage_raging_winds : public AuraScript
 {
-    PrepareAuraScript(spell_aura_proc_raging_winds);
+    PrepareAuraScript(spell_mage_raging_winds);
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         if (Player* caster = GetCaster()->ToPlayer()) {
-            if (caster->HasSpell(80019))
-                caster->ModifySpellCooldown(80013, -200);
-            if (caster->HasSpell(80020))
-                caster->ModifySpellCooldown(80013, -400);
-            if (caster->HasSpell(80021))
-                caster->ModifySpellCooldown(80013, -600);
+            caster->ModifySpellCooldown(80013, -aurEff->GetAmount());
         }
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_aura_proc_raging_winds::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_mage_raging_winds::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1533,7 +1528,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_fingers_of_frost_proc_aura);
     RegisterSpellScript(spell_mage_fingers_of_frost_proc);
     RegisterSpellScript(spell_mage_arcane_barrage);
-    RegisterSpellScript(spell_cast_frozen_orbs);
+    RegisterSpellScript(spell_mage_frozen_orbs);
     RegisterSpellScript(spell_mage_frozen_orb_damage);
     RegisterSpellScript(spell_mage_rule_of_threes);
     RegisterSpellScript(spell_mage_arcane_meditation);
