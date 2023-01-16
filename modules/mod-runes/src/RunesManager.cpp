@@ -544,16 +544,16 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     if (match == m_SlotRune.end())
         return;
 
-    auto runeToFind = std::find_if(match->second.begin(), match->second.end(), [&](const SlotRune& slot) {
+    auto slotToFind = std::find_if(match->second.begin(), match->second.end(), [&](const SlotRune& slot) {
         return slot.runeSpellId == rune.spellId;
     });
 
-    if (runeToFind == match->second.end())
+    if (slotToFind == match->second.end())
         return;
 
-    match->second.erase(runeToFind);
+    match->second.erase(slotToFind);
 
-    CharacterDatabase.Query("DELETE FROM character_rune_slots WHERE runeId = {}", runeToFind->id);
+    CharacterDatabase.Query("DELETE FROM character_rune_slots WHERE runeId = {} AND id = {}", slotToFind->runeId, activeId);
     sEluna->RefreshSlotsRune(player);
 }
 
