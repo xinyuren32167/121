@@ -171,29 +171,28 @@ std::vector<std::string> RunesManager::RunesForClient(Player* player)
     std::vector<std::string > elements = {};
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
     auto pushRune = [&](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
-
-        std::stringstream fmt;
-        fmt << rune.spellId
-            << ";" <<
-            rune.quality
-            << ";" <<
-            rune.maxStack
-            << ";" <<
-            rune.refundItemId
-            << ";" <<
-            rune.refundDusts
-            << ";" <<
+        std::string fmt = 
+        std::to_string(rune.spellId)
+            + ";" +
+            std::to_string(rune.quality)
+            + ";" +
+            std::to_string(rune.maxStack)
+            + ";" +
+                std::to_string(rune.refundItemId)
+            + ";" +
+                std::to_string(rune.refundDusts)
+            + ";" +
             rune.keywords
-            << ";" <<
+            + ";" +
             std::to_string(config.debug ? true : kwown)
-            << ";" <<
+            + ";" +
             std::to_string(config.debug ? rune.spellId : id)
-            << ";" <<
+            + ";" +
             std::to_string(config.debug ? (rune.allowableClass & player->getClassMask()) != 0 : activable)
-            << ";" <<
-            activated
-            << ";" <<  rune.allowableClass;
-        elements.push_back(fmt.str());
+            + ";" +
+                std::to_string(activated)
+            + ";" + std::to_string(rune.allowableClass);
+        elements.push_back(fmt);
     };
 
     if (known != m_KnownRunes.end())
@@ -248,7 +247,7 @@ std::vector<std::string> RunesManager::SlotsCachingForClient(Player* player)
         for (auto const& slot : match->second) {
             Rune rune = GetRuneBySpellId(slot.runeSpellId);
             std::stringstream fmt;
-            fmt << slot.id << ";" << slot.runeId << ";" << slot.runeSpellId << ";" << slot.order << ";" << rune.quality;
+            fmt << slot.id << ";" << slot.runeId << ";" << slot.runeSpellId << ";" << slot.order << ";" << std::to_string(rune.quality);
             elements.push_back(fmt.str());
         }
 
