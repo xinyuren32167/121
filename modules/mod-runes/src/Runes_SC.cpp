@@ -73,7 +73,7 @@ public:
     static bool HandleLevelupCustom(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         if (handler->GetPlayer()->getLevel() < 60)
-            handler->GetPlayer()->GiveLevel(1);
+            handler->GetPlayer()->GiveLevel(handler->GetPlayer()->getLevel() + 1);
 
         return true;
     }

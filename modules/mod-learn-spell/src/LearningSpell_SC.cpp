@@ -25,6 +25,19 @@ public:
 
     void OnFirstLogin(Player* player) {
         LearningSpellsManager::GiveSpellsForLevelup(player);
+
+        switch (player->getClass())
+        {
+        case CLASS_WARRIOR:
+            player->removeSpell(78, SPEC_MASK_ALL, false);
+            break;
+        case CLASS_MAGE:
+            player->removeSpell(168, SPEC_MASK_ALL, false);
+            player->removeSpell(133, SPEC_MASK_ALL, false);
+            break;
+        default:
+            break;
+        }
     }
 };
 
