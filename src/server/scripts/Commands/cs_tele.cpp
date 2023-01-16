@@ -50,12 +50,12 @@ public:
         static ChatCommandTable teleNameCommandTable =
         {
             { "npc",    teleNameNpcCommandTable },
-            { "",       HandleTeleNameCommand,           SEC_GAMEMASTER,    Console::Yes },
+            { "",       HandleTeleNameCommand,           SEC_PLAYER,    Console::Yes },
         };
         static ChatCommandTable teleCommandTable =
         {
-            { "add",    HandleTeleAddCommand,            SEC_ADMINISTRATOR, Console::No },
-            { "del",    HandleTeleDelCommand,            SEC_ADMINISTRATOR, Console::Yes },
+            { "add",    HandleTeleAddCommand,            SEC_PLAYER, Console::No },
+            { "del",    HandleTeleDelCommand,            SEC_PLAYER, Console::Yes },
             { "name",   teleNameCommandTable },
             { "group",  HandleTeleGroupCommand,          SEC_PLAYER,    Console::No },
             { "",       HandleTeleCommand,               SEC_PLAYER,    Console::No }

@@ -20,7 +20,6 @@ public:
        
     }
 
-
     void OnCreate(Player* player)
     {
         RunesManager::CreateDefaultCharacter(player);

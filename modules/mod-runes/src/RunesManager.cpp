@@ -509,14 +509,23 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
     SlotRune slot = { activeId, runeId, rune.spellId, 1 };
 
     if (match != m_SlotRune.end()) {
-        if(match->second.size() > 0)
+        if (match->second.size() > 0) {
             slot.order = GetMissingSlotNumber(match->second, player);
-
+        }
         match->second.push_back(slot);
     }
     else
         m_SlotRune[activeId].push_back(slot);
 
+
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_RUNE_SLOT);
+    stmt->SetData(0, slot.id);
+    stmt->SetData(1, slot.runeId);
+    stmt->SetData(2, slot.runeSpellId);
+    stmt->SetData(3, slot.order);
+    trans->Append(stmt);
+    CharacterDatabase.CommitTransaction(trans);
     sEluna->RefreshSlotsRune(player);
 }
 
@@ -543,16 +552,22 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
         return;
 
     match->second.erase(runeToFind);
+
+    CharacterDatabase.Query("DELETE FROM character_rune_slots WHERE runeId = {}", runeToFind->id);
     sEluna->RefreshSlotsRune(player);
 }
 
-uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p)
-{
+uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p) {
+
     auto progression = m_Progression.find(p->GetSession()->GetAccountId());
 
-    for (int i = 0; i < progression->second.unlockedSlotRunes; i++) {
-        if (slots[i].order != (i + 1))
-            return (i + 1);
+    std::set<uint32> usedOrders;
+    for (auto& slot : slots) {
+        usedOrders.insert(slot.order);
     }
-    return -1;
+    uint32 idx = 1;
+    while (usedOrders.count(idx) != 0) {
+        idx++;
+    }
+    return idx;
 }
