@@ -4,7 +4,7 @@
 #include "ElunaIncludes.h"
 #include "LuaEngine.h"
 #include "boost/iterator/counting_iterator.hpp"
-
+#include "CustomStatsManager.h"
 
 std::map<uint64 /* guid */, uint32 /* specId */> PlayerSpecialization::m_PlayersSpecialization = {};
 std::map<uint32 /* specId */, Specialization> PlayerSpecialization::m_Specializations = {};
@@ -90,6 +90,7 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
     m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
     CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
     sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true);
+    player->UpdateMastery();
 }
 
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
@@ -97,12 +98,10 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
     std::vector<std::string> elements = {};
     uint32 currentSpecId = GetCurrentSpecId(player);
 
-    auto firstElement = std::format(
-        "{}",
-        currentSpecId
-    );
+    std::stringstream fmt;
+    fmt << currentSpecId;
 
-    elements.push_back(firstElement);
+    elements.push_back(fmt.str());
 
     for (auto const& spec : m_Specializations) {
         Specialization specialization = spec.second;
@@ -111,14 +110,9 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
             for (auto const& spellId : m_SpecSpells[spec.second.id])
                 spellsIds += std::to_string(spellId) + "#";
 
-            auto string = std::format(
-                "{};{};{};{}",
-                specialization.id,
-                specialization.name,
-                specialization.spellIcon,
-                spellsIds
-            );
-            elements.push_back(string);
+            std::stringstream fmt2;
+            fmt2 << specialization.id << ";" << specialization.name << ";" << specialization.spellIcon << ";" << spellsIds;
+            elements.push_back(fmt2.str());
         }
     }
     return elements;

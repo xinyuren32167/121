@@ -43,9 +43,9 @@ public:
     {
         static ChatCommandTable teleNameNpcCommandTable =
         {
-            { "id",     HandleTeleNameNpcIdCommand,      SEC_GAMEMASTER,    Console::Yes },
-            { "guid",   HandleTeleNameNpcSpawnIdCommand, SEC_GAMEMASTER,    Console::Yes },
-            { "name",   HandleTeleNameNpcNameCommand,    SEC_GAMEMASTER,    Console::Yes },
+            { "id",     HandleTeleNameNpcIdCommand,      SEC_PLAYER,    Console::Yes },
+            { "guid",   HandleTeleNameNpcSpawnIdCommand, SEC_PLAYER,    Console::Yes },
+            { "name",   HandleTeleNameNpcNameCommand,    SEC_PLAYER,    Console::Yes },
         };
         static ChatCommandTable teleNameCommandTable =
         {
@@ -57,8 +57,8 @@ public:
             { "add",    HandleTeleAddCommand,            SEC_ADMINISTRATOR, Console::No },
             { "del",    HandleTeleDelCommand,            SEC_ADMINISTRATOR, Console::Yes },
             { "name",   teleNameCommandTable },
-            { "group",  HandleTeleGroupCommand,          SEC_GAMEMASTER,    Console::No },
-            { "",       HandleTeleCommand,               SEC_GAMEMASTER,    Console::No }
+            { "group",  HandleTeleGroupCommand,          SEC_PLAYER,    Console::No },
+            { "",       HandleTeleCommand,               SEC_PLAYER,    Console::No }
         };
         static ChatCommandTable commandTable =
         {

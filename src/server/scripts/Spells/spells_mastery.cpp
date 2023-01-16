@@ -177,6 +177,23 @@ class spell_mastery_savant : public SpellScript
     }
 };
 
+class spell_mastery_savant_on_remove : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_savant_on_remove);
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->RemoveAura(300112);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_mastery_savant_on_remove::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 // Warrior
 class spell_mastery_deep_wounds : public AuraScript
 {
@@ -246,7 +263,20 @@ class spell_mastery_critical_block : public SpellScript
     }
 };
 
+class spell_mastery_critical_block_on_remove : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_critical_block_on_remove);
 
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->RemoveAura(100750);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_mastery_critical_block_on_remove::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
 
 void AddSC_spells_mastery_scripts()
 {
@@ -258,4 +288,6 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_deep_wounds);
     RegisterSpellScript(spell_mastery_unshackled_fury);
     RegisterSpellScript(spell_mastery_critical_block);
+    RegisterSpellScript(spell_mastery_savant_on_remove);
+    RegisterSpellScript(spell_mastery_critical_block_on_remove);
 }

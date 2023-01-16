@@ -171,21 +171,29 @@ std::vector<std::string> RunesManager::RunesForClient(Player* player)
     std::vector<std::string > elements = {};
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
     auto pushRune = [&](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
-        auto runestring = std::format(
-            "{};{};{};{};{};{};{};{};{};{};{}",
-            rune.spellId,
-            rune.quality,
-            rune.maxStack,
-            rune.refundItemId,
-            rune.refundDusts,
-            rune.keywords,
-            config.debug ? true : kwown,
-            config.debug ? rune.spellId : id,
-            config.debug ? true : activable,
-            activated,
-            rune.allowableClass
-        );
-        elements.push_back(runestring);
+
+        std::stringstream fmt;
+        fmt << rune.spellId
+            << ";" <<
+            rune.quality
+            << ";" <<
+            rune.maxStack
+            << ";" <<
+            rune.refundItemId
+            << ";" <<
+            rune.refundDusts
+            << ";" <<
+            rune.keywords
+            << ";" <<
+            std::to_string(config.debug ? true : kwown)
+            << ";" <<
+            std::to_string(config.debug ? rune.spellId : id)
+            << ";" <<
+            std::to_string(config.debug ? (rune.allowableClass & player->getClassMask()) != 0 : activable)
+            << ";" <<
+            activated
+            << ";" <<  rune.allowableClass;
+        elements.push_back(fmt.str());
     };
 
     if (known != m_KnownRunes.end())
@@ -218,13 +226,9 @@ std::vector<std::string> RunesManager::LoadoutCachingForClient(Player* player)
 
     if (match != m_Loadout.end()) {
         for (auto const& loadout : match->second) {
-            auto runestring = std::format(
-                "{};{};{}",
-                loadout.id,
-                loadout.title,
-                loadout.active
-            );
-            elements.push_back(runestring);
+            std::stringstream fmt;
+            fmt << loadout.id << ";" << loadout.title << ";" << loadout.active;
+            elements.push_back(fmt.str());
         }
     }
     return elements;
@@ -243,15 +247,9 @@ std::vector<std::string> RunesManager::SlotsCachingForClient(Player* player)
     if (match != m_SlotRune.end())
         for (auto const& slot : match->second) {
             Rune rune = GetRuneBySpellId(slot.runeSpellId);
-            auto runestring = std::format(
-                "{};{};{};{};{}",
-                slot.id,
-                slot.runeId,
-                slot.runeSpellId,
-                slot.order,
-                rune.quality
-            );
-            elements.push_back(runestring);
+            std::stringstream fmt;
+            fmt << slot.id << ";" << slot.runeId << ";" << slot.runeSpellId << ";" << slot.order << ";" << rune.quality;
+            elements.push_back(fmt.str());
         }
 
     return elements;
@@ -263,14 +261,9 @@ std::string RunesManager::ProgressionCachingForClient(Player* player)
     auto progression = m_Progression.find(player->GetSession()->GetAccountId());
 
     if (progression != m_Progression.end()) {
-        auto runestring = std::format(
-            "{};{};{};{}",
-            progression->second.dusts,
-            progression->second.unlockedLoadoutCount,
-            progression->second.unlockedSlotRunes,
-            config.maxSlots
-        );
-        value = runestring;
+        std::stringstream fmt;
+        fmt << progression->second.dusts << ";" << progression->second.unlockedLoadoutCount << ";" << progression->second.unlockedSlotRunes << ";" << config.maxSlots;
+        value = fmt.str();
     }
     return value;
 }
@@ -419,6 +412,12 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 
     if (!rune) {
         sEluna->OnRuneMessage(player, "You don't have this rune.");
+        return;
+    }
+
+    if((rune.allowableClass & player->getClassMask()) == 0)
+    {
+        sEluna->OnRuneMessage(player, "You can't activate this rune.");
         return;
     }
 

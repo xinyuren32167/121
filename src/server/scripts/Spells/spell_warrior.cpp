@@ -563,6 +563,11 @@ class spell_warr_bloodthirst : public SpellScript
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
+
+        if (Aura* aura = GetCaster()->GetAura(80035))
+            if(GetExplTargetUnit()->HealthBelowPct(35))
+                ApplyPct(damage, aura->GetEffect(EFFECT_0)->GetAmount());
+
         SetHitDamage(damage);
     }
 
