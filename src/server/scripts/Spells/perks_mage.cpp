@@ -379,6 +379,12 @@ class spell_greater_invisibility : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetRuneAura())
+            return;
+
+        if (!GetProcAura())
+            return;
+
         if (!GetCaster()->HasAura(GetProcAura()))
             return;
 

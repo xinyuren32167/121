@@ -332,13 +332,16 @@ class spell_gutripper : public AuraScript
         if (!GetCaster())
             return;
 
-        uint32 random = urand(1, 100);
+        if(eventInfo.GetProcTarget() &&
+            eventInfo.GetDamageInfo() &&
+            eventInfo.GetDamageInfo()->GetDamage() > 0) {
+            uint32 random = urand(1, 100);
 
-        if (random <= GetProcChance(eventInfo))
-        {
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-
-            GetCaster()->CastCustomSpell(100097, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+            if (random <= GetProcChance(eventInfo))
+            {
+                int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+                GetCaster()->CastCustomSpell(100097, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+            }
         }
     }
 
