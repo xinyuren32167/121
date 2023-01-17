@@ -1369,9 +1369,9 @@ class spell_pyroshatter : public AuraScript
     {
         if (GetRuneAura())
         {
-            uint32 random = urand(0, 100);
+            uint32 random = urand(1, 100);
 
-            if (random < 26)
+            if (random <= 25)
                 GetCaster()->AddAura(GetProcSpell(), GetCaster());
         }
     }

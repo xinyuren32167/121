@@ -252,44 +252,14 @@ class spell_bulwark : public AuraScript
 {
     PrepareAuraScript(spell_bulwark);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(100072))
-            return GetCaster()->GetAura(100072);
-
-        if (GetCaster()->HasAura(100073))
-            return GetCaster()->GetAura(100073);
-
-        if (GetCaster()->HasAura(100074))
-            return GetCaster()->GetAura(100074);
-
-        if (GetCaster()->HasAura(100075))
-            return GetCaster()->GetAura(100075);
-
-        if (GetCaster()->HasAura(100076))
-            return GetCaster()->GetAura(100076);
-
-        if (GetCaster()->HasAura(100077))
-            return GetCaster()->GetAura(100077);
-
-        return nullptr;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-    }
-
-    int GetProcPct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetProcPct()));
+        if (!GetCaster())
+            return;
 
-        GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(100078, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
     }
 
     void Register() override
@@ -349,39 +319,6 @@ class spell_gutripper : public AuraScript
 {
     PrepareAuraScript(spell_gutripper);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(100091))
-            return GetCaster()->GetAura(100091);
-
-        if (GetCaster()->HasAura(100092))
-            return GetCaster()->GetAura(100092);
-
-        if (GetCaster()->HasAura(100093))
-            return GetCaster()->GetAura(100093);
-
-        if (GetCaster()->HasAura(100094))
-            return GetCaster()->GetAura(100094);
-
-        if (GetCaster()->HasAura(100095))
-            return GetCaster()->GetAura(100095);
-
-        if (GetCaster()->HasAura(100096))
-            return GetCaster()->GetAura(100096);
-
-        return nullptr;
-    }
-
-    int GetDamagePct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-    }
-
     int GetProcChance(ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetProcTarget()->GetHealthPct() < 35)
@@ -390,15 +327,18 @@ class spell_gutripper : public AuraScript
         return 20;
     }
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster())
+            return;
+
         uint32 random = urand(1, 100);
 
         if (random <= GetProcChance(eventInfo))
         {
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()));
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
 
-            GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+            GetCaster()->CastCustomSpell(100097, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
         }
     }
 
@@ -972,13 +912,22 @@ class spell_last_defender : public SpellScript
 
     void FindTargets(std::list<WorldObject*>& targets)
     {
+        LOG_ERROR("error", "Last Defender base");
+        if (!GetCaster())
+            return;
+        LOG_ERROR("error", "Last Defender getcaster");
+        if (!GetRuneAura())
+            return;
+
+        LOG_ERROR("error", "Last Defender full");
+
         if (targets.size() > 0)
         {
             if (!GetCaster()->HasAura(GetProcSpell()))
                 GetCaster()->AddAura(GetProcSpell(), GetCaster());
-
+            LOG_ERROR("error", "{}",targets.size());
             Aura* aura = GetCaster()->GetAura(GetProcSpell());
-
+            LOG_ERROR("error", "{}", aura->GetStackAmount());
             if (aura->GetStackAmount() != targets.size())
                 aura->SetStackAmount(targets.size());
 
