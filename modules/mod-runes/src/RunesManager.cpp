@@ -165,6 +165,14 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     m_Loadout[guid].push_back(loadout);
 
     CharacterDatabase.Query("INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES ({}, 0, 0, 40) ", accountId);
+
+    auto progression = m_Progression.find(player->GetSession()->GetAccountId());
+
+    if (progression == m_Progression.end()) {
+        AccountProgression progression = { 0, 0, 40 };
+        m_Progression[accountId] = { progression };
+    }
+
 }
 
 std::vector<std::string> RunesManager::RunesForClient(Player* player)
