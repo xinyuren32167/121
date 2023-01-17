@@ -1710,6 +1710,7 @@ class spell_burning_talons : public AuraScript
 
         if (!GetCaster())
             return;
+
         if (GetRuneAura())
         {
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();

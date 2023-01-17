@@ -40,7 +40,7 @@ class spell_vampirism : public AuraScript
     int GetProcPct()
     {
         if (!GetRuneAura())
-            return;
+            return 0;
 
         return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
@@ -836,25 +836,37 @@ class spell_shadow_pact : public AuraScript
     {
         PreventDefaultAction();
 
+        LOG_ERROR("TEST", "1");
+
         if (!GetCaster())
             return;
 
         if (!GetRuneAura())
             return;
 
+        LOG_ERROR("TEST", "2");
+
         int32 maxTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
-        uint32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / maxTicks;
+        LOG_ERROR("TEST", "2.5");
 
-        if (AuraEffect* protEff = GetCaster()->GetAuraEffect(GetProcSpell(), 0))
-        {
-            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
-            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
-            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+            LOG_ERROR("TEST", "3");
 
-            amount += remainingAmountPerTick;
+            uint32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / maxTicks;
+
+            if (amount < 0)
+                return;
+
+            if (AuraEffect* protEff = GetCaster()->GetAuraEffect(GetProcSpell(), 0))
+            {
+                int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+                int32 remainingAmountPerTick = remainingAmount / maxTicks;
+                amount += remainingAmountPerTick;
+            }
+            GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
 
-        GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
