@@ -919,25 +919,22 @@ class spell_last_defender : public SpellScript
 
     void FindTargets(std::list<WorldObject*>& targets)
     {
-        LOG_ERROR("error", "Last Defender base");
         if (!GetCaster())
             return;
-        LOG_ERROR("error", "Last Defender getcaster");
+
         if (!GetRuneAura())
             return;
-
-        LOG_ERROR("error", "Last Defender full");
 
         if (targets.size() > 0)
         {
             if (!GetCaster()->HasAura(GetProcSpell()))
                 GetCaster()->AddAura(GetProcSpell(), GetCaster());
-            LOG_ERROR("error", "{}",targets.size());
-            Aura* aura = GetCaster()->GetAura(GetProcSpell());
-            LOG_ERROR("error", "{}", aura->GetStackAmount());
-            if (aura->GetStackAmount() != targets.size())
-                aura->SetStackAmount(targets.size());
 
+            Aura* aura = GetCaster()->GetAura(GetProcSpell());
+            uint32 amount = (std::max<int32>(targets.size(), 10));
+
+            if (aura->GetStackAmount() != amount) 
+                aura->SetStackAmount(amount);
         }
         else if (GetCaster()->HasAura(GetProcSpell()))
             GetCaster()->RemoveAura(GetProcSpell());
