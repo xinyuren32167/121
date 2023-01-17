@@ -808,7 +808,9 @@ void Unit::DealDamageMods(Unit const* victim, uint32& damage, uint32* absorb)
 
 uint32 Unit::DealDamage(Unit* attacker, Unit* victim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellInfo const* spellProto, bool durabilityLoss, bool /*allowGM*/, Spell const* damageSpell /*= nullptr*/)
 {
-    damage = attacker->UpgradeDamage(attacker, victim, damage);
+
+    if(attacker)
+        damage = attacker->UpgradeDamage(attacker, victim, damage);
 
     // Xinef: initialize damage done for rage calculations
     // Xinef: its rare to modify damage in hooks, however training dummy's sets damage to 0
@@ -1955,6 +1957,13 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
 
 uint32 Unit::UpgradeDamage(Unit* attacker, Unit* victim, uint32 damage)
 {
+
+    if (!attacker)
+        return 0;
+
+    if (!victim)
+        return 0;
+
     uint32 tpDamage = damage;
 
     if (attacker->GetTypeId() != TYPEID_PLAYER)
