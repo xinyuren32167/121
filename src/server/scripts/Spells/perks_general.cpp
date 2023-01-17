@@ -9,7 +9,6 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-
 class spell_vampirism : public AuraScript
 {
     PrepareAuraScript(spell_vampirism);
@@ -836,21 +835,15 @@ class spell_shadow_pact : public AuraScript
     {
         PreventDefaultAction();
 
-        LOG_ERROR("TEST", "1");
-
         if (!GetCaster())
             return;
 
         if (!GetRuneAura())
             return;
 
-        LOG_ERROR("TEST", "2");
-
         int32 maxTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
-        LOG_ERROR("TEST", "2.5");
 
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
-            LOG_ERROR("TEST", "3");
 
             uint32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / maxTicks;
 
