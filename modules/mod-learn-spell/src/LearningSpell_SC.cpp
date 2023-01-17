@@ -24,6 +24,7 @@ public:
     }
 
     void OnFirstLogin(Player* player) {
+
         LearningSpellsManager::GiveSpellsForLevelup(player);
 
         switch (player->getClass())

@@ -17,12 +17,17 @@ public:
 
     void OnLogin(Player* player) override
     {
-       
+        RunesManager::ApplyRunesOnLogin(player);
     }
 
     void OnCreate(Player* player)
     {
         RunesManager::CreateDefaultCharacter(player);
+    }
+
+    void OnDelete(ObjectGuid guid, uint32 accountId)
+    {
+        RunesManager::RemoveSlotsOnCharacterDel(guid);
     }
 
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/) {

@@ -138,6 +138,8 @@ class spell_the_art_of_war : public AuraScript
     }
 };
 
+
+// crash...
 class spell_tide_of_blood : public AuraScript
 {
     PrepareAuraScript(spell_tide_of_blood);
@@ -374,7 +376,8 @@ class spell_blood_and_thunder : public SpellScript
         {
             for (auto const& target : targets)
                 if (Unit* unit = target->ToUnit())
-                    GetCaster()->CastSpell(unit, 200237, TRIGGERED_FULL_MASK);
+                    if(!unit->HasAura(47465))
+                        GetCaster()->CastSpell(unit, 200237, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1782,6 +1785,8 @@ class spell_healing_block : public AuraScript
     }
 };
 
+
+// Crash ..
 class spell_hurricane : public AuraScript
 {
     PrepareAuraScript(spell_hurricane);
@@ -1816,6 +1821,9 @@ class spell_hurricane : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster())
+            return;
+
         if (!GetRuneAura())
             return;
 
@@ -1824,6 +1832,12 @@ class spell_hurricane : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster())
+            return;
+
+        if (!GetRuneAura())
+            return;
+
         if (!GetCaster()->HasAura(GetProcAura()))
             return;
 

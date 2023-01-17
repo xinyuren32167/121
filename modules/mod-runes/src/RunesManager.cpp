@@ -161,8 +161,10 @@ void RunesManager::CreateDefaultCharacter(Player* player)
 
     CharacterDatabase.Execute(stmt);
 
-    Loadout loadout = { guid, startIdSlot, slotDefault, active };
+    Loadout loadout = { guid, startIdSlot, slotDefault, true };
     m_Loadout[guid].push_back(loadout);
+
+    CharacterDatabase.Query("INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES ({}, 0, 0, 40) ", accountId);
 }
 
 std::vector<std::string> RunesManager::RunesForClient(Player* player)
@@ -295,6 +297,34 @@ bool RunesManager::KnowRuneId(Player* player, uint64 runeId)
             return false;
     }
     return false;
+}
+
+void RunesManager::RemoveSlotsOnCharacterDel(ObjectGuid guid)
+{
+    auto match = m_Loadout.find(guid.GetCounter());
+
+    if (match != m_Loadout.end())
+        for (auto const& loadout : match->second)
+            if (loadout.active)
+                CharacterDatabase.Query("DELETE FROM character_rune_slots WHERE id = {}", loadout.id);
+
+
+    CharacterDatabase.Query("DELETE FROM character_rune_loadout WHERE guid = {}", guid.GetCounter());
+}
+
+void RunesManager::ApplyRunesOnLogin(Player* player)
+{
+    uint64 activeId = GetActiveLoadoutId(player);
+
+    if (activeId <= 0)
+        return;
+
+    auto match = m_SlotRune.find(activeId);
+
+    if (match != m_SlotRune.end())
+        for (auto const& slot : match->second)
+            if (!player->HasAura(slot.runeSpellId) && slot.id)
+                player->AddAura(slot.runeSpellId, player);
 }
 
 Rune RunesManager::GetRuneById(Player* player, uint64 id)
@@ -501,6 +531,9 @@ void RunesManager::UpgradeRune(Player* player, uint64 runeId)
 void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
 {
     uint64 activeId = GetActiveLoadoutId(player);
+
+
+    LOG_ERROR("ACTIVEID", "ACTIVE ID {}", activeId);
 
     if (activeId <= 0)
         return;
