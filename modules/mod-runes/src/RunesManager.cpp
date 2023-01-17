@@ -442,6 +442,17 @@ uint32 RunesManager::GetCountActivatedRune(Player* player)
 
 void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 {
+    if (!player)
+        return;
+
+    if (player->isDead())
+        return;
+
+    if (player->IsInCombat()) {
+        sEluna->OnRuneMessage(player, "You can't do that while in combat.");
+        return;
+    }
+
     Rune rune = GetRuneById(player, runeId);
 
     if (config.debug)
@@ -488,6 +499,17 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 
 void RunesManager::DisableRune(Player* player, uint64 runeId)
 {
+
+    if (!player)
+        return;
+
+    if (player->isDead())
+        return;
+
+    if (player->IsInCombat()) {
+        sEluna->OnRuneMessage(player, "You can't do that while in combat.");
+        return;
+    }
     Rune rune = GetRuneById(player, runeId);
 
     if (config.debug)

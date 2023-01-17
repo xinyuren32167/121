@@ -1347,6 +1347,12 @@ class spell_violent_outburst : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster())
+            return;
+
+        if (!GetRuneAura())
+            return;
+
         if (GetCaster()->GetAura(200612)->GetStackAmount() < GetRuneAura()->GetEffect(EFFECT_0)->GetAmount())
             return;
 

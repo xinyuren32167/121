@@ -783,23 +783,21 @@ class spell_shadow_pact : public AuraScript
 
         int32 maxTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
 
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+        uint32 amountHealOrDamage = eventInfo.GetDamageInfo() ? eventInfo.GetDamageInfo()->GetDamage() : eventInfo.GetHealInfo()->GetHeal();
+        uint32 amount = CalculatePct(amountHealOrDamage, GetDamagePct()) / maxTicks;
 
-            uint32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / maxTicks;
+        if (amount < 0)
+            return;
 
-            if (amount < 0)
-                return;
-
-            if (AuraEffect* protEff = GetCaster()->GetAuraEffect(GetProcSpell(), 0))
-            {
-                int32 remainingTicks = maxTicks - protEff->GetTickNumber();
-                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
-                int32 remainingAmountPerTick = remainingAmount / maxTicks;
-                amount += remainingAmountPerTick;
-            }
-            GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+        if (AuraEffect* protEff = GetCaster()->GetAuraEffect(GetProcSpell(), 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+            amount += remainingAmountPerTick;
         }
 
+        GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override

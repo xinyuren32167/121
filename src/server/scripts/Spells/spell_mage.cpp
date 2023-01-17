@@ -74,8 +74,6 @@ public:
 
         }
 
-        uint32 time = 1000;
-
         void Reset() override
         {
             Position pos = me->GetFirstCollisionPosition(40.0f, 0);
@@ -88,14 +86,10 @@ public:
 
         void UpdateAI(uint32 diff) override
         {
-            if (time <= diff) {
-                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                    int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), 11.0f));
-                    me->CastCustomSpell(80012, SPELLVALUE_BASE_POINT0, amount); // DMG
-                    time = 1000;
-                }
+            if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), 11.0f));
+                me->CastCustomSpell(80012, SPELLVALUE_BASE_POINT0, amount); // DMG
             }
-            time -= diff;
         }
 
     };
@@ -120,6 +114,7 @@ public:
         }
 
         uint32 time = 1000;
+        std::vector<uint64> unitsHits;
 
         void Reset() override
         {
@@ -133,14 +128,10 @@ public:
 
         void UpdateAI(uint32 diff) override
         {
-            if (time <= diff) {
-                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                    int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), 122));
-                    me->CastCustomSpell(80017, SPELLVALUE_BASE_POINT0, amount); // DMG
-                    time = 1000;
-                }
+            if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), 122));
+                me->CastCustomSpell(80017, SPELLVALUE_BASE_POINT0, amount); // DMG
             }
-            time -= diff;
         }
 
     };
