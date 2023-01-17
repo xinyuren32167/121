@@ -1109,11 +1109,14 @@ class spell_mage_master_of_elements : public AuraScript
     {
         PreventDefaultAction();
 
-        int32 mana = int32(_spellInfo->CalcPowerCost(GetTarget(), eventInfo.GetSchoolMask()) / ticksModifier);
-        mana = CalculatePct(mana, aurEff->GetAmount());
+        if (_spellInfo && eventInfo.GetSchoolMask()) {
+            int32 mana = int32(_spellInfo->CalcPowerCost(GetTarget(), eventInfo.GetSchoolMask()) / ticksModifier);
+            mana = CalculatePct(mana, aurEff->GetAmount());
 
-        if (mana > 0)
-            GetTarget()->CastCustomSpell(SPELL_MAGE_MASTER_OF_ELEMENTS_ENERGIZE, SPELLVALUE_BASE_POINT0, mana, GetTarget(), true, nullptr, aurEff);
+            if (mana > 0)
+                GetTarget()->CastCustomSpell(SPELL_MAGE_MASTER_OF_ELEMENTS_ENERGIZE, SPELLVALUE_BASE_POINT0, mana, GetTarget(), true, nullptr, aurEff);
+        }
+      
     }
 
     void Register() override
