@@ -49,6 +49,12 @@ class spell_cut_the_veins : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
+
+        PreventDefaultAction();
+
+        if (!GetCaster())
+            return;
+
         if (GetRuneAura())
         {
             int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();

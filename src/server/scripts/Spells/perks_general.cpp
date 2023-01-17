@@ -14,16 +14,45 @@ class spell_vampirism : public AuraScript
 {
     PrepareAuraScript(spell_vampirism);
 
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(100000))
+            return GetCaster()->GetAura(100000);
+
+        if (GetCaster()->HasAura(100001))
+            return GetCaster()->GetAura(100001);
+
+        if (GetCaster()->HasAura(100002))
+            return GetCaster()->GetAura(100002);
+
+        if (GetCaster()->HasAura(100003))
+            return GetCaster()->GetAura(100003);
+
+        if (GetCaster()->HasAura(100004))
+            return GetCaster()->GetAura(100004);
+
+        if (GetCaster()->HasAura(100005))
+            return GetCaster()->GetAura(100005);
+
+        return nullptr;
+    }
+
     int GetProcPct()
     {
-        return GetRankRune(100000)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        if (!GetRuneAura())
+            return;
+
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        GetCaster()->CastCustomSpellPct(100006, SPELLVALUE_BASE_POINT0,
-            std::max(1, damage), GetProcPct(), false, false, false, 0, GetCaster());
+        if (damage) {
+            GetCaster()->CastCustomSpellPct(100006, SPELLVALUE_BASE_POINT0,
+                std::max(1, damage), GetProcPct(), false, false, false, 0, GetCaster());
+        }
+       
     }
 
     void Register() override
@@ -805,6 +834,14 @@ class spell_shadow_pact : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
+        PreventDefaultAction();
+
+        if (!GetCaster())
+            return;
+
+        if (!GetRuneAura())
+            return;
+
         int32 maxTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
         uint32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / maxTicks;
 

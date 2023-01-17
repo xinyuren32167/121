@@ -70,8 +70,6 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 
     Specialization newSpec = m_Specializations[newSpecId];
 
-    LOG_ERROR("CLASS", "CLASS {} {}", player->getClass(), newSpec.classInfo);
-
     if (newSpec.classInfo != player->getClass()) {
         sEluna->OnActivateSpec(player, "You can't do that", false);
         return;
@@ -81,16 +79,17 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 
     if (currentSpecId > 0)
         for (auto const& spellId : m_SpecSpells[currentSpecId])
-            player->removeSpell(spellId, SPEC_MASK_ALL, false);
+            player->removeSpell(spellId, SPEC_MASK_ALL, false, false);
 
 
     for (auto const& spellId : m_SpecSpells[newSpecId])
-        player->learnSpell(spellId);
+        player->learnSpell(spellId, false, false, false);
 
     m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
     CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
     sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true);
     player->UpdateMastery();
+    player->SaveToDB(false, false);
 }
 
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
