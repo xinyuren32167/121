@@ -973,6 +973,9 @@ class spell_touch_of_the_magi_debuff : public AuraScript
 
     void TriggerDamage(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!eventInfo.GetActionTarget()->HasAura(300531))
+            return;
+
         if (DamageInfo* damageInfo = eventInfo.GetDamageInfo())
         {
             int32 amount = eventInfo.GetDamageInfo()->GetDamage();
