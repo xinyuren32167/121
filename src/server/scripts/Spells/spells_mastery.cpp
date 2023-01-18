@@ -132,7 +132,7 @@ class spell_mastery_ignite : public AuraScript
             if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0))
                 amount += protEff->GetAmount();
 
-            eventInfo.GetProcTarget()->CastCustomSpell(300110, SPELLVALUE_BASE_POINT0, amount, GetTarget(), true);
+            eventInfo.GetProcTarget()->CastCustomSpell(300110, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
         }
       
     }
