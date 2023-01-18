@@ -128,11 +128,17 @@ class spell_mastery_ignite : public AuraScript
             float pct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
             int32 totalTicks = sSpellMgr->AssertSpellInfo(300110)->GetMaxTicks();
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
+            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0)) {
+                LOG_ERROR("log", "log protEff->GetAmount() {}", protEff->GetAmount());
+                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+                LOG_ERROR("log", "remainingAmount {}", remainingAmount);
+                amount += remainingAmount;
+            }
 
-            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0))
-                amount += protEff->GetAmount();
+            LOG_ERROR("log", "log amount total {}", amount);
 
-            eventInfo.GetProcTarget()->CastCustomSpell(300110, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+            GetCaster()->CastCustomSpellTrigger(300110, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_IGNORE_AURA_SCALING);
         }
       
     }
