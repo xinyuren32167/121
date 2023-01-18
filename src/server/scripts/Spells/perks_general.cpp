@@ -330,12 +330,12 @@ class spell_gutripper : public AuraScript
         return 20;
     }
 
-    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (!GetCaster())
             return;
 
-        if(eventInfo.GetProcTarget() &&
+        if (eventInfo.GetProcTarget() &&
             eventInfo.GetDamageInfo() &&
             eventInfo.GetDamageInfo()->GetDamage() > 0) {
             uint32 random = urand(1, 100);
@@ -931,7 +931,7 @@ class spell_last_defender : public AuraScript
 
         if (Aura* auraEff = unit->GetAura(spellId)) {
             uint32 currentStack = auraEff->GetStackAmount();
-            if(currentStack != size)
+            if (currentStack != size)
                 auraEff->SetStackAmount(size);
         }
         else {
@@ -951,71 +951,56 @@ class spell_juggling_balance : public AuraScript
 {
     PrepareAuraScript(spell_juggling_balance);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(100253))
-            return GetCaster()->GetAura(100253);
-
-        if (GetCaster()->HasAura(100254))
-            return GetCaster()->GetAura(100254);
-
-        if (GetCaster()->HasAura(100255))
-            return GetCaster()->GetAura(100255);
-
-        if (GetCaster()->HasAura(100256))
-            return GetCaster()->GetAura(100256);
-
-        if (GetCaster()->HasAura(100257))
-            return GetCaster()->GetAura(100257);
-
-        if (GetCaster()->HasAura(100258))
-            return GetCaster()->GetAura(100258);
-
-        return nullptr;
-    }
-
-    int GetHasteProc()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-    }
-
-    int GetCritProc()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
-    }
-
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* player = GetCaster();
 
-        if (!player || !GetRuneAura())
+        if (!player)
             return;
 
-        float playerPowerPct = player->GetPowerPct(player->getPowerType());     
+        float playerPowerPct = player->GetPowerPct(player->getPowerType());
+        uint32 hasteAura = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        uint32 critAura = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
 
         if (playerPowerPct >= 50)
         {
-            if (player->HasAura(GetCritProc()))
-                player->RemoveAura(GetCritProc());
+            if (player->HasAura(critAura))
+                player->RemoveAura(critAura);
 
-            if (!player->HasAura(GetHasteProc()))
-                player->AddAura(GetHasteProc(), player);
+            if (!player->HasAura(hasteAura))
+                player->AddAura(hasteAura, player);
         }
 
         if (playerPowerPct < 50)
         {
-            if (player->HasAura(GetHasteProc()))
-                player->RemoveAura(GetHasteProc());
+            if (player->HasAura(hasteAura))
+                player->RemoveAura(hasteAura);
 
-            if (!player->HasAura(GetCritProc()))
-                player->AddAura(GetCritProc(), player);
+            if (!player->HasAura(critAura))
+                player->AddAura(critAura, player);
         }
 
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster())
+            return;
+
+        uint32 hasteAura = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        uint32 critAura = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+
+        if (GetCaster()->HasAura(hasteAura))
+            GetCaster()->RemoveAura(hasteAura);
+
+        if (GetCaster()->HasAura(critAura))
+            GetCaster()->RemoveAura(critAura);
     }
 
     void Register() override
     {
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_juggling_balance::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_juggling_balance::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
