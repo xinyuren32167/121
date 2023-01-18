@@ -326,9 +326,10 @@ class spell_unstable_magic : public AuraScript
     {
         PreventDefaultAction();
 
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 50));
-
-        GetCaster()->CastCustomSpell(300062, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 50));
+            GetCaster()->CastCustomSpell(300062, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+        }
     }
 
     void Register() override
@@ -1287,9 +1288,10 @@ class spell_arcanic_unstability : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetProcPct()));
-
-        GetCaster()->CastCustomSpell(300640, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage()) {
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetProcPct()));
+            GetCaster()->CastCustomSpell(300640, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
+        }
     }
 
     void Register() override

@@ -1734,17 +1734,19 @@ class spell_blade_turning : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        float blockValue = eventInfo.GetDamageInfo()->GetBlock();
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetBlock()) {
+            float blockValue = eventInfo.GetDamageInfo()->GetBlock();
 
-        if (blockValue <= 0)
-            return;
+            if (blockValue <= 0)
+                return;
 
-        uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+            uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
 
-        if (GetCaster()->HasAura(200726))
-            amount += GetCaster()->GetAura(200726)->GetEffect(EFFECT_0)->GetAmount();
+            if (GetCaster()->HasAura(200726))
+                amount += GetCaster()->GetAura(200726)->GetEffect(EFFECT_0)->GetAmount();
 
-        GetCaster()->CastCustomSpell(200726, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            GetCaster()->CastCustomSpell(200726, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
