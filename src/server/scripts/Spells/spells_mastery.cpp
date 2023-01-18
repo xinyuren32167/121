@@ -130,12 +130,7 @@ class spell_mastery_ignite : public AuraScript
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
 
             if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0))
-            {
-                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
-                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
-                int32 remainingAmountPerTick = remainingAmount / totalTicks;
-                amount = amount + remainingAmountPerTick;
-            }
+                amount += protEff->GetAmount();
 
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), 300110, SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }

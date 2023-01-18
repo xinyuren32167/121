@@ -882,66 +882,70 @@ class spell_rampart_remove : public AuraScript
     }
 };
 
-class spell_last_defender : public SpellScript
+class spell_last_defender : public AuraScript
 {
-    PrepareSpellScript(spell_last_defender);
+    PrepareAuraScript(spell_last_defender);
 
-    Aura* GetRuneAura()
+    uint32 findSizeThreath()
     {
-        if (GetCaster()->HasAura(100240))
-            return GetCaster()->GetAura(100240);
+        std::list<Unit*> targetList;
 
-        if (GetCaster()->HasAura(100241))
-            return GetCaster()->GetAura(100241);
+        Unit* caster = GetCaster();
 
-        if (GetCaster()->HasAura(100242))
-            return GetCaster()->GetAura(100242);
+        if (!caster)
+            return 0;
 
-        if (GetCaster()->HasAura(100243))
-            return GetCaster()->GetAura(100243);
+        auto const& threatlist = caster->getAttackers();
 
-        if (GetCaster()->HasAura(100244))
-            return GetCaster()->GetAura(100244);
-
-        if (GetCaster()->HasAura(100245))
-            return GetCaster()->GetAura(100245);
-
-        return nullptr;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-    }
-
-    void FindTargets(std::list<WorldObject*>& targets)
-    {
-        if (!GetCaster())
-            return;
-
-        if (!GetRuneAura())
-            return;
-
-        if (targets.size() > 0)
-        {
-            if (!GetCaster()->HasAura(GetProcSpell()))
-                GetCaster()->AddAura(GetProcSpell(), GetCaster());
-
-            Aura* aura = GetCaster()->GetAura(GetProcSpell());
-            uint32 amount = (std::max<int32>(targets.size(), 10));
-
-            if (aura->GetStackAmount() != amount) 
-                aura->SetStackAmount(amount);
+        if (threatlist.empty()) {
+            return 0;
         }
-        else if (GetCaster()->HasAura(GetProcSpell()))
-            GetCaster()->RemoveAura(GetProcSpell());
+
+        for (auto itr = threatlist.begin(); itr != threatlist.end(); ++itr)
+        {
+            Unit* treath = (*itr);
+
+            float distance = caster->GetDistance(treath->GetPosition());
+            if (distance <= 8.0f && treath->IsAlive()) {
+                targetList.push_back(treath);
+            }
+        }
+
+        return targetList.size();
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        uint32 spellId = aurEff->GetAmount();
+        Unit* unit = GetCaster();
+
+        if (!unit)
+            return;
+
+        uint32 size = std::min<uint32>(findSizeThreath(), 10);
+
+        if (size == 0) {
+            unit->RemoveAura(spellId);
+            return;
+        }
+
+        if (Aura* auraEff = unit->GetAura(spellId)) {
+            uint32 currentStack = auraEff->GetStackAmount();
+            if(currentStack != size)
+                auraEff->SetStackAmount(size);
+        }
+        else {
+            Aura* aura = unit->AddAura(spellId, unit);
+            aura->SetStackAmount(size);
+        }
     }
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_last_defender::FindTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_last_defender::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
+
 
 class spell_juggling_balance : public AuraScript
 {

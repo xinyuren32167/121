@@ -2402,6 +2402,8 @@ Creature* WorldObject::FindNearestCreature(uint32 entry, float range, bool alive
     return creature;
 }
 
+
+
 GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range, bool onlySpawned /*= false*/) const
 {
     GameObject* go = nullptr;
