@@ -684,7 +684,7 @@ class spell_storm_of_swords : public AuraScript
         if (GetCaster()->HasAura(1719))
         {
             float remainingDuration = GetCaster()->GetAura(1719)->GetDuration();
-            GetCaster()->GetAura(1719)->SetDuration(remainingDuration + 5000);
+            GetCaster()->GetAura(1719)->SetDuration(remainingDuration + 2000);
         }
         else
         {
@@ -1619,6 +1619,9 @@ class spell_inspiring_wall_heal : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (eventInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
+            return;
+
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
 
         if (amount <= 0)
