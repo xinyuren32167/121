@@ -30,7 +30,10 @@ public:
         RunesManager::RemoveSlotsOnCharacterDel(guid);
     }
 
-    virtual void OnPlayerResurrect(Player* /*player*/, float /*restore_percent*/, bool /*applySickness*/) { }
+    void OnPlayerResurrect(Player* player, float restore_percent, bool applySickness)
+    {
+        RunesManager::ApplyRunesOnLogin(player);
+    }
 
 
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/) {
