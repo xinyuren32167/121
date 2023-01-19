@@ -1619,15 +1619,17 @@ class spell_inspiring_wall_heal : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
-            return;
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+            if (eventInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
+                return;
 
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
 
-        if (amount <= 0)
-            return;
+            if (amount <= 0)
+                return;
 
-        GetCaster()->CastCustomSpell(200686, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActor(), TRIGGERED_FULL_MASK);
+            GetCaster()->CastCustomSpell(200686, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActor(), TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -1764,14 +1766,18 @@ class spell_block_spike : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        float blockValue = eventInfo.GetDamageInfo()->GetBlock();
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetBlock()) {
 
-        if (blockValue <= 0)
-            return;
+            float blockValue = eventInfo.GetDamageInfo()->GetBlock();
 
-        uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+            if (blockValue <= 0)
+                return;
 
-        GetCaster()->CastCustomSpell(200733, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+
+            GetCaster()->CastCustomSpell(200733, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+
     }
 
     void Register() override
@@ -1786,14 +1792,17 @@ class spell_healing_block : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        float blockValue = eventInfo.GetDamageInfo()->GetBlock();
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetBlock()) {
 
-        if (blockValue <= 0)
-            return;
+            float blockValue = eventInfo.GetDamageInfo()->GetBlock();
 
-        uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+            if (blockValue <= 0)
+                return;
 
-        GetCaster()->CastCustomSpell(200740, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            uint32 amount = int32(CalculatePct(blockValue, aurEff->GetAmount()));
+
+            GetCaster()->CastCustomSpell(200740, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override

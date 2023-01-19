@@ -30,6 +30,12 @@ public:
         RunesManager::RemoveSlotsOnCharacterDel(guid);
     }
 
+    void OnPlayerResurrect(Player* player, float restore_percent, bool applySickness)
+    {
+        RunesManager::ApplyRunesOnLogin(player);
+    }
+
+
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/) {
 
         if (spell->GetSpellInfo()->Id != 5000000)
