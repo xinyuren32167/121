@@ -1029,7 +1029,7 @@ class spell_touch_of_the_magi_explosion : public AuraScript
 
     int DamagePct(Unit* player)
     {
-        return GetRuneAura(player)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -1288,7 +1288,8 @@ class spell_arcanic_unstability : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage()) {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+
             int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetProcPct()));
             GetCaster()->CastCustomSpell(300640, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
         }

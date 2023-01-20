@@ -14,37 +14,14 @@ class spell_cut_the_veins : public AuraScript
 {
     PrepareAuraScript(spell_cut_the_veins);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200038))
-            return GetCaster()->GetAura(200038);
-
-        if (GetCaster()->HasAura(200039))
-            return GetCaster()->GetAura(200039);
-
-        if (GetCaster()->HasAura(200040))
-            return GetCaster()->GetAura(200040);
-
-        if (GetCaster()->HasAura(200041))
-            return GetCaster()->GetAura(200041);
-
-        if (GetCaster()->HasAura(200042))
-            return GetCaster()->GetAura(200042);
-
-        if (GetCaster()->HasAura(200043))
-            return GetCaster()->GetAura(200043);
-
-        return nullptr;
-    }
-
     int GetProcSpell()
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
+        return GetAura()->GetEffect(EFFECT_1)->GetAmount();
     }
 
     int GetDamagePct()
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetAura()->GetEffect(EFFECT_0)->GetAmount();
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
@@ -55,22 +32,19 @@ class spell_cut_the_veins : public AuraScript
         if (!GetCaster())
             return;
 
-        if (GetRuneAura())
+        int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
+        int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
+
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
         {
-            int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
-            int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
+            int32 remainingTicks = totalTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / totalTicks;
 
-            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
-            {
-                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
-                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
-                int32 remainingAmountPerTick = remainingAmount / totalTicks;
-
-                amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
-            }
-            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+            amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
         }
+        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
@@ -83,58 +57,32 @@ class spell_the_art_of_war : public AuraScript
 {
     PrepareAuraScript(spell_the_art_of_war);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200087))
-            return GetCaster()->GetAura(200087);
-
-        if (GetCaster()->HasAura(200088))
-            return GetCaster()->GetAura(200088);
-
-        if (GetCaster()->HasAura(200089))
-            return GetCaster()->GetAura(200089);
-
-        if (GetCaster()->HasAura(200090))
-            return GetCaster()->GetAura(200090);
-
-        if (GetCaster()->HasAura(200091))
-            return GetCaster()->GetAura(200091);
-
-        if (GetCaster()->HasAura(200092))
-            return GetCaster()->GetAura(200092);
-
-        return nullptr;
-    }
-
     int GetRagePct()
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        return GetAura()->GetEffect(EFFECT_0)->GetAmount();
     }
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        Aura* aura = GetRuneAura();
+        Aura* aura = GetAura();
 
         if (!aura)
             return;
 
-        if (GetRuneAura())
+        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 rageAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+
+        if (spellRage <= 0)
+            return;
+
+        if (rageAccumulated >= GetRagePct())
         {
-            int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
-            int32 rageAccumulated = GetRuneAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
-
-            if (spellRage <= 0)
-                return;
-
-            if (rageAccumulated >= GetRagePct())
-            {
-                GetCaster()->CastSpell(GetCaster(), 200093, TRIGGERED_FULL_MASK);
-                GetRuneAura()->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
-            }
-            else
-            {
-                GetRuneAura()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
-            }
+            GetCaster()->CastSpell(GetCaster(), 200093, TRIGGERED_FULL_MASK);
+            GetAura()->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
+        }
+        else
+        {
+            GetAura()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
         }
     }
 
@@ -150,34 +98,9 @@ class spell_tide_of_blood : public AuraScript
 {
     PrepareAuraScript(spell_tide_of_blood);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200100))
-            return GetCaster()->GetAura(200100);
-
-        if (GetCaster()->HasAura(200101))
-            return GetCaster()->GetAura(200101);
-
-        if (GetCaster()->HasAura(200102))
-            return GetCaster()->GetAura(200102);
-
-        if (GetCaster()->HasAura(200103))
-            return GetCaster()->GetAura(200103);
-
-        if (GetCaster()->HasAura(200104))
-            return GetCaster()->GetAura(200104);
-
-        if (GetCaster()->HasAura(200105))
-            return GetCaster()->GetAura(200105);
-
-        return nullptr;
-    }
-
-
     void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
     {
-
-        Aura* aura = GetRuneAura();
+        Aura* aura = GetAura();
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
 
@@ -1619,7 +1542,7 @@ class spell_inspiring_wall_heal : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && aurEff) {
             if (eventInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
                 return;
 

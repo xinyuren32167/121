@@ -95,7 +95,7 @@
 #include "WorldSession.h"
 #include <boost/asio/ip/address.hpp>
 #include <cmath>
-
+#include "Config.h"
 namespace
 {
     TaskScheduler playersSaveScheduler;

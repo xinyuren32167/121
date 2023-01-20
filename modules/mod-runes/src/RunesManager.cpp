@@ -562,9 +562,6 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
 {
     uint64 activeId = GetActiveLoadoutId(player);
 
-
-    LOG_ERROR("ACTIVEID", "ACTIVE ID {}", activeId);
-
     if (activeId <= 0)
         return;
 

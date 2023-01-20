@@ -83,7 +83,7 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 
 
     for (auto const& spellId : m_SpecSpells[newSpecId])
-        player->learnSpell(spellId, false, false, false);
+        player->learnSpell(spellId, false, false);
 
     m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
     CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
