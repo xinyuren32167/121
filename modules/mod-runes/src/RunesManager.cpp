@@ -629,5 +629,5 @@ uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p
     while (usedOrders.count(idx) != 0) {
         idx++;
     }
-    return idx;
+    return idx == 0 ? 1 : idx;
 }

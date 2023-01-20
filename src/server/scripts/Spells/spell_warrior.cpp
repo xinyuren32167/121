@@ -493,8 +493,6 @@ class spell_warr_execute : public SpellScript
 
             int32 bp = int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue()));
             caster->CastCustomSpell(target, SPELL_WARRIOR_EXECUTE, &bp, nullptr, nullptr, true, nullptr, nullptr, GetOriginalCaster()->GetGUID());
-
-            //caster->CastCustomSpell(SPELL_WARRIOR_EXECUTE, SPELLVALUE_BASE_POINT0, bp, GetCaster(), true);
         }
     }
 
