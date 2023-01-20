@@ -38,6 +38,7 @@ class spell_tempest_barrier : public SpellScript
     {
         int playerMaxHealth = GetCaster()->GetMaxHealth();
         int32 absorb = int32(CalculatePct(playerMaxHealth, ShieldPct()));
+        LOG_ERROR("error", "{}", absorb);
         GetCaster()->CastCustomSpell(300135, SPELLVALUE_BASE_POINT0, absorb, GetCaster(), true);
     }
 
@@ -175,44 +176,51 @@ class spell_diverted_energy_mana : public AuraScript
     }
 };
 
-class spell_spiritual_armor : public SpellScript
+class spell_spiritual_armor : public AuraScript
 {
-    PrepareSpellScript(spell_spiritual_armor);
+    PrepareAuraScript(spell_spiritual_armor);
 
-    void HandleProc()
+    Aura* GetRuneAura()
     {
         if (GetCaster()->HasAura(300037))
-            GetCaster()->CastSpell(GetCaster(), 300031, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300037);
 
         if (GetCaster()->HasAura(300038))
-            GetCaster()->CastSpell(GetCaster(), 300032, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300038);
 
         if (GetCaster()->HasAura(300039))
-            GetCaster()->CastSpell(GetCaster(), 300033, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300039);
 
         if (GetCaster()->HasAura(300040))
-            GetCaster()->CastSpell(GetCaster(), 300034, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300040);
 
         if (GetCaster()->HasAura(300041))
-            GetCaster()->CastSpell(GetCaster(), 300035, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300041);
 
         if (GetCaster()->HasAura(300042))
-            GetCaster()->CastSpell(GetCaster(), 300036, TRIGGERED_IGNORE_CASTER_AURAS);
+            return GetCaster()->GetAura(300042);
+
+        return nullptr;
     }
 
-    void Register() override
+    int GetProcSpell()
     {
-        AfterCast += SpellCastFn(spell_spiritual_armor::HandleProc);
+        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
     }
-};
 
-class spell_spiritual_armor_remove : public AuraScript
-{
-
-    PrepareAuraScript(spell_spiritual_armor_remove);
-
-    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetRuneAura())
+            return;
+
+        GetCaster()->AddAura(GetProcSpell(), GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster())
+            return;
+
         if (GetCaster()->HasAura(300031))
             GetCaster()->RemoveAura(300031);
 
@@ -234,7 +242,39 @@ class spell_spiritual_armor_remove : public AuraScript
 
     void Register() override
     {
-        AfterEffectRemove += AuraEffectRemoveFn(spell_spiritual_armor_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_PCT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_spiritual_armor::HandleProc, EFFECT_1, SPELL_AURA_MOD_INCREASE_ENERGY_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_spiritual_armor::HandleRemove, EFFECT_1, SPELL_AURA_MOD_INCREASE_ENERGY_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_spiritual_armor_rune : public AuraScript
+{
+    PrepareAuraScript(spell_spiritual_armor_rune);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster())
+            return;
+
+        if (GetCaster()->HasAura(43024) || GetCaster()->HasAura(300150))
+            GetCaster()->AddAura(aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster())
+            return;
+
+        uint32 buff = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        if (GetCaster()->HasAura(buff))
+            GetCaster()->RemoveAura(buff);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_spiritual_armor_rune::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_spiritual_armor_rune::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -269,6 +309,47 @@ class spell_triune_armor : public SpellScript
     void Register() override
     {
         AfterCast += SpellCastFn(spell_triune_armor::HandleProc);
+    }
+};
+
+class spell_triune_armor_rune : public AuraScript
+{
+    PrepareAuraScript(spell_triune_armor_rune);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster())
+            return;
+
+        if (GetCaster()->HasAura(43024))
+            GetCaster()->RemoveAura(43024);
+
+        if (GetCaster()->HasAura(43046))
+            GetCaster()->RemoveAura(43046);
+
+        if (GetCaster()->HasAura(43008))
+            GetCaster()->RemoveAura(43008);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetCaster())
+            return;
+
+        if (GetCaster()->HasAura(300149))
+            GetCaster()->RemoveAura(300149);
+
+        if (GetCaster()->HasAura(300150))
+            GetCaster()->RemoveAura(300150);
+
+        if (GetCaster()->HasAura(300151))
+            GetCaster()->RemoveAura(300151);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_triune_armor_rune::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_triune_armor_rune::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -520,14 +601,14 @@ class spell_forzen_veins : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-        if (GetCaster()->HasAura(12472))
+        if (!GetCaster()->HasAura(12472))
+            return;
+
+        if (Aura* auraEff = GetCaster()->GetAura(12472))
         {
-            if (AuraEffect* protEff = GetCaster()->GetAuraEffect(12472, EFFECT_0))
-            {
-                uint32 duration = protEff->GetBase()->GetDuration();
-                if (duration < protEff->GetBase()->GetMaxDuration() + 10000)
-                    protEff->GetBase()->SetDuration(protEff->GetBase()->GetDuration() + aurEff->GetAmount());
-            }
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + aurEff->GetAmount(), auraEff->GetMaxDuration() + 10000));
+
+            auraEff->SetDuration(duration);
         }
     }
 
@@ -2048,8 +2129,9 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_diverted_energy);
     RegisterSpellScript(spell_diverted_energy_mana);
     RegisterSpellScript(spell_spiritual_armor);
-    RegisterSpellScript(spell_spiritual_armor_remove);
+    RegisterSpellScript(spell_spiritual_armor_rune);
     RegisterSpellScript(spell_triune_armor);
+    RegisterSpellScript(spell_triune_armor_rune);
     RegisterSpellScript(spell_arcanic_gems);
     RegisterSpellScript(spell_unstable_magic);
     RegisterSpellScript(spell_slick_ice);

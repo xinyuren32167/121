@@ -565,7 +565,7 @@ class spell_warr_bloodthirst : public SpellScript
         }
 
         if (Aura* aura = GetCaster()->GetAura(80035))
-            if(GetExplTargetUnit()->HealthBelowPct(35))
+            if (GetExplTargetUnit()->HealthBelowPct(35))
                 ApplyPct(damage, aura->GetEffect(EFFECT_0)->GetAmount());
 
         SetHitDamage(damage);
@@ -612,7 +612,7 @@ class spell_warr_overpower : public SpellScript
             return;
 
         if (Player* target = GetHitPlayer())
-             target->CastSpell(target, spellId, true, 0, 0, GetCaster()->GetGUID());
+            target->CastSpell(target, spellId, true, 0, 0, GetCaster()->GetGUID());
     }
 
     void HandleDamage(SpellEffIndex effIndex)
@@ -1328,10 +1328,11 @@ class spell_healing_deep_wound : public AuraScript
 {
     PrepareAuraScript(spell_healing_deep_wound);
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 50));
-        GetCaster()->CastCustomSpell(80003, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
+        LOG_ERROR("error", "Fueled by violence");
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        GetCaster()->CastCustomSpell(80003, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1445,6 +1446,33 @@ class spell_ignore_pain_absorbe : public AuraScript
     }
 };
 
+class spell_warr_unbridled_fury : public AuraScript
+{
+    PrepareAuraScript(spell_warr_unbridled_fury);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster())
+            return;
+
+        if (Aura* recklessness = GetCaster()->GetAura(1719))
+        {
+            uint32 duration = recklessness->GetDuration();
+            recklessness->SetDuration(duration + 2000);
+        }
+        else
+        {
+            GetCaster()->CastSpell(GetCaster(), 1719, TRIGGERED_FULL_MASK);
+            GetCaster()->GetAura(1719)->SetDuration(4000);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warr_unbridled_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 void AddSC_warrior_spell_scripts()
 {
@@ -1487,4 +1515,5 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_rampage_proc_rage);
     RegisterSpellScript(spell_warr_devastate);
     RegisterSpellScript(spell_war_damage_heroic_leap);
+    RegisterSpellScript(spell_warr_unbridled_fury);
 }
