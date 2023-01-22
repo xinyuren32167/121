@@ -9,7 +9,6 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-
 class spell_cut_the_veins : public AuraScript
 {
     PrepareAuraScript(spell_cut_the_veins);
