@@ -1967,7 +1967,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
         case SPELLFAMILY_PALADIN:
             switch (GetId())
             {
-                case 19746:
+                /*case 19746:
                 case 31821:
                     // Aura Mastery Triggered Spell Handler
                     // If apply Concentration Aura -> trigger -> apply Aura Mastery Immunity
@@ -1983,7 +1983,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     }
                     else
                         target->RemoveAurasDueToSpell(64364, GetCasterGUID());
-                    break;
+                    break;*/
                 case 31842:
                     if (caster && caster->HasAura(70755))
                     {
