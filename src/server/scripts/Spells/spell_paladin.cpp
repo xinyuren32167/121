@@ -1071,6 +1071,21 @@ class spell_pal_seal_of_righteousness : public AuraScript
     }
 };
 
+class spell_pal_forbearance : public SpellScript
+{
+    PrepareSpellScript(spell_pal_forbearance);
+
+    void HandleProc()
+    {
+        GetCaster()->CastSpell(GetCaster(), 25771, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_pal_forbearance::HandleProc);
+    }
+}
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1098,4 +1113,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_lay_on_hands);
     RegisterSpellScript(spell_pal_righteous_defense);
     RegisterSpellScript(spell_pal_seal_of_righteousness);
+    RegisterSpellScript(spell_pal_forbearance);
 }
