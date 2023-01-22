@@ -949,6 +949,7 @@ class spell_relentless : public AuraScript
 
         GetCaster()->RemoveAura(200434);
         GetCaster()->CastSpell(GetCaster(), 200435, TRIGGERED_FULL_MASK);
+        GetCaster()->RemoveAura(25771);
     }
 
     void Register() override
