@@ -1080,11 +1080,74 @@ class spell_pal_forbearance : public SpellScript
         GetCaster()->CastSpell(GetCaster(), 25771, TRIGGERED_FULL_MASK);
     }
 
-    void Register() override
+    void Register()
     {
         OnCast += SpellCastFn(spell_pal_forbearance::HandleProc);
     }
-}
+};
+
+class spell_pal_crusader_strike : public SpellScript
+{
+    PrepareSpellScript(spell_pal_crusader_strike);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 holy = GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
+
+        int32 sum = std::max<int32>(0, int32((ap * 0.8033f + 0.5355f * holy)));
+
+        if (Unit* target = GetHitUnit())
+        {
+            sum = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE, effIndex);
+            sum = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(sum);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pal_crusader_strike::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_pal_divine_storm_override : public SpellScript
+{
+    PrepareSpellScript(spell_pal_divine_storm_override);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+            float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+            int32 holy = GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
+
+            int32 sum = std::max<int32>(0, int32((ap * 0.6467f + 0.4312f * holy)));
+            LOG_ERROR("error", "{] , {}", holy, ap);
+
+            if (Unit* target = GetHitUnit())
+            {
+                sum = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE, effIndex);
+                sum = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE);
+            }
+
+            SetHitDamage(sum);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pal_divine_storm_override::HandleDamage, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+/*class spell_pal_power_cooldown : public SpellScript
+{
+    PrepareSpellScript(spell_pal_power_cooldown);
+
+    void HandleCooldown()
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(80038,12000);
+    }
+};*/
 
 void AddSC_paladin_spell_scripts()
 {
@@ -1097,7 +1160,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_blessing_of_faith);
     RegisterSpellScript(spell_pal_blessing_of_sanctuary);
     RegisterSpellScript(spell_pal_divine_sacrifice);
-    RegisterSpellScript(spell_pal_divine_storm);
+    //RegisterSpellScript(spell_pal_divine_storm);
     RegisterSpellScript(spell_pal_divine_storm_dummy);
     RegisterSpellScript(spell_pal_exorcism_and_holy_wrath_damage);
     RegisterSpellScript(spell_pal_eye_for_an_eye);
@@ -1114,4 +1177,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_righteous_defense);
     RegisterSpellScript(spell_pal_seal_of_righteousness);
     RegisterSpellScript(spell_pal_forbearance);
+    RegisterSpellScript(spell_pal_crusader_strike);
+    RegisterSpellScript(spell_pal_divine_storm_override);
 }
