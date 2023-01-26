@@ -35,7 +35,7 @@ enum PaladinSpells
     SPELL_PALADIN_BLESSING_OF_SANCTUARY_BUFF     = 67480,
     SPELL_PALADIN_BLESSING_OF_SANCTUARY_ENERGIZE = 57319,
 
-    SPELL_PALADIN_HOLY_SHOCK_R1                  = 20473,
+    SPELL_PALADIN_HOLY_SHOCK_R1                  = 48825,
     SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE           = 25912,
     SPELL_PALADIN_HOLY_SHOCK_R1_HEALING          = 25914,
 
@@ -81,7 +81,11 @@ enum PaladinSpells
     SPELL_PALADIN_AURA_MASTERY_IMMUNE            = 64364,
 
     SPELL_GENERIC_ARENA_DAMPENING                = 74410,
-    SPELL_GENERIC_BATTLEGROUND_DAMPENING         = 74411
+    SPELL_GENERIC_BATTLEGROUND_DAMPENING         = 74411,
+
+    SPELL_PALADIN_CONSECRATION                   = 48819,
+    SPELL_PALADIN_EXORCISM                       = 48801,
+    SPELL_PALADIN_RETRIBUTION_AURA               = 54043,
 };
 
 enum PaladinSpellIcons
@@ -1122,68 +1126,108 @@ class spell_pal_forbearance : public SpellScript
     }
 };
 
-class spell_pal_crusader_strike : public SpellScript
-{
-    PrepareSpellScript(spell_pal_crusader_strike);
-
-    void HandleDamage(SpellEffIndex effIndex)
-    {
-        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 holy = GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
-
-        int32 sum = std::max<int32>(0, int32((ap * 0.8033f + 0.5355f * holy)));
-
-        if (Unit* target = GetHitUnit())
-        {
-            sum = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE, effIndex);
-            sum = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE);
-        }
-
-        SetHitDamage(sum);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_pal_crusader_strike::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
-class spell_pal_divine_storm_override : public SpellScript
-{
-    PrepareSpellScript(spell_pal_divine_storm_override);
-
-    void HandleDamage(SpellEffIndex effIndex)
-    {
-            float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-            int32 holy = GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
-
-            int32 sum = std::max<int32>(0, int32((ap * 0.6467f + 0.4312f * holy)));
-            LOG_ERROR("error", "{] , {}", holy, ap);
-
-            if (Unit* target = GetHitUnit())
-            {
-                sum = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE, effIndex);
-                sum = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE);
-            }
-
-            SetHitDamage(sum);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_pal_divine_storm_override::HandleDamage, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
-/*class spell_pal_power_cooldown : public SpellScript
+class spell_pal_power_cooldown : public SpellScript
 {
     PrepareSpellScript(spell_pal_power_cooldown);
 
     void HandleCooldown()
     {
-        GetCaster()->ToPlayer()->ModifySpellCooldown(80038,12000);
+        GetCaster()->ToPlayer()->ModifySpellCooldown(53385, 12000);
+        GetCaster()->ToPlayer()->ModifySpellCooldown(80037, 12000);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_pal_power_cooldown::HandleCooldown);
+    }
+};
+
+class spell_pal_exorcism : public SpellScript
+{
+    PrepareSpellScript(spell_pal_exorcism);
+
+    void HandleScriptEffect()
+    {
+        Creature* creature = GetCaster()->FindNearestCreature(500502, 30);
+        if (!creature)
+            return;
+
+        for (auto const& targetburn : FindCreatures(creature))
+        {
+            GetCaster()->AddAura(48801, targetburn);
+        }
+    }
+
+    std::list <Unit*> FindCreatures(Creature* creature)
+    {
+        auto const& threatlist = GetCaster()->getAttackers();
+        Position creaturepos = creature->GetPosition();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatlist)
+        {
+            Position targetpos = target->GetPosition();
+            float distance = creature->GetDistance(targetpos);
+
+            if (distance <= 8)
+            {
+                targetAvailable.push_back(target);
+            }
+        } return targetAvailable;
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_pal_exorcism::HandleScriptEffect);
+    }
+};
+
+class spell_pal_consecration : public SpellScript
+{
+    PrepareSpellScript(spell_pal_consecration);
+
+    void HandleScriptEffect()
+    {
+        GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, 12000);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_pal_consecration::HandleScriptEffect);
+    }
+};
+
+/*class spell_pal_ret_aura : public AuraScript
+{
+    PrepareAuraScript(spell_pal_ret_aura);
+
+    std::list <Unit*> FindPlayers(Unit* player)
+    {
+        std::list<Unit*> PartyMembers;
+        GetCaster()->GetPartyMembers(PartyMembers);
+        std::list <Unit*> withAura;
+
+        for (auto const& target : PartyMembers)
+        {
+            if (player->HasAura(SPELL_PALADIN_RETRIBUTION_AURA))
+            {
+                withAura.push_back(target);
+            }
+        }
+        return withAura;
+    }
+
+    void CheckHealth()
+    {
+
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        eventInfo.GetActor()->
     }
 };*/
+
 
 void AddSC_paladin_spell_scripts()
 {
@@ -1213,7 +1257,9 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_righteous_defense);
     RegisterSpellScript(spell_pal_seal_of_righteousness);
     RegisterSpellScript(spell_pal_forbearance);
-    RegisterSpellScript(spell_pal_crusader_strike);
-    RegisterSpellScript(spell_pal_divine_storm_override);
     RegisterSpellScript(spell_pal_seraphim);
+    RegisterSpellScript(spell_pal_power_cooldown);
+    RegisterSpellScript(spell_pal_exorcism);
+    RegisterSpellScript(spell_pal_consecration);
+    //RegisterSpellScript(spell_pal_ret_aura);
 }
