@@ -601,6 +601,42 @@ private:
     }
 };
 
+class spell_pal_seraphim : public AuraScript
+{
+    PrepareAuraScript(spell_pal_seraphim);
+
+    void ApplyHasteAndMeleeCritical(bool apply)
+    {
+        Unit* caster = GetCaster();
+
+        caster->ApplyAttackTimePercentMod(BASE_ATTACK, 8.0f, apply);
+        caster->ApplyAttackTimePercentMod(OFF_ATTACK, 8.0f, apply);
+        caster->ApplyAttackTimePercentMod(RANGED_ATTACK, 8.0f, apply);
+        caster->ApplyCastTimePercentMod(8.0f, apply);
+
+        caster->ToPlayer()->HandleBaseModValue(CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
+        caster->ToPlayer()->HandleBaseModValue(OFFHAND_CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
+        caster->ToPlayer()->HandleBaseModValue(RANGED_CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
+    }
+
+    void HandleBuff(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        ApplyHasteAndMeleeCritical(true);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        ApplyHasteAndMeleeCritical(false);
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pal_seraphim::HandleBuff, EFFECT_1, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_seraphim::HandleRemove, EFFECT_1, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 // 33695 - Exorcism and Holy Wrath Damage
 class spell_pal_exorcism_and_holy_wrath_damage : public AuraScript
 {
@@ -1179,4 +1215,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_forbearance);
     RegisterSpellScript(spell_pal_crusader_strike);
     RegisterSpellScript(spell_pal_divine_storm_override);
+    RegisterSpellScript(spell_pal_seraphim);
 }
