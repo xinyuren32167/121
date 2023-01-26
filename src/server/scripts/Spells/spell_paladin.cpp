@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_PALADIN and SPELLFAMILY_GENERIC spells used by paladin players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_pal_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_PALADIN and SPELLFAMILY_GENERIC spells used by paladin players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_pal_".
+  */
 
 #include "Group.h"
 #include "Player.h"
@@ -31,66 +31,67 @@
 
 enum PaladinSpells
 {
-    SPELL_PALADIN_DIVINE_PLEA                    = 54428,
-    SPELL_PALADIN_BLESSING_OF_SANCTUARY_BUFF     = 67480,
+    SPELL_PALADIN_DIVINE_PLEA = 54428,
+    SPELL_PALADIN_BLESSING_OF_SANCTUARY_BUFF = 67480,
     SPELL_PALADIN_BLESSING_OF_SANCTUARY_ENERGIZE = 57319,
 
-    SPELL_PALADIN_HOLY_SHOCK_R1                  = 48825,
-    SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE           = 25912,
-    SPELL_PALADIN_HOLY_SHOCK_R1_HEALING          = 25914,
+    SPELL_PALADIN_HOLY_SHOCK_R1 = 48825,
+    SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE = 25912,
+    SPELL_PALADIN_HOLY_SHOCK_R1_HEALING = 25914,
 
-    SPELL_PALADIN_BLESSING_OF_LOWER_CITY_DRUID   = 37878,
+    SPELL_PALADIN_BLESSING_OF_LOWER_CITY_DRUID = 37878,
     SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PALADIN = 37879,
-    SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PRIEST  = 37880,
-    SPELL_PALADIN_BLESSING_OF_LOWER_CITY_SHAMAN  = 37881,
+    SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PRIEST = 37880,
+    SPELL_PALADIN_BLESSING_OF_LOWER_CITY_SHAMAN = 37881,
 
-    SPELL_PALADIN_DIVINE_STORM                   = 53385,
-    SPELL_PALADIN_DIVINE_STORM_DUMMY             = 54171,
-    SPELL_PALADIN_DIVINE_STORM_HEAL              = 54172,
+    SPELL_PALADIN_DIVINE_STORM = 53385,
+    SPELL_PALADIN_DIVINE_STORM_DUMMY = 54171,
+    SPELL_PALADIN_DIVINE_STORM_HEAL = 54172,
 
-    SPELL_PALADIN_EYE_FOR_AN_EYE_DAMAGE          = 25997,
+    SPELL_PALADIN_EYE_FOR_AN_EYE_DAMAGE = 25997,
 
-    SPELL_PALADIN_FORBEARANCE                    = 25771,
-    SPELL_PALADIN_AVENGING_WRATH_MARKER          = 61987,
-    SPELL_PALADIN_IMMUNE_SHIELD_MARKER           = 61988,
+    SPELL_PALADIN_FORBEARANCE = 25771,
+    SPELL_PALADIN_AVENGING_WRATH_MARKER = 61987,
+    SPELL_PALADIN_IMMUNE_SHIELD_MARKER = 61988,
 
-    SPELL_PALADIN_HAND_OF_SACRIFICE              = 6940,
-    SPELL_PALADIN_DIVINE_SACRIFICE               = 64205,
+    SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
+    SPELL_PALADIN_DIVINE_SACRIFICE = 64205,
 
-    SPELL_PALADIN_JUDGEMENT_DAMAGE               = 54158,
-    SPELL_PALADIN_JUDGEMENT_OF_JUSTICE           = 20184,
-    SPELL_PALADIN_JUDGEMENT_OF_LIGHT             = 20185,
-    SPELL_PALADIN_JUDGEMENT_OF_WISDOM            = 20186,
+    SPELL_PALADIN_JUDGEMENT_DAMAGE = 54158,
+    SPELL_PALADIN_JUDGEMENT_OF_JUSTICE = 20184,
+    SPELL_PALADIN_JUDGEMENT_OF_LIGHT = 20185,
+    SPELL_PALADIN_JUDGEMENT_OF_WISDOM = 20186,
 
-    SPELL_PALADIN_GLYPH_OF_SALVATION             = 63225,
+    SPELL_PALADIN_GLYPH_OF_SALVATION = 63225,
 
-    SPELL_PALADIN_RIGHTEOUS_DEFENSE_TAUNT        = 31790,
+    SPELL_PALADIN_RIGHTEOUS_DEFENSE_TAUNT = 31790,
 
-    SPELL_PALADIN_SANCTIFIED_WRATH               = 57318,
-    SPELL_PALADIN_SANCTIFIED_WRATH_TALENT_R1     = 53375,
+    SPELL_PALADIN_SANCTIFIED_WRATH = 57318,
+    SPELL_PALADIN_SANCTIFIED_WRATH_TALENT_R1 = 53375,
 
-    SPELL_PALADIN_SEAL_OF_RIGHTEOUSNESS          = 25742,
+    SPELL_PALADIN_SEAL_OF_RIGHTEOUSNESS = 25742,
 
-    SPELL_PALADIN_CONCENTRACTION_AURA            = 19746,
-    SPELL_PALADIN_SANCTIFIED_RETRIBUTION_R1      = 31869,
-    SPELL_PALADIN_SWIFT_RETRIBUTION_R1           = 53379,
+    SPELL_PALADIN_CONCENTRACTION_AURA = 19746,
+    SPELL_PALADIN_SANCTIFIED_RETRIBUTION_R1 = 31869,
+    SPELL_PALADIN_SWIFT_RETRIBUTION_R1 = 53379,
 
-    SPELL_PALADIN_IMPROVED_CONCENTRACTION_AURA   = 63510,
-    SPELL_PALADIN_IMPROVED_DEVOTION_AURA         = 63514,
-    SPELL_PALADIN_SANCTIFIED_RETRIBUTION_AURA    = 63531,
-    SPELL_PALADIN_AURA_MASTERY_IMMUNE            = 64364,
+    SPELL_PALADIN_IMPROVED_CONCENTRACTION_AURA = 63510,
+    SPELL_PALADIN_IMPROVED_DEVOTION_AURA = 63514,
+    SPELL_PALADIN_SANCTIFIED_RETRIBUTION_AURA = 63531,
+    SPELL_PALADIN_AURA_MASTERY_IMMUNE = 64364,
 
-    SPELL_GENERIC_ARENA_DAMPENING                = 74410,
-    SPELL_GENERIC_BATTLEGROUND_DAMPENING         = 74411,
+    SPELL_GENERIC_ARENA_DAMPENING = 74410,
+    SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
 
-    SPELL_PALADIN_CONSECRATION                   = 48819,
-    SPELL_PALADIN_EXORCISM                       = 48801,
-    SPELL_PALADIN_RETRIBUTION_AURA               = 54043,
+    SPELL_PALADIN_CONSECRATION = 48819,
+    SPELL_PALADIN_EXORCISM = 48801,
+    SPELL_PALADIN_RETRIBUTION_AURA = 54043,
+    SPELL_PALADIN_SHIELD_OF_RIGHTEOUS = 61411,
 };
 
 enum PaladinSpellIcons
 {
-    PALADIN_ICON_ID_RETRIBUTION_AURA             = 555
+    PALADIN_ICON_ID_RETRIBUTION_AURA = 555
 };
 
 class spell_pal_seal_of_command_aura : public AuraScript
@@ -128,7 +129,7 @@ class spell_pal_seal_of_command_aura : public AuraScript
         }
 
         Unit* target = eventInfo.GetActionTarget();
-        if (target->IsAlive())
+        if (target->IsAlive()) 
         {
             eventInfo.GetActor()->CastCustomSpell(aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, SPELLVALUE_MAX_TARGETS, targets, target, false, nullptr, aurEff);
         }
@@ -205,8 +206,11 @@ class spell_pal_sacred_shield_base : public AuraScript
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(GetSpellInfo()->Effects[aurEff->GetEffIndex()].TriggerSpell);
             amount = spellInfo->Effects[EFFECT_0].CalcValue();
 
-            // +75.00% from sp bonus
-            amount += CalculatePct(caster->SpellBaseDamageBonusDone(spellInfo->GetSchoolMask()), 75.0f);
+            // ratios
+
+            int32 sp = CalculatePct(caster->SpellBaseDamageBonusDone(spellInfo->GetSchoolMask()), 139.5f);
+            int32 ap = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 93.0f);
+            amount += (ap + sp);
 
             // Xinef: removed divine guardian because it will affect triggered spell with increased amount
             // Arena - Dampening
@@ -251,7 +255,7 @@ class spell_pal_sacred_shield_base : public AuraScript
             }
 
             if (caster && procSpell->SpellFamilyName == SPELLFAMILY_PALADIN &&
-                    procSpell->SpellFamilyFlags.HasFlag(0x40000000) && caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_PALADIN, 3021, 0)) // need infusion of light
+                procSpell->SpellFamilyFlags.HasFlag(0x40000000) && caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_PALADIN, 3021, 0)) // need infusion of light
             {
                 int32 basepoints = int32(float(healinfo->GetHeal()) / 12.0f);
                 // Item - Paladin T9 Holy 4P Bonus (Flash of Light)
@@ -317,7 +321,7 @@ private:
     bool Load() override
     {
         healPct = GetSpellInfo()->Effects[EFFECT_1].CalcValue();
-        absorbPct = GetSpellInfo()->Effects[EFFECT_0].CalcValue();
+        absorbPct = GetSpellInfo()->Effects[EFFECT_2].CalcValue();
         return GetUnitOwner()->GetTypeId() == TYPEID_PLAYER;
     }
 
@@ -331,7 +335,7 @@ private:
     {
         Unit* victim = GetTarget();
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
-        uint32 allowedHealth = victim->CountPctFromMaxHealth(35);
+        uint32 allowedHealth = victim->CountPctFromMaxHealth(1);
         // If damage kills us
         if (remainingHealth <= 0 && !victim->ToPlayer()->HasSpellCooldown(PAL_SPELL_ARDENT_DEFENDER_HEAL))
         {
@@ -343,19 +347,19 @@ private:
             // Formula: max defense at level + 140 (raiting from gear)
             uint32 reqDefForMaxHeal = victim->getLevel() * 5 + 140;
             float pctFromDefense = (defenseSkillValue >= reqDefForMaxHeal)
-                                    ? 1.0f
-                                    : float(defenseSkillValue) / float(reqDefForMaxHeal);
+                ? 1.0f
+                : float(defenseSkillValue) / float(reqDefForMaxHeal);
 
             int32 healAmount = int32(victim->CountPctFromMaxHealth(uint32(healPct * pctFromDefense)));
             victim->CastCustomSpell(PAL_SPELL_ARDENT_DEFENDER_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
-            victim->ToPlayer()->AddSpellCooldown(PAL_SPELL_ARDENT_DEFENDER_HEAL, 0, 120000);
+            victim->ToPlayer()->AddSpellCooldown(PAL_SPELL_ARDENT_DEFENDER_HEAL, 0, 60000);
         }
         else if (remainingHealth < int32(allowedHealth))
         {
             // Reduce damage that brings us under 35% (or full damage if we are already under 35%) by x%
             uint32 damageToReduce = (victim->GetHealth() < allowedHealth)
-                                    ? dmgInfo.GetDamage()
-                                    : allowedHealth - remainingHealth;
+                ? dmgInfo.GetDamage()
+                : allowedHealth - remainingHealth;
             absorbAmount = CalculatePct(damageToReduce, absorbPct);
         }
     }
@@ -422,20 +426,20 @@ class spell_pal_blessing_of_faith : public SpellScript
             uint32 spell_id = 0;
             switch (unitTarget->getClass())
             {
-                case CLASS_DRUID:
-                    spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_DRUID;
-                    break;
-                case CLASS_PALADIN:
-                    spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PALADIN;
-                    break;
-                case CLASS_PRIEST:
-                    spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PRIEST;
-                    break;
-                case CLASS_SHAMAN:
-                    spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_SHAMAN;
-                    break;
-                default:
-                    return; // ignore for non-healing classes
+            case CLASS_DRUID:
+                spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_DRUID;
+                break;
+            case CLASS_PALADIN:
+                spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PALADIN;
+                break;
+            case CLASS_PRIEST:
+                spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PRIEST;
+                break;
+            case CLASS_SHAMAN:
+                spell_id = SPELL_PALADIN_BLESSING_OF_LOWER_CITY_SHAMAN;
+                break;
+            default:
+                return; // ignore for non-healing classes
             }
             Unit* caster = GetCaster();
             caster->CastSpell(caster, spell_id, true);
@@ -589,7 +593,7 @@ class spell_pal_divine_storm_dummy : public SpellScript
 
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
-        if (!_targetCount || ! GetHitUnit())
+        if (!_targetCount || !GetHitUnit())
             return;
 
         int32 heal = GetEffectValue() / _targetCount;
@@ -604,42 +608,6 @@ private:
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pal_divine_storm_dummy::CountTargets, EFFECT_0, TARGET_UNIT_CASTER_AREA_RAID);
     }
 };
-
-class spell_pal_seraphim : public AuraScript
-{
-    PrepareAuraScript(spell_pal_seraphim);
-
-    void ApplyHasteAndMeleeCritical(bool apply)
-    {
-        Unit* caster = GetCaster();
-
-        caster->ApplyAttackTimePercentMod(BASE_ATTACK, 8.0f, apply);
-        caster->ApplyAttackTimePercentMod(OFF_ATTACK, 8.0f, apply);
-        caster->ApplyAttackTimePercentMod(RANGED_ATTACK, 8.0f, apply);
-        caster->ApplyCastTimePercentMod(8.0f, apply);
-
-        caster->ToPlayer()->HandleBaseModValue(CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
-        caster->ToPlayer()->HandleBaseModValue(OFFHAND_CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
-        caster->ToPlayer()->HandleBaseModValue(RANGED_CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
-    }
-
-    void HandleBuff(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        ApplyHasteAndMeleeCritical(true);
-    }
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        ApplyHasteAndMeleeCritical(false);
-    }
-
-    void Register()
-    {
-        OnEffectApply += AuraEffectApplyFn(spell_pal_seraphim::HandleBuff, EFFECT_1, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pal_seraphim::HandleRemove, EFFECT_1, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
 
 // 33695 - Exorcism and Holy Wrath Damage
 class spell_pal_exorcism_and_holy_wrath_damage : public AuraScript
@@ -1126,22 +1094,6 @@ class spell_pal_forbearance : public SpellScript
     }
 };
 
-class spell_pal_power_cooldown : public SpellScript
-{
-    PrepareSpellScript(spell_pal_power_cooldown);
-
-    void HandleCooldown()
-    {
-        GetCaster()->ToPlayer()->ModifySpellCooldown(53385, 12000);
-        GetCaster()->ToPlayer()->ModifySpellCooldown(80037, 12000);
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_pal_power_cooldown::HandleCooldown);
-    }
-};
-
 class spell_pal_exorcism : public SpellScript
 {
     PrepareSpellScript(spell_pal_exorcism);
@@ -1197,37 +1149,113 @@ class spell_pal_consecration : public SpellScript
     }
 };
 
-/*class spell_pal_ret_aura : public AuraScript
+class spell_pal_seraphim : public AuraScript
+{
+    PrepareAuraScript(spell_pal_seraphim);
+
+    void ApplyHasteAndMeleeCritical(bool apply)
+    {
+        Unit* caster = GetCaster();
+
+        caster->ApplyAttackTimePercentMod(BASE_ATTACK, 8.0f, apply);
+        caster->ApplyAttackTimePercentMod(OFF_ATTACK, 8.0f, apply);
+        caster->ApplyAttackTimePercentMod(RANGED_ATTACK, 8.0f, apply);
+        caster->ApplyCastTimePercentMod(8.0f, apply);
+
+        caster->ToPlayer()->HandleBaseModValue(CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
+        caster->ToPlayer()->HandleBaseModValue(OFFHAND_CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
+        caster->ToPlayer()->HandleBaseModValue(RANGED_CRIT_PERCENTAGE, FLAT_MOD, 8.0f, apply);
+    }
+
+    void HandleBuff(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        ApplyHasteAndMeleeCritical(true);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        ApplyHasteAndMeleeCritical(false);
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pal_seraphim::HandleBuff, EFFECT_1, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_seraphim::HandleRemove, EFFECT_1, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_pal_ret_aura : public AuraScript
 {
     PrepareAuraScript(spell_pal_ret_aura);
 
-    std::list <Unit*> FindPlayers(Unit* player)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        std::list<Unit*> PartyMembers;
-        GetCaster()->GetPartyMembers(PartyMembers);
-        std::list <Unit*> withAura;
-
-        for (auto const& target : PartyMembers)
+        if (GetCaster()->HasAura(80039))
         {
-            if (player->HasAura(SPELL_PALADIN_RETRIBUTION_AURA))
-            {
-                withAura.push_back(target);
-            }
+            float remainingDuration = GetCaster()->GetAura(80039)->GetDuration();
+            GetCaster()->GetAura(80039)->SetDuration(remainingDuration + 4000);
         }
-        return withAura;
+        else
+        {
+            GetCaster()->CastSpell(GetCaster(), 80039, TRIGGERED_FULL_MASK);
+            GetCaster()->GetAura(80039)->SetDuration(4000);
+        }
+        GetCaster()->CastSpell(GetCaster(), 80041, TRIGGERED_FULL_MASK);
     }
 
-    void CheckHealth()
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
+        Unit* victim = GetTarget();
+        uint32 healthPct = CalculatePct(victim->GetHealth(), 50);
 
+        if (GetCaster()->HasAura(80041))
+            return false;
+        if (!eventInfo.GetDamageInfo())
+            return false;
+        if (eventInfo.GetDamageInfo()->GetDamage() < healthPct)
+            return false;
+
+        return true;
     }
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void Register() override
     {
-        eventInfo.GetActor()->
+        DoCheckProc += AuraCheckProcFn(spell_pal_ret_aura::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_ret_aura::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
-};*/
+};
 
+class spell_pal_shield_righteous : public SpellScript
+{
+    PrepareSpellScript(spell_pal_shield_righteous);
+
+    void HandleArmor()
+    {
+        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), 170);
+
+        GetCaster()->CastCustomSpell(80042, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_shield_righteous::HandleArmor);
+    }
+};
+
+class spell_pal_holy_power : public SpellScript
+{
+    PrepareSpellScript(spell_pal_holy_power);
+
+    void HandleEnergy()
+    {
+        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_holy_power::HandleEnergy);
+    }
+};
 
 void AddSC_paladin_spell_scripts()
 {
@@ -1258,8 +1286,9 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_seal_of_righteousness);
     RegisterSpellScript(spell_pal_forbearance);
     RegisterSpellScript(spell_pal_seraphim);
-    RegisterSpellScript(spell_pal_power_cooldown);
     RegisterSpellScript(spell_pal_exorcism);
     RegisterSpellScript(spell_pal_consecration);
-    //RegisterSpellScript(spell_pal_ret_aura);
+    RegisterSpellScript(spell_pal_ret_aura);
+    RegisterSpellScript(spell_pal_shield_righteous);
+    RegisterSpellScript(spell_pal_holy_power);
 }
