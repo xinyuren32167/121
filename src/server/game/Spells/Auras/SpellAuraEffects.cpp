@@ -6100,12 +6100,12 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
                 }
                 break;
             // Beacon of Light
-            case 53563:
+            /*case 53563:
                 {
                     // area aura owner casts the spell
                     GetBase()->GetUnitOwner()->CastSpell(target, triggeredSpellInfo, true, 0, this, GetBase()->GetUnitOwner()->GetGUID());
                     return;
-                }
+                }*/
             // Slime Spray - temporary here until preventing default effect works again
             // added on 9.10.2010
             case 69508:

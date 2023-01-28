@@ -1257,6 +1257,177 @@ class spell_pal_holy_power : public SpellScript
     }
 };
 
+class spell_pal_light_of_dawn : public SpellScript
+{
+    PrepareSpellScript(spell_pal_light_of_dawn);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+
+        uint32 const maxTargets = 5;
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pal_light_of_dawn::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ALLY);
+    }
+};
+
+class spell_pal_light_of_the_martyr : public AuraScript
+{
+    PrepareAuraScript(spell_pal_light_of_the_martyr);
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+            int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(),50));
+            GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() < 0)
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_light_of_the_martyr::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_light_of_the_martyr::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_beacon_of_virtue : public SpellScript
+{
+    PrepareSpellScript(spell_pal_beacon_of_virtue);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+
+        uint32 const maxTargets = 3;
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+        for (auto const& target : targets)
+        {
+            Unit* player = target->ToUnit();
+            GetCaster()->AddAura(80055, player);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pal_beacon_of_virtue::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class spell_pal_final_reckoning : public AuraScript
+{
+    PrepareAuraScript(spell_pal_final_reckoning);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->HasSpellCooldown(80052))
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_final_reckoning::CheckProc);
+    }
+};
+
+class spell_pal_beacon : public AuraScript
+{
+    PrepareAuraScript(spell_pal_beacon);
+
+    std::list <Unit*> FindTargets(int32 spellId)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->HasAura(spellId))
+                    if (player->GetAura(spellId)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = player->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            int32 heal = eventInfo.GetHealInfo()->GetHeal();
+            int32 healpct = CalculatePct(heal, 30);
+
+            for (auto const& targetheal : FindTargets(53563))
+            {
+                GetCaster()->CastCustomSpell(80051, SPELLVALUE_BASE_POINT0, healpct, targetheal, true, nullptr);
+            }
+
+            for (auto const& targetheal : FindTargets(80049))
+            {
+                GetCaster()->CastCustomSpell(80050, SPELLVALUE_BASE_POINT0, healpct, targetheal, true, nullptr);
+            }
+
+            for (auto const& targetheal : FindTargets(80055))
+            {
+                GetCaster()->CastCustomSpell(80051, SPELLVALUE_BASE_POINT0, healpct, targetheal, true, nullptr);
+            }
+        }
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup())
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_beacon::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_beacon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_beacon_listener : public SpellScript
+{
+    PrepareSpellScript(spell_pal_beacon_listener);
+
+    void HandleProc()
+    {
+        GetCaster()->AddAura(80054, GetCaster());
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_beacon_listener::HandleProc);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1291,4 +1462,10 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_ret_aura);
     RegisterSpellScript(spell_pal_shield_righteous);
     RegisterSpellScript(spell_pal_holy_power);
+    RegisterSpellScript(spell_pal_light_of_dawn);
+    RegisterSpellScript(spell_pal_light_of_the_martyr);
+    RegisterSpellScript(spell_pal_beacon_of_virtue);
+    RegisterSpellScript(spell_pal_final_reckoning);
+    RegisterSpellScript(spell_pal_beacon);
+    RegisterSpellScript(spell_pal_beacon_listener);
 }

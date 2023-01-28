@@ -552,10 +552,10 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Light's Beacon, Beacon of Light
-    ApplySpellFix({ 53651 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({53651}, [](SpellInfo* spellInfo)
     {
         spellInfo->AttributesEx3 |= SPELL_ATTR3_DOT_STACKING_RULE;
-    });
+    });*/
 
     // Hand of Reckoning
     ApplySpellFix({ 62124 }, [](SpellInfo* spellInfo)
@@ -595,15 +595,15 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->AttributesEx3 &= ~SPELL_ATTR3_SUPRESS_CASTER_PROCS;
     });
 
-    ApplySpellFix({
+    /*ApplySpellFix({
         54968,  // Glyph of Holy Light, Damage Class should be magic
         53652,  // Beacon of Light heal, Damage Class should be magic
-        53654
+        53654,
         }, [](SpellInfo* spellInfo)
     {
         spellInfo->AttributesEx3 |= SPELL_ATTR3_IGNORE_CASTER_MODIFIERS;
         spellInfo->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
-    });
+    });*/
 
     // Wild Hunt
     ApplySpellFix({ 62758, 62762 }, [](SpellInfo* spellInfo)
@@ -4031,6 +4031,11 @@ void SpellMgr::LoadSpellInfoCorrections()
     {
         spellInfo->AttributesEx |= SPELL_ATTR1_NO_THREAT;
     });
+
+    ApplySpellFix({ 80050 }, [](SpellInfo* spellInfo)
+        {
+            spellInfo->AttributesEx |= SPELL_ATTR1_NO_THREAT;
+        });
 
     // Shadow Hunter Vosh'gajin - Hex
     ApplySpellFix({ 16097 }, [](SpellInfo* spellInfo)
