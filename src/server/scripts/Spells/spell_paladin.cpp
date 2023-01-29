@@ -1374,13 +1374,16 @@ class spell_pal_beacon : public AuraScript
         return targetAvailable;
     }
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
         {
             int32 heal = eventInfo.GetHealInfo()->GetHeal();
-            int32 healpct = CalculatePct(heal, 30);
 
+            int32 healpct = CalculatePct(heal, aurEff->GetAmount());
+            if (GetCaster()->HasSpell(80049))
+                healpct = CalculatePct(healpct, 70);
+             
             for (auto const& targetheal : FindTargets(53563))
             {
                 GetCaster()->CastCustomSpell(80051, SPELLVALUE_BASE_POINT0, healpct, targetheal, true, nullptr);
@@ -1428,6 +1431,88 @@ class spell_pal_beacon_listener : public SpellScript
     }
 };
 
+class spell_pal_justicars_vengeance : public AuraScript
+{
+    PrepareAuraScript(spell_pal_justicars_vengeance);
+
+    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        GetCaster()->CastCustomSpell(80057, SPELLVALUE_BASE_POINT0, damage, GetCaster(), true, nullptr);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_justicars_vengeance::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_justicars_scaling : public SpellScript
+{
+    PrepareSpellScript(spell_pal_justicars_scaling);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK)), 105);
+        int32 holysp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY)), 70);
+
+        int32 sum = std::max<int32>(0, int32(ap + holysp));
+
+        if (GetExplTargetUnit()->GetHealthPct() <= 35)
+            sum = CalculatePct(int32(sum), 150);
+
+        SetHitDamage(sum);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pal_justicars_scaling::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_pal_absolution : public SpellScript
+{
+    PrepareSpellScript(spell_pal_absolution);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->isDead())
+                  {
+                      Unit* dummy = player->ToUnit();
+                      if (dummy)
+                          targetAvailable.push_back(dummy);
+                  }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup())
+            return;
+
+         for (auto const& target : FindTargets())
+         {
+             GetCaster()->CastSpell(target, 80059, TRIGGERED_FULL_MASK);
+         }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_pal_absolution::HandleProc);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1468,4 +1553,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_final_reckoning);
     RegisterSpellScript(spell_pal_beacon);
     RegisterSpellScript(spell_pal_beacon_listener);
+    RegisterSpellScript(spell_pal_justicars_vengeance);
+    RegisterSpellScript(spell_pal_justicars_scaling);
+    RegisterSpellScript(spell_pal_absolution);
 }
