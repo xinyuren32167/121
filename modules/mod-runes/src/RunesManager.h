@@ -26,7 +26,7 @@ struct Loadout {
     bool active;
 };
 
-struct SpellRunes {
+struct SpellRuneConversion {
     uint32 runeSpellId;
     uint32 oldSpellId;
     uint32 newSpellId;
@@ -77,7 +77,7 @@ private:
     static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadout;
     static std::map<uint64 /* slotId */, std::vector<SlotRune>> m_SlotRune;
     static std::map<uint32 /* accountId */, AccountProgression> m_Progression;
-    static std::vector<SpellRunes> m_SpellRune;
+    static std::vector<SpellRuneConversion> m_SpellRuneConversion;
     static RuneConfig config;
     static uint32 GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p);
 public:
@@ -87,6 +87,7 @@ public:
     static void LoadAllLoadout();
     static void LoadAllSlotRune();
     static void LoadAllProgression();
+    static void LoadSpellsConversion();
     static void CreateDefaultCharacter(Player* player);
     static std::vector<std::string> RunesForClient(Player* player);
     static std::vector<std::string> LoadoutCachingForClient(Player* player);
@@ -110,4 +111,5 @@ public:
     static void AddRuneToSlot(Player* player, Rune rune, uint64 runeId);
     static void RemoveRuneFromSlots(Player* player, Rune rune);
     static bool HasEnoughToUpgrade(Player* player, uint32 spellId);
+    static void SpellConversion(uint32 runeId, Player* player, bool apply);
 };

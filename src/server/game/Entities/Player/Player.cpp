@@ -13624,6 +13624,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     if (!talentInfo)
         return;
 
+
     TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
     if (!talentTabInfo)
         return;
@@ -13646,6 +13647,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     // xinef: we already have same or higher rank talent learned
     if (currentTalentRank >= talentRank + 1)
         return;
+
 
     // xinef: check if we have enough free talent points
     uint32 talentPointsChange = (talentRank - currentTalentRank + 1);
@@ -13695,6 +13697,9 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     if (spellId == 0)
         return;
 
+    if (!sScriptMgr->CanLearnTalent(this, spellId))
+        return;
+
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
         return;
@@ -13716,6 +13721,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
         if (spellInfo->Effects[i].Effect == SPELL_EFFECT_LEARN_SPELL)
             if (sSpellMgr->IsAdditionalTalentSpell(spellInfo->Effects[i].TriggerSpell))
                 learnSpell(spellInfo->Effects[i].TriggerSpell);
+
 
     addTalent(spellId, GetActiveSpecMask(), currentTalentRank);
 

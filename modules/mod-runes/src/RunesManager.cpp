@@ -10,6 +10,8 @@ std::map<uint32 /* accountId */, std::vector<KnownRune>> RunesManager::m_KnownRu
 std::map<uint64 /* guid */, std::vector<Loadout>> RunesManager::m_Loadout = {};
 std::map<uint64 /* LoadoutId */, std::vector<SlotRune>> RunesManager::m_SlotRune = {};
 std::map<uint32 /* accountId */, AccountProgression> RunesManager::m_Progression = {};
+std::vector<SpellRuneConversion> RunesManager::m_SpellRuneConversion = {};
+
 RuneConfig RunesManager::config = {};
 
 void RunesManager::SetupConfig()
@@ -50,6 +52,44 @@ void RunesManager::LoadAllRunes()
         std::string keywords = fields[8].Get<std::string>();
         Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, refundItemId, refundDusts, keywords };
         m_Runes.insert(std::make_pair(id, rune));
+    } while (result->NextRow());
+
+}
+
+void RunesManager::SpellConversion(uint32 runeId, Player* player, bool apply)
+{
+    for (auto const& spell : m_SpellRuneConversion)
+        if (spell.runeSpellId == runeId) {
+            if (apply) {
+                player->learnSpell(spell.newSpellId, false, false, true);
+                player->removeSpell(spell.oldSpellId, SPEC_MASK_ALL, false, true);
+            }   
+            else {
+                player->learnSpell(spell.oldSpellId, false, false, true);
+                player->removeSpell(spell.newSpellId, SPEC_MASK_ALL, false, true);
+            }
+        }
+
+}
+
+void RunesManager::LoadSpellsConversion()
+{
+
+    RunesManager::m_SpellRuneConversion = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT * FROM runes_spell_switch");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 runeSpellId = fields[0].Get<uint32>();
+        uint32 oldSpellId = fields[1].Get<uint32>();
+        int32 newSpellId = fields[2].Get<int32>();
+        SpellRuneConversion s = { runeSpellId, oldSpellId, newSpellId };
+        m_SpellRuneConversion.push_back(s);
     } while (result->NextRow());
 
 }
@@ -492,6 +532,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
         return;
     }
 
+    SpellConversion(rune.spellId, player, true);
     player->AddAura(rune.spellId, player);
     AddRuneToSlot(player, rune, runeId);
     sEluna->OnActivateRune(player, "Rune successfully activated!", index);
@@ -592,8 +633,6 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
 
 void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 {
-    player->RemoveAura(rune.spellId);
-
     uint64 activeId = GetActiveLoadoutId(player);
 
     if (activeId <= 0)
@@ -614,6 +653,10 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     match->second.erase(slotToFind);
 
     CharacterDatabase.Query("DELETE FROM character_rune_slots WHERE runeId = {} AND id = {}", slotToFind->runeId, activeId);
+
+    SpellConversion(rune.spellId, player, false);
+    player->RemoveAura(rune.spellId);
+
     sEluna->RefreshSlotsRune(player);
 }
 

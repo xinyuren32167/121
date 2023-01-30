@@ -1342,6 +1342,22 @@ bool ScriptMgr::CanJoinLfg(Player* player, uint8 roles, lfg::LfgDungeonSet& dung
     return true;
 }
 
+bool ScriptMgr::CanLearnTalent(Player* player, uint32 spellId)
+{
+    auto ret = IsValidBoolScript<PlayerScript>([&](PlayerScript* script)
+    {
+        return !script->CanLearnTalent(player, spellId);
+    });
+
+    if (ret && *ret)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
 bool ScriptMgr::CanEnterMap(Player* player, MapEntry const* entry, InstanceTemplate const* instance, MapDifficulty const* mapDiff, bool loginCheck)
 {
     auto ret = IsValidBoolScript<PlayerScript>([&](PlayerScript* script)

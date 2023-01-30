@@ -28,8 +28,10 @@ public:
 
     void OnLogin(Player* player)
     {
-        if(player->getClass() == CLASS_PALADIN)
+        if (player->getClass() == CLASS_PALADIN) {
             player->SetMaxPower(POWER_ENERGY, 5);
+            player->SetPower(POWER_ENERGY, 0);
+        }
     }
 
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)
