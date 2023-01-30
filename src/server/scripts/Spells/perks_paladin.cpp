@@ -32,12 +32,18 @@ class rune_pal_touch_of_light : public AuraScript
 
         if (eventInfo.GetDamageInfo())
         {
+            if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+                return;
+
             procSpell = 400046;
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         }
         else if (eventInfo.GetHealInfo())
         {
+            if (eventInfo.GetHealInfo()->GetHeal() <= 0)
+                return;
+
             procSpell = 400047;
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).BonusMultiplier;
