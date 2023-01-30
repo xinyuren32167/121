@@ -129,7 +129,7 @@ class spell_pal_seal_of_command_aura : public AuraScript
         }
 
         Unit* target = eventInfo.GetActionTarget();
-        if (target->IsAlive()) 
+        if (target->IsAlive())
         {
             eventInfo.GetActor()->CastCustomSpell(aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, SPELLVALUE_MAX_TARGETS, targets, target, false, nullptr, aurEff);
         }
@@ -1286,8 +1286,8 @@ class spell_pal_light_of_the_martyr : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-            int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(),50));
-            GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
+        int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), 50));
+        GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
@@ -1383,7 +1383,7 @@ class spell_pal_beacon : public AuraScript
             int32 healpct = CalculatePct(heal, aurEff->GetAmount());
             if (GetCaster()->HasSpell(80049))
                 healpct = CalculatePct(healpct, 70);
-             
+
             for (auto const& targetheal : FindTargets(53563))
             {
                 GetCaster()->CastCustomSpell(80051, SPELLVALUE_BASE_POINT0, healpct, targetheal, true, nullptr);
@@ -1486,11 +1486,11 @@ class spell_pal_absolution : public SpellScript
             Player* player = ObjectAccessor::FindPlayer(target.guid);
             if (player)
                 if (player->isDead())
-                  {
-                      Unit* dummy = player->ToUnit();
-                      if (dummy)
-                          targetAvailable.push_back(dummy);
-                  }
+                {
+                    Unit* dummy = player->ToUnit();
+                    if (dummy)
+                        targetAvailable.push_back(dummy);
+                }
         }
         return targetAvailable;
     }
@@ -1501,10 +1501,10 @@ class spell_pal_absolution : public SpellScript
         if (!player->GetGroup())
             return;
 
-         for (auto const& target : FindTargets())
-         {
-             GetCaster()->CastSpell(target, 80059, TRIGGERED_FULL_MASK);
-         }
+        for (auto const& target : FindTargets())
+        {
+            GetCaster()->CastSpell(target, 80059, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
