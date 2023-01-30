@@ -1513,6 +1513,72 @@ class spell_pal_absolution : public SpellScript
     }
 };
 
+class spell_pal_wake_of_ashes : public SpellScript
+{
+    PrepareSpellScript(spell_pal_wake_of_ashes);
+
+    void HandleEnergy()
+    {
+        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 3);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_wake_of_ashes::HandleEnergy);
+    }
+};
+
+class spell_pal_execution_sentence : public AuraScript
+{
+    PrepareAuraScript(spell_pal_execution_sentence);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetTarget()->GetAuraEffect(80064, 0))
+            return;
+
+        int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
+
+        AuraEffect* protEff = GetTarget()->GetAuraEffect(80064, 0);
+
+        int32 amount = protEff->GetAmount() + damagedealt;
+
+        protEff->SetAmount(amount);
+
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo()->GetDamage())
+            return false;
+        if (eventInfo.GetDamageInfo()->GetDamage() < 0)
+            return false;
+        return true;
+
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_execution_sentence::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_execution_sentence::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_execution_sentence_listener : public SpellScript
+{
+    PrepareSpellScript(spell_pal_execution_sentence_listener);
+
+    void HandleProc()
+    {
+        GetCaster()->AddAura(80063, GetCaster());
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_execution_sentence_listener::HandleProc);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1556,4 +1622,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_justicars_vengeance);
     RegisterSpellScript(spell_pal_justicars_scaling);
     RegisterSpellScript(spell_pal_absolution);
+    RegisterSpellScript(spell_pal_wake_of_ashes);
+    RegisterSpellScript(spell_pal_execution_sentence);
+    RegisterSpellScript(spell_pal_execution_sentence_listener);
 }
