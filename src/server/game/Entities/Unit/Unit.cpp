@@ -7613,13 +7613,13 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
         case SPELLFAMILY_PALADIN:
             {
                 // Light's Beacon - Beacon of Light
-                if (dummySpell->Id == 53651)
+                /*if (dummySpell->Id == 53651)
                 {
                     if (!victim)
                         return false;
 
                     // Do not proc from Glyph of Holy Light and Judgement of Light
-                    if (procSpell->Id == 20267 || procSpell->Id == 54968)
+                    if (procSpell->Id == 20267 || procSpell->Id == 54968 || procSpell->Id == 80043)
                     {
                         return false;
                     }
@@ -7628,12 +7628,12 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     if (!beaconTarget || beaconTarget == this || !beaconTarget->GetAura(53563, victim->GetGUID()))
                         return false;
 
-                    basepoints0 = int32(damage);
+                    basepoints0 = int32(CalculatePct(damage,triggerAmount));
                     triggered_spell_id = procSpell->IsRankOf(sSpellMgr->GetSpellInfo(635)) ? 53652 : 53654;
 
                     victim->CastCustomSpell(beaconTarget, triggered_spell_id, &basepoints0, nullptr, nullptr, true, 0, triggeredByAura, victim->GetGUID());
                     return true;
-                }
+                }*/
                 // Judgements of the Wise
                 if (dummySpell->SpellIconID == 3017)
                 {
