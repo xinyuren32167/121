@@ -18,6 +18,9 @@ class rune_pal_touch_of_light : public AuraScript
         if (!eventInfo.GetDamageInfo() && !eventInfo.GetHealInfo())
             return false;
 
+        if (GetCaster()->HasSpellCooldown(GetAura()->GetId()))
+            return false;
+
         return true;
     }
 
@@ -26,7 +29,7 @@ class rune_pal_touch_of_light : public AuraScript
         uint32 procSpell = 0;
         float apPct = 0;
         float spPct = 0;
-        LOG_ERROR("error", "{} {}", eventInfo.GetDamageInfo()->GetDamage(), eventInfo.GetHealInfo()->GetHeal());
+
         if (eventInfo.GetDamageInfo())
         {
             procSpell = 400046;
@@ -39,12 +42,12 @@ class rune_pal_touch_of_light : public AuraScript
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).BonusMultiplier;
         }
-        LOG_ERROR("error", "{} {} {}", procSpell, apPct, spPct);
-        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK)), apPct);
-        float sp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY)), spPct);
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK) * apPct;
+        float sp = GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY) * spPct;
         int32 amount = std::max<int32>(0, int32(ap + sp));
-        LOG_ERROR("error", "{} {} {}", ap, sp, amount);
+
         GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->AddSpellCooldown(GetAura()->GetId(), 0, 1000);
     }
 
     void Register()
@@ -60,7 +63,6 @@ class rune_pal_justice_clemency : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "justice clemency");
         if (!eventInfo.GetDamageInfo())
             return false;
 
@@ -69,6 +71,9 @@ class rune_pal_justice_clemency : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
         uint32 procSpell = 400054;
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
