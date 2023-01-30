@@ -1534,17 +1534,15 @@ class spell_pal_execution_sentence : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetTarget()->GetAuraEffect(80064, 0))
-            return;
-
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
 
-        AuraEffect* protEff = GetTarget()->GetAuraEffect(80064, 0);
+        AuraEffect* protEff = GetTarget()->GetAuraEffect(80064, EFFECT_0);
+        int32 amount = damagedealt;
 
-        int32 amount = protEff->GetAmount() + damagedealt;
+        if (protEff)
+            amount += protEff->GetAmount();
 
         protEff->SetAmount(amount);
-
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)

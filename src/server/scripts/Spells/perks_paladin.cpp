@@ -15,7 +15,6 @@ class rune_pal_touch_of_light : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "touch of light");
         if (!eventInfo.GetDamageInfo() && !eventInfo.GetHealInfo())
             return false;
 
