@@ -212,15 +212,6 @@ class rune_pal_fortified_empyrean_legacy : public AuraScript
 {
     PrepareAuraScript(rune_pal_fortified_empyrean_legacy);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        LOG_ERROR("error", "fortified check");
-        if (GetCaster()->HasSpellCooldown(GetAura()->GetId()))
-            return false;
-
-        return true;
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         LOG_ERROR("error", "fortified proc");
@@ -231,13 +222,14 @@ class rune_pal_fortified_empyrean_legacy : public AuraScript
             return;
         LOG_ERROR("error", "fortified proc check");
         GetCaster()->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
-        //GetCaster()->AddSpellCooldown(GetAura()->GetId(), 0, 1000);
+
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(48827, true);
         LOG_ERROR("error", "finished");
     }
 
     void Register()
     {
-       // DoCheckProc += AuraCheckProcFn(rune_pal_fortified_empyrean_legacy::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pal_fortified_empyrean_legacy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
