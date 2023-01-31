@@ -1592,6 +1592,38 @@ class spell_pal_art_of_the_blade : public AuraScript
     }
 };
 
+class spell_pal_shield_of_vengeance_absorb : public SpellScript
+{
+    PrepareSpellScript(spell_pal_shield_of_vengeance_absorb);
+
+    void HandleAbsorb()
+    {
+        int32 hp = CalculatePct(GetCaster()->GetMaxHealth(), 30);
+        GetCaster()->CastCustomSpell(80067, SPELLVALUE_BASE_POINT0, hp, GetCaster());
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_shield_of_vengeance_absorb::HandleAbsorb);
+    }
+};
+
+class spell_pal_shield_of_vengeance_damage : public AuraScript
+{
+    PrepareAuraScript(spell_pal_shield_of_vengeance_damage);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        int32 hp = CalculatePct(GetCaster()->GetMaxHealth(), 30);
+        GetCaster()->CastCustomSpell(80068, SPELLVALUE_BASE_POINT0, hp, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_shield_of_vengeance_damage::HandleProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1639,4 +1671,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_execution_sentence);
     RegisterSpellScript(spell_pal_execution_sentence_listener);
     RegisterSpellScript(spell_pal_art_of_the_blade);
+    RegisterSpellScript(spell_pal_shield_of_vengeance_absorb);
+    RegisterSpellScript(spell_pal_shield_of_vengeance_damage);
 }
