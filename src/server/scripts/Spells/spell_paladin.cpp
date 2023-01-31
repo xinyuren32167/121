@@ -1547,7 +1547,7 @@ class spell_pal_execution_sentence : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (!eventInfo.GetDamageInfo()->GetDamage())
+        if (!eventInfo.GetDamageInfo())
             return false;
         if (eventInfo.GetDamageInfo()->GetDamage() < 0)
             return false;
@@ -1574,6 +1574,21 @@ class spell_pal_execution_sentence_listener : public SpellScript
     void Register()
     {
         OnCast += SpellCastFn(spell_pal_execution_sentence_listener::HandleProc);
+    }
+};
+
+class spell_pal_art_of_the_blade : public AuraScript
+{
+    PrepareAuraScript(spell_pal_art_of_the_blade);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(80045, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_art_of_the_blade::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1623,4 +1638,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_wake_of_ashes);
     RegisterSpellScript(spell_pal_execution_sentence);
     RegisterSpellScript(spell_pal_execution_sentence_listener);
+    RegisterSpellScript(spell_pal_art_of_the_blade);
 }
