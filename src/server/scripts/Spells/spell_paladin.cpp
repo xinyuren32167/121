@@ -1286,7 +1286,10 @@ class spell_pal_light_of_the_martyr : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), 50));
+        float damagePct = GetEffect(EFFECT_2)->GetAmount();
+        if (damagePct <= 0)
+            return;
+        int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), damagePct));
         GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
     }
 
@@ -1435,11 +1438,11 @@ class spell_pal_justicars_vengeance : public AuraScript
 {
     PrepareAuraScript(spell_pal_justicars_vengeance);
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damage = procInfo.GetDamageInfo()->GetDamage();
 
-        GetCaster()->CastCustomSpell(80057, SPELLVALUE_BASE_POINT0, damage, GetCaster(), true, nullptr);
+        GetCaster()->CastCustomSpellTrigger(80057, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -1463,6 +1466,8 @@ class spell_pal_justicars_scaling : public SpellScript
             sum = CalculatePct(int32(sum), 150);
 
         SetHitDamage(sum);
+
+        GetCaster()->CastCustomSpellTrigger(80057, SPELLVALUE_BASE_POINT0, sum, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1534,15 +1539,22 @@ class spell_pal_execution_sentence : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        LOG_ERROR("error", "first check");
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-
+        LOG_ERROR("error", "second check");
         AuraEffect* protEff = GetTarget()->GetAuraEffect(80064, EFFECT_0);
+        LOG_ERROR("error", "third check");
         int32 amount = damagedealt;
+        LOG_ERROR("error", "fourth check");
 
         if (protEff)
             amount += protEff->GetAmount();
+        LOG_ERROR("error", "fifth check");
+        LOG_ERROR("error", "{}", amount);
 
-        protEff->SetAmount(amount);
+        if (amount > 0)
+            protEff->SetAmount(amount);
+        LOG_ERROR("error", "sixth check");
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
