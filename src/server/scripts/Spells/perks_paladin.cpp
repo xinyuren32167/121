@@ -234,6 +234,36 @@ class rune_pal_fortified_empyrean_legacy : public AuraScript
     }
 };
 
+class rune_pal_fires_of_justice : public AuraScript
+{
+    PrepareAuraScript(rune_pal_fires_of_justice);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_fires_of_justice::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_sanctification : public AuraScript
+{
+    PrepareAuraScript(rune_pal_sanctification);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_sanctification::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -244,4 +274,6 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_zealots_paragon);
     RegisterSpellScript(rune_pal_virtuous_command);
     RegisterSpellScript(rune_pal_fortified_empyrean_legacy);
+    RegisterSpellScript(rune_pal_fires_of_justice);
+    RegisterSpellScript(rune_pal_sanctification);
 }
