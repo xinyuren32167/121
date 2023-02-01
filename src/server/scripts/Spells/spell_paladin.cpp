@@ -28,6 +28,9 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "UnitAI.h"
+#include "SpellAuras.h"
+#include "SpellAuraDefines.h"
+#include "Unit.h"
 
 enum PaladinSpells
 {
@@ -1280,30 +1283,31 @@ class spell_pal_light_of_dawn : public SpellScript
     }
 };
 
-class spell_pal_light_of_the_martyr : public AuraScript
+class spell_pal_light_of_the_martyr : public SpellScript
 {
-    PrepareAuraScript(spell_pal_light_of_the_martyr);
+    PrepareSpellScript(spell_pal_light_of_the_martyr);
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc()
     {
-        float damagePct = GetEffect(EFFECT_2)->GetAmount();
+        float damagePct = sSpellMgr->AssertSpellInfo(80043)->GetEffect(EFFECT_2).BasePoints + 1;
         if (damagePct <= 0)
             return;
-        int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), damagePct));
-        GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
-    }
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        if (!eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() < 0)
-            return false;
-        return true;
+        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK)), 105);
+        int32 holysp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY)), 157);
+
+        int32 sum = (ap + holysp);
+
+        int32 damage = int32(CalculatePct(sum, damagePct));
+
+        damage = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(spell_pal_light_of_the_martyr::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_pal_light_of_the_martyr::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+        OnCast += SpellCastFn(spell_pal_light_of_the_martyr::HandleProc);
     }
 };
 
@@ -1431,23 +1435,6 @@ class spell_pal_beacon_listener : public SpellScript
     void Register()
     {
         OnCast += SpellCastFn(spell_pal_beacon_listener::HandleProc);
-    }
-};
-
-class spell_pal_justicars_vengeance : public AuraScript
-{
-    PrepareAuraScript(spell_pal_justicars_vengeance);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
-    {
-        int32 damage = procInfo.GetDamageInfo()->GetDamage();
-
-        GetCaster()->CastCustomSpellTrigger(80057, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
-    }
-
-    void Register()
-    {
-        OnEffectProc += AuraEffectProcFn(spell_pal_justicars_vengeance::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1676,7 +1663,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_final_reckoning);
     RegisterSpellScript(spell_pal_beacon);
     RegisterSpellScript(spell_pal_beacon_listener);
-    RegisterSpellScript(spell_pal_justicars_vengeance);
     RegisterSpellScript(spell_pal_justicars_scaling);
     RegisterSpellScript(spell_pal_absolution);
     RegisterSpellScript(spell_pal_wake_of_ashes);
