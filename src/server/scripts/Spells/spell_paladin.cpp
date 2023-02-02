@@ -1623,6 +1623,22 @@ class spell_pal_shield_of_vengeance_damage : public AuraScript
     }
 };
 
+class spell_pal_crusaders_might : public AuraScript
+{
+    PrepareAuraScript(spell_pal_crusaders_might);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(48825, -aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_crusaders_might::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1671,4 +1687,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_art_of_the_blade);
     RegisterSpellScript(spell_pal_shield_of_vengeance_absorb);
     RegisterSpellScript(spell_pal_shield_of_vengeance_damage);
+    RegisterSpellScript(spell_pal_crusaders_might);
 }
