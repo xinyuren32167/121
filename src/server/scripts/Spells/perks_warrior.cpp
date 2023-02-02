@@ -788,7 +788,6 @@ class spell_berserkers_tourment : public AuraScript
     {
         if (!GetRuneAura())
             return;
-        LOG_ERROR("error", "recklessness proc");
 
         GetCaster()->AddAura(200407, GetCaster());
     }
@@ -797,7 +796,7 @@ class spell_berserkers_tourment : public AuraScript
     {
         if (!GetCaster()->HasAura(200407))
             return;
-        LOG_ERROR("error", "recklessness removed");
+
         GetCaster()->RemoveAura(200407);
     }
 
@@ -818,7 +817,6 @@ class spell_berserkers_tourment_proc : public AuraScript
             return;
 
         uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
-        LOG_ERROR("error", "damage proc");
         GetCaster()->DealDamage(GetCaster(), GetCaster(), damage, nullptr, DIRECT_DAMAGE);
     }
 
