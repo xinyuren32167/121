@@ -270,16 +270,14 @@ class rune_pal_golden_path : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff)
     {
-        {
-            uint32 procSpell = 400236;
+        uint32 procSpell = 400236;
 
 
-            float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), (aurEff->GetAmount())));
-            float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), (aurEff->GetAmount())));
-            int32 amount = std::max<int32>(0, int32(ap + sp));
+        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetAmount()));
+        int32 amount = std::max<int32>(0, int32(ap + sp));
 
-            GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
-        }
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -479,6 +477,154 @@ class rune_pal_lights_adrenaline : public AuraScript
     }
 };
 
+class rune_pal_titan_of_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_titan_of_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400288;
+        float heal = eventInfo.GetHealInfo()->GetHeal();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target)
+            return;
+
+        int32 amount = (int32(CalculatePct(heal, aurEff->GetAmount()))) / 8;
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_titan_of_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_titan_of_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_soothing_aura : public AuraScript
+{
+    PrepareAuraScript(rune_pal_soothing_aura);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetHealInfo() || eventInfo.GetHealInfo()->GetHeal() <= 0)
+            return false;
+
+        if (!GetCaster()->HasAura(31821))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400314;
+        float heal = eventInfo.GetHealInfo()->GetHeal();
+
+        int32 amount = int32(CalculatePct(heal, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_soothing_aura::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_soothing_aura::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_crusaders_reprieve : public AuraScript
+{
+    PrepareAuraScript(rune_pal_crusaders_reprieve);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400322;
+        float damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        int32 amount = int32(CalculatePct(damage, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_crusaders_reprieve::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_crusaders_reprieve::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_avenging_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_avenging_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400330;
+        float heal = eventInfo.GetHealInfo()->GetHeal();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target)
+            return;
+
+        int32 amount = int32(CalculatePct(heal, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_avenging_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_avenging_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_resplendent_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_resplendent_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400338;
+        float heal = eventInfo.GetHealInfo()->GetHeal();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target)
+            return;
+
+        int32 amount = int32(CalculatePct(heal, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_resplendent_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_resplendent_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -497,4 +643,9 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_paragon_of_light);
     RegisterSpellScript(rune_pal_verdict);
     RegisterSpellScript(rune_pal_lights_adrenaline);
+    RegisterSpellScript(rune_pal_titan_of_light);
+    RegisterSpellScript(rune_pal_soothing_aura);
+    RegisterSpellScript(rune_pal_crusaders_reprieve);
+    RegisterSpellScript(rune_pal_avenging_light);
+    RegisterSpellScript(rune_pal_resplendent_light);
 }
