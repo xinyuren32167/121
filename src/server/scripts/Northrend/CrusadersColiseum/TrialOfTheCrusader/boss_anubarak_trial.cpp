@@ -530,13 +530,13 @@ public:
             if (me->GetMap())
                 switch (me->GetMap()->GetDifficulty())
                 {
-                    case RAID_DIFFICULTY_10MAN_NORMAL:
+                    case RAID_DIFFICULTY_10_25MAN_NORMAL:
                         ID = 66118;
                         break;
-                    case RAID_DIFFICULTY_25MAN_NORMAL:
+                    case RAID_DIFFICULTY_10_25MAN_HEROIC:
                         ID = 67630;
                         break;
-                    case RAID_DIFFICULTY_10MAN_HEROIC:
+                    case RAID_DIFFICULTY_10_25MAN_MYTHIC:
                         ID = 68646;
                         break;
                     case RAID_DIFFICULTY_25MAN_HEROIC:

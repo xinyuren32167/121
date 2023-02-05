@@ -1318,10 +1318,11 @@ void WorldSession::HandleResetInstancesOpcode(WorldPacket& /*recv_data*/)
 
 void WorldSession::HandleSetDungeonDifficultyOpcode(WorldPacket& recv_data)
 {
-    LOG_DEBUG("network", "MSG_SET_DUNGEON_DIFFICULTY");
 
     uint32 mode;
     recv_data >> mode;
+
+    LOG_ERROR("network", "MSG_SET_DUNGEON_DIFFICULTY {}", mode);
 
     if (mode >= MAX_DUNGEON_DIFFICULTY)
         return;

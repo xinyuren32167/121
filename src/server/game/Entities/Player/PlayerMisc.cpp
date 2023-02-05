@@ -174,6 +174,16 @@ void Player::SendDungeonDifficulty(bool IsInGroup)
     GetSession()->SendPacket(&data);
 }
 
+void Player::SendDungeonDifficulty(bool IsInGroup, uint8 diff)
+{
+    uint8 val = 0x00000001;
+    WorldPacket data(MSG_SET_DUNGEON_DIFFICULTY, 12);
+    data << (uint32)diff;
+    data << uint32(val);
+    data << uint32(IsInGroup);
+    GetSession()->SendPacket(&data);
+}
+
 void Player::SendRaidDifficulty(bool IsInGroup, int32 forcedDifficulty)
 {
     uint8 val = 0x00000001;

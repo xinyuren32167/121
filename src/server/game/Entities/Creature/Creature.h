@@ -470,6 +470,8 @@ private:
 
     uint32 _playerDamageReq;
     bool _damagedByPlayer;
+
+    uint8 AutobalancePlayerCount;
 };
 
 class AssistDelayEvent : public BasicEvent

@@ -292,8 +292,8 @@ Player::Player(WorldSession* session): Unit(true), m_mover(this)
     m_HomebindTimer = 0;
     m_InstanceValid = true;
     m_dungeonDifficulty = DUNGEON_DIFFICULTY_NORMAL;
-    m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
-    m_raidMapDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
+    m_raidDifficulty = RAID_DIFFICULTY_10_25MAN_NORMAL;
+    m_raidMapDifficulty = RAID_DIFFICULTY_10_25MAN_NORMAL;
 
     m_lastPotionId = 0;
 

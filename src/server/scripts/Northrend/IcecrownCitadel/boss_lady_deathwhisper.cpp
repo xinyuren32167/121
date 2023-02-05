@@ -281,7 +281,7 @@ public:
             events.SetPhase(PHASE_ONE);
             events.ScheduleEvent(EVENT_BERSERK, 600000);
             events.ScheduleEvent(EVENT_SPELL_DEATH_AND_DECAY, 10000);
-            if (GetDifficulty() != RAID_DIFFICULTY_10MAN_NORMAL)
+            if (GetDifficulty() != RAID_DIFFICULTY_10_25MAN_NORMAL)
                 events.ScheduleEvent(EVENT_SPELL_DOMINATE_MIND_25, 30000);
             events.ScheduleEvent(EVENT_SPELL_SHADOW_BOLT, 2000, 0, PHASE_ONE);
             events.ScheduleEvent(EVENT_SUMMON_WAVE_P1, 5000, 0, PHASE_ONE);
@@ -439,7 +439,7 @@ public:
                 case EVENT_SPELL_SUMMON_SHADE:
                     {
                         uint8 count = 1;
-                        if (GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
+                        if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_HEROIC)
                             count = 2;
                         else if (GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
                             count = 3;

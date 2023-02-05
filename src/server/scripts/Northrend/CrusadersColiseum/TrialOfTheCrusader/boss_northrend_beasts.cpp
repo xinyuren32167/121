@@ -949,15 +949,15 @@ public:
                         if( pInstance )
                             switch( GetDifficulty() )
                             {
-                                case RAID_DIFFICULTY_10MAN_NORMAL:
+                                case RAID_DIFFICULTY_10_25MAN_NORMAL:
                                     pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MASSIVE_CRASH);
                                     pInstance->DoCastSpellOnPlayers(SPELL_SURGE_OF_ADRENALINE);
                                     break;
-                                case RAID_DIFFICULTY_25MAN_NORMAL:
+                                case RAID_DIFFICULTY_10_25MAN_HEROIC:
                                     pInstance->DoRemoveAurasDueToSpellOnPlayers(67660);
                                     pInstance->DoCastSpellOnPlayers(SPELL_SURGE_OF_ADRENALINE);
                                     break;
-                                case RAID_DIFFICULTY_10MAN_HEROIC:
+                                case RAID_DIFFICULTY_10_25MAN_MYTHIC:
                                     pInstance->DoRemoveAurasDueToSpellOnPlayers(67661);
                                     break;
                                 case RAID_DIFFICULTY_25MAN_HEROIC:

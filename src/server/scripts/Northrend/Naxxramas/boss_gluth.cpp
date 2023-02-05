@@ -208,7 +208,7 @@ public:
                             // In 10 man raid, normal mode - should spawn only from mid gate
                             // \1 |0 /2 pos
                             // In 25 man raid - should spawn from all 3 gates
-                            if (me->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
+                            if (me->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10_25MAN_NORMAL)
                             {
                                 me->SummonCreature(NPC_ZOMBIE_CHOW, zombiePos[0]);
                             }

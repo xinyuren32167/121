@@ -1970,6 +1970,7 @@ public:
     void SendExplorationExperience(uint32 Area, uint32 Experience);
 
     void SendDungeonDifficulty(bool IsInGroup);
+    void SendDungeonDifficulty(bool IsInGroup, uint8 diff);
     void SendRaidDifficulty(bool IsInGroup, int32 forcedDifficulty = -1);
     static void ResetInstances(ObjectGuid guid, uint8 method, bool isRaid);
     void SendResetInstanceSuccess(uint32 MapId);

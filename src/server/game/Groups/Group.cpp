@@ -64,7 +64,7 @@ Loot* Roll::getLoot()
 }
 
 Group::Group() : m_leaderName(""), m_groupType(GROUPTYPE_NORMAL),
-    m_dungeonDifficulty(DUNGEON_DIFFICULTY_NORMAL), m_raidDifficulty(RAID_DIFFICULTY_10MAN_NORMAL),
+    m_dungeonDifficulty(DUNGEON_DIFFICULTY_NORMAL), m_raidDifficulty(RAID_DIFFICULTY_10_25MAN_NORMAL),
     m_bfGroup(nullptr), m_bgGroup(nullptr), m_lootMethod(FREE_FOR_ALL), m_lootThreshold(ITEM_QUALITY_UNCOMMON),
     m_subGroupsCounts(nullptr), m_counter(0), m_maxEnchantingLevel(0), _difficultyChangePreventionTime(0),
     _difficultyChangePreventionType(DIFFICULTY_PREVENTION_CHANGE_NONE)
@@ -129,7 +129,7 @@ bool Group::Create(Player* leader)
     m_masterLooterGuid.Clear();
 
     m_dungeonDifficulty = DUNGEON_DIFFICULTY_NORMAL;
-    m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
+    m_raidDifficulty = RAID_DIFFICULTY_10_25MAN_NORMAL;
 
     if (!isBGGroup() && !isBFGroup())
     {
@@ -214,7 +214,7 @@ bool Group::LoadGroupFromDB(Field* fields)
 
     uint32 r_diff = fields[14].Get<uint8>();
     if (r_diff >= MAX_RAID_DIFFICULTY)
-        m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
+        m_raidDifficulty = RAID_DIFFICULTY_10_25MAN_NORMAL;
     else
         m_raidDifficulty = Difficulty(r_diff);
 
@@ -1700,7 +1700,7 @@ void Group::SendUpdateToPlayer(ObjectGuid playerGUID, MemberSlot* slot)
         data << uint8(m_lootThreshold);                 // loot threshold
         data << uint8(m_dungeonDifficulty);             // Dungeon Difficulty
         data << uint8(m_raidDifficulty);                // Raid Difficulty
-        data << uint8(m_raidDifficulty >= RAID_DIFFICULTY_10MAN_HEROIC);    // 3.3 Dynamic Raid Difficulty - 0 normal/1 heroic
+        data << uint8(m_raidDifficulty >= RAID_DIFFICULTY_10_25MAN_MYTHIC);    // 3.3 Dynamic Raid Difficulty - 0 normal/1 heroic
     }
 
     player->GetSession()->SendPacket(&data);

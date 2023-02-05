@@ -125,7 +125,7 @@ public:
 
         void DoCheckDedicatedInsanity()
         {
-            if (!bDedicatedInsanity || AttemptsLeft < 50 || instance->GetDifficulty() != RAID_DIFFICULTY_10MAN_HEROIC)
+            if (!bDedicatedInsanity || AttemptsLeft < 50 || instance->GetDifficulty() != RAID_DIFFICULTY_10_25MAN_MYTHIC)
                 return;
 
             if (validDedicatedInsanityItems.empty())
@@ -426,13 +426,13 @@ public:
                                 uint32 cacheEntry = 0;
                                 switch( instance->GetDifficulty() )
                                 {
-                                    case RAID_DIFFICULTY_10MAN_NORMAL:
+                                    case RAID_DIFFICULTY_10_25MAN_NORMAL:
                                         cacheEntry = GO_CRUSADERS_CACHE_10;
                                         break;
-                                    case RAID_DIFFICULTY_25MAN_NORMAL:
+                                    case RAID_DIFFICULTY_10_25MAN_HEROIC:
                                         cacheEntry = GO_CRUSADERS_CACHE_25;
                                         break;
-                                    case RAID_DIFFICULTY_10MAN_HEROIC:
+                                    case RAID_DIFFICULTY_10_25MAN_MYTHIC:
                                         cacheEntry = GO_CRUSADERS_CACHE_10_H;
                                         break;
                                     case RAID_DIFFICULTY_25MAN_HEROIC:
@@ -1040,7 +1040,7 @@ public:
                         vOtherEntries.push_back(TeamIdInInstance == TEAM_ALLIANCE ? NPC_HORDE_WARRIOR : NPC_ALLIANCE_WARRIOR);
 
                         uint8 healersSubtracted = 2;
-                        if( instance->GetSpawnMode() == RAID_DIFFICULTY_25MAN_NORMAL || instance->GetSpawnMode() == RAID_DIFFICULTY_25MAN_HEROIC )
+                        if( instance->GetSpawnMode() == RAID_DIFFICULTY_10_25MAN_HEROIC || instance->GetSpawnMode() == RAID_DIFFICULTY_25MAN_HEROIC )
                             healersSubtracted = 1;
                         for( uint8 i = 0; i < healersSubtracted; ++i )
                         {
@@ -1075,7 +1075,7 @@ public:
                             vHealerEntries.erase(vHealerEntries.begin() + pos);
                         }
 
-                        if( instance->GetSpawnMode() == RAID_DIFFICULTY_10MAN_NORMAL || instance->GetSpawnMode() == RAID_DIFFICULTY_10MAN_HEROIC )
+                        if( instance->GetSpawnMode() == RAID_DIFFICULTY_10_25MAN_NORMAL || instance->GetSpawnMode() == RAID_DIFFICULTY_10_25MAN_MYTHIC )
                             for( uint8 i = 0; i < 4; ++i )
                                 vOtherEntries.erase(vOtherEntries.begin() + urand(0, vOtherEntries.size() - 1));
 
@@ -1353,7 +1353,7 @@ public:
                         if( instance->IsHeroic() )
                         {
                             uint32 tributeChest = 0;
-                            if( instance->GetSpawnMode() == RAID_DIFFICULTY_10MAN_HEROIC )
+                            if( instance->GetSpawnMode() == RAID_DIFFICULTY_10_25MAN_MYTHIC )
                             {
                                 if (AttemptsLeft >= 50)
                                     tributeChest = GO_TRIBUTE_CHEST_10H_99;

@@ -218,7 +218,7 @@ public:
         {
             switch (diff)
             {
-                case RAID_DIFFICULTY_10MAN_NORMAL: // 10 man chest
+                case RAID_DIFFICULTY_10_25MAN_NORMAL: // 10 man chest
                 {
                     if (!m_hodirNormalChest)
                     {
@@ -249,7 +249,7 @@ public:
                     }
                     break;
                 }
-                case RAID_DIFFICULTY_25MAN_NORMAL: // 25 man chest
+                case RAID_DIFFICULTY_10_25MAN_HEROIC: // 25 man chest
                 {
                     if (!m_hodirNormalChest)
                     {

@@ -164,7 +164,7 @@ namespace DisableMgr
                             case MAP_RAID:
                                 if (flags & DUNGEON_STATUSFLAG_HEROIC && !GetMapDifficultyData(entry, DUNGEON_DIFFICULTY_HEROIC))
                                     isFlagInvalid = true;
-                                else if (flags & RAID_STATUSFLAG_10MAN_HEROIC && !GetMapDifficultyData(entry, RAID_DIFFICULTY_10MAN_HEROIC))
+                                else if (flags & RAID_STATUSFLAG_10MAN_HEROIC && !GetMapDifficultyData(entry, RAID_DIFFICULTY_10_25MAN_MYTHIC))
                                     isFlagInvalid = true;
                                 else if (flags & RAID_STATUSFLAG_25MAN_HEROIC && !GetMapDifficultyData(entry, RAID_DIFFICULTY_25MAN_HEROIC))
                                     isFlagInvalid = true;
@@ -367,7 +367,7 @@ namespace DisableMgr
                                 return disabledModes & DUNGEON_STATUSFLAG_NORMAL;
                             case DUNGEON_DIFFICULTY_HEROIC:
                                 return disabledModes & DUNGEON_STATUSFLAG_HEROIC;
-                            case RAID_DIFFICULTY_10MAN_HEROIC:
+                            case RAID_DIFFICULTY_10_25MAN_MYTHIC:
                                 return disabledModes & RAID_STATUSFLAG_10MAN_HEROIC;
                             case RAID_DIFFICULTY_25MAN_HEROIC:
                                 return disabledModes & RAID_STATUSFLAG_25MAN_HEROIC;

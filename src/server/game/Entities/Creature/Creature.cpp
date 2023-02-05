@@ -408,7 +408,7 @@ bool Creature::InitEntry(uint32 Entry, const CreatureData* data)
         }
 
         // for instances heroic to normal, other cases attempt to retrieve previous difficulty
-        if (diff >= RAID_DIFFICULTY_10MAN_HEROIC && GetMap()->IsRaid())
+        if (diff >= RAID_DIFFICULTY_10_25MAN_MYTHIC && GetMap()->IsRaid())
             diff -= 2;                                      // to normal raid difficulty cases
         else
             --diff;
@@ -1619,7 +1619,7 @@ bool Creature::CreateFromProto(ObjectGuid::LowType guidlow, uint32 Entry, uint32
             }
 
             // for instances heroic to normal, other cases attempt to retrieve previous difficulty
-            if (diff >= RAID_DIFFICULTY_10MAN_HEROIC && GetMap()->IsRaid())
+            if (diff >= RAID_DIFFICULTY_10_25MAN_MYTHIC && GetMap()->IsRaid())
                 diff -= 2;                                      // to normal raid difficulty cases
             else
                 --diff;

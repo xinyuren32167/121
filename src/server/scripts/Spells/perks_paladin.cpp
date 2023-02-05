@@ -214,18 +214,12 @@ class rune_pal_fortified_empyrean_legacy : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "fortified proc");
-        uint32 procSpell = 48827;
         Unit* target = GetTarget();
 
         if (!target)
             return;
-        LOG_ERROR("error", "fortified proc check");
-        GetCaster()->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
 
-        if (Player* caster = GetCaster()->ToPlayer())
-            caster->RemoveSpellCooldown(48827, true);
-        LOG_ERROR("error", "finished");
+        GetCaster()->CastSpell(target, 48827, TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD);
     }
 
     void Register()
