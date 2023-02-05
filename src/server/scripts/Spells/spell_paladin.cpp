@@ -28,6 +28,9 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "UnitAI.h"
+#include "SpellAuras.h"
+#include "SpellAuraDefines.h"
+#include "Unit.h"
 
 enum PaladinSpells
 {
@@ -51,7 +54,6 @@ enum PaladinSpells
     SPELL_PALADIN_EYE_FOR_AN_EYE_DAMAGE = 25997,
 
     SPELL_PALADIN_FORBEARANCE = 25771,
-    SPELL_PALADIN_AVENGING_WRATH_MARKER = 61987,
     SPELL_PALADIN_IMMUNE_SHIELD_MARKER = 61988,
 
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
@@ -922,7 +924,6 @@ class spell_pal_lay_on_hands : public SpellScript
         return ValidateSpellInfo(
             {
                 SPELL_PALADIN_FORBEARANCE,
-                SPELL_PALADIN_AVENGING_WRATH_MARKER,
                 SPELL_PALADIN_IMMUNE_SHIELD_MARKER
             });
     }
@@ -938,7 +939,7 @@ class spell_pal_lay_on_hands : public SpellScript
         Unit* caster = GetCaster();
         if (Unit* target = GetExplTargetUnit())
             if (caster == target)
-                if (target->HasAura(SPELL_PALADIN_FORBEARANCE) || target->HasAura(SPELL_PALADIN_AVENGING_WRATH_MARKER) || target->HasAura(SPELL_PALADIN_IMMUNE_SHIELD_MARKER))
+                if (target->HasAura(SPELL_PALADIN_FORBEARANCE) || target->HasAura(SPELL_PALADIN_IMMUNE_SHIELD_MARKER))
                     return SPELL_FAILED_TARGET_AURASTATE;
 
         // Xinef: Glyph of Divinity
@@ -956,7 +957,6 @@ class spell_pal_lay_on_hands : public SpellScript
         if (caster == target)
         {
             caster->CastSpell(caster, SPELL_PALADIN_FORBEARANCE, true);
-            caster->CastSpell(caster, SPELL_PALADIN_AVENGING_WRATH_MARKER, true);
             caster->CastSpell(caster, SPELL_PALADIN_IMMUNE_SHIELD_MARKER, true);
         }
         // Xinef: Glyph of Divinity
@@ -1280,27 +1280,31 @@ class spell_pal_light_of_dawn : public SpellScript
     }
 };
 
-class spell_pal_light_of_the_martyr : public AuraScript
+class spell_pal_light_of_the_martyr : public SpellScript
 {
-    PrepareAuraScript(spell_pal_light_of_the_martyr);
+    PrepareSpellScript(spell_pal_light_of_the_martyr);
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc()
     {
-        int32 damage = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), 50));
+        float damagePct = sSpellMgr->AssertSpellInfo(80043)->GetEffect(EFFECT_2).BasePoints + 1;
+        if (damagePct <= 0)
+            return;
+
+        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK)), 105);
+        int32 holysp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY)), 157);
+
+        int32 sum = (ap + holysp);
+
+        int32 damage = int32(CalculatePct(sum, damagePct));
+
+        damage = std::max<int32>(0, damage);
+
         GetCaster()->CastCustomSpellTrigger(80044, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_IGNORE_AURA_SCALING);
-    }
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        if (!eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() < 0)
-            return false;
-        return true;
     }
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(spell_pal_light_of_the_martyr::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_pal_light_of_the_martyr::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+        OnCast += SpellCastFn(spell_pal_light_of_the_martyr::HandleProc);
     }
 };
 
@@ -1431,23 +1435,6 @@ class spell_pal_beacon_listener : public SpellScript
     }
 };
 
-class spell_pal_justicars_vengeance : public AuraScript
-{
-    PrepareAuraScript(spell_pal_justicars_vengeance);
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-
-        GetCaster()->CastCustomSpell(80057, SPELLVALUE_BASE_POINT0, damage, GetCaster(), true, nullptr);
-    }
-
-    void Register()
-    {
-        OnEffectProc += AuraEffectProcFn(spell_pal_justicars_vengeance::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
-    }
-};
-
 class spell_pal_justicars_scaling : public SpellScript
 {
     PrepareSpellScript(spell_pal_justicars_scaling);
@@ -1463,6 +1450,8 @@ class spell_pal_justicars_scaling : public SpellScript
             sum = CalculatePct(int32(sum), 150);
 
         SetHitDamage(sum);
+
+        GetCaster()->CastCustomSpellTrigger(80057, SPELLVALUE_BASE_POINT0, sum, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1534,15 +1523,22 @@ class spell_pal_execution_sentence : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        LOG_ERROR("error", "first check");
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-
+        LOG_ERROR("error", "second check");
         AuraEffect* protEff = GetTarget()->GetAuraEffect(80064, EFFECT_0);
+        LOG_ERROR("error", "third check");
         int32 amount = damagedealt;
+        LOG_ERROR("error", "fourth check");
 
         if (protEff)
             amount += protEff->GetAmount();
+        LOG_ERROR("error", "fifth check");
+        LOG_ERROR("error", "{}", amount);
 
-        protEff->SetAmount(amount);
+        if (amount > 0)
+            protEff->SetAmount(amount);
+        LOG_ERROR("error", "sixth check");
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
@@ -1624,6 +1620,112 @@ class spell_pal_shield_of_vengeance_damage : public AuraScript
     }
 };
 
+class spell_pal_crusaders_might : public AuraScript
+{
+    PrepareAuraScript(spell_pal_crusaders_might);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(48825, -aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_crusaders_might::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_glimmer_of_light_heal : public AuraScript
+{
+    PrepareAuraScript(spell_pal_glimmer_of_light_heal);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->HasAura(80087))
+                    if (player->GetAura(80087)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = player->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            for (auto const& targetheal : FindTargets())
+            {
+                GetCaster()->CastSpell(targetheal, 80086, true);
+            }
+        }
+        GetCaster()->CastSpell(GetTarget(), 80087, true);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup())
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_glimmer_of_light_heal::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_glimmer_of_light_heal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_glimmer_of_light_damage : public AuraScript
+{
+    PrepareAuraScript(spell_pal_glimmer_of_light_damage);
+
+    std::list <Unit*> FindTargets()
+    {
+        auto const& threatlist = GetCaster()->getAttackers();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatlist)
+        {
+            if (target)
+                if (target->HasAura(80087))
+                    if (target->GetAura(80087)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = target->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        } return targetAvailable;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        for (auto const& targetdamage : FindTargets())
+        {
+            GetCaster()->CastSpell(targetdamage, 80085, true);
+        }
+
+        GetCaster()->CastSpell(GetTarget(), 80087, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_glimmer_of_light_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1664,7 +1766,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_final_reckoning);
     RegisterSpellScript(spell_pal_beacon);
     RegisterSpellScript(spell_pal_beacon_listener);
-    RegisterSpellScript(spell_pal_justicars_vengeance);
     RegisterSpellScript(spell_pal_justicars_scaling);
     RegisterSpellScript(spell_pal_absolution);
     RegisterSpellScript(spell_pal_wake_of_ashes);
@@ -1673,4 +1774,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_art_of_the_blade);
     RegisterSpellScript(spell_pal_shield_of_vengeance_absorb);
     RegisterSpellScript(spell_pal_shield_of_vengeance_damage);
+    RegisterSpellScript(spell_pal_crusaders_might);
+    RegisterSpellScript(spell_pal_glimmer_of_light_heal);
+    RegisterSpellScript(spell_pal_glimmer_of_light_damage);
 }
