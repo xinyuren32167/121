@@ -1636,6 +1636,96 @@ class spell_pal_crusaders_might : public AuraScript
     }
 };
 
+class spell_pal_glimmer_of_light_heal : public AuraScript
+{
+    PrepareAuraScript(spell_pal_glimmer_of_light_heal);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->HasAura(80087))
+                    if (player->GetAura(80087)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = player->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            for (auto const& targetheal : FindTargets())
+            {
+                GetCaster()->CastSpell(targetheal, 80086, true);
+            }
+        }
+        GetCaster()->CastSpell(GetTarget(), 80087, true);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup())
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_glimmer_of_light_heal::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_glimmer_of_light_heal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_glimmer_of_light_damage : public AuraScript
+{
+    PrepareAuraScript(spell_pal_glimmer_of_light_damage);
+
+    std::list <Unit*> FindTargets()
+    {
+        auto const& threatlist = GetCaster()->getAttackers();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatlist)
+        {
+            if (target)
+                if (target->HasAura(80087))
+                    if (target->GetAura(80087)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = target->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        } return targetAvailable;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        for (auto const& targetdamage : FindTargets())
+        {
+            GetCaster()->CastSpell(targetdamage, 80085, true);
+        }
+
+        GetCaster()->CastSpell(GetTarget(), 80087, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_glimmer_of_light_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1685,4 +1775,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_shield_of_vengeance_absorb);
     RegisterSpellScript(spell_pal_shield_of_vengeance_damage);
     RegisterSpellScript(spell_pal_crusaders_might);
+    RegisterSpellScript(spell_pal_glimmer_of_light_heal);
+    RegisterSpellScript(spell_pal_glimmer_of_light_damage);
 }
