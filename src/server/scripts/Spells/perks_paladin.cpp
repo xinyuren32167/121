@@ -30,9 +30,6 @@ class rune_pal_touch_of_light : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (!eventInfo.GetDamageInfo() && !eventInfo.GetHealInfo())
-            return false;
-
         if (GetCaster()->HasSpellCooldown(GetAura()->GetId()))
             return false;
 
@@ -45,20 +42,14 @@ class rune_pal_touch_of_light : public AuraScript
         float apPct = 0;
         float spPct = 0;
 
-        if (eventInfo.GetDamageInfo())
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
-            if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
-                return;
-
             procSpell = 400046;
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         }
-        else if (eventInfo.GetHealInfo())
+        else if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
         {
-            if (eventInfo.GetHealInfo()->GetHeal() <= 0)
-                return;
-
             procSpell = 400047;
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).BonusMultiplier;

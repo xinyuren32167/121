@@ -12,6 +12,11 @@ struct AutobalanceScalingInfo {
     float periodicDamageModifier;
 };
 
+struct CreatureInfo {
+    uint32 prevMaxHealth;
+    uint32 prevMaxMana;
+};
+
 class AutoBalanceManager {
 
 private:
@@ -21,10 +26,15 @@ private:
     static std::map<Difficulty, AutobalanceScalingInfo> m_ScalingDungeonDifficulty;
 public:
     static void InitializeScalingPerSpecialization();
-    static void InitializeScalingPerCreatureId();
-    static void InitializeScalingPerDifficulty();
     static std::list<Player*> GetPlayersMap(Map* map);
-    static Player* GetAlonePlayerMap(Map* map);
+    static Player* GetFirstPlayerMap(Map* map);
     static AutobalanceScalingInfo GetScalingInfo(Map* map, Creature* creature);
+    static void ApplyScalingHealthAndMana(Map* map, Creature* creature);
+    static void ApplyScalingMeleeDamage(Map* map, Creature* creature);
+    static void ApplyScalingSpellDamage(Map* map, Creature* creature);
+    static void ApplyScalingPeriodicDamage(Map* map, Creature* creature);
+    static void ApplyScaleDownMoney(Player* player, Loot* loot);
+    static void ApplyScaleDownXp(Player* player, uint32& amount, Unit* victim);
+    static bool SomeoneIsTooHighLevel(Map* map);
 };
 

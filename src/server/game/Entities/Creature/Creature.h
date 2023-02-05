@@ -45,6 +45,10 @@ class CreatureGroup;
 class Creature : public Unit, public GridObject<Creature>, public MovableMapObject
 {
 public:
+
+    // custom
+    uint8 AutobalancePlayerCount;
+
     explicit Creature(bool isWorldObject = false);
     ~Creature() override;
 
@@ -471,7 +475,6 @@ private:
     uint32 _playerDamageReq;
     bool _damagedByPlayer;
 
-    uint8 AutobalancePlayerCount;
 };
 
 class AssistDelayEvent : public BasicEvent
