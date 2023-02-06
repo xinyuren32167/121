@@ -80,10 +80,10 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* cr
     Difficulty difficulty = map->GetDifficulty();
     uint8 playerCount = map->GetPlayersCountExceptGMs();
 
-    if (SomeoneIsTooHighLevel(map)) {
+    /* if (SomeoneIsTooHighLevel(map)) {
         AutobalanceScalingInfo info = { 1.0f, 1.0f, 1.0f, 1.0f };
         return info;
-    }
+    } */
 
     if (playerCount <= 1) {
         Player* player = GetFirstPlayerMap(map);
