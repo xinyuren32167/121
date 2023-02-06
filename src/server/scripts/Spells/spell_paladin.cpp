@@ -1524,7 +1524,7 @@ class spell_pal_execution_sentence : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-        AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(80064, EFFECT_0);
+        AuraEffect* protEff = GetCaster()->GetAuraEffect(80063, EFFECT_0);
 
         if (protEff)
             damagedealt += protEff->GetAmount();
@@ -1540,7 +1540,6 @@ class spell_pal_execution_sentence : public AuraScript
         if (eventInfo.GetDamageInfo()->GetDamage() < 0)
             return false;
         return true;
-
     }
 
     void Register()
@@ -1550,18 +1549,30 @@ class spell_pal_execution_sentence : public AuraScript
     }
 };
 
-class spell_pal_execution_sentence_listener : public SpellScript
+class spell_pal_execution_sentence_listener : public AuraScript
 {
-    PrepareSpellScript(spell_pal_execution_sentence_listener);
+    PrepareAuraScript(spell_pal_execution_sentence_listener);
 
-    void HandleProc()
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         GetCaster()->AddAura(80063, GetCaster());
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount()));
+        float bonusdmg = GetCaster()->GetAura(80063)->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = ap + sp + bonusdmg;
+
+        GetCaster()->CastCustomSpell(80088, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->RemoveAura(80063);
+    }
+
     void Register()
     {
-        OnCast += SpellCastFn(spell_pal_execution_sentence_listener::HandleProc);
+        OnEffectApply += AuraEffectApplyFn(spell_pal_execution_sentence_listener::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_execution_sentence_listener::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1655,12 +1666,9 @@ class spell_pal_glimmer_of_light_heal : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        for (auto const& targetheal : FindTargets())
         {
-            for (auto const& targetheal : FindTargets())
-            {
-                GetCaster()->CastSpell(targetheal, 80086, true);
-            }
+            GetCaster()->CastSpell(targetheal, 80086, true);
         }
     }
 
@@ -1721,15 +1729,16 @@ class spell_pal_glimmer_of_light_listener : public SpellScript
 
     void HandleProc()
     {
+        int32 duration = GetExplTargetUnit()->GetAura(80087)->GetMaxDuration();
         if (GetCaster()->HasSpell(80084))
             if (!GetExplTargetUnit()->HasAura(80087))
                 GetCaster()->CastSpell(GetExplTargetUnit(), 80087, true);
-        //GetExplTargetUnit()->GetAura(80087)->SetDuration(30000);
+        GetExplTargetUnit()->GetAura(80087)->SetDuration(duration);
     }
 
     void Register()
     {
-        OnCast += SpellCastFn(spell_pal_glimmer_of_light_listener::HandleProc);
+        AfterCast += SpellCastFn(spell_pal_glimmer_of_light_listener::HandleProc);
     }
 };
 
