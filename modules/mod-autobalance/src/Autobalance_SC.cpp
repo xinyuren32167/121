@@ -10,7 +10,7 @@
 #include "LuaEngine.h"
 #include "Spell.h"
 #include "PlayerSpecialization.h"
-#include "mod-autobalance/AutobalanceManager.h"
+#include "AutobalanceManager.h"
 
  // Add player scripts
 class Autobalance_PlayerScripts : public PlayerScript

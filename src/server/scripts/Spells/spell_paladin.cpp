@@ -1523,22 +1523,14 @@ class spell_pal_execution_sentence : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "first check");
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-        LOG_ERROR("error", "second check");
-        AuraEffect* protEff = GetTarget()->GetAuraEffect(80064, EFFECT_0);
-        LOG_ERROR("error", "third check");
-        int32 amount = damagedealt;
-        LOG_ERROR("error", "fourth check");
+        AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(80064, EFFECT_0);
 
         if (protEff)
-            amount += protEff->GetAmount();
-        LOG_ERROR("error", "fifth check");
-        LOG_ERROR("error", "{}", amount);
+            damagedealt += protEff->GetAmount();
 
-        if (amount > 0)
-            protEff->SetAmount(amount);
-        LOG_ERROR("error", "sixth check");
+        if (damagedealt > 0 && protEff)
+            protEff->SetAmount(damagedealt);
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
@@ -1670,7 +1662,6 @@ class spell_pal_glimmer_of_light_heal : public AuraScript
                 GetCaster()->CastSpell(targetheal, 80086, true);
             }
         }
-        GetCaster()->CastSpell(GetTarget(), 80087, true);
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
@@ -1707,7 +1698,7 @@ class spell_pal_glimmer_of_light_damage : public AuraScript
                         if (dummy)
                             targetAvailable.push_back(dummy);
                     }
-        } return targetAvailable;
+        }return targetAvailable;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -1716,13 +1707,29 @@ class spell_pal_glimmer_of_light_damage : public AuraScript
         {
             GetCaster()->CastSpell(targetdamage, 80085, true);
         }
-
-        GetCaster()->CastSpell(GetTarget(), 80087, true);
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_pal_glimmer_of_light_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_glimmer_of_light_listener : public SpellScript
+{
+    PrepareSpellScript(spell_pal_glimmer_of_light_listener);
+
+    void HandleProc()
+    {
+        if (GetCaster()->HasSpell(80084))
+            if (!GetExplTargetUnit()->HasAura(80087))
+                GetCaster()->CastSpell(GetExplTargetUnit(), 80087, true);
+        //GetExplTargetUnit()->GetAura(80087)->SetDuration(30000);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_glimmer_of_light_listener::HandleProc);
     }
 };
 
@@ -1777,4 +1784,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_crusaders_might);
     RegisterSpellScript(spell_pal_glimmer_of_light_heal);
     RegisterSpellScript(spell_pal_glimmer_of_light_damage);
+    RegisterSpellScript(spell_pal_glimmer_of_light_listener);
 }
