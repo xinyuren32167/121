@@ -610,6 +610,93 @@ class rune_pal_resplendent_light : public AuraScript
     }
 };
 
+class rune_pal_holy_reflection : public AuraScript
+{
+    PrepareAuraScript(rune_pal_holy_reflection);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        LOG_ERROR("error", "reflection proc");
+        if (!eventInfo.GetDamageInfo() || eventInfo.GetDamageInfo()->GetUnmitigatedDamage() <= 0)
+            return false;
+        LOG_ERROR("error", "reflection damage = {}", eventInfo.GetDamageInfo()->GetUnmitigatedDamage());
+        if (!GetCaster()->HasAura(642))
+            return false;
+        LOG_ERROR("error", "reflection has damage + divine");
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400400;
+        float damage = eventInfo.GetDamageInfo()->GetUnmitigatedDamage();
+        LOG_ERROR("error", "damage = {}", damage);
+        int32 amount = int32(CalculatePct(damage, aurEff->GetAmount()));
+        LOG_ERROR("error", "amount = {}", amount);
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_holy_reflection::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_holy_reflection::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_divine_perfection : public AuraScript
+{
+    PrepareAuraScript(rune_pal_divine_perfection);
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        int32 cooldown = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 healSpell = 400408;
+        int32 healPct = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount();
+
+        if (remainingHealth <= 0 && !victim->ToPlayer()->HasSpellCooldown(healSpell))
+        {
+            absorbAmount = dmgInfo.GetDamage();
+
+            int32 healAmount = int32(victim->CountPctFromMaxHealth(healPct));
+            victim->CastCustomSpell(healSpell, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
+            victim->ToPlayer()->AddSpellCooldown(healSpell, 0, cooldown);
+            victim->AddAura(642, victim);
+            victim->GetAura(642)->SetDuration(4000);
+        }
+        else
+            absorbAmount = 0;
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(rune_pal_divine_perfection::Absorb, EFFECT_0);
+    }
+};
+
+class rune_pal_punishment : public AuraScript
+{
+    PrepareAuraScript(rune_pal_punishment);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        LOG_ERROR("error", "punishment  proc");
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetTarget(), 80046, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_punishment::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_punishment::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -633,4 +720,7 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_crusaders_reprieve);
     RegisterSpellScript(rune_pal_avenging_light);
     RegisterSpellScript(rune_pal_resplendent_light);
+    RegisterSpellScript(rune_pal_holy_reflection);
+    RegisterSpellScript(rune_pal_divine_perfection);
+    RegisterSpellScript(rune_pal_punishment);
 }
