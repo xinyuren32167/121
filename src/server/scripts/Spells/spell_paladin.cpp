@@ -1729,11 +1729,15 @@ class spell_pal_glimmer_of_light_listener : public SpellScript
 
     void HandleProc()
     {
-        int32 duration = GetExplTargetUnit()->GetAura(80087)->GetMaxDuration();
         if (GetCaster()->HasSpell(80084))
             if (!GetExplTargetUnit()->HasAura(80087))
                 GetCaster()->CastSpell(GetExplTargetUnit(), 80087, true);
-        GetExplTargetUnit()->GetAura(80087)->SetDuration(duration);
+        if (GetCaster()->HasSpell(80084))
+        {
+            int32 duration = GetExplTargetUnit()->GetAura(80087)->GetMaxDuration();
+            GetExplTargetUnit()->GetAura(80087)->SetDuration(duration);
+        }
+
     }
 
     void Register()
