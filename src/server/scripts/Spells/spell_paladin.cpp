@@ -1085,7 +1085,7 @@ class spell_pal_forbearance : public SpellScript
 
     void HandleProc()
     {
-        GetCaster()->CastSpell(GetCaster(), 25771, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetExplTargetUnit(), 25771, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -1746,6 +1746,43 @@ class spell_pal_glimmer_of_light_listener : public SpellScript
     }
 };
 
+class spell_pal_shining_light : public AuraScript
+{
+    PrepareAuraScript(spell_pal_shining_light);
+
+    void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        Aura* aura = GetAura();
+        Unit* caster = GetCaster();
+        Unit* target = GetTarget();
+
+        if (!target)
+            return;
+
+        if (!aura)
+            return;
+
+        Aura* auraStack = caster->GetAura(80094);
+
+        if (!auraStack)
+            return;
+
+        uint32 stacksAmount = auraStack->GetStackAmount();
+        uint32 requireStacks = aura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+
+        if (stacksAmount < requireStacks)
+            return;
+
+        caster->CastSpell(GetCaster(), 80095, true);
+        caster->RemoveAura(80094);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_shining_light::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1798,4 +1835,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_glimmer_of_light_heal);
     RegisterSpellScript(spell_pal_glimmer_of_light_damage);
     RegisterSpellScript(spell_pal_glimmer_of_light_listener);
+    RegisterSpellScript(spell_pal_shining_light);
 }
