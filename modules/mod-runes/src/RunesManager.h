@@ -81,6 +81,8 @@ private:
     static RuneConfig config;
     static uint32 GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p);
 public:
+
+    static bool IsDebugEnabled() { return config.debug; };
     static void SetupConfig();
     static void LoadAllRunes();
     static void LoadAccountsRunes();

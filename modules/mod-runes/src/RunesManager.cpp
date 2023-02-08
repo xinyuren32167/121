@@ -479,7 +479,6 @@ uint32 RunesManager::GetCountActivatedRune(Player* player)
     return count;
 }
 
-
 void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 {
     if (!player)
@@ -488,8 +487,8 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (player->IsInCombat()) {
-        sEluna->OnRuneMessage(player, "You can't do that while in combat.");
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING)) {
+        sEluna->OnRuneMessage(player, "You can change only your rune inside resting area.");
         return;
     }
 
@@ -532,10 +531,12 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
         return;
     }
 
-    SpellConversion(rune.spellId, player, true);
+    player->CastCustomSpell(79850, SPELLVALUE_BASE_POINT0, runeId, player, TRIGGERED_NONE);
+
+    /* SpellConversion(rune.spellId, player, true);
     player->AddAura(rune.spellId, player);
     AddRuneToSlot(player, rune, runeId);
-    sEluna->OnActivateRune(player, "Rune successfully activated!", index);
+    sEluna->OnActivateRune(player, "Rune successfully activated!", index); */
 }
 
 void RunesManager::DisableRune(Player* player, uint64 runeId)

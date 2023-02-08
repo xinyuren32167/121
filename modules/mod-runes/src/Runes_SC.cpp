@@ -9,6 +9,16 @@
 #include "RunesManager.h"
 #include "LuaEngine.h"
 #include "Spell.h"
+#include "PetDefines.h"
+#include "ScriptMgr.h"
+#include "SpellAuraEffects.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
+#include "Totem.h"
+#include "UnitAI.h"
+#include "Log.h"
+
 // Add player scripts
 class Runes_PlayerScripts: public PlayerScript
 {
@@ -89,6 +99,34 @@ public:
     }
 };
 
+class spell_activate_rune : public SpellScript
+{
+    PrepareSpellScript(spell_activate_rune);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        SpellValue const* value = GetSpellValue();
+        uint32 runeId = value->EffectBasePoints[EFFECT_0];
+        Rune rune;
+
+        if(RunesManager::IsDebugEnabled())
+            rune = RunesManager::GetRuneBySpellId(runeId);
+        else
+            rune = RunesManager::GetRuneById(player, runeId);
+
+        RunesManager::SpellConversion(rune.spellId, player, true);
+        GetCaster()->AddAura(rune.spellId, GetCaster());
+        RunesManager::AddRuneToSlot(player, rune, runeId);
+        sEluna->OnActivateRune(player, "Rune successfully activated!", 0);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_activate_rune::HandleProc);
+    }
+};
+
 class Runes_WorldScript : public WorldScript
 {
 public:
@@ -113,4 +151,5 @@ void AddSC_runesScripts()
     new Runes_PlayerScripts();
     new Runes_WorldScript();
     new Runes_CommandsScript();
+    RegisterSpellScript(spell_activate_rune);
 }
