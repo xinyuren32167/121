@@ -1783,6 +1783,55 @@ class spell_pal_shining_light : public AuraScript
     }
 };
 
+class spell_pal_sacred_duty : public SpellScript
+{
+    PrepareSpellScript(spell_pal_sacred_duty);
+
+    void HandleProc()
+    {
+        if (GetCaster()->HasAura(31848) || GetCaster()->HasAura(31849))
+            GetCaster()->CastSpell(GetCaster(), 80102, true);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_pal_sacred_duty::HandleProc);
+    }
+};
+
+class spell_pal_grand_crusader : public AuraScript
+{
+    PrepareAuraScript(spell_pal_grand_crusader);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(53595, true);
+
+        if (GetCaster()->HasAura(80105))
+            GetCaster()->CastSpell(GetCaster(), 80104, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_grand_crusader::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_tyr_enforcer : public AuraScript
+{
+    PrepareAuraScript(spell_pal_tyr_enforcer);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetTarget(), 80106, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_tyr_enforcer::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -1836,4 +1885,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_glimmer_of_light_damage);
     RegisterSpellScript(spell_pal_glimmer_of_light_listener);
     RegisterSpellScript(spell_pal_shining_light);
+    RegisterSpellScript(spell_pal_sacred_duty);
+    RegisterSpellScript(spell_pal_grand_crusader);
+    RegisterSpellScript(spell_pal_tyr_enforcer);
 }
