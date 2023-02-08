@@ -697,6 +697,287 @@ class rune_pal_punishment : public AuraScript
     }
 };
 
+class rune_pal_light_of_the_titans : public AuraScript
+{
+    PrepareAuraScript(rune_pal_light_of_the_titans);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = 400452;
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target)
+            return;
+
+        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
+        int32 amount = (ap + sp) / 15;
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_light_of_the_titans::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_light_of_the_titans::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_answered_prayer : public AuraScript
+{
+    PrepareAuraScript(rune_pal_answered_prayer);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return !GetCaster()->ToPlayer()->HasSpellCooldown(400466);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 remainingHealth = caster->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
+        int32 cooldown = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 healthTreshold = aurEff->GetAmount();
+        int32 wordOfGlory = 80062;
+
+        if (remainingHealth > int32(caster->CountPctFromMaxHealth(healthTreshold)))
+            return;
+
+        caster->CastSpell(caster, wordOfGlory, TRIGGERED_FULL_MASK);
+
+        caster->ToPlayer()->AddSpellCooldown(400466, 0, cooldown);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_answered_prayer::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_answered_prayer::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_hand_of_the_protector : public AuraScript
+{
+    PrepareAuraScript(rune_pal_hand_of_the_protector);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target)
+            return;
+
+        int32 procSpell = 400478;
+        float healthPct = target->GetHealthPct();
+
+        if (healthPct == 100)
+            return;
+
+        int32 increasePct = (100 - healthPct) * aurEff->GetAmount();
+        int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), increasePct));
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_hand_of_the_protector::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_hand_of_the_protector::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_ashes_to_ashes : public AuraScript
+{
+    PrepareAuraScript(rune_pal_ashes_to_ashes);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(400486))
+            return GetCaster()->GetAura(400486);
+
+        if (GetCaster()->HasAura(400487))
+            return GetCaster()->GetAura(400487);
+
+        if (GetCaster()->HasAura(400488))
+            return GetCaster()->GetAura(400488);
+
+        if (GetCaster()->HasAura(400489))
+            return GetCaster()->GetAura(400489);
+
+        if (GetCaster()->HasAura(400490))
+            return GetCaster()->GetAura(400490);
+
+        if (GetCaster()->HasAura(400491))
+            return GetCaster()->GetAura(400491);
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetRuneAura();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 seraphim = 80039;
+
+        if (Aura* auraEff = GetCaster()->GetAura(seraphim))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + 1000, auraEff->GetMaxDuration() + 5000));
+
+            auraEff->SetDuration(duration);
+        }
+        else
+        {
+            GetCaster()->AddAura(seraphim, GetCaster());
+            GetCaster()->GetAura(seraphim)->SetDuration(GetRuneAura()->GetEffect(EFFECT_0)->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_ashes_to_ashes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_ashes_to_ashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_tirions_devotion : public AuraScript
+{
+    PrepareAuraScript(rune_pal_tirions_devotion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(48788, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_tirions_devotion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_tirions_devotion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_empyreal_ward : public SpellScript
+{
+    PrepareSpellScript(rune_pal_empyreal_ward);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(400486))
+            return GetCaster()->GetAura(400486);
+
+        if (GetCaster()->HasAura(400487))
+            return GetCaster()->GetAura(400487);
+
+        if (GetCaster()->HasAura(400488))
+            return GetCaster()->GetAura(400488);
+
+        if (GetCaster()->HasAura(400489))
+            return GetCaster()->GetAura(400489);
+
+        if (GetCaster()->HasAura(400490))
+            return GetCaster()->GetAura(400490);
+
+        if (GetCaster()->HasAura(400491))
+            return GetCaster()->GetAura(400491);
+
+        return nullptr;
+    }
+
+    void HandleProc()
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(rune_pal_empyreal_ward::HandleProc);
+    }
+};
+
+class rune_pal_echoing_hands_freedom : public AuraScript
+{
+    PrepareAuraScript(rune_pal_echoing_hands_freedom);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(400516))
+            GetCaster()->AddAura(400522, GetTarget());
+
+        if (GetCaster()->HasAura(400517))
+            GetCaster()->AddAura(400523, GetTarget());
+
+        if (GetCaster()->HasAura(400518))
+            GetCaster()->AddAura(400524, GetTarget());
+
+        if (GetCaster()->HasAura(400519))
+            GetCaster()->AddAura(400525, GetTarget());
+
+        if (GetCaster()->HasAura(400520))
+            GetCaster()->AddAura(400526, GetTarget());
+
+        if (GetCaster()->HasAura(400521))
+            GetCaster()->AddAura(400527, GetTarget());
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_echoing_hands_freedom::HandleRemove, EFFECT_2, SPELL_AURA_MOD_INCREASE_SPEED, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pal_echoing_hands_protection : public AuraScript
+{
+    PrepareAuraScript(rune_pal_echoing_hands_protection);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(400516))
+            GetCaster()->AddAura(400528, GetTarget());
+
+        if (GetCaster()->HasAura(400517))
+            GetCaster()->AddAura(400529, GetTarget());
+
+        if (GetCaster()->HasAura(400518))
+            GetCaster()->AddAura(400530, GetTarget());
+
+        if (GetCaster()->HasAura(400519))
+            GetCaster()->AddAura(400531, GetTarget());
+
+        if (GetCaster()->HasAura(400520))
+            GetCaster()->AddAura(400532, GetTarget());
+
+        if (GetCaster()->HasAura(400521))
+            GetCaster()->AddAura(400533, GetTarget());
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_echoing_hands_protection::HandleRemove, EFFECT_2, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -723,4 +1004,12 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_holy_reflection);
     RegisterSpellScript(rune_pal_divine_perfection);
     RegisterSpellScript(rune_pal_punishment);
+    RegisterSpellScript(rune_pal_light_of_the_titans);
+    RegisterSpellScript(rune_pal_answered_prayer);
+    RegisterSpellScript(rune_pal_hand_of_the_protector);
+    RegisterSpellScript(rune_pal_ashes_to_ashes);
+    RegisterSpellScript(rune_pal_tirions_devotion);
+    RegisterSpellScript(rune_pal_empyreal_ward);
+    RegisterSpellScript(rune_pal_echoing_hands_freedom);
+    RegisterSpellScript(rune_pal_echoing_hands_protection);
 }
