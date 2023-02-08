@@ -31,7 +31,7 @@ bool AutoBalanceManager::SomeoneIsTooHighLevel(Map* map)
     if (!playerList.IsEmpty())
         for (Map::PlayerList::const_iterator playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
             if (Player* playerHandle = playerIteration->GetSource())
-                return playerHandle->getLevel() > minLevel;
+                return (playerHandle->getLevel() - 3) > minLevel;
 
     return false;
 }
@@ -80,10 +80,10 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* cr
     Difficulty difficulty = map->GetDifficulty();
     uint8 playerCount = map->GetPlayersCountExceptGMs();
 
-    /* if (SomeoneIsTooHighLevel(map)) {
+    if (SomeoneIsTooHighLevel(map)) {
         AutobalanceScalingInfo info = { 1.0f, 1.0f, 1.0f, 1.0f };
         return info;
-    } */
+    }
 
     if (playerCount <= 1) {
         Player* player = GetFirstPlayerMap(map);

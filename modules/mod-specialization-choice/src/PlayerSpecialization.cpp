@@ -61,6 +61,12 @@ void PlayerSpecialization::InitializeSpecializations()
 
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
 {
+
+    if (player->GetMap()->IsDungeon()) {
+        sEluna->OnActivateSpec(player, "You can't do that while in a dungeon!", false);
+        return;
+    }
+
     auto match = m_Specializations.find(newSpecId);
 
     if (match == m_Specializations.end()) {
@@ -85,11 +91,11 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
     for (auto const& spellId : m_SpecSpells[newSpecId])
         player->learnSpell(spellId, false, false);
 
-    m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
+    /* m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
     CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
     sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true);
     player->UpdateMastery();
-    player->SaveToDB(false, false);
+    player->SaveToDB(false, false); */
 }
 
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
