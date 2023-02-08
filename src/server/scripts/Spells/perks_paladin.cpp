@@ -879,23 +879,23 @@ class rune_pal_empyreal_ward : public SpellScript
 
     Aura* GetRuneAura()
     {
-        if (GetCaster()->HasAura(400486))
-            return GetCaster()->GetAura(400486);
+        if (GetCaster()->HasAura(400504))
+            return GetCaster()->GetAura(400504);
 
-        if (GetCaster()->HasAura(400487))
-            return GetCaster()->GetAura(400487);
+        if (GetCaster()->HasAura(400505))
+            return GetCaster()->GetAura(400505);
 
-        if (GetCaster()->HasAura(400488))
-            return GetCaster()->GetAura(400488);
+        if (GetCaster()->HasAura(400506))
+            return GetCaster()->GetAura(400506);
 
-        if (GetCaster()->HasAura(400489))
-            return GetCaster()->GetAura(400489);
+        if (GetCaster()->HasAura(400507))
+            return GetCaster()->GetAura(400507);
 
-        if (GetCaster()->HasAura(400490))
-            return GetCaster()->GetAura(400490);
+        if (GetCaster()->HasAura(400508))
+            return GetCaster()->GetAura(400508);
 
-        if (GetCaster()->HasAura(400491))
-            return GetCaster()->GetAura(400491);
+        if (GetCaster()->HasAura(400509))
+            return GetCaster()->GetAura(400509);
 
         return nullptr;
     }
@@ -978,6 +978,270 @@ class rune_pal_echoing_hands_protection : public AuraScript
     }
 };
 
+class rune_pal_shock_trooper : public AuraScript
+{
+    PrepareAuraScript(rune_pal_shock_trooper);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(48825, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_shock_trooper::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_avenging_shock : public AuraScript
+{
+    PrepareAuraScript(rune_pal_avenging_shock);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(31884, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_avenging_shock::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_shock_barrier : public AuraScript
+{
+    PrepareAuraScript(rune_pal_shock_barrier);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target)
+            return;
+
+        int32 procSpell = 400564;
+        int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_shock_barrier::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_shock_barrier::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_dynamic : public AuraScript
+{
+    PrepareAuraScript(rune_pal_dynamic);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 divineIllumination = 31842;
+
+        if (Aura* auraEff = GetCaster()->GetAura(divineIllumination))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + 2000, auraEff->GetMaxDuration() + 5000));
+
+            auraEff->SetDuration(duration);
+        }
+        else
+        {
+            GetCaster()->AddAura(divineIllumination, GetCaster());
+            GetCaster()->GetAura(divineIllumination)->SetDuration(aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_dynamic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_imbued_infusions : public AuraScript
+{
+    PrepareAuraScript(rune_pal_imbued_infusions);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(400576))
+            return GetCaster()->GetAura(400576);
+
+        if (GetCaster()->HasAura(400577))
+            return GetCaster()->GetAura(400577);
+
+        if (GetCaster()->HasAura(400578))
+            return GetCaster()->GetAura(400578);
+
+        if (GetCaster()->HasAura(400579))
+            return GetCaster()->GetAura(400579);
+
+        if (GetCaster()->HasAura(400580))
+            return GetCaster()->GetAura(400580);
+
+        if (GetCaster()->HasAura(400581))
+            return GetCaster()->GetAura(400581);
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(48825, -GetRuneAura()->GetEffect(EFFECT_0)->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_imbued_infusions::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pal_power_of_the_silver_hand_check : public AuraScript
+{
+    PrepareAuraScript(rune_pal_power_of_the_silver_hand_check);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = aurEff->GetAmount();
+
+        if (GetCaster()->HasAura(procSpell))
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_power_of_the_silver_hand_check::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_power_of_the_silver_hand : public AuraScript
+{
+    PrepareAuraScript(rune_pal_power_of_the_silver_hand);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetHealInfo() && !eventInfo.GetDamageInfo())
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amountPct = aurEff->GetAmount();
+        int32 amount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            int32 healAmount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), amountPct));
+            amount += healAmount;
+        }
+        else if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damageAmount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), amountPct));
+            amount += damageAmount;
+        }
+
+        aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(amount);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        int32 procSpell = 400600;
+        int32 amount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 maxAmount = GetCaster()->CountPctFromMaxHealth(50);
+
+        amount = std::min<int32>(amount, maxAmount);
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_power_of_the_silver_hand::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_power_of_the_silver_hand::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_power_of_the_silver_hand::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pal_veneration : public AuraScript
+{
+    PrepareAuraScript(rune_pal_veneration);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(48806, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_veneration::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pal_avenger : public AuraScript
+{
+    PrepareAuraScript(rune_pal_avenger);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(400608))
+            return GetCaster()->GetAura(400608);
+
+        if (GetCaster()->HasAura(400609))
+            return GetCaster()->GetAura(400609);
+
+        if (GetCaster()->HasAura(400610))
+            return GetCaster()->GetAura(400610);
+
+        if (GetCaster()->HasAura(400611))
+            return GetCaster()->GetAura(400611);
+
+        if (GetCaster()->HasAura(400612))
+            return GetCaster()->GetAura(400612);
+
+        if (GetCaster()->HasAura(400613))
+            return GetCaster()->GetAura(400613);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 procSpell = 400614;
+        int32 amount = GetRuneAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, -amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(400614))
+            GetCaster()->RemoveAura(400614);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pal_avenger::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_avenger::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -1012,4 +1276,13 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_empyreal_ward);
     RegisterSpellScript(rune_pal_echoing_hands_freedom);
     RegisterSpellScript(rune_pal_echoing_hands_protection);
+    RegisterSpellScript(rune_pal_shock_trooper);
+    RegisterSpellScript(rune_pal_avenging_shock);
+    RegisterSpellScript(rune_pal_shock_barrier);
+    RegisterSpellScript(rune_pal_dynamic);
+    RegisterSpellScript(rune_pal_imbued_infusions);
+    RegisterSpellScript(rune_pal_power_of_the_silver_hand_check);
+    RegisterSpellScript(rune_pal_power_of_the_silver_hand);
+    RegisterSpellScript(rune_pal_veneration);
+    RegisterSpellScript(rune_pal_avenger);
 }
