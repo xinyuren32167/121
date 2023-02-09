@@ -1242,6 +1242,100 @@ class rune_pal_avenger : public AuraScript
     }
 };
 
+class rune_pal_protection_of_tyr : public AuraScript
+{
+    PrepareAuraScript(rune_pal_protection_of_tyr);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(400616))
+            return GetCaster()->GetAura(400616);
+
+        if (GetCaster()->HasAura(400617))
+            return GetCaster()->GetAura(400617);
+
+        if (GetCaster()->HasAura(400618))
+            return GetCaster()->GetAura(400618);
+
+        if (GetCaster()->HasAura(400619))
+            return GetCaster()->GetAura(400619);
+
+        if (GetCaster()->HasAura(400620))
+            return GetCaster()->GetAura(400620);
+
+        if (GetCaster()->HasAura(400621))
+            return GetCaster()->GetAura(400621);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(procSpell, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(400622))
+            GetCaster()->RemoveAura(400622);
+
+        if (GetCaster()->HasAura(400623))
+            GetCaster()->RemoveAura(400623);
+
+        if (GetCaster()->HasAura(400624))
+            GetCaster()->RemoveAura(400624);
+
+        if (GetCaster()->HasAura(400625))
+            GetCaster()->RemoveAura(400625);
+
+        if (GetCaster()->HasAura(400626))
+            GetCaster()->RemoveAura(400626);
+
+        if (GetCaster()->HasAura(400627))
+            GetCaster()->RemoveAura(400627);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pal_protection_of_tyr::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_protection_of_tyr::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pal_awakening : public AuraScript
+{
+    PrepareAuraScript(rune_pal_awakening);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 avengingWrath = 31884;
+        int32 fullDuration = aurEff->GetAmount();
+        int32 increasedDuration = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (Aura* auraEff = GetCaster()->GetAura(avengingWrath))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + increasedDuration, auraEff->GetMaxDuration() + 5000));
+
+            auraEff->SetDuration(duration);
+        }
+        else
+        {
+            GetCaster()->AddAura(avengingWrath, GetCaster());
+            GetCaster()->GetAura(avengingWrath)->SetDuration(fullDuration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_awakening::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -1285,4 +1379,6 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_power_of_the_silver_hand);
     RegisterSpellScript(rune_pal_veneration);
     RegisterSpellScript(rune_pal_avenger);
+    RegisterSpellScript(rune_pal_protection_of_tyr);
+    RegisterSpellScript(rune_pal_awakening);
 }
