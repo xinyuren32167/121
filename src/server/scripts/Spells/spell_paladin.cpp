@@ -368,8 +368,8 @@ private:
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pal_ardent_defender::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
-        OnEffectAbsorb += AuraEffectAbsorbFn(spell_pal_ardent_defender::Absorb, EFFECT_0);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pal_ardent_defender::CalculateAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_pal_ardent_defender::Absorb, EFFECT_2);
     }
 };
 
@@ -1206,7 +1206,7 @@ class spell_pal_ret_aura : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         Unit* victim = GetTarget();
-        uint32 healthPct = CalculatePct(victim->GetHealth(), 50);
+        uint32 healthPct = CalculatePct(victim->GetMaxHealth(), 50);
 
         if (GetCaster()->HasAura(80041))
             return false;
@@ -1817,18 +1817,19 @@ class spell_pal_grand_crusader : public AuraScript
     }
 };
 
-class spell_pal_tyr_enforcer : public AuraScript
+class spell_pal_zeal : public AuraScript
 {
-    PrepareAuraScript(spell_pal_tyr_enforcer);
+    PrepareAuraScript(spell_pal_zeal);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->CastSpell(GetTarget(), 80106, true);
+        GetCaster()->CastSpell(GetTarget(), 80111, true);
+        LOG_ERROR("error", "ffs");
     }
 
-    void Register() override
+    void Register()
     {
-        OnEffectProc += AuraEffectProcFn(spell_pal_tyr_enforcer::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_zeal::HandleRemove, EFFECT_1, SPELL_AURA_MOD_MELEE_HASTE, AURA_EFFECT_HANDLE_CHANGE_AMOUNT);
     }
 };
 
@@ -1887,5 +1888,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_shining_light);
     RegisterSpellScript(spell_pal_sacred_duty);
     RegisterSpellScript(spell_pal_grand_crusader);
-    RegisterSpellScript(spell_pal_tyr_enforcer);
+    RegisterSpellScript(spell_pal_zeal);
 }
