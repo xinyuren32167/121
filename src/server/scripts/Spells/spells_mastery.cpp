@@ -286,7 +286,7 @@ class spell_mastery_lightbringer : public AuraScript
         int32 defaultValue = aurEff->GetAmount();
         float mastery = GetCaster()->ToPlayer()->GetMastery();
 
-        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 80124)
+        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 400001)
             return;
         int32 healAmount = procInfo.GetHealInfo()->GetHeal();
 
@@ -309,7 +309,7 @@ class spell_mastery_lightbringer : public AuraScript
         int32 finalAmount = CalculatePct(effectiveValue, effectiveness);
         int32 finalHeal = ApplyPct(healAmount, finalAmount);
 
-        GetCaster()->CastCustomSpell(80124, SPELLVALUE_BASE_POINT0, finalHeal, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(400001, SPELLVALUE_BASE_POINT0, finalHeal, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
