@@ -57,6 +57,10 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 8 };
     m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 8 };
     m_Specializations[MAGE_FROST] = { 6, 42842, "Frost", 8 };
+
+    m_Specializations[PALADIN_HOLY] = { 17, 48782, "Holy", 2 };
+    m_Specializations[PALADIN_PROTECTION] = { 18, 48952, "Protection", 2 };
+    m_Specializations[PALADIN_RETRIBUTION] = { 19, 35395, "Retribution", 2 };
 }
 
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
