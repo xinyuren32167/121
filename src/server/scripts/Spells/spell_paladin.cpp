@@ -59,6 +59,9 @@ enum PaladinSpells
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
     SPELL_PALADIN_DIVINE_SACRIFICE = 64205,
 
+    SPELL_PALADIN_INFUSION_OF_LIGHT_R1 = 53672,
+    SPELL_PALADIN_INFUSION_OF_LIGHT_R2 = 54149,
+
     SPELL_PALADIN_JUDGEMENT_DAMAGE = 54158,
     SPELL_PALADIN_JUDGEMENT_OF_JUSTICE = 20184,
     SPELL_PALADIN_JUDGEMENT_OF_LIGHT = 20185,
@@ -1257,6 +1260,37 @@ class spell_pal_holy_power : public SpellScript
     }
 };
 
+class spell_pal_infusion_of_light_power : public AuraScript
+{
+    PrepareAuraScript(spell_pal_infusion_of_light_power);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+
+        if (GetCaster()->HasAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1))
+        {
+            if (int32 charge = GetCaster()->GetAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1)->GetCharges() > 1)
+                GetCaster()->GetAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1)->SetCharges(charge - 1);
+            else
+                GetCaster()->RemoveAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1);
+        }
+
+        if (GetCaster()->HasAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R2))
+        {
+            if (int32 charge = GetCaster()->GetAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R2)->GetCharges() > 1)
+                GetCaster()->GetAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R2)->SetCharges(charge - 1);
+            else
+                GetCaster()->RemoveAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R2);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_infusion_of_light_power::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 class spell_pal_light_of_dawn : public SpellScript
 {
     PrepareSpellScript(spell_pal_light_of_dawn);
@@ -1847,7 +1881,7 @@ void AddSC_paladin_spell_scripts()
     //RegisterSpellScript(spell_pal_divine_storm);
     RegisterSpellScript(spell_pal_divine_storm_dummy);
     RegisterSpellScript(spell_pal_exorcism_and_holy_wrath_damage);
-    RegisterSpellScript(spell_pal_eye_for_an_eye);
+    //RegisterSpellScript(spell_pal_eye_for_an_eye);
     RegisterSpellScript(spell_pal_glyph_of_holy_light);
     RegisterSpellScript(spell_pal_guarded_by_the_light);
     RegisterSpellAndAuraScriptPair(spell_pal_hand_of_sacrifice, spell_pal_hand_of_sacrifice_aura);
@@ -1867,6 +1901,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_ret_aura);
     RegisterSpellScript(spell_pal_shield_righteous);
     RegisterSpellScript(spell_pal_holy_power);
+    RegisterSpellScript(spell_pal_infusion_of_light_power);
     RegisterSpellScript(spell_pal_light_of_dawn);
     RegisterSpellScript(spell_pal_light_of_the_martyr);
     RegisterSpellScript(spell_pal_beacon_of_virtue);

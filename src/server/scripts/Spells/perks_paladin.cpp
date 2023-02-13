@@ -9,6 +9,85 @@
 #include "UnitAI.h"
 #include "Log.h"
 
+enum PaladinSpells
+{
+    SPELL_PALADIN_AURA_MASTERY = 31821,
+    SPELL_PALADIN_AVENGERS_SHIELD = 48827,
+    SPELL_PALADIN_AVENGING_WRATH = 31884,
+
+    SPELL_PALADIN_BEACON_OF_LIGHT = 53563,
+    SPELL_PALADIN_BEACON_OF_VIRTUE = 80048,
+    SPELL_PALADIN_BEACON_OF_FAITH = 80049,
+
+    SPELL_PALADIN_DIVINE_ILLUMINATION = 31842,
+    SPELL_PALADIN_HAMMER_OF_WRATH = 48806,
+
+    SPELL_PALADIN_HOLY_SHOCK = 48825,
+    SPELL_PALADIN_HOLY_SHOCK_DAMAGE = 25912,
+    SPELL_PALADIN_HOLY_SHOCK_HEAL = 25914,
+
+    SPELL_PALADIN_INFUSION_OF_LIGHT_R1 = 53672,
+    SPELL_PALADIN_INFUSION_OF_LIGHT_R2 = 54149,
+
+    SPELL_PALADIN_LAY_ON_HANDS = 48788,
+    SPELL_PALADIN_SERAPHIM = 80039,
+    SPELL_PALADIN_TEMPLARS_VERDICT = 80046,
+    SPELL_PALADIN_WORD_OF_GLORY = 80062,
+
+
+
+    RUNE_PALADIN_TOUCH_OF_LIGHT_DAMAGE = 400046,
+    RUNE_PALADIN_TOUCH_OF_LIGHT_HEAL = 400047,
+
+    RUNE_PALADIN_JUSTICES_CLEMENCY_HEAL = 400054,
+
+    RUNE_PALADIN_UNTOUCHABLE_JUDGEMENT_SHIELD = 400088,
+
+    RUNE_PALADIN_VIRTUOUS_COMMAND_DAMAGE = 400108,
+
+    RUNE_PALADIN_GOLDEN_PATH_HEAL = 400236,
+
+    RUNE_PALADIN_CRUSADE_HASTE = 400244,
+
+    RUNE_PALADIN_TITAN_OF_LIGHT_HEAL = 400288,
+
+    RUNE_PALADIN_SOOTHING_AURA_HEAL = 400314,
+
+    RUNE_PALADIN_CRUSADERS_REPRIEVE_HEAL = 400322,
+
+    RUNE_PALADIN_AVENGING_LIGHT_DAMAGE = 400330,
+
+    RUNE_PALADIN_RESPLENDENT_LIGHT_HEAL = 400338,
+
+    RUNE_PALADIN_HOLY_REFLECTION_DAMAGE = 400400,
+
+    RUNE_PALADIN_DIVINE_PERFECTION_HEAL = 400408,
+
+    RUNE_PALADIN_LIGHT_OF_THE_TITANS_HEAL = 400452,
+
+    RUNE_PALADIN_ANSWERED_PRAYER_COOLDOWN = 400479,
+
+    RUNE_PALADIN_HAND_OF_THE_PROTECTOR_HEAL = 400478,
+
+    RUNE_PALADIN_SHOCK_BARRIER_SHIELD = 400564,
+
+    RUNE_PALADIN_POWER_OF_THE_SILVER_HAND_BUFF = 400600,
+
+    RUNE_PALADIN_AVENGER_BUFF = 400614,
+
+    RUNE_PALADIN_SAVED_BY_THE_LIGHT_SHIELD = 400726,
+    RUNE_PALADIN_SAVED_BY_THE_LIGHT_DEBUFF = 400727,
+
+    RUNE_PALADIN_SIGN_OF_FAITH_HEAL = 400740,
+    RUNE_PALADIN_SIGN_OF_FAITH_DEBUFF = 400741,
+
+    RUNE_PALADIN_DIVINE_REVELATIONS_ENERGIZE = 400760,
+
+    RUNE_PALADIN_INFLORESCENCE_OF_THE_SUNWELL_POWER = 400768,
+
+    RUNE_PALADIN_BULWARK_OF_ORDER_SHIELD = 400794,
+};
+
 class rune_pal_inner_grace : public AuraScript
 {
     PrepareAuraScript(rune_pal_inner_grace);
@@ -44,13 +123,13 @@ class rune_pal_touch_of_light : public AuraScript
 
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
-            procSpell = 400046;
+            procSpell = RUNE_PALADIN_TOUCH_OF_LIGHT_DAMAGE;
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         }
         else if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
         {
-            procSpell = 400047;
+            procSpell = RUNE_PALADIN_TOUCH_OF_LIGHT_HEAL;
             apPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).DamageMultiplier;
             spPct = aurEff->GetSpellInfo()->GetEffect(EFFECT_2).BonusMultiplier;
         }
@@ -86,11 +165,10 @@ class rune_pal_justice_clemency : public AuraScript
         if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
             return;
 
-        uint32 procSpell = 400054;
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_JUSTICES_CLEMENCY_HEAL, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -107,7 +185,7 @@ class rune_pal_fist_of_justice : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Player* caster = GetCaster()->ToPlayer())
-            caster->RemoveSpellCooldown(48806, true);
+            caster->RemoveSpellCooldown(SPELL_PALADIN_HAMMER_OF_WRATH, true);
     }
 
     void Register()
@@ -130,11 +208,10 @@ class rune_pal_untouchable_judgement : public AuraScript
         if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
             return;
 
-        uint32 procSpell = 400088;
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_UNTOUCHABLE_JUDGEMENT_SHIELD, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
 
     }
 
@@ -151,12 +228,12 @@ class rune_pal_zealots_paragon : public AuraScript
 
     bool HandleProc(ProcEventInfo& eventInfo)
     {
-        return (GetCaster()->HasAura(31884));
+        return (GetCaster()->HasAura(SPELL_PALADIN_AVENGING_WRATH));
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-        if (Aura* auraEff = GetCaster()->GetAura(31884))
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_AVENGING_WRATH))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + aurEff->GetAmount(), auraEff->GetMaxDuration() + 5000));
 
@@ -185,11 +262,10 @@ class rune_pal_virtuous_command : public AuraScript
         if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
             return;
 
-        uint32 procSpell = 400108;
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_VIRTUOUS_COMMAND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -210,7 +286,7 @@ class rune_pal_fortified_empyrean_legacy : public AuraScript
         if (!target)
             return;
 
-        GetCaster()->CastSpell(target, 48827, TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD);
+        GetCaster()->CastSpell(target, SPELL_PALADIN_AVENGERS_SHIELD, TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD);
     }
 
     void Register()
@@ -255,14 +331,11 @@ class rune_pal_golden_path : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff)
     {
-        uint32 procSpell = 400236;
-
-
         float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
         float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetAmount()));
         int32 amount = std::max<int32>(0, int32(ap + sp));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_GOLDEN_PATH_HEAL, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -277,13 +350,13 @@ class rune_pal_crusade : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return GetCaster()->HasAura(31884);
+        return GetCaster()->HasAura(SPELL_PALADIN_AVENGING_WRATH);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         int32 holyPowerCost = eventInfo.GetSpellInfo()->ManaCost;
-        Aura* crusadeAura = GetCaster()->GetAura(400244);
+        Aura* crusadeAura = GetCaster()->GetAura(RUNE_PALADIN_CRUSADE_HASTE);
 
         if (holyPowerCost <= 0 || holyPowerCost > 5 || !crusadeAura)
             return;
@@ -342,13 +415,13 @@ class rune_pal_crusade_avenger_check : public AuraScript
         if (!GetRuneAura())
             return;
 
-        GetCaster()->AddAura(400244, GetCaster());
+        GetCaster()->AddAura(RUNE_PALADIN_CRUSADE_HASTE, GetCaster());
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (GetCaster()->HasAura(400244))
-            GetCaster()->RemoveAura(400244);
+        if (GetCaster()->HasAura(RUNE_PALADIN_CRUSADE_HASTE))
+            GetCaster()->RemoveAura(RUNE_PALADIN_CRUSADE_HASTE);
     }
 
     void Register() override
@@ -364,7 +437,7 @@ class rune_pal_paragon_of_light : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-        if (Aura* auraEff = GetCaster()->GetAura(31884))
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_AVENGING_WRATH))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + 2000, auraEff->GetMaxDuration() + 5000));
 
@@ -372,8 +445,8 @@ class rune_pal_paragon_of_light : public AuraScript
         }
         else
         {
-            GetCaster()->AddAura(31884, GetCaster());
-            GetCaster()->GetAura(31884)->SetDuration(aurEff->GetAmount());
+            GetCaster()->AddAura(SPELL_PALADIN_AVENGING_WRATH, GetCaster());
+            GetCaster()->GetAura(SPELL_PALADIN_AVENGING_WRATH)->SetDuration(aurEff->GetAmount());
         }
     }
 
@@ -390,7 +463,7 @@ class rune_pal_verdict : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         if (Player* target = GetTarget()->ToPlayer())
-            target->ModifySpellCooldown(31884, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_PALADIN_AVENGING_WRATH, -aurEff->GetAmount());
     }
 
     void Register() override
@@ -473,7 +546,6 @@ class rune_pal_titan_of_light : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400288;
         float heal = eventInfo.GetHealInfo()->GetHeal();
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
@@ -482,7 +554,7 @@ class rune_pal_titan_of_light : public AuraScript
 
         int32 amount = (int32(CalculatePct(heal, aurEff->GetAmount()))) / 8;
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_TITAN_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -501,7 +573,7 @@ class rune_pal_soothing_aura : public AuraScript
         if (!eventInfo.GetHealInfo() || eventInfo.GetHealInfo()->GetHeal() <= 0)
             return false;
 
-        if (!GetCaster()->HasAura(31821))
+        if (!GetCaster()->HasAura(SPELL_PALADIN_AURA_MASTERY))
             return false;
 
         return true;
@@ -509,12 +581,10 @@ class rune_pal_soothing_aura : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400314;
         float heal = eventInfo.GetHealInfo()->GetHeal();
-
         int32 amount = int32(CalculatePct(heal, aurEff->GetAmount()));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_SOOTHING_AURA_HEAL, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -535,12 +605,10 @@ class rune_pal_crusaders_reprieve : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400322;
         float damage = eventInfo.GetDamageInfo()->GetDamage();
-
         int32 amount = int32(CalculatePct(damage, aurEff->GetAmount()));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_CRUSADERS_REPRIEVE_HEAL, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -561,7 +629,6 @@ class rune_pal_avenging_light : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400330;
         float heal = eventInfo.GetHealInfo()->GetHeal();
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
@@ -570,7 +637,7 @@ class rune_pal_avenging_light : public AuraScript
 
         int32 amount = int32(CalculatePct(heal, aurEff->GetAmount()));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_AVENGING_LIGHT_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -591,7 +658,6 @@ class rune_pal_resplendent_light : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400338;
         float heal = eventInfo.GetHealInfo()->GetHeal();
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
@@ -600,7 +666,7 @@ class rune_pal_resplendent_light : public AuraScript
 
         int32 amount = int32(CalculatePct(heal, aurEff->GetAmount()));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_RESPLENDENT_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -628,12 +694,11 @@ class rune_pal_holy_reflection : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400400;
         float damage = eventInfo.GetDamageInfo()->GetUnmitigatedDamage();
         LOG_ERROR("error", "damage = {}", damage);
         int32 amount = int32(CalculatePct(damage, aurEff->GetAmount()));
         LOG_ERROR("error", "amount = {}", amount);
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_HOLY_REFLECTION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -652,16 +717,16 @@ class rune_pal_divine_perfection : public AuraScript
         Unit* victim = GetTarget();
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         int32 cooldown = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
-        int32 healSpell = 400408;
         int32 healPct = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount();
 
-        if (remainingHealth <= 0 && !victim->ToPlayer()->HasSpellCooldown(healSpell))
+        if (remainingHealth <= 0 && !victim->ToPlayer()->HasSpellCooldown(RUNE_PALADIN_DIVINE_PERFECTION_HEAL))
         {
             absorbAmount = dmgInfo.GetDamage();
-
             int32 healAmount = int32(victim->CountPctFromMaxHealth(healPct));
-            victim->CastCustomSpell(healSpell, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
-            victim->ToPlayer()->AddSpellCooldown(healSpell, 0, cooldown);
+
+            victim->CastCustomSpell(RUNE_PALADIN_DIVINE_PERFECTION_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
+            victim->ToPlayer()->AddSpellCooldown(RUNE_PALADIN_DIVINE_PERFECTION_HEAL, 0, cooldown);
+
             victim->AddAura(642, victim);
             victim->GetAura(642)->SetDuration(4000);
         }
@@ -687,7 +752,7 @@ class rune_pal_punishment : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->CastSpell(GetTarget(), 80046, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetTarget(), SPELL_PALADIN_TEMPLARS_VERDICT, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -708,7 +773,6 @@ class rune_pal_light_of_the_titans : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 procSpell = 400452;
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
         if (!target)
@@ -718,7 +782,7 @@ class rune_pal_light_of_the_titans : public AuraScript
         float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
         int32 amount = (ap + sp) / 15;
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_LIGHT_OF_THE_TITANS_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -734,7 +798,7 @@ class rune_pal_answered_prayer : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return !GetCaster()->ToPlayer()->HasSpellCooldown(400466);
+        return !GetCaster()->ToPlayer()->HasSpellCooldown(RUNE_PALADIN_ANSWERED_PRAYER_COOLDOWN);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -743,14 +807,13 @@ class rune_pal_answered_prayer : public AuraScript
         int32 remainingHealth = caster->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
         int32 cooldown = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         int32 healthTreshold = aurEff->GetAmount();
-        int32 wordOfGlory = 80062;
 
         if (remainingHealth > int32(caster->CountPctFromMaxHealth(healthTreshold)))
             return;
 
-        caster->CastSpell(caster, wordOfGlory, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_PALADIN_WORD_OF_GLORY, TRIGGERED_FULL_MASK);
 
-        caster->ToPlayer()->AddSpellCooldown(400466, 0, cooldown);
+        caster->ToPlayer()->AddSpellCooldown(RUNE_PALADIN_ANSWERED_PRAYER_COOLDOWN, 0, cooldown);
     }
 
     void Register() override
@@ -776,7 +839,6 @@ class rune_pal_hand_of_the_protector : public AuraScript
         if (!target)
             return;
 
-        int32 procSpell = 400478;
         float healthPct = target->GetHealthPct();
 
         if (healthPct == 100)
@@ -785,7 +847,7 @@ class rune_pal_hand_of_the_protector : public AuraScript
         int32 increasePct = (100 - healthPct) * aurEff->GetAmount();
         int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), increasePct));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_HAND_OF_THE_PROTECTOR_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -829,9 +891,7 @@ class rune_pal_ashes_to_ashes : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 seraphim = 80039;
-
-        if (Aura* auraEff = GetCaster()->GetAura(seraphim))
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_SERAPHIM))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + 1000, auraEff->GetMaxDuration() + 5000));
 
@@ -839,8 +899,8 @@ class rune_pal_ashes_to_ashes : public AuraScript
         }
         else
         {
-            GetCaster()->AddAura(seraphim, GetCaster());
-            GetCaster()->GetAura(seraphim)->SetDuration(GetRuneAura()->GetEffect(EFFECT_0)->GetAmount());
+            GetCaster()->AddAura(SPELL_PALADIN_SERAPHIM, GetCaster());
+            GetCaster()->GetAura(SPELL_PALADIN_SERAPHIM)->SetDuration(GetRuneAura()->GetEffect(EFFECT_0)->GetAmount());
         }
     }
 
@@ -863,7 +923,7 @@ class rune_pal_tirions_devotion : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Player* target = GetTarget()->ToPlayer())
-            target->ModifySpellCooldown(48788, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_PALADIN_LAY_ON_HANDS, -aurEff->GetAmount());
     }
 
     void Register() override
@@ -985,7 +1045,7 @@ class rune_pal_shock_trooper : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         if (Player* target = GetTarget()->ToPlayer())
-            target->ModifySpellCooldown(48825, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_PALADIN_HOLY_SHOCK, -aurEff->GetAmount());
     }
 
     void Register() override
@@ -1001,7 +1061,7 @@ class rune_pal_avenging_shock : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         if (Player* target = GetTarget()->ToPlayer())
-            target->ModifySpellCooldown(31884, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_PALADIN_AVENGING_WRATH, -aurEff->GetAmount());
     }
 
     void Register() override
@@ -1026,10 +1086,9 @@ class rune_pal_shock_barrier : public AuraScript
         if (!target)
             return;
 
-        int32 procSpell = 400564;
         int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount()));
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_SHOCK_BARRIER_SHIELD, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1045,9 +1104,7 @@ class rune_pal_dynamic : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 divineIllumination = 31842;
-
-        if (Aura* auraEff = GetCaster()->GetAura(divineIllumination))
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_DIVINE_ILLUMINATION))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + 2000, auraEff->GetMaxDuration() + 5000));
 
@@ -1055,8 +1112,8 @@ class rune_pal_dynamic : public AuraScript
         }
         else
         {
-            GetCaster()->AddAura(divineIllumination, GetCaster());
-            GetCaster()->GetAura(divineIllumination)->SetDuration(aurEff->GetAmount());
+            GetCaster()->AddAura(SPELL_PALADIN_DIVINE_ILLUMINATION, GetCaster());
+            GetCaster()->GetAura(SPELL_PALADIN_DIVINE_ILLUMINATION)->SetDuration(aurEff->GetAmount());
         }
     }
 
@@ -1096,7 +1153,7 @@ class rune_pal_imbued_infusions : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         if (Player* target = GetTarget()->ToPlayer())
-            target->ModifySpellCooldown(48825, -GetRuneAura()->GetEffect(EFFECT_0)->GetAmount());
+            target->ModifySpellCooldown(SPELL_PALADIN_HOLY_SHOCK, -GetRuneAura()->GetEffect(EFFECT_0)->GetAmount());
     }
 
     void Register() override
@@ -1158,13 +1215,12 @@ class rune_pal_power_of_the_silver_hand : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        int32 procSpell = 400600;
         int32 amount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         int32 maxAmount = GetCaster()->CountPctFromMaxHealth(50);
 
         amount = std::min<int32>(amount, maxAmount);
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_POWER_OF_THE_SILVER_HAND_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1182,7 +1238,7 @@ class rune_pal_veneration : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Player* caster = GetCaster()->ToPlayer())
-            caster->RemoveSpellCooldown(48806, true);
+            caster->RemoveSpellCooldown(SPELL_PALADIN_HAMMER_OF_WRATH, true);
     }
 
     void Register()
@@ -1223,16 +1279,15 @@ class rune_pal_avenger : public AuraScript
         if (!GetRuneAura())
             return;
 
-        int32 procSpell = 400614;
         int32 amount = GetRuneAura()->GetEffect(EFFECT_1)->GetAmount();
 
-        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, -amount, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_AVENGER_BUFF, SPELLVALUE_BASE_POINT0, -amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (GetCaster()->HasAura(400614))
-            GetCaster()->RemoveAura(400614);
+        if (GetCaster()->HasAura(RUNE_PALADIN_AVENGER_BUFF))
+            GetCaster()->RemoveAura(RUNE_PALADIN_AVENGER_BUFF);
     }
 
     void Register() override
@@ -1313,11 +1368,10 @@ class rune_pal_awakening : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 avengingWrath = 31884;
         int32 fullDuration = aurEff->GetAmount();
         int32 increasedDuration = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
 
-        if (Aura* auraEff = GetCaster()->GetAura(avengingWrath))
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_AVENGING_WRATH))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + increasedDuration, auraEff->GetMaxDuration() + 5000));
 
@@ -1325,14 +1379,314 @@ class rune_pal_awakening : public AuraScript
         }
         else
         {
-            GetCaster()->AddAura(avengingWrath, GetCaster());
-            GetCaster()->GetAura(avengingWrath)->SetDuration(fullDuration);
+            GetCaster()->AddAura(SPELL_PALADIN_AVENGING_WRATH, GetCaster());
+            GetCaster()->GetAura(SPELL_PALADIN_AVENGING_WRATH)->SetDuration(fullDuration);
         }
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(rune_pal_awakening::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_tower_of_radiance : public AuraScript
+{
+    PrepareAuraScript(rune_pal_tower_of_radiance);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!victim)
+            return;
+
+        if (victim->HasAura(SPELL_PALADIN_BEACON_OF_LIGHT) || victim->HasAura(SPELL_PALADIN_BEACON_OF_VIRTUE) || victim->HasAura(SPELL_PALADIN_BEACON_OF_FAITH))
+            GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        else
+        {
+            int32 healthPct = 100 - victim->GetHealthPct();
+            uint32 random = urand(1, 100);
+
+            if (random <= healthPct)
+                GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_tower_of_radiance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_saved_by_the_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_saved_by_the_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim->HasAura(SPELL_PALADIN_BEACON_OF_LIGHT) && !victim->HasAura(SPELL_PALADIN_BEACON_OF_VIRTUE) && !victim->HasAura(SPELL_PALADIN_BEACON_OF_FAITH))
+            return false;
+
+        if (victim->HasAura(RUNE_PALADIN_SAVED_BY_THE_LIGHT_DEBUFF))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        int32 remainingHealth = victim->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
+        int32 healhPct = aurEff->GetAmount();
+
+        if (remainingHealth > victim->CountPctFromMaxHealth(healhPct))
+            return;
+
+        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount()));
+        int32 amount = std::max<int32>(0, int32(ap + sp));
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_SAVED_BY_THE_LIGHT_SHIELD, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+        GetCaster()->AddAura(RUNE_PALADIN_SAVED_BY_THE_LIGHT_DEBUFF, victim);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_saved_by_the_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_saved_by_the_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_sign_of_faith : public AuraScript
+{
+    PrepareAuraScript(rune_pal_sign_of_faith);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim->HasAura(SPELL_PALADIN_BEACON_OF_LIGHT) && !victim->HasAura(SPELL_PALADIN_BEACON_OF_VIRTUE) && !victim->HasAura(SPELL_PALADIN_BEACON_OF_FAITH))
+            return false;
+
+        if (victim->HasAura(RUNE_PALADIN_SIGN_OF_FAITH_DEBUFF))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetAmount()));
+        int32 amount = std::max<int32>(0, int32(ap + sp));
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_SIGN_OF_FAITH_HEAL, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+        GetCaster()->AddAura(RUNE_PALADIN_SIGN_OF_FAITH_DEBUFF, victim);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_sign_of_faith::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_sign_of_faith::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_divine_tempo : public AuraScript
+{
+    PrepareAuraScript(rune_pal_divine_tempo);
+
+    bool HandleProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster()->HasAura(SPELL_PALADIN_DIVINE_ILLUMINATION));
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_DIVINE_ILLUMINATION))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + aurEff->GetAmount(), auraEff->GetMaxDuration() + 5000));
+
+            auraEff->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_divine_tempo::HandleProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_divine_tempo::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_divine_revelations : public AuraScript
+{
+    PrepareAuraScript(rune_pal_divine_revelations);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(400748))
+            return GetCaster()->GetAura(400748);
+
+        if (GetCaster()->HasAura(400749))
+            return GetCaster()->GetAura(400749);
+
+        if (GetCaster()->HasAura(400750))
+            return GetCaster()->GetAura(400750);
+
+        if (GetCaster()->HasAura(400751))
+            return GetCaster()->GetAura(400751);
+
+        if (GetCaster()->HasAura(400752))
+            return GetCaster()->GetAura(400752);
+
+        if (GetCaster()->HasAura(400753))
+            return GetCaster()->GetAura(400753);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        GetCaster()->AddAura(GetRuneAura()->GetEffect(EFFECT_0)->GetAmount(), GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(400754))
+            GetCaster()->RemoveAura(400754);
+
+        if (GetCaster()->HasAura(400755))
+            GetCaster()->RemoveAura(400755);
+
+        if (GetCaster()->HasAura(400756))
+            GetCaster()->RemoveAura(400756);
+
+        if (GetCaster()->HasAura(400757))
+            GetCaster()->RemoveAura(400757);
+
+        if (GetCaster()->HasAura(400758))
+            GetCaster()->RemoveAura(400758);
+
+        if (GetCaster()->HasAura(400759))
+            GetCaster()->RemoveAura(400759);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pal_divine_revelations::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_divine_revelations::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pal_divine_revelations_mana : public AuraScript
+{
+    PrepareAuraScript(rune_pal_divine_revelations_mana);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        int32 maxMana = GetCaster()->GetMaxPower(POWER_MANA);
+        int32 amount = int32(CalculatePct(maxMana, aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_DIVINE_REVELATIONS_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {;
+        OnEffectProc += AuraEffectProcFn(rune_pal_divine_revelations_mana::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_inflorescence_of_the_sunwell : public AuraScript
+{
+    PrepareAuraScript(rune_pal_inflorescence_of_the_sunwell);
+
+    bool HandleProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster()->HasAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1) || GetCaster()->HasAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R2));
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        int32 holyLightNumber = aurEff->GetAmount();
+
+        if (holyLightNumber == 1)
+        {
+            GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+            return;
+        }
+
+        GetCaster()->CastSpell(GetCaster(), RUNE_PALADIN_INFLORESCENCE_OF_THE_SUNWELL_POWER, TRIGGERED_FULL_MASK);
+        int32 currentStacks = GetCaster()->GetAura(RUNE_PALADIN_INFLORESCENCE_OF_THE_SUNWELL_POWER)->GetStackAmount();
+
+        if (currentStacks < holyLightNumber)
+            return;
+
+        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        GetCaster()->RemoveAura(RUNE_PALADIN_INFLORESCENCE_OF_THE_SUNWELL_POWER);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_inflorescence_of_the_sunwell::HandleProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_inflorescence_of_the_sunwell::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_second_shield : public AuraScript
+{
+    PrepareAuraScript(rune_pal_second_shield);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_PALADIN_AVENGERS_SHIELD, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_second_shield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_bulwark_of_order : public AuraScript
+{
+    PrepareAuraScript(rune_pal_bulwark_of_order);
+
+    bool HandleProc(ProcEventInfo& eventInfo)
+    {
+        return (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0);
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        int32 maxAmount = GetCaster()->CountPctFromMaxHealth(aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
+
+        if (GetCaster()->HasAura(RUNE_PALADIN_BULWARK_OF_ORDER_SHIELD))
+            amount += GetCaster()->GetAura(RUNE_PALADIN_BULWARK_OF_ORDER_SHIELD)->GetEffect(EFFECT_0)->GetAmount();
+
+        amount = std::min<int32>(amount, maxAmount);
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_BULWARK_OF_ORDER_SHIELD, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_bulwark_of_order::HandleProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_bulwark_of_order::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1381,4 +1735,13 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_avenger);
     RegisterSpellScript(rune_pal_protection_of_tyr);
     RegisterSpellScript(rune_pal_awakening);
+    RegisterSpellScript(rune_pal_tower_of_radiance);
+    RegisterSpellScript(rune_pal_saved_by_the_light);
+    RegisterSpellScript(rune_pal_sign_of_faith);
+    RegisterSpellScript(rune_pal_divine_tempo);
+    RegisterSpellScript(rune_pal_divine_revelations);
+    RegisterSpellScript(rune_pal_divine_revelations_mana);
+    RegisterSpellScript(rune_pal_inflorescence_of_the_sunwell);
+    RegisterSpellScript(rune_pal_second_shield);
+    RegisterSpellScript(rune_pal_bulwark_of_order);
 }

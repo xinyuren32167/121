@@ -8,6 +8,7 @@
 #include "Totem.h"
 #include "UnitAI.h"
 #include "Log.h"
+#include "Object.h"
 
 // Mage
 class spell_icicle_ice_lance : public SpellScript
@@ -277,6 +278,115 @@ class spell_mastery_critical_block_on_remove : public AuraScript
     }
 };
 
+class spell_mastery_lightbringer : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_lightbringer);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        int32 defaultValue = aurEff->GetAmount();
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+
+        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 400001)
+            return;
+        int32 healAmount = procInfo.GetHealInfo()->GetHeal();
+
+        int32 effectiveness;
+        int32 effectiveValue = defaultValue + mastery;
+
+        Unit* target = procInfo.GetActionTarget();
+        if (!target)
+            return;
+        Position targetPos = target->GetPosition();
+        float distance = GetCaster()->GetDistance(targetPos);
+
+        if (distance >= 40)
+            effectiveness = 0;
+        if (distance <= 10)
+            effectiveness = 100; 
+        if (distance > 10)
+            effectiveness = (40 - distance) * 3.33;
+
+        int32 finalAmount = CalculatePct(effectiveValue, effectiveness);
+        int32 finalHeal = ApplyPct(healAmount, finalAmount);
+
+        GetCaster()->CastCustomSpell(400001, SPELLVALUE_BASE_POINT0, finalHeal, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_lightbringer::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_divine_bulwark : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_divine_bulwark);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 attackPower = (GetCaster()->GetAura(400002)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        int32 blockRating = (GetCaster()->GetAura(400002)->GetEffect(EFFECT_2)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(GetCaster(), 400005, &attackPower, &blockRating, nullptr, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_divine_bulwark::HandleCast);
+    }
+};
+
+class spell_mastery_divine_bulwark_consec : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_divine_bulwark_consec);
+
+    void HandleCast()
+    {
+        if (!GetCaster()->HasAura(400002))
+            return;
+
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 damageReduction = (GetCaster()->GetAura(400002)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(400003, SPELLVALUE_BASE_POINT0, damageReduction, GetCaster(), true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_divine_bulwark_consec::HandleCast);
+    }
+};
+
+class spell_mastery_divine_bulwark_selection : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_divine_bulwark_selection);
+
+    void HandleCast(std::list<WorldObject*>& targets)
+    {
+        Unit* target = nullptr;
+        for (auto itr = targets.begin(); itr != targets.end(); ++itr)
+        {
+            if (Unit* unit = (*itr)->ToUnit())
+                if (unit->GetGUID() == GetCaster()->GetGUID())
+                {
+                    target = unit;
+                    break;
+                }
+        }
+
+        targets.clear();
+        if (target)
+            targets.push_back(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mastery_divine_bulwark_selection::HandleCast, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
@@ -289,4 +399,8 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_critical_block);
     RegisterSpellScript(spell_mastery_savant_on_remove);
     RegisterSpellScript(spell_mastery_critical_block_on_remove);
+    RegisterSpellScript(spell_mastery_lightbringer);
+    RegisterSpellScript(spell_mastery_divine_bulwark);
+    RegisterSpellScript(spell_mastery_divine_bulwark_consec);
+    RegisterSpellScript(spell_mastery_divine_bulwark_selection);
 }
