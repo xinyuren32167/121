@@ -54,7 +54,6 @@ enum PaladinSpells
     SPELL_PALADIN_EYE_FOR_AN_EYE_DAMAGE = 25997,
 
     SPELL_PALADIN_FORBEARANCE = 25771,
-    SPELL_PALADIN_IMMUNE_SHIELD_MARKER = 61988,
 
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
     SPELL_PALADIN_DIVINE_SACRIFICE = 64205,
@@ -927,7 +926,6 @@ class spell_pal_lay_on_hands : public SpellScript
         return ValidateSpellInfo(
             {
                 SPELL_PALADIN_FORBEARANCE,
-                SPELL_PALADIN_IMMUNE_SHIELD_MARKER
             });
     }
 
@@ -942,7 +940,7 @@ class spell_pal_lay_on_hands : public SpellScript
         Unit* caster = GetCaster();
         if (Unit* target = GetExplTargetUnit())
             if (caster == target)
-                if (target->HasAura(SPELL_PALADIN_FORBEARANCE) || target->HasAura(SPELL_PALADIN_IMMUNE_SHIELD_MARKER))
+                if (target->HasAura(SPELL_PALADIN_FORBEARANCE))
                     return SPELL_FAILED_TARGET_AURASTATE;
 
         // Xinef: Glyph of Divinity
@@ -960,7 +958,6 @@ class spell_pal_lay_on_hands : public SpellScript
         if (caster == target)
         {
             caster->CastSpell(caster, SPELL_PALADIN_FORBEARANCE, true);
-            caster->CastSpell(caster, SPELL_PALADIN_IMMUNE_SHIELD_MARKER, true);
         }
         // Xinef: Glyph of Divinity
         else if (target && caster->HasAura(54939) && GetSpellInfo()->Id != 633 && _manaAmount > 0) // excluding first rank
