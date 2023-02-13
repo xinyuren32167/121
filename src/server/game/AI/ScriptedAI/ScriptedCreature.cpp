@@ -203,6 +203,7 @@ void ScriptedAI::AttackStartNoMove(Unit* who)
         DoStartNoMovement(who);
 }
 
+
 void ScriptedAI::AttackStart(Unit* who)
 {
     if (IsCombatMovementAllowed())
@@ -239,6 +240,14 @@ void ScriptedAI::DoStopAttack()
     if (me->GetVictim())
         me->AttackStop();
 }
+
+uint32 ScriptedAI::GetPlayersCount()
+{
+    if (Map* map = me->GetMap())
+        return map->GetPlayersCountExceptGMs();
+    return 0;
+}
+
 
 void ScriptedAI::DoCastSpell(Unit* target, SpellInfo const* spellInfo, bool triggered)
 {

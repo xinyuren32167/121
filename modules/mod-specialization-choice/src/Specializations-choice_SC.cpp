@@ -10,6 +10,11 @@
 #include "LuaEngine.h"
 #include "Spell.h"
 #include "PlayerSpecialization.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
+#include "Totem.h"
+#include "UnitAI.h"
+#include "Log.h"
 
  // Add player scripts
 class SpecChoice_PlayerScripts : public PlayerScript
@@ -61,6 +66,43 @@ public:
     }
 };
 
+class spell_activate_specialization : public SpellScript
+{
+    PrepareSpellScript(spell_activate_specialization);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        SpellValue const* value = GetSpellValue();
+        uint32 newSpecId = value->EffectBasePoints[EFFECT_0];
+
+        uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
+        Specialization newSpec = PlayerSpecialization::m_Specializations[newSpecId];
+
+        if (currentSpecId > 0)
+            for (auto const& spellId : PlayerSpecialization::m_SpecSpells[currentSpecId])
+                player->removeSpell(spellId, SPEC_MASK_ALL, false, false);
+
+
+        for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
+            player->learnSpell(spellId, false, false);
+
+
+        player->CastCustomSpell(79852, SPELLVALUE_BASE_POINT0, newSpecId, player, TRIGGERED_NONE);
+
+        PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
+        CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
+        sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true);
+        player->UpdateMastery();
+        player->SaveToDB(false, false);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_activate_specialization::HandleProc);
+    }
+};
+
 class SpecChoice_WorldScript : public WorldScript
 {
 public:
@@ -81,4 +123,5 @@ void AddSC_SpecChoices()
     new SpecChoice_PlayerScripts();
     new SpecChoice_WorldScript();
     new SpecChoice_CommandsScript();
+    RegisterSpellScript(spell_activate_specialization);
 }

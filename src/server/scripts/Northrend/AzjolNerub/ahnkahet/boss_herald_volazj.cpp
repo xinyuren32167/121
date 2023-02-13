@@ -356,11 +356,13 @@ class spell_herald_volzaj_insanity : public SpellScript
             targets.clear();
             return;
         }
+        
 
         if (!targets.empty())
         {
             targets.remove_if([this](WorldObject* targetObj) -> bool
             {
+
                 return !targetObj || targetObj->GetTypeId() != TYPEID_PLAYER || !targetObj->ToPlayer()->IsInCombatWith(GetCaster()) ||
                         targetObj->GetDistance(GetCaster()) >= (MAX_VISIBILITY_DISTANCE * 2);
             });

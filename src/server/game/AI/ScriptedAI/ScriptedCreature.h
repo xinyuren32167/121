@@ -295,6 +295,8 @@ struct ScriptedAI : public CreatureAI
     //Stop attack of current victim
     void DoStopAttack();
 
+    uint32 GetPlayersCount();
+
     //Cast spell by spell info
     void DoCastSpell(Unit* target, SpellInfo const* spellInfo, bool triggered = false);
 
@@ -393,23 +395,21 @@ struct ScriptedAI : public CreatureAI
     }
 
     template<class T> inline
-    const T& RAID_MODE(const T& normal10, const T& normal25, const T& heroic10, const T& heroic25) const
+    const T& RAID_MODE(const T& normal, const T& heroic, const T& mythic, const T& mythic25) const
     {
         switch (_difficulty)
         {
             case RAID_DIFFICULTY_10_25MAN_NORMAL:
-                return normal10;
+                return normal;
             case RAID_DIFFICULTY_10_25MAN_HEROIC:
-                return normal25;
+                return heroic;
             case RAID_DIFFICULTY_10_25MAN_MYTHIC:
-                return heroic10;
-            case RAID_DIFFICULTY_25MAN_HEROIC:
-                return heroic25;
+                return mythic;
             default:
                 break;
         }
 
-        return heroic25;
+        return mythic;
     }
 
     Player* SelectTargetFromPlayerList(float maxdist, uint32 excludeAura = 0, bool mustBeInLOS = false) const;

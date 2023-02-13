@@ -52,11 +52,10 @@ enum SPECS {
 
 
 class PlayerSpecialization {
-private:
+public:
     static std::map<uint64 /* guid */, uint32 /* specId */> m_PlayersSpecialization;
     static std::map<uint32 /* specId */, Specialization> m_Specializations;
     static std::map<uint32 /* specId */, std::vector<uint32>> m_SpecSpells;
-public:
     static void LoadAllSpecsPlayers();
     static void LoadAllSpecsSpells();
     static void InitializeSpecializations();

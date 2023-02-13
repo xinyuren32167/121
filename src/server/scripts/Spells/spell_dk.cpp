@@ -2080,7 +2080,6 @@ class spell_dk_vampiric_blood : public AuraScript
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_vampiric_blood::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_INCREASE_HEALTH);
     }
 };
-
 // 52284 - Will of the Necropolis
 class spell_dk_will_of_the_necropolis : public AuraScript
 {

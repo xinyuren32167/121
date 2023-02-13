@@ -81,21 +81,8 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
         return;
     }
 
-    uint32 currentSpecId = GetCurrentSpecId(player);
+    player->CastCustomSpell(79852, SPELLVALUE_BASE_POINT0, newSpecId, player, TRIGGERED_NONE);
 
-    if (currentSpecId > 0)
-        for (auto const& spellId : m_SpecSpells[currentSpecId])
-            player->removeSpell(spellId, SPEC_MASK_ALL, false, false);
-
-
-    for (auto const& spellId : m_SpecSpells[newSpecId])
-        player->learnSpell(spellId, false, false);
-
-    /* m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
-    CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
-    sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true);
-    player->UpdateMastery();
-    player->SaveToDB(false, false); */
 }
 
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
