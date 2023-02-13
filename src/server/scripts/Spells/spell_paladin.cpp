@@ -1229,19 +1229,19 @@ class spell_pal_shield_righteous : public SpellScript
 {
     PrepareSpellScript(spell_pal_shield_righteous);
 
-    void HandleArmor()
+    void HandleDummy(SpellEffIndex effIndex)
     {
-        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), 170);
+        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), GetEffectValue());
 
         GetCaster()->CastCustomSpell(80042, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
     {
-        OnCast += SpellCastFn(spell_pal_shield_righteous::HandleArmor);
+        OnEffectHit += SpellEffectFn(spell_pal_shield_righteous::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
 };
-
+    
 class spell_pal_holy_power : public SpellScript
 {
     PrepareSpellScript(spell_pal_holy_power);
