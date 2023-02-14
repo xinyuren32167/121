@@ -93,6 +93,12 @@ enum PaladinSpells
     RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_DEBUFF = 400881,
 
     RUNE_PALADIN_INNER_LIGHT_DAMAGE = 400906,
+
+    RUNE_PALADIN_DIVINE_VINDICATION_DAMAGE = 400996,
+
+    RUNE_PALADIN_LIGHT_STORM_HEAL = 401008,
+
+    RUNE_PALADIN_TEMPEST_OF_THE_LIGHTBRINGER_DAMAGE = 401040,
 };
 
 class rune_pal_inner_grace : public AuraScript
@@ -1873,6 +1879,106 @@ class rune_pal_inner_light_damage : public AuraScript
     }
 };
 
+class rune_pal_divine_vindication : public AuraScript
+{
+    PrepareAuraScript(rune_pal_divine_vindication);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        
+        if (!victim)
+            return;
+
+        float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount()) / 4;
+        int32 amount = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_DIVINE_VINDICATION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_divine_vindication::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_divine_vindication::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_light_storm : public AuraScript
+{
+    PrepareAuraScript(rune_pal_light_storm);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_LIGHT_STORM_HEAL, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_light_storm::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_light_storm::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_tempest_of_the_lightbringer : public AuraScript
+{
+    PrepareAuraScript(rune_pal_tempest_of_the_lightbringer);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_TEMPEST_OF_THE_LIGHTBRINGER_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_tempest_of_the_lightbringer::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_tempest_of_the_lightbringer::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -1933,4 +2039,8 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_gift_of_the_golden_valkyr);
     RegisterSpellScript(rune_pal_inner_light_proc);
     RegisterSpellScript(rune_pal_inner_light_damage);
+    RegisterSpellScript(rune_pal_divine_vindication);
+    RegisterSpellScript(rune_pal_light_storm);
+    RegisterSpellScript(rune_pal_tempest_of_the_lightbringer);
+    
 }
