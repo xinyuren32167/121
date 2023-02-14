@@ -1140,7 +1140,12 @@ class spell_pal_consecration : public SpellScript
 
     void HandleScriptEffect()
     {
-        GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, 12000);
+        GetCaster()->CastSpell(GetCaster(), 80121, true);
+
+        Aura* auraEff = GetCaster()->GetAura(80121);
+        int32 duration = auraEff->GetDuration();
+
+        GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, duration);
     }
 
     void Register() override
