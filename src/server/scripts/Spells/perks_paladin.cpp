@@ -20,8 +20,14 @@ enum PaladinSpells
     SPELL_PALADIN_BEACON_OF_VIRTUE = 80048,
     SPELL_PALADIN_BEACON_OF_FAITH = 80049,
 
+    SPELL_PALADIN_BLADE_OF_JUSTICE = 80045,
+
     SPELL_PALADIN_DIVINE_ILLUMINATION = 31842,
     SPELL_PALADIN_DIVINE_SHIELD = 642,
+
+    SPELL_PALADIN_EXECUTION_SENTENCE = 80064,
+    SPELL_PALADIN_EXECUTION_SENTENCE_LISTENER = 80063,
+    SPELL_PALADIN_EXECUTION_SENTENCE_DAMAGE = 80088,
 
     SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS = 80070,
     SPELL_PALADIN_HAMMER_OF_WRATH = 48806,
@@ -96,9 +102,15 @@ enum PaladinSpells
 
     RUNE_PALADIN_DIVINE_VINDICATION_DAMAGE = 400996,
 
-    RUNE_PALADIN_LIGHT_STORM_HEAL = 401008,
+    RUNE_PALADIN_LIGHT_STORM_HEAL = 401004,
 
-    RUNE_PALADIN_TEMPEST_OF_THE_LIGHTBRINGER_DAMAGE = 401040,
+    RUNE_PALADIN_TEMPEST_OF_THE_LIGHTBRINGER_DAMAGE = 401032,
+
+    RUNE_PALADIN_LIGHTS_DECREE_DAMAGE = 401040,
+
+    RUNE_PALADIN_HOLY_REACTION_DAMAGE = 401048,
+
+    RUNE_PALADIN_TEMPLARS_VINDICATION_DAMAGE = 401074,
 };
 
 class rune_pal_inner_grace : public AuraScript
@@ -1897,7 +1909,7 @@ class rune_pal_divine_vindication : public AuraScript
             return;
 
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
-        
+
         if (!victim)
             return;
 
@@ -1979,6 +1991,160 @@ class rune_pal_tempest_of_the_lightbringer : public AuraScript
     }
 };
 
+class rune_pal_lights_decree : public AuraScript
+{
+    PrepareAuraScript(rune_pal_lights_decree);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_PALADIN_AVENGING_WRATH);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        float ap = int32(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
+        float sp = int32(CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
+        int32 amount = std::max<int32>(0, int32(ap + sp));
+
+        caster->CastCustomSpell(RUNE_PALADIN_LIGHTS_DECREE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_lights_decree::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_lights_decree::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_tempars_vindication : public AuraScript
+{
+    PrepareAuraScript(rune_pal_tempars_vindication);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_TEMPLARS_VINDICATION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_tempars_vindication::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_tempars_vindication::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_executioners_will : public AuraScript
+{
+    PrepareAuraScript(rune_pal_executioners_will);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasAura(SPELL_PALADIN_EXECUTION_SENTENCE_LISTENER))
+            return false;
+
+        if (!eventInfo.GetDamageInfo() || !eventInfo.GetDamageInfo()->GetVictim())
+            return false;
+
+        if (!eventInfo.GetDamageInfo()->GetVictim()->HasAura(SPELL_PALADIN_EXECUTION_SENTENCE))
+            return false;
+
+        return true;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        Player* target = GetCaster()->ToPlayer();
+        int32 maxAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 increase = aurEff->GetAmount();
+
+        if (!victim || !target)
+            return;
+
+        Aura* listener = target->GetAura(SPELL_PALADIN_EXECUTION_SENTENCE_LISTENER);
+
+        if (!listener)
+            return;
+
+        int32 amountIncreased = listener->GetEffect(EFFECT_2)->GetAmount();
+
+
+        if (amountIncreased >= maxAmount)
+            return;
+
+        Aura* executionSentence = victim->GetAura(SPELL_PALADIN_EXECUTION_SENTENCE);
+
+        if (!executionSentence)
+            return;
+
+        int32 remainingDuration = executionSentence->GetDuration();
+
+        if (amountIncreased + increase > maxAmount)
+            increase = maxAmount - amountIncreased;
+
+        executionSentence->SetDuration(remainingDuration + increase);
+        amountIncreased += increase;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_executioners_will::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_executioners_will::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_righteous_cause : public AuraScript
+{
+    PrepareAuraScript(rune_pal_righteous_cause);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_PALADIN_BLADE_OF_JUSTICE, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_righteous_cause::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pal_final_verdict : public AuraScript
+{
+    PrepareAuraScript(rune_pal_final_verdict);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_PALADIN_HAMMER_OF_WRATH, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_final_verdict::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -2042,5 +2208,9 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_divine_vindication);
     RegisterSpellScript(rune_pal_light_storm);
     RegisterSpellScript(rune_pal_tempest_of_the_lightbringer);
-    
+    RegisterSpellScript(rune_pal_lights_decree);
+    RegisterSpellScript(rune_pal_tempars_vindication);
+    RegisterSpellScript(rune_pal_executioners_will);
+    RegisterSpellScript(rune_pal_righteous_cause);
+    RegisterSpellScript(rune_pal_final_verdict);   
 }

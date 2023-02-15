@@ -294,7 +294,7 @@ class spell_mastery_lightbringer : public AuraScript
 
         int32 healAmount = procInfo.GetHealInfo()->GetHeal();
 
-        int32 effectiveness;
+        int32 effectiveness = 0;
         int32 effectiveValue = defaultValue + mastery;
 
         Unit* target = procInfo.GetActionTarget();
