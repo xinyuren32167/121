@@ -287,8 +287,11 @@ class spell_mastery_lightbringer : public AuraScript
         int32 defaultValue = aurEff->GetAmount();
         float mastery = GetCaster()->ToPlayer()->GetMastery();
 
+        if (!procInfo.GetHealInfo())
+            return;
         if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 400001)
             return;
+
         int32 healAmount = procInfo.GetHealInfo()->GetHeal();
 
         int32 effectiveness;
