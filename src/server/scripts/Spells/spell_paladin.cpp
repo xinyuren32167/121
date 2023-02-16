@@ -1246,7 +1246,7 @@ class spell_pal_shield_righteous : public SpellScript
         OnEffectHit += SpellEffectFn(spell_pal_shield_righteous::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
 };
-    
+
 class spell_pal_holy_power : public SpellScript
 {
     PrepareSpellScript(spell_pal_holy_power);
@@ -1557,17 +1557,6 @@ class spell_pal_execution_sentence : public AuraScript
 {
     PrepareAuraScript(spell_pal_execution_sentence);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-        AuraEffect* protEff = GetCaster()->GetAuraEffect(80063, EFFECT_0);
-
-        if (protEff)
-            damagedealt += protEff->GetAmount();
-
-        if (damagedealt > 0 && protEff)
-            protEff->SetAmount(damagedealt);
-    }
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -1576,6 +1565,20 @@ class spell_pal_execution_sentence : public AuraScript
         if (eventInfo.GetDamageInfo()->GetDamage() < 0)
             return false;
         return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
+        int32 amount = aurEff->GetAmount();
+
+        amount += damagedealt;
+        aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(amount);
+
+        if (AuraEffect* executionersWrathListener = GetCaster()->GetAura(401175)->GetEffect(EFFECT_0))
+            executionersWrathListener->SetAmount(amount);
+
+        GetCaster()->RemoveAura(80063);
     }
 
     void Register()
@@ -1589,9 +1592,33 @@ class spell_pal_execution_sentence_listener : public AuraScript
 {
     PrepareAuraScript(spell_pal_execution_sentence_listener);
 
+    bool HasExecutionersWrathRune()
+    {
+        if (GetCaster()->HasAura(401168) ||
+            GetCaster()->HasAura(401169) ||
+            GetCaster()->HasAura(401170) ||
+            GetCaster()->HasAura(401171) ||
+            GetCaster()->HasAura(401172) ||
+            GetCaster()->HasAura(401173))
+            return true;
+
+        return false;
+    }
+
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (GetCaster()->HasAura(80063))
+            GetCaster()->RemoveAura(80063);
+
         GetCaster()->AddAura(80063, GetCaster());
+
+        if (HasExecutionersWrathRune())
+        {
+            if (GetCaster()->HasAura(401175))
+                GetCaster()->RemoveAura(401175);
+
+            GetCaster()->AddAura(401175, GetCaster());
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)

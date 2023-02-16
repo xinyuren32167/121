@@ -22,6 +22,8 @@ enum PaladinSpells
 
     SPELL_PALADIN_BLADE_OF_JUSTICE = 80045,
 
+    SPELL_PALADIN_CONSECRATION_ON_ENEMY = 401048,
+
     SPELL_PALADIN_DIVINE_ILLUMINATION = 31842,
     SPELL_PALADIN_DIVINE_SHIELD = 642,
 
@@ -108,9 +110,12 @@ enum PaladinSpells
 
     RUNE_PALADIN_LIGHTS_DECREE_DAMAGE = 401040,
 
-    RUNE_PALADIN_HOLY_REACTION_DAMAGE = 401048,
-
     RUNE_PALADIN_TEMPLARS_VINDICATION_DAMAGE = 401074,
+
+    RUNE_PALADIN_EXPURGATION_DAMAGE = 401148,
+
+    RUNE_PALADIN_EXECUTIONERS_WRATH_DAMAGE = 401174,
+    RUNE_PALADIN_EXECUTIONERS_WRATH_LISTENER = 401175,
 };
 
 class rune_pal_inner_grace : public AuraScript
@@ -2145,6 +2150,204 @@ class rune_pal_final_verdict : public AuraScript
     }
 };
 
+class rune_pal_blade_of_wrath : public AuraScript
+{
+    PrepareAuraScript(rune_pal_blade_of_wrath);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(401106))
+            return GetCaster()->GetAura(401106);
+
+        if (GetCaster()->HasAura(401107))
+            return GetCaster()->GetAura(401107);
+
+        if (GetCaster()->HasAura(401108))
+            return GetCaster()->GetAura(401108);
+
+        if (GetCaster()->HasAura(401109))
+            return GetCaster()->GetAura(401109);
+
+        if (GetCaster()->HasAura(401110))
+            return GetCaster()->GetAura(401110);
+
+        if (GetCaster()->HasAura(401111))
+            return GetCaster()->GetAura(401111);
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetRuneAura();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        LOG_ERROR("error", "{}", aurEff->GetSpellInfo()->ProcChance);
+        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_blade_of_wrath::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_blade_of_wrath::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_consecrated_blade : public AuraScript
+{
+    PrepareAuraScript(rune_pal_consecrated_blade);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(401118))
+            return GetCaster()->GetAura(401118);
+
+        if (GetCaster()->HasAura(401119))
+            return GetCaster()->GetAura(401119);
+
+        if (GetCaster()->HasAura(401120))
+            return GetCaster()->GetAura(401120);
+
+        if (GetCaster()->HasAura(401121))
+            return GetCaster()->GetAura(401121);
+
+        if (GetCaster()->HasAura(401122))
+            return GetCaster()->GetAura(401122);
+
+        if (GetCaster()->HasAura(401123))
+            return GetCaster()->GetAura(401123);
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetRuneAura();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_consecrated_blade::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_consecrated_blade::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_consecrated_blade_proc : public AuraScript
+{
+    PrepareAuraScript(rune_pal_consecrated_blade_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        GetCaster()->CastSpell(victim, SPELL_PALADIN_CONSECRATION_ON_ENEMY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_consecrated_blade_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_consecrated_blade_proc::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_expurgation : public AuraScript
+{
+    PrepareAuraScript(rune_pal_expurgation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount()) / 6;
+        int32 amount = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_EXPURGATION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_expurgation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_expurgation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_executioners_wrath : public AuraScript
+{
+    PrepareAuraScript(rune_pal_executioners_wrath);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(401168))
+            return GetCaster()->GetAura(401168);
+
+        if (GetCaster()->HasAura(401169))
+            return GetCaster()->GetAura(401169);
+
+        if (GetCaster()->HasAura(401170))
+            return GetCaster()->GetAura(401170);
+
+        if (GetCaster()->HasAura(401171))
+            return GetCaster()->GetAura(401171);
+
+        if (GetCaster()->HasAura(401172))
+            return GetCaster()->GetAura(401172);
+
+        if (GetCaster()->HasAura(401173))
+            return GetCaster()->GetAura(401173);
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        if (!GetCaster()->HasAura(RUNE_PALADIN_EXECUTIONERS_WRATH_LISTENER))
+            return;
+
+        float bonusdmg = GetCaster()->GetAura(RUNE_PALADIN_EXECUTIONERS_WRATH_LISTENER)->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = int32(CalculatePct(bonusdmg, GetRuneAura()->GetEffect(EFFECT_0)->GetAmount()));
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_EXECUTIONERS_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->RemoveAura(RUNE_PALADIN_EXECUTIONERS_WRATH_LISTENER);
+    }
+
+    void Register()
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_pal_executioners_wrath::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -2212,5 +2415,11 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_tempars_vindication);
     RegisterSpellScript(rune_pal_executioners_will);
     RegisterSpellScript(rune_pal_righteous_cause);
-    RegisterSpellScript(rune_pal_final_verdict);   
+    RegisterSpellScript(rune_pal_final_verdict);
+    RegisterSpellScript(rune_pal_blade_of_wrath);
+    RegisterSpellScript(rune_pal_consecrated_blade);
+    RegisterSpellScript(rune_pal_consecrated_blade_proc);
+    RegisterSpellScript(rune_pal_expurgation);
+    RegisterSpellScript(rune_pal_executioners_wrath);
+
 }
