@@ -287,11 +287,14 @@ class spell_mastery_lightbringer : public AuraScript
         int32 defaultValue = aurEff->GetAmount();
         float mastery = GetCaster()->ToPlayer()->GetMastery();
 
+        if (!procInfo.GetHealInfo())
+            return;
         if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 400001)
             return;
+
         int32 healAmount = procInfo.GetHealInfo()->GetHeal();
 
-        int32 effectiveness;
+        int32 effectiveness = 0;
         int32 effectiveValue = defaultValue + mastery;
 
         Unit* target = procInfo.GetActionTarget();
@@ -359,31 +362,51 @@ class spell_mastery_divine_bulwark_consec : public SpellScript
     }
 };
 
-class spell_mastery_divine_bulwark_selection : public SpellScript
+class spell_mastery_divine_bulwark_selection : public AuraScript
 {
-    PrepareSpellScript(spell_mastery_divine_bulwark_selection);
+    PrepareAuraScript(spell_mastery_divine_bulwark_selection);
 
-    void HandleCast(std::list<WorldObject*>& targets)
+    void HandleScriptEffect(AuraEffect* aurEff)
     {
-        Unit* target = nullptr;
-        for (auto itr = targets.begin(); itr != targets.end(); ++itr)
-        {
-            if (Unit* unit = (*itr)->ToUnit())
-                if (unit->GetGUID() == GetCaster()->GetGUID())
-                {
-                    target = unit;
-                    break;
-                }
-        }
+        Creature* creature = GetCaster()->FindNearestCreature(500502, 30);
+        if (!creature)
+            return;
 
-        targets.clear();
-        if (target)
-            targets.push_back(target);
+        Position player = GetCaster()->GetPosition();
+        float distance = creature->GetDistance(player);
+
+        if (const SpellInfo* info = sSpellMgr->GetSpellInfo(48819))
+        {
+            float radius = info->Effects[EFFECT_0].CalcRadius(GetCaster());
+
+            if (distance > radius)
+                GetCaster()->RemoveAura(400003);
+            else
+                GetCaster()->AddAura(400003, GetCaster());
+        }
     }
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mastery_divine_bulwark_selection::HandleCast, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        OnEffectUpdatePeriodic += AuraEffectUpdatePeriodicFn(spell_mastery_divine_bulwark_selection::HandleScriptEffect, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_mastery_hand_of_light : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_hand_of_light);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 holyPower = (GetCaster()->GetAura(400006)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(400007, SPELLVALUE_BASE_POINT0, holyPower, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_hand_of_light::HandleCast);
     }
 };
 
@@ -403,4 +426,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_divine_bulwark);
     RegisterSpellScript(spell_mastery_divine_bulwark_consec);
     RegisterSpellScript(spell_mastery_divine_bulwark_selection);
+    RegisterSpellScript(spell_mastery_hand_of_light);
 }

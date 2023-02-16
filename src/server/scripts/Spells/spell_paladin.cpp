@@ -54,7 +54,6 @@ enum PaladinSpells
     SPELL_PALADIN_EYE_FOR_AN_EYE_DAMAGE = 25997,
 
     SPELL_PALADIN_FORBEARANCE = 25771,
-    SPELL_PALADIN_IMMUNE_SHIELD_MARKER = 61988,
 
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
     SPELL_PALADIN_DIVINE_SACRIFICE = 64205,
@@ -927,7 +926,6 @@ class spell_pal_lay_on_hands : public SpellScript
         return ValidateSpellInfo(
             {
                 SPELL_PALADIN_FORBEARANCE,
-                SPELL_PALADIN_IMMUNE_SHIELD_MARKER
             });
     }
 
@@ -942,7 +940,7 @@ class spell_pal_lay_on_hands : public SpellScript
         Unit* caster = GetCaster();
         if (Unit* target = GetExplTargetUnit())
             if (caster == target)
-                if (target->HasAura(SPELL_PALADIN_FORBEARANCE) || target->HasAura(SPELL_PALADIN_IMMUNE_SHIELD_MARKER))
+                if (target->HasAura(SPELL_PALADIN_FORBEARANCE))
                     return SPELL_FAILED_TARGET_AURASTATE;
 
         // Xinef: Glyph of Divinity
@@ -960,7 +958,6 @@ class spell_pal_lay_on_hands : public SpellScript
         if (caster == target)
         {
             caster->CastSpell(caster, SPELL_PALADIN_FORBEARANCE, true);
-            caster->CastSpell(caster, SPELL_PALADIN_IMMUNE_SHIELD_MARKER, true);
         }
         // Xinef: Glyph of Divinity
         else if (target && caster->HasAura(54939) && GetSpellInfo()->Id != 633 && _manaAmount > 0) // excluding first rank
@@ -1143,7 +1140,12 @@ class spell_pal_consecration : public SpellScript
 
     void HandleScriptEffect()
     {
-        GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, 12000);
+        GetCaster()->CastSpell(GetCaster(), 80121, true);
+
+        Aura* auraEff = GetCaster()->GetAura(80121);
+        int32 duration = auraEff->GetDuration();
+
+        GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, duration);
     }
 
     void Register() override
@@ -1232,19 +1234,19 @@ class spell_pal_shield_righteous : public SpellScript
 {
     PrepareSpellScript(spell_pal_shield_righteous);
 
-    void HandleArmor()
+    void HandleDummy(SpellEffIndex effIndex)
     {
-        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), 170);
+        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), GetEffectValue());
 
         GetCaster()->CastCustomSpell(80042, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register()
     {
-        OnCast += SpellCastFn(spell_pal_shield_righteous::HandleArmor);
+        OnEffectHit += SpellEffectFn(spell_pal_shield_righteous::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
 };
-
+    
 class spell_pal_holy_power : public SpellScript
 {
     PrepareSpellScript(spell_pal_holy_power);
