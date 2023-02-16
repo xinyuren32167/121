@@ -1577,6 +1577,8 @@ class spell_pal_execution_sentence : public AuraScript
 
         if (AuraEffect* executionersWrathListener = GetCaster()->GetAura(401175)->GetEffect(EFFECT_0))
             executionersWrathListener->SetAmount(amount);
+
+        GetCaster()->RemoveAura(80063);
     }
 
     void Register()
@@ -1605,10 +1607,18 @@ class spell_pal_execution_sentence_listener : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (GetCaster()->HasAura(80063))
+            GetCaster()->RemoveAura(80063);
+
         GetCaster()->AddAura(80063, GetCaster());
 
         if (HasExecutionersWrathRune())
+        {
+            if (GetCaster()->HasAura(401175))
+                GetCaster()->RemoveAura(401175);
+
             GetCaster()->AddAura(401175, GetCaster());
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
