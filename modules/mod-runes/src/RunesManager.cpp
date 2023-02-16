@@ -87,7 +87,7 @@ void RunesManager::LoadSpellsConversion()
         Field* fields = result->Fetch();
         uint32 runeSpellId = fields[0].Get<uint32>();
         uint32 oldSpellId = fields[1].Get<uint32>();
-        int32 newSpellId = fields[2].Get<int32>();
+        uint32 newSpellId = fields[2].Get<int32>();
         SpellRuneConversion s = { runeSpellId, oldSpellId, newSpellId };
         m_SpellRuneConversion.push_back(s);
     } while (result->NextRow());
@@ -532,16 +532,10 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     }
 
     player->CastCustomSpell(79850, SPELLVALUE_BASE_POINT0, runeId, player, TRIGGERED_NONE);
-
-    /* SpellConversion(rune.spellId, player, true);
-    player->AddAura(rune.spellId, player);
-    AddRuneToSlot(player, rune, runeId);
-    sEluna->OnActivateRune(player, "Rune successfully activated!", index); */
 }
 
 void RunesManager::DisableRune(Player* player, uint64 runeId)
 {
-
     if (!player)
         return;
 
@@ -645,7 +639,7 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
         return;
 
     auto slotToFind = std::find_if(match->second.begin(), match->second.end(), [&](const SlotRune& slot) {
-        return slot.runeSpellId == rune.spellId;
+        return slot.runeId == rune.spellId;
     });
 
     if (slotToFind == match->second.end())
@@ -653,7 +647,11 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 
     match->second.erase(slotToFind);
 
-    CharacterDatabase.Query("DELETE FROM character_rune_slots WHERE runeId = {} AND id = {}", slotToFind->runeId, activeId);
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_SLOT);
+
+    stmt->SetData(0, uint32(slotToFind->runeId));
+    stmt->SetData(1, activeId);
+    CharacterDatabase.Execute(stmt);
 
     SpellConversion(rune.spellId, player, false);
     player->RemoveAura(rune.spellId);
@@ -663,15 +661,14 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 
 uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p) {
 
-    auto progression = m_Progression.find(p->GetSession()->GetAccountId());
+    std::list<uint32> usedOrders;
+    for (auto& slot : slots)
+        usedOrders.push_back(slot.order);
 
-    std::set<uint32> usedOrders;
-    for (auto& slot : slots) {
-        usedOrders.insert(slot.order);
-    }
-    uint32 idx = 1;
-    while (usedOrders.count(idx) != 0) {
-        idx++;
-    }
-    return idx == 0 ? 1 : idx;
+    for (uint32 order = 1; order < config.maxSlots; order++)
+        if (std::find(usedOrders.begin(), usedOrders.end(), order) == usedOrders.end())
+            return order;
+
+
+    return 1;
 }
