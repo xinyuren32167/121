@@ -47,6 +47,7 @@ struct TimedRun {
     uint32 elapsedTime;
     std::vector<TimedDungeonBoss> bosses;
     uint32 enemyForces;
+    uint32 totalEnemyForces;
     uint32 deaths;
     std::vector<Affixe> affixes;
 };
