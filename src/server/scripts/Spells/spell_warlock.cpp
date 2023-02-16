@@ -761,7 +761,7 @@ class spell_vampirism : public AuraScript
 
     bool Load() override
     {
-        healPct = GetSpellInfo()->Effects[EFFECT_1].CalcValue(GetCaster());
+        healPct = GetAura()->GetEffect(EFFECT_0)->GetAmount();
         spellId = GetSpellInfo()->Effects[EFFECT_0].TriggerSpell;
         return true;
     }

@@ -734,8 +734,20 @@ class spell_holy_aegis : public AuraScript
             GetTarget()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, absorb, eventInfo.GetProcTarget(), true, nullptr, aurEff);
     }
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetHealInfo())
+            return false;
+
+        if (!eventInfo.GetHealInfo()->GetHeal() < 0)
+            return false;
+
+        return true;
+    }
+
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_holy_aegis::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_holy_aegis::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
