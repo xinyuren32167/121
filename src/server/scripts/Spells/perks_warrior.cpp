@@ -104,11 +104,11 @@ class spell_the_art_of_war : public AuraScript
         if (rageAccumulated >= GetRagePct())
         {
             GetCaster()->CastSpell(GetCaster(), 200093, TRIGGERED_FULL_MASK);
-            GetAura()->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
+            aura->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
         }
         else
         {
-            GetAura()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
+            aura->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
         }
     }
 

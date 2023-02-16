@@ -1570,15 +1570,12 @@ class spell_pal_execution_sentence : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-        int32 amount = aurEff->GetAmount();
+        int32 amount = damagedealt + aurEff->GetAmount();
 
-        amount += damagedealt;
-        aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(amount);
+        GetAura()->GetEffect(EFFECT_0)->SetAmount(amount);
 
         if (AuraEffect* executionersWrathListener = GetCaster()->GetAura(401175)->GetEffect(EFFECT_0))
             executionersWrathListener->SetAmount(amount);
-
-        GetCaster()->RemoveAura(80063);
     }
 
     void Register()
