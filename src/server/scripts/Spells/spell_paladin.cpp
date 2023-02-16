@@ -1564,18 +1564,22 @@ class spell_pal_execution_sentence : public AuraScript
             return false;
         if (eventInfo.GetDamageInfo()->GetDamage() < 0)
             return false;
+        if (!eventInfo.GetDamageInfo()->GetVictim())
+            return false;
         return true;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 10);
-        int32 amount = damagedealt + aurEff->GetAmount();
+        Unit* Victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        GetAura()->GetEffect(EFFECT_0)->SetAmount(amount);
+        if (!Victim->HasAura(80064))
+            return;
 
-        if (AuraEffect* executionersWrathListener = GetCaster()->GetAura(401175)->GetEffect(EFFECT_0))
-            executionersWrathListener->SetAmount(amount);
+        int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        int32 amount = damagedealt + GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        GetAura()->GetEffect(EFFECT_1)->SetAmount(amount);
     }
 
     void Register()
@@ -1589,40 +1593,20 @@ class spell_pal_execution_sentence_listener : public AuraScript
 {
     PrepareAuraScript(spell_pal_execution_sentence_listener);
 
-    bool HasExecutionersWrathRune()
-    {
-        if (GetCaster()->HasAura(401168) ||
-            GetCaster()->HasAura(401169) ||
-            GetCaster()->HasAura(401170) ||
-            GetCaster()->HasAura(401171) ||
-            GetCaster()->HasAura(401172) ||
-            GetCaster()->HasAura(401173))
-            return true;
-
-        return false;
-    }
-
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         if (GetCaster()->HasAura(80063))
             GetCaster()->RemoveAura(80063);
 
-        GetCaster()->AddAura(80063, GetCaster());
-
-        if (HasExecutionersWrathRune())
-        {
-            if (GetCaster()->HasAura(401175))
-                GetCaster()->RemoveAura(401175);
-
-            GetCaster()->AddAura(401175, GetCaster());
-        }
+        int32 amount = aurEff->GetAmount();
+        GetCaster()->CastCustomSpell(80063, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
-        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount()));
-        float bonusdmg = GetCaster()->GetAura(80063)->GetEffect(EFFECT_0)->GetAmount();
+        float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetAura()->GetEffect(EFFECT_1)->GetAmount()));
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), GetAura()->GetEffect(EFFECT_2)->GetAmount()));
+        float bonusdmg = GetCaster()->GetAura(80063)->GetEffect(EFFECT_1)->GetAmount();
         int32 amount = ap + sp + bonusdmg;
 
         GetCaster()->CastCustomSpell(80088, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
@@ -1642,6 +1626,7 @@ class spell_pal_art_of_the_blade : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        LOG_ERROR("error", "art of blade proc");
         GetCaster()->ToPlayer()->RemoveSpellCooldown(80045, true);
     }
 
