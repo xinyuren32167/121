@@ -1482,6 +1482,12 @@ class spell_pal_justicars_scaling : public SpellScript
 
         int32 sum = std::max<int32>(0, int32(ap + holysp));
 
+        if (Unit* target = GetHitUnit())
+        {
+            sum = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE, effIndex);
+            sum = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(sum), SPELL_DIRECT_DAMAGE);
+        }
+
         if (GetExplTargetUnit()->GetHealthPct() <= 35)
             sum = CalculatePct(int32(sum), 150);
 
@@ -1626,12 +1632,29 @@ class spell_pal_art_of_the_blade : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(80045, true);
+        if (Player* caster = GetTarget()->ToPlayer())
+            caster->RemoveSpellCooldown(80045, true);
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_pal_art_of_the_blade::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_art_of_war : public AuraScript
+{
+    PrepareAuraScript(spell_pal_art_of_war);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetTarget()->ToPlayer())
+            caster->ModifySpellCooldown(48801, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_art_of_war::HandleProc, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
@@ -1924,6 +1947,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_execution_sentence);
     RegisterSpellScript(spell_pal_execution_sentence_listener);
     RegisterSpellScript(spell_pal_art_of_the_blade);
+    RegisterSpellScript(spell_pal_art_of_war);
     RegisterSpellScript(spell_pal_shield_of_vengeance_absorb);
     RegisterSpellScript(spell_pal_shield_of_vengeance_damage);
     RegisterSpellScript(spell_pal_crusaders_might);

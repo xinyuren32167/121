@@ -13,6 +13,10 @@ enum PaladinSpells
 {
     SPELL_PALADIN_ARDENT_DEFENDER = 31852,
     SPELL_PALADIN_AURA_MASTERY = 31821,
+
+    SPELL_PALADIN_ART_OF_WAR_RANK1 = 53486,
+    SPELL_PALADIN_ART_OF_WAR_RANK2 = 53488,
+
     SPELL_PALADIN_AVENGERS_SHIELD = 48827,
     SPELL_PALADIN_AVENGING_WRATH = 31884,
 
@@ -44,7 +48,9 @@ enum PaladinSpells
     SPELL_PALADIN_LAY_ON_HANDS = 48788,
     SPELL_PALADIN_SERAPHIM = 80039,
     SPELL_PALADIN_TEMPLARS_VERDICT = 80046,
+
     SPELL_PALADIN_WORD_OF_GLORY = 80062,
+    SPELL_PALADIN_WAKE_OF_ASHES = 80060,
 
     RUNE_PALADIN_TOUCH_OF_LIGHT_DAMAGE = 400046,
     RUNE_PALADIN_TOUCH_OF_LIGHT_HEAL = 400047,
@@ -116,6 +122,12 @@ enum PaladinSpells
 
     RUNE_PALADIN_EXECUTIONERS_WRATH_DAMAGE = 401174,
     RUNE_PALADIN_EXECUTIONERS_WRATH_LISTENER = 401175,
+
+    RUNE_PALADIN_TRUTHS_WAKE_DAMAGE = 401200,
+
+    RUNE_PALADIN_VIRTUOUS_DESTINY_DAMAGE = 401226,
+
+    RUNE_PALADIN_ZEALOTS_FERVOR_HEAL = 401234,
 };
 
 class rune_pal_inner_grace : public AuraScript
@@ -914,13 +926,11 @@ class rune_pal_ashes_to_ashes : public AuraScript
         return nullptr;
     }
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return GetRuneAura();
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetRuneAura())
+            return;
+
         if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_SERAPHIM))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + 1000, auraEff->GetMaxDuration() + 5000));
@@ -936,7 +946,6 @@ class rune_pal_ashes_to_ashes : public AuraScript
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_pal_ashes_to_ashes::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pal_ashes_to_ashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -2177,21 +2186,18 @@ class rune_pal_blade_of_wrath : public AuraScript
         return nullptr;
     }
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return GetRuneAura();
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetRuneAura())
+            return;
+
         int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-        LOG_ERROR("error", "{}", aurEff->GetSpellInfo()->ProcChance);
+
         GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
     }
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_pal_blade_of_wrath::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pal_blade_of_wrath::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -2223,13 +2229,11 @@ class rune_pal_consecrated_blade : public AuraScript
         return nullptr;
     }
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return GetRuneAura();
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetRuneAura())
+            return;
+
         int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
 
         GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
@@ -2237,7 +2241,6 @@ class rune_pal_consecrated_blade : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_pal_consecrated_blade::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pal_consecrated_blade::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -2259,6 +2262,7 @@ class rune_pal_consecrated_blade_proc : public AuraScript
             return;
 
         GetCaster()->CastSpell(victim, SPELL_PALADIN_CONSECRATION_ON_ENEMY, TRIGGERED_FULL_MASK);
+        GetCaster()->RemoveAura(GetAura());
     }
 
     void Register()
@@ -2400,6 +2404,185 @@ class rune_pal_executioners_wrath_listener : public AuraScript
     }
 };
 
+class rune_pal_ashes_to_dust : public AuraScript
+{
+    PrepareAuraScript(rune_pal_ashes_to_dust);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(401188))
+            return GetCaster()->GetAura(401188);
+
+        if (GetCaster()->HasAura(401189))
+            return GetCaster()->GetAura(401189);
+
+        if (GetCaster()->HasAura(401190))
+            return GetCaster()->GetAura(401190);
+
+        if (GetCaster()->HasAura(401191))
+            return GetCaster()->GetAura(401191);
+
+        if (GetCaster()->HasAura(401192))
+            return GetCaster()->GetAura(401192);
+
+        if (GetCaster()->HasAura(401193))
+            return GetCaster()->GetAura(401193);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetRuneAura())
+            return;
+
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster)
+            return;
+
+        if (!caster->HasSpellCooldown(SPELL_PALADIN_WAKE_OF_ASHES))
+            return;
+
+        int32 procChance = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
+        uint32 random = urand(1, 100);
+
+        if (random <= procChance)
+            caster->RemoveSpellCooldown(SPELL_PALADIN_WAKE_OF_ASHES, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pal_ashes_to_dust::HandleProc, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pal_truths_wake : public AuraScript
+{
+    PrepareAuraScript(rune_pal_truths_wake);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damage = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        int32 amount = damage / 6;
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_TRUTHS_WAKE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_truths_wake::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_truths_wake::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_avenging_art : public AuraScript
+{
+    PrepareAuraScript(rune_pal_avenging_art);
+
+    int GetArtOfWarRank()
+    {
+        if (GetCaster()->HasAura(SPELL_PALADIN_ART_OF_WAR_RANK1))
+            return SPELL_PALADIN_ART_OF_WAR_RANK1;
+
+        if (GetCaster()->HasAura(SPELL_PALADIN_ART_OF_WAR_RANK2))
+            return SPELL_PALADIN_ART_OF_WAR_RANK2;
+
+        return 0;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        if (GetArtOfWarRank() == 0)
+            return;
+
+        int32 amount = GetCaster()->GetAura(GetArtOfWarRank())->GetEffect(EFFECT_1)->GetAmount();
+        int32 procSpell = GetCaster()->GetAura(GetArtOfWarRank())->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+
+        if (Player* caster = GetTarget()->ToPlayer())
+        {
+            caster->ModifySpellCooldown(48801, -amount);
+            GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_pal_avenging_art::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_pal_virtuous_destiny : public AuraScript
+{
+    PrepareAuraScript(rune_pal_virtuous_destiny);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_VIRTUOUS_DESTINY_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_virtuous_destiny::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_virtuous_destiny::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_zealots_fervor : public AuraScript
+{
+    PrepareAuraScript(rune_pal_zealots_fervor);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        float amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_ZEALOTS_FERVOR_HEAL, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_zealots_fervor::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_zealots_fervor::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -2474,5 +2657,11 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_expurgation);
     RegisterSpellScript(rune_pal_executioners_wrath);
     RegisterSpellScript(rune_pal_executioners_wrath_listener);
+    RegisterSpellScript(rune_pal_ashes_to_dust);
+    RegisterSpellScript(rune_pal_truths_wake);
+    RegisterSpellScript(rune_pal_avenging_art);
+    RegisterSpellScript(rune_pal_virtuous_destiny);
+    RegisterSpellScript(rune_pal_zealots_fervor);
 
+    
 }
