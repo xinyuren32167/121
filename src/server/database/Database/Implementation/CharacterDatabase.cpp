@@ -30,7 +30,7 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_INS_PROGESSION, "INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES (?, 0, 0, ?)", CONNECTION_ASYNC);
 
     PrepareStatement(CHAR_INS_RUNE_SLOT, "INSERT INTO character_rune_slots (id, runeId, runeSpellId, `order`) VALUES (?, ?, ?, ?)", CONNECTION_ASYNC);
-    PrepareStatement(CHAR_DEL_SLOT, "DELETE FROM character_rune_slots WHERE runeId = ? AND id = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_DEL_SLOT, "DELETE FROM character_rune_slots WHERE `order` = ? AND id = ?", CONNECTION_ASYNC);
 
     PrepareStatement(CHAR_DEL_QUEST_POOL_SAVE, "DELETE FROM pool_quest_save WHERE pool_id = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_QUEST_POOL_SAVE, "INSERT INTO pool_quest_save (pool_id, quest_id) VALUES (?, ?)", CONNECTION_ASYNC);

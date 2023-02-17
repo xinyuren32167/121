@@ -86,6 +86,13 @@ namespace LuaPlayer
         return 0;
     }
 
+
+    int ResetAllSlots(lua_State* L, Player* player)
+    {
+        RunesManager::ResetAllSlots(player);
+        return 0;
+    }
+
     int ActivateSpec(lua_State* L, Player* player)
     {
         uint32 specId = Eluna::CHECKVAL<uint32>(L, 2);

@@ -1626,7 +1626,6 @@ class spell_pal_art_of_the_blade : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "art of blade proc");
         GetCaster()->ToPlayer()->RemoveSpellCooldown(80045, true);
     }
 

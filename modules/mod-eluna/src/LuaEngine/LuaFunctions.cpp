@@ -457,6 +457,7 @@ ElunaRegister<Player> PlayerMethods[] =
     { "GetSlots", &LuaPlayer::GetSlotsRune },
     { "GetProgression", &LuaPlayer::GetProgression },
     { "ActivateRune", &LuaPlayer::ActivateRune },
+    { "ResetAllSlots", &LuaPlayer::ResetAllSlots },
     { "DisableRune", &LuaPlayer::DisableRune },
     { "RefundRune", &LuaPlayer::RefundRune },
     { "UpgradeRune", &LuaPlayer::UpgradeRune },

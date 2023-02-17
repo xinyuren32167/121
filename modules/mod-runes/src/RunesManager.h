@@ -91,6 +91,7 @@ public:
     static void LoadAllProgression();
     static void LoadSpellsConversion();
     static void CreateDefaultCharacter(Player* player);
+    static std::vector<std::string> KnownRuneForClient(Player* player);
     static std::vector<std::string> RunesForClient(Player* player);
     static std::vector<std::string> LoadoutCachingForClient(Player* player);
     static std::vector<std::string> SlotsCachingForClient(Player* player);
@@ -103,6 +104,7 @@ public:
     static uint32 GetCoutSameGroupRune(Player* player, uint32 spellId);
     static uint32 GetCountActivatedRune(Player* player);
     static void ActivateRune(Player* player, uint32 index, uint64 runeId);
+    static void ResetAllSlots(Player* player);
     static void CastActivateLoadout(Player* player, uint64 loadoutId);
     static void RemoveSlotsOnCharacterDel(ObjectGuid guid);
     static void ApplyRunesOnLogin(Player* player);

@@ -18,7 +18,7 @@ void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
     config.debug = true;
-    config.maxSlots  = sConfigMgr->GetOption<uint32>("RuneManager.maxSlots", 10);
+    config.maxSlots  = 40;
     config.defaultSlot = sConfigMgr->GetOption<uint32>("RuneManager.defaultSlot", 8);
     config.chanceDropRuneQualityWhite = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityWhite", 90.0f);
     config.chanceDropRuneQualityGreen = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityGreen", 10.0f);
@@ -215,33 +215,23 @@ void RunesManager::CreateDefaultCharacter(Player* player)
 
 }
 
+
 std::vector<std::string> RunesManager::RunesForClient(Player* player)
 {
     std::vector<uint32> runeIds = {};
     std::vector<std::string > elements = {};
     auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
-    auto pushRune = [&](Rune rune, uint32 id, bool kwown, bool activable, bool activated) {
+    auto pushRune = [&](Rune rune, uint32 id, bool known) {
         std::string fmt = 
-        std::to_string(rune.spellId)
-            + ";" +
-            std::to_string(rune.quality)
-            + ";" +
-            std::to_string(rune.maxStack)
-            + ";" +
-                std::to_string(rune.refundItemId)
-            + ";" +
-                std::to_string(rune.refundDusts)
-            + ";" +
-            rune.keywords
-            + ";" +
-            std::to_string(config.debug ? true : kwown)
-            + ";" +
-            std::to_string(config.debug ? rune.spellId : id)
-            + ";" +
-            std::to_string(config.debug ? (rune.allowableClass & player->getClassMask()) != 0 : activable)
-            + ";" +
-                std::to_string(activated)
-            + ";" + std::to_string(rune.allowableClass);
+                    std::to_string(rune.spellId)
+            + ";" + std::to_string(rune.quality)
+            + ";" + std::to_string(rune.maxStack)
+            + ";" + std::to_string(rune.refundItemId)
+            + ";" + std::to_string(rune.refundDusts)
+            + ";" + rune.keywords
+            + ";" + std::to_string(config.debug ? rune.spellId : id)
+            + ";" + std::to_string(rune.allowableClass)
+        +";" + std::to_string(config.debug ? true : known);
         elements.push_back(fmt);
     };
 
@@ -249,19 +239,14 @@ std::vector<std::string> RunesManager::RunesForClient(Player* player)
         for (auto const& kwownRune : known->second) {
             runeIds.push_back(kwownRune.rune.spellId);
             Rune rune = GetRuneBySpellId(kwownRune.rune.spellId);
-            const uint32 count = GetCoutSameGroupRune(player, rune.spellId);
-            bool haveLessThanMaxStack = count < rune.maxStack;
-            bool activable = bool(!RuneAlreadyActivated(player, kwownRune.id) && haveLessThanMaxStack &&
-                (GetCountActivatedRune(player) < config.maxSlots));
-            bool activated = RuneAlreadyActivated(player, kwownRune.id);
-            pushRune(rune, kwownRune.id, true, activable, activated);
+            pushRune(rune, kwownRune.id, true);
         }
 
     for (auto it = m_Runes.begin(); it != m_Runes.end(); it++)
     {
         Rune rune = it->second;
         if (std::find(runeIds.begin(), runeIds.end(), rune.spellId) == runeIds.end()) {
-            pushRune(rune, 0, false, false, false);
+            pushRune(rune, rune.spellId, false);
         }
     }
     return elements;
@@ -303,6 +288,7 @@ std::vector<std::string> RunesManager::SlotsCachingForClient(Player* player)
 
     return elements;
 }
+
 
 std::string RunesManager::ProgressionCachingForClient(Player* player)
 {
@@ -534,6 +520,30 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     player->CastCustomSpell(79850, SPELLVALUE_BASE_POINT0, runeId, player, TRIGGERED_NONE);
 }
 
+
+void RunesManager::ResetAllSlots(Player* player)
+{
+    if (!player)
+        return;
+
+    uint64 activeId = GetActiveLoadoutId(player);
+
+    if (activeId <= 0)
+        return;
+
+    CharacterDatabase.Query("DELETE FROM character_rune_slots  WHERE id = {}", activeId);
+
+    auto match = m_SlotRune.find(activeId);
+    if (match != m_SlotRune.end()) {
+        for (auto& slot : match->second) {
+            player->RemoveAura(slot.runeSpellId);
+        }
+        match->second.clear();
+    }
+
+    sEluna->RefreshSlotsRune(player);
+}
+
 void RunesManager::DisableRune(Player* player, uint64 runeId)
 {
     if (!player)
@@ -649,8 +659,8 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_SLOT);
 
-    stmt->SetData(0, uint32(slotToFind->runeId));
-    stmt->SetData(1, activeId);
+    stmt->SetData(0, slotToFind->order);
+    stmt->SetData(1, uint32(activeId));
     CharacterDatabase.Execute(stmt);
 
     SpellConversion(rune.spellId, player, false);
