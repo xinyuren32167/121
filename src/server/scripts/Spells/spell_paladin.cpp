@@ -1378,6 +1378,8 @@ class spell_pal_final_reckoning : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster()->HasSpell(80052))
+            return false;
         if (GetCaster()->HasSpellCooldown(80052))
             return false;
         return true;
