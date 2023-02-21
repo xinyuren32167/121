@@ -267,8 +267,8 @@ void Spell::EffectResurrectNew(SpellEffIndex effIndex)
     if (target->isResurrectRequested())       // already have one active request
         return;
 
-    uint32 health = damage;
-    uint32 mana = m_spellInfo->Effects[effIndex].MiscValue;
+    uint32 health = CalculatePct(target->GetMaxHealth(),35);
+    uint32 mana = CalculatePct(target->GetMaxPower(POWER_MANA), 35);
     ExecuteLogEffectResurrect(effIndex, target);
     target->setResurrectRequestData(m_caster->GetGUID(), m_caster->GetMapId(), m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), health, mana);
     SendResurrectRequest(target);

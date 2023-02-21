@@ -1884,22 +1884,6 @@ class spell_pal_grand_crusader : public AuraScript
     }
 };
 
-class spell_pal_zeal : public AuraScript
-{
-    PrepareAuraScript(spell_pal_zeal);
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        GetCaster()->CastSpell(GetTarget(), 80111, true);
-        LOG_ERROR("error", "ffs");
-    }
-
-    void Register()
-    {
-        OnEffectRemove += AuraEffectRemoveFn(spell_pal_zeal::HandleRemove, EFFECT_1, SPELL_AURA_MOD_MELEE_HASTE, AURA_EFFECT_HANDLE_CHANGE_AMOUNT);
-    }
-};
-
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
