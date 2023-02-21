@@ -1403,7 +1403,7 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage* damageInfo, int32 dama
         case SPELL_DAMAGE_CLASS_NONE:
         case SPELL_DAMAGE_CLASS_MAGIC:
             {
-                if(HasAuraType(SPELL_AURA_ALLOW_BLOCKING_SPELL))
+                if(victim->HasAuraType(SPELL_AURA_ALLOW_BLOCKING_SPELL))
                     blocked = isSpellBlocked(victim, spellInfo, attackType);
 
                 // If crit add critical bonus
@@ -3068,7 +3068,6 @@ bool Unit::isSpellBlocked(Unit* victim, SpellInfo const* spellProto, WeaponAttac
             return false;
 
         float blockChance = victim->GetUnitBlockChance();
-        blockChance += (int32(GetWeaponSkillValue(attackType)) - int32(victim->GetMaxSkillValueForLevel())) * 0.04f;
 
         // xinef: cant block while casting or while stunned
         if (blockChance < 0.0f || victim->IsNonMeleeSpellCast(false, false, true) || victim->HasUnitState(UNIT_STATE_CONTROLLED))
