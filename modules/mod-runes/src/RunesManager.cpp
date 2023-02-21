@@ -552,10 +552,11 @@ void RunesManager::DisableRune(Player* player, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (player->IsInCombat()) {
-        sEluna->OnRuneMessage(player, "You can't do that while in combat.");
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING)) {
+        sEluna->OnRuneMessage(player, "You can change only your rune inside resting area.");
         return;
     }
+
     Rune rune = GetRuneById(player, runeId);
 
     if (config.debug)
