@@ -1941,5 +1941,4 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_shining_light);
     RegisterSpellScript(spell_pal_sacred_duty);
     RegisterSpellScript(spell_pal_grand_crusader);
-    RegisterSpellScript(spell_pal_zeal);
 }
