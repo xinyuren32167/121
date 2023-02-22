@@ -597,6 +597,11 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
         SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
     }
 
+    if (getPowerType() == POWER_FOCUS) {
+        SetPower(POWER_FOCUS, 0);
+        SetMaxPower(POWER_FOCUS, 100);
+    }
+
     if (getPowerType() == POWER_RUNIC_POWER)
     {
         SetPower(POWER_RUNE, 8);
@@ -1887,7 +1892,7 @@ void Player::Regenerate(Powers power)
             break;
         case POWER_RUNE:
         case POWER_FOCUS:
-            addvalue += 0.01f * m_regenTimer * sWorld->getRate(RATE_POWER_ENERGY);
+            addvalue += 0.01f * m_regenTimer * (sWorld->getRate(RATE_POWER_ENERGY) / 2);
         case POWER_HAPPINESS:
             break;
         case POWER_HEALTH:
@@ -2013,6 +2018,9 @@ void Player::ResetAllPowers()
             break;
         case POWER_RAGE:
             SetPower(POWER_RAGE, 0);
+            break;
+        case POWER_FOCUS:
+            SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
             break;
         case POWER_ENERGY:
             SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
@@ -2483,7 +2491,7 @@ void Player::GiveLevel(uint8 level)
     SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
         SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
-    SetPower(POWER_FOCUS, 100);
+    SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
     SetPower(POWER_HAPPINESS, 0);
 
     // update level to hunter/summon pet
@@ -2689,7 +2697,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
         SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
-    SetPower(POWER_FOCUS, 100);
+    SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
     SetPower(POWER_HAPPINESS, 0);
     SetPower(POWER_RUNIC_POWER, 0);
 
