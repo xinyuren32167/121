@@ -1892,7 +1892,7 @@ void Player::Regenerate(Powers power)
             break;
         case POWER_RUNE:
         case POWER_FOCUS:
-            addvalue += 0.01f * m_regenTimer * (sWorld->getRate(RATE_POWER_ENERGY) / 2);
+            addvalue += 0.01f * m_regenTimer * (sWorld->getRate(RATE_POWER_ENERGY) / 1.5);
         case POWER_HAPPINESS:
             break;
         case POWER_HEALTH:
