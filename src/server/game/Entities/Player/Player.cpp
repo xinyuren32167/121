@@ -1741,6 +1741,10 @@ void Player::RegenerateAll()
     if(getClass() == CLASS_ROGUE && getClass() == CLASS_DRUID)
         Regenerate(POWER_ENERGY);
 
+
+    if (getClass() == CLASS_HUNTER)
+        Regenerate(POWER_FOCUS);
+
     Regenerate(POWER_MANA);
 
     // Runes act as cooldowns, and they don't need to send any data
@@ -1883,6 +1887,7 @@ void Player::Regenerate(Powers power)
             break;
         case POWER_RUNE:
         case POWER_FOCUS:
+            addvalue += 0.01f * m_regenTimer * sWorld->getRate(RATE_POWER_ENERGY);
         case POWER_HAPPINESS:
             break;
         case POWER_HEALTH:
@@ -2478,7 +2483,7 @@ void Player::GiveLevel(uint8 level)
     SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
         SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
-    SetPower(POWER_FOCUS, 0);
+    SetPower(POWER_FOCUS, 100);
     SetPower(POWER_HAPPINESS, 0);
 
     // update level to hunter/summon pet
@@ -2684,7 +2689,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
         SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
-    SetPower(POWER_FOCUS, 0);
+    SetPower(POWER_FOCUS, 100);
     SetPower(POWER_HAPPINESS, 0);
     SetPower(POWER_RUNIC_POWER, 0);
 
