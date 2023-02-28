@@ -87,12 +87,9 @@ class spell_activate_specialization : public SpellScript
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
             player->learnSpell(spellId, false, false);
 
-
-        player->CastCustomSpell(79852, SPELLVALUE_BASE_POINT0, newSpecId, player, TRIGGERED_NONE);
-
         PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
         CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
-        sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true);
+        sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true, newSpecId);
         player->UpdateMastery();
         player->SaveToDB(false, false);
     }

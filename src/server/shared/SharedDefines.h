@@ -862,7 +862,7 @@ enum SpellEffects
     SPELL_EFFECT_RESURRECT_PET                      = 109,
     SPELL_EFFECT_DESTROY_ALL_TOTEMS                 = 110,
     SPELL_EFFECT_DURABILITY_DAMAGE                  = 111,
-    SPELL_EFFECT_112                                = 112,
+    SPELL_EFFECT_SUMMON_OBJECT_SLOT5                = 112,
     SPELL_EFFECT_RESURRECT_NEW                      = 113,
     SPELL_EFFECT_ATTACK_ME                          = 114,
     SPELL_EFFECT_DURABILITY_DAMAGE_PCT              = 115,
