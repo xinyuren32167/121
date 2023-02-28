@@ -206,7 +206,7 @@ void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint3
         if (affixe.level <= level)
             affixes.push_back(affixe);
 
-    TimedRun run = { keyId, level, dungeon.timeToComplete, 0, false, m_TimedDungeonBoss, 0, dungeon.totalCreatureToKill, totalDeath, affixes };
+    TimedRun run = { keyId, level, dungeon.timeToComplete, false, 0, m_TimedDungeonBoss, 0, totalDeath, affixes };
     m_TimedRun[map->GetInstanceId()] = run;
 
     if (group) {
@@ -236,29 +236,22 @@ void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint3
 std::vector<std::string> TimedDungeonManager::SendStatsMythicRun(Player* player, TimedRun run)
 {
     std::vector<std::string> elements = {};
-
     std::string first =
         std::to_string(run.level)
         + ";" + std::to_string(run.enemyForces)
-        + ";" + std::to_string(run.totalEnemyForces)
         + ";" + std::to_string(run.timeToComplete)
         + ";" + std::to_string(run.elapsedTime)
         + ";" + std::to_string(run.deaths);
 
     elements.push_back(first);
 
-    std::string affixeStr = "";
-    for (auto const& affixe : run.affixes)
-        affixeStr += ";" + std::to_string(affixe.spellId);
-
     std::string bossStatus = "";
     for (auto const& boss : run.bosses) {
         CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(boss.creatureId);
-        affixeStr += ";" + creatureTemplate->Name + "+" + std::to_string(boss.alive);
+        bossStatus += ";" + creatureTemplate->Name + "+" + std::to_string(boss.creatureId) +  "+" + std::to_string(boss.alive);
     }
 
     elements.push_back(bossStatus);
-
 
     return elements;
 }

@@ -4611,6 +4611,9 @@ void Spell::EffectSummonObject(SpellEffIndex effIndex)
         case SPELL_EFFECT_SUMMON_OBJECT_SLOT4:
             slot = 3;
             break;
+        case SPELL_EFFECT_SUMMON_OBJECT_SLOT5:
+            slot = 4;
+            break;
         default:
             return;
     }

@@ -71,21 +71,21 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
 {
 
     if (player->GetMap()->IsDungeon()) {
-        sEluna->OnActivateSpec(player, "You can't do that while in a dungeon!", false);
+        sEluna->OnActivateSpec(player, "You can't do that while in a dungeon!", false, 0);
         return;
     }
 
     auto match = m_Specializations.find(newSpecId);
 
     if (match == m_Specializations.end()) {
-        sEluna->OnActivateSpec(player, "This specialization doesn't exist!", false);
+        sEluna->OnActivateSpec(player, "This specialization doesn't exist!", false, 0);
         return;
     }
 
     Specialization newSpec = m_Specializations[newSpecId];
 
     if (newSpec.classInfo != player->getClass()) {
-        sEluna->OnActivateSpec(player, "You can't do that", false);
+        sEluna->OnActivateSpec(player, "You can't do that", false, 0);
         return;
     }
 

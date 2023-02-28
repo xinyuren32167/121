@@ -46,7 +46,6 @@ class spell_vampirism : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
             if (damage) {
