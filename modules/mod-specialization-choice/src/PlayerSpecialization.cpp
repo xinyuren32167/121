@@ -61,6 +61,10 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[PALADIN_HOLY] = { 17, 48782, "Holy", 2 };
     m_Specializations[PALADIN_PROTECTION] = { 18, 48952, "Protection", 2 };
     m_Specializations[PALADIN_RETRIBUTION] = { 19, 35395, "Retribution", 2 };
+
+    m_Specializations[HUNTER_BEAST] = { 14, 80132, "Beast Mastery", 3 };
+    m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3 };
+    m_Specializations[HUNTER_SURVIVAL] = { 16, 19306, "Survival", 3 };
 }
 
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)

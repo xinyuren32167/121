@@ -1309,6 +1309,283 @@ class spell_hun_bestial_wrath : public SpellScript
     }
 };
 
+class spell_hun_predators_thirst : public AuraScript
+{
+    PrepareAuraScript(spell_hun_predators_thirst);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    { 
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
+            Unit* pet = GetCaster();
+            Unit* master = GetCaster()->GetOwner();
+
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            Unit* target = eventInfo.GetDamageInfo()->GetAttacker()->IsPlayer() ? master : pet;
+            int32 healPct = aurEff->GetAmount();
+
+            if (master->HasAura(13161))
+                healPct += 5;
+
+            int32 healAmount = CalculatePct(damage, healPct);
+
+            target->CastCustomSpell(80124, SPELLVALUE_BASE_POINT0, healAmount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_predators_thirst::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_aspect_predator : public AuraScript
+{
+    PrepareAuraScript(spell_hun_aspect_predator);
+
+    int32 originalAmount;
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        AuraEffect* predatorAuraEffect = pet->GetAuraEffect(80127, EFFECT_0);
+        if (!predatorAuraEffect)
+            return;
+
+        int32 increaseAmount = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        originalAmount = predatorAuraEffect->GetAmount();
+        int32 newPathAmount = CalculatePct(originalAmount, increaseAmount) + originalAmount;
+        predatorAuraEffect->ChangeAmount(newPathAmount);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        AuraEffect* predatorAuraEffect = pet->GetAuraEffect(80127, EFFECT_0);
+        if (!predatorAuraEffect)
+            return;
+
+        predatorAuraEffect->ChangeAmount(10);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_predator::HandleProc, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_predator::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_aspect_endurance : public AuraScript
+{
+    PrepareAuraScript(spell_hun_aspect_endurance);
+
+    int32 originalAmount;
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        AuraEffect* enduranceAuraEffect = pet->GetAuraEffect(80126, EFFECT_0);
+        if (!enduranceAuraEffect)
+            return;
+
+        int32 increaseAmount = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        originalAmount = enduranceAuraEffect->GetAmount();
+        int32 newEnduranceAmount = CalculatePct(originalAmount, increaseAmount) + originalAmount;
+        enduranceAuraEffect->ChangeAmount(newEnduranceAmount);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        AuraEffect* enduranceAuraEffect = pet->GetAuraEffect(80126, EFFECT_0);
+        if (!enduranceAuraEffect)
+            return;
+
+        enduranceAuraEffect->ChangeAmount(5);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_endurance::HandleProc, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_endurance::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_aspect_path : public AuraScript
+{
+    PrepareAuraScript(spell_hun_aspect_path);
+
+    int32 originalAmount;
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        AuraEffect* pathAuraEffect = pet->GetAuraEffect(80127, EFFECT_0);
+        if (!pathAuraEffect)
+            return;
+
+        int32 increaseAmount = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        originalAmount = pathAuraEffect->GetAmount();
+        int32 newPathAmount = CalculatePct(originalAmount, increaseAmount) + originalAmount;
+        pathAuraEffect->ChangeAmount(newPathAmount);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        AuraEffect* pathAuraEffect = pet->GetAuraEffect(80127, EFFECT_0);
+        if (!pathAuraEffect)
+            return;
+
+        pathAuraEffect->ChangeAmount(8);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_path::HandleProc, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_path::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_aspect_cheetah : public AuraScript
+{
+    PrepareAuraScript(spell_hun_aspect_cheetah);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->CastSpell(GetCaster(), 80129, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_cheetah::HandleRemove, EFFECT_0, SPELL_AURA_MOD_INCREASE_SPEED, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_bestial_apply : public SpellScript
+{
+    PrepareSpellScript(spell_hun_bestial_apply);
+
+    void HandleBuff()
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+
+        GetCaster()->AddAura(80132, GetCaster());
+
+        GetCaster()->AddAura(80132, pet);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_bestial_apply::HandleBuff);
+    }
+};
+
+class spell_hun_black_arrow_reset : public AuraScript
+{
+    PrepareAuraScript(spell_hun_black_arrow_reset);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasSpell(63672))
+            return;
+
+        if (Player* caster = GetTarget()->ToPlayer())
+            caster->RemoveSpellCooldown(63672, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_black_arrow_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_chimaera_trigger : public SpellScript
+{
+    PrepareSpellScript(spell_hun_chimaera_trigger);
+
+    void HandleBuff()
+    {
+        GetCaster()->CastSpell(GetExplTargetUnit(), 80136, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_chimaera_trigger::HandleBuff);
+    }
+};
+
+class spell_hun_steady_shot_concussive : public SpellScript
+{
+    PrepareSpellScript(spell_hun_steady_shot_concussive);
+
+    void HandleBuff()
+    {
+        if (GetExplTargetUnit()->HasAura(5116))
+        {
+            Aura* concussive = GetExplTargetUnit()->GetAura(5116);
+            concussive->SetDuration(concussive->GetDuration() + 3000);
+        }
+    }
+
+    void Register() override
+    {
+        OnHit += SpellHitFn(spell_hun_steady_shot_concussive::HandleBuff);
+    }
+};
+
+class spell_hun_explosive_shot : public AuraScript
+{
+    PrepareAuraScript(spell_hun_explosive_shot);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* target = GetTarget();
+        GetCaster()->CastSpell(target, 80137, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_explosive_shot::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_kill_command : public SpellScript
+{
+    PrepareSpellScript(spell_hun_kill_command);
+
+    void HandleBuff()
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        pet->CastSpell(GetExplTargetUnit(), 80142, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_kill_command::HandleBuff);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -1318,7 +1595,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_generic_scaling);
     RegisterSpellScript(spell_hun_taming_the_beast);
     RegisterSpellScript(spell_hun_glyph_of_arcane_shot);
-    RegisterSpellScript(spell_hun_aspect_of_the_beast);
+    //RegisterSpellScript(spell_hun_aspect_of_the_beast);
     RegisterSpellScript(spell_hun_ascpect_of_the_viper);
     RegisterSpellScript(spell_hun_chimera_shot);
     RegisterSpellScript(spell_hun_disengage);
@@ -1339,4 +1616,15 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_lock_and_load);
     RegisterSpellScript(spell_hun_intimidation);
     RegisterSpellScript(spell_hun_bestial_wrath);
+    RegisterSpellScript(spell_hun_predators_thirst);
+    RegisterSpellScript(spell_hun_aspect_predator);
+    RegisterSpellScript(spell_hun_aspect_endurance);
+    RegisterSpellScript(spell_hun_aspect_path);
+    RegisterSpellScript(spell_hun_aspect_cheetah);
+    RegisterSpellScript(spell_hun_bestial_apply);
+    RegisterSpellScript(spell_hun_black_arrow_reset);
+    RegisterSpellScript(spell_hun_chimaera_trigger);
+    RegisterSpellScript(spell_hun_steady_shot_concussive);
+    RegisterSpellScript(spell_hun_explosive_shot);
+    RegisterSpellScript(spell_hun_kill_command);
 }
