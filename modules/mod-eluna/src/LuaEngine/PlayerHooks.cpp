@@ -215,6 +215,7 @@ void Eluna::OnActivateRune(Player* pPlayer, std::string message, uint32 index)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+
 void Eluna::OnDisableRune(Player* pPlayer, std::string message, uint32 index)
 {
     START_HOOK(PLAYER_EVENT_CALLBACK_REMOVE_RUNE);
@@ -247,6 +248,54 @@ void Eluna::OnRefundRune(Player* pPlayer, std::string message, uint32 spellId)
     Push(pPlayer);
     Push(message);
     Push(spellId);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
+void Eluna::SendMythicUpdateDeath(Player* pPlayer, uint32 totalDeath)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    Push(totalDeath);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::SendMythicUpdateTimer(Player* pPlayer, uint32 timer)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    Push(timer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::SendMythicUpdateChestDecrapeted(Player* pPlayer)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    Push(creatureId);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    Push(enemyForces);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void Eluna::SendShowMythicUI(Player* pPlayer, bool show)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    Push(show);
     CallAllFunctions(PlayerEventBindings, key);
 }
 

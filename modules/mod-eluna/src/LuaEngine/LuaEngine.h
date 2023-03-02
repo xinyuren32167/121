@@ -442,16 +442,28 @@ public:
     void OnPacketReceiveOne(Player* player, WorldPacket& packet, bool& result);
 
     /* Player */
+
+
+    // Challenge Dungeon
+    void SendMythicUpdateDeath(Player* pPlayer, uint32 totalDeath);
+    void SendMythicUpdateTimer(Player* pPlayer, uint32 timer);
+    void SendMythicUpdateChestDecrapeted(Player* pPlayer);
+    void SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId);
+    void SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces);
+    void SendShowMythicUI(Player* pPlayer, bool show);
+    // Runes
+
+    void RefreshSlotsRune(Player* pPlayer);
+    void OnRuneMessage(Player* pPlayer, std::string message);
+    void OnActivateSpec(Player* pPlayer, std::string message, bool activated, uint32 specId);
+    void OnActivateRune(Player* pPlayer, std::string message, uint32 index);
+
     void OnPlayerEnterCombat(Player* pPlayer, Unit* pEnemy);
     void OnPlayerLeaveCombat(Player* pPlayer);
     void OnPVPKill(Player* pKiller, Player* pKilled);
     void OnCreatureKill(Player* pKiller, Creature* pKilled);
     void OnPlayerKilledByCreature(Creature* pKiller, Player* pKilled);
     void OnLevelChanged(Player* pPlayer, uint8 oldLevel);
-    void RefreshSlotsRune(Player* pPlayer);
-    void OnRuneMessage(Player* pPlayer, std::string message);
-    void OnActivateSpec(Player* pPlayer, std::string message, bool activated, uint32 specId);
-    void OnActivateRune(Player* pPlayer, std::string message, uint32 index);
     void OnDisableRune(Player* pPlayer, std::string message, uint32 spellId);
     void OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId);
     void OnRefundRune(Player* pPlayer, std::string message, uint32 spellId);

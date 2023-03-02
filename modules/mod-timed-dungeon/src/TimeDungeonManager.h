@@ -6,7 +6,7 @@
 struct TimedDungeon {
     uint32 mapId;
     uint32 timeToComplete;
-    uint32 totalCreatureToKill;
+    uint32 totalEnemyForces;
     bool enable;
 };
 
@@ -44,11 +44,13 @@ struct TimedRun {
     uint32 level;
     uint32 timeToComplete;
     bool started;
+    bool chestDecrapeted;
+    bool done;
     uint32 elapsedTime;
     std::vector<TimedDungeonBoss> bosses;
     float enemyForces;
     uint32 deaths;
-    std::vector<Affixe> affixes;
+    uint32 startTimer;
 };
 
 
@@ -66,12 +68,20 @@ public:
     static void InitializeRewardsDungeons();
     static void InitializeTimedDungeonBosses();
     static void InitializeWeeklyAffixes();
+    static void Update(Map* map, uint32 diff);
     static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);
+    static void OnKillBoss(Player* player, Creature* killed);
+    static void OnKillMinion(Player* player, Creature* killed);
+    static void OnPlayerKilledByCreature(Creature* killer, Player* killed);
+    static void CompleteMythicDungeon(TimedRun run, Player* player);
+    static void OnPlayerRelease(Player* player);
+    static bool MeetTheConditionsToCompleteTheDungeon(TimedRun run);
     // Fired when you loggin or when you enter on a mythic dungeon or and when you start a dungeon.
     static std::vector<std::string> SendStatsMythicRun(Player* player, TimedRun run);
     static MythicKey GetCurrentMythicKey(Player* player);
     static std::vector<std::string> GetWeeklyAffixes(Player* player);
+    static std::vector<std::string> GetDungeonBosses(Player* player);
     static std::vector<std::string> GetDungeonsEnabled(Player* player);
     // static voAu nivid EndMythicDungeon(Player* player);
 };

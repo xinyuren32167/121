@@ -1,5 +1,9 @@
 #include "TimeDungeonManager.h"
 #include "Group.h"
+#include "Config.h"
+#include "ElunaIncludes.h"
+#include "LuaEngine.h"
+#include "boost/iterator/counting_iterator.hpp"
 
 std::map<uint32, TimedDungeon> TimedDungeonManager::m_TimedDungeon = {};
 std::map<uint32, std::vector<TimedRewardDungeon>> TimedDungeonManager::m_TimedRewardDungeon = {};
@@ -45,6 +49,50 @@ void TimedDungeonManager::InitializeWeeklyAffixes()
         Affixe affixe = { spellId, level };
         m_WeeklyAffixes.push_back(affixe);
     } while (result->NextRow());
+}
+
+void TimedDungeonManager::Update(Map* map, uint32 diff)
+{
+    auto it = m_TimedRun.find(map->GetInstanceId());
+
+    if (it == m_TimedRun.end())
+        return;
+
+    if (it->second.done)
+        return;
+
+    if (!it->second.started) {
+        Map::PlayerList const& playerList = map->GetPlayers();
+
+        if (playerList.IsEmpty())
+            return;
+
+        it->second.startTimer -= diff;
+
+        if (it->second.startTimer <= 0) {
+            it->second.startTimer = 0;
+            for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
+                if (Player* player = playerIteration->GetSource()) {
+                    player->ClearUnitState(UNIT_STATE_ROOT);
+                    player->SetControlled(false, UNIT_STATE_ROOT);
+                }
+            }
+            it->second.started = true;
+        }
+    }
+    else {
+        it->second.elapsedTime += diff;
+        TimedDungeon dungeon = m_TimedDungeon[map->GetId()];
+        if (it->second.elapsedTime >= dungeon.timeToComplete && !it->second.chestDecrapeted && !it->second.done) {
+            it->second.chestDecrapeted = true;
+            Map::PlayerList const& playerList = map->GetPlayers();
+
+            if (!playerList.IsEmpty())
+                for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+                    if (Player* player = playerIteration->GetSource())
+                        sEluna->SendMythicUpdateChestDecrapeted(player);
+        }
+    }
 }
 
 void TimedDungeonManager::InitializeTimedDungeons()
@@ -143,7 +191,6 @@ void TimedDungeonManager::HandleChangeDungeonDifficulty(Player* _player, uint8 m
         _player->SendDungeonDifficulty(false, DUNGEON_DIFFICULTY_EPIC);
         Player::ResetInstances(_player->GetGUID(), INSTANCE_RESET_CHANGE_DIFFICULTY, false);
     }
-
 }
 
 std::vector<std::string> TimedDungeonManager::GetDungeonsEnabled(Player* player)
@@ -156,7 +203,7 @@ std::vector<std::string> TimedDungeonManager::GetDungeonsEnabled(Player* player)
             std::string fmt =
                 std::to_string(dungeon.second.mapId)
                 + ";" + std::to_string(dungeon.second.timeToComplete)
-                + ";" + std::to_string(dungeon.second.totalCreatureToKill);
+                + ";" + std::to_string(dungeon.second.totalEnemyForces);
             elements.push_back(fmt);
         }
     }
@@ -177,8 +224,25 @@ std::vector<std::string> TimedDungeonManager::GetWeeklyAffixes(Player* player)
     return elements;
 }
 
+std::vector<std::string> TimedDungeonManager::GetDungeonBosses(Player* player)
+{
+    std::vector<std::string> elements = {};
+    uint32 mapId = player->GetMapId();
+
+    std::vector<DungeonBoss> DungeonBosses = m_TimedDungeonBosses[mapId];
+
+    for (auto const& timed : DungeonBosses) {
+
+    }
+
+    return elements;
+}
+
 void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint32 level)
 {
+    // Check if the player highest key.
+    // Lower the key
+
     Map* map = player->GetMap();
 
     if (!map)
@@ -202,11 +266,7 @@ void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint3
 
     uint32 totalDeath = 0;
 
-    for (auto const& affixe : m_WeeklyAffixes)
-        if (affixe.level <= level)
-            affixes.push_back(affixe);
-
-    TimedRun run = { keyId, level, dungeon.timeToComplete, false, 0, m_TimedDungeonBoss, 0, totalDeath, affixes };
+    TimedRun run = { keyId, level, dungeon.timeToComplete, false, false, false, 0, m_TimedDungeonBoss, 0.0f, totalDeath, 10 * IN_MILLISECONDS };
     m_TimedRun[map->GetInstanceId()] = run;
 
     if (group) {
@@ -224,13 +284,206 @@ void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint3
             Player* member = ObjectAccessor::FindPlayer(target.guid);
             if (member) {
                 SendStatsMythicRun(member, run);
+                member->ClearUnitState(UNIT_STATE_ROOT);
+                member->SetControlled(true, UNIT_STATE_ROOT);
+                AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
+                if (at) {
+                    member->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
+                }
             }
         }
-
     }
     else {
         SendStatsMythicRun(player, run);
+        player->ClearUnitState(UNIT_STATE_ROOT);
+        player->SetControlled(true, UNIT_STATE_ROOT);
+        AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
+
+        if (at) {
+            player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
+        }
     }
+}
+
+void TimedDungeonManager::OnKillBoss(Player* player, Creature* killed)
+{
+    Map* map = player->GetMap();
+
+    auto it = m_TimedRun.find(map->GetInstanceId());
+
+    if (it == m_TimedRun.end())
+        return;
+
+    if (!it->second.started)
+        return;
+
+    if (it->second.done)
+        return;
+
+    if (!killed->IsDungeonBoss())
+        return;
+
+    for (auto ij = it->second.bosses.begin(); ij != it->second.bosses.end(); ++ij) {
+        if (ij->creatureId == killed->GetEntry()) {
+            ij->alive = false;
+            if (Group* group = player->GetGroup()) {
+                auto const& allyList = group->GetMemberSlots();
+
+                for (auto const& target : allyList)
+                {
+                    Player* member = ObjectAccessor::FindPlayer(target.guid);
+                    if (member) {
+                        sEluna->SendMythicUpdateBossKill(member, killed->GetEntry());
+                    }
+                }
+            }
+            else
+                sEluna->SendMythicUpdateBossKill(player, killed->GetEntry());
+        }
+    }
+
+    if (MeetTheConditionsToCompleteTheDungeon(it->second)) {
+        CompleteMythicDungeon(it->second, player);
+    }
+}
+
+void TimedDungeonManager::OnKillMinion(Player* player, Creature* killed)
+{
+    Map* map = player->GetMap();
+
+    auto it = m_TimedRun.find(map->GetInstanceId());
+
+    if (it == m_TimedRun.end())
+        return;
+
+    if (it->second.done)
+        return;
+
+    if (!it->second.started)
+        return;
+
+    if (killed->IsDungeonBoss())
+        return;
+
+    TimedDungeon dungeon = m_TimedDungeon[map->GetId()];
+
+    uint32 point = 1;
+
+    if (killed->isElite())
+        point = 2;
+
+    float currentEnemyForces = it->second.enemyForces;
+    uint32 totalEnemyForces = dungeon.totalEnemyForces;
+
+    it->second.enemyForces += (point / totalEnemyForces) * 100;
+    it->second.enemyForces = std::max(it->second.enemyForces, 100.0f);
+
+    if (Group* group = player->GetGroup()) {
+        auto const& allyList = group->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* member = ObjectAccessor::FindPlayer(target.guid);
+            if (member) {
+                sEluna->SendMythicUpdateEnemyForces(member, it->second.enemyForces);
+            }
+        }
+    }
+    else
+        sEluna->SendMythicUpdateEnemyForces(player, it->second.enemyForces);
+
+    if (MeetTheConditionsToCompleteTheDungeon(it->second)) {
+        CompleteMythicDungeon(it->second, player);
+    }
+}
+
+void TimedDungeonManager::OnPlayerKilledByCreature(Creature* killer, Player* killed)
+{
+    Map* map = killed->GetMap();
+
+    auto it = m_TimedRun.find(map->GetInstanceId());
+
+    if (it == m_TimedRun.end())
+        return;
+
+    if (!it->second.started)
+        return;
+
+    it->second.deaths += 1;
+    int32 totalDeath = it->second.deaths;
+    int32 timeToReduce = std::max(((5 * IN_MILLISECONDS) * totalDeath), (30 * IN_MILLISECONDS));
+    it->second.elapsedTime += timeToReduce;
+
+    if (Group* group = killed->GetGroup()) {
+        auto const& allyList = group->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* member = ObjectAccessor::FindPlayer(target.guid);
+            if (member) {
+                sEluna->SendMythicUpdateDeath(member, totalDeath);
+                sEluna->SendMythicUpdateTimer(member, timeToReduce);
+            }
+        }
+    }
+    else {
+        sEluna->SendMythicUpdateDeath(killed, totalDeath);
+        sEluna->SendMythicUpdateTimer(killed, timeToReduce);
+    }
+}
+
+void TimedDungeonManager::CompleteMythicDungeon(TimedRun run, Player* player)
+{
+    run.done = true;
+    if (Group* group = player->GetGroup()) {
+        auto const& allyList = group->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* member = ObjectAccessor::FindPlayer(target.guid);
+            if (member) {
+
+            }
+        }
+    }
+    else {
+
+    }
+
+    // Save the result in the database;
+    // Change the key and increase it (check by how much they completed the key) save to the database or give a new key level -1;
+    // Give rewards to everyone
+}
+
+void TimedDungeonManager::OnPlayerRelease(Player* player)
+{
+    Map* map = player->GetMap();
+
+    auto it = m_TimedRun.find(map->GetInstanceId());
+
+    if (it == m_TimedRun.end())
+        return;
+
+    if (!it->second.started)
+        return;
+
+    AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
+
+    if (at) {
+        player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
+    }
+}
+
+
+bool TimedDungeonManager::MeetTheConditionsToCompleteTheDungeon(TimedRun run)
+{
+    bool allBossesAreDead = true;
+
+    for (auto ij = run.bosses.begin(); ij != run.bosses.end(); ++ij)
+        if (ij->alive)
+            allBossesAreDead = false;
+
+    return allBossesAreDead && run.enemyForces >= 100.0f;
 }
 
 std::vector<std::string> TimedDungeonManager::SendStatsMythicRun(Player* player, TimedRun run)
@@ -247,8 +500,7 @@ std::vector<std::string> TimedDungeonManager::SendStatsMythicRun(Player* player,
 
     std::string bossStatus = "";
     for (auto const& boss : run.bosses) {
-        CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(boss.creatureId);
-        bossStatus += ";" + creatureTemplate->Name + "+" + std::to_string(boss.creatureId) +  "+" + std::to_string(boss.alive);
+        bossStatus += ";" + std::to_string(boss.creatureId) +  "+" + std::to_string(boss.alive);
     }
 
     elements.push_back(bossStatus);

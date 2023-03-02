@@ -168,7 +168,6 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (creature->IsDungeonBoss())
         healthModifier *= 2;
 
-
     if (creature->prevMaxHealth <= 0)
         creature->prevMaxHealth = creature->GetMaxHealth();
 
