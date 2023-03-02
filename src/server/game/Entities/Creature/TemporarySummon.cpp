@@ -255,6 +255,10 @@ void TempSummon::InitSummon()
     {
         if (owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature()->IsAIEnabled)
             owner->ToCreature()->AI()->JustSummoned(this);
+
+        if (owner->GetTypeId() == TYPEID_PLAYER) {
+            owner->ToPlayer()->AddSummonUnit(this->GetGUID().GetCounter());
+        }
     }
 
     // Xinef: Allow to call this hook when npc is summoned by gameobject, in this case pass this as summoner to avoid possible null checks
@@ -293,6 +297,11 @@ void TempSummon::UnSummon(uint32 msTime)
     Unit* owner = GetSummonerUnit();
     if (owner && owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature()->IsAIEnabled)
         owner->ToCreature()->AI()->SummonedCreatureDespawn(this);
+
+    if (owner && owner->GetTypeId() == TYPEID_PLAYER) {
+        owner->ToPlayer()->RemoveSummonedUnit(this->GetGUID().GetCounter());
+    }
+
 
     AddObjectToRemoveList();
 }

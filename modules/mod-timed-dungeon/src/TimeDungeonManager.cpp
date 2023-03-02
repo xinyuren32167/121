@@ -58,7 +58,7 @@ void TimedDungeonManager::Update(Map* map, uint32 diff)
     if (it == m_TimedRun.end())
         return;
 
-    if (it->second.done)
+    if (it->second.done || it->second.chestDecrapeted)
         return;
 
     if (!it->second.started) {
@@ -71,13 +71,14 @@ void TimedDungeonManager::Update(Map* map, uint32 diff)
 
         if (it->second.startTimer <= 0) {
             it->second.startTimer = 0;
+            it->second.started = true;
             for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
                 if (Player* player = playerIteration->GetSource()) {
                     player->ClearUnitState(UNIT_STATE_ROOT);
                     player->SetControlled(false, UNIT_STATE_ROOT);
+                    sEluna->SendStartMythicDungeon(player);
                 }
             }
-            it->second.started = true;
         }
     }
     else {

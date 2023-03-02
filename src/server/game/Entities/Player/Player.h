@@ -1118,12 +1118,20 @@ public:
 
 
     // Specializations
-
     uint32 GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair, BarberShopStyleEntry const* newSkin = nullptr);
 
     PlayerSocial* GetSocial() { return m_social; }
 
+    std::vector<Unit*> summonedUnits = {};
+
     PlayerTaxi m_taxi;
+    void AddSummonUnit(Unit* unit) { summonedUnits.push_back(unit); };
+    void RemoveSummonedUnit(Unit* unit) { summonedUnits.erase(std::remove(summonedUnits.begin(), summonedUnits.end(), unit), summonedUnits.end()); };
+
+    std::vector<Unit*> GetSummonedUnits() {
+        return summonedUnits;
+    };
+
     void InitTaxiNodesForLevel() { m_taxi.InitTaxiNodesForLevel(getRace(), getClass(), getLevel()); }
     bool ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc = nullptr, uint32 spellid = 1);
     bool ActivateTaxiPathTo(uint32 taxi_path_id, uint32 spellid = 1);

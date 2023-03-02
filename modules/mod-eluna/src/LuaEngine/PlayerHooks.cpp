@@ -260,6 +260,13 @@ void Eluna::SendMythicUpdateDeath(Player* pPlayer, uint32 totalDeath)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::SendStartMythicDungeon(Player* pPlayer)
+{
+    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
 void Eluna::SendMythicUpdateTimer(Player* pPlayer, uint32 timer)
 {
     START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);

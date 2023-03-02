@@ -451,6 +451,7 @@ public:
     void SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId);
     void SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces);
     void SendShowMythicUI(Player* pPlayer, bool show);
+    void SendStartMythicDungeon(Player* pPlayer);
     // Runes
 
     void RefreshSlotsRune(Player* pPlayer);
