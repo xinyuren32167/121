@@ -244,6 +244,24 @@ class rune_hunter_poison_injection : public SpellScript
     }
 };
 
+class rune_hunter_dance_with_death : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_dance_with_death);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, GetCaster()), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, GetCaster()));
+        uint32 random = urand(1, 100);
+
+        return random <= criticalChance;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_dance_with_death::CheckProc);
+    }
+};
+
 class rune_hunter_might_of_the_beast : public AuraScript
 {
     PrepareAuraScript(rune_hunter_might_of_the_beast);
@@ -337,6 +355,7 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_sniper_training);
     RegisterSpellScript(rune_hunter_serpent_touch);
     RegisterSpellScript(rune_hunter_poison_injection);
+    RegisterSpellScript(rune_hunter_dance_with_death);
     RegisterSpellScript(rune_hunter_might_of_the_beast);
     RegisterSpellScript(rune_hunter_dragonhawk_focus);
     RegisterSpellScript(rune_hunter_hawk_quickness);
