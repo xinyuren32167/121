@@ -215,6 +215,9 @@ std::vector<std::string> TimedDungeonManager::GetWeeklyAffixes(Player* player)
 {
     std::vector<std::string> elements = {};
 
+
+    player->GetSummonedUnits();
+
     for (auto const& dungeon : m_WeeklyAffixes)
     {
         std::string fmt =

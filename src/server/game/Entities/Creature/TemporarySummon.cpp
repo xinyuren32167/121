@@ -302,7 +302,6 @@ void TempSummon::UnSummon(uint32 msTime)
         owner->ToPlayer()->RemoveSummonedUnit(this);
     }
 
-
     AddObjectToRemoveList();
 }
 
