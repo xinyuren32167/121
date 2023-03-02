@@ -40,10 +40,10 @@
 enum HunterSpells
 {
     // Ours
-    SPELL_HUNTER_WYVERN_STING_DOT                   = 24131,
+    SPELL_HUNTER_WYVERN_STING_DOT                   = 80156,
 
     // Theirs
-    SPELL_HUNTER_ASPECT_OF_THE_BEAST                = 13161,
+    SPELL_HUNTER_ASPECT_OF_THE_BEAST                = 49071,
     SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET            = 61669,
     SPELL_HUNTER_ASPECT_OF_THE_VIPER                = 34074,
     SPELL_HUNTER_ASPECT_OF_THE_VIPER_ENERGIZE       = 34075,
@@ -69,7 +69,8 @@ enum HunterSpells
     SPELL_DRAENEI_GIFT_OF_THE_NAARU                 = 59543,
     SPELL_HUNTER_GLYPH_OF_ARCANE_SHOT               = 61389,
     SPELL_LOCK_AND_LOAD_TRIGGER                     = 56453,
-    SPELL_LOCK_AND_LOAD_MARKER                      = 67544
+    SPELL_LOCK_AND_LOAD_MARKER                      = 67544,
+    SPELL_HUNTER_MONGOOSE_FURY                      = 80144,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -126,7 +127,7 @@ class spell_hun_wyvern_sting : public AuraScript
     void HandleEffectRemove(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (Unit* caster = GetCaster())
-            caster->CastSpell(GetTarget(), sSpellMgr->GetSpellWithRank(SPELL_HUNTER_WYVERN_STING_DOT, GetSpellInfo()->GetRank()), true);
+            caster->CastSpell(GetTarget(), SPELL_HUNTER_WYVERN_STING_DOT, true);
     }
 
     void Register() override
@@ -345,7 +346,7 @@ class spell_hun_aspect_of_the_beast : public AuraScript
 
     void Register() override
     {
-        if (m_scriptSpellId == 13161)
+        if (m_scriptSpellId == 49071)
         {
             AfterEffectApply += AuraEffectApplyFn(spell_hun_aspect_of_the_beast::OnApply, EFFECT_0, SPELL_AURA_UNTRACKABLE, AURA_EFFECT_HANDLE_REAL);
             AfterEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_of_the_beast::OnRemove, EFFECT_0, SPELL_AURA_UNTRACKABLE, AURA_EFFECT_HANDLE_REAL);
@@ -1586,6 +1587,146 @@ class spell_hun_kill_command : public SpellScript
     }
 };
 
+class spell_hun_mongoose_fury : public SpellScript
+{
+    PrepareSpellScript(spell_hun_mongoose_fury);
+
+    void HandleBuff()
+    {
+        Unit* player = GetCaster();
+        Aura* mongooseBuff = player->GetAura(SPELL_HUNTER_MONGOOSE_FURY);
+        SpellValue const* value = GetSpellValue();
+
+        if(!mongooseBuff)
+            player->AddAura(SPELL_HUNTER_MONGOOSE_FURY, player);
+
+        if (mongooseBuff)
+        {
+            int32 maxStack = value->EffectBasePoints[EFFECT_1];
+            LOG_ERROR("error", "{}", maxStack);
+            int32 stackCount = mongooseBuff->GetStackAmount();
+            if (stackCount == maxStack)
+                return;
+            player->SetAuraStack(SPELL_HUNTER_MONGOOSE_FURY, player, stackCount+1);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_mongoose_fury::HandleBuff);
+    }
+};
+
+class spell_hun_wailing_arrow : public SpellScript
+{
+    PrepareSpellScript(spell_hun_wailing_arrow);
+
+    void HandleBuff()
+    {
+        GetCaster()->CastSpell(GetExplTargetUnit(), 80150, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_wailing_arrow::HandleBuff);
+    }
+};
+
+class spell_hun_readiness_trigger : public AuraScript
+{
+    PrepareAuraScript(spell_hun_readiness_trigger);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetTarget()->ToPlayer())
+        {
+            caster->RemoveSpellCooldown(80149, true);
+            caster->AddAura(80152, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_readiness_trigger::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_trueshot : public SpellScript
+{
+    PrepareSpellScript(spell_hun_trueshot);
+
+    void HandleBuff()
+    {
+        GetCaster()->CastSpell(GetExplTargetUnit(), 80150, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_trueshot::HandleBuff);
+    }
+};
+
+class spell_hun_bear_applier : public AuraScript
+{
+    PrepareAuraScript(spell_hun_bear_applier);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+        GetCaster()->AddAura(49071, pet);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        if (!pet)
+            return;
+
+        pet->RemoveAura(49071);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_bear_applier::HandleProc, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER_PCT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_bear_applier::HandleRemove, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER_PCT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_aspect_turtle : public SpellScript
+{
+    PrepareSpellScript(spell_hun_aspect_turtle);
+
+    void HandleBuff()
+    {
+        GetCaster()->CastSpell(GetCaster(), 80158, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_aspect_turtle::HandleBuff);
+    }
+};
+
+class spell_hun_scriptIStoleFromMatth : public SpellScript
+{
+    PrepareSpellScript(spell_hun_scriptIStoleFromMatth);
+
+    void HandlePet()
+    {
+        PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+        uint32 creatureId = petStable->StabledPets[0]->CreatureId;
+        TempSummon* summon = GetCaster()->SummonCreature(creatureId, GetCaster()->GetPosition());
+        summon->AddAura(34902, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_scriptIStoleFromMatth::HandlePet);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -1627,4 +1768,10 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_steady_shot_concussive);
     RegisterSpellScript(spell_hun_explosive_shot);
     RegisterSpellScript(spell_hun_kill_command);
+    RegisterSpellScript(spell_hun_mongoose_fury);
+    RegisterSpellScript(spell_hun_wailing_arrow);
+    RegisterSpellScript(spell_hun_readiness_trigger);
+    RegisterSpellScript(spell_hun_trueshot);
+    RegisterSpellScript(spell_hun_bear_applier);
+    RegisterSpellScript(spell_hun_aspect_turtle);
 }
