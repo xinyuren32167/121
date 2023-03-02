@@ -1,5 +1,6 @@
 #include "PetDefines.h"
 #include "Player.h"
+#include "Pet.h"
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
@@ -11,6 +12,12 @@
 
 enum HunterSpells
 {
+
+    SPELL_HUNTER_ASPECT_OF_THE_BEAST = 13161,
+    SPELL_HUNTER_ASPECT_OF_THE_DRAGONHAWK = 5118,
+    SPELL_HUNTER_ASPECT_OF_THE_HAWK = 27044,
+    SPELL_HUNTER_ASPECT_OF_THE_MONKEY = 13163,
+
     SPELL_HUNTER_KILL_SHOT = 61006,
     SPELL_HUNTER_SERPENT_STING = 49001,
 
@@ -237,6 +244,91 @@ class rune_hunter_poison_injection : public SpellScript
     }
 };
 
+class rune_hunter_might_of_the_beast : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_might_of_the_beast);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_HUNTER_ASPECT_OF_THE_BEAST);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = GetAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet)
+            GetCaster()->AddAura(procSpell, pet);
+        
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            GetCaster()->AddAura(procSpell, unit);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_might_of_the_beast::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_might_of_the_beast::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_dragonhawk_focus : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_dragonhawk_focus);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_HUNTER_ASPECT_OF_THE_DRAGONHAWK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_dragonhawk_focus::CheckProc);
+    }
+};
+
+class rune_hunter_hawk_quickness : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_hawk_quickness);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_HUNTER_ASPECT_OF_THE_HAWK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_hawk_quickness::CheckProc);
+    }
+};
+
+class rune_hunter_monkey_business : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_monkey_business);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_HUNTER_ASPECT_OF_THE_MONKEY);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_monkey_business::CheckProc);
+    }
+};
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -245,4 +337,8 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_sniper_training);
     RegisterSpellScript(rune_hunter_serpent_touch);
     RegisterSpellScript(rune_hunter_poison_injection);
+    RegisterSpellScript(rune_hunter_might_of_the_beast);
+    RegisterSpellScript(rune_hunter_dragonhawk_focus);
+    RegisterSpellScript(rune_hunter_hawk_quickness);
+    RegisterSpellScript(rune_hunter_monkey_business);
 }
