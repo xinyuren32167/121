@@ -257,7 +257,7 @@ void TempSummon::InitSummon()
             owner->ToCreature()->AI()->JustSummoned(this);
 
         if (owner->GetTypeId() == TYPEID_PLAYER) {
-            owner->ToPlayer()->AddSummonUnit(this->GetGUID().GetCounter());
+            owner->ToPlayer()->AddSummonUnit(this);
         }
     }
 
@@ -299,7 +299,7 @@ void TempSummon::UnSummon(uint32 msTime)
         owner->ToCreature()->AI()->SummonedCreatureDespawn(this);
 
     if (owner && owner->GetTypeId() == TYPEID_PLAYER) {
-        owner->ToPlayer()->RemoveSummonedUnit(this->GetGUID().GetCounter());
+        owner->ToPlayer()->RemoveSummonedUnit(this);
     }
 
 
