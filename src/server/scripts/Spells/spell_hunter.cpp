@@ -1688,7 +1688,7 @@ class spell_hun_bear_applier : public AuraScript
 
         if (!pet)
             return;
-
+            
         player->AddAura(49071, pet);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -1801,12 +1801,15 @@ class spell_hun_camouflage : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* player = GetCaster()->ToPlayer();
-        Unit* pet = player->GetPet();
 
-        if (!pet)
-            return;
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
-        player->AddAura(80163, pet);
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            player->AddAura(80175, unit);
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -1818,6 +1821,15 @@ class spell_hun_camouflage : public AuraScript
             return;
 
         pet->RemoveAura(80163);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            unit->RemoveAura(80175);
+        }
     }
 
     void Register() override
@@ -1883,9 +1895,15 @@ class spell_hun_barbed_shot : public SpellScript
         }
     }
 
+    void HandleEnergy(SpellEffIndex effIndex)
+    {
+        GetCaster()->CastSpell(GetCaster(), 80173, TRIGGERED_FULL_MASK);
+    }
+
     void Register() override
     {
         OnCast += SpellCastFn(spell_hun_barbed_shot::HandleBuff);
+        OnEffectHit += SpellEffectFn(spell_hun_barbed_shot::HandleEnergy, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
