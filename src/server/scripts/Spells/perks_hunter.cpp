@@ -18,6 +18,14 @@ enum HunterSpells
     SPELL_HUNTER_ASPECT_OF_THE_HAWK = 27044,
     SPELL_HUNTER_ASPECT_OF_THE_MONKEY = 13163,
 
+    SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
+    SPELL_HUNTER_FREEZING_TRAP = 80139,
+    SPELL_HUNTER_FROST_TRAP = 13809,
+    SPELL_HUNTER_IMMOLATION_TRAP = 49056,
+    SPELL_HUNTER_SNAKE_TRAP = 34600,
+
+    SPELL_HUNTER_DISENGAGE = 781,
+    SPELL_HUNTER_EXHILARATION = 80161,
     SPELL_HUNTER_KILL_SHOT = 61006,
     SPELL_HUNTER_SERPENT_STING = 49001,
 
@@ -30,6 +38,8 @@ enum HunterSpells
     RUNE_HUNTER_SERPENT_TOUCH_DAMAGE = 500074,
 
     RUNE_HUNTER_POISON_INJECTION_DAMAGE = 500094,
+
+    RUNE_HUNTER_REJUVENATING_WIND_HOT = 500258,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -283,7 +293,7 @@ class rune_hunter_might_of_the_beast : public AuraScript
 
         if (pet)
             GetCaster()->AddAura(procSpell, pet);
-        
+
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
         for (auto const& unit : summonedUnits)
@@ -347,6 +357,118 @@ class rune_hunter_monkey_business : public AuraScript
     }
 };
 
+class rune_hunter_ambuscade : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_ambuscade);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_DISENGAGE, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_ambuscade::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_natural_mending : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_natural_mending);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Aura* aura = GetAura();
+        Player* target = GetTarget()->ToPlayer();
+
+        if (!aura || !target)
+            return;
+
+        int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
+
+        if (spellFocus <= 0)
+            return;
+
+        int32 cooldownReduction = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 focusAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount() + spellFocus;
+        int32 focusThreshold = aurEff->GetAmount();
+
+        if (focusAccumulated >= focusThreshold)
+        {
+            target->ModifySpellCooldown(SPELL_HUNTER_EXHILARATION, -cooldownReduction);
+            aura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated - focusThreshold);
+            focusAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+
+            if (focusAccumulated >= focusThreshold)
+            {
+                target->ModifySpellCooldown(SPELL_HUNTER_EXHILARATION, -cooldownReduction);
+                aura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated - focusThreshold);
+            }
+        }
+        else
+            aura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_natural_mending::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_natural_mending::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_rejuvenating_wind : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_rejuvenating_wind);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = GetCaster();
+
+        if (!target)
+            return;
+
+        int32 maxHealth = target->GetMaxHealth();
+        float heal = int32(CalculatePct(maxHealth, aurEff->GetAmount()));
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_HUNTER_REJUVENATING_WIND_HOT)->GetMaxTicks();
+        int32 amount = heal / maxTicks;
+
+        GetCaster()->CastCustomSpell(RUNE_HUNTER_REJUVENATING_WIND_HOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_rejuvenating_wind::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_trap_mastery : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_trap_mastery);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+        {
+            target->ModifySpellCooldown(SPELL_HUNTER_EXPLOSIVE_TRAP, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_HUNTER_FREEZING_TRAP, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_HUNTER_FROST_TRAP, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_HUNTER_IMMOLATION_TRAP, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_HUNTER_SNAKE_TRAP, -aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_trap_mastery::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -360,4 +482,11 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_dragonhawk_focus);
     RegisterSpellScript(rune_hunter_hawk_quickness);
     RegisterSpellScript(rune_hunter_monkey_business);
+    RegisterSpellScript(rune_hunter_ambuscade);
+    RegisterSpellScript(rune_hunter_natural_mending);
+    RegisterSpellScript(rune_hunter_rejuvenating_wind);
+    RegisterSpellScript(rune_hunter_trap_mastery);
+
+
+    
 }

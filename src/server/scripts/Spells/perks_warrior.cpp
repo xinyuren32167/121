@@ -104,7 +104,7 @@ class spell_the_art_of_war : public AuraScript
         if (rageAccumulated >= GetRagePct())
         {
             GetCaster()->CastSpell(GetCaster(), 200093, TRIGGERED_FULL_MASK);
-            aura->GetEffect(EFFECT_1)->SetAmount(GetRagePct() - rageAccumulated);
+            aura->GetEffect(EFFECT_1)->SetAmount(rageAccumulated - GetRagePct());
         }
         else
         {
@@ -1319,7 +1319,6 @@ class spell_violent_outburst : public AuraScript
     }
 };
 
-
 class spell_defenders_aegis : public AuraScript
 {
     PrepareAuraScript(spell_defenders_aegis);
@@ -1761,8 +1760,6 @@ class spell_healing_block : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_healing_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
-
 // Crash ..
 class spell_hurricane : public AuraScript
 {
@@ -1827,7 +1824,6 @@ class spell_hurricane : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_hurricane::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
 
 void AddSC_warrior_perks_scripts()
 {
