@@ -1489,11 +1489,23 @@ class spell_hun_bestial_apply : public SpellScript
 
     void HandleBuff()
     {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
 
-        GetCaster()->AddAura(80132, GetCaster());
+        if (!pet)
+            return;
 
-        GetCaster()->AddAura(80132, pet);
+        player->AddAura(80132, pet);
+        player->AddAura(80132, player);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            player->AddAura(80132, unit);
+        }
     }
 
     void Register() override
@@ -1603,7 +1615,6 @@ class spell_hun_mongoose_fury : public SpellScript
         if (mongooseBuff)
         {
             int32 maxStack = value->EffectBasePoints[EFFECT_1];
-            LOG_ERROR("error", "{}", maxStack);
             int32 stackCount = mongooseBuff->GetStackAmount();
             if (stackCount == maxStack)
                 return;
@@ -1672,19 +1683,42 @@ class spell_hun_bear_applier : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
         if (!pet)
             return;
-        GetCaster()->AddAura(49071, pet);
+
+        player->AddAura(49071, pet);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            player->AddAura(49071, unit);
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
         if (!pet)
             return;
 
         pet->RemoveAura(49071);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            unit->RemoveAura(49071);
+        }
     }
 
     void Register() override
@@ -1706,6 +1740,152 @@ class spell_hun_aspect_turtle : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_hun_aspect_turtle::HandleBuff);
+    }
+};
+
+class spell_hun_survival_fittest : public AuraScript
+{
+    PrepareAuraScript(spell_hun_survival_fittest);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
+        player->AddAura(80162, pet);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            player->AddAura(80162, unit);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
+        pet->RemoveAura(80162);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            unit->RemoveAura(80162);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_survival_fittest::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_survival_fittest::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_camouflage : public AuraScript
+{
+    PrepareAuraScript(spell_hun_camouflage);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
+        player->AddAura(80163, pet);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
+        pet->RemoveAura(80163);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_camouflage::HandleProc, EFFECT_0, SPELL_AURA_MOD_STEALTH, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_camouflage::HandleRemove, EFFECT_0, SPELL_AURA_MOD_STEALTH, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_death_chakram : public SpellScript
+{
+    PrepareSpellScript(spell_hun_death_chakram);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        GetCaster()->CastSpell(GetCaster(), 80168, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_hun_death_chakram::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_hun_cobra_shot : public AuraScript
+{
+    PrepareAuraScript(spell_hun_cobra_shot);
+
+    void HandleCd(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).BasePoints;
+        target->ModifySpellCooldown(80141, amount);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_cobra_shot::HandleCd, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_barbed_shot : public SpellScript
+{
+    PrepareSpellScript(spell_hun_barbed_shot);
+
+    void HandleBuff()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
+        player->AddAura(80174, pet);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+            player->AddAura(80174, unit);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_barbed_shot::HandleBuff);
     }
 };
 
@@ -1774,4 +1954,9 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_trueshot);
     RegisterSpellScript(spell_hun_bear_applier);
     RegisterSpellScript(spell_hun_aspect_turtle);
+    RegisterSpellScript(spell_hun_survival_fittest);
+    RegisterSpellScript(spell_hun_camouflage);
+    RegisterSpellScript(spell_hun_death_chakram);
+    RegisterSpellScript(spell_hun_cobra_shot);
+    RegisterSpellScript(spell_hun_barbed_shot);
 }
