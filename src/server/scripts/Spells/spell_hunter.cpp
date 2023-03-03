@@ -1590,7 +1590,11 @@ class spell_hun_kill_command : public SpellScript
     void HandleBuff()
     {
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
-        pet->CastSpell(GetExplTargetUnit(), 80142, TRIGGERED_FULL_MASK);
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).BasePoints;
+        int32 damage = CalculatePct(ap, ratio);
+
+        pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1907,6 +1911,25 @@ class spell_hun_barbed_shot : public SpellScript
     }
 };
 
+class spell_hun_murder_crows_reset : public AuraScript
+{
+    PrepareAuraScript(spell_hun_murder_crows_reset);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasSpell(80176))
+            return;
+
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(80176, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_murder_crows_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 class spell_hun_scriptIStoleFromMatth : public SpellScript
 {
     PrepareSpellScript(spell_hun_scriptIStoleFromMatth);
@@ -1977,4 +2000,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_death_chakram);
     RegisterSpellScript(spell_hun_cobra_shot);
     RegisterSpellScript(spell_hun_barbed_shot);
+    RegisterSpellScript(spell_hun_murder_crows_reset);
 }
