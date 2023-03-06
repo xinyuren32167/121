@@ -633,13 +633,103 @@ class rune_hunter_killer_instinct : public AuraScript
         actor->CastCustomSpell(RUNE_HUNTER_KILLER_INSTINCT_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        GetCaster()->AddAura(GetAura()->GetId(), pet);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        pet->RemoveAura(GetAura()->GetId());
+    }
+
     void Register()
     {
-        //DoCheckProc += AuraCheckProcFn(rune_hunter_killer_instinct::CheckProc);
+        DoCheckProc += AuraCheckProcFn(rune_hunter_killer_instinct::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_hunter_killer_instinct::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_killer_instinct::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_killer_instinct::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
+class rune_hunter_killer_instinct_aura : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_killer_instinct_aura);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500360))
+            return GetCaster()->GetAura(500360);
+
+        if (GetCaster()->HasAura(500361))
+            return GetCaster()->GetAura(500361);
+
+        if (GetCaster()->HasAura(500362))
+            return GetCaster()->GetAura(500362);
+
+        if (GetCaster()->HasAura(500363))
+            return GetCaster()->GetAura(500363);
+
+        if (GetCaster()->HasAura(500364))
+            return GetCaster()->GetAura(500364);
+
+        if (GetCaster()->HasAura(500365))
+            return GetCaster()->GetAura(500365);
+
+        return nullptr;
+    }
+
+    void HandleBuff()
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        if (!GetRuneAura())
+        {
+            if (pet->HasAura(500360))
+                pet->RemoveAura(500360);
+
+            if (pet->HasAura(500361))
+                pet->RemoveAura(500361);
+
+            if (pet->HasAura(500362))
+                pet->RemoveAura(500362);
+
+            if (pet->HasAura(500363))
+                pet->RemoveAura(500363);
+
+            if (pet->HasAura(500364))
+                pet->RemoveAura(500364);
+
+            if (pet->HasAura(500365))
+                pet->RemoveAura(500365);
+
+            return;
+        }
+            
+        if (pet->HasAura(GetRuneAura()->GetId()))
+            return;
+
+        GetCaster()->AddAura(GetRuneAura()->GetId(), pet);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(rune_hunter_killer_instinct_aura::HandleBuff);
+    }
+};
 
 void AddSC_hunter_perks_scripts()
 {
@@ -663,6 +753,7 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_resilience_of_the_hunter);
     RegisterSpellScript(rune_hunter_ice_skate);
     RegisterSpellScript(rune_hunter_killer_instinct);
+    RegisterSpellScript(rune_hunter_killer_instinct_aura);
 
 
     
