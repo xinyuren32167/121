@@ -24,8 +24,11 @@ enum HunterSpells
     SPELL_HUNTER_IMMOLATION_TRAP = 49056,
     SPELL_HUNTER_SNAKE_TRAP = 34600,
 
+
     SPELL_HUNTER_DISENGAGE = 781,
     SPELL_HUNTER_EXHILARATION = 80161,
+    SPELL_HUNTER_FEIGN_DEATH = 5384,
+
     SPELL_HUNTER_KILL_SHOT = 61006,
     SPELL_HUNTER_SERPENT_STING = 49001,
 
@@ -40,6 +43,10 @@ enum HunterSpells
     RUNE_HUNTER_POISON_INJECTION_DAMAGE = 500094,
 
     RUNE_HUNTER_REJUVENATING_WIND_HOT = 500258,
+
+    RUNE_HUNTER_REST_IN_PEACE_HEAL = 500314,
+
+    RUNE_HUNTER_KILLER_INSTINCT_DAMAGE = 500366,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -469,6 +476,171 @@ class rune_hunter_trap_mastery : public AuraScript
     }
 };
 
+class rune_hunter_third_degree_burn : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_third_degree_burn);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        int32 debuffSpell = GetAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->CastSpell(victim, debuffSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_third_degree_burn::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_third_degree_burn::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_rest_in_peace : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_rest_in_peace);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_FEIGN_DEATH, true);
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* target = GetCaster();
+
+        if (!target)
+            return;
+
+        if (target->GetHealthPct() >= 100)
+            return;
+
+        if (!target->HasAura(SPELL_HUNTER_FEIGN_DEATH))
+            return;
+
+        int32 maxHealth = target->GetMaxHealth();
+        int32 amount = int32(CalculatePct(maxHealth, aurEff->GetAmount()));
+
+        target->CastCustomSpell(RUNE_HUNTER_REST_IN_PEACE_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_rest_in_peace::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_rest_in_peace::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_hunter_resilience_of_the_hunter : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_resilience_of_the_hunter);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500316))
+            return GetCaster()->GetAura(500316);
+
+        if (GetCaster()->HasAura(500317))
+            return GetCaster()->GetAura(500317);
+
+        if (GetCaster()->HasAura(500318))
+            return GetCaster()->GetAura(500318);
+
+        if (GetCaster()->HasAura(500319))
+            return GetCaster()->GetAura(500319);
+
+        if (GetCaster()->HasAura(500320))
+            return GetCaster()->GetAura(500320);
+
+        if (GetCaster()->HasAura(500321))
+            return GetCaster()->GetAura(500321);
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_resilience_of_the_hunter::HandleRemove, EFFECT_0, SPELL_AURA_FEIGN_DEATH, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_ice_skate : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_ice_skate);
+
+    void HandleApplyAura(SpellEffIndex effIndex)
+    {
+        
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_hunter_ice_skate::HandleApplyAura, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
+    }
+};
+
+class rune_hunter_killer_instinct : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_killer_instinct);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        Unit* actor = eventInfo.GetDamageInfo()->GetAttacker();
+        int32 healthThreshold = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        LOG_ERROR("error", "killer instinct");
+        if (!victim)
+            return;
+        LOG_ERROR("error", "killer instinct, Victim name = {}, Actor name = {}", victim->GetName(), actor->GetName());
+       // if (victim->GetHealthPct() > healthThreshold)
+       //     return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+        LOG_ERROR("error", "killer instinct damage dealt = {}", damageDealt);
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+        LOG_ERROR("error", "killer instinct amount = {}", amount);
+        if (!actor)
+            return;
+
+        actor->CastCustomSpell(RUNE_HUNTER_KILLER_INSTINCT_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        //DoCheckProc += AuraCheckProcFn(rune_hunter_killer_instinct::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_killer_instinct::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -486,6 +658,11 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_natural_mending);
     RegisterSpellScript(rune_hunter_rejuvenating_wind);
     RegisterSpellScript(rune_hunter_trap_mastery);
+    RegisterSpellScript(rune_hunter_third_degree_burn);
+    RegisterSpellScript(rune_hunter_rest_in_peace);
+    RegisterSpellScript(rune_hunter_resilience_of_the_hunter);
+    RegisterSpellScript(rune_hunter_ice_skate);
+    RegisterSpellScript(rune_hunter_killer_instinct);
 
 
     
