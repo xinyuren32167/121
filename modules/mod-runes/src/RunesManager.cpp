@@ -72,6 +72,11 @@ void RunesManager::SpellConversion(uint32 runeId, Player* player, bool apply)
 
 }
 
+void RunesManager::SendPlayerMessage(Player* player, std::string msg)
+{
+    player->GetSession()->SendAreaTriggerMessage(msg.c_str());
+}
+
 void RunesManager::LoadSpellsConversion()
 {
 
@@ -474,7 +479,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
         return;
 
     if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING)) {
-        sEluna->OnRuneMessage(player, "You can change only your rune inside resting area.");
+        SendPlayerMessage(player, "You can change only your rune inside resting area.");
         return;
     }
 
@@ -484,19 +489,19 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
         rune = GetRuneBySpellId(runeId);
 
     if (!rune) {
-        sEluna->OnRuneMessage(player, "You don't have this rune.");
+        SendPlayerMessage(player, "You don't have this rune.");
         return;
     }
 
     if((rune.allowableClass & player->getClassMask()) == 0)
     {
-        sEluna->OnRuneMessage(player, "You can't activate this rune.");
+        SendPlayerMessage(player, "You can't activate this rune.");
         return;
     }
 
     if (RuneAlreadyActivated(player, runeId))
     {
-        sEluna->OnRuneMessage(player, "This rune is already activated.");
+        SendPlayerMessage(player, "This rune is already activated.");
         return;
     }
 
@@ -504,7 +509,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 
     if (GetCountActivatedRune(player) >= progression->second.unlockedSlotRunes)
     {
-        sEluna->OnRuneMessage(player, "You have reach the maximum rune.");
+        SendPlayerMessage(player, "You have reach the maximum rune.");
         return;
     }
 
@@ -513,7 +518,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
 
     if (tooMuchStack)
     {
-        sEluna->OnRuneMessage(player, "You can't activate more of this rune.");
+        SendPlayerMessage(player, "You can't activate more of this rune.");
         return;
     }
 
@@ -553,7 +558,7 @@ void RunesManager::DisableRune(Player* player, uint64 runeId)
         return;
 
     if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING)) {
-        sEluna->OnRuneMessage(player, "You can change only your rune inside resting area.");
+        SendPlayerMessage(player, "You can change only your rune inside resting area.");
         return;
     }
 
@@ -564,13 +569,13 @@ void RunesManager::DisableRune(Player* player, uint64 runeId)
 
     if (!rune)
     {
-        sEluna->OnRuneMessage(player, "You don't have this rune.");
+        SendPlayerMessage(player, "You don't have this rune.");
         return;
     }
 
     if (!RuneAlreadyActivated(player, runeId))
     {
-        sEluna->OnRuneMessage(player, "This rune is not activated.");
+        SendPlayerMessage(player, "This rune is not activated.");
         return;
     }
 
@@ -582,7 +587,7 @@ void RunesManager::RefundRune(Player* player, uint64 runeId)
     Rune rune = GetRuneById(player, runeId);
 
     if (!rune) {
-        sEluna->OnRuneMessage(player, "You don't have this rune.");
+        SendPlayerMessage(player, "You don't have this rune.");
         return;
     }
 
@@ -595,12 +600,12 @@ void RunesManager::UpgradeRune(Player* player, uint64 runeId)
     Rune rune = GetRuneById(player, runeId);
 
     if (!rune) {
-        sEluna->OnRuneMessage(player, "You don't have this rune.");
+        SendPlayerMessage(player, "You don't have this rune.");
         return;
     }
 
     if (!HasEnoughToUpgrade(player, rune.spellId)) {
-        sEluna->OnRuneMessage(player, "You don't have enough of this similar rune to upgrade.");
+        SendPlayerMessage(player, "You don't have enough of this similar rune to upgrade.");
         return;
     }
 }

@@ -2052,6 +2052,7 @@ public:
         void RelocateTransportOffset(SpellEffIndex /*effIndex*/)
         {
             WorldLocation const* dest = GetHitDest();
+            GetCaster()->CastSpell(dest->GetPositionX(), dest->GetPositionY(), dest->GetPositionZ(), 10000, true);
             Unit* target = GetHitUnit();
             if (!dest || !target || !target->GetTransport())
                 return;

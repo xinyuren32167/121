@@ -208,6 +208,7 @@ void TempSummon::InitStats(uint32 duration)
     m_timer = duration;
     m_lifetime = duration;
 
+
     if (m_type == TEMPSUMMON_MANUAL_DESPAWN)
         m_type = (duration == 0) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
 
@@ -246,6 +247,7 @@ void TempSummon::InitStats(uint32 duration)
         SetFaction(m_Properties->Faction);
     else if (IsVehicle() && owner) // properties should be vehicle
         SetFaction(owner->GetFaction());
+
 }
 
 void TempSummon::InitSummon()

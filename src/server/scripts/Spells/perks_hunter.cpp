@@ -587,11 +587,43 @@ class rune_hunter_ice_skate : public SpellScript
 {
     PrepareSpellScript(rune_hunter_ice_skate);
 
-    void HandleApplyAura() {
+    Aura* GetRuneAura()
+    {
+        if (GetOriginalCaster()->HasAura(500328))
+            return GetOriginalCaster()->GetAura(500328);
+
+        if (GetOriginalCaster()->HasAura(500329))
+            return GetOriginalCaster()->GetAura(500329);
+
+        if (GetOriginalCaster()->HasAura(500330))
+            return GetOriginalCaster()->GetAura(500330);
+
+        if (GetOriginalCaster()->HasAura(500331))
+            return GetOriginalCaster()->GetAura(500331);
+
+        if (GetOriginalCaster()->HasAura(500332))
+            return GetOriginalCaster()->GetAura(500332);
+
+        if (GetOriginalCaster()->HasAura(500333))
+            return GetOriginalCaster()->GetAura(500333);
+
+        return nullptr;
+    }
+
+    void HandleApplyAura()
+    {
+        if (!GetRuneAura())
+            return;
 
         Unit* unit = GetExplTargetUnit();
+
+        if (!unit)
+            return;
+
         Position dest = unit->GetPosition();
-        GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), 500334, true);
+        int32 buffAreaAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), buffAreaAura, true);
     }
 
     void Register() override
@@ -600,138 +632,65 @@ class rune_hunter_ice_skate : public SpellScript
     }
 };
 
-class rune_hunter_killer_instinct : public AuraScript
+class rune_hunter_killer_instinct : public SpellScript
 {
-    PrepareAuraScript(rune_hunter_killer_instinct);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetDamageInfo();
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
-        Unit* actor = eventInfo.GetDamageInfo()->GetAttacker();
-        int32 healthThreshold = GetAura()->GetEffect(EFFECT_1)->GetAmount();
-        LOG_ERROR("error", "killer instinct");
-        if (!victim)
-            return;
-        LOG_ERROR("error", "killer instinct, Victim name = {}, Actor name = {}", victim->GetName(), actor->GetName());
-       // if (victim->GetHealthPct() > healthThreshold)
-       //     return;
-
-        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
-
-        if (damageDealt <= 0)
-            return;
-        LOG_ERROR("error", "killer instinct damage dealt = {}", damageDealt);
-        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
-        int32 amount = std::max<int32>(0, damage);
-        LOG_ERROR("error", "killer instinct amount = {}", amount);
-        if (!actor)
-            return;
-
-        actor->CastCustomSpell(RUNE_HUNTER_KILLER_INSTINCT_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
-    }
-
-    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet();
-
-        if (!pet)
-            return;
-
-        GetCaster()->AddAura(GetAura()->GetId(), pet);
-    }
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet();
-
-        if (!pet)
-            return;
-
-        pet->RemoveAura(GetAura()->GetId());
-    }
-
-    void Register()
-    {
-        DoCheckProc += AuraCheckProcFn(rune_hunter_killer_instinct::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_hunter_killer_instinct::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        OnEffectApply += AuraEffectApplyFn(rune_hunter_killer_instinct::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_killer_instinct::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
-class rune_hunter_killer_instinct_aura : public SpellScript
-{
-    PrepareSpellScript(rune_hunter_killer_instinct_aura);
+    PrepareSpellScript(rune_hunter_killer_instinct);
 
     Aura* GetRuneAura()
     {
-        if (GetCaster()->HasAura(500360))
-            return GetCaster()->GetAura(500360);
 
-        if (GetCaster()->HasAura(500361))
-            return GetCaster()->GetAura(500361);
+        Unit* owner = GetCaster()->GetOwner();
 
-        if (GetCaster()->HasAura(500362))
-            return GetCaster()->GetAura(500362);
+        if (owner->HasAura(500360))
+            return owner->GetAura(500360);
 
-        if (GetCaster()->HasAura(500363))
-            return GetCaster()->GetAura(500363);
+        if (owner->HasAura(500361))
+            return owner->GetAura(500361);
 
-        if (GetCaster()->HasAura(500364))
-            return GetCaster()->GetAura(500364);
+        if (owner->HasAura(500362))
+            return owner->GetAura(500362);
 
-        if (GetCaster()->HasAura(500365))
-            return GetCaster()->GetAura(500365);
+        if (owner->HasAura(500363))
+            return owner->GetAura(500363);
+
+        if (owner->HasAura(500364))
+            return owner->GetAura(500364);
+
+        if (owner->HasAura(500365))
+            return owner->GetAura(500365);
 
         return nullptr;
     }
 
-    void HandleBuff()
+
+    void HandleDummy(SpellEffIndex effIndex)
     {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        Aura* rune = GetRuneAura();
 
-        if (!pet)
+        if (!rune)
             return;
 
-        if (!GetRuneAura())
-        {
-            if (pet->HasAura(500360))
-                pet->RemoveAura(500360);
 
-            if (pet->HasAura(500361))
-                pet->RemoveAura(500361);
+        Unit* victim = GetHitUnit();
+        int32 pct = rune->GetEffect(EFFECT_0)->GetAmount();
+        int32 healthThreshold = rune->GetEffect(EFFECT_1)->GetAmount();
 
-            if (pet->HasAura(500362))
-                pet->RemoveAura(500362);
-
-            if (pet->HasAura(500363))
-                pet->RemoveAura(500363);
-
-            if (pet->HasAura(500364))
-                pet->RemoveAura(500364);
-
-            if (pet->HasAura(500365))
-                pet->RemoveAura(500365);
-
+        if (!victim->IsAlive())
             return;
+
+        if (victim->GetHealthPct() <= healthThreshold) {
+            int32 damage = GetEffectValue();
+            int32 finalDamage = CalculatePct(damage, pct);
+            GetCaster()->CastCustomSpell(RUNE_HUNTER_KILLER_INSTINCT_DAMAGE, SPELLVALUE_BASE_POINT0, finalDamage, victim, TRIGGERED_IGNORE_AURA_SCALING);
         }
-            
-        if (pet->HasAura(GetRuneAura()->GetId()))
-            return;
-
-        GetCaster()->AddAura(GetRuneAura()->GetId(), pet);
     }
 
     void Register() override
     {
-        BeforeCast += SpellCastFn(rune_hunter_killer_instinct_aura::HandleBuff);
+        OnEffectLaunchTarget += SpellEffectFn(rune_hunter_killer_instinct::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
+
 
 void AddSC_hunter_perks_scripts()
 {
@@ -754,7 +713,7 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_rest_in_peace);
     RegisterSpellScript(rune_hunter_resilience_of_the_hunter);
     RegisterSpellScript(rune_hunter_ice_skate);
-   // RegisterSpellScript(rune_hunter_killer_instinct);
+    RegisterSpellScript(rune_hunter_killer_instinct);
    // RegisterSpellScript(rune_hunter_killer_instinct_aura);
 
 

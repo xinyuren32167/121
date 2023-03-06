@@ -116,4 +116,5 @@ public:
     static void RemoveRuneFromSlots(Player* player, Rune rune);
     static bool HasEnoughToUpgrade(Player* player, uint32 spellId);
     static void SpellConversion(uint32 runeId, Player* player, bool apply);
+    static void SendPlayerMessage(Player* player, std::string msg);
 };

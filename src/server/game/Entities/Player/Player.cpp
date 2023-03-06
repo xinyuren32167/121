@@ -11477,6 +11477,7 @@ void Player::SendInstanceResetWarning(uint32 mapid, Difficulty difficulty, uint3
         data << uint8(bind && bind->perm);                  // is locked
         data << uint8(bind && bind->extended);              // is extended, ignored if prev field is 0
     }
+    LOG_ERROR("time", "RAID_INSTANCE_WELCOME {}", time);
     GetSession()->SendPacket(&data);
 }
 
