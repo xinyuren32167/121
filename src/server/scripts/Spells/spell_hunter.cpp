@@ -1691,12 +1691,8 @@ class spell_hun_bear_applier : public AuraScript
 
         if (!pet)
             return;
-<<<<<<< Updated upstream
             
         player->AddAura(49071, pet);
-=======
->>>>>>> Stashed changes
-
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
         for (auto const& unit : summonedUnits)
