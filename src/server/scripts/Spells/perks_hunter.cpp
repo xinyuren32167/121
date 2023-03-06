@@ -587,11 +587,43 @@ class rune_hunter_ice_skate : public SpellScript
 {
     PrepareSpellScript(rune_hunter_ice_skate);
 
-    void HandleApplyAura() {
+    Aura* GetRuneAura()
+    {
+        if (GetOriginalCaster()->HasAura(500328))
+            return GetOriginalCaster()->GetAura(500328);
+
+        if (GetOriginalCaster()->HasAura(500329))
+            return GetOriginalCaster()->GetAura(500329);
+
+        if (GetOriginalCaster()->HasAura(500330))
+            return GetOriginalCaster()->GetAura(500330);
+
+        if (GetOriginalCaster()->HasAura(500331))
+            return GetOriginalCaster()->GetAura(500331);
+
+        if (GetOriginalCaster()->HasAura(500332))
+            return GetOriginalCaster()->GetAura(500332);
+
+        if (GetOriginalCaster()->HasAura(500333))
+            return GetOriginalCaster()->GetAura(500333);
+
+        return nullptr;
+    }
+
+    void HandleApplyAura()
+    {
+        if (!GetRuneAura())
+            return;
 
         Unit* unit = GetExplTargetUnit();
+
+        if (!unit)
+            return;
+
         Position dest = unit->GetPosition();
-        GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), 500334, true);
+        int32 buffAreaAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), buffAreaAura, true);
     }
 
     void Register() override
