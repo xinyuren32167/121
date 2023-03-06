@@ -587,14 +587,16 @@ class rune_hunter_ice_skate : public SpellScript
 {
     PrepareSpellScript(rune_hunter_ice_skate);
 
-    void HandleApplyAura(SpellEffIndex effIndex)
-    {
-        
+    void HandleApplyAura() {
+
+        Unit* unit = GetExplTargetUnit();
+        Position dest = unit->GetPosition();
+        GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), 500334, true);
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(rune_hunter_ice_skate::HandleApplyAura, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
+        OnCast += SpellCastFn(rune_hunter_ice_skate::HandleApplyAura);
     }
 };
 

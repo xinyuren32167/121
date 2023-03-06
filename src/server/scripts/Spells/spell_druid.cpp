@@ -773,6 +773,8 @@ class spell_dru_rip : public AuraScript
 
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
     {
+
+
         canBeRecalculated = false;
 
         if (Unit* caster = GetCaster())
