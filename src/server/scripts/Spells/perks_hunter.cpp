@@ -752,8 +752,8 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_rest_in_peace);
     RegisterSpellScript(rune_hunter_resilience_of_the_hunter);
     RegisterSpellScript(rune_hunter_ice_skate);
-    RegisterSpellScript(rune_hunter_killer_instinct);
-    RegisterSpellScript(rune_hunter_killer_instinct_aura);
+   // RegisterSpellScript(rune_hunter_killer_instinct);
+   // RegisterSpellScript(rune_hunter_killer_instinct_aura);
 
 
     
