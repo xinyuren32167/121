@@ -1944,6 +1944,46 @@ class spell_hun_murder_crows_reset : public SpellScript
     }
 };
 
+class spell_hun_bloodshed : public SpellScript
+{
+    PrepareSpellScript(spell_hun_bloodshed);
+
+    void HandleBuff()
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).BasePoints;
+        int32 damage = CalculatePct(ap, ratio);
+
+        pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_bloodshed::HandleBuff);
+    }
+};
+
+class spell_hun_lone_wolf : public AuraScript
+{
+    PrepareAuraScript(spell_hun_lone_wolf);
+
+    void HandleProc(AuraEffect* aurEff)
+    {
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (pet)
+            return;
+
+        GetCaster()->AddAura(80182 ,GetCaster());
+    }
+
+    void Register() override
+    {
+        OnEffectUpdatePeriodic += AuraEffectUpdatePeriodicFn(spell_hun_lone_wolf::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 class spell_hun_scriptIStoleFromMatth : public SpellScript
 {
     PrepareSpellScript(spell_hun_scriptIStoleFromMatth);
@@ -2016,4 +2056,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_barbed_shot);
     RegisterSpellScript(spell_hun_murder_crows_reset);
     RegisterSpellScript(spell_hun_murder_crows_check);
+    RegisterSpellScript(spell_hun_bloodshed);
+    RegisterSpellScript(spell_hun_lone_wolf);
 }
