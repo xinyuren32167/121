@@ -30,6 +30,7 @@
 #include "SpellAuras.h"
 #include "SpellMgr.h"
 #include "SpellScript.h"
+#include "Player.h"
 
 // TODO: this import is not necessary for compilation and marked as unused by the IDE
 //  however, for some reasons removing it would cause a damn linking issue
@@ -1690,16 +1691,25 @@ class spell_hun_bear_applier : public AuraScript
 
         if (!pet)
             return;
+<<<<<<< Updated upstream
             
         player->AddAura(49071, pet);
+=======
+>>>>>>> Stashed changes
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
         for (auto const& unit : summonedUnits)
         {
+            if (!unit->IsInWorld())
+                continue;
+
             if (unit->isDead())
                 continue;
-            player->AddAura(49071, unit);
+
+            float ap = unit->GetTotalAttackPowerValue(BASE_ATTACK);
+            unit->SetInt32Value(UNIT_FIELD_ATTACK_POWER, CalculatePct(ap, 10.0f));
+            unit->UpdateDamagePhysical(BASE_ATTACK);
         }
     }
 
@@ -1711,16 +1721,18 @@ class spell_hun_bear_applier : public AuraScript
         if (!pet)
             return;
 
-        pet->RemoveAura(49071);
-
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
         for (auto const& unit : summonedUnits)
         {
+            if (!unit->IsInWorld())
+                continue;
+
             if (unit->isDead())
                 continue;
-            unit->RemoveAura(49071);
+
         }
+
     }
 
     void Register() override
@@ -1729,6 +1741,7 @@ class spell_hun_bear_applier : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_hun_bear_applier::HandleRemove, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER_PCT, AURA_EFFECT_HANDLE_REAL);
     }
 };
+
 
 class spell_hun_aspect_turtle : public SpellScript
 {
@@ -1763,9 +1776,13 @@ class spell_hun_survival_fittest : public AuraScript
 
         for (auto const& unit : summonedUnits)
         {
+            if (!unit->IsInWorld())
+                continue;
+
             if (unit->isDead())
                 continue;
-            player->AddAura(80162, unit);
+
+            player->CastSpell(unit, 80162);
         }
     }
 
@@ -1783,8 +1800,12 @@ class spell_hun_survival_fittest : public AuraScript
 
         for (auto const& unit : summonedUnits)
         {
+            if (!unit->IsInWorld())
+                continue;
+
             if (unit->isDead())
                 continue;
+
             unit->RemoveAura(80162);
         }
     }

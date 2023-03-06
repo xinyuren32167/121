@@ -9,6 +9,8 @@
 
 #include "GameTime.h"
 #include "PlayerSpecialization.h"
+#include "TimeDungeonManager.h"
+
 /***
  * Inherits all methods from: [Object], [WorldObject], [Unit]
  */
@@ -77,6 +79,23 @@ namespace LuaPlayer
         lua_settop(L, tbl);
         return 1;
     }
+
+    int GetMythicData(lua_State* L, Player* player)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        auto datas = TimedDungeonManager::GetData(player);
+        for (const auto& data : datas)
+        {
+            Eluna::Push(L, data);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
 
     int ActivateRune(lua_State* L, Player* player)
     {

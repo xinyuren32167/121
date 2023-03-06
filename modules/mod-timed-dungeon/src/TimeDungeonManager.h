@@ -78,7 +78,7 @@ public:
     static void OnPlayerRelease(Player* player);
     static bool MeetTheConditionsToCompleteTheDungeon(TimedRun run);
     // Fired when you loggin or when you enter on a mythic dungeon or and when you start a dungeon.
-    static std::vector<std::string> SendStatsMythicRun(Player* player, TimedRun run);
+    static std::vector<std::string> GetData(Player* player);
     static MythicKey GetCurrentMythicKey(Player* player);
     static std::vector<std::string> GetWeeklyAffixes(Player* player);
     static std::vector<std::string> GetDungeonBosses(Player* player);

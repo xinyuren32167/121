@@ -215,9 +215,6 @@ std::vector<std::string> TimedDungeonManager::GetWeeklyAffixes(Player* player)
 {
     std::vector<std::string> elements = {};
 
-
-    player->GetSummonedUnits();
-
     for (auto const& dungeon : m_WeeklyAffixes)
     {
         std::string fmt =
@@ -287,7 +284,6 @@ void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint3
         {
             Player* member = ObjectAccessor::FindPlayer(target.guid);
             if (member) {
-                SendStatsMythicRun(member, run);
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
                 AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
@@ -298,11 +294,9 @@ void TimedDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint3
         }
     }
     else {
-        SendStatsMythicRun(player, run);
         player->ClearUnitState(UNIT_STATE_ROOT);
         player->SetControlled(true, UNIT_STATE_ROOT);
         AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
-
         if (at) {
             player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
         }
@@ -490,8 +484,15 @@ bool TimedDungeonManager::MeetTheConditionsToCompleteTheDungeon(TimedRun run)
     return allBossesAreDead && run.enemyForces >= 100.0f;
 }
 
-std::vector<std::string> TimedDungeonManager::SendStatsMythicRun(Player* player, TimedRun run)
+std::vector<std::string> TimedDungeonManager::GetData(Player* player)
 {
+    auto it = m_TimedRun.find(player->GetMap()->GetInstanceId());
+
+    if (it == m_TimedRun.end())
+        return {};
+
+    TimedRun run = it->second;
+
     std::vector<std::string> elements = {};
     std::string first =
         std::to_string(run.level)

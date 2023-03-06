@@ -254,7 +254,7 @@ void Eluna::OnRefundRune(Player* pPlayer, std::string message, uint32 spellId)
 
 void Eluna::SendMythicUpdateDeath(Player* pPlayer, uint32 totalDeath)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_DEATH);
     Push(pPlayer);
     Push(totalDeath);
     CallAllFunctions(PlayerEventBindings, key);
@@ -262,14 +262,14 @@ void Eluna::SendMythicUpdateDeath(Player* pPlayer, uint32 totalDeath)
 
 void Eluna::SendStartMythicDungeon(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_START);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void Eluna::SendMythicUpdateTimer(Player* pPlayer, uint32 timer)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_TIMER);
     Push(pPlayer);
     Push(timer);
     CallAllFunctions(PlayerEventBindings, key);
@@ -277,14 +277,14 @@ void Eluna::SendMythicUpdateTimer(Player* pPlayer, uint32 timer)
 
 void Eluna::SendMythicUpdateChestDecrapeted(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_CHEST);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void Eluna::SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_BOSS);
     Push(pPlayer);
     Push(creatureId);
     CallAllFunctions(PlayerEventBindings, key);
@@ -292,7 +292,7 @@ void Eluna::SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId)
 
 void Eluna::SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_MINION);
     Push(pPlayer);
     Push(enemyForces);
     CallAllFunctions(PlayerEventBindings, key);
@@ -300,7 +300,7 @@ void Eluna::SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces)
 
 void Eluna::SendShowMythicUI(Player* pPlayer, bool show)
 {
-    START_HOOK(PLAYER_EVENT_CALLBACK_ACTIVATE_RUNE);
+    START_HOOK(PLAYER_SEND_MYTHIC_SHOW_UI);
     Push(pPlayer);
     Push(show);
     CallAllFunctions(PlayerEventBindings, key);
