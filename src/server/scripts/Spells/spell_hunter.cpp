@@ -1514,22 +1514,20 @@ class spell_hun_bestial_apply : public SpellScript
     }
 };
 
-class spell_hun_black_arrow_reset : public AuraScript
+class spell_hun_black_arrow_reset : public SpellScript
 {
-    PrepareAuraScript(spell_hun_black_arrow_reset);
+    PrepareSpellScript(spell_hun_black_arrow_reset);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void HandleProc()
     {
         if (!GetCaster()->HasSpell(63672))
             return;
-
-        if (Player* caster = GetTarget()->ToPlayer())
-            caster->RemoveSpellCooldown(63672, true);
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(63672, true);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_hun_black_arrow_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnCast += SpellCastFn(spell_hun_black_arrow_reset::HandleProc);
     }
 };
 
@@ -1911,22 +1909,38 @@ class spell_hun_barbed_shot : public SpellScript
     }
 };
 
-class spell_hun_murder_crows_reset : public AuraScript
+class spell_hun_murder_crows_check : public AuraScript
 {
-    PrepareAuraScript(spell_hun_murder_crows_reset);
+    PrepareAuraScript(spell_hun_murder_crows_check);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    bool HandleProc(ProcEventInfo& eventInfo)
     {
-        if (!GetCaster()->HasSpell(80176))
-            return;
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = eventInfo.GetActionTarget();
 
-        if (Player* caster = GetCaster()->ToPlayer())
-            caster->RemoveSpellCooldown(80176, true);
+        if (target->HasAura(80176))
+            if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
+                return true;
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_hun_murder_crows_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_hun_murder_crows_check::HandleProc);
+    }
+};
+
+class spell_hun_murder_crows_reset : public SpellScript
+{
+    PrepareSpellScript(spell_hun_murder_crows_reset);
+
+    void HandleProc()
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(80176, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_murder_crows_reset::HandleProc);
     }
 };
 
@@ -2001,4 +2015,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_cobra_shot);
     RegisterSpellScript(spell_hun_barbed_shot);
     RegisterSpellScript(spell_hun_murder_crows_reset);
+    RegisterSpellScript(spell_hun_murder_crows_check);
 }
