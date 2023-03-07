@@ -913,7 +913,6 @@ class rune_hunter_quick_shot : public SpellScript
 
             caster->ModifySpellCooldown(SPELL_HUNTER_ARCANE_SHOT, -cooldownReduction);
         }
-
     }
 
     void Register() override
