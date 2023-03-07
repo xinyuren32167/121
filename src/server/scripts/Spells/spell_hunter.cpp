@@ -31,6 +31,7 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "Player.h"
+#include <random>
 
 // TODO: this import is not necessary for compilation and marked as unused by the IDE
 //  however, for some reasons removing it would cause a damn linking issue
@@ -1990,8 +1991,8 @@ class spell_hun_lone_wolf : public AuraScript
         Pet* pet = GetCaster()->ToPlayer()->GetPet();
 
         if (pet)
-            return;
-
+            GetCaster()->RemoveAura(80182);
+        else
         GetCaster()->AddAura(80182 ,GetCaster());
     }
 
@@ -2001,21 +2002,102 @@ class spell_hun_lone_wolf : public AuraScript
     }
 };
 
-class spell_hun_scriptIStoleFromMatth : public SpellScript
+class spell_hun_dire_beast : public SpellScript
 {
-    PrepareSpellScript(spell_hun_scriptIStoleFromMatth);
+    PrepareSpellScript(spell_hun_dire_beast);
 
-    void HandlePet()
+    void HandleSummon()
     {
-        PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
-        uint32 creatureId = petStable->StabledPets[0]->CreatureId;
-        TempSummon* summon = GetCaster()->SummonCreature(creatureId, GetCaster()->GetPosition());
+        std::vector<int32> summons = { 400000,400001,400002 };
+        int32 summonId = summons[rand() % summons.size()];
+
+        Position const& pos = GetCaster()->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        int32 duration = GetSpellInfo()->GetDuration();
+
+        Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
         summon->AddAura(34902, GetCaster());
+        summon->AddAura(34903, GetCaster());
+        summon->AddAura(34904, GetCaster());
+
+        if (summon && summon->IsAlive())
+            summon->AI()->AttackStart(GetExplTargetUnit());
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_hun_scriptIStoleFromMatth::HandlePet);
+        OnCast += SpellCastFn(spell_hun_dire_beast::HandleSummon);
+    }
+};
+
+class spell_hun_call_of_wild : public SpellScript
+{
+    PrepareSpellScript(spell_hun_call_of_wild);
+
+    void PetScaler(CreatureFamilyEntry const* cFamily, Creature* summon, uint8 level)
+    {
+        if (cFamily && cFamily->minScale > 0.0f)
+        {
+            float scale;
+            if (level >= cFamily->maxScaleLevel)
+                scale = 1.0f;
+            else if (level <= cFamily->minScaleLevel)
+                scale = 0.5f;
+            else
+                scale = 0.5f + 0.5f * float(level - cFamily->minScaleLevel) / float(cFamily->maxScaleLevel - cFamily->minScaleLevel);
+
+            summon->SetObjectScale(scale);
+        }
+    };
+
+    void HandlePet()
+    {
+        Unit* caster = GetCaster();
+        Position const& pos = GetCaster()->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        int32 duration = GetSpellInfo()->GetDuration();
+
+        PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+
+        if (petStable && petStable->StabledPets.at(0) && petStable->StabledPets.at(1))
+        {
+            auto level1 = petStable->StabledPets.at(0)->Level;
+            auto level2 = petStable->StabledPets.at(1)->Level;
+            auto pet1 = petStable->StabledPets.at(0)->CreatureId;
+            auto pet2 = petStable->StabledPets.at(1)->CreatureId;
+
+            Creature* summon1 = GetCaster()->SummonCreature(pet1, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+            Creature* summon2 = GetCaster()->SummonCreature(pet2, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
+            CreatureTemplate const* cinfo1 = sObjectMgr->GetCreatureTemplate(pet1);
+            CreatureFamilyEntry const* cFamily1 = sCreatureFamilyStore.LookupEntry(cinfo1->family);
+
+            PetScaler(cFamily1, summon1, level1);
+
+            CreatureTemplate const* cinfo2 = sObjectMgr->GetCreatureTemplate(pet2);
+            CreatureFamilyEntry const* cFamily2 = sCreatureFamilyStore.LookupEntry(cinfo2->family);
+
+            PetScaler(cFamily2, summon2, level2);
+
+            summon1->AddAura(34902, caster);
+            summon1->AddAura(34903, caster);
+            summon1->AddAura(34904, caster);
+
+            summon2->AddAura(34902, caster);
+            summon2->AddAura(34903, caster);
+            summon2->AddAura(34904, caster);
+
+            if (summon1 && summon1->IsAlive())
+                summon1->AI()->AttackStart(GetExplTargetUnit());
+            if (summon2 && summon2->IsAlive())
+                summon2->AI()->AttackStart(GetExplTargetUnit());
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_call_of_wild::HandlePet);
     }
 };
 
@@ -2075,4 +2157,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_murder_crows_check);
     RegisterSpellScript(spell_hun_bloodshed);
     RegisterSpellScript(spell_hun_lone_wolf);
+    RegisterSpellScript(spell_hun_dire_beast);
+    RegisterSpellScript(spell_hun_call_of_wild);
 }
