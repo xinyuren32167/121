@@ -56,6 +56,9 @@ struct TimedRun {
 
 class TimedDungeonManager {
 private:
+    static std::map<uint32, MythicKey> m_TimedWeeklyDungeon;
+    static std::map<uint32, MythicKey> m_TimedAllTimedDungeon;
+
     static std::map<uint32, std::vector<DungeonBoss>> m_TimedDungeonBosses;
     static std::map<uint32, TimedDungeon> m_TimedDungeon;
     static std::map<uint32, std::vector<TimedRewardDungeon>> m_TimedRewardDungeon;
@@ -68,13 +71,14 @@ public:
     static void InitializeRewardsDungeons();
     static void InitializeTimedDungeonBosses();
     static void InitializeWeeklyAffixes();
+    static void InitializeMythicKeyCompleted();
     static void Update(Map* map, uint32 diff);
     static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);
     static void OnKillBoss(Player* player, Creature* killed);
     static void OnKillMinion(Player* player, Creature* killed);
     static void OnPlayerKilledByCreature(Creature* killer, Player* killed);
-    static void CompleteMythicDungeon(TimedRun run, Player* player);
+    static void CompleteMythicDungeon(TimedRun* run, Player* player);
     static void OnPlayerRelease(Player* player);
     static bool MeetTheConditionsToCompleteTheDungeon(TimedRun run);
     // Fired when you loggin or when you enter on a mythic dungeon or and when you start a dungeon.

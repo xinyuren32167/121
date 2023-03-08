@@ -2037,17 +2037,17 @@ class spell_hun_call_of_wild : public SpellScript
 {
     PrepareSpellScript(spell_hun_call_of_wild);
 
-    void PetScaler(CreatureFamilyEntry const* cFamily, Creature* summon, uint8 level)
+    void PetScaler(CreatureFamilyEntry const* cFamily, Creature* summon)
     {
         if (cFamily && cFamily->minScale > 0.0f)
         {
             float scale;
-            if (level >= cFamily->maxScaleLevel)
+            if (summon->getLevel() >= cFamily->maxScaleLevel)
                 scale = 1.0f;
-            else if (level <= cFamily->minScaleLevel)
+            else if (summon->getLevel() <= cFamily->minScaleLevel)
                 scale = 0.5f;
             else
-                scale = 0.5f + 0.5f * float(level - cFamily->minScaleLevel) / float(cFamily->maxScaleLevel - cFamily->minScaleLevel);
+                scale = 0.5f + 0.5f * float(summon->getLevel() - cFamily->minScaleLevel) / float(cFamily->maxScaleLevel - cFamily->minScaleLevel);
 
             summon->SetObjectScale(scale);
         }
@@ -2071,27 +2071,28 @@ class spell_hun_call_of_wild : public SpellScript
 
         PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
 
-        if (petStable)
+        if (!petStable)
+            return;
+
+        SpellValue const* value = GetSpellValue();
+        uint32 summonAmount = value->EffectBasePoints[EFFECT_2];
+
+        for (size_t i = 0; i < summonAmount; i++)
         {
-            int32 summonAmount = sSpellMgr->AssertSpellInfo(80186)->GetEffect(EFFECT_2).BasePoints;
-            for (size_t i = 0; i < summonAmount; i++)
-            {
-                if (!petStable->StabledPets.at(i))
-                    continue;
+            if (!petStable->StabledPets.at(i))
+                continue;
 
-                auto petLevel = petStable->StabledPets.at(i)->Level;
-                auto petId = petStable->StabledPets.at(i)->CreatureId;
-                Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+            auto petId = petStable->StabledPets.at(i)->CreatureId;
+            Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-                CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
-                CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
+            CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
+            CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
 
-                PetScaler(petFamily, pet, petLevel);
-                PetBuffs(pet);
+            PetScaler(petFamily, pet);
+            PetBuffs(pet);
 
-                if (pet && pet->IsAlive())
-                    pet->AI()->AttackStart(GetExplTargetUnit());
-            }
+            if (pet && pet->IsAlive())
+                pet->AI()->AttackStart(GetExplTargetUnit());
         }
     }
 

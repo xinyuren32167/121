@@ -162,6 +162,25 @@ class spell_diverted_energy_mana : public AuraScript
         return healPct;
     }
 
+
+    int CalculateDamage(uint32 damage)
+    {
+        auto playerAuras = GetCaster()->GetAppliedAuras();
+        for (auto itr = playerAuras.begin(); itr != playerAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x00000080)
+                {
+                    float pct = aura->GetEffect(EFFECT_0)->GetAmount();
+                    ApplyPct(damage, pct);
+                }
+            }
+        }
+    }
+
     void Absorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
         int32 heal = int32(CalculatePct(absorbAmount, HealPct()));
