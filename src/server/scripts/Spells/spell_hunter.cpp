@@ -2051,6 +2051,15 @@ class spell_hun_call_of_wild : public SpellScript
         }
     };
 
+    void PetBuffs(Creature* summon)
+    {
+        Unit* caster = GetCaster();
+
+        summon->AddAura(34902, caster);
+        summon->AddAura(34903, caster);
+        summon->AddAura(34904, caster);
+    }
+
     void HandlePet()
     {
         Unit* caster = GetCaster();
@@ -2062,42 +2071,81 @@ class spell_hun_call_of_wild : public SpellScript
 
         if (petStable && petStable->StabledPets.at(0) && petStable->StabledPets.at(1))
         {
-            auto level1 = petStable->StabledPets.at(0)->Level;
-            auto level2 = petStable->StabledPets.at(1)->Level;
-            auto pet1 = petStable->StabledPets.at(0)->CreatureId;
-            auto pet2 = petStable->StabledPets.at(1)->CreatureId;
+            auto firstPetLevel = petStable->StabledPets.at(0)->Level;
+            auto secondPetLevel = petStable->StabledPets.at(1)->Level;
+            auto firstPetId = petStable->StabledPets.at(0)->CreatureId;
+            auto secondPetId = petStable->StabledPets.at(1)->CreatureId;
 
-            Creature* summon1 = GetCaster()->SummonCreature(pet1, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-            Creature* summon2 = GetCaster()->SummonCreature(pet2, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+            Creature* firstPet = GetCaster()->SummonCreature(firstPetId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+            Creature* secondPet = GetCaster()->SummonCreature(secondPetId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-            CreatureTemplate const* cinfo1 = sObjectMgr->GetCreatureTemplate(pet1);
-            CreatureFamilyEntry const* cFamily1 = sCreatureFamilyStore.LookupEntry(cinfo1->family);
+            CreatureTemplate const* firstPetCinfo = sObjectMgr->GetCreatureTemplate(firstPetId);
+            CreatureFamilyEntry const* firstPetFamily = sCreatureFamilyStore.LookupEntry(firstPetCinfo->family);
+            CreatureTemplate const* secondPetCinfo = sObjectMgr->GetCreatureTemplate(secondPetId);
+            CreatureFamilyEntry const* secondPetFamily = sCreatureFamilyStore.LookupEntry(secondPetCinfo->family);
 
-            PetScaler(cFamily1, summon1, level1);
+            PetScaler(firstPetFamily, firstPet, firstPetLevel);
+            PetScaler(secondPetFamily, secondPet, secondPetLevel);
 
-            CreatureTemplate const* cinfo2 = sObjectMgr->GetCreatureTemplate(pet2);
-            CreatureFamilyEntry const* cFamily2 = sCreatureFamilyStore.LookupEntry(cinfo2->family);
+            PetBuffs(firstPet);
+            PetBuffs(secondPet);
 
-            PetScaler(cFamily2, summon2, level2);
-
-            summon1->AddAura(34902, caster);
-            summon1->AddAura(34903, caster);
-            summon1->AddAura(34904, caster);
-
-            summon2->AddAura(34902, caster);
-            summon2->AddAura(34903, caster);
-            summon2->AddAura(34904, caster);
-
-            if (summon1 && summon1->IsAlive())
-                summon1->AI()->AttackStart(GetExplTargetUnit());
-            if (summon2 && summon2->IsAlive())
-                summon2->AI()->AttackStart(GetExplTargetUnit());
+            if (firstPet && firstPet->IsAlive())
+                firstPet->AI()->AttackStart(GetExplTargetUnit());
+            if (secondPet && secondPet->IsAlive())
+                secondPet->AI()->AttackStart(GetExplTargetUnit());
         }
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_hun_call_of_wild::HandlePet);
+    }
+};
+
+class spell_hun_call_of_wild_periodic : public SpellScript
+{
+    PrepareSpellScript(spell_hun_call_of_wild_periodic);
+
+    void HandleSummon()
+    {
+        PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+        Position const& pos = GetCaster()->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        int32 duration = GetSpellInfo()->GetDuration();
+
+        if (petStable && petStable->StabledPets.at(0) && petStable->StabledPets.at(1))
+        {
+            std::vector<int32> summons;
+            auto firstPet = petStable->StabledPets.at(0)->CreatureId;
+            auto secondPet = petStable->StabledPets.at(1)->CreatureId;
+            summons.push_back(firstPet);
+            summons.push_back(secondPet);
+
+            if (petStable && petStable->StabledPets.at(2) && petStable->StabledPets.at(3))
+            {
+                auto thirdPet = petStable->StabledPets.at(2)->CreatureId;
+                auto fourthPet = petStable->StabledPets.at(3)->CreatureId;
+                summons.push_back(thirdPet);
+                summons.push_back(fourthPet);
+            }
+
+            int32 summonId = summons[rand() % summons.size()];
+
+            Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
+            summon->AddAura(34902, GetCaster());
+            summon->AddAura(34903, GetCaster());
+            summon->AddAura(34904, GetCaster());
+
+            if (summon && summon->IsAlive())
+                summon->AI()->AttackStart(GetExplTargetUnit());
+        }
+    }
+    
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_call_of_wild_periodic::HandleSummon);
     }
 };
 
@@ -2159,4 +2207,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_lone_wolf);
     RegisterSpellScript(spell_hun_dire_beast);
     RegisterSpellScript(spell_hun_call_of_wild);
+    RegisterSpellScript(spell_hun_call_of_wild_periodic);
 }
