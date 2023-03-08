@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_HUNTER, SPELLFAMILY_PET and SPELLFAMILY_GENERIC spells used by hunter players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_hun_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_HUNTER, SPELLFAMILY_PET and SPELLFAMILY_GENERIC spells used by hunter players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_hun_".
+  */
 
 #include "Cell.h"
 #include "CellImpl.h"
@@ -33,46 +33,46 @@
 #include "Player.h"
 #include <random>
 
-// TODO: this import is not necessary for compilation and marked as unused by the IDE
-//  however, for some reasons removing it would cause a damn linking issue
-//  there is probably some underlying problem with imports which should properly addressed
-//  see: https://github.com/azerothcore/azerothcore-wotlk/issues/9766
+  // TODO: this import is not necessary for compilation and marked as unused by the IDE
+  //  however, for some reasons removing it would cause a damn linking issue
+  //  there is probably some underlying problem with imports which should properly addressed
+  //  see: https://github.com/azerothcore/azerothcore-wotlk/issues/9766
 #include "GridNotifiersImpl.h"
 
 enum HunterSpells
 {
     // Ours
-    SPELL_HUNTER_WYVERN_STING_DOT                   = 80156,
+    SPELL_HUNTER_WYVERN_STING_DOT = 80156,
 
     // Theirs
-    SPELL_HUNTER_ASPECT_OF_THE_BEAST                = 49071,
-    SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET            = 61669,
-    SPELL_HUNTER_ASPECT_OF_THE_VIPER                = 34074,
-    SPELL_HUNTER_ASPECT_OF_THE_VIPER_ENERGIZE       = 34075,
-    SPELL_HUNTER_BESTIAL_WRATH                      = 19574,
-    SPELL_HUNTER_CHIMERA_SHOT_SERPENT               = 53353,
-    SPELL_HUNTER_CHIMERA_SHOT_VIPER                 = 53358,
-    SPELL_HUNTER_CHIMERA_SHOT_SCORPID               = 53359,
-    SPELL_HUNTER_GLYPH_OF_ASPECT_OF_THE_VIPER       = 56851,
-    SPELL_HUNTER_IMPROVED_MEND_PET                  = 24406,
-    SPELL_HUNTER_INVIGORATION_TRIGGERED             = 53398,
-    SPELL_HUNTER_MASTERS_CALL_TRIGGERED             = 62305,
-    SPELL_HUNTER_MISDIRECTION_PROC                  = 35079,
-    SPELL_HUNTER_PET_LAST_STAND_TRIGGERED           = 53479,
-    SPELL_HUNTER_PET_HEART_OF_THE_PHOENIX           = 55709,
+    SPELL_HUNTER_ASPECT_OF_THE_BEAST = 49071,
+    SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET = 61669,
+    SPELL_HUNTER_ASPECT_OF_THE_VIPER = 34074,
+    SPELL_HUNTER_ASPECT_OF_THE_VIPER_ENERGIZE = 34075,
+    SPELL_HUNTER_BESTIAL_WRATH = 19574,
+    SPELL_HUNTER_CHIMERA_SHOT_SERPENT = 53353,
+    SPELL_HUNTER_CHIMERA_SHOT_VIPER = 53358,
+    SPELL_HUNTER_CHIMERA_SHOT_SCORPID = 53359,
+    SPELL_HUNTER_GLYPH_OF_ASPECT_OF_THE_VIPER = 56851,
+    SPELL_HUNTER_IMPROVED_MEND_PET = 24406,
+    SPELL_HUNTER_INVIGORATION_TRIGGERED = 53398,
+    SPELL_HUNTER_MASTERS_CALL_TRIGGERED = 62305,
+    SPELL_HUNTER_MISDIRECTION_PROC = 35079,
+    SPELL_HUNTER_PET_LAST_STAND_TRIGGERED = 53479,
+    SPELL_HUNTER_PET_HEART_OF_THE_PHOENIX = 55709,
     SPELL_HUNTER_PET_HEART_OF_THE_PHOENIX_TRIGGERED = 54114,
-    SPELL_HUNTER_PET_HEART_OF_THE_PHOENIX_DEBUFF    = 55711,
-    SPELL_HUNTER_PET_CARRION_FEEDER_TRIGGERED       = 54045,
-    SPELL_HUNTER_READINESS                          = 23989,
-    SPELL_HUNTER_SNIPER_TRAINING_R1                 = 53302,
-    SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1            = 64418,
-    SPELL_HUNTER_VICIOUS_VIPER                      = 61609,
-    SPELL_HUNTER_VIPER_ATTACK_SPEED                 = 60144,
-    SPELL_DRAENEI_GIFT_OF_THE_NAARU                 = 59543,
-    SPELL_HUNTER_GLYPH_OF_ARCANE_SHOT               = 61389,
-    SPELL_LOCK_AND_LOAD_TRIGGER                     = 56453,
-    SPELL_LOCK_AND_LOAD_MARKER                      = 67544,
-    SPELL_HUNTER_MONGOOSE_FURY                      = 80144,
+    SPELL_HUNTER_PET_HEART_OF_THE_PHOENIX_DEBUFF = 55711,
+    SPELL_HUNTER_PET_CARRION_FEEDER_TRIGGERED = 54045,
+    SPELL_HUNTER_READINESS = 23989,
+    SPELL_HUNTER_SNIPER_TRAINING_R1 = 53302,
+    SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1 = 64418,
+    SPELL_HUNTER_VICIOUS_VIPER = 61609,
+    SPELL_HUNTER_VIPER_ATTACK_SPEED = 60144,
+    SPELL_DRAENEI_GIFT_OF_THE_NAARU = 59543,
+    SPELL_HUNTER_GLYPH_OF_ARCANE_SHOT = 61389,
+    SPELL_LOCK_AND_LOAD_TRIGGER = 56453,
+    SPELL_LOCK_AND_LOAD_MARKER = 67544,
+    SPELL_HUNTER_MONGOOSE_FURY = 80144,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -126,7 +126,7 @@ class spell_hun_wyvern_sting : public AuraScript
 {
     PrepareAuraScript(spell_hun_wyvern_sting)
 
-    void HandleEffectRemove(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        void HandleEffectRemove(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (Unit* caster = GetCaster())
             caster->CastSpell(GetTarget(), SPELL_HUNTER_WYVERN_STING_DOT, true);
@@ -179,7 +179,7 @@ class spell_hun_generic_scaling : public AuraScript
             int32 modifier = 45;
 
             // xinef: Wild Hunt bonus for stamina
-            if  (AuraEffect* wildHuntEff = GetUnitOwner()->GetDummyAuraEffect(SPELLFAMILY_PET, 3748, EFFECT_0))
+            if (AuraEffect* wildHuntEff = GetUnitOwner()->GetDummyAuraEffect(SPELLFAMILY_PET, 3748, EFFECT_0))
                 AddPct(modifier, wildHuntEff->GetAmount());
 
             amount = CalculatePct(std::max<int32>(0, owner->GetStat(Stats(aurEff->GetSpellInfo()->Effects[aurEff->GetEffIndex()].MiscValue))), modifier);
@@ -666,10 +666,10 @@ class spell_hun_readiness : public SpellScript
         {
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
             if (spellInfo
-            && spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER
-            && spellInfo->Id != SPELL_HUNTER_READINESS
-            && spellInfo->Id != SPELL_HUNTER_BESTIAL_WRATH
-            && spellInfo->Id != SPELL_DRAENEI_GIFT_OF_THE_NAARU)
+                && spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER
+                && spellInfo->Id != SPELL_HUNTER_READINESS
+                && spellInfo->Id != SPELL_HUNTER_BESTIAL_WRATH
+                && spellInfo->Id != SPELL_DRAENEI_GIFT_OF_THE_NAARU)
             {
                 if (spellInfo->RecoveryTime > 0)
                     spellsToRemove.insert(std::make_pair(spellInfo->Id, cooldown.needSendToClient));
@@ -754,8 +754,8 @@ class spell_hun_sniper_training : public AuraScript
         {
             int32 baseAmount = aurEff->GetBaseAmount();
             int32 amount = playerTarget->isMoving() || aurEff->GetAmount() <= 0 ?
-                            playerTarget->CalculateSpellDamage(playerTarget, GetSpellInfo(), aurEff->GetEffIndex(), &baseAmount) :
-                            aurEff->GetAmount() - 1;
+                playerTarget->CalculateSpellDamage(playerTarget, GetSpellInfo(), aurEff->GetEffIndex(), &baseAmount) :
+                aurEff->GetAmount() - 1;
             aurEff->SetAmount(amount);
         }
     }
@@ -1060,9 +1060,9 @@ class spell_hun_glyph_of_arcane_shot : public AuraScript
                 [&](std::pair<uint32, AuraApplication*> pair)
                 {
                     Aura const* aura = pair.second->GetBase();
-                    return ((aura->GetCasterGUID() == GetTarget()->GetGUID())
-                        && aura->GetSpellInfo()->SpellFamilyName == SPELLFAMILY_HUNTER
-                        && aura->GetSpellInfo()->SpellFamilyFlags.HasFlag(0xC000, 0x1080));
+            return ((aura->GetCasterGUID() == GetTarget()->GetGUID())
+                && aura->GetSpellInfo()->SpellFamilyName == SPELLFAMILY_HUNTER
+                && aura->GetSpellInfo()->SpellFamilyFlags.HasFlag(0xC000, 0x1080));
                 });
 
             if (found != std::end(procTarget->GetAppliedAuras()))
@@ -1317,7 +1317,7 @@ class spell_hun_predators_thirst : public AuraScript
     PrepareAuraScript(spell_hun_predators_thirst);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    { 
+    {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
             Unit* pet = GetCaster();
             Unit* master = GetCaster()->GetOwner();
@@ -1613,7 +1613,7 @@ class spell_hun_mongoose_fury : public SpellScript
         Aura* mongooseBuff = player->GetAura(SPELL_HUNTER_MONGOOSE_FURY);
         SpellValue const* value = GetSpellValue();
 
-        if(!mongooseBuff)
+        if (!mongooseBuff)
             player->AddAura(SPELL_HUNTER_MONGOOSE_FURY, player);
 
         if (mongooseBuff)
@@ -1622,7 +1622,7 @@ class spell_hun_mongoose_fury : public SpellScript
             int32 stackCount = mongooseBuff->GetStackAmount();
             if (stackCount == maxStack)
                 return;
-            player->SetAuraStack(SPELL_HUNTER_MONGOOSE_FURY, player, stackCount+1);
+            player->SetAuraStack(SPELL_HUNTER_MONGOOSE_FURY, player, stackCount + 1);
         }
     }
 
@@ -1692,7 +1692,7 @@ class spell_hun_bear_applier : public AuraScript
 
         if (!pet)
             return;
-            
+
         player->AddAura(49071, pet);
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
@@ -1990,10 +1990,12 @@ class spell_hun_lone_wolf : public AuraScript
     {
         Pet* pet = GetCaster()->ToPlayer()->GetPet();
 
-        if (pet)
+        std::vector<Unit*> summonedUnits = GetCaster()->ToPlayer()->GetSummonedUnits();
+
+        if (pet || !summonedUnits.empty())
             GetCaster()->RemoveAura(80182);
         else
-        GetCaster()->AddAura(80182 ,GetCaster());
+            GetCaster()->AddAura(80182, GetCaster());
     }
 
     void Register() override
@@ -2069,31 +2071,27 @@ class spell_hun_call_of_wild : public SpellScript
 
         PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
 
-        if (petStable && petStable->StabledPets.at(0) && petStable->StabledPets.at(1))
+        if (petStable)
         {
-            auto firstPetLevel = petStable->StabledPets.at(0)->Level;
-            auto secondPetLevel = petStable->StabledPets.at(1)->Level;
-            auto firstPetId = petStable->StabledPets.at(0)->CreatureId;
-            auto secondPetId = petStable->StabledPets.at(1)->CreatureId;
+            int32 summonAmount = sSpellMgr->AssertSpellInfo(80186)->GetEffect(EFFECT_2).BasePoints;
+            for (size_t i = 0; i < summonAmount; i++)
+            {
+                if (!petStable->StabledPets.at(i))
+                    continue;
 
-            Creature* firstPet = GetCaster()->SummonCreature(firstPetId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-            Creature* secondPet = GetCaster()->SummonCreature(secondPetId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+                auto petLevel = petStable->StabledPets.at(i)->Level;
+                auto petId = petStable->StabledPets.at(i)->CreatureId;
+                Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-            CreatureTemplate const* firstPetCinfo = sObjectMgr->GetCreatureTemplate(firstPetId);
-            CreatureFamilyEntry const* firstPetFamily = sCreatureFamilyStore.LookupEntry(firstPetCinfo->family);
-            CreatureTemplate const* secondPetCinfo = sObjectMgr->GetCreatureTemplate(secondPetId);
-            CreatureFamilyEntry const* secondPetFamily = sCreatureFamilyStore.LookupEntry(secondPetCinfo->family);
+                CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
+                CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
 
-            PetScaler(firstPetFamily, firstPet, firstPetLevel);
-            PetScaler(secondPetFamily, secondPet, secondPetLevel);
+                PetScaler(petFamily, pet, petLevel);
+                PetBuffs(pet);
 
-            PetBuffs(firstPet);
-            PetBuffs(secondPet);
-
-            if (firstPet && firstPet->IsAlive())
-                firstPet->AI()->AttackStart(GetExplTargetUnit());
-            if (secondPet && secondPet->IsAlive())
-                secondPet->AI()->AttackStart(GetExplTargetUnit());
+                if (pet && pet->IsAlive())
+                    pet->AI()->AttackStart(GetExplTargetUnit());
+            }
         }
     }
 
@@ -2110,39 +2108,37 @@ class spell_hun_call_of_wild_periodic : public SpellScript
     void HandleSummon()
     {
         PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+        if (!petStable)
+            return;
+
         Position const& pos = GetCaster()->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = GetSpellInfo()->GetDuration();
 
-        if (petStable && petStable->StabledPets.at(0) && petStable->StabledPets.at(1))
+        int32 petQuantity = -1;
+
+        for (size_t i = 0; i < petStable->StabledPets.size(); i++)
         {
-            std::vector<int32> summons;
-            auto firstPet = petStable->StabledPets.at(0)->CreatureId;
-            auto secondPet = petStable->StabledPets.at(1)->CreatureId;
-            summons.push_back(firstPet);
-            summons.push_back(secondPet);
+            if (!petStable->StabledPets.at(i))
+                continue;
 
-            if (petStable && petStable->StabledPets.at(2) && petStable->StabledPets.at(3))
-            {
-                auto thirdPet = petStable->StabledPets.at(2)->CreatureId;
-                auto fourthPet = petStable->StabledPets.at(3)->CreatureId;
-                summons.push_back(thirdPet);
-                summons.push_back(fourthPet);
-            }
-
-            int32 summonId = summons[rand() % summons.size()];
-
-            Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-
-            summon->AddAura(34902, GetCaster());
-            summon->AddAura(34903, GetCaster());
-            summon->AddAura(34904, GetCaster());
-
-            if (summon && summon->IsAlive())
-                summon->AI()->AttackStart(GetExplTargetUnit());
+            petQuantity++;
         }
+
+        uint32 random = urand(0, petQuantity);
+
+        auto pet = petStable->StabledPets.at(random)->CreatureId;
+
+        Creature* summon = GetCaster()->SummonCreature(pet, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
+        summon->AddAura(34902, GetCaster());
+        summon->AddAura(34903, GetCaster());
+        summon->AddAura(34904, GetCaster());
+
+        if (summon && summon->IsAlive())
+            summon->AI()->AttackStart(GetExplTargetUnit());
     }
-    
+
     void Register() override
     {
         OnCast += SpellCastFn(spell_hun_call_of_wild_periodic::HandleSummon);
