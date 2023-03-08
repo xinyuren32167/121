@@ -62,6 +62,12 @@ enum HunterSpells
     RUNE_HUNTER_CLEAVE_COMMAND_DAMAGE = 500380,
 
     RUNE_HUNTER_RAZOR_FRAGMENTS_DAMAGE = 500442,
+
+    RUNE_HUNTER_BEAST_CLEAVE_DAMAGE = 500480,
+
+    RUNE_HUNTER_TRICK_SHOTS_LISTENER = 500518,
+
+    RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE = 500538,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -820,7 +826,7 @@ class rune_hunter_cleave_command : public AuraScript
         float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        GetCaster()->CastCustomSpell(RUNE_HUNTER_CLEAVE_COMMAND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+        eventInfo.GetActor()->CastCustomSpell(RUNE_HUNTER_CLEAVE_COMMAND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -1020,7 +1026,7 @@ class rune_hunter_razor_fragments_trick_shots : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_razor_fragments_trick_shots::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_razor_fragments_trick_shots::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1103,6 +1109,197 @@ class rune_hunter_razor_fragments : public AuraScript
     }
 };
 
+class rune_hunter_good_health : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_good_health);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = GetAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        int32 procPct = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (!pet)
+            return;
+
+        if (pet->HasAura(procSpell))
+            pet->RemoveAura(procSpell);
+
+        float health = pet->GetMaxHealth();
+        int32 amount = CalculatePct(health, procPct);
+
+        GetCaster()->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, pet, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_good_health::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_beast_cleave_proc : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_beast_cleave_proc);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet)
+            GetCaster()->AddAura(procSpell, pet);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            GetCaster()->AddAura(procSpell, unit);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_beast_cleave_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_beast_cleave : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_beast_cleave);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+
+        eventInfo.GetActor()->CastCustomSpell(RUNE_HUNTER_BEAST_CLEAVE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_beast_cleave::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_beast_cleave::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_trick_shots_listener : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_trick_shots_listener);
+
+    void HandleApplyAura()
+    {
+        if (GetCaster()->HasAura(RUNE_HUNTER_TRICK_SHOTS_LISTENER))
+            GetCaster()->RemoveAura(RUNE_HUNTER_TRICK_SHOTS_LISTENER);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(rune_hunter_trick_shots_listener::HandleApplyAura);
+    }
+};
+
+class rune_hunter_trick_shots : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_trick_shots);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 buffAura = aurEff->GetAmount();
+
+        if (GetCaster()->HasAura(buffAura))
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), RUNE_HUNTER_TRICK_SHOTS_LISTENER, TRIGGERED_FULL_MASK);
+
+        Aura* listener = GetCaster()->GetAura(RUNE_HUNTER_TRICK_SHOTS_LISTENER);
+
+        if (listener->GetStackAmount() < 3)
+            return;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_trick_shots::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_trick_shots::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_aspect_of_the_storm : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_aspect_of_the_storm);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int32 attackPower = std::max<int32>(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK));
+        float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet)
+            pet->CastCustomSpell(RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE, SPELLVALUE_BASE_POINT0, damage, pet, TRIGGERED_FULL_MASK);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            unit->CastCustomSpell(RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE, SPELLVALUE_BASE_POINT0, damage, unit, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_aspect_of_the_storm::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -1136,7 +1333,13 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_razor_fragments_trick_shots);
     RegisterSpellScript(rune_hunter_razor_fragments_weak_spot);
     RegisterSpellScript(rune_hunter_razor_fragments);
+    RegisterSpellScript(rune_hunter_good_health);
+    RegisterSpellScript(rune_hunter_beast_cleave_proc);
+    RegisterSpellScript(rune_hunter_beast_cleave);
+    RegisterSpellScript(rune_hunter_trick_shots_listener);
+    RegisterSpellScript(rune_hunter_trick_shots);
+    RegisterSpellScript(rune_hunter_aspect_of_the_storm);
 
-
-
+    
+    
 }
