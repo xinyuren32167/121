@@ -15251,6 +15251,25 @@ bool Player::AddItem(uint32 itemId, uint32 count)
     return true;
 }
 
+Item* Player::CreateMythicKey(uint32 keyId)
+{
+    uint32 noSpaceForCount = 0;
+    ItemPosCountVec dest;
+    InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, keyId, 1, &noSpaceForCount);
+
+    if (dest.empty())
+    {
+        // -- TODO: Send to mailbox if no space
+        ChatHandler(GetSession()).PSendSysMessage("You don't have any space in your bags.");
+        return nullptr;
+    }
+
+    Item* item = StoreNewItem(dest, keyId, true);
+    if (item)
+        SendNewItem(item, 1, true, false);
+    return item;
+}
+
 PetStable& Player::GetOrInitPetStable()
 {
     if (!m_petStable)

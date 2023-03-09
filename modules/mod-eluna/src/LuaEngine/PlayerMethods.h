@@ -85,7 +85,7 @@ namespace LuaPlayer
         lua_newtable(L);
         int tbl = lua_gettop(L);
         uint32 counter = 1;
-        auto datas = TimedDungeonManager::GetDataTimedRun(player);
+        auto datas = MythicDungeonManager::GetDataMythicRun(player);
         for (const auto& data : datas)
         {
             Eluna::Push(L, data);
