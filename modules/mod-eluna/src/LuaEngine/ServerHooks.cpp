@@ -11,7 +11,7 @@
 #include "ElunaEventMgr.h"
 #include "ElunaIncludes.h"
 #include "ElunaTemplate.h"
-#include "TimeDungeonManager.h"
+#include "MythicDungeonManager.h"
 
 using namespace Hooks;
 

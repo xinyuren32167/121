@@ -1,4 +1,4 @@
-#include "TimeDungeonManager.h"
+#include "MythicDungeonManager.h"
 #include "Group.h"
 #include "Config.h"
 #include "ElunaIncludes.h"

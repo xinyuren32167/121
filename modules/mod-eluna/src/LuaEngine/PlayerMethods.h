@@ -9,7 +9,7 @@
 
 #include "GameTime.h"
 #include "PlayerSpecialization.h"
-#include "TimeDungeonManager.h"
+#include "MythicDungeonManager.h"
 
 /***
  * Inherits all methods from: [Object], [WorldObject], [Unit]
