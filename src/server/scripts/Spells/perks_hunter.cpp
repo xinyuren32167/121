@@ -17,6 +17,7 @@ enum HunterSpells
     SPELL_HUNTER_ASPECT_OF_THE_DRAGONHAWK = 5118,
     SPELL_HUNTER_ASPECT_OF_THE_HAWK = 27044,
     SPELL_HUNTER_ASPECT_OF_THE_MONKEY = 13163,
+    SPELL_HUNTER_ASPECT_OF_THE_WILD = 80130,
 
     SPELL_HUNTER_AIMED_SHOT = 49050,
     SPELL_HUNTER_ARCANE_SHOT = 49045,
@@ -27,6 +28,7 @@ enum HunterSpells
     SPELL_HUNTER_IMMOLATION_TRAP = 49056,
     SPELL_HUNTER_IMMOLATION_TRAP_DOT = 49054,
     SPELL_HUNTER_SNAKE_TRAP = 34600,
+    SPELL_HUNTER_SNAKE_TRAP_RANGED = 34601,
 
 
     SPELL_HUNTER_DISENGAGE = 781,
@@ -68,6 +70,8 @@ enum HunterSpells
     RUNE_HUNTER_TRICK_SHOTS_LISTENER = 500518,
 
     RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE = 500538,
+
+    RUNE_HUNTER_BLACK_MAMBA_DAMAGE = 500570,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -1300,6 +1304,269 @@ class rune_hunter_aspect_of_the_storm : public AuraScript
     }
 };
 
+class rune_hunter_black_mamba_proc : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_black_mamba_proc);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            int32 displayID = unit->GetNativeDisplayId();
+
+            if (displayID != 6303 && displayID != 2958 && displayID != 1206 && displayID != 2957)
+                continue;
+
+            GetCaster()->AddAura(procSpell, unit);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_black_mamba_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_black_mamba : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_black_mamba);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        Unit* pet = eventInfo.GetActor();
+        int32 attackPower = std::max<int32>(player->GetTotalAttackPowerValue(BASE_ATTACK), player->GetTotalAttackPowerValue(RANGED_ATTACK));
+        float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+        if (!victim || !player || !pet)
+            return;
+
+        player->CastCustomSpell(RUNE_HUNTER_BLACK_MAMBA_DAMAGE, SPELLVALUE_BASE_POINT0, damage, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_black_mamba::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_black_mamba::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_it_had_to_be_snake : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_it_had_to_be_snake);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        Position dest = victim->GetPosition();
+
+        GetCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), SPELL_HUNTER_SNAKE_TRAP_RANGED, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_it_had_to_be_snake::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_mighty_snake_trap : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_mighty_snake_trap);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            int32 displayID = unit->GetNativeDisplayId();
+
+            if (displayID != 6303 && displayID != 2958 && displayID != 1206 && displayID != 2957)
+                continue;
+
+            GetCaster()->AddAura(procSpell, unit);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_mighty_snake_trap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_master_handler_aura : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_master_handler_aura);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet && !pet->HasAura(procSpell))
+            GetCaster()->AddAura(procSpell, pet);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            if (!unit->HasAura(procSpell))
+                GetCaster()->AddAura(procSpell, unit);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_master_handler_aura::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_hunter_master_handler : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_master_handler);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = eventInfo.GetActor()->GetOwner()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_ASPECT_OF_THE_WILD, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_master_handler::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_ferocious_appetite : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_ferocious_appetite);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetCaster()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_ASPECT_OF_THE_WILD, -aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_ferocious_appetite::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_snake_bite : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_snake_bite);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500652))
+            return GetCaster()->GetAura(500652);
+
+        if (GetCaster()->HasAura(500653))
+            return GetCaster()->GetAura(500653);
+
+        if (GetCaster()->HasAura(500654))
+            return GetCaster()->GetAura(500654);
+
+        if (GetCaster()->HasAura(500655))
+            return GetCaster()->GetAura(500655);
+
+        if (GetCaster()->HasAura(500656))
+            return GetCaster()->GetAura(500656);
+
+        if (GetCaster()->HasAura(500657))
+            return GetCaster()->GetAura(500657);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(500658))
+            GetCaster()->RemoveAura(500658);
+
+        if (GetCaster()->HasAura(500659))
+            GetCaster()->RemoveAura(500659);
+
+        if (GetCaster()->HasAura(500660))
+            GetCaster()->RemoveAura(500660);
+
+        if (GetCaster()->HasAura(500661))
+            GetCaster()->RemoveAura(500661);
+
+        if (GetCaster()->HasAura(500662))
+            GetCaster()->RemoveAura(500662);
+
+        if (GetCaster()->HasAura(500663))
+            GetCaster()->RemoveAura(500663);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_snake_bite::HandleProc, EFFECT_0, SPELL_AURA_MOD_CRIT_PCT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_snake_bite::HandleRemove, EFFECT_0, SPELL_AURA_MOD_CRIT_PCT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -1339,7 +1606,16 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_trick_shots_listener);
     RegisterSpellScript(rune_hunter_trick_shots);
     RegisterSpellScript(rune_hunter_aspect_of_the_storm);
+    RegisterSpellScript(rune_hunter_black_mamba_proc);
+    RegisterSpellScript(rune_hunter_black_mamba);
+    RegisterSpellScript(rune_hunter_it_had_to_be_snake);
+    RegisterSpellScript(rune_hunter_mighty_snake_trap);
+    RegisterSpellScript(rune_hunter_master_handler_aura);
+    RegisterSpellScript(rune_hunter_master_handler);
+    RegisterSpellScript(rune_hunter_ferocious_appetite);
+    RegisterSpellScript(rune_hunter_snake_bite);
 
-    
+
+
     
 }
