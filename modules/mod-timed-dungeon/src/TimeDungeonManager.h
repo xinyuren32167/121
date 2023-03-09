@@ -21,6 +21,14 @@ struct MythicKey {
     uint32 level;
 };
 
+struct MythicKeyCompleted {
+    uint32 mapId;
+    uint32 level;
+    // 1 / 2 / 3
+    uint8 timer; 
+};
+
+
 
 struct Affixe {
     uint32 spellId;
@@ -79,9 +87,10 @@ public:
     static void OnPlayerRelease(Player* player);
     static bool MeetTheConditionsToCompleteTheDungeon(TimedRun run);
     // Fired when you loggin or when you enter on a mythic dungeon or and when you start a dungeon.
-    static std::vector<std::string> GetData(Player* player);
+    static std::vector<std::string> GetDataTimedRun(Player* player);
     static MythicKey GetCurrentMythicKey(Player* player);
     static std::vector<std::string> GetHighestCompletedDungeonThisWeek(Player* player);
+    static std::vector<std::string> GetHighestCompletedDungeonAllTime(Player* player);
     static std::vector<std::string> GetWeeklyAffixes(Player* player);
     static std::vector<std::string> GetDungeonBosses(Player* player);
     static std::vector<std::string> GetDungeonsEnabled(Player* player);

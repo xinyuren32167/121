@@ -472,7 +472,7 @@ bool TimedDungeonManager::MeetTheConditionsToCompleteTheDungeon(TimedRun run)
     return allBossesAreDead && run.enemyForces >= 100.0f;
 }
 
-std::vector<std::string> TimedDungeonManager::GetData(Player* player)
+std::vector<std::string> TimedDungeonManager::GetDataTimedRun(Player* player)
 {
     auto it = m_TimedRun.find(player->GetMap()->GetInstanceId());
 
@@ -518,7 +518,7 @@ std::vector<std::string> TimedDungeonManager::GetHighestCompletedDungeonThisWeek
     QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE createdAt >= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 4 HOUR) AND createdAt < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 7 DAY) AND guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
 
     if (!result)
-        return;
+        return elements;
 
     do
     {
@@ -526,7 +526,29 @@ std::vector<std::string> TimedDungeonManager::GetHighestCompletedDungeonThisWeek
         uint32 guid = fields[0].Get<uint32>();
         uint32 mapId = fields[1].Get<uint32>();
         uint32 level = fields[2].Get<uint32>();
-        uint8 timer = fields[2].Get<uint8>();
+        uint8 timer = fields[3].Get<uint8>();
+         
+    } while (result->NextRow());
+
+}
+
+
+std::vector<std::string> TimedDungeonManager::GetHighestCompletedDungeonAllTime(Player* player)
+{
+    std::vector<std::string> elements = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
+
+    if (!result)
+        return elements;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 guid = fields[0].Get<uint32>();
+        uint32 mapId = fields[1].Get<uint32>();
+        uint32 level = fields[2].Get<uint32>();
+        uint8 timer = fields[3].Get<uint8>();
 
     } while (result->NextRow());
 
