@@ -11,7 +11,7 @@
 #include "ElunaEventMgr.h"
 #include "ElunaIncludes.h"
 #include "ElunaTemplate.h"
-#include "TimeDungeonManager.h"
+#include "MythicDungeonManager.h"
 
 using namespace Hooks;
 
@@ -52,7 +52,7 @@ bool Eluna::OnAddonMessage(Player* sender, uint32 type, std::string& msg, Player
         if (prefix == "SetDungeonDifficulty")
         {
             uint8 mode = atoi(content.c_str());
-            TimedDungeonManager::HandleChangeDungeonDifficulty(sender, mode);
+            MythicDungeonManager::HandleChangeDungeonDifficulty(sender, mode);
         }
     }
 

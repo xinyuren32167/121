@@ -1380,6 +1380,7 @@ public:
     void LoadPet();
 
     bool AddItem(uint32 itemId, uint32 count);
+    Item* CreateMythicKey(uint32 keyId);
 
     /*********************************************************/
     /***                    GOSSIP SYSTEM                  ***/

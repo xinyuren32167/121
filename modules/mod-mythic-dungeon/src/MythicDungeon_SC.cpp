@@ -9,14 +9,14 @@
 #include "RunesManager.h"
 #include "LuaEngine.h"
 #include "Spell.h"
-#include "TimeDungeonManager.h"
+#include "MythicDungeonManager.h"
 #include <boost/algorithm/string.hpp>
 
  // Add player scripts
-class TimeDungeon_PlayerScripts : public PlayerScript
+class MythicDungeon_PlayerScripts : public PlayerScript
 {
 public:
-    TimeDungeon_PlayerScripts() : PlayerScript("TimeDungeon_PlayerScripts") { }
+    MythicDungeon_PlayerScripts() : PlayerScript("MythicDungeon_PlayerScripts") { }
 
     void OnLogin(Player* player) override
     {
@@ -41,10 +41,10 @@ public:
 };
 
 
-class TimeDungeon_WorldScript : public WorldScript
+class MythicDungeon_WorldScript : public WorldScript
 {
 public:
-    TimeDungeon_WorldScript() : WorldScript("TimeDungeon_WorldScript") { }
+    MythicDungeon_WorldScript() : WorldScript("MythicDungeon_WorldScript") { }
 
     void OnBeforeConfigLoad(bool reload) override
     {
@@ -53,8 +53,8 @@ public:
 
 
 // Add all scripts in one
-void AddSC_TimeDungeons()
+void AddSC_MythicDungeons()
 {
-    new TimeDungeon_PlayerScripts();
-    new TimeDungeon_WorldScript();
+    new MythicDungeon_PlayerScripts();
+    new MythicDungeon_WorldScript();
 }
