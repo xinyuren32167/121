@@ -188,7 +188,7 @@ std::vector<std::string> TimedDungeonManager::GetDungeonsEnabled(Player* player)
             Map* map = sMapMgr->FindBaseMap(dungeon.second.mapId);
             std::string fmt =
                 std::to_string(dungeon.second.mapId)
-                + ";" + map->GetMapName();
+                + ";" + map->GetMapName()
                 + ";" + std::to_string(dungeon.second.timeToComplete)
                 + ";" + std::to_string(dungeon.second.totalEnemyForces);
             elements.push_back(fmt);
@@ -530,6 +530,8 @@ std::vector<std::string> TimedDungeonManager::GetHighestCompletedDungeonThisWeek
          
     } while (result->NextRow());
 
+
+    return elements;
 }
 
 
@@ -551,5 +553,6 @@ std::vector<std::string> TimedDungeonManager::GetHighestCompletedDungeonAllTime(
         uint8 timer = fields[3].Get<uint8>();
 
     } while (result->NextRow());
+    return elements;
 
 }
