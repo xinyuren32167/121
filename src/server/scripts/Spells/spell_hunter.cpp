@@ -1554,10 +1554,16 @@ class spell_hun_steady_shot_concussive : public SpellScript
 
     void HandleBuff()
     {
-        if (GetExplTargetUnit()->HasAura(5116))
+        Unit* target = GetExplTargetUnit();
+
+        if (target->HasAura(5116))
         {
-            Aura* concussive = GetExplTargetUnit()->GetAura(5116);
-            concussive->SetDuration(concussive->GetDuration() + 3000);
+            Aura* concussive = target->GetAura(5116);
+
+            if (concussive->GetCasterGUID() == GetCaster()->GetGUID())
+            {
+                concussive->SetDuration(concussive->GetDuration() + 3000);
+            }
         }
     }
 
@@ -1589,12 +1595,19 @@ class spell_hun_kill_command : public SpellScript
 
     void HandleBuff()
     {
+        Player* caster = GetCaster()->ToPlayer();
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).BasePoints;
+        int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+
+        if (caster->HasSpell(80194))
+        {
+            int32 amount = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_1).CalcValue();
+            caster->ModifySpellCooldown(80194, amount);
+        }
     }
 
     void Register() override
@@ -1881,7 +1894,7 @@ class spell_hun_cobra_shot : public AuraScript
     void HandleCd(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).BasePoints;
+        int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).CalcValue();
         target->ModifySpellCooldown(80141, amount);
     }
 
@@ -1970,7 +1983,7 @@ class spell_hun_bloodshed : public SpellScript
     {
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).BasePoints;
+        int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
         pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
@@ -2146,6 +2159,74 @@ class spell_hun_call_of_wild_periodic : public SpellScript
     }
 };
 
+class spell_hun_harpoon : public SpellScript
+{
+    PrepareSpellScript(spell_hun_harpoon);
+
+    SpellCastResult CheckCast()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+
+        if (target->GetTypeId() == TYPEID_PLAYER && caster->GetExactDist(target) < 8.0f)
+            return SPELL_FAILED_TOO_CLOSE;
+
+        return SPELL_CAST_OK;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_hun_harpoon::CheckCast);
+    }
+};
+
+class spell_hun_fury_eagle : public SpellScript
+{
+    PrepareSpellScript(spell_hun_fury_eagle);
+
+    void HandleHit(SpellMissInfo missInfo)
+    {
+        Unit* target = GetExplTargetUnit();
+        int32 targetHealthPct = target->GetHealthPct();
+        int32 hpThreshold = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_2).CalcValue();
+
+        if (targetHealthPct < hpThreshold)
+        {
+            GetCaster()->CastSpell(GetCaster(), 80196, true);
+        }
+
+    }
+
+    void Register() override
+    {
+        BeforeHit += BeforeSpellHitFn(spell_hun_fury_eagle::HandleHit);
+    }
+};
+
+class spell_hun_flanking_strike : public SpellScript
+{
+    PrepareSpellScript(spell_hun_flanking_strike);
+
+    void HandleBuff()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* pet = caster->GetPet();
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 ratio = sSpellMgr->AssertSpellInfo(80197)->GetEffect(EFFECT_0).MiscValueB;
+        int32 damage = CalculatePct(ap, ratio);
+
+        if (!pet)
+            return;
+
+        pet->CastCustomSpellTrigger(80197, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_flanking_strike::HandleBuff);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -2205,4 +2286,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_dire_beast);
     RegisterSpellScript(spell_hun_call_of_wild);
     RegisterSpellScript(spell_hun_call_of_wild_periodic);
+    RegisterSpellScript(spell_hun_harpoon);
+    RegisterSpellScript(spell_hun_fury_eagle);
+    RegisterSpellScript(spell_hun_flanking_strike);
 }
