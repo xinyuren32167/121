@@ -6,8 +6,6 @@
 #include "boost/iterator/counting_iterator.hpp"
 
 std::map<uint32, TimedDungeon> TimedDungeonManager::m_TimedDungeon = {};
-std::map<uint32, MythicKey> TimedDungeonManager::m_TimedWeeklyDungeon = {};
-std::map<uint32, MythicKey> TimedDungeonManager::m_TimedAllTimedDungeon = {};
 std::map<uint32, std::vector<TimedRewardDungeon>> TimedDungeonManager::m_TimedRewardDungeon = {};
 std::map<uint32, std::vector<DungeonBoss>> TimedDungeonManager::m_TimedDungeonBosses = {};
 std::map<uint64, MythicKey> TimedDungeonManager::m_PlayerKey = {};
@@ -50,27 +48,6 @@ void TimedDungeonManager::InitializeWeeklyAffixes()
         uint32 level = fields[1].Get<uint32>();
         Affixe affixe = { spellId, level };
         m_WeeklyAffixes.push_back(affixe);
-    } while (result->NextRow());
-}
-
-void TimedDungeonManager::InitializeMythicKeyCompleted()
-{
-
-    m_TimedWeeklyDungeon = {};
-    m_TimedAllTimedDungeon = {};
-
-    QueryResult result = CharacterDatabase.Query("SELECT id, guid, mapId, MAX(`level`) FROM character_mythic_completed WHERE  GROUP BY guid, mapId");
-
-    if (!result)
-        return;
-
-    do
-    {
-        Field* fields = result->Fetch();
-        uint64 guid = fields[0].Get<uint64>();
-        uint32 mapId = fields[1].Get<uint32>();
-        uint32 level = fields[2].Get<uint32>();
-        m_TimedWeeklyDungeon[guid] = { mapId, level };
     } while (result->NextRow());
 }
 
@@ -160,22 +137,7 @@ void TimedDungeonManager::InitializeRewardsDungeons()
 
 void TimedDungeonManager::InitializeTimedDungeonBosses()
 {
-    m_TimedRewardDungeon = {};
-
-    QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic_rewards");
-
-    if (!result)
-        return;
-
-    do
-    {
-        Field* fields = result->Fetch();
-        uint32 mapId = fields[0].Get<uint32>();
-        uint32 itemId = fields[1].Get<uint32>();
-        uint32 level = fields[2].Get<uint32>();
-        TimedRewardDungeon reward = { mapId, itemId, level };
-        m_TimedRewardDungeon[mapId].push_back(reward);
-    } while (result->NextRow());
+   
 }
 
 
@@ -547,4 +509,25 @@ MythicKey TimedDungeonManager::GetCurrentMythicKey(Player* player)
         return it->second;
 
     return {};
+}
+
+std::vector<std::string> TimedDungeonManager::GetHighestCompletedDungeonThisWeek(Player* player)
+{
+    std::vector<std::string> elements = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE createdAt >= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 4 HOUR) AND createdAt < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 7 DAY) AND guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 guid = fields[0].Get<uint32>();
+        uint32 mapId = fields[1].Get<uint32>();
+        uint32 level = fields[2].Get<uint32>();
+        uint8 timer = fields[2].Get<uint8>();
+
+    } while (result->NextRow());
+
 }

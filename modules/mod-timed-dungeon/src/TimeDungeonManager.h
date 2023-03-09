@@ -56,8 +56,6 @@ struct TimedRun {
 
 class TimedDungeonManager {
 private:
-    static std::map<uint32, MythicKey> m_TimedWeeklyDungeon;
-    static std::map<uint32, MythicKey> m_TimedAllTimedDungeon;
 
     static std::map<uint32, std::vector<DungeonBoss>> m_TimedDungeonBosses;
     static std::map<uint32, TimedDungeon> m_TimedDungeon;
@@ -67,11 +65,10 @@ private:
     static std::map<uint32, TimedRun> m_TimedRun;
 public:
     static void InitializeMythicKeys();
+    static void InitializeTimedDungeonBosses();
     static void InitializeTimedDungeons();
     static void InitializeRewardsDungeons();
-    static void InitializeTimedDungeonBosses();
     static void InitializeWeeklyAffixes();
-    static void InitializeMythicKeyCompleted();
     static void Update(Map* map, uint32 diff);
     static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);
@@ -84,6 +81,7 @@ public:
     // Fired when you loggin or when you enter on a mythic dungeon or and when you start a dungeon.
     static std::vector<std::string> GetData(Player* player);
     static MythicKey GetCurrentMythicKey(Player* player);
+    static std::vector<std::string> GetHighestCompletedDungeonThisWeek(Player* player);
     static std::vector<std::string> GetWeeklyAffixes(Player* player);
     static std::vector<std::string> GetDungeonBosses(Player* player);
     static std::vector<std::string> GetDungeonsEnabled(Player* player);
