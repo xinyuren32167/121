@@ -2212,18 +2212,37 @@ class spell_hun_flanking_strike : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80197)->GetEffect(EFFECT_0).MiscValueB;
+        int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).MiscValueB;
         int32 damage = CalculatePct(ap, ratio);
+
+        Position targetPos = GetExplTargetUnit()->GetPosition();
 
         if (!pet)
             return;
 
-        pet->CastCustomSpellTrigger(80197, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        pet->GetMotionMaster()->MoveJump(targetPos, 15.0f, 15.0f);
+        pet->CastCustomSpellTrigger(80198, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_hun_flanking_strike::HandleBuff);
+    }
+};
+
+class spell_hun_rapid_fire : public SpellScript
+{
+    PrepareSpellScript(spell_hun_rapid_fire);
+
+    void HandleHit()
+    {
+        int32 focus = sSpellMgr->AssertSpellInfo(80147)->GetEffect(EFFECT_1).CalcValue();
+        GetCaster()->SetPower(POWER_FOCUS, GetCaster()->GetPower(POWER_FOCUS) + focus);
+    }
+
+    void Register() override
+    {
+        OnHit += SpellHitFn(spell_hun_rapid_fire::HandleHit);
     }
 };
 
@@ -2289,4 +2308,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_harpoon);
     RegisterSpellScript(spell_hun_fury_eagle);
     RegisterSpellScript(spell_hun_flanking_strike);
+    RegisterSpellScript(spell_hun_rapid_fire);
 }
