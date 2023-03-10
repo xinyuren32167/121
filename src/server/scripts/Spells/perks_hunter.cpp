@@ -21,6 +21,8 @@ enum HunterSpells
 
     SPELL_HUNTER_AIMED_SHOT = 49050,
     SPELL_HUNTER_ARCANE_SHOT = 49045,
+    SPELL_HUNTER_BARBED_SHOT = 80172,
+    SPELL_HUNTER_BARBED_SHOT_FRENZY = 80174,
 
     SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
     SPELL_HUNTER_FREEZING_TRAP = 80139,
@@ -72,6 +74,11 @@ enum HunterSpells
     RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE = 500538,
 
     RUNE_HUNTER_BLACK_MAMBA_DAMAGE = 500570,
+
+    RUNE_HUNTER_STOMP_DAMAGE = 500730,
+
+    RUNE_HUNTER_BLOODTHIRSTY_WRATH_HEAL = 500750,
+    RUNE_HUNTER_BLOODTHIRSTY_WRATH_SHIELD = 500751,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -1565,6 +1572,308 @@ class rune_hunter_snake_bite : public AuraScript
     }
 };
 
+class rune_hunter_war_orders : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_war_orders);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_war_orders::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_scent_of_blood : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_scent_of_blood);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500682))
+            return GetCaster()->GetAura(500682);
+
+        if (GetCaster()->HasAura(500683))
+            return GetCaster()->GetAura(500683);
+
+        if (GetCaster()->HasAura(500684))
+            return GetCaster()->GetAura(500684);
+
+        if (GetCaster()->HasAura(500685))
+            return GetCaster()->GetAura(500685);
+
+        if (GetCaster()->HasAura(500686))
+            return GetCaster()->GetAura(500686);
+
+        if (GetCaster()->HasAura(500687))
+            return GetCaster()->GetAura(500687);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_BARBED_SHOT, true);
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(500688))
+            GetCaster()->RemoveAura(500688);
+
+        if (GetCaster()->HasAura(500689))
+            GetCaster()->RemoveAura(500689);
+
+        if (GetCaster()->HasAura(500690))
+            GetCaster()->RemoveAura(500690);
+
+        if (GetCaster()->HasAura(500691))
+            GetCaster()->RemoveAura(500691);
+
+        if (GetCaster()->HasAura(500692))
+            GetCaster()->RemoveAura(500692);
+
+        if (GetCaster()->HasAura(500693))
+            GetCaster()->RemoveAura(500693);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_scent_of_blood::HandleProc, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_scent_of_blood::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_deaths_dance : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_deaths_dance);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, eventInfo.GetActionTarget()), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, eventInfo.GetActionTarget()));
+        uint32 random = urand(1, 100);
+
+        return random <= criticalChance;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_deaths_dance::CheckProc);
+    }
+};
+
+class rune_hunter_brutal_companion : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_brutal_companion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* pet = GetCaster()->ToPlayer()->GetPet()->ToUnit();
+
+        if (!pet)
+            return false;
+
+        if (!pet->HasAura(SPELL_HUNTER_BARBED_SHOT_FRENZY))
+            return false;
+
+        if (pet->GetAura(SPELL_HUNTER_BARBED_SHOT_FRENZY)->GetStackAmount() >= 3)
+            return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetActionTarget();
+
+        if (!victim)
+            return;
+
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            int32 coolDown = caster->GetSpellCooldownDelay(SPELL_HUNTER_KILL_COMMAND);
+            int32 arcaneShotCooldown = sSpellMgr->GetSpellInfo(SPELL_HUNTER_KILL_COMMAND)->GetRecoveryTime();
+            int32 cooldownReduction = arcaneShotCooldown - coolDown;
+
+            caster->CastSpell(victim, SPELL_HUNTER_KILL_COMMAND, TRIGGERED_FULL_MASK);
+
+            caster->ModifySpellCooldown(SPELL_HUNTER_KILL_COMMAND, -cooldownReduction);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_brutal_companion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_brutal_companion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_stomp : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_stomp);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int32 attackPower = std::max<int32>(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK));
+        float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet)
+            pet->CastCustomSpell(RUNE_HUNTER_STOMP_DAMAGE, SPELLVALUE_BASE_POINT0, damage, pet, TRIGGERED_FULL_MASK);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            unit->CastCustomSpell(RUNE_HUNTER_STOMP_DAMAGE, SPELLVALUE_BASE_POINT0, damage, unit, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_stomp::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_bloodthirsty_wrath : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_bloodthirsty_wrath);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500738))
+            return GetCaster()->GetAura(500738);
+
+        if (GetCaster()->HasAura(500739))
+            return GetCaster()->GetAura(500739);
+
+        if (GetCaster()->HasAura(500740))
+            return GetCaster()->GetAura(500740);
+
+        if (GetCaster()->HasAura(500741))
+            return GetCaster()->GetAura(500741);
+
+        if (GetCaster()->HasAura(500742))
+            return GetCaster()->GetAura(500742);
+
+        if (GetCaster()->HasAura(500743))
+            return GetCaster()->GetAura(500743);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(500744))
+            GetCaster()->RemoveAura(500744);
+
+        if (GetCaster()->HasAura(500745))
+            GetCaster()->RemoveAura(500745);
+
+        if (GetCaster()->HasAura(500746))
+            GetCaster()->RemoveAura(500746);
+
+        if (GetCaster()->HasAura(500747))
+            GetCaster()->RemoveAura(500747);
+
+        if (GetCaster()->HasAura(500748))
+            GetCaster()->RemoveAura(500748);
+
+        if (GetCaster()->HasAura(500749))
+            GetCaster()->RemoveAura(500749);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_bloodthirsty_wrath::HandleProc, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_bloodthirsty_wrath::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_bloodthirsty_wrath_heal : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_bloodthirsty_wrath_heal);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+        int32 maxHealth = GetCaster()->GetMaxHealth();
+        int32 currentHealth = GetCaster()->GetHealth();
+
+        if (currentHealth + amount <= maxHealth)
+            GetCaster()->CastCustomSpell(RUNE_HUNTER_BLOODTHIRSTY_WRATH_HEAL, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        else
+        {
+            int32 newAmount = 0;
+
+            if (currentHealth != maxHealth)
+            {
+                newAmount = maxHealth - currentHealth;
+                GetCaster()->CastCustomSpell(RUNE_HUNTER_BLOODTHIRSTY_WRATH_HEAL, SPELLVALUE_BASE_POINT0, newAmount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+
+            int32 shieldAmount = amount - newAmount;
+            int32 maxShieldThreshold = CalculatePct(maxHealth, GetAura()->GetEffect(EFFECT_1)->GetAmount());
+
+            if (GetCaster()->HasAura(RUNE_HUNTER_BLOODTHIRSTY_WRATH_SHIELD))
+                shieldAmount += GetCaster()->GetAura(RUNE_HUNTER_BLOODTHIRSTY_WRATH_SHIELD)->GetEffect(EFFECT_0)->GetAmount();
+
+            int32 shield = std::min<int32>(shieldAmount, maxShieldThreshold);
+
+            GetCaster()->CastCustomSpell(RUNE_HUNTER_BLOODTHIRSTY_WRATH_SHIELD, SPELLVALUE_BASE_POINT0, shield, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_bloodthirsty_wrath_heal::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_bloodthirsty_wrath_heal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 
 
 void AddSC_hunter_perks_scripts()
@@ -1614,8 +1923,15 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_master_handler);
     RegisterSpellScript(rune_hunter_ferocious_appetite);
     RegisterSpellScript(rune_hunter_snake_bite);
+    RegisterSpellScript(rune_hunter_war_orders);
+    RegisterSpellScript(rune_hunter_scent_of_blood);
+    RegisterSpellScript(rune_hunter_deaths_dance);
+    RegisterSpellScript(rune_hunter_brutal_companion);
+    RegisterSpellScript(rune_hunter_stomp);
+    RegisterSpellScript(rune_hunter_bloodthirsty_wrath);
+    RegisterSpellScript(rune_hunter_bloodthirsty_wrath_heal);
 
 
 
-    
+
 }
