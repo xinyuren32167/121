@@ -43,6 +43,8 @@ enum HunterSpells
 {
     // Ours
     SPELL_HUNTER_WYVERN_STING_DOT = 80156,
+    SPELL_HUNTER_WILDFIRE_BOMB = 80188,
+    SPELL_HUNTER_KILL_SHOT = 61006,
 
     // Theirs
     SPELL_HUNTER_ASPECT_OF_THE_BEAST = 49071,
@@ -2212,7 +2214,7 @@ class spell_hun_flanking_strike : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).MiscValueB;
+        int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
         Position targetPos = GetExplTargetUnit()->GetPosition();
@@ -2243,6 +2245,149 @@ class spell_hun_rapid_fire : public SpellScript
     void Register() override
     {
         OnHit += SpellHitFn(spell_hun_rapid_fire::HandleHit);
+    }
+};
+
+class spell_hun_coordinated_assault : public SpellScript
+{
+    PrepareSpellScript(spell_hun_coordinated_assault);
+
+    void HandleBuff()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* pet = caster->GetPet();
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 ratio = sSpellMgr->AssertSpellInfo(80203)->GetEffect(EFFECT_0).CalcValue();
+        int32 damage = CalculatePct(ap, ratio);
+
+        if (!pet)
+            return;
+
+        pet->CastCustomSpellTrigger(80203, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        GetCaster()->AddAura(80202, GetCaster());
+        GetCaster()->AddAura(80204, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_coordinated_assault::HandleBuff);
+    }
+};
+
+class rune_hun_coordinated_bleed : public AuraScript
+{
+    PrepareAuraScript(rune_hun_coordinated_bleed);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        if (!GetCaster()->HasSpell(80200))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        int32 damagePct = sSpellMgr->AssertSpellInfo(80202)->GetEffect(EFFECT_1).CalcValue();
+        float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), damagePct);
+        int32 amount = std::max<int32>(0, damage);
+
+        GetCaster()->CastCustomSpell(80201, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hun_coordinated_bleed::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hun_coordinated_bleed::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_coordinated_buff_handler_primary : public AuraScript
+{
+    PrepareAuraScript(spell_hun_coordinated_buff_handler_primary);
+
+    void HandlePrimary(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(80204);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_coordinated_buff_handler_primary::HandlePrimary, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_coordinated_buff_handler_secondary : public AuraScript
+{
+    PrepareAuraScript(spell_hun_coordinated_buff_handler_secondary);
+
+    void HandlePrimary(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(80202);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_coordinated_buff_handler_secondary::HandlePrimary, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_spearhead : public SpellScript
+{
+    PrepareSpellScript(spell_hun_spearhead);
+
+    void HandleBuff()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* pet = caster->GetPet();
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue;
+        int32 damage = CalculatePct(ap, ratio);
+
+        if (!pet)
+            return;
+
+        pet->CastCustomSpellTrigger(80207, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_spearhead::HandleBuff);
+    }
+};
+
+class spell_hun_spearhead_buff : public AuraScript
+{
+    PrepareAuraScript(spell_hun_spearhead_buff);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasSpell(80206))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->AddAura(80208, GetCaster());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_hun_spearhead_buff::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_hun_spearhead_buff::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2309,4 +2454,10 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_fury_eagle);
     RegisterSpellScript(spell_hun_flanking_strike);
     RegisterSpellScript(spell_hun_rapid_fire);
+    RegisterSpellScript(spell_hun_coordinated_assault);
+    RegisterSpellScript(spell_hun_coordinated_buff_handler_primary);
+    RegisterSpellScript(spell_hun_coordinated_buff_handler_secondary);
+    RegisterSpellScript(rune_hun_coordinated_bleed);
+    RegisterSpellScript(spell_hun_spearhead);
+    RegisterSpellScript(spell_hun_spearhead_buff);
 }
