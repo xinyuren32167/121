@@ -2352,7 +2352,7 @@ class spell_hun_spearhead : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue;
+        int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
         if (!pet)
