@@ -1595,7 +1595,7 @@ class spell_hun_kill_command : public SpellScript
 {
     PrepareSpellScript(spell_hun_kill_command);
 
-    void HandleBuff()
+    void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
@@ -1612,9 +1612,27 @@ class spell_hun_kill_command : public SpellScript
         }
     }
 
+    void HandleAfterCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (caster->HasAura(80208))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(80208)->GetEffect(EFFECT_2).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            LOG_ERROR("error", "{}", didProc);
+            if (didProc == true)
+            {
+                caster->RemoveSpellCooldown(80141, true);
+                LOG_ERROR("error", "procced");
+            }
+        }
+    }
+
     void Register() override
     {
-        OnCast += SpellCastFn(spell_hun_kill_command::HandleBuff);
+        OnCast += SpellCastFn(spell_hun_kill_command::HandleCast);
+        AfterCast += SpellCastFn(spell_hun_kill_command::HandleAfterCast);
     }
 };
 
@@ -2367,27 +2385,23 @@ class spell_hun_spearhead : public SpellScript
     }
 };
 
-class spell_hun_spearhead_buff : public AuraScript
+class spell_hun_spearhead_buff : public SpellScript
 {
-    PrepareAuraScript(spell_hun_spearhead_buff);
+    PrepareSpellScript(spell_hun_spearhead_buff);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
+    void HandleProc()
     {
         if (!GetCaster()->HasSpell(80206))
-            return false;
+            return;
 
-        return true;
-    }
+        Unit* pet = GetCaster()->ToPlayer()->GetPet();
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
         GetCaster()->AddAura(80208, GetCaster());
     }
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(spell_hun_spearhead_buff::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_hun_spearhead_buff::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnCast += SpellCastFn(spell_hun_spearhead_buff::HandleProc);
     }
 };
 
