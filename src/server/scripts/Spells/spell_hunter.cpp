@@ -2208,6 +2208,10 @@ class spell_hun_fury_eagle : public SpellScript
     void HandleHit(SpellMissInfo missInfo)
     {
         Unit* target = GetExplTargetUnit();
+
+        if (!target)
+            return;
+
         int32 targetHealthPct = target->GetHealthPct();
         int32 hpThreshold = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_2).CalcValue();
 
@@ -2215,7 +2219,6 @@ class spell_hun_fury_eagle : public SpellScript
         {
             GetCaster()->CastSpell(GetCaster(), 80196, true);
         }
-
     }
 
     void Register() override
