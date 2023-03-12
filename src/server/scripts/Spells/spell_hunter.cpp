@@ -1557,6 +1557,7 @@ class spell_hun_steady_shot_concussive : public SpellScript
     void HandleBuff()
     {
         Unit* target = GetExplTargetUnit();
+        int32 increaseAmount = sSpellMgr->AssertSpellInfo(5116)->GetEffect(EFFECT_1).CalcValue();
 
         if (target->HasAura(5116))
         {
@@ -1564,7 +1565,7 @@ class spell_hun_steady_shot_concussive : public SpellScript
 
             if (concussive->GetCasterGUID() == GetCaster()->GetGUID())
             {
-                concussive->SetDuration(concussive->GetDuration() + 3000);
+                concussive->SetDuration(concussive->GetDuration() + increaseAmount);
             }
         }
     }
