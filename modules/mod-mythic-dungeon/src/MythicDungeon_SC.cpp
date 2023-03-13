@@ -40,6 +40,17 @@ public:
 
 };
 
+class MythicDungeon_AllMapScript : public AllMapScript
+{
+public:
+    MythicDungeon_AllMapScript() : AllMapScript("MythicDungeon_AllMapScript") { }
+   
+    void OnMapUpdate(Map* map, uint32 diff) override
+    {
+       MythicDungeonManager::Update(map, diff);
+    }
+};
+
 
 class MythicDungeon_WorldScript : public WorldScript
 {
@@ -48,6 +59,11 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
+        MythicDungeonManager::InitializeRewardsDungeons();
+        MythicDungeonManager::InitializeMythicDungeons();
+        MythicDungeonManager::InitializeMythicDungeonBosses();
+        MythicDungeonManager::InitializeWeeklyAffixes();
+        MythicDungeonManager::InitializeMythicKeys();
     }
 };
 
@@ -57,4 +73,5 @@ void AddSC_MythicDungeons()
 {
     new MythicDungeon_PlayerScripts();
     new MythicDungeon_WorldScript();
+    new MythicDungeon_AllMapScript();
 }

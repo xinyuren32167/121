@@ -1627,11 +1627,9 @@ class spell_hun_kill_command : public SpellScript
         {
             int32 procChance = sSpellMgr->AssertSpellInfo(80208)->GetEffect(EFFECT_2).CalcValue();
             bool didProc = roll_chance_i(procChance);
-            LOG_ERROR("error", "{}", didProc);
             if (didProc == true)
             {
                 caster->RemoveSpellCooldown(80141, true);
-                LOG_ERROR("error", "procced");
             }
         }
     }
@@ -2421,6 +2419,98 @@ class spell_hun_spearhead_buff : public SpellScript
     }
 };
 
+class spell_hun_cobra_sting : public SpellScript
+{
+    PrepareSpellScript(spell_hun_cobra_sting);
+
+    void HandleAfterCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (caster->HasAura(24443))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(24443)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            if (didProc == true)
+            {
+                caster->RemoveSpellCooldown(80172, true);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_hun_cobra_sting::HandleAfterCast);
+    }
+};
+
+class spell_hun_aspect_mastery_crit : public AuraScript
+{
+    PrepareAuraScript(spell_hun_aspect_mastery_crit);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (caster->HasAura(53265))
+            caster->AddAura(80213, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        caster->RemoveAura(80213);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_mastery_crit::HandleProc, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_mastery_crit::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_aspect_mastery_ranged_damage : public AuraScript
+{
+    PrepareAuraScript(spell_hun_aspect_mastery_ranged_damage);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (caster->HasAura(53265))
+            caster->AddAura(80214, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        caster->RemoveAura(80214);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_mastery_ranged_damage::HandleProc, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_mastery_ranged_damage::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_wild_call : public SpellScript
+{
+    PrepareSpellScript(spell_hun_wild_call);
+
+    void HandleAfterCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        caster->RemoveSpellCooldown(80172, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_wild_call::HandleAfterCast);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -2490,4 +2580,8 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(rune_hun_coordinated_bleed);
     RegisterSpellScript(spell_hun_spearhead);
     RegisterSpellScript(spell_hun_spearhead_buff);
+    RegisterSpellScript(spell_hun_cobra_sting);
+    RegisterSpellScript(spell_hun_aspect_mastery_crit);
+    RegisterSpellScript(spell_hun_aspect_mastery_ranged_damage);
+    RegisterSpellScript(spell_hun_wild_call);
 }

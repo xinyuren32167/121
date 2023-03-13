@@ -259,6 +259,14 @@ void TempSummon::InitSummon()
             owner->ToCreature()->AI()->JustSummoned(this);
 
         if (owner->GetTypeId() == TYPEID_PLAYER) {
+            Pet* pet = owner->ToPlayer()->GetPet();
+            if (pet) {
+                Aura* aura = pet->GetAura(80132);
+                if (aura) {
+                    AddAura(80132, owner);
+                    aura->SetDuration(aura->GetDuration());
+                }
+            }
             owner->ToPlayer()->AddSummonUnit(this);
         }
     }
