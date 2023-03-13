@@ -24,6 +24,9 @@ enum HunterSpells
     SPELL_HUNTER_BARBED_SHOT = 80172,
     SPELL_HUNTER_BARBED_SHOT_FRENZY = 80174,
 
+    SPELL_HUNTER_BESTIAL_WRATH = 80133,
+    SPELL_HUNTER_BESTIAL_WRATH_AURA = 80132,
+
     SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
     SPELL_HUNTER_FREEZING_TRAP = 80139,
     SPELL_HUNTER_FROST_TRAP = 13809,
@@ -79,6 +82,8 @@ enum HunterSpells
 
     RUNE_HUNTER_BLOODTHIRSTY_WRATH_HEAL = 500750,
     RUNE_HUNTER_BLOODTHIRSTY_WRATH_SHIELD = 500751,
+
+    RUNE_HUNTER_THUNDERSLASH_DAMAGE = 500814,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -1469,9 +1474,38 @@ class rune_hunter_master_handler_aura : public AuraScript
         }
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet && pet->HasAura(procSpell))
+            pet->RemoveAura(procSpell);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            if (unit->HasAura(procSpell))
+                unit->RemoveAura(procSpell);
+        }
+    }
+
     void Register() override
     {
         OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_master_handler_aura::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_master_handler_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1873,6 +1907,372 @@ class rune_hunter_bloodthirsty_wrath_heal : public AuraScript
     }
 };
 
+class rune_hunter_2wolves_1man : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_2wolves_1man);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500752))
+            return GetCaster()->GetAura(500752);
+
+        if (GetCaster()->HasAura(500753))
+            return GetCaster()->GetAura(500753);
+
+        if (GetCaster()->HasAura(500754))
+            return GetCaster()->GetAura(500754);
+
+        if (GetCaster()->HasAura(500755))
+            return GetCaster()->GetAura(500755);
+
+        if (GetCaster()->HasAura(500756))
+            return GetCaster()->GetAura(500756);
+
+        if (GetCaster()->HasAura(500757))
+            return GetCaster()->GetAura(500757);
+
+        return nullptr;
+    }
+
+    void HandleBuff()
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 procChance = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
+        int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        int32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(rune_hunter_2wolves_1man::HandleBuff);
+    }
+};
+
+class rune_hunter_howl : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_howl);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* pet = player->GetPet()->ToUnit();
+        int32 increasedDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 baseDuration = aurEff->GetAmount();
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+
+        if (Aura* auraEff = player->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + increasedDuration, auraEff->GetMaxDuration() + 10000));
+
+            auraEff->SetDuration(duration);
+
+            if (pet && pet->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
+                pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+            else
+            {
+                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
+                pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+            }
+            for (auto const& unit : summonedUnits)
+            {
+                if (unit->isDead())
+                    continue;
+
+                if (unit->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
+                    unit->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+                else
+                {
+                    player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, unit);
+                    unit->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+                }
+            }
+        }
+        else
+        {
+            player->AddAura(SPELL_HUNTER_BESTIAL_WRATH, player);
+            player->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
+
+            if (pet)
+            {
+                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH, pet);
+                pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
+            }
+
+            for (auto const& unit : summonedUnits)
+            {
+                if (unit->isDead())
+                    continue;
+
+                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH, unit);
+                unit->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_howl::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_barbed_wrath : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_barbed_wrath);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_BESTIAL_WRATH, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_barbed_wrath::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_sustained_anger : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_sustained_anger);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA);
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int32 procSpell = aurEff->GetAmount();
+
+        if (!player)
+            return;
+
+        player->CastSpell(player, procSpell, TRIGGERED_FULL_MASK);
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet)
+            player->CastSpell(pet, procSpell, TRIGGERED_FULL_MASK);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            player->CastSpell(unit, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_sustained_anger::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_sustained_anger::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_killer_cobra_apply : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_killer_cobra_apply);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500784))
+            return GetCaster()->GetAura(500784);
+
+        if (GetCaster()->HasAura(500785))
+            return GetCaster()->GetAura(500785);
+
+        if (GetCaster()->HasAura(500786))
+            return GetCaster()->GetAura(500786);
+
+        if (GetCaster()->HasAura(500787))
+            return GetCaster()->GetAura(500787);
+
+        if (GetCaster()->HasAura(500788))
+            return GetCaster()->GetAura(500788);
+
+        if (GetCaster()->HasAura(500789))
+            return GetCaster()->GetAura(500789);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(500790))
+            GetCaster()->RemoveAura(500790);
+
+        if (GetCaster()->HasAura(500791))
+            GetCaster()->RemoveAura(500791);
+
+        if (GetCaster()->HasAura(500792))
+            GetCaster()->RemoveAura(500792);
+
+        if (GetCaster()->HasAura(500793))
+            GetCaster()->RemoveAura(500793);
+
+        if (GetCaster()->HasAura(500794))
+            GetCaster()->RemoveAura(500794);
+
+        if (GetCaster()->HasAura(500795))
+            GetCaster()->RemoveAura(500795);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_killer_cobra_apply::HandleProc, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_killer_cobra_apply::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_killer_cobra : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_killer_cobra);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_killer_cobra::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_hunter_thunderslash_aura : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_thunderslash_aura);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet && !pet->HasAura(procSpell))
+            player->AddAura(procSpell, pet);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            if (!unit->HasAura(procSpell))
+                player->AddAura(procSpell, unit);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        int32 procSpell = aurEff->GetAmount();
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        Unit* pet = player->GetPet()->ToUnit();
+
+        if (pet && pet->HasAura(procSpell))
+            pet->RemoveAura(procSpell);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+        if (summonedUnits.empty())
+            return;
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            if (unit->HasAura(procSpell))
+                unit->RemoveAura(procSpell);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_thunderslash_aura::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_thunderslash_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_thunderslash : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_thunderslash);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        if (!eventInfo.GetActor()->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* actor = eventInfo.GetActor();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 amount = std::max<int32>(0, damage);
+
+        actor->CastCustomSpell(RUNE_HUNTER_SERPENT_TOUCH_DAMAGE, SPELLVALUE_BASE_POINT0, amount, actor, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_thunderslash::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_thunderslash::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+
+
+
 
 
 
@@ -1930,8 +2330,17 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_stomp);
     RegisterSpellScript(rune_hunter_bloodthirsty_wrath);
     RegisterSpellScript(rune_hunter_bloodthirsty_wrath_heal);
+    RegisterSpellScript(rune_hunter_2wolves_1man);
+    RegisterSpellScript(rune_hunter_howl);
+    RegisterSpellScript(rune_hunter_barbed_wrath);
+    RegisterSpellScript(rune_hunter_sustained_anger);
+    RegisterSpellScript(rune_hunter_killer_cobra_apply);
+    RegisterSpellScript(rune_hunter_killer_cobra);
+    RegisterSpellScript(rune_hunter_thunderslash_aura);
+    RegisterSpellScript(rune_hunter_thunderslash);
 
 
 
 
+    
 }
