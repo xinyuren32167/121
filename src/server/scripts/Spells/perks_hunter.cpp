@@ -35,7 +35,7 @@ enum HunterSpells
     SPELL_HUNTER_SNAKE_TRAP = 34600,
     SPELL_HUNTER_SNAKE_TRAP_RANGED = 34601,
 
-
+    SPELL_HUNTER_CALL_OF_THE_WILD = 80186,
     SPELL_HUNTER_DISENGAGE = 781,
     SPELL_HUNTER_EXHILARATION = 80161,
     SPELL_HUNTER_FEIGN_DEATH = 5384,
@@ -333,7 +333,7 @@ class rune_hunter_might_of_the_beast : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
             GetCaster()->AddAura(procSpell, pet);
@@ -806,7 +806,7 @@ class rune_hunter_cleave_command_proc : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
             GetCaster()->AddAura(procSpell, pet);
@@ -866,7 +866,7 @@ class rune_hunter_strength_of_the_pack : public AuraScript
 
         player->AddAura(procSpell, player);
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
             GetCaster()->AddAura(procSpell, pet);
@@ -1138,7 +1138,7 @@ class rune_hunter_good_health : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (!pet)
             return;
@@ -1170,7 +1170,7 @@ class rune_hunter_beast_cleave_proc : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
             GetCaster()->AddAura(procSpell, pet);
@@ -1291,7 +1291,7 @@ class rune_hunter_aspect_of_the_storm : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
             pet->CastCustomSpell(RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE, SPELLVALUE_BASE_POINT0, damage, pet, TRIGGERED_FULL_MASK);
@@ -1454,7 +1454,7 @@ class rune_hunter_master_handler_aura : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet && !pet->HasAura(procSpell))
             GetCaster()->AddAura(procSpell, pet);
@@ -1482,7 +1482,7 @@ class rune_hunter_master_handler_aura : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet && pet->HasAura(procSpell))
             pet->RemoveAura(procSpell);
@@ -1714,7 +1714,7 @@ class rune_hunter_brutal_companion : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        Unit* pet = GetCaster()->ToPlayer()->GetPet()->ToUnit();
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
 
         if (!pet)
             return false;
@@ -1765,7 +1765,7 @@ class rune_hunter_stomp : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
             pet->CastCustomSpell(RUNE_HUNTER_STOMP_DAMAGE, SPELLVALUE_BASE_POINT0, damage, pet, TRIGGERED_FULL_MASK);
@@ -1962,7 +1962,7 @@ class rune_hunter_howl : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         Player* player = GetCaster()->ToPlayer();
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
         int32 increasedDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
         int32 baseDuration = aurEff->GetAmount();
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -1981,6 +1981,7 @@ class rune_hunter_howl : public AuraScript
                 player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
                 pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
             }
+
             for (auto const& unit : summonedUnits)
             {
                 if (unit->isDead())
@@ -1997,12 +1998,12 @@ class rune_hunter_howl : public AuraScript
         }
         else
         {
-            player->AddAura(SPELL_HUNTER_BESTIAL_WRATH, player);
+            player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, player);
             player->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
 
             if (pet)
             {
-                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH, pet);
+                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
                 pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
             }
 
@@ -2011,7 +2012,7 @@ class rune_hunter_howl : public AuraScript
                 if (unit->isDead())
                     continue;
 
-                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH, unit);
+                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, unit);
                 unit->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
             }
         }
@@ -2057,10 +2058,10 @@ class rune_hunter_sustained_anger : public AuraScript
             return;
 
         player->CastSpell(player, procSpell, TRIGGERED_FULL_MASK);
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet)
-            player->CastSpell(pet, procSpell, TRIGGERED_FULL_MASK);
+            pet->CastSpell(pet, procSpell, TRIGGERED_FULL_MASK);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
@@ -2069,7 +2070,7 @@ class rune_hunter_sustained_anger : public AuraScript
             if (unit->isDead())
                 continue;
 
-            player->CastSpell(unit, procSpell, TRIGGERED_FULL_MASK);
+            unit->CastSpell(unit, procSpell, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2157,7 +2158,7 @@ class rune_hunter_killer_cobra : public AuraScript
 
     void Register()
     {
-        OnEffectProc += AuraEffectProcFn(rune_hunter_killer_cobra::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_killer_cobra::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2173,7 +2174,7 @@ class rune_hunter_thunderslash_aura : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet && !pet->HasAura(procSpell))
             player->AddAura(procSpell, pet);
@@ -2201,10 +2202,12 @@ class rune_hunter_thunderslash_aura : public AuraScript
         if (!player)
             return;
 
-        Unit* pet = player->GetPet()->ToUnit();
+        Pet* pet = player->GetPet();
 
         if (pet && pet->HasAura(procSpell))
             pet->RemoveAura(procSpell);
+
+        pet->CastSpell(pet, 500, TRIGGERED_FULL_MASK);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
@@ -2234,12 +2237,13 @@ class rune_hunter_thunderslash : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        LOG_ERROR("error", "thunderslash proc");
         if (!eventInfo.GetDamageInfo())
             return false;
-
+        LOG_ERROR("error", "thunderslash check 1");
         if (!eventInfo.GetActor()->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
             return false;
-
+        LOG_ERROR("error", "thunderslash check 2");
         return true;
     }
 
@@ -2250,16 +2254,16 @@ class rune_hunter_thunderslash : public AuraScript
 
         if (!victim)
             return;
-
+        LOG_ERROR("error", "thunderslash check 3");
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
 
         if (damageDealt <= 0)
             return;
-
+        LOG_ERROR("error", "thunderslash check 4");
         float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        actor->CastCustomSpell(RUNE_HUNTER_SERPENT_TOUCH_DAMAGE, SPELLVALUE_BASE_POINT0, amount, actor, TRIGGERED_FULL_MASK);
+        actor->CastCustomSpell(RUNE_HUNTER_THUNDERSLASH_DAMAGE, SPELLVALUE_BASE_POINT0, amount, actor, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -2268,6 +2272,38 @@ class rune_hunter_thunderslash : public AuraScript
         OnEffectProc += AuraEffectProcFn(rune_hunter_thunderslash::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
+class rune_hunter_wild_instincts : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_wild_instincts);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        if (!GetCaster()->HasAura(SPELL_HUNTER_CALL_OF_THE_WILD))
+            return false;
+
+        if (eventInfo.GetSpellInfo()->ManaCost <= 0)
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_BARBED_SHOT, true);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_wild_instincts::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_wild_instincts::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -2338,9 +2374,10 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_killer_cobra);
     RegisterSpellScript(rune_hunter_thunderslash_aura);
     RegisterSpellScript(rune_hunter_thunderslash);
+    RegisterSpellScript(rune_hunter_wild_instincts);
 
 
 
 
-    
+
 }
