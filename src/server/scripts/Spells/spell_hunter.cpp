@@ -1599,23 +1599,54 @@ class spell_hun_kill_command : public SpellScript
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
-        if (Unit* target = GetHitUnit())
+        if (target)
         {
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         if (caster->HasSpell(80194))
         {
             int32 amount = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_1).CalcValue();
             caster->ModifySpellCooldown(80194, amount);
+        }
+
+        if (caster->HasAura(34462))
+        {
+            int32 procFirstRank = sSpellMgr->AssertSpellInfo(34462)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procFirstRank);
+            if (didProc == true)
+            {
+                caster->CastSpell(target,80219,true);
+            }
+        }
+
+        if (caster->HasAura(34464))
+        {
+            int32 procFirstRank = sSpellMgr->AssertSpellInfo(34464)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procFirstRank);
+            if (didProc == true)
+            {
+                caster->CastSpell(target, 80219, true);
+            }
+        }
+
+        if (caster->HasAura(34465))
+        {
+            int32 procFirstRank = sSpellMgr->AssertSpellInfo(34465)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procFirstRank);
+            if (didProc == true)
+            {
+                caster->CastSpell(target, 80219, true);
+            }
         }
     }
 
@@ -2007,17 +2038,18 @@ class spell_hun_bloodshed : public SpellScript
     void HandleBuff()
     {
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
+        Unit* target = GetHitUnit();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
-        if (Unit* target = GetHitUnit())
+        if (target)
         {
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2244,10 +2276,17 @@ class spell_hun_flanking_strike : public SpellScript
     void HandleBuff()
     {
         Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
+
+        if (target)
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
 
         Position targetPos = GetExplTargetUnit()->GetPosition();
 
@@ -2255,7 +2294,7 @@ class spell_hun_flanking_strike : public SpellScript
             return;
 
         pet->GetMotionMaster()->MoveJump(targetPos, 15.0f, 15.0f);
-        pet->CastCustomSpellTrigger(80198, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        pet->CastCustomSpellTrigger(80198, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2287,15 +2326,22 @@ class spell_hun_coordinated_assault : public SpellScript
     void HandleBuff()
     {
         Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80203)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
+        if (target)
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
         if (!pet)
             return;
 
-        pet->CastCustomSpellTrigger(80203, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        pet->CastCustomSpellTrigger(80203, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
         GetCaster()->AddAura(80202, GetCaster());
         GetCaster()->AddAura(80204, GetCaster());
     }
@@ -2333,6 +2379,13 @@ class rune_hun_coordinated_bleed : public AuraScript
 
         int32 damagePct = sSpellMgr->AssertSpellInfo(80202)->GetEffect(EFFECT_1).CalcValue();
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), damagePct);
+
+        if (victim)
+        {
+            damage = GetCaster()->SpellDamageBonusDone(victim, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = victim->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
         int32 amount = std::max<int32>(0, damage);
 
         GetCaster()->CastCustomSpell(80201, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
@@ -2382,15 +2435,22 @@ class spell_hun_spearhead : public SpellScript
     void HandleBuff()
     {
         Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
+        if (target)
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
         if (!pet)
             return;
 
-        pet->CastCustomSpellTrigger(80207, SPELLVALUE_BASE_POINT0, damage, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
+        pet->CastCustomSpellTrigger(80207, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
