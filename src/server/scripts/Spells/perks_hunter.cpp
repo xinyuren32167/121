@@ -1722,8 +1722,10 @@ class rune_hunter_brutal_companion : public AuraScript
         if (!pet->HasAura(SPELL_HUNTER_BARBED_SHOT_FRENZY))
             return false;
 
-        if (pet->GetAura(SPELL_HUNTER_BARBED_SHOT_FRENZY)->GetStackAmount() >= 3)
-            return true;
+        if (pet->GetAura(SPELL_HUNTER_BARBED_SHOT_FRENZY)->GetStackAmount() < 3)
+            return false;
+
+        return true;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -1952,6 +1954,49 @@ class rune_hunter_2wolves_1man : public SpellScript
     void Register() override
     {
         BeforeCast += SpellCastFn(rune_hunter_2wolves_1man::HandleBuff);
+    }
+};
+
+class rune_hunter_2wolves_1man_summon : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_2wolves_1man_summon);
+
+    void PetBuffs(Creature* summon)
+    {
+        Unit* caster = GetCaster();
+
+        summon->AddAura(34902, caster);
+        summon->AddAura(34903, caster);
+        summon->AddAura(34904, caster);
+    }
+
+    void HandlePet()
+    {
+        Unit* caster = GetCaster();
+        Position const& pos = GetCaster()->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        int32 duration = GetSpellInfo()->GetDuration();
+        SpellValue const* value = GetSpellValue();
+        uint32 summonAmount = value->EffectBasePoints[EFFECT_0];
+
+        for (size_t i = 0; i < summonAmount; i++)
+        {
+            auto petId = GetSpellInfo()->Id;
+            Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
+            CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
+            CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
+
+            PetBuffs(pet);
+
+            if (pet && pet->IsAlive())
+                pet->AI()->AttackStart(GetExplTargetUnit());
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_hunter_2wolves_1man_summon::HandlePet);
     }
 };
 
@@ -2207,8 +2252,6 @@ class rune_hunter_thunderslash_aura : public AuraScript
         if (pet && pet->HasAura(procSpell))
             pet->RemoveAura(procSpell);
 
-        pet->CastSpell(pet, 500, TRIGGERED_FULL_MASK);
-
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
         if (summonedUnits.empty())
@@ -2237,13 +2280,12 @@ class rune_hunter_thunderslash : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "thunderslash proc");
         if (!eventInfo.GetDamageInfo())
             return false;
-        LOG_ERROR("error", "thunderslash check 1");
+
         if (!eventInfo.GetActor()->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
             return false;
-        LOG_ERROR("error", "thunderslash check 2");
+
         return true;
     }
 
@@ -2254,12 +2296,12 @@ class rune_hunter_thunderslash : public AuraScript
 
         if (!victim)
             return;
-        LOG_ERROR("error", "thunderslash check 3");
+
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
 
         if (damageDealt <= 0)
             return;
-        LOG_ERROR("error", "thunderslash check 4");
+
         float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
@@ -2367,6 +2409,7 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_bloodthirsty_wrath);
     RegisterSpellScript(rune_hunter_bloodthirsty_wrath_heal);
     RegisterSpellScript(rune_hunter_2wolves_1man);
+    RegisterSpellScript(rune_hunter_2wolves_1man_summon);
     RegisterSpellScript(rune_hunter_howl);
     RegisterSpellScript(rune_hunter_barbed_wrath);
     RegisterSpellScript(rune_hunter_sustained_anger);
@@ -2379,5 +2422,5 @@ void AddSC_hunter_perks_scripts()
 
 
 
-
+    
 }
