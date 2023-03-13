@@ -12,6 +12,8 @@ std::map<uint64, MythicKey> MythicDungeonManager::m_PlayerKey = {};
 std::vector<Affixe> MythicDungeonManager::m_WeeklyAffixes = {};
 std::map<uint32, MythicRun> MythicDungeonManager::m_MythicRun = {};
 
+Config MythicDungeonManager::m_Config = {};
+
 void MythicDungeonManager::InitializeMythicKeys()
 {
 
@@ -49,6 +51,30 @@ void MythicDungeonManager::InitializeWeeklyAffixes()
         Affixe affixe = { spellId, level };
         m_WeeklyAffixes.push_back(affixe);
     } while (result->NextRow());
+}
+
+void MythicDungeonManager::InitializeConfig()
+{
+    std::vector<Config> configs = {};
+    QueryResult result = WorldDatabase.Query("SELECT * FROM seasons ORDER by season");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        std::time_t startDate = fields[0].Get<std::time_t>();
+        std::time_t endDate = fields[1].Get<std::time_t>();
+        uint8 season = fields[2].Get<uint8>();
+        Config config = { startDate, endDate, season };
+        configs.push_back(config);
+    } while (result->NextRow());
+
+    if (configs.size() == 0)
+        return;
+
+    m_Config = configs.back();
 }
 
 void MythicDungeonManager::Update(Map* map, uint32 diff)
@@ -139,7 +165,6 @@ void MythicDungeonManager::InitializeMythicDungeonBosses()
 {
    
 }
-
 
 void MythicDungeonManager::HandleChangeDungeonDifficulty(Player* _player, uint8 mode)
 {
@@ -243,16 +268,21 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
 
     Group* group = player->GetGroup();
 
-    std::vector<MythicDungeonBoss> m_MythicDungeonBoss = {};
+    std::vector<MythicDungeonBoss> bosses = {};
     std::vector<DungeonBoss> DungeonBosses = m_MythicDungeonBosses[keyId];
     MythicDungeon dungeon = m_MythicDungeon[keyId];
 
     for (auto const& Mythic : DungeonBosses)
-        m_MythicDungeonBoss.push_back({ Mythic.bossId, true });
+        bosses.push_back({ Mythic.bossId, true });
 
     uint32 totalDeath = 0;
-
-    MythicRun run = { keyId, level, dungeon.timeToComplete, false, false, false, 0, m_MythicDungeonBoss, 0.0f, totalDeath, 10 * IN_MILLISECONDS };
+    bool started = false;
+    bool chestDecrapeted = false;
+    bool done = false;
+    uint32 elapsedTime = 0;
+    float enemyForces = 0.0f;
+    uint32 counting = 10 * IN_MILLISECONDS;
+    MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
     m_MythicRun[map->GetInstanceId()] = run;
 
     if (group) {
@@ -350,6 +380,8 @@ void MythicDungeonManager::OnKillMinion(Player* player, Creature* killed)
 
     MythicDungeon dungeon = m_MythicDungeon[map->GetId()];
 
+
+    // From now all elite give the same.
     uint32 point = 1;
 
     if (killed->isElite())
@@ -374,6 +406,7 @@ void MythicDungeonManager::OnKillMinion(Player* player, Creature* killed)
     }
     else
         sEluna->SendMythicUpdateEnemyForces(player, it->second.enemyForces);
+
     MythicRun* run = &it->second;
     if (MeetTheConditionsToCompleteTheDungeon(run)) {
         CompleteMythicDungeon(run, player);
@@ -434,8 +467,6 @@ void MythicDungeonManager::SaveRun(MythicRun* run, Player* player, uint32 increa
 
 void MythicDungeonManager::UpdateOrCreateMythicKey(MythicRun* run, Player* player, uint32 increaseAmountKey)
 {
-
-    // Find a new random mapId from the pool;
     auto item = m_MythicDungeon.begin();
     std::advance(item, rand() % m_MythicDungeon.size());
     auto random_dungeon = item->second;
@@ -545,14 +576,17 @@ MythicKey MythicDungeonManager::GetCurrentMythicKey(Player* player)
     return {};
 }
 
-std::vector<std::string> MythicDungeonManager::GetHighestCompletedDungeonThisWeek(Player* player)
+uint32 MythicDungeonManager::GetMythicScore(Player* player)
+{
+    uint32 score = 0;
+    return score;
+}
+
+void MythicDungeonManager::GetHighestCompletedDungeonThisWeek(Player* player)
 {
     std::vector<std::string> elements = {};
 
     QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE createdAt >= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 4 HOUR) AND createdAt < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 7 DAY) AND guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
-
-    if (!result)
-        return elements;
 
     do
     {
@@ -563,20 +597,16 @@ std::vector<std::string> MythicDungeonManager::GetHighestCompletedDungeonThisWee
         uint8 timer = fields[3].Get<uint8>();
          
     } while (result->NextRow());
+}
 
-
-    return elements;
+void MythicDungeonManager::GetHighestCompletedDungeonThisSeason(Player* player)
+{
 }
 
 
-std::vector<std::string> MythicDungeonManager::GetHighestCompletedDungeonAllTime(Player* player)
+void MythicDungeonManager::GetHighestCompletedDungeonAllTime(Player* player)
 {
-    std::vector<std::string> elements = {};
-
     QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
-
-    if (!result)
-        return elements;
 
     do
     {
@@ -587,6 +617,4 @@ std::vector<std::string> MythicDungeonManager::GetHighestCompletedDungeonAllTime
         uint8 timer = fields[3].Get<uint8>();
 
     } while (result->NextRow());
-    return elements;
-
 }
