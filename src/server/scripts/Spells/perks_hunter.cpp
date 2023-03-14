@@ -2432,6 +2432,9 @@ class rune_hunter_enduring_call_aura : public AuraScript
         if (Aura* auraEff = player->GetAura(SPELL_HUNTER_CALL_OF_THE_WILD))
             auraEff->SetDuration(auraEff->GetDuration() + durationIncrease);
 
+        if (!pet)
+            return;
+
         if (Aura* auraEff = pet->GetAura(SPELL_HUNTER_RABID_AURA))
             auraEff->SetDuration(auraEff->GetDuration() + durationIncrease);
     }
@@ -2450,8 +2453,8 @@ class rune_hunter_enduring_call : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Player* player = GetOwner()->ToPlayer();
         Unit* actor = eventInfo.GetActor();
+        Player* player = actor->GetOwner()->ToPlayer();
         int32 durationIncrease = aurEff->GetAmount();
 
         if (Aura* auraEff = player->GetAura(SPELL_HUNTER_CALL_OF_THE_WILD))
@@ -2521,15 +2524,17 @@ class rune_hunter_double_trouble : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
+        Unit* caster = GetCaster()->ToPlayer();
         Position const& pos = GetCaster()->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = aurEff->GetAmount();
         Unit* pet = eventInfo.GetActor();
         int32 petId = pet->GetDisplayId();
 
+        LOG_ERROR("error", "ID = {}", petId);
 
         Creature* guardian = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+        LOG_ERROR("error", "ID = {}", guardian->GetDisplayId());
         CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
         CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
 
