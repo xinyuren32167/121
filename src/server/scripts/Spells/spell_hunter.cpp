@@ -2185,6 +2185,7 @@ class spell_hun_call_of_wild_periodic : public SpellScript
     void HandleSummon()
     {
         PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+
         if (!petStable)
             return;
 
@@ -2201,6 +2202,9 @@ class spell_hun_call_of_wild_periodic : public SpellScript
 
             petQuantity++;
         }
+
+        if (petQuantity < 0)
+            return;
 
         uint32 random = urand(0, petQuantity);
 
