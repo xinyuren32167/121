@@ -267,6 +267,14 @@ void Eluna::SendStartMythicDungeon(Player* pPlayer)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::SendBeginMythicDungeon(Player* pPlayer)
+{
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_BEGIN);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
 void Eluna::SendMythicUpdateTimer(Player* pPlayer, uint32 timer)
 {
     START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_TIMER);

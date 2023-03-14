@@ -20,12 +20,9 @@ public:
 
     void OnLogin(Player* player) override
     {
-
-    }
-
-    void OnCreate(Player* player)
-    {
-
+        MythicDungeonManager::InitHighestCompletedDungeonAllTime(player);
+        MythicDungeonManager::InitHighestCompletedDungeonThisSeason(player);
+        MythicDungeonManager::InitHighestCompletedDungeonThisWeek(player);
     }
 
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
@@ -49,7 +46,29 @@ public:
     {
        MythicDungeonManager::Update(map, diff);
     }
+
+    void OnPlayerEnterAll(Map* map, Player* player)
+    {
+
+    }
 };
+
+class MythicDungeon_AllCreatureScript : public AllCreatureScript
+{
+public:
+    MythicDungeon_AllCreatureScript()
+        : AllCreatureScript("MythicDungeon_AllCreatureScript")
+    {
+
+    }
+
+    void OnAllCreatureUpdate(Creature* creature, uint32 /*diff*/) override
+    {
+        Map* map = creature->GetMap();
+        MythicDungeonManager::ApplyAffixesAndOtherUpgrade(creature, map);
+    }
+};
+
 
 
 class MythicDungeon_WorldScript : public WorldScript
@@ -64,6 +83,34 @@ public:
         MythicDungeonManager::InitializeMythicDungeonBosses();
         MythicDungeonManager::InitializeWeeklyAffixes();
         MythicDungeonManager::InitializeMythicKeys();
+        MythicDungeonManager::InitializeConfig();
+    }
+};
+
+
+using namespace Acore::ChatCommands;
+
+class MythicDungeon_commandsScript : public CommandScript
+{
+public:
+    MythicDungeon_commandsScript() : CommandScript("MythicDungeon_ommandsScript") { }
+
+    ChatCommandTable GetCommands() const override
+    {
+        static ChatCommandTable commandTable =
+        {
+            { "startmythic",  HandleStartMythicCommand, SEC_MODERATOR,     Console::No },
+        };
+        return commandTable;
+    }
+
+    static bool HandleStartMythicCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    {
+        Player* selectedPlayer = handler->getSelectedPlayer();
+        if (selectedPlayer) {
+            MythicDungeonManager::StartMythicDungeon(selectedPlayer, selectedPlayer->GetMapId(), 20);
+        }
+        return true;
     }
 };
 
@@ -74,4 +121,6 @@ void AddSC_MythicDungeons()
     new MythicDungeon_PlayerScripts();
     new MythicDungeon_WorldScript();
     new MythicDungeon_AllMapScript();
+    new MythicDungeon_AllCreatureScript();
+    new MythicDungeon_commandsScript();
 }

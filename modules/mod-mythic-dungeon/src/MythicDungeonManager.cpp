@@ -12,6 +12,9 @@ std::map<uint64, MythicKey> MythicDungeonManager::m_PlayerKey = {};
 std::vector<Affixe> MythicDungeonManager::m_WeeklyAffixes = {};
 std::map<uint32, MythicRun> MythicDungeonManager::m_MythicRun = {};
 
+std::map<uint32, std::map<MythicTypeData, std::vector<MythicPlayerDataCompletion>>>
+MythicDungeonManager::m_MythicDungeonPlayerDataCompletion = {};
+
 Config MythicDungeonManager::m_Config = {};
 
 void MythicDungeonManager::InitializeMythicKeys()
@@ -64,8 +67,8 @@ void MythicDungeonManager::InitializeConfig()
     do
     {
         Field* fields = result->Fetch();
-        std::time_t startDate = fields[0].Get<std::time_t>();
-        std::time_t endDate = fields[1].Get<std::time_t>();
+        std::time_t startDate = time_t(fields[0].Get<uint32>());
+        std::time_t endDate = time_t(fields[1].Get<uint32>());
         uint8 season = fields[2].Get<uint8>();
         Config config = { startDate, endDate, season };
         configs.push_back(config);
@@ -75,6 +78,35 @@ void MythicDungeonManager::InitializeConfig()
         return;
 
     m_Config = configs.back();
+}
+
+void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* map)
+{
+
+    auto it = m_MythicRun.find(map->GetInstanceId());
+
+    if (it == m_MythicRun.end())
+        return;
+
+    if (it->second.done)
+        return;
+
+    // First we need to Apply the correct amount of hp / damage increase.
+    uint32 level = it->second.level;
+    int32 hp = level * 5;
+    int32 damage = level * 10;
+
+    if (creature->IsAlive()
+        && !creature->IsPet()
+        && !creature->IsControlledByPlayer() &&
+        !creature->HasAura(90000)) {
+        creature->CastCustomSpell(creature, 90000, &damage, &damage, nullptr, true, 0);
+    }
+}
+
+void MythicDungeonManager::HandleAffixes(Map* map)
+{
+   // depending of the level of the key we need to handle the affixes.
 }
 
 void MythicDungeonManager::Update(Map* map, uint32 diff)
@@ -125,7 +157,7 @@ void MythicDungeonManager::InitializeMythicDungeons()
 {
     m_MythicDungeonBosses = {};
 
-    QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic_bosses ORDER by `order` ASC");
+    QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic WHERE enable = 1");
 
     if (!result)
         return;
@@ -134,9 +166,9 @@ void MythicDungeonManager::InitializeMythicDungeons()
     {
         Field* fields = result->Fetch();
         uint32 mapId = fields[0].Get<uint32>();
-        uint32 order = fields[1].Get<uint32>();
-        uint32 bossId = fields[2].Get<uint32>();
-        DungeonBoss boss = { mapId, order, bossId };
+        uint32 timeToComplete = fields[1].Get<uint32>();
+        uint32 totalCreatureToKill = fields[2].Get<uint32>();
+        DungeonBoss boss = { mapId, timeToComplete, totalCreatureToKill };
         m_MythicDungeonBosses[mapId].push_back(boss);
     } while (result->NextRow());
 }
@@ -163,7 +195,23 @@ void MythicDungeonManager::InitializeRewardsDungeons()
 
 void MythicDungeonManager::InitializeMythicDungeonBosses()
 {
-   
+    m_MythicDungeonBosses = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic_bosses ORDER by `order` ASC");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 mapId = fields[0].Get<uint32>();
+        uint32 order = fields[1].Get<uint32>();
+        uint32 bossId = fields[2].Get<uint32>();
+        DungeonBoss boss = { mapId, order, bossId };
+        m_MythicDungeonBosses[mapId].push_back(boss);
+    } while (result->NextRow());
+
 }
 
 void MythicDungeonManager::HandleChangeDungeonDifficulty(Player* _player, uint8 mode)
@@ -255,6 +303,8 @@ std::vector<std::string> MythicDungeonManager::GetDungeonBosses(Player* player)
 
 void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint32 level)
 {
+
+    LOG_ERROR("Mythic", "Mythic.map");
     Map* map = player->GetMap();
 
     if (!map)
@@ -263,6 +313,8 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     if (map->GetId() != keyId)
         return;
 
+    LOG_ERROR("Mythic", "map->GetId() != keyId");
+
     if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC)
         return;
 
@@ -270,7 +322,11 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
 
     std::vector<MythicDungeonBoss> bosses = {};
     std::vector<DungeonBoss> DungeonBosses = m_MythicDungeonBosses[keyId];
-    MythicDungeon dungeon = m_MythicDungeon[keyId];
+
+    MythicDungeon dungeon = GetMythicDungeonByMapId(keyId);
+
+    if (!dungeon.mapId)
+        return;
 
     for (auto const& Mythic : DungeonBosses)
         bosses.push_back({ Mythic.bossId, true });
@@ -283,6 +339,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     float enemyForces = 0.0f;
     uint32 counting = 10 * IN_MILLISECONDS;
     MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
+
     m_MythicRun[map->GetInstanceId()] = run;
 
     if (group) {
@@ -299,6 +356,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
         {
             Player* member = ObjectAccessor::FindPlayer(target.guid);
             if (member) {
+                sEluna->SendBeginMythicDungeon(member);
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
                 AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
@@ -309,8 +367,10 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
         }
     }
     else {
+        LOG_ERROR("Mythic", "Mythic.starting");
         player->ClearUnitState(UNIT_STATE_ROOT);
         player->SetControlled(true, UNIT_STATE_ROOT);
+        sEluna->SendBeginMythicDungeon(player);
         AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
         if (at) {
             player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
@@ -379,7 +439,6 @@ void MythicDungeonManager::OnKillMinion(Player* player, Creature* killed)
         return;
 
     MythicDungeon dungeon = m_MythicDungeon[map->GetId()];
-
 
     // From now all elite give the same.
     uint32 point = 1;
@@ -525,6 +584,19 @@ void MythicDungeonManager::OnPlayerRelease(Player* player)
     }
 }
 
+MythicDungeon MythicDungeonManager::GetMythicDungeonByMapId(uint32 mapId)
+{
+    auto it = m_MythicDungeon.find(mapId);
+
+    if (it == m_MythicDungeon.end())
+        return {};
+
+    if (it->second.enable)
+        return it->second;
+
+    return {};
+}
+
 
 bool MythicDungeonManager::MeetTheConditionsToCompleteTheDungeon(MythicRun* run)
 {
@@ -582,11 +654,14 @@ uint32 MythicDungeonManager::GetMythicScore(Player* player)
     return score;
 }
 
-void MythicDungeonManager::GetHighestCompletedDungeonThisWeek(Player* player)
+void MythicDungeonManager::InitHighestCompletedDungeonThisWeek(Player* player)
 {
-    std::vector<std::string> elements = {};
+    uint64 guid = player->GetGUID().GetCounter();
+    m_MythicDungeonPlayerDataCompletion[guid][HIGHEST_WEEKLY_COMPLETION] = {};
+    QueryResult result = CharacterDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE createdAt >= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 4 HOUR) AND createdAt < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 7 DAY) AND guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
 
-    QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE createdAt >= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 4 HOUR) AND createdAt < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL IF(WEEKDAY(CURDATE()) >= 2, WEEKDAY(CURDATE()) - 1, WEEKDAY(CURDATE()) + 6) DAY), INTERVAL 7 DAY) AND guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
+    if (!result)
+        return;
 
     do
     {
@@ -595,18 +670,19 @@ void MythicDungeonManager::GetHighestCompletedDungeonThisWeek(Player* player)
         uint32 mapId = fields[1].Get<uint32>();
         uint32 level = fields[2].Get<uint32>();
         uint8 timer = fields[3].Get<uint8>();
-         
+        MythicPlayerDataCompletion data = { guid, mapId, level, timer, HIGHEST_WEEKLY_COMPLETION };
+        m_MythicDungeonPlayerDataCompletion[guid][HIGHEST_WEEKLY_COMPLETION].push_back(data);
     } while (result->NextRow());
 }
 
-void MythicDungeonManager::GetHighestCompletedDungeonThisSeason(Player* player)
+void MythicDungeonManager::InitHighestCompletedDungeonThisSeason(Player* player)
 {
-}
+    uint64 guid = player->GetGUID().GetCounter();
+    m_MythicDungeonPlayerDataCompletion[guid][HIGHEST_SEASONAL_COMPLETION] = {};
+    QueryResult result = CharacterDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE createdAt BETWEEN {} and {} AND guid = {} GROUP BY mapId, `level`", m_Config.start, m_Config.end, player->GetGUID().GetCounter());
 
-
-void MythicDungeonManager::GetHighestCompletedDungeonAllTime(Player* player)
-{
-    QueryResult result = WorldDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
+    if (!result)
+        return;
 
     do
     {
@@ -615,6 +691,29 @@ void MythicDungeonManager::GetHighestCompletedDungeonAllTime(Player* player)
         uint32 mapId = fields[1].Get<uint32>();
         uint32 level = fields[2].Get<uint32>();
         uint8 timer = fields[3].Get<uint8>();
+        MythicPlayerDataCompletion data = { guid, mapId, level, timer, HIGHEST_SEASONAL_COMPLETION };
+        m_MythicDungeonPlayerDataCompletion[guid][HIGHEST_SEASONAL_COMPLETION].push_back(data);
+    } while (result->NextRow());
+}
 
+
+void MythicDungeonManager::InitHighestCompletedDungeonAllTime(Player* player)
+{
+    uint64 guid = player->GetGUID().GetCounter();
+    m_MythicDungeonPlayerDataCompletion[guid][HIGHEST_ALL_TIME_COMPLETION] = {};
+    QueryResult result = CharacterDatabase.Query("SELECT guid, mapId, MAX(level), timer FROM character_mythic_completed WHERE guid = {} GROUP BY mapId, `level`", player->GetGUID().GetCounter());
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 guid = fields[0].Get<uint32>();
+        uint32 mapId = fields[1].Get<uint32>();
+        uint32 level = fields[2].Get<uint32>();
+        uint8 timer = fields[3].Get<uint8>();
+        MythicPlayerDataCompletion data = { guid, mapId, level, timer, HIGHEST_ALL_TIME_COMPLETION };
+        m_MythicDungeonPlayerDataCompletion[guid][HIGHEST_ALL_TIME_COMPLETION].push_back(data);
     } while (result->NextRow());
 }

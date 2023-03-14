@@ -452,6 +452,8 @@ public:
     void SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces);
     void SendShowMythicUI(Player* pPlayer, bool show);
     void SendStartMythicDungeon(Player* pPlayer);
+    void SendBeginMythicDungeon(Player* pPlayer);
+
     // Runes
 
     void RefreshSlotsRune(Player* pPlayer);

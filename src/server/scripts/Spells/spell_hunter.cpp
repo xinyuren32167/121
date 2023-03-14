@@ -2041,6 +2041,9 @@ class spell_hun_murder_crows_check : public AuraScript
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
+
+
+        return false;
     }
 
     void Register() override
