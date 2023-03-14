@@ -1739,17 +1739,13 @@ class rune_hunter_brutal_companion : public AuraScript
         if (!pet->HasAura(SPELL_HUNTER_BARBED_SHOT_FRENZY))
             return false;
 
-<<<<<<< Updated upstream
         if (pet->GetAura(SPELL_HUNTER_BARBED_SHOT_FRENZY)->GetStackAmount() < 3)
             return false;
 
-        return true;
-=======
         if (pet->GetAura(SPELL_HUNTER_BARBED_SHOT_FRENZY)->GetStackAmount() >= 3)
             return true;
 
         return false;
->>>>>>> Stashed changes
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
