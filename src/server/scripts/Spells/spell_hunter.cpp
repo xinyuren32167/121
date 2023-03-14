@@ -1621,8 +1621,8 @@ class spell_hun_kill_command : public SpellScript
 
         if (caster->HasAura(34462))
         {
-            int32 procFirstRank = sSpellMgr->AssertSpellInfo(34462)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procFirstRank);
+            int32 procChance = sSpellMgr->AssertSpellInfo(34462)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
             if (didProc == true)
             {
                 caster->CastSpell(target,80219,true);
@@ -1631,8 +1631,8 @@ class spell_hun_kill_command : public SpellScript
 
         if (caster->HasAura(34464))
         {
-            int32 procFirstRank = sSpellMgr->AssertSpellInfo(34464)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procFirstRank);
+            int32 procChance = sSpellMgr->AssertSpellInfo(34464)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
             if (didProc == true)
             {
                 caster->CastSpell(target, 80219, true);
@@ -1641,11 +1641,44 @@ class spell_hun_kill_command : public SpellScript
 
         if (caster->HasAura(34465))
         {
-            int32 procFirstRank = sSpellMgr->AssertSpellInfo(34465)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procFirstRank);
+            int32 procChance = sSpellMgr->AssertSpellInfo(34465)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
             if (didProc == true)
             {
                 caster->CastSpell(target, 80219, true);
+            }
+        }
+
+        if (caster->HasAura(53262))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(53262)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            if (didProc == true)
+            {
+                caster->RemoveSpellCooldown(61006, true);
+                caster->AddAura(80220, caster);
+            }
+        }
+
+        if (caster->HasAura(53263))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(53263)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            if (didProc == true)
+            {
+                caster->RemoveSpellCooldown(61006, true);
+                caster->AddAura(80220, caster);
+            }
+        }
+
+        if (caster->HasAura(53264))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(53264)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            if (didProc == true)
+            {
+                caster->RemoveSpellCooldown(61006, true);
+                caster->AddAura(80220, caster);
             }
         }
     }
@@ -2095,9 +2128,9 @@ class spell_hun_dire_beast : public SpellScript
 
         Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-        summon->AddAura(34902, GetCaster());
-        summon->AddAura(34903, GetCaster());
-        summon->AddAura(34904, GetCaster());
+        GetCaster()->AddAura(34902, summon);
+        GetCaster()->AddAura(34903, summon);
+        GetCaster()->AddAura(34904, summon);
 
         if (summon && summon->IsAlive())
             summon->AI()->AttackStart(GetExplTargetUnit());
@@ -2571,6 +2604,69 @@ class spell_hun_wild_call : public SpellScript
     }
 };
 
+class spell_hun_beast_within : public AuraScript
+{
+    PrepareAuraScript(spell_hun_beast_within);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (caster->HasAura(80221))
+            caster->AddAura(80222, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(80222);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_beast_within::HandleProc, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_beast_within::HandleRemove, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_animal_companion : public SpellScript
+{
+    PrepareSpellScript(spell_hun_animal_companion);
+
+    void HandleBuff()
+    {
+        if (!GetCaster()->HasAura(80223))
+            return;
+
+        PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+        if (!petStable)
+            return;
+
+        int32 summonId = petStable->StabledPets.at(0)->CreatureId;
+
+        Position const& pos = GetCaster()->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        int32 duration = GetSpellInfo()->GetDuration();
+
+        Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
+        //Debuff auras
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        GetCaster()->AddAura(80224, summon);
+        GetCaster()->AddAura(80224, pet);
+
+        //Scaling auras
+        GetCaster()->AddAura(34902, summon);
+        GetCaster()->AddAura(34903, summon);
+        GetCaster()->AddAura(34904, summon);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_animal_companion::HandleBuff);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -2644,4 +2740,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_aspect_mastery_crit);
     RegisterSpellScript(spell_hun_aspect_mastery_ranged_damage);
     RegisterSpellScript(spell_hun_wild_call);
+    RegisterSpellScript(spell_hun_beast_within);
+    RegisterSpellScript(spell_hun_animal_companion);
 }
