@@ -2651,7 +2651,7 @@ class spell_hun_animal_companion : public SpellScript
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = GetSpellInfo()->GetDuration();
 
-        Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+        Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
 
         //Debuff auras
         Pet* pet = GetCaster()->ToPlayer()->GetPet();
