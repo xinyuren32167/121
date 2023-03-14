@@ -1373,6 +1373,7 @@ public:
     bool Attack(Unit* victim, bool meleeAttack);
     void CastStop(uint32 except_spellid = 0, bool withInstant = true);
     bool AttackStop();
+    void AttackStopSummonedUnits();
     void RemoveAllAttackers();
     [[nodiscard]] AttackerSet const& getAttackers() const { return m_attackers; }
     [[nodiscard]] bool GetMeleeAttackPoint(Unit* attacker, Position& pos);

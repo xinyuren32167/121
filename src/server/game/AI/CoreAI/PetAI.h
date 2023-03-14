@@ -90,6 +90,7 @@ private:
     Unit* SelectNextTarget(bool allowAutoSelect) const;
     void HandleReturnMovement();
     void DoAttack(Unit* target, bool chase);
+    void DoAttackSummonedUnits(Unit* target, bool chase);
     bool CanAttack(Unit* target, SpellInfo const* spellInfo = nullptr);
     void ClearCharmInfoFlags();
 };

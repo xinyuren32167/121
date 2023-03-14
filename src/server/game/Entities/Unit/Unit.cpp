@@ -10312,11 +10312,47 @@ bool Unit::AttackStop()
     return true;
 }
 
+void Unit::AttackStopSummonedUnits()
+{
+    if (!IsPet())
+        return;
+
+    if (!IsAlive())
+        return;
+
+    Unit* owner = GetOwner();
+
+    if (!owner)
+        return;
+
+    Player* player = owner->ToPlayer();
+
+    if (!player)
+        return;
+
+    auto summonedUnits = player->GetSummonedUnits();
+
+    for (const auto& unit : summonedUnits) {
+
+        if (unit->isDead())
+            continue;
+
+        unit->CombatStop();
+        unit->getHostileRefMgr().deleteReferences();
+        unit->InterruptNonMeleeSpells(false);
+        unit->AttackStop();
+        unit->GetMotionMaster()->Clear();
+        unit->ClearInCombat();
+        unit->GetMotionMaster()->MoveFollow(unit->GetCharmerOrOwner(), PET_FOLLOW_DIST + 2.0f, unit->GetFollowAngle());
+    }
+}
+
 void Unit::CombatStop(bool includingCast)
 {
     if (includingCast && IsNonMeleeSpellCast(false))
         InterruptNonMeleeSpells(false);
 
+    AttackStopSummonedUnits();
     AttackStop();
     RemoveAllAttackers();
     if (GetTypeId() == TYPEID_PLAYER)
@@ -20355,6 +20391,7 @@ void Unit::PetSpellFail(SpellInfo const* spellInfo, Unit* target, uint32 result)
             {
                 if (spellInfo->IsPositive() && IsFriendlyTo(target))
                 {
+                    AttackStopSummonedUnits();
                     AttackStop();
                     charmInfo->SetIsAtStay(false);
                     charmInfo->SetIsCommandAttack(true);
@@ -20366,6 +20403,7 @@ void Unit::PetSpellFail(SpellInfo const* spellInfo, Unit* target, uint32 result)
                 else if (owner->IsValidAttackTarget(target))
                 {
                     AttackStop();
+                    AttackStopSummonedUnits();
                     charmInfo->SetIsAtStay(false);
                     charmInfo->SetIsCommandAttack(true);
                     charmInfo->SetIsReturning(false);

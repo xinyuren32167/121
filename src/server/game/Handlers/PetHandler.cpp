@@ -144,6 +144,7 @@ void WorldSession::HandlePetStopAttack(WorldPackets::Pet::PetStopAttack& packet)
         return;
 
     pet->AttackStop();
+    pet->AttackStopSummonedUnits();
     pet->ClearInPetCombat();
 }
 
@@ -188,6 +189,7 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                     }
                 case COMMAND_FOLLOW:                        //spellId=1792  //FOLLOW
                     {
+                        pet->AttackStopSummonedUnits();
                         pet->AttackStop();
                         pet->InterruptNonMeleeSpells(false);
                         pet->ClearInPetCombat();
@@ -250,6 +252,7 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                         if (pet->GetVictim() != TargetUnit || (pet->GetVictim() == TargetUnit && !pet->GetCharmInfo()->IsCommandAttack()))
                         {
                             pet->AttackStop();
+                            pet->AttackStopSummonedUnits();
 
                             if (pet->GetTypeId() != TYPEID_PLAYER && pet->ToCreature()->IsAIEnabled)
                             {
@@ -318,6 +321,8 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
             {
                 case REACT_PASSIVE:                         //passive
                     pet->AttackStop();
+                    pet->AttackStopSummonedUnits();
+
                     if (pet->ToPet())
                         pet->ToPet()->ClearCastWhenWillAvailable();
                     pet->ClearInPetCombat();
@@ -497,8 +502,10 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                         // This is true if pet has no target or has target but targets differs.
                         if (pet->GetVictim() != TargetUnit || (pet->GetVictim() == TargetUnit && !pet->GetCharmInfo()->IsCommandAttack()))
                         {
-                            if (pet->GetVictim())
+                            if (pet->GetVictim()) {
+                                pet->AttackStopSummonedUnits();
                                 pet->AttackStop();
+                            }
 
                             if (pet->GetTypeId() != TYPEID_PLAYER && pet->ToCreature() && pet->ToCreature()->IsAIEnabled)
                             {
@@ -517,8 +524,10 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                             }
                             else // charmed player
                             {
-                                if (pet->GetVictim() && pet->GetVictim() != TargetUnit)
+                                if (pet->GetVictim() && pet->GetVictim() != TargetUnit) {
+                                    pet->AttackStopSummonedUnits();
                                     pet->AttackStop();
+                                }
 
                                 charmInfo->SetIsCommandAttack(true);
                                 charmInfo->SetIsAtStay(false);
@@ -541,6 +550,7 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                         Unit* victim = pet->GetVictim();
                         if (victim)
                         {
+                            pet->AttackStopSummonedUnits();
                             pet->AttackStop();
                         }
                         else

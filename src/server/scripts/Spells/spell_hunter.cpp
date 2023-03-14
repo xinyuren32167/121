@@ -75,6 +75,7 @@ enum HunterSpells
     SPELL_LOCK_AND_LOAD_TRIGGER = 56453,
     SPELL_LOCK_AND_LOAD_MARKER = 67544,
     SPELL_HUNTER_MONGOOSE_FURY = 80144,
+    SPELL_HUNTER_ANIMAL_COMPANION = 80224,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -2639,38 +2640,57 @@ class spell_hun_animal_companion : public SpellScript
 {
     PrepareSpellScript(spell_hun_animal_companion);
 
+
+    bool IsSecondPetAlreadySummoned() {
+
+        Player* caster = GetCaster()->ToPlayer();
+        auto summonedUnits = caster->GetSummonedUnits();
+
+        if (summonedUnits.size() == 0)
+            return false;
+        
+        for (const auto& unit : summonedUnits) {
+            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
+                return true;
+        }
+
+        return false;
+    }
+
     void HandleBuff()
     {
-        if (!GetCaster()->HasAura(80223))
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster)
             return;
 
-        PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
+        PetStable* petStable = caster->GetPetStable();
+
         if (!petStable)
             return;
 
-        int32 summonId = petStable->StabledPets.at(0)->CreatureId;
+        auto firstPet = petStable->StabledPets.at(0);
+
+        if (!firstPet)
+            return;
+
+        if (IsSecondPetAlreadySummoned())
+            return;
 
         Position const& pos = GetCaster()->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = GetSpellInfo()->GetDuration();
 
-        Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
+        Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
+        summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST + 2.0f, summon->GetFollowAngle());
 
-        //Debuff auras
-        Pet* pet = GetCaster()->ToPlayer()->GetPet();
-
-        GetCaster()->AddAura(80224, summon);
-        GetCaster()->AddAura(80224, pet);
-
-        //Scaling auras
-        GetCaster()->AddAura(34902, summon);
-        GetCaster()->AddAura(34903, summon);
-        GetCaster()->AddAura(34904, summon);
+        summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
+        caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_hun_animal_companion::HandleBuff);
+        AfterCast += SpellCastFn(spell_hun_animal_companion::HandleBuff);
     }
 };
 

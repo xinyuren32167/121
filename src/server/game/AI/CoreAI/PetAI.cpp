@@ -81,6 +81,7 @@ void PetAI::_stopAttack()
     }
 
     me->AttackStop();
+    me->AttackStopSummonedUnits();
     me->InterruptNonMeleeSpells(false);
     me->GetCharmInfo()->SetIsCommandAttack(false);
     ClearCharmInfoFlags();
@@ -407,6 +408,7 @@ void PetAI::KilledUnit(Unit* victim)
     // Can't use _stopAttack() because that activates movement handlers and ignores
     // next target selection
     me->AttackStop();
+    me->AttackStopSummonedUnits();
     me->InterruptNonMeleeSpells(false);
 
     // Before returning to owner, see if there are more things to attack
@@ -589,7 +591,7 @@ void PetAI::DoAttack(Unit* target, bool chase)
 {
     // Handles attack with or without chase and also resets flags
     // for next update / creature kill
-
+    DoAttackSummonedUnits(target, chase);
     if (me->Attack(target, true))
     {
         // xinef: properly fix fake combat after pet is sent to attack
@@ -626,8 +628,32 @@ void PetAI::DoAttack(Unit* target, bool chase)
     }
 }
 
+void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
+{
+    Unit* owner = me->GetOwner();
+
+    if (!owner)
+        return;
+
+    Player* player = owner->ToPlayer();
+
+    if (!player)
+        return;
+
+    auto summonedUnits = player->GetSummonedUnits();
+
+    for (const auto& unit : summonedUnits) {
+
+        if (unit->isDead())
+            continue;
+
+        unit->Attack(target, true);
+    }
+}
+
 void PetAI::MovementInform(uint32 moveType, uint32 data)
 {
+
     // Receives notification when pet reaches stay or follow owner
     switch (moveType)
     {

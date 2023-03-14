@@ -19,7 +19,6 @@ Config MythicDungeonManager::m_Config = {};
 
 void MythicDungeonManager::InitializeMythicKeys()
 {
-
     m_PlayerKey = {};
     QueryResult result = CharacterDatabase.Query("SELECT * FROM character_mythic_key");
 
@@ -168,8 +167,8 @@ void MythicDungeonManager::InitializeMythicDungeons()
         uint32 mapId = fields[0].Get<uint32>();
         uint32 timeToComplete = fields[1].Get<uint32>();
         uint32 totalCreatureToKill = fields[2].Get<uint32>();
-        DungeonBoss boss = { mapId, timeToComplete, totalCreatureToKill };
-        m_MythicDungeonBosses[mapId].push_back(boss);
+        MythicDungeon dungeon = { mapId, timeToComplete, totalCreatureToKill };
+        m_MythicDungeon[mapId] = dungeon;
     } while (result->NextRow());
 }
 
@@ -313,7 +312,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     if (map->GetId() != keyId)
         return;
 
-    LOG_ERROR("Mythic", "map->GetId() != keyId");
+    LOG_ERROR("Mythic", "map->GetId() != keyId {}", player->GetDungeonDifficulty());
 
     if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC)
         return;
