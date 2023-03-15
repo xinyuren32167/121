@@ -1,6 +1,7 @@
 #include "PetDefines.h"
 #include "Player.h"
 #include "Pet.h"
+#include "Creature.h"
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
@@ -49,6 +50,9 @@ enum HunterSpells
     SPELL_HUNTER_RAPID_FIRE = 80146,
     SPELL_HUNTER_RAPID_FIRE_DAMAGE = 80147,
 
+    SPELL_HUNTER_TRUESHOT = 80148,
+    SPELL_HUNTER_WIND_ARROW = 80225,
+    SPELL_HUNTER_WIND_ARROW_DAMAGE = 80226,
 
     RUNE_HUNTER_BULLSEYE_BUFF = 500044,
 
@@ -95,6 +99,8 @@ enum HunterSpells
     RUNE_HUNTER_TRUE_AIMED_SHOT_CHECK = 500909,
 
     RUNE_HUNTER_DOUBLE_IMPACT_DAMAGE = 500928,
+
+    RUNE_HUNTER_LETHAL_AMMUNITION_BUFF = 500986,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -2532,12 +2538,9 @@ class rune_hunter_double_trouble : public AuraScript
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = aurEff->GetAmount();
         Unit* pet = eventInfo.GetActor();
-        int32 petId = pet->GetDisplayId();
-
-        LOG_ERROR("error", "ID = {}", petId);
+        int32 petId = pet->ToCreature()->GetCreatureTemplate()->Entry;
 
         Creature* guardian = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-        LOG_ERROR("error", "ID = {}", guardian->GetDisplayId());
         CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
         CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
 
@@ -2740,6 +2743,190 @@ class rune_hunter_double_impact : public AuraScript
     }
 };
 
+class spell_hun_wind_arrow : public SpellScript
+{
+    PrepareSpellScript(spell_hun_wind_arrow);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(500930))
+            return GetCaster()->GetAura(500930);
+
+        if (GetCaster()->HasAura(500931))
+            return GetCaster()->GetAura(500931);
+
+        if (GetCaster()->HasAura(500932))
+            return GetCaster()->GetAura(500932);
+
+        if (GetCaster()->HasAura(500933))
+            return GetCaster()->GetAura(500933);
+
+        if (GetCaster()->HasAura(500934))
+            return GetCaster()->GetAura(500934);
+
+        if (GetCaster()->HasAura(500935))
+            return GetCaster()->GetAura(500935);
+
+        return nullptr;
+    }
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        float ap = GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK);
+        int32 ratio = GetRuneAura() ? GetRuneAura()->GetEffect(EFFECT_0)->GetAmount() : sSpellMgr->AssertSpellInfo(500930)->GetEffect(EFFECT_0).CalcValue();
+        int32 damage = CalculatePct(ap, ratio);
+
+        if (target)
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_hun_wind_arrow::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class rune_hunter_legacy_of_the_windrunner : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_legacy_of_the_windrunner);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        if (eventInfo.GetSpellInfo()->Id != SPELL_HUNTER_AIMED_SHOT)
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        int32 duration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        GetCaster()->CastSpell(victim, SPELL_HUNTER_WIND_ARROW, TRIGGERED_FULL_MASK);
+        victim->GetAura(SPELL_HUNTER_WIND_ARROW)->SetDuration(duration);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_legacy_of_the_windrunner::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_legacy_of_the_windrunner::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_windrunners_guidance : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_windrunners_guidance);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        if (eventInfo.GetSpellInfo()->Id != SPELL_HUNTER_WIND_ARROW_DAMAGE)
+            return false;
+
+        return true;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int32 increasedDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 baseDuration = aurEff->GetAmount();
+
+        if (Aura* auraEff = player->GetAura(SPELL_HUNTER_TRUESHOT))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + increasedDuration, auraEff->GetMaxDuration() + 10000));
+
+            auraEff->SetDuration(duration);
+        }
+        else
+        {
+            player->AddAura(SPELL_HUNTER_TRUESHOT, player);
+            player->GetAura(SPELL_HUNTER_TRUESHOT)->SetDuration(baseDuration);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_windrunners_guidance::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_windrunners_guidance::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_precise_shots : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_precise_shots);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        if (eventInfo.GetSpellInfo()->Id != SPELL_HUNTER_AIMED_SHOT)
+            return false;
+
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_precise_shots::CheckProc);
+    }
+};
+
+class rune_hunter_lock_and_loaded : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_lock_and_loaded);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_AIMED_SHOT, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_lock_and_loaded::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_hunter_lethal_ammunition : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_lethal_ammunition);
+
+    void HandleProc(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(RUNE_HUNTER_LETHAL_AMMUNITION_BUFF))
+            caster->RemoveAura(RUNE_HUNTER_LETHAL_AMMUNITION_BUFF);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(rune_hunter_lethal_ammunition::HandleProc, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 
 
 
@@ -2822,6 +3009,12 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_true_aimed_shot);
     RegisterSpellScript(rune_hunter_set_aim_shoot);
     RegisterSpellScript(rune_hunter_double_impact);
+    RegisterSpellScript(spell_hun_wind_arrow);
+    RegisterSpellScript(rune_hunter_legacy_of_the_windrunner);
+    RegisterSpellScript(rune_hunter_windrunners_guidance);
+    RegisterSpellScript(rune_hunter_precise_shots);
+    RegisterSpellScript(rune_hunter_lock_and_loaded);
+    RegisterSpellScript(rune_hunter_lethal_ammunition);
 
 
 
