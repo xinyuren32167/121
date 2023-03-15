@@ -1597,6 +1597,33 @@ class spell_hun_kill_command : public SpellScript
 {
     PrepareSpellScript(spell_hun_kill_command);
 
+    void AuraCastSpell(int32 auraId, int32 castId)
+    {
+        if (GetCaster()->ToPlayer()->HasAura(auraId))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(auraId)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            if (didProc == true)
+            {
+                GetCaster()->ToPlayer()->CastSpell(GetExplTargetUnit(), castId, true);
+            }
+        }
+    };
+
+    void AuraAdd(int32 auraId)
+    {
+        if (GetCaster()->ToPlayer()->HasAura(auraId))
+        {
+            int32 procChance = sSpellMgr->AssertSpellInfo(auraId)->GetEffect(EFFECT_0).CalcValue();
+            bool didProc = roll_chance_i(procChance);
+            if (didProc == true)
+            {
+                GetCaster()->ToPlayer()->RemoveSpellCooldown(61006, true);
+                GetCaster()->ToPlayer()->AddAura(80220, GetExplTargetUnit());
+            }
+        }
+    };
+
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
@@ -1614,74 +1641,26 @@ class spell_hun_kill_command : public SpellScript
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
+        auto summonedUnits = caster->GetSummonedUnits();
+
+        for (const auto& unit : summonedUnits) {
+            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
+                unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+        }
+
         if (caster->HasSpell(80194))
         {
             int32 amount = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_1).CalcValue();
             caster->ModifySpellCooldown(80194, amount);
         }
 
-        if (caster->HasAura(34462))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(34462)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->CastSpell(target,80219,true);
-            }
-        }
+        AuraCastSpell(34462,80219);
+        AuraCastSpell(34464, 80219);
+        AuraCastSpell(34465, 80219);
 
-        if (caster->HasAura(34464))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(34464)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->CastSpell(target, 80219, true);
-            }
-        }
-
-        if (caster->HasAura(34465))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(34465)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->CastSpell(target, 80219, true);
-            }
-        }
-
-        if (caster->HasAura(53262))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(53262)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->RemoveSpellCooldown(61006, true);
-                caster->AddAura(80220, caster);
-            }
-        }
-
-        if (caster->HasAura(53263))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(53263)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->RemoveSpellCooldown(61006, true);
-                caster->AddAura(80220, caster);
-            }
-        }
-
-        if (caster->HasAura(53264))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(53264)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->RemoveSpellCooldown(61006, true);
-                caster->AddAura(80220, caster);
-            }
-        }
+        AuraAdd(53262);
+        AuraAdd(53263);
+        AuraAdd(53264);
     }
 
     void HandleAfterCast()
