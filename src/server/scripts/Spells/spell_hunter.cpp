@@ -2655,11 +2655,34 @@ class spell_hun_animal_companion : public SpellScript
 
         summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
         caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster);
+        caster->AddAura(34902, summon);
+        caster->AddAura(34903, summon);
+        caster->AddAura(34904, summon);
     }
 
     void Register() override
     {
         AfterCast += SpellCastFn(spell_hun_animal_companion::HandleBuff);
+    }
+};
+
+class spell_hun_arctic_bola : public SpellScript
+{
+    PrepareSpellScript(spell_hun_arctic_bola);
+
+    void HandleAfterCast()
+    {
+        if (AuraEffect const* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 3411, 0))
+        {
+            bool didProc = roll_chance_i(aurEff->GetAmount());
+            if (didProc)
+                GetCaster()->ToPlayer()->CastSpell(GetExplTargetUnit(), 80227, true);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_hun_arctic_bola::HandleAfterCast);
     }
 };
 
@@ -2738,4 +2761,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_wild_call);
     RegisterSpellScript(spell_hun_beast_within);
     RegisterSpellScript(spell_hun_animal_companion);
+    RegisterSpellScript(spell_hun_arctic_bola);
 }
