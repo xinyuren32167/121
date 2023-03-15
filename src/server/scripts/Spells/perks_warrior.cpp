@@ -133,6 +133,7 @@ class spell_tide_of_blood : public AuraScript
         if (!target)
             return;
 
+
         if (!aura)
             return;
 

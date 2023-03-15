@@ -76,6 +76,7 @@ enum HunterSpells
     SPELL_LOCK_AND_LOAD_MARKER = 67544,
     SPELL_HUNTER_MONGOOSE_FURY = 80144,
     SPELL_HUNTER_ANIMAL_COMPANION = 80224,
+    SPELL_HUNTER_KILL_COMMAND = 80141,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -1597,27 +1598,20 @@ class spell_hun_kill_command : public SpellScript
 {
     PrepareSpellScript(spell_hun_kill_command);
 
-    void AuraCastSpell(int32 auraId, int32 castId)
+    void DireCommandSpellProc()
     {
-        if (GetCaster()->ToPlayer()->HasAura(auraId))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(auraId)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                GetCaster()->ToPlayer()->CastSpell(GetExplTargetUnit(), castId, true);
-            }
+        if (AuraEffect const* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2224, 0)) {
+            bool didProc = roll_chance_i(aurEff->GetAmount());
+            if (didProc)
+                GetCaster()->ToPlayer()->CastSpell(GetExplTargetUnit(), 80219, true);
         }
     };
 
-    void AuraAdd(int32 auraId)
+    void HunterPreySpellCommand()
     {
-        if (GetCaster()->ToPlayer()->HasAura(auraId))
-        {
-            int32 procChance = sSpellMgr->AssertSpellInfo(auraId)->GetEffect(EFFECT_0).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
+        if (AuraEffect const* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 3561, 0)) {
+            bool didProc = roll_chance_i(aurEff->GetAmount());
+            if (didProc) {
                 GetCaster()->ToPlayer()->RemoveSpellCooldown(61006, true);
                 GetCaster()->ToPlayer()->AddAura(80220, GetExplTargetUnit());
             }
@@ -1636,45 +1630,36 @@ class spell_hun_kill_command : public SpellScript
         if (target)
         {
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         auto summonedUnits = caster->GetSummonedUnits();
 
-        for (const auto& unit : summonedUnits) {
+        for (const auto& unit : summonedUnits)
             if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
                 unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
-        }
 
-        if (caster->HasSpell(80194))
+        if (Aura* aura = caster->GetAura(80194))
         {
-            int32 amount = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_1).CalcValue();
+            int32 amount = aura->GetEffect(EFFECT_1)->GetAmount();
             caster->ModifySpellCooldown(80194, amount);
         }
 
-        AuraCastSpell(34462,80219);
-        AuraCastSpell(34464, 80219);
-        AuraCastSpell(34465, 80219);
-
-        AuraAdd(53262);
-        AuraAdd(53263);
-        AuraAdd(53264);
+        DireCommandSpellProc();
+        HunterPreySpellCommand();
     }
 
     void HandleAfterCast()
     {
         Player* caster = GetCaster()->ToPlayer();
 
-        if (caster->HasAura(80208))
+        if (Aura* aura = caster->GetAura(80208))
         {
-            int32 procChance = sSpellMgr->AssertSpellInfo(80208)->GetEffect(EFFECT_2).CalcValue();
-            bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
-                caster->RemoveSpellCooldown(80141, true);
-            }
+            int32 procChance = aura->GetEffect(EFFECT_2)->GetAmount();
+            if (roll_chance_i(procChance))
+                caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
         }
     }
 
@@ -1964,7 +1949,7 @@ class spell_hun_cobra_shot : public AuraScript
     {
         Player* target = GetCaster()->ToPlayer();
         int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).CalcValue();
-        target->ModifySpellCooldown(80141, amount);
+        target->ModifySpellCooldown(SPELL_HUNTER_KILL_COMMAND, amount);
     }
 
     void Register() override
