@@ -1644,6 +1644,8 @@ class spell_hun_kill_command : public SpellScript
 
             if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
                 unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+
+
         }
 
         if (Aura* aura = caster->GetAura(80194))
