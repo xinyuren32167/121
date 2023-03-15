@@ -2013,9 +2013,6 @@ class spell_hun_murder_crows_check : public AuraScript
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
-
-
-        return false;
     }
 
     void Register() override
@@ -2561,8 +2558,8 @@ class spell_hun_aspect_mastery_ranged_damage : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_mastery_ranged_damage::HandleProc, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_mastery_ranged_damage::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_hun_aspect_mastery_ranged_damage::HandleProc, EFFECT_2, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_mastery_ranged_damage::HandleRemove, EFFECT_2, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2656,7 +2653,7 @@ class spell_hun_animal_companion : public SpellScript
         summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST + 2.0f, summon->GetFollowAngle());
 
         summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
-        caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster);
+        caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster->GetPet());
         caster->AddAura(34902, summon);
         caster->AddAura(34903, summon);
         caster->AddAura(34904, summon);
@@ -2668,23 +2665,57 @@ class spell_hun_animal_companion : public SpellScript
     }
 };
 
-class spell_hun_arctic_bola : public SpellScript
+class spell_hun_arctic_bola : public AuraScript
 {
-    PrepareSpellScript(spell_hun_arctic_bola);
+    PrepareAuraScript(spell_hun_arctic_bola);
 
-    void HandleAfterCast()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        if (AuraEffect const* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 3411, 0))
-        {
-            bool didProc = roll_chance_i(aurEff->GetAmount());
-            if (didProc)
-                GetCaster()->ToPlayer()->CastSpell(GetExplTargetUnit(), 80227, true);
-        }
+        Player* caster = GetCaster()->ToPlayer();
+
+        caster->CastSpell(procInfo.GetActionTarget(), 80227, true);
     }
 
     void Register() override
     {
-        AfterCast += SpellCastFn(spell_hun_arctic_bola::HandleAfterCast);
+        OnEffectProc += AuraEffectProcFn(spell_hun_arctic_bola::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hunter_careful_aim : public AuraScript //V.I.P
+{
+    PrepareAuraScript(spell_hunter_careful_aim);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        AuraEffect const* currentAura = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2222, 0);
+
+        float damage = CalculatePct(int32(damageDealt), currentAura->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(80229)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        GetCaster()->CastCustomSpell(80229, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_hunter_careful_aim::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_hunter_careful_aim::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2764,4 +2795,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_beast_within);
     RegisterSpellScript(spell_hun_animal_companion);
     RegisterSpellScript(spell_hun_arctic_bola);
+    RegisterSpellScript(spell_hunter_careful_aim);
 }
