@@ -2660,7 +2660,6 @@ public:
             Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, 0, 0, properties);
             summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 2.0f, summon->GetFollowAngle());
 
-            player->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, player);
         }
     }
 };
