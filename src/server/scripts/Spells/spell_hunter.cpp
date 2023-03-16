@@ -2801,6 +2801,34 @@ class spell_hun_careful_aim : public AuraScript
     }
 };
 
+class spell_hun_calculated_shot : public SpellScript
+{
+    PrepareSpellScript(spell_hun_calculated_shot);
+
+    void HandleHit()
+    {
+        if (!GetCaster()->HasAura(80231))
+            return;
+
+        Unit* target = GetExplTargetUnit();
+        if (!target)
+            return;
+
+        int32 targetHealthPct = target->GetHealthPct();
+        int32 hpThreshold = sSpellMgr->GetSpellInfo(80230)->GetEffect(EFFECT_1).CalcValue();
+
+        if (targetHealthPct > hpThreshold)
+        {
+            GetCaster()->CastSpell(GetCaster(), 80230, true);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_calculated_shot::HandleHit);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -2878,5 +2906,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_animal_companion);
     RegisterSpellScript(spell_hun_arctic_bola);
     RegisterSpellScript(spell_hun_careful_aim);
+    RegisterSpellScript(spell_hun_calculated_shot);
     new Hunter_AllMapScript();
 }
