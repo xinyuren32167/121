@@ -2007,10 +2007,9 @@ class rune_hunter_2wolves_1man_summon : public SpellScript
 
         for (size_t i = 0; i < summonAmount; i++)
         {
-            auto petId = GetSpellInfo()->Id;
-            Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+            Creature* pet = GetCaster()->SummonCreature(29264, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-            CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
+            CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(29264);
             CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
 
             PetBuffs(pet);
