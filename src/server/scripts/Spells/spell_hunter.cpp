@@ -2860,9 +2860,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_beast_within);
     RegisterSpellScript(spell_hun_animal_companion);
     RegisterSpellScript(spell_hun_arctic_bola);
-<<<<<<< Updated upstream
     RegisterSpellScript(spell_hunter_careful_aim);
-=======
     new Hunter_AllMapScript();
->>>>>>> Stashed changes
 }
