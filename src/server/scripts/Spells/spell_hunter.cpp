@@ -45,6 +45,7 @@ enum HunterSpells
     SPELL_HUNTER_WYVERN_STING_DOT = 80156,
     SPELL_HUNTER_WILDFIRE_BOMB = 80188,
     SPELL_HUNTER_KILL_SHOT = 61006,
+    SPELL_HUNTER_BESTIAL_WRATH_DAMAGE = 80229,
 
     // Theirs
     SPELL_HUNTER_ASPECT_OF_THE_BEAST = 49071,
@@ -1497,13 +1498,26 @@ class spell_hun_bestial_apply : public SpellScript
     void HandleBuff()
     {
         Player* player = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
         Unit* pet = player->GetPet();
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 ratio = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE)->GetEffect(EFFECT_1).CalcValue();
+
+        int32 damage = CalculatePct(ap, ratio);
 
         if (!pet)
             return;
 
+        if (target)
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = target->SpellDamageBonusTaken(player, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
         player->AddAura(80132, pet);
         player->AddAura(80132, player);
+
+        pet->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
@@ -1512,6 +1526,9 @@ class spell_hun_bestial_apply : public SpellScript
             if (unit->isDead())
                 continue;
             player->AddAura(80132, unit);
+
+            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
+                unit->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1648,7 +1665,8 @@ class spell_hun_kill_command : public SpellScript
 
         auto summonedUnits = caster->GetSummonedUnits();
 
-        for (const auto& unit : summonedUnits) {
+        for (const auto& unit : summonedUnits)
+        {
 
             if (unit->isDead())
                 continue;
@@ -2757,14 +2775,12 @@ class spell_hun_careful_aim : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "procced");
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
         if (!victim)
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
-        LOG_ERROR("error", "{}", damageDealt);
 
         if (damageDealt <= 0)
             return;
@@ -2773,9 +2789,7 @@ class spell_hun_careful_aim : public AuraScript
 
         float damage = CalculatePct(int32(damageDealt), currentAura->GetAmount());
         int32 maxTicks = sSpellMgr->GetSpellInfo(80228)->GetMaxTicks();
-        LOG_ERROR("error", "{}", maxTicks);
         int32 amount = damage / maxTicks;
-        LOG_ERROR("error", "{}", amount);
 
         GetCaster()->CastCustomSpell(80228, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
