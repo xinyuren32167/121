@@ -22,11 +22,13 @@ enum HunterSpells
 
     SPELL_HUNTER_AIMED_SHOT = 49050,
     SPELL_HUNTER_ARCANE_SHOT = 49045,
+
     SPELL_HUNTER_BARBED_SHOT = 80172,
     SPELL_HUNTER_BARBED_SHOT_FRENZY = 80174,
 
     SPELL_HUNTER_BESTIAL_WRATH = 80133,
     SPELL_HUNTER_BESTIAL_WRATH_AURA = 80132,
+    SPELL_HUNTER_BURSTING_SHOT = 80184,
 
     SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
     SPELL_HUNTER_FREEZING_TRAP = 80139,
@@ -50,6 +52,7 @@ enum HunterSpells
     SPELL_HUNTER_RAPID_FIRE = 80146,
     SPELL_HUNTER_RAPID_FIRE_DAMAGE = 80147,
 
+    SPELL_HUNTER_STEADY_SHOT = 49052,
     SPELL_HUNTER_TRUESHOT = 80148,
     SPELL_HUNTER_WIND_ARROW = 80225,
     SPELL_HUNTER_WIND_ARROW_DAMAGE = 80226,
@@ -101,6 +104,14 @@ enum HunterSpells
     RUNE_HUNTER_DOUBLE_IMPACT_DAMAGE = 500928,
 
     RUNE_HUNTER_LETHAL_AMMUNITION_BUFF = 500986,
+
+    RUNE_HUNTER_QUICK_LOAD_LISTENER = 501059,
+
+    RUNE_HUNTER_STEADFAST_FOCUS_LISTENER = 501030,
+
+    RUNE_HUNTER_ON_THE_TRAIL_DOT = 501058,
+
+    RUNE_HUNTER_ECHOES_OF_ONHARA_DAMAGE = 501066,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -2926,6 +2937,194 @@ class rune_hunter_lethal_ammunition : public SpellScript
     }
 };
 
+class rune_hunter_quick_load : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_quick_load);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (player->HasAura(RUNE_HUNTER_QUICK_LOAD_LISTENER))
+            return;
+
+        if (player->GetHealthPct() < aurEff->GetAmount())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damage <= 0)
+            return;
+
+        int32 maxHealth = player->GetMaxHealth();
+        int32 currentHealth = player->GetHealth() - damage;
+
+        if (currentHealth <= 0)
+            return;
+
+        float healthPct = 100.f * currentHealth / maxHealth;
+
+        if (healthPct > aurEff->GetAmount())
+            return;
+
+        int32 listenerDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        player->RemoveSpellCooldown(SPELL_HUNTER_BURSTING_SHOT, true);
+        player->AddAura(RUNE_HUNTER_QUICK_LOAD_LISTENER, player);
+        player->GetAura(RUNE_HUNTER_QUICK_LOAD_LISTENER)->SetDuration(listenerDuration);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_quick_load::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_quick_load::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_steadfast_focus : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_steadfast_focus);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* player = GetCaster();
+        int32 procSpell = aurEff->GetAmount();
+
+        if (eventInfo.GetSpellInfo()->Id == SPELL_HUNTER_STEADY_SHOT)
+        {
+            if (player->HasAura(RUNE_HUNTER_STEADFAST_FOCUS_LISTENER))
+            {
+                player->CastSpell(player, procSpell, TRIGGERED_FULL_MASK);
+                player->RemoveAura(RUNE_HUNTER_STEADFAST_FOCUS_LISTENER);
+            }
+            else
+                player->AddAura(RUNE_HUNTER_STEADFAST_FOCUS_LISTENER, player);
+        }
+        else
+            if (player->HasAura(RUNE_HUNTER_STEADFAST_FOCUS_LISTENER))
+                player->RemoveAura(RUNE_HUNTER_STEADFAST_FOCUS_LISTENER);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_steadfast_focus::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_steadfast_focus::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_on_the_trail : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_on_the_trail);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        int32 procSpell = GetAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+        int32 attackPower = player->GetTotalAttackPowerValue(RANGED_ATTACK);
+        float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+        if (!victim || !player)
+            return;
+
+        player->CastCustomSpell(RUNE_HUNTER_ON_THE_TRAIL_DOT, SPELLVALUE_BASE_POINT0, damage, victim, TRIGGERED_FULL_MASK);
+
+        if (!player->HasAura(procSpell))
+            player->AddAura(procSpell, player);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_on_the_trail::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_on_the_trail::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_on_the_trail_duration : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_on_the_trail_duration);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+      
+        if (Aura* dot = victim->GetAura(RUNE_HUNTER_ON_THE_TRAIL_DOT))
+        {
+            int32 durationIncrease = aurEff->GetAmount();
+            int32 increasedAmount = dot->GetEffect(EFFECT_1)->GetAmount();
+            int32 maxIncrease = dot->GetMaxDuration();
+
+            if (increasedAmount >= maxIncrease)
+                return;
+
+            int32 duration = dot->GetDuration() + durationIncrease;
+
+            dot->SetDuration(duration);
+            dot->GetEffect(EFFECT_0)->ResetTicks();
+            increasedAmount += durationIncrease;
+            dot->GetEffect(EFFECT_1)->SetAmount(increasedAmount);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_on_the_trail_duration::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_on_the_trail_duration::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_echoes_of_ohnara : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_echoes_of_ohnara);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        int32 attackPower = player->GetTotalAttackPowerValue(RANGED_ATTACK);
+        float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+        if (!victim || !player)
+            return;
+
+        player->CastCustomSpell(RUNE_HUNTER_ECHOES_OF_ONHARA_DAMAGE, SPELLVALUE_BASE_POINT0, damage, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_echoes_of_ohnara::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_echoes_of_ohnara::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -3014,6 +3213,11 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_precise_shots);
     RegisterSpellScript(rune_hunter_lock_and_loaded);
     RegisterSpellScript(rune_hunter_lethal_ammunition);
+    RegisterSpellScript(rune_hunter_quick_load);
+    RegisterSpellScript(rune_hunter_steadfast_focus);
+    RegisterSpellScript(rune_hunter_on_the_trail);
+    RegisterSpellScript(rune_hunter_on_the_trail_duration);
+    RegisterSpellScript(rune_hunter_echoes_of_ohnara);
 
 
 
