@@ -75,6 +75,7 @@ enum HunterSpells
     SPELL_LOCK_AND_LOAD_TRIGGER = 56453,
     SPELL_LOCK_AND_LOAD_MARKER = 67544,
     SPELL_HUNTER_MONGOOSE_FURY = 80144,
+    SPELL_HUNTER_ANIMAL_COMPANION_TALENT = 80223,
     SPELL_HUNTER_ANIMAL_COMPANION = 80224,
     SPELL_HUNTER_KILL_COMMAND = 80141,
 };
@@ -1543,7 +1544,17 @@ class spell_hun_chimaera_trigger : public SpellScript
 
     void HandleBuff()
     {
-        GetCaster()->CastSpell(GetExplTargetUnit(), 80136, TRIGGERED_FULL_MASK);
+        if (Unit* unit = GetExplTargetUnit()) {
+            Spell* spell = GetSpell();
+            std::list<WorldObject*> targets;
+            spell->SearchAreaTargets(targets, 7.5f, unit, GetCaster(), TARGET_OBJECT_TYPE_UNIT, TARGET_CHECK_ENEMY, nullptr);
+            targets.remove(unit);
+            if (targets.size() == 0)
+                GetCaster()->CastSpell(unit, 80136, TRIGGERED_FULL_MASK);
+            else
+                if (Creature* creature = targets.front()->ToCreature())
+                    GetCaster()->CastSpell(creature, 80136, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -2604,12 +2615,62 @@ class spell_hun_beast_within : public AuraScript
     }
 };
 
+
+class Hunter_AllMapScript : public AllMapScript
+{
+public:
+    Hunter_AllMapScript() : AllMapScript("Hunter_AllMapScript") { }
+
+
+    bool IsSecondaryPetAlreadySummoned(Player* caster) {
+
+        auto summonedUnits = caster->GetSummonedUnits();
+
+        if (summonedUnits.size() == 0)
+            return false;
+
+        for (const auto& unit : summonedUnits)
+            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
+                return true;
+
+        return false;
+    }
+
+    // Handle the secondary pet if the player has the talent when the hunter enter in any maps.
+    void OnPlayerEnterAll(Map* map, Player* player)
+    {
+        if (player->getClass() == CLASS_HUNTER &&
+            player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT)) {
+
+            PetStable* petStable = player->GetPetStable();
+
+            if (!petStable)
+                return;
+
+            auto firstPet = petStable->StabledPets.at(0);
+
+            if (!firstPet)
+                return;
+
+            if (IsSecondaryPetAlreadySummoned(player))
+                return;
+
+            Position const& pos = player->GetPosition();
+            SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+            Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, 0, 0, properties);
+            summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 2.0f, summon->GetFollowAngle());
+
+            player->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, player);
+        }
+    }
+};
+
+
 class spell_hun_animal_companion : public SpellScript
 {
     PrepareSpellScript(spell_hun_animal_companion);
 
-
-    bool IsSecondPetAlreadySummoned() {
+    bool IsSecondaryPetAlreadySummoned() {
 
         Player* caster = GetCaster()->ToPlayer();
         auto summonedUnits = caster->GetSummonedUnits();
@@ -2617,10 +2678,9 @@ class spell_hun_animal_companion : public SpellScript
         if (summonedUnits.size() == 0)
             return false;
         
-        for (const auto& unit : summonedUnits) {
+        for (const auto& unit : summonedUnits)
             if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
                 return true;
-        }
 
         return false;
     }
@@ -2630,6 +2690,9 @@ class spell_hun_animal_companion : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
 
         if (!caster)
+            return;
+
+        if (!caster->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
             return;
 
         PetStable* petStable = caster->GetPetStable();
@@ -2642,18 +2705,20 @@ class spell_hun_animal_companion : public SpellScript
         if (!firstPet)
             return;
 
-        if (IsSecondPetAlreadySummoned())
+        if (IsSecondaryPetAlreadySummoned())
             return;
 
         Position const& pos = GetCaster()->GetPosition();
-        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);   
         int32 duration = GetSpellInfo()->GetDuration();
 
         Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
-        summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST + 2.0f, summon->GetFollowAngle());
+        summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 2.0f, summon->GetFollowAngle());
 
         summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
-        caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster->GetPet());
+        if (caster->GetPet()) {
+            caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster);
+        }
         caster->AddAura(34902, summon);
         caster->AddAura(34903, summon);
         caster->AddAura(34904, summon);
@@ -2795,5 +2860,9 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_beast_within);
     RegisterSpellScript(spell_hun_animal_companion);
     RegisterSpellScript(spell_hun_arctic_bola);
+<<<<<<< Updated upstream
     RegisterSpellScript(spell_hunter_careful_aim);
+=======
+    new Hunter_AllMapScript();
+>>>>>>> Stashed changes
 }

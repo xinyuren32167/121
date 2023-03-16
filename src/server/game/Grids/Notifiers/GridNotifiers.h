@@ -1349,6 +1349,30 @@ namespace Acore
         NearestCreatureEntryWithLiveStateInObjectRangeCheck(NearestCreatureEntryWithLiveStateInObjectRangeCheck const&);
     };
 
+    class NearestCreaturWithLiveStateInObjectRangeCheck
+    {
+    public:
+        NearestCreaturWithLiveStateInObjectRangeCheck(WorldObject const& obj, bool alive, float range)
+            : i_obj(obj), i_alive(alive), i_range(range) {}
+
+        bool operator()(Creature* u)
+        {
+            if (u->IsAlive() == i_alive && i_obj.IsWithinDist(u, i_range) && i_obj.InSamePhase(u))
+            {
+                i_range = i_obj.GetDistance(u);         // use found unit range as new range limit for next check
+                return true;
+            }
+            return false;
+        }
+    private:
+        WorldObject const& i_obj;
+        bool   i_alive;
+        float  i_range;
+
+        // prevent clone this object
+        NearestCreaturWithLiveStateInObjectRangeCheck(NearestCreaturWithLiveStateInObjectRangeCheck const&);
+    };
+
     class AnyPlayerInObjectRangeCheck
     {
     public:

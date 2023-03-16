@@ -598,7 +598,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     }
 
     if (getPowerType() == POWER_FOCUS) {
-        SetPower(POWER_FOCUS, 0);
+        SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
         SetMaxPower(POWER_FOCUS, 100);
     }
 

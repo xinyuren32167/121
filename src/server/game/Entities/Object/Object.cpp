@@ -2402,7 +2402,14 @@ Creature* WorldObject::FindNearestCreature(uint32 entry, float range, bool alive
     return creature;
 }
 
-
+Creature* WorldObject::FindNearestCreatureWithoutEntry(float range, bool alive) const
+{
+    Creature* creature = nullptr;
+    Acore::NearestCreaturWithLiveStateInObjectRangeCheck checker(*this, alive, range);
+    Acore::CreatureLastSearcher<Acore::NearestCreaturWithLiveStateInObjectRangeCheck> searcher(this, creature, checker);
+    Cell::VisitAllObjects(this, searcher, range);
+    return creature;
+}
 
 GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range, bool onlySpawned /*= false*/) const
 {
