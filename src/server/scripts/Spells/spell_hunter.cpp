@@ -2747,9 +2747,9 @@ class spell_hun_arctic_bola : public AuraScript
     }
 };
 
-class spell_hunter_careful_aim : public AuraScript //V.I.P
+class spell_hun_careful_aim : public AuraScript
 {
-    PrepareAuraScript(spell_hunter_careful_aim);
+    PrepareAuraScript(spell_hun_careful_aim);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -2758,12 +2758,14 @@ class spell_hunter_careful_aim : public AuraScript //V.I.P
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        LOG_ERROR("error", "procced");
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
         if (!victim)
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+        LOG_ERROR("error", "{}", damageDealt);
 
         if (damageDealt <= 0)
             return;
@@ -2771,16 +2773,18 @@ class spell_hunter_careful_aim : public AuraScript //V.I.P
         AuraEffect const* currentAura = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2222, 0);
 
         float damage = CalculatePct(int32(damageDealt), currentAura->GetAmount());
-        int32 maxTicks = sSpellMgr->GetSpellInfo(80229)->GetMaxTicks();
+        int32 maxTicks = sSpellMgr->GetSpellInfo(80228)->GetMaxTicks();
+        LOG_ERROR("error", "{}", maxTicks);
         int32 amount = damage / maxTicks;
+        LOG_ERROR("error", "{}", amount);
 
-        GetCaster()->CastCustomSpell(80229, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(80228, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(spell_hunter_careful_aim::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_hunter_careful_aim::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_hun_careful_aim::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_hun_careful_aim::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2860,6 +2864,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_beast_within);
     RegisterSpellScript(spell_hun_animal_companion);
     RegisterSpellScript(spell_hun_arctic_bola);
-    RegisterSpellScript(spell_hunter_careful_aim);
+    RegisterSpellScript(spell_hun_careful_aim);
     new Hunter_AllMapScript();
 }
