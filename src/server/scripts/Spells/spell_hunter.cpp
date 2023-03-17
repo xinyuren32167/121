@@ -2044,9 +2044,6 @@ class spell_hun_murder_crows_check : public AuraScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* target = eventInfo.GetActionTarget();
 
-        if (caster->isDead())
-            return false;
-
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
@@ -2840,6 +2837,31 @@ class spell_hun_calculated_shot : public SpellScript
     }
 };
 
+class spell_hun_rabid_mongoose : public AuraScript
+{
+    PrepareAuraScript(spell_hun_rabid_mongoose);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(48996, SPEC_MASK_ALL, false);
+        target->learnSpell(53339);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(53339, SPEC_MASK_ALL, false);
+        target->learnSpell(48996);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_rabid_mongoose::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_rabid_mongoose::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -2918,5 +2940,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_arctic_bola);
     RegisterSpellScript(spell_hun_careful_aim);
     RegisterSpellScript(spell_hun_calculated_shot);
+    RegisterSpellScript(spell_hun_rabid_mongoose);
     new Hunter_AllMapScript();
 }
