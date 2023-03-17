@@ -1677,6 +1677,11 @@ class spell_hun_kill_command : public SpellScript
 
         }
 
+        if (Aura* aura = caster->GetAura(80232))
+        {
+            caster->CastSpell(caster, 80233, true);
+        }
+
         if (Aura* aura = caster->GetAura(80194))
         {
             int32 amount = aura->GetEffect(EFFECT_1)->GetAmount();
@@ -2039,9 +2044,14 @@ class spell_hun_murder_crows_check : public AuraScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* target = eventInfo.GetActionTarget();
 
+        if (caster->isDead())
+            return false;
+
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
+
+        return false;
     }
 
     void Register() override
@@ -2598,10 +2608,8 @@ class spell_hun_beast_within : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* caster = GetCaster()->ToPlayer();
-
-        if (caster->HasAura(80221))
-            caster->AddAura(80222, caster);
+        if (GetCaster()->HasAura(80221))
+            GetCaster()->AddAura(80222, GetCaster());
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -2659,8 +2667,11 @@ public:
             Position const& pos = player->GetPosition();
             SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
             Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, 0, 0, properties);
-            summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 2.0f, summon->GetFollowAngle());
-
+            summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 4.0f, summon->GetFollowAngle());
+            summon->InitCharmInfo();
+            player->AddAura(34902, summon);
+            player->AddAura(34903, summon);
+            player->AddAura(34904, summon);
         }
     }
 };
@@ -2714,7 +2725,7 @@ class spell_hun_animal_companion : public SpellScript
 
         Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
         summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 2.0f, summon->GetFollowAngle());
-
+        summon->InitCharmInfo();
         summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
         if (caster->GetPet()) {
             caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster);
