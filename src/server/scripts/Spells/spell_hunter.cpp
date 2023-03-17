@@ -1677,6 +1677,11 @@ class spell_hun_kill_command : public SpellScript
 
         }
 
+        if (Aura* aura = caster->GetAura(80232))
+        {
+            caster->CastSpell(caster, 80233, true);
+        }
+
         if (Aura* aura = caster->GetAura(80194))
         {
             int32 amount = aura->GetEffect(EFFECT_1)->GetAmount();
@@ -2039,9 +2044,14 @@ class spell_hun_murder_crows_check : public AuraScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* target = eventInfo.GetActionTarget();
 
+        if (caster->isDead())
+            return false;
+
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
+
+        return false;
     }
 
     void Register() override
