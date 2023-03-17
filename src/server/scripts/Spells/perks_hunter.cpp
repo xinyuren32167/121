@@ -1868,6 +1868,12 @@ class rune_hunter_bloodthirsty_wrath : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster())
+            return;
+
+        if (!GetRuneAura())
+            return;
+
         if (GetCaster()->HasAura(500744))
             GetCaster()->RemoveAura(500744);
 
@@ -1985,7 +1991,19 @@ class rune_hunter_2wolves_1man : public SpellScript
         if (random > procChance)
             return;
 
-        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+        Position const& pos = GetCaster()->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        for (size_t i = 0; i < 2; i++)
+        {
+            Creature* pet = GetCaster()->SummonCreature(29264, pos, TEMPSUMMON_TIMED_DESPAWN, 20000, 0, properties);
+
+            if (pet && pet->IsAlive()) {
+                GetCaster()->AddAura(34902, pet);
+                GetCaster()->AddAura(34903, pet);
+                GetCaster()->AddAura(34904, pet);
+                pet->AI()->AttackStart(GetExplTargetUnit());
+            }
+        }
     }
 
     void Register() override
@@ -2009,25 +2027,6 @@ class rune_hunter_2wolves_1man_summon : public SpellScript
 
     void HandlePet()
     {
-        Unit* caster = GetCaster();
-        Position const& pos = GetCaster()->GetPosition();
-        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-        int32 duration = GetSpellInfo()->GetDuration();
-        SpellValue const* value = GetSpellValue();
-        uint32 summonAmount = value->EffectBasePoints[EFFECT_0];
-
-        for (size_t i = 0; i < summonAmount; i++)
-        {
-            Creature* pet = GetCaster()->SummonCreature(29264, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-
-            CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(29264);
-            CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
-
-            PetBuffs(pet);
-
-            if (pet && pet->IsAlive())
-                pet->AI()->AttackStart(GetExplTargetUnit());
-        }
     }
 
     void Register() override
@@ -2493,6 +2492,21 @@ class rune_hunter_double_trouble_aura : public AuraScript
 {
     PrepareAuraScript(rune_hunter_double_trouble_aura);
 
+    void SecondaryPetsDoubleTrouble(uint32 procSpell, bool remove) {
+
+        auto summonedUnits = GetCaster()->ToPlayer()->GetSummonedUnits();
+
+        if (summonedUnits.size() == 0)
+            return;
+
+        for (const auto& unit : summonedUnits) {
+            if (!remove && !unit->HasAura(procSpell) && unit->HasAura(80224))
+                unit->AddAura(procSpell, unit);
+            if (remove && unit->HasAura(procSpell) && unit->HasAura(80224))
+                unit->RemoveAura(procSpell);
+        }
+    }
+
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         int32 procSpell = aurEff->GetAmount();
@@ -2503,9 +2517,14 @@ class rune_hunter_double_trouble_aura : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet && !pet->HasAura(procSpell))
+        if (!pet)
+            return;
+
+        if (!pet->HasAura(procSpell))
             player->AddAura(procSpell, pet);
-    }
+
+        SecondaryPetsDoubleTrouble(procSpell, false);
+;    }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
@@ -2517,8 +2536,13 @@ class rune_hunter_double_trouble_aura : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet && pet->HasAura(procSpell))
+        if (!pet)
+            return;
+
+        if (pet->HasAura(procSpell))
             pet->RemoveAura(procSpell);
+
+        SecondaryPetsDoubleTrouble(procSpell, true);
     }
 
     void Register() override

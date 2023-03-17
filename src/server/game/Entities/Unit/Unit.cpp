@@ -10337,13 +10337,17 @@ void Unit::AttackStopSummonedUnits()
         if (unit->isDead())
             continue;
 
+        if (!unit->IsInCombat())
+            continue;
+
+        if (!unit->GetCharmInfo())
+            continue;
+
         unit->CombatStop();
-        unit->getHostileRefMgr().deleteReferences();
-        unit->InterruptNonMeleeSpells(false);
-        unit->AttackStop();
+        unit->GetCharmInfo()->SetIsCommandAttack(false);
+        unit->GetCharmInfo()->SetIsCommandFollow(true);
         unit->GetMotionMaster()->Clear();
-        unit->ClearInCombat();
-        unit->GetMotionMaster()->MoveFollow(unit->GetCharmerOrOwner(), PET_FOLLOW_DIST + 2.0f, unit->GetFollowAngle());
+        unit->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST - 4.0f, unit->GetFollowAngle(), MOTION_SLOT_ACTIVE);
     }
 }
 
@@ -10352,7 +10356,7 @@ void Unit::CombatStop(bool includingCast)
     if (includingCast && IsNonMeleeSpellCast(false))
         InterruptNonMeleeSpells(false);
 
-    AttackStopSummonedUnits();
+    // AttackStopSummonedUnits();
     AttackStop();
     RemoveAllAttackers();
     if (GetTypeId() == TYPEID_PLAYER)
