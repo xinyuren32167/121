@@ -2348,22 +2348,6 @@ class spell_hun_flanking_strike : public SpellScript
     }
 };
 
-class spell_hun_rapid_fire : public SpellScript
-{
-    PrepareSpellScript(spell_hun_rapid_fire);
-
-    void HandleHit()
-    {
-        int32 focus = sSpellMgr->AssertSpellInfo(80147)->GetEffect(EFFECT_1).CalcValue();
-        GetCaster()->SetPower(POWER_FOCUS, GetCaster()->GetPower(POWER_FOCUS) + focus);
-    }
-
-    void Register() override
-    {
-        OnHit += SpellHitFn(spell_hun_rapid_fire::HandleHit);
-    }
-};
-
 class spell_hun_coordinated_assault : public SpellScript
 {
     PrepareSpellScript(spell_hun_coordinated_assault);
@@ -2599,20 +2583,19 @@ class spell_hun_aspect_mastery_ranged_damage : public AuraScript
     }
 };
 
-class spell_hun_wild_call : public SpellScript
+class spell_hun_wild_call : public AuraScript
 {
-    PrepareSpellScript(spell_hun_wild_call);
+    PrepareAuraScript(spell_hun_wild_call);
 
-    void HandleAfterCast()
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Player* caster = GetCaster()->ToPlayer();
-
-        caster->RemoveSpellCooldown(80172, true);
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(80172, true);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_hun_wild_call::HandleAfterCast);
+        OnEffectProc += AuraEffectProcFn(spell_hun_wild_call::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2924,7 +2907,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_harpoon);
     RegisterSpellScript(spell_hun_fury_eagle);
     RegisterSpellScript(spell_hun_flanking_strike);
-    RegisterSpellScript(spell_hun_rapid_fire);
     RegisterSpellScript(spell_hun_coordinated_assault);
     RegisterSpellScript(spell_hun_coordinated_buff_handler_primary);
     RegisterSpellScript(spell_hun_coordinated_buff_handler_secondary);
