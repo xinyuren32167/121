@@ -54,6 +54,10 @@ enum HunterSpells
 
     SPELL_HUNTER_STEADY_SHOT = 49052,
     SPELL_HUNTER_TRUESHOT = 80148,
+
+    SPELL_HUNTER_WAILING_ARROW_AOE = 80149,
+    SPELL_HUNTER_WAILING_ARROW_ST = 80150,
+
     SPELL_HUNTER_WIND_ARROW = 80225,
     SPELL_HUNTER_WIND_ARROW_DAMAGE = 80226,
 
@@ -114,6 +118,11 @@ enum HunterSpells
     RUNE_HUNTER_ECHOES_OF_ONHARA_DAMAGE = 501066,
 
     RUNE_HUNTER_STEADY_FOCUS_LISTENER = 501174,
+
+    RUNE_HUNTER_FOCALISED_TRUESHOT_BUFF = 501200,
+    RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER = 501201,
+
+    RUNE_HUNTER_UNERRING_VISION_BUFF = 501214,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -458,10 +467,10 @@ class rune_hunter_natural_mending : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Aura* aura = GetAura();
+        Aura* runeAura = GetAura();
         Player* target = GetTarget()->ToPlayer();
 
-        if (!aura || !target)
+        if (!runeAura || !target)
             return;
 
         int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
@@ -469,24 +478,23 @@ class rune_hunter_natural_mending : public AuraScript
         if (spellFocus <= 0)
             return;
 
-        int32 cooldownReduction = GetAura()->GetEffect(EFFECT_1)->GetAmount();
-        int32 focusAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount() + spellFocus;
+        int32 cooldownReduction = runeAura->GetEffect(EFFECT_1)->GetAmount();
+        int32 focusAccumulated = runeAura->GetEffect(EFFECT_2)->GetAmount() + spellFocus;
         int32 focusThreshold = aurEff->GetAmount();
 
         if (focusAccumulated >= focusThreshold)
         {
-            target->ModifySpellCooldown(SPELL_HUNTER_EXHILARATION, -cooldownReduction);
-            aura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated - focusThreshold);
-            focusAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+            target->ModifySpellCooldown(SPELL_HUNTER_TRUESHOT, -cooldownReduction);
+            focusAccumulated -= focusThreshold;
 
             if (focusAccumulated >= focusThreshold)
             {
-                target->ModifySpellCooldown(SPELL_HUNTER_EXHILARATION, -cooldownReduction);
-                aura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated - focusThreshold);
+                target->ModifySpellCooldown(SPELL_HUNTER_TRUESHOT, -cooldownReduction);
+                focusAccumulated -= focusThreshold;
             }
         }
-        else
-            aura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
+
+        runeAura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
     }
 
     void Register() override
@@ -2462,7 +2470,7 @@ class rune_hunter_enduring_call_aura : public AuraScript
     void Register() override
     {
         OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_enduring_call_aura::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
-        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_enduring_call_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_enduring_call_aura::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectProc += AuraEffectProcFn(rune_hunter_enduring_call_aura::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -2526,7 +2534,8 @@ class rune_hunter_double_trouble_aura : public AuraScript
             player->AddAura(procSpell, pet);
 
         SecondaryPetsDoubleTrouble(procSpell, false);
-;    }
+        ;
+    }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
@@ -3282,6 +3291,191 @@ class rune_hunter_steady_focus : public AuraScript
     }
 };
 
+class rune_hunter_focalised_trueshot : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_focalised_trueshot);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasAura(SPELL_HUNTER_TRUESHOT))
+            return;
+
+        int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
+
+        if (spellFocus <= 0)
+            return;
+
+        int32 focusAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellFocus;
+        int32 focusThreshold = aurEff->GetAmount();
+
+
+        for (focusAccumulated; focusAccumulated > focusThreshold; focusAccumulated -= focusThreshold)
+        {
+            GetCaster()->CastSpell(GetCaster(), RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER, TRIGGERED_FULL_MASK);
+        }
+
+        GetAura()->GetEffect(EFFECT_1)->SetAmount(focusAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_focalised_trueshot::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_focalised_trueshot::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_focalised_trueshot_remove : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_focalised_trueshot_remove);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* player = GetCaster();
+        Aura* listenerAura = player->GetAura(RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER);
+
+        if (!listenerAura)
+            return;
+
+        int32 stackAmount = listenerAura->GetStackAmount();
+
+        player->RemoveAura(listenerAura);
+        player->CastSpell(player, RUNE_HUNTER_FOCALISED_TRUESHOT_BUFF, TRIGGERED_FULL_MASK);
+        player->GetAura(RUNE_HUNTER_FOCALISED_TRUESHOT_BUFF)->SetStackAmount(stackAmount);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_focalised_trueshot_remove::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_unerring_vision : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_unerring_vision);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        if (!GetCaster()->HasAura(SPELL_HUNTER_TRUESHOT))
+            return;
+
+        Aura* buffAura = GetCaster()->GetAura(RUNE_HUNTER_UNERRING_VISION_BUFF);
+
+        if (!buffAura)
+        {
+            GetCaster()->CastSpell(GetCaster(), RUNE_HUNTER_UNERRING_VISION_BUFF, TRIGGERED_FULL_MASK);
+            return;
+        }
+
+        int32 currentStacks = buffAura->GetStackAmount();
+
+        if (currentStacks >= aurEff->GetAmount())
+        {
+            buffAura->RefreshDuration();
+            return;
+        }
+
+        GetCaster()->CastSpell(GetCaster(), RUNE_HUNTER_UNERRING_VISION_BUFF, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_unerring_vision::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_hunter_calling_the_shots : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_calling_the_shots);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Aura* runeAura = GetAura();
+        Player* target = GetTarget()->ToPlayer();
+
+        if (!runeAura || !target)
+            return;
+
+        int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
+
+        if (spellFocus <= 0)
+            return;
+
+        int32 cooldownReduction = runeAura->GetEffect(EFFECT_1)->GetAmount();
+        int32 focusAccumulated = runeAura->GetEffect(EFFECT_2)->GetAmount() + spellFocus;
+        int32 focusThreshold = aurEff->GetAmount();
+
+        for (focusAccumulated; focusAccumulated > focusThreshold; focusAccumulated -= focusThreshold)
+        {
+            target->ModifySpellCooldown(SPELL_HUNTER_TRUESHOT, -cooldownReduction);
+        }
+
+        runeAura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_calling_the_shots::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_calling_the_shots::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_windrunners_barrage : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_windrunners_barrage);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return;
+
+        int32 duration = 0;
+
+        if (eventInfo.GetSpellInfo()->Id == SPELL_HUNTER_WAILING_ARROW_ST)
+            duration += GetAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        if (eventInfo.GetSpellInfo()->Id == SPELL_HUNTER_WAILING_ARROW_AOE)
+            duration += GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (duration == 0)
+            return;
+
+        if (victim->HasAura(SPELL_HUNTER_WIND_ARROW))
+            duration += victim->GetAura(SPELL_HUNTER_WIND_ARROW)->GetDuration();
+
+        GetCaster()->CastSpell(victim, SPELL_HUNTER_WIND_ARROW, TRIGGERED_FULL_MASK);
+        victim->GetAura(SPELL_HUNTER_WIND_ARROW)->SetDuration(duration);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_windrunners_barrage::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_windrunners_barrage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -3380,10 +3574,15 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_tommy_gun);
     RegisterSpellScript(rune_hunter_lethal_shots);
     RegisterSpellScript(rune_hunter_steady_focus);
+    RegisterSpellScript(rune_hunter_focalised_trueshot);
+    RegisterSpellScript(rune_hunter_focalised_trueshot_remove);
+    RegisterSpellScript(rune_hunter_unerring_vision);
+    RegisterSpellScript(rune_hunter_calling_the_shots);
+    RegisterSpellScript(rune_hunter_windrunners_barrage);
 
 
 
 
 
-    
+
 }
