@@ -3484,7 +3484,6 @@ class rune_hunter_windrunners_barrage : public AuraScript
 
 
 
-
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
