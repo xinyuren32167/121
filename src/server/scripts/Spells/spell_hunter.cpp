@@ -2282,9 +2282,41 @@ class spell_hun_harpoon : public SpellScript
         return SPELL_CAST_OK;
     }
 
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(19295))
+            return GetCaster()->GetAura(19295);
+
+        if (GetCaster()->HasAura(19297))
+            return GetCaster()->GetAura(19297);
+
+        if (GetCaster()->HasAura(19298))
+            return GetCaster()->GetAura(19298);
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        if (GetCaster()->HasAura(19295) || GetCaster()->HasAura(19297) || GetCaster()->HasAura(19298))
+        {
+            Unit* target = GetExplTargetUnit();
+            float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+            int32 damageRatio = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).CalcValue();
+            int32 focusAmount = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_2).CalcValue();
+            int32 dummy = 0;
+            int32 damage = CalculatePct(ap, damageRatio);
+
+            GetCaster()->CastCustomSpell(target, 80236, &damageRatio, &focusAmount, &dummy, true, nullptr, nullptr, GetCaster()->GetGUID());
+
+
+        }
+    }
+
     void Register() override
     {
         OnCheckCast += SpellCheckCastFn(spell_hun_harpoon::CheckCast);
+        OnCast += SpellCastFn(spell_hun_harpoon::HandleCast);
     }
 };
 
@@ -2845,6 +2877,29 @@ class spell_hun_rabid_mongoose : public AuraScript
     }
 };
 
+class spell_hun_harpoon_reset : public AuraScript
+{
+    PrepareAuraScript(spell_hun_harpoon_reset);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->HasAura(19295) || GetCaster()->HasAura(19297) || GetCaster()->HasAura(19298))
+            return true;
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(80190, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_hun_harpoon_reset::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_hun_harpoon_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -2923,5 +2978,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_careful_aim);
     RegisterSpellScript(spell_hun_calculated_shot);
     RegisterSpellScript(spell_hun_rabid_mongoose);
+    RegisterSpellScript(spell_hun_harpoon_reset);
     new Hunter_AllMapScript();
 }
