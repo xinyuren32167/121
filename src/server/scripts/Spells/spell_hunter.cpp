@@ -2282,7 +2282,7 @@ class spell_hun_harpoon : public SpellScript
         return SPELL_CAST_OK;
     }
 
-    Aura* GetRuneAura()
+    Aura* GetTalentAura()
     {
         if (GetCaster()->HasAura(19295))
             return GetCaster()->GetAura(19295);
@@ -2298,19 +2298,17 @@ class spell_hun_harpoon : public SpellScript
 
     void HandleCast()
     {
-        if (GetCaster()->HasAura(19295) || GetCaster()->HasAura(19297) || GetCaster()->HasAura(19298))
-        {
-            Unit* target = GetExplTargetUnit();
-            float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-            int32 damageRatio = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).CalcValue();
-            int32 focusAmount = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_2).CalcValue();
-            int32 dummy = 0;
-            int32 damage = CalculatePct(ap, damageRatio);
+        if (!GetTalentAura())
+            return;
 
-            GetCaster()->CastCustomSpell(target, 80236, &damageRatio, &focusAmount, &dummy, true, nullptr, nullptr, GetCaster()->GetGUID());
+        Unit* target = GetExplTargetUnit();
+        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 damageRatio = GetTalentAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 focusAmount = GetTalentAura()->GetEffect(EFFECT_2)->GetAmount();
+        int32 dummy = 0;
+        int32 damage = CalculatePct(ap, damageRatio);
 
-
-        }
+        GetCaster()->CastCustomSpell(target, 80236, &damageRatio, &focusAmount, &dummy, true, nullptr, nullptr, GetCaster()->GetGUID());
     }
 
     void Register() override
