@@ -2307,7 +2307,6 @@ class spell_hun_harpoon : public SpellScript
         int32 focusAmount = GetTalentAura()->GetEffect(EFFECT_1)->GetAmount();
         int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
         int32 newFocusAmount = focusAmount / maxTicks;
-        int32 damage = CalculatePct(ap, damageRatio);
         GetCaster()->CastCustomSpell(target, 80235, &damageRatio, &newFocusAmount, nullptr, true, nullptr, nullptr);
     }
 
@@ -2879,6 +2878,13 @@ class spell_hun_harpoon_reset : public AuraScript
 {
     PrepareAuraScript(spell_hun_harpoon_reset);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->HasAura(19295) || GetCaster()->HasAura(19297) || GetCaster()->HasAura(19298))
+            return true;
+        return false;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
         GetCaster()->ToPlayer()->RemoveSpellCooldown(80190, true);
@@ -2886,6 +2892,7 @@ class spell_hun_harpoon_reset : public AuraScript
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_hun_harpoon_reset::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_hun_harpoon_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
