@@ -2267,22 +2267,56 @@ class spell_hun_call_of_wild_periodic : public SpellScript
     }
 };
 
-class spell_hun_proc_harpoon : public AuraScript
+class spell_hun_harpoon : public SpellScript
 {
-    PrepareAuraScript(spell_hun_proc_harpoon);
-   
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    PrepareSpellScript(spell_hun_harpoon);
+
+    SpellCastResult CheckCast()
     {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+
+        if (target->GetTypeId() == TYPEID_PLAYER && caster->GetExactDist(target) < 8.0f)
+            return SPELL_FAILED_TOO_CLOSE;
+
+        return SPELL_CAST_OK;
+    }
+
+    Aura* GetTalentAura()
+    {
+        if (GetCaster()->HasAura(19295))
+            return GetCaster()->GetAura(19295);
+
+        if (GetCaster()->HasAura(19297))
+            return GetCaster()->GetAura(19297);
+
+        if (GetCaster()->HasAura(19298))
+            return GetCaster()->GetAura(19298);
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        if (!GetTalentAura())
+            return;
+
+        Unit* target = GetExplTargetUnit();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 damageRatio = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
-        int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 damageRatio = GetTalentAura()->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue();
+        int32 focusAmount = GetTalentAura()->GetSpellInfo()->GetEffect(EFFECT_1).CalcValue();
+        int32 maxTicks = sSpellMgr->GetSpellInfo(80235)->GetMaxTicks();
+        int32 newFocusAmount = focusAmount / maxTicks;
+        int32 dummy = 0;
         int32 damage = CalculatePct(ap, damageRatio);
-        GetCaster()->CastCustomSpell(eventInfo.GetActionTarget(), 80236, &damageRatio, &focusAmount, nullptr, true, nullptr, nullptr, GetCaster()->GetGUID());
+
+        GetCaster()->CastCustomSpell(target, 80235, &damageRatio, &newFocusAmount, &dummy, true, nullptr, nullptr, GetCaster()->GetGUID());
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_hun_proc_harpoon::HandleProc, EFFECT_1, SPELL_AURA_MOD_INCREASE_ENERGY_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnCheckCast += SpellCheckCastFn(spell_hun_harpoon::CheckCast);
+        OnCast += SpellCastFn(spell_hun_harpoon::HandleCast);
     }
 };
 
