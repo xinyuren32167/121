@@ -60,6 +60,7 @@ struct SlotRune {
     {
         return !order;
     }
+
 };
 
 struct AccountProgression {

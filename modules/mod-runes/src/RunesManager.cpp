@@ -654,24 +654,23 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     if (match == m_SlotRune.end())
         return;
 
-    auto slotToFind = std::find_if(match->second.begin(), match->second.end(), [&](const SlotRune& slot) {
-        return slot.runeId == rune.spellId;
-    });
+    uint32 order = 0;
 
-    if (slotToFind == match->second.end())
-        return;
-
-    match->second.erase(slotToFind);
+    for (auto it = match->second.begin(); it != match->second.end();) {
+        if (it->runeId == rune.spellId) {
+            order = it->order;
+            it = match->second.erase(it);
+            break;
+        }
+    }
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_SLOT);
-
-    stmt->SetData(0, slotToFind->order);
+    stmt->SetData(0, uint32(order));
     stmt->SetData(1, uint32(activeId));
     CharacterDatabase.Execute(stmt);
 
     SpellConversion(rune.spellId, player, false);
     player->RemoveAura(rune.spellId);
-
     sEluna->RefreshSlotsRune(player);
 }
 

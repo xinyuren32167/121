@@ -2696,7 +2696,7 @@ public:
             Position const& pos = player->GetPosition();
             SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
             Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, 0, 0, properties);
-            summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 4.0f, summon->GetFollowAngle());
+            summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
             summon->InitCharmInfo();
             player->AddAura(34902, summon);
             player->AddAura(34903, summon);
@@ -2753,7 +2753,7 @@ class spell_hun_animal_companion : public SpellScript
         int32 duration = GetSpellInfo()->GetDuration();
 
         Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
-        summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), PET_FOLLOW_DIST - 2.0f, summon->GetFollowAngle());
+        summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
         summon->InitCharmInfo();
         summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
         if (caster->GetPet()) {
