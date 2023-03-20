@@ -2305,10 +2305,10 @@ class spell_hun_harpoon : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 damageRatio = GetTalentAura()->GetEffect(EFFECT_0)->GetAmount();
         int32 focusAmount = GetTalentAura()->GetEffect(EFFECT_1)->GetAmount();
-        int32 maxTicks = sSpellMgr->GetSpellInfo(80235)->GetMaxTicks();
+        int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
         int32 newFocusAmount = focusAmount / maxTicks;
         int32 damage = CalculatePct(ap, damageRatio);
-        GetCaster()->CastCustomSpell(target, 80235, &damageRatio, &newFocusAmount, nullptr, true, nullptr, nullptr, GetCaster()->GetGUID());
+        GetCaster()->CastCustomSpell(target, 80235, &damageRatio, &newFocusAmount, nullptr, true, nullptr, nullptr);
     }
 
     void Register() override
