@@ -267,6 +267,14 @@ void Eluna::SendStartMythicDungeon(Player* pPlayer)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::SendCompletedMythicDungeon(Player* pPlayer, uint32 timer)
+{
+    START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_COMPLETED);
+    Push(pPlayer);
+    Push(timer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
 void Eluna::SendBeginMythicDungeon(Player* pPlayer)
 {
     START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_BEGIN);
@@ -298,7 +306,7 @@ void Eluna::SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
-void Eluna::SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces)
+void Eluna::SendMythicUpdateEnemyForces(Player* pPlayer, double enemyForces)
 {
     START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_MINION);
     Push(pPlayer);

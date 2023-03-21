@@ -449,10 +449,11 @@ public:
     void SendMythicUpdateTimer(Player* pPlayer, uint32 timer);
     void SendMythicUpdateChestDecrapeted(Player* pPlayer);
     void SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId);
-    void SendMythicUpdateEnemyForces(Player* pPlayer, float enemyForces);
+    void SendMythicUpdateEnemyForces(Player* pPlayer, double enemyForces);
     void SendShowMythicUI(Player* pPlayer, bool show);
     void SendStartMythicDungeon(Player* pPlayer);
     void SendBeginMythicDungeon(Player* pPlayer);
+    void SendCompletedMythicDungeon(Player* pPlayer, uint32 timer);
 
     // Runes
 

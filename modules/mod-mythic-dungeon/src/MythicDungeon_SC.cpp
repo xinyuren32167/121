@@ -30,10 +30,29 @@ public:
 
     }
 
+    void OnCreatureKill(Player* killer, Creature* killed)
+    {
+        MythicDungeonManager::OnKillBoss(killer, killed);
+        MythicDungeonManager::OnKillMinion(killer, killed);
+    }
+
+
+    void OnPlayerKilledByCreature(Creature* killer, Player* killed)
+    {
+        MythicDungeonManager::OnPlayerKilledByCreature(killer, killed);
+    }
+
+
     void OnChat(Player* player, uint32 type, uint32 lang, std::string& msg, Player* receiver)
     {
 
     }
+
+    void OnPlayerReleasedGhost(Player* player)
+    {
+        MythicDungeonManager::OnPlayerRelease(player);
+    }
+
 
 };
 

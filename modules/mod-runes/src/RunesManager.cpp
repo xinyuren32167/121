@@ -623,6 +623,7 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
     if (match != m_SlotRune.end()) {
         if (match->second.size() > 0) {
             slot.order = GetMissingSlotNumber(match->second, player);
+            LOG_ERROR("slot.order", "slot.order {}", slot.order);
         }
         match->second.push_back(slot);
     }
@@ -654,23 +655,20 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     if (match == m_SlotRune.end())
         return;
 
-    uint32 order = 0;
-
-    for (auto it = match->second.begin(); it != match->second.end();) {
-        if (it->runeId == rune.spellId) {
-            order = it->order;
-            it = match->second.erase(it);
-            break;
-        }
-    }
+    auto it = std::find_if(match->second.begin(),
+        match->second.end(),
+        [&]
+    (const SlotRune& slot) -> bool { return slot.runeId == rune.spellId; });
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_SLOT);
-    stmt->SetData(0, uint32(order));
+    stmt->SetData(0, uint32(it->order));
     stmt->SetData(1, uint32(activeId));
     CharacterDatabase.Execute(stmt);
 
     SpellConversion(rune.spellId, player, false);
     player->RemoveAura(rune.spellId);
+    match->second.erase(it);
+
     sEluna->RefreshSlotsRune(player);
 }
 

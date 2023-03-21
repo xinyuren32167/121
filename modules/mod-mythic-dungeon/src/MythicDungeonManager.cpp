@@ -81,7 +81,6 @@ void MythicDungeonManager::InitializeConfig()
 
 void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* map)
 {
-
     auto it = m_MythicRun.find(map->GetInstanceId());
 
     if (it == m_MythicRun.end())
@@ -90,8 +89,8 @@ void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* 
     if (it->second.done)
         return;
 
-    // First we need to Apply the correct amount of hp / damage increase.
     uint32 level = it->second.level;
+
     int32 hp = level * 5;
     int32 damage = level * 10;
 
@@ -99,7 +98,7 @@ void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* 
         && !creature->IsPet()
         && !creature->IsControlledByPlayer() &&
         !creature->HasAura(90000)) {
-        creature->CastCustomSpell(creature, 90000, &damage, &damage, nullptr, true, 0);
+        creature->CastCustomSpell(creature, 90000, &damage, &hp, nullptr, true, 0);
     }
 }
 
@@ -115,20 +114,22 @@ void MythicDungeonManager::Update(Map* map, uint32 diff)
     if (it == m_MythicRun.end())
         return;
 
-    if (it->second.done || it->second.chestDecrapeted)
+    MythicRun* run = &it->second;
+
+    if (run->done || run->chestDecrapeted)
         return;
 
-    if (!it->second.started) {
+    if (!run->started) {
         Map::PlayerList const& playerList = map->GetPlayers();
 
         if (playerList.IsEmpty())
             return;
 
-        it->second.startTimer -= diff;
+        run->startTimer -= diff;
 
-        if (it->second.startTimer <= 0) {
-            it->second.startTimer = 0;
-            it->second.started = true;
+        if (run->startTimer <= 0) {
+            run->startTimer = 0;
+            run->started = true;
             for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
                 if (Player* player = playerIteration->GetSource()) {
                     player->ClearUnitState(UNIT_STATE_ROOT);
@@ -139,9 +140,10 @@ void MythicDungeonManager::Update(Map* map, uint32 diff)
         }
     }
     else {
-        it->second.elapsedTime += diff;
-        if (it->second.elapsedTime >= it->second.timeToComplete && !it->second.chestDecrapeted && !it->second.done) {
-            it->second.chestDecrapeted = true;
+        run->elapsedTime += diff;
+
+        if (run->elapsedTime >= run->timeToComplete && !run->chestDecrapeted && !run->done) {
+            run->chestDecrapeted = true;
             Map::PlayerList const& playerList = map->GetPlayers();
 
             if (!playerList.IsEmpty())
@@ -154,7 +156,7 @@ void MythicDungeonManager::Update(Map* map, uint32 diff)
 
 void MythicDungeonManager::InitializeMythicDungeons()
 {
-    m_MythicDungeonBosses = {};
+    m_MythicDungeon = {};
 
     QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic WHERE enable = 1");
 
@@ -167,7 +169,8 @@ void MythicDungeonManager::InitializeMythicDungeons()
         uint32 mapId = fields[0].Get<uint32>();
         uint32 timeToComplete = fields[1].Get<uint32>();
         uint32 totalCreatureToKill = fields[2].Get<uint32>();
-        MythicDungeon dungeon = { mapId, timeToComplete, totalCreatureToKill };
+        bool enabled = fields[3].Get<bool>();
+        MythicDungeon dungeon = { mapId, timeToComplete, totalCreatureToKill, enabled };
         m_MythicDungeon[mapId] = dungeon;
     } while (result->NextRow());
 }
@@ -283,27 +286,8 @@ std::vector<std::string> MythicDungeonManager::GetWeeklyAffixes(Player* player)
     return elements;
 }
 
-std::vector<std::string> MythicDungeonManager::GetDungeonBosses(Player* player)
-{
-    std::vector<std::string> elements = {};
-    uint32 mapId = player->GetMapId();
-
-    std::vector<DungeonBoss> DungeonBosses = m_MythicDungeonBosses[mapId];
-
-    for (auto const& map : m_MythicDungeonBosses)
-        for (auto const& boss : map.second) {
-            std::string bossStatus = "";
-            bossStatus += ";" + std::to_string(boss.mapId) + "+" + std::to_string(boss.bossId);
-            elements.push_back(bossStatus);
-        }
-
-    return elements;
-}
-
 void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint32 level)
 {
-
-    LOG_ERROR("Mythic", "Mythic.map");
     Map* map = player->GetMap();
 
     if (!map)
@@ -311,8 +295,6 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
 
     if (map->GetId() != keyId)
         return;
-
-    LOG_ERROR("Mythic", "map->GetId() != keyId {}", player->GetDungeonDifficulty());
 
     if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC)
         return;
@@ -323,6 +305,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     std::vector<DungeonBoss> DungeonBosses = m_MythicDungeonBosses[keyId];
 
     MythicDungeon dungeon = GetMythicDungeonByMapId(keyId);
+
 
     if (!dungeon.mapId)
         return;
@@ -336,7 +319,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     bool done = false;
     uint32 elapsedTime = 0;
     float enemyForces = 0.0f;
-    uint32 counting = 10 * IN_MILLISECONDS;
+    int counting = 10 * IN_MILLISECONDS;
     MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
 
     m_MythicRun[map->GetInstanceId()] = run;
@@ -366,7 +349,6 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
         }
     }
     else {
-        LOG_ERROR("Mythic", "Mythic.starting");
         player->ClearUnitState(UNIT_STATE_ROOT);
         player->SetControlled(true, UNIT_STATE_ROOT);
         sEluna->SendBeginMythicDungeon(player);
@@ -434,22 +416,27 @@ void MythicDungeonManager::OnKillMinion(Player* player, Creature* killed)
     if (!it->second.started)
         return;
 
+    if (it->second.enemyForces >= 100)
+        return;
+
     if (killed->IsDungeonBoss())
         return;
 
     MythicDungeon dungeon = m_MythicDungeon[map->GetId()];
 
     // From now all elite give the same.
-    uint32 point = 1;
+    int32 point = 1;
 
     if (killed->isElite())
         point = 2;
 
-    float currentEnemyForces = it->second.enemyForces;
     uint32 totalEnemyForces = dungeon.totalEnemyForces;
+    double value = (double)point / (double)totalEnemyForces * 100.0;
 
-    it->second.enemyForces += (point / totalEnemyForces) * 100;
-    it->second.enemyForces = std::max(it->second.enemyForces, 100.0f);
+    if ((it->second.enemyForces + value) > 100)
+        it->second.enemyForces = 100;
+    else
+        it->second.enemyForces += value;
 
     if (Group* group = player->GetGroup()) {
         auto const& allyList = group->GetMemberSlots();
@@ -555,12 +542,14 @@ void MythicDungeonManager::CompleteMythicDungeon(MythicRun* run, Player* player)
                 uint32 highestId = GetHighestRunId();
                 SaveRun(run, member, increasesAmount, highestId);
                 UpdateOrCreateMythicKey(run, member, increasesAmount);
+                sEluna->SendCompletedMythicDungeon(member, run->elapsedTime);
             }
         }
     }
     else {
         SaveRun(run, player, increasesAmount);
         UpdateOrCreateMythicKey(run, player, increasesAmount);
+        sEluna->SendCompletedMythicDungeon(player, run->elapsedTime);
     }
 }
 
@@ -577,6 +566,8 @@ void MythicDungeonManager::OnPlayerRelease(Player* player)
         return;
 
     AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
+
+    player->ResurrectPlayer(50.f);
 
     if (at) {
         player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
@@ -629,10 +620,15 @@ std::vector<std::string> MythicDungeonManager::GetDataMythicRun(Player* player)
 
     std::string bossStatus = "";
     for (auto const& boss : run.bosses) {
-        bossStatus += ";" + std::to_string(boss.creatureId) +  "+" + std::to_string(boss.alive);
+        CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(boss.creatureId);
+        bossStatus += ";" + std::to_string(boss.creatureId) + ";" + creatureTemplate->Name + "+" + std::to_string(boss.alive);
     }
 
     elements.push_back(bossStatus);
+
+    std::string mapName = player->GetMap()->GetMapName();
+
+    elements.push_back(mapName);
 
     return elements;
 }

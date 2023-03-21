@@ -1661,7 +1661,7 @@ class spell_hun_kill_command : public SpellScript
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+        pet->CastCustomSpell(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         auto summonedUnits = caster->GetSummonedUnits();
 
@@ -2044,6 +2044,9 @@ class spell_hun_murder_crows_check : public AuraScript
         Player* caster = GetCaster()->ToPlayer();
         Unit* target = eventInfo.GetActionTarget();
 
+        if (!target)
+            return false;
+
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
@@ -2063,7 +2066,9 @@ class spell_hun_murder_crows_reset : public SpellScript
 
     void HandleProc()
     {
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(80176, true);
+        if (GetCaster()->HasSpell(80176)) {
+            GetCaster()->ToPlayer()->RemoveSpellCooldown(80176, true);
+        }
     }
 
     void Register() override

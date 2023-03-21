@@ -70,9 +70,9 @@ struct MythicRun {
     bool done;
     uint32 elapsedTime;
     std::vector<MythicDungeonBoss> bosses;
-    float enemyForces;
+    double enemyForces;
     uint32 deaths;
-    uint32 startTimer;
+    int startTimer;
 };
 
 struct MythicPlayerDataCompletion {
@@ -129,6 +129,5 @@ public:
     static void InitHighestCompletedDungeonThisSeason(Player* player);
     static void InitHighestCompletedDungeonAllTime(Player* player);
     static std::vector<std::string> GetWeeklyAffixes(Player* player);
-    static std::vector<std::string> GetDungeonBosses(Player* player);
     static std::vector<std::string> GetDungeonsEnabled(Player* player);
 };
