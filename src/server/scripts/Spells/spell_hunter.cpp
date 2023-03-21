@@ -1269,7 +1269,6 @@ class spell_hun_lock_and_load_new : public AuraScript
 
     void HandleProcTrap(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        LOG_ERROR("error", "procced");
         if (!roll_chance_i(aurEff->GetAmount()))
         {
             return;
@@ -1281,7 +1280,6 @@ class spell_hun_lock_and_load_new : public AuraScript
 
     void HandleProcPeriodic(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        LOG_ERROR("error", "procced");
         if (!roll_chance_i(aurEff->GetAmount()))
         {
             return;
@@ -2925,6 +2923,67 @@ class spell_hun_hunters_prey : public AuraScript
     }
 };
 
+class spell_hun_thrill_of_hunt : public AuraScript
+{
+    PrepareAuraScript(spell_hun_thrill_of_hunt);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        GetCaster()->AddAura(80239, pet);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_thrill_of_hunt::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_hun_noxious_stings : public AuraScript
+{
+    PrepareAuraScript(spell_hun_noxious_stings);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        int32 buffAmount = aurEff->GetAmount();
+
+        GetCaster()->CastCustomSpell(80240, SPELLVALUE_BASE_POINT0, buffAmount, GetCaster());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_noxious_stings::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_hunting_party : public AuraScript
+{
+    PrepareAuraScript(spell_hun_hunting_party);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount();
+
+        GetCaster()->CastCustomSpell(80241, SPELLVALUE_BASE_POINT0, focusAmount, GetCaster());
+
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        GetCaster()->CastCustomSpell(80241, SPELLVALUE_BASE_POINT0, focusAmount, pet);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_hunting_party::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -3006,5 +3065,8 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_harpoon_reset);
     RegisterSpellScript(spell_hun_lock_and_load_new);
     RegisterSpellScript(spell_hun_hunters_prey);
+    RegisterSpellScript(spell_hun_thrill_of_hunt);
+    RegisterSpellScript(spell_hun_noxious_stings);
+    RegisterSpellScript(spell_hun_hunting_party);
     new Hunter_AllMapScript();
 }
