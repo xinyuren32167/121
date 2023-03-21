@@ -1543,12 +1543,6 @@ class spell_hun_bestial_apply : public SpellScript
         if (!pet)
             return;
 
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(player, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
         player->AddAura(80132, pet);
         player->AddAura(80132, player);
 
@@ -1669,12 +1663,6 @@ class spell_hun_kill_command : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
@@ -2096,12 +2084,6 @@ class spell_hun_bloodshed : public SpellScript
         int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
         pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
@@ -2367,13 +2349,6 @@ class spell_hun_flanking_strike : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
         Position targetPos = GetExplTargetUnit()->GetPosition();
 
         if (!pet)
@@ -2401,12 +2376,6 @@ class spell_hun_coordinated_assault : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80203)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
 
         if (!pet)
             return;
@@ -2510,12 +2479,6 @@ class spell_hun_spearhead : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
 
         if (!pet)
             return;

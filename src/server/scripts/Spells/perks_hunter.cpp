@@ -28,7 +28,10 @@ enum HunterSpells
 
     SPELL_HUNTER_BESTIAL_WRATH = 80133,
     SPELL_HUNTER_BESTIAL_WRATH_AURA = 80132,
+    SPELL_HUNTER_BLACK_ARROW = 63672,
+    SPELL_HUNTER_BUTCHERY = 80191,
     SPELL_HUNTER_BURSTING_SHOT = 80184,
+
 
     SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
     SPELL_HUNTER_FREEZING_TRAP = 80139,
@@ -57,6 +60,7 @@ enum HunterSpells
 
     SPELL_HUNTER_WAILING_ARROW_AOE = 80149,
     SPELL_HUNTER_WAILING_ARROW_ST = 80150,
+    SPELL_HUNTER_WILDFIRE_BOMB = 80188,
 
     SPELL_HUNTER_WIND_ARROW = 80225,
     SPELL_HUNTER_WIND_ARROW_DAMAGE = 80226,
@@ -3476,6 +3480,244 @@ class rune_hunter_windrunners_barrage : public AuraScript
     }
 };
 
+class rune_hunter_reload : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_reload);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_BLACK_ARROW, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_reload::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_reload::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_frequent_butcher : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_frequent_butcher);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_BUTCHERY, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_frequent_butcher::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_frequent_butcher::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_coordinated_kill : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_coordinated_kill);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(501338))
+            return GetCaster()->GetAura(501338);
+
+        if (GetCaster()->HasAura(501339))
+            return GetCaster()->GetAura(501339);
+
+        if (GetCaster()->HasAura(501340))
+            return GetCaster()->GetAura(501340);
+
+        if (GetCaster()->HasAura(501341))
+            return GetCaster()->GetAura(501341);
+
+        if (GetCaster()->HasAura(501342))
+            return GetCaster()->GetAura(501342);
+
+        if (GetCaster()->HasAura(501343))
+            return GetCaster()->GetAura(501343);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(501344))
+            GetCaster()->RemoveAura(501344);
+
+        if (GetCaster()->HasAura(501345))
+            GetCaster()->RemoveAura(501345);
+
+        if (GetCaster()->HasAura(501346))
+            GetCaster()->RemoveAura(501346);
+
+        if (GetCaster()->HasAura(501347))
+            GetCaster()->RemoveAura(501347);
+
+        if (GetCaster()->HasAura(501348))
+            GetCaster()->RemoveAura(501348);
+
+        if (GetCaster()->HasAura(501349))
+            GetCaster()->RemoveAura(501349);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_coordinated_kill::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_coordinated_kill::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_birds_of_prey : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_birds_of_prey);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(501356))
+            return GetCaster()->GetAura(501356);
+
+        if (GetCaster()->HasAura(501357))
+            return GetCaster()->GetAura(501357);
+
+        if (GetCaster()->HasAura(501358))
+            return GetCaster()->GetAura(501358);
+
+        if (GetCaster()->HasAura(501359))
+            return GetCaster()->GetAura(501359);
+
+        if (GetCaster()->HasAura(501360))
+            return GetCaster()->GetAura(501360);
+
+        if (GetCaster()->HasAura(501361))
+            return GetCaster()->GetAura(501361);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        GetCaster()->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 501362; i < 501368; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+
+        /*if (GetCaster()->HasAura(501344))
+            GetCaster()->RemoveAura(501344);
+
+        if (GetCaster()->HasAura(501345))
+            GetCaster()->RemoveAura(501345);
+
+        if (GetCaster()->HasAura(501346))
+            GetCaster()->RemoveAura(501346);
+
+        if (GetCaster()->HasAura(501347))
+            GetCaster()->RemoveAura(501347);
+
+        if (GetCaster()->HasAura(501348))
+            GetCaster()->RemoveAura(501348);
+
+        if (GetCaster()->HasAura(501349))
+            GetCaster()->RemoveAura(501349);*/
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_birds_of_prey::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_birds_of_prey::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_bombardier : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_bombardier);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 501374; i < 501380; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        //if (GetCaster()->HasAura(501374))
+        //    return GetCaster()->GetAura(501374);
+
+        //if (GetCaster()->HasAura(501375))
+        //    return GetCaster()->GetAura(501375);
+
+        //if (GetCaster()->HasAura(501376))
+        //    return GetCaster()->GetAura(501376);
+
+        //if (GetCaster()->HasAura(501377))
+        //    return GetCaster()->GetAura(501377);
+
+        //if (GetCaster()->HasAura(501378))
+        //    return GetCaster()->GetAura(501378);
+
+        //if (GetCaster()->HasAura(501379))
+        //    return GetCaster()->GetAura(501379);
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_WILDFIRE_BOMB, true);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetRuneAura())
+            return;
+
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_WILDFIRE_BOMB, true);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_bombardier::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_bombardier::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 
@@ -3578,10 +3820,15 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_unerring_vision);
     RegisterSpellScript(rune_hunter_calling_the_shots);
     RegisterSpellScript(rune_hunter_windrunners_barrage);
+    RegisterSpellScript(rune_hunter_reload);
+    RegisterSpellScript(rune_hunter_frequent_butcher);
+    RegisterSpellScript(rune_hunter_coordinated_kill);
+    RegisterSpellScript(rune_hunter_birds_of_prey);
+    RegisterSpellScript(rune_hunter_bombardier);
 
 
 
 
 
-
+    
 }
