@@ -1157,11 +1157,11 @@ enum LocknLoadSpells
 };
 
 // -56342 - Lock and Load
-class spell_hun_lock_and_load : public AuraScript
+/*class spell_hun_lock_and_load : public AuraScript
 {
     PrepareAuraScript(spell_hun_lock_and_load);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
+    bool Validate(SpellInfo const* /*spellInfo) override
     {
         return ValidateSpellInfo({ SPELL_LOCK_AND_LOAD_TRIGGER, SPELL_LOCK_AND_LOAD_MARKER, SPELL_FROST_TRAP_SLOW });
     }
@@ -1175,7 +1175,7 @@ class spell_hun_lock_and_load : public AuraScript
         }
 
         // Black Arrow and Fire traps may trigger on periodic tick only.
-        if (((spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FIRE) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_SHADOW))
+        if (((spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FIRE) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_SHADOW) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NATURE))
             && (spellInfo->Effects[0].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || spellInfo->Effects[1].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE))
         {
             return true;
@@ -1193,7 +1193,7 @@ class spell_hun_lock_and_load : public AuraScript
 
         // Don't check it for fire traps and black arrow, they proc on periodic only and not spell hit.
         // So it's wrong to check for immunity, it was already checked when the spell was applied.
-        if ((spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FIRE) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_SHADOW))
+        if ((spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FIRE) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_SHADOW) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NATURE))
         {
             return false;
         }
@@ -1227,7 +1227,7 @@ class spell_hun_lock_and_load : public AuraScript
 
         // Also check if the proc from the fire traps and black arrow actually comes from the periodic ticks here.
         // Normally this wouldn't be required, but we are circumventing the current proc system limitations.
-        if (((spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FIRE) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_SHADOW))
+        if (((spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FIRE) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_SHADOW) || (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NATURE))
             && (spellInfo->Effects[0].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || spellInfo->Effects[1].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
             && !(mask & PROC_FLAG_DONE_PERIODIC))
         {
@@ -1260,6 +1260,39 @@ class spell_hun_lock_and_load : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_hun_lock_and_load::HandleProcs<PROC_FLAG_DONE_PERIODIC>, EFFECT_1, SPELL_AURA_DUMMY);
 
         AfterProc += AuraProcFn(spell_hun_lock_and_load::ApplyMarker);
+    }
+};*/
+
+class spell_hun_lock_and_load_new : public AuraScript
+{
+    PrepareAuraScript(spell_hun_lock_and_load_new);
+
+    void HandleProcTrap(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        if (!roll_chance_i(aurEff->GetAmount()))
+        {
+            return;
+        }
+
+        Unit* caster = procInfo.GetActor();
+        caster->CastSpell(caster, SPELL_LOCK_AND_LOAD_TRIGGER, true);
+    }
+
+    void HandleProcPeriodic(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        if (!roll_chance_i(aurEff->GetAmount()))
+        {
+            return;
+        }
+
+        Unit* caster = procInfo.GetActor();
+        caster->CastSpell(caster, SPELL_LOCK_AND_LOAD_TRIGGER, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_lock_and_load_new::HandleProcTrap, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_hun_lock_and_load_new::HandleProcPeriodic, EFFECT_1, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1508,12 +1541,6 @@ class spell_hun_bestial_apply : public SpellScript
         if (!pet)
             return;
 
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(player, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
         player->AddAura(80132, pet);
         player->AddAura(80132, player);
 
@@ -1626,26 +1653,6 @@ class spell_hun_kill_command : public SpellScript
 {
     PrepareSpellScript(spell_hun_kill_command);
 
-    void DireCommandSpellProc()
-    {
-        if (AuraEffect const* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2224, 0)) {
-            bool didProc = roll_chance_i(aurEff->GetAmount());
-            if (didProc)
-                GetCaster()->ToPlayer()->CastSpell(GetExplTargetUnit(), 80219, true);
-        }
-    };
-
-    void HunterPreySpellCommand()
-    {
-        if (AuraEffect const* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 3561, 0)) {
-            bool didProc = roll_chance_i(aurEff->GetAmount());
-            if (didProc) {
-                GetCaster()->ToPlayer()->RemoveSpellCooldown(61006, true);
-                GetCaster()->ToPlayer()->AddAura(80220, GetExplTargetUnit());
-            }
-        }
-    };
-
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
@@ -1687,9 +1694,6 @@ class spell_hun_kill_command : public SpellScript
             int32 amount = aura->GetEffect(EFFECT_1)->GetAmount();
             caster->ModifySpellCooldown(80194, amount);
         }
-
-        DireCommandSpellProc();
-        HunterPreySpellCommand();
     }
 
     void HandleAfterCast()
@@ -2089,12 +2093,6 @@ class spell_hun_bloodshed : public SpellScript
         int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
         pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
@@ -2360,13 +2358,6 @@ class spell_hun_flanking_strike : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
         Position targetPos = GetExplTargetUnit()->GetPosition();
 
         if (!pet)
@@ -2394,12 +2385,6 @@ class spell_hun_coordinated_assault : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80203)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
 
         if (!pet)
             return;
@@ -2503,12 +2488,6 @@ class spell_hun_spearhead : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
-
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
 
         if (!pet)
             return;
@@ -2895,10 +2874,87 @@ class spell_hun_harpoon_reset : public AuraScript
         GetCaster()->ToPlayer()->RemoveSpellCooldown(80190, true);
     }
 
-    void Register() override
+    void Register()
     {
         DoCheckProc += AuraCheckProcFn(spell_hun_harpoon_reset::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_hun_harpoon_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_hunters_prey : public AuraScript
+{
+    PrepareAuraScript(spell_hun_hunters_prey);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(61006, true);
+        GetCaster()->ToPlayer()->AddAura(80220, GetCaster());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_hunters_prey::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_thrill_of_hunt : public AuraScript
+{
+    PrepareAuraScript(spell_hun_thrill_of_hunt);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        GetCaster()->AddAura(80239, pet);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_thrill_of_hunt::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_hun_noxious_stings : public AuraScript
+{
+    PrepareAuraScript(spell_hun_noxious_stings);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        int32 buffAmount = aurEff->GetAmount();
+
+        GetCaster()->CastCustomSpell(80240, SPELLVALUE_BASE_POINT0, buffAmount, GetCaster());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_noxious_stings::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_hunting_party : public AuraScript
+{
+    PrepareAuraScript(spell_hun_hunting_party);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount();
+
+        GetCaster()->CastCustomSpell(80241, SPELLVALUE_BASE_POINT0, focusAmount, GetCaster());
+
+        Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!pet)
+            return;
+
+        GetCaster()->CastCustomSpell(80241, SPELLVALUE_BASE_POINT0, focusAmount, pet);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_hunting_party::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2929,7 +2985,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_tame_beast);
     RegisterSpellScript(spell_hun_viper_attack_speed);
     RegisterSpellScript(spell_hun_volley_trigger);
-    RegisterSpellScript(spell_hun_lock_and_load);
+    //RegisterSpellScript(spell_hun_lock_and_load);
     RegisterSpellScript(spell_hun_intimidation);
     RegisterSpellScript(spell_hun_bestial_wrath);
     RegisterSpellScript(spell_hun_predators_thirst);
@@ -2981,5 +3037,10 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_calculated_shot);
     RegisterSpellScript(spell_hun_rabid_mongoose);
     RegisterSpellScript(spell_hun_harpoon_reset);
+    RegisterSpellScript(spell_hun_lock_and_load_new);
+    RegisterSpellScript(spell_hun_hunters_prey);
+    RegisterSpellScript(spell_hun_thrill_of_hunt);
+    RegisterSpellScript(spell_hun_noxious_stings);
+    RegisterSpellScript(spell_hun_hunting_party);
     new Hunter_AllMapScript();
 }
