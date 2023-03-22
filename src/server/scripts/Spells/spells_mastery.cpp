@@ -278,6 +278,8 @@ class spell_mastery_critical_block_on_remove : public AuraScript
     }
 };
 
+
+//Paladin
 class spell_mastery_lightbringer : public AuraScript
 {
     PrepareAuraScript(spell_mastery_lightbringer);
@@ -410,6 +412,45 @@ class spell_mastery_hand_of_light : public SpellScript
     }
 };
 
+
+//Hunter
+class spell_mastery_master_of_beasts : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_master_of_beasts);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 damageBonus = (GetCaster()->GetAura(500003)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(500000, SPELLVALUE_BASE_POINT0, damageBonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_master_of_beasts::HandleCast);
+    }
+};
+
+class spell_mastery_sniper_training : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_sniper_training);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 rangeBonus = (GetCaster()->GetAura(500004)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        int32 damageBonus = (GetCaster()->GetAura(500004)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(GetCaster(), 500001, &rangeBonus, &damageBonus, nullptr, true, nullptr, nullptr);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_sniper_training::HandleCast);
+    }
+};
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
@@ -427,4 +468,6 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_divine_bulwark_consec);
     RegisterSpellScript(spell_mastery_divine_bulwark_selection);
     RegisterSpellScript(spell_mastery_hand_of_light);
+    RegisterSpellScript(spell_mastery_master_of_beasts);
+    RegisterSpellScript(spell_mastery_sniper_training);
 }
