@@ -44,7 +44,10 @@ enum HunterSpells
     SPELL_HUNTER_CALL_OF_THE_WILD = 80186,
     SPELL_HUNTER_DISENGAGE = 781,
     SPELL_HUNTER_EXHILARATION = 80161,
+
     SPELL_HUNTER_FEIGN_DEATH = 5384,
+    SPELL_HUNTER_FLANKING_STRIKE = 80197,
+    SPELL_HUNTER_FURY_OF_THE_EAGLE = 80194,
 
     SPELL_HUNTER_KILL_COMMAND = 80141,
     SPELL_HUNTER_KILL_SHOT = 61006,
@@ -127,6 +130,8 @@ enum HunterSpells
     RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER = 501201,
 
     RUNE_HUNTER_UNERRING_VISION_BUFF = 501214,
+
+    RUNE_HUNTER_RUTHLESS_MARAUDER_BUFF = 501410,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -3672,24 +3677,6 @@ class rune_hunter_bombardier : public AuraScript
                 return GetCaster()->GetAura(i);
         }
 
-        //if (GetCaster()->HasAura(501374))
-        //    return GetCaster()->GetAura(501374);
-
-        //if (GetCaster()->HasAura(501375))
-        //    return GetCaster()->GetAura(501375);
-
-        //if (GetCaster()->HasAura(501376))
-        //    return GetCaster()->GetAura(501376);
-
-        //if (GetCaster()->HasAura(501377))
-        //    return GetCaster()->GetAura(501377);
-
-        //if (GetCaster()->HasAura(501378))
-        //    return GetCaster()->GetAura(501378);
-
-        //if (GetCaster()->HasAura(501379))
-        //    return GetCaster()->GetAura(501379);
-
         return nullptr;
     }
 
@@ -3715,6 +3702,94 @@ class rune_hunter_bombardier : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(rune_hunter_bombardier::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(rune_hunter_bombardier::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_hunter_poisonous_claws : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_poisonous_claws);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_FURY_OF_THE_EAGLE, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_poisonous_claws::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_poisonous_claws::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_ruthless_marauder_crit : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_ruthless_marauder_crit);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 501404; i < 501410; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleAura(SpellMissInfo missInfo)
+    {
+        if (!GetRuneAura())
+            return;
+        Unit* target = GetHitUnit();
+
+        if (!target)
+            return;
+
+        int32 healthThreshold = GetRuneAura()->GetEffect(EFFECT_2)->GetAmount();
+
+        if (target->GetHealthPct() > healthThreshold)
+            return;
+
+        int32 criticalChance = GetCaster()->GetUnitCriticalChance(BASE_ATTACK, target);
+        int32 critPct = GetRuneAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 critIncrease = CalculatePct(criticalChance, critPct);
+
+        GetCaster()->CastCustomSpell(RUNE_HUNTER_RUTHLESS_MARAUDER_BUFF, SPELLVALUE_BASE_POINT0, critIncrease, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+    void Register() override
+    {
+        BeforeHit += BeforeSpellHitFn(rune_hunter_ruthless_marauder_crit::HandleAura);
+    }
+};
+
+class rune_hunter_ruthless_marauder : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_ruthless_marauder);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+        {
+            target->ModifySpellCooldown(SPELL_HUNTER_WILDFIRE_BOMB, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_HUNTER_FLANKING_STRIKE, -aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_ruthless_marauder::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_ruthless_marauder::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3825,6 +3900,9 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_coordinated_kill);
     RegisterSpellScript(rune_hunter_birds_of_prey);
     RegisterSpellScript(rune_hunter_bombardier);
+    RegisterSpellScript(rune_hunter_poisonous_claws);
+    RegisterSpellScript(rune_hunter_ruthless_marauder_crit);
+    RegisterSpellScript(rune_hunter_ruthless_marauder);
 
 
 
