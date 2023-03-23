@@ -623,7 +623,6 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune, uint64 runeId)
     if (match != m_SlotRune.end()) {
         if (match->second.size() > 0) {
             slot.order = GetMissingSlotNumber(match->second, player);
-            LOG_ERROR("slot.order", "slot.order {}", slot.order);
         }
         match->second.push_back(slot);
     }
