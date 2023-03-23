@@ -69,6 +69,7 @@ enum HunterSpells
     SPELL_HUNTER_READINESS = 23989,
     SPELL_HUNTER_SNIPER_TRAINING_R1 = 53302,
     SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1 = 64418,
+    SPELL_HUNTER_SPEARHEAD = 80206,
     SPELL_HUNTER_VICIOUS_VIPER = 61609,
     SPELL_HUNTER_VIPER_ATTACK_SPEED = 60144,
     SPELL_DRAENEI_GIFT_OF_THE_NAARU = 59543,
@@ -1653,6 +1654,17 @@ class spell_hun_kill_command : public SpellScript
 {
     PrepareSpellScript(spell_hun_kill_command);
 
+    Aura* GetDeadlyDuoRune()
+    {
+        for (size_t i = 501484; i < 501490; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
@@ -1662,13 +1674,7 @@ class spell_hun_kill_command : public SpellScript
         int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
-        if (target)
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-
-        pet->CastCustomSpell(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+        pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         auto summonedUnits = caster->GetSummonedUnits();
 
@@ -1699,12 +1705,34 @@ class spell_hun_kill_command : public SpellScript
     {
         Player* caster = GetCaster()->ToPlayer();
         int32 procChance = sSpellMgr->AssertSpellInfo(80141)->GetEffect(EFFECT_2).CalcValue();
+        int32 duration = 0;
 
         if (Aura* aura = caster->GetAura(80208))
+        {
             procChance += aura->GetEffect(EFFECT_2)->GetAmount();
+            duration = aura->GetDuration();
+        }
+
+        if (GetDeadlyDuoRune())
+            if (Aura* aura = caster->GetAura(GetDeadlyDuoRune()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell))
+            {
+                procChance += aura->GetEffect(EFFECT_1)->GetAmount();
+                caster->RemoveAura(aura);
+            }
 
         if (roll_chance_i(procChance))
             caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
+        else
+            return;
+
+        if (duration == 0)
+            return;
+
+        if (GetDeadlyDuoRune())
+        {
+            int32 amount = GetDeadlyDuoRune()->GetEffect(EFFECT_1)->GetAmount();          
+            caster->GetAura(80208)->SetDuration(duration + amount);
+        }
     }
 
     void Register() override

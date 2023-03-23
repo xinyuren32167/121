@@ -51,18 +51,19 @@ enum HunterSpells
 
     SPELL_HUNTER_KILL_COMMAND = 80141,
     SPELL_HUNTER_KILL_SHOT = 61006,
-    SPELL_HUNTER_WEAK_SPOT = 80160,
-    SPELL_HUNTER_SERPENT_STING = 49001,
 
     SPELL_HUNTER_RABID_AURA = 53401,
     SPELL_HUNTER_RAPID_FIRE = 80146,
     SPELL_HUNTER_RAPID_FIRE_DAMAGE = 80147,
 
+    SPELL_HUNTER_SERPENT_STING = 49001,
+    SPELL_HUNTER_SPEARHEAD_AURA = 80208,
     SPELL_HUNTER_STEADY_SHOT = 49052,
     SPELL_HUNTER_TRUESHOT = 80148,
 
     SPELL_HUNTER_WAILING_ARROW_AOE = 80149,
     SPELL_HUNTER_WAILING_ARROW_ST = 80150,
+    SPELL_HUNTER_WEAK_SPOT = 80160,
     SPELL_HUNTER_WILDFIRE_BOMB = 80188,
 
     SPELL_HUNTER_WIND_ARROW = 80225,
@@ -132,6 +133,10 @@ enum HunterSpells
     RUNE_HUNTER_UNERRING_VISION_BUFF = 501214,
 
     RUNE_HUNTER_RUTHLESS_MARAUDER_BUFF = 501410,
+
+    RUNE_HUNTER_VOLATILE_BOMB_DAMAGE = 501520,
+
+    RUNE_HUNTER_SHRAPNEL_BOMB_DOT = 501534,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -3810,6 +3815,159 @@ class rune_hunter_ruthless_marauder : public AuraScript
     }
 };
 
+class rune_hunter_deadly_duo_check : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_deadly_duo_check);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasAura(SPELL_HUNTER_SPEARHEAD_AURA);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_deadly_duo_check::CheckProc);
+    }
+};
+
+class rune_hunter_forest_fire : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_forest_fire);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_HUNTER_WILDFIRE_BOMB, -aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_forest_fire::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_forest_fire::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_frenzy_strikes : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_frenzy_strikes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Player* target = GetTarget()->ToPlayer();
+
+        int32 bombReduction = aurEff->GetAmount();
+        int32 flankingReduction = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+
+        target->ModifySpellCooldown(SPELL_HUNTER_WILDFIRE_BOMB, -bombReduction);
+        target->ModifySpellCooldown(SPELL_HUNTER_FLANKING_STRIKE, -flankingReduction);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_frenzy_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_frenzy_strikes::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_volatile_bomb : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_volatile_bomb);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || !player)
+            return;
+
+        if (Aura* serpentAura = victim->GetAura(SPELL_HUNTER_SERPENT_STING))
+        {
+            int32 attackPower = player->GetTotalAttackPowerValue(BASE_ATTACK);
+            float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+            player->CastCustomSpell(RUNE_HUNTER_VOLATILE_BOMB_DAMAGE, SPELLVALUE_BASE_POINT0, damage, victim, TRIGGERED_FULL_MASK);
+
+            serpentAura->RefreshDuration();
+            serpentAura->GetEffect(EFFECT_0)->ResetTicks();
+        }
+        else
+            player->CastSpell(victim, SPELL_HUNTER_SERPENT_STING, TRIGGERED_FULL_MASK);
+
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_volatile_bomb::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_volatile_bomb::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_pheromone_bomb : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_pheromone_bomb);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_pheromone_bomb::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_shrapnel_bomb : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_shrapnel_bomb);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || !player)
+            return;
+
+        if (!victim->HasAura(SPELL_HUNTER_WILDFIRE_BOMB))
+            return;
+
+        int32 attackPower = player->GetTotalAttackPowerValue(BASE_ATTACK);
+        float damage = int32(CalculatePct(attackPower, aurEff->GetAmount()));
+
+        player->CastCustomSpell(RUNE_HUNTER_SHRAPNEL_BOMB_DOT, SPELLVALUE_BASE_POINT0, damage, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_shrapnel_bomb::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_shrapnel_bomb::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -3920,10 +4078,16 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_poisonous_claws);
     RegisterSpellScript(rune_hunter_ruthless_marauder_crit);
     RegisterSpellScript(rune_hunter_ruthless_marauder);
+    RegisterSpellScript(rune_hunter_deadly_duo_check);
+    RegisterSpellScript(rune_hunter_forest_fire);
+    RegisterSpellScript(rune_hunter_frenzy_strikes);
+    RegisterSpellScript(rune_hunter_volatile_bomb);
+    RegisterSpellScript(rune_hunter_pheromone_bomb);
+    RegisterSpellScript(rune_hunter_shrapnel_bomb);
 
 
 
 
 
-    
+
 }
