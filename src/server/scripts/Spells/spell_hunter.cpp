@@ -2732,13 +2732,14 @@ class spell_hun_animal_companion : public SpellScript
         Position const& pos = GetCaster()->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);   
         int32 duration = GetSpellInfo()->GetDuration();
+        Pet* pet = caster->GetPet();
 
         Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
         summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
         summon->InitCharmInfo();
         summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
-        if (caster->GetPet()) {
-            caster->GetPet()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, caster);
+        if (pet) {
+            GetCaster()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, pet);
         }
         caster->AddAura(34902, summon);
         caster->AddAura(34903, summon);
