@@ -2087,7 +2087,7 @@ class spell_hun_bloodshed : public SpellScript
     void HandleBuff()
     {
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
-        Unit* target = GetHitUnit();
+        Unit* target = GetExplTargetUnit();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
