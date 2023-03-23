@@ -103,6 +103,7 @@ private:
     static uint32 GetHighestRunId();
     static void SaveRun(MythicRun* run, Player* player, uint32 increaseAmountKey, uint32 runId = 0);
     static bool MeetTheConditionsToCompleteTheDungeon(MythicRun* run);
+    static bool IsCreatureNpc(Creature* creature);
     static void UpdateOrCreateMythicKey(MythicRun* run, Player* player, uint32 increaseAmountKey);
 public:
     static void InitializeMythicKeys();

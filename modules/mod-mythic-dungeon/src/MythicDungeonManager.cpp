@@ -93,13 +93,11 @@ void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* 
 
     int32 hp = level * 5;
     int32 damage = level * 10;
+    bool requierement = IsCreatureNpc(creature) && !creature->HasAura(90000);
 
-    if (creature->IsAlive()
-        && !creature->IsPet()
-        && !creature->IsControlledByPlayer() &&
-        !creature->HasAura(90000)) {
-        creature->CastCustomSpell(creature, 90000, &damage, &hp, nullptr, true, 0);
-    }
+    if (requierement)
+        creature->CastCustomSpell(creature, 90000, &damage, &hp, nullptr, true);
+
 }
 
 void MythicDungeonManager::HandleAffixes(Map* map)
@@ -377,6 +375,7 @@ void MythicDungeonManager::OnKillBoss(Player* player, Creature* killed)
     if (!killed->IsDungeonBoss())
         return;
 
+    uint8 index = 1;
     for (auto ij = it->second.bosses.begin(); ij != it->second.bosses.end(); ++ij) {
         if (ij->creatureId == killed->GetEntry()) {
             ij->alive = false;
@@ -387,13 +386,14 @@ void MythicDungeonManager::OnKillBoss(Player* player, Creature* killed)
                 {
                     Player* member = ObjectAccessor::FindPlayer(target.guid);
                     if (member) {
-                        sEluna->SendMythicUpdateBossKill(member, killed->GetEntry());
+                        sEluna->SendMythicUpdateBossKill(member, index);
                     }
                 }
             }
             else
-                sEluna->SendMythicUpdateBossKill(player, killed->GetEntry());
+                sEluna->SendMythicUpdateBossKill(player, index);
         }
+        index++;
     }
     MythicRun* run = &it->second;
     if (MeetTheConditionsToCompleteTheDungeon(run)) {
@@ -599,6 +599,11 @@ bool MythicDungeonManager::MeetTheConditionsToCompleteTheDungeon(MythicRun* run)
     return allBossesAreDead && run->enemyForces >= 100.0f;
 }
 
+bool MythicDungeonManager::IsCreatureNpc(Creature* creature)
+{
+    return creature->IsAlive() && !creature->IsPet() && !creature->IsControlledByPlayer();
+}
+
 std::vector<std::string> MythicDungeonManager::GetDataMythicRun(Player* player)
 {
     auto it = m_MythicRun.find(player->GetMap()->GetInstanceId());
@@ -614,22 +619,17 @@ std::vector<std::string> MythicDungeonManager::GetDataMythicRun(Player* player)
         + ";" + std::to_string(run.enemyForces)
         + ";" + std::to_string(run.timeToComplete)
         + ";" + std::to_string(run.elapsedTime)
-        + ";" + std::to_string(run.deaths);
+        + ";" + std::to_string(run.deaths)
+        + ";" + player->GetMap()->GetMapName();
 
     elements.push_back(first);
 
     std::string bossStatus = "";
     for (auto const& boss : run.bosses) {
         CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(boss.creatureId);
-        bossStatus += ";" + std::to_string(boss.creatureId) + ";" + creatureTemplate->Name + "+" + std::to_string(boss.alive);
+        bossStatus += ";" + creatureTemplate->Name + "+" + std::to_string(boss.alive);
     }
-
     elements.push_back(bossStatus);
-
-    std::string mapName = player->GetMap()->GetMapName();
-
-    elements.push_back(mapName);
-
     return elements;
 }
 
