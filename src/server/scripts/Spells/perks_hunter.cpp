@@ -3969,13 +3969,6 @@ class rune_hunter_shrapnel_bomb : public AuraScript
 };
 
 
-
-
-
-
-
-
-
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -4084,10 +4077,4 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_volatile_bomb);
     RegisterSpellScript(rune_hunter_pheromone_bomb);
     RegisterSpellScript(rune_hunter_shrapnel_bomb);
-
-
-
-
-
-
 }
