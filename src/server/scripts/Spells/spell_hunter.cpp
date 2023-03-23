@@ -1722,16 +1722,13 @@ class spell_hun_kill_command : public SpellScript
             }
 
         if (roll_chance_i(procChance))
-            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
-        else
-            return;
-
-        if (duration == 0)
-            return;
-
-        if (GetDeadlyDuoRune())
         {
-            int32 amount = GetDeadlyDuoRune()->GetEffect(EFFECT_1)->GetAmount();          
+            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
+
+            if (!GetDeadlyDuoRune() || duration == 0)
+                return;
+
+            int32 amount = GetDeadlyDuoRune()->GetEffect(EFFECT_1)->GetAmount();
             caster->GetAura(80208)->SetDuration(duration + amount);
         }
     }
@@ -2684,7 +2681,7 @@ class Hunter_AllMapScript : public AllMapScript
 {
 public:
     Hunter_AllMapScript() : AllMapScript("Hunter_AllMapScript") { }
-    
+
     // Handle the secondary pet if the player has the talent when the hunter enter in any maps.
     void OnPlayerEnterAll(Map* map, Player* player)
     {
@@ -2741,7 +2738,7 @@ class spell_hun_animal_companion : public SpellScript
             return;
 
         Position const& pos = GetCaster()->GetPosition();
-        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);   
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = GetSpellInfo()->GetDuration();
         Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, duration, 60 * IN_MILLISECONDS, properties);
         ApplySecondaryPet(summon, firstPet, caster);
