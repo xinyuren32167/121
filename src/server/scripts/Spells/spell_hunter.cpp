@@ -32,6 +32,7 @@
 #include "SpellScript.h"
 #include "Player.h"
 #include <random>
+#include "PetDefines.h"
 
   // TODO: this import is not necessary for compilation and marked as unused by the IDE
   //  however, for some reasons removing it would cause a damn linking issue
@@ -2156,31 +2157,6 @@ class spell_hun_call_of_wild : public SpellScript
 {
     PrepareSpellScript(spell_hun_call_of_wild);
 
-    void PetScaler(CreatureFamilyEntry const* cFamily, Creature* summon)
-    {
-        if (cFamily && cFamily->minScale > 0.0f)
-        {
-            float scale;
-            if (summon->getLevel() >= cFamily->maxScaleLevel)
-                scale = 1.0f;
-            else if (summon->getLevel() <= cFamily->minScaleLevel)
-                scale = 0.5f;
-            else
-                scale = 0.5f + 0.5f * float(summon->getLevel() - cFamily->minScaleLevel) / float(cFamily->maxScaleLevel - cFamily->minScaleLevel);
-
-            summon->SetObjectScale(scale);
-        }
-    };
-
-    void PetBuffs(Creature* summon)
-    {
-        Unit* caster = GetCaster();
-
-        summon->AddAura(34902, caster);
-        summon->AddAura(34903, caster);
-        summon->AddAura(34904, caster);
-    }
-
     void HandlePet()
     {
         Unit* caster = GetCaster();
@@ -2206,9 +2182,6 @@ class spell_hun_call_of_wild : public SpellScript
 
             CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
             CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
-
-            PetScaler(petFamily, pet);
-            PetBuffs(pet);
 
             if (pet && pet->IsAlive())
                 pet->AI()->AttackStart(GetExplTargetUnit());
@@ -2634,26 +2607,56 @@ class spell_hun_beast_within : public AuraScript
 };
 
 
+static bool IsSecondaryPetAlreadySummoned(Unit* caster, uint32 petId) {
+
+    auto summonedUnits = caster->ToPlayer()->GetSummonedUnits();
+
+    if (summonedUnits.size() == 0)
+        return false;
+
+    for (const auto& unit : summonedUnits)
+        if (unit->GetEntry() == petId)
+            return true;
+
+    return false;
+}
+
+
+static void ApplySecondaryPet(Creature* summon, auto firstPet, Unit* caster)
+{
+    summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
+    summon->InitCharmInfo();
+
+    summon->GetCharmInfo()->SetPetNumber(firstPet->PetNumber, false);
+    summon->SetDisplayId(firstPet->DisplayId);
+    summon->SetNativeDisplayId(firstPet->DisplayId);
+    summon->SetName(firstPet->Name);
+
+    PetLevelInfo const* pInfo = sObjectMgr->GetPetLevelInfo(firstPet->CreatureId, caster->getLevel());
+    if (pInfo)                                      // exist in DB
+    {
+        summon->SetCreateHealth(pInfo->health);
+        summon->SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)pInfo->health);
+        if (pInfo->armor > 0)
+            summon->SetModifierValue(UNIT_MOD_ARMOR, BASE_VALUE, float(pInfo->armor));
+
+        for (uint8 stat = 0; stat < MAX_STATS; ++stat)
+            summon->SetCreateStat(Stats(stat), float(pInfo->stats[stat]));
+    }
+
+    summon->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(caster->getLevel() - (caster->getLevel() / 4)));
+    summon->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(caster->getLevel() + (caster->getLevel() / 4)));
+
+    caster->AddAura(34902, summon);
+    caster->AddAura(34903, summon);
+    caster->AddAura(34904, summon);
+}
+
 class Hunter_AllMapScript : public AllMapScript
 {
 public:
     Hunter_AllMapScript() : AllMapScript("Hunter_AllMapScript") { }
-
-
-    bool IsSecondaryPetAlreadySummoned(Player* caster, uint32 petId) {
-
-        auto summonedUnits = caster->GetSummonedUnits();
-
-        if (summonedUnits.size() == 0)
-            return false;
-
-        for (const auto& unit : summonedUnits)
-            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION) || unit->GetEntry() == petId)
-                return true;
-
-        return false;
-    }
-
+    
     // Handle the secondary pet if the player has the talent when the hunter enter in any maps.
     void OnPlayerEnterAll(Map* map, Player* player)
     {
@@ -2675,13 +2678,8 @@ public:
 
             Position const& pos = player->GetPosition();
             SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-            Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, 0, 0, properties);
-            summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
-            summon->InitCharmInfo();
-            player->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
-            player->AddAura(34902, summon);
-            player->AddAura(34903, summon);
-            player->AddAura(34904, summon);
+            Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
+            ApplySecondaryPet(summon, firstPet, player);
         }
     }
 };
@@ -2690,21 +2688,6 @@ public:
 class spell_hun_animal_companion : public SpellScript
 {
     PrepareSpellScript(spell_hun_animal_companion);
-
-    bool IsSecondaryPetAlreadySummoned() {
-
-        Player* caster = GetCaster()->ToPlayer();
-        auto summonedUnits = caster->GetSummonedUnits();
-
-        if (summonedUnits.size() == 0)
-            return false;
-        
-        for (const auto& unit : summonedUnits)
-            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
-                return true;
-
-        return false;
-    }
 
     void HandleBuff()
     {
@@ -2726,24 +2709,14 @@ class spell_hun_animal_companion : public SpellScript
         if (!firstPet)
             return;
 
-        if (IsSecondaryPetAlreadySummoned())
+        if (IsSecondaryPetAlreadySummoned(caster, firstPet->CreatureId))
             return;
 
         Position const& pos = GetCaster()->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);   
         int32 duration = GetSpellInfo()->GetDuration();
-        Pet* pet = caster->GetPet();
-
-        Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, duration, 0, properties);
-        summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
-        summon->InitCharmInfo();
-        summon->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
-        if (pet) {
-            GetCaster()->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, pet);
-        }
-        caster->AddAura(34902, summon);
-        caster->AddAura(34903, summon);
-        caster->AddAura(34904, summon);
+        Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, duration, 60 * IN_MILLISECONDS, properties);
+        ApplySecondaryPet(summon, firstPet, caster);
     }
 
     void Register() override
