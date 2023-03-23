@@ -352,7 +352,15 @@ class rune_hunter_dance_with_death : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, GetCaster()), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, GetCaster()));
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return false;
+
+        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, victim), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, victim));
         uint32 random = urand(1, 100);
 
         return random <= criticalChance;
@@ -1749,7 +1757,15 @@ class rune_hunter_deaths_dance : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, GetCaster()), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, GetCaster()));
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim)
+            return false;
+
+        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, victim), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, victim));
         uint32 random = urand(1, 100);
 
         return random <= criticalChance;
@@ -3746,6 +3762,7 @@ class rune_hunter_ruthless_marauder_crit : public SpellScript
     {
         if (!GetRuneAura())
             return;
+
         Unit* target = GetHitUnit();
 
         if (!target)
