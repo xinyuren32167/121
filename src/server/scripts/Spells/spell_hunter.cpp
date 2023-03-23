@@ -1681,7 +1681,6 @@ class spell_hun_kill_command : public SpellScript
             if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
                 unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
-
         }
 
         if (Aura* aura = caster->GetAura(80232))
@@ -1699,13 +1698,13 @@ class spell_hun_kill_command : public SpellScript
     void HandleAfterCast()
     {
         Player* caster = GetCaster()->ToPlayer();
+        int32 procChance = sSpellMgr->AssertSpellInfo(80141)->GetEffect(EFFECT_2).CalcValue();
 
         if (Aura* aura = caster->GetAura(80208))
-        {
-            int32 procChance = aura->GetEffect(EFFECT_2)->GetAmount();
-            if (roll_chance_i(procChance))
-                caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
-        }
+            procChance += aura->GetEffect(EFFECT_2)->GetAmount();
+
+        if (roll_chance_i(procChance))
+            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_COMMAND, true);
     }
 
     void Register() override
@@ -2641,7 +2640,7 @@ public:
     Hunter_AllMapScript() : AllMapScript("Hunter_AllMapScript") { }
 
 
-    bool IsSecondaryPetAlreadySummoned(Player* caster) {
+    bool IsSecondaryPetAlreadySummoned(Player* caster, uint32 petId) {
 
         auto summonedUnits = caster->GetSummonedUnits();
 
@@ -2649,7 +2648,7 @@ public:
             return false;
 
         for (const auto& unit : summonedUnits)
-            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
+            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION) || unit->GetEntry() == petId)
                 return true;
 
         return false;
@@ -2671,7 +2670,7 @@ public:
             if (!firstPet)
                 return;
 
-            if (IsSecondaryPetAlreadySummoned(player))
+            if (IsSecondaryPetAlreadySummoned(player, firstPet->CreatureId))
                 return;
 
             Position const& pos = player->GetPosition();
@@ -2679,6 +2678,7 @@ public:
             Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_DESPAWN, 0, 0, properties);
             summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
             summon->InitCharmInfo();
+            player->AddAura(SPELL_HUNTER_ANIMAL_COMPANION, summon);
             player->AddAura(34902, summon);
             player->AddAura(34903, summon);
             player->AddAura(34904, summon);
