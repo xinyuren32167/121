@@ -1749,7 +1749,7 @@ class rune_hunter_deaths_dance : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, eventInfo.GetActionTarget()), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, eventInfo.GetActionTarget()));
+        int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, GetCaster()), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, GetCaster()));
         uint32 random = urand(1, 100);
 
         return random <= criticalChance;
