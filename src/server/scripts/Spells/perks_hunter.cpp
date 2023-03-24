@@ -1097,7 +1097,7 @@ class rune_hunter_razor_fragments_trick_shots : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_razor_fragments_trick_shots::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_hunter_razor_fragments_trick_shots::HandleRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3160,7 +3160,7 @@ class rune_hunter_on_the_trail_duration : public AuraScript
             dot->SetDuration(duration);
             dot->GetEffect(EFFECT_0)->ResetTicks();
             increasedAmount += durationIncrease;
-            dot->GetEffect(EFFECT_1)->SetAmount(increasedAmount);
+            dot->GetEffect(EFFECT_0)->SetAmount(increasedAmount);
         }
     }
 
