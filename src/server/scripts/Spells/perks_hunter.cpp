@@ -3149,7 +3149,7 @@ class rune_hunter_on_the_trail_duration : public AuraScript
         if (Aura* dot = victim->GetAura(RUNE_HUNTER_ON_THE_TRAIL_DOT))
         {
             int32 durationIncrease = aurEff->GetAmount();
-            int32 increasedAmount = dot->GetEffect(EFFECT_1)->GetAmount();
+            int32 increasedAmount = dot->GetEffect(EFFECT_0)->GetAmount();
             int32 maxIncrease = dot->GetSpellInfo()->GetMaxDuration();
 
             if (increasedAmount >= maxIncrease)
