@@ -1780,7 +1780,7 @@ class spell_hun_trueshot : public SpellScript
 
     void HandleBuff()
     {
-        GetCaster()->CastSpell(GetExplTargetUnit(), 80150, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetExplTargetUnit(), 80154, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
