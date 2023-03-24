@@ -421,18 +421,29 @@ class spell_unstable_magic : public AuraScript
 {
     PrepareAuraScript(spell_unstable_magic);
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        PreventDefaultAction();
+        return eventInfo.GetDamageInfo();
+    }
 
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 50));
-            GetCaster()->CastCustomSpell(300062, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
-        }
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        GetCaster()->CastCustomSpell(300062, SPELLVALUE_BASE_POINT0, amount, victim, true);
+
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_unstable_magic::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_unstable_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -792,43 +803,40 @@ class spell_brain_fire : public SpellScript
 
 class spell_ice_spike : public SpellScript
 {
-
     PrepareSpellScript(spell_ice_spike);
 
-    int GetProcRate()
+    Aura* GetRuneAura(Unit* caster)
     {
-        if (GetCaster()->HasAura(300402))
-            return 21;
+        for (size_t i = 300402; i < 300408; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
 
-        if (GetCaster()->HasAura(300403))
-            return 37;
-
-        if (GetCaster()->HasAura(300404))
-            return 53;
-
-        if (GetCaster()->HasAura(300405))
-            return 69;
-
-        if (GetCaster()->HasAura(300406))
-            return 85;
-
-        if (GetCaster()->HasAura(300407))
-            return 101;
-
-        return 0;
+        return nullptr;
     }
 
     void HandleProc()
     {
-        if (GetCaster()->HasAura(57761))
-        {
-            if (GetCaster()->HasAura(300402) || GetCaster()->HasAura(300403) || GetCaster()->HasAura(300404) || GetCaster()->HasAura(300405) || GetCaster()->HasAura(300406) || GetCaster()->HasAura(300407))
-            {
-                uint32 random = urand(0, 100);
-                if (random < GetProcRate())
-                    GetCaster()->CastSpell(GetExplTargetUnit(), 300408, TRIGGERED_FULL_MASK);
-            }
-        }
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+
+        if (!caster || caster->isDead() || !GetRuneAura(caster))
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        if (!caster->HasAura(57761))
+            return;
+
+        int32 procChance = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        uint32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        GetCaster()->CastSpell(target, 300408, TRIGGERED_FULL_MASK);
     }
 
     void Register() override

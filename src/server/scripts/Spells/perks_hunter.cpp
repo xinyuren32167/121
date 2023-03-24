@@ -3687,24 +3687,6 @@ class rune_hunter_birds_of_prey : public AuraScript
             if (GetCaster()->HasAura(i))
                 GetCaster()->RemoveAura(i);
         }
-
-        /*if (GetCaster()->HasAura(501344))
-            GetCaster()->RemoveAura(501344);
-
-        if (GetCaster()->HasAura(501345))
-            GetCaster()->RemoveAura(501345);
-
-        if (GetCaster()->HasAura(501346))
-            GetCaster()->RemoveAura(501346);
-
-        if (GetCaster()->HasAura(501347))
-            GetCaster()->RemoveAura(501347);
-
-        if (GetCaster()->HasAura(501348))
-            GetCaster()->RemoveAura(501348);
-
-        if (GetCaster()->HasAura(501349))
-            GetCaster()->RemoveAura(501349);*/
     }
 
     void Register() override
