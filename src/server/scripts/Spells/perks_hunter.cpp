@@ -2212,7 +2212,7 @@ class rune_hunter_killer_cobra_apply : public AuraScript
     Aura* GetRuneAura()
     {
         if (!GetCaster())
-            return;
+            return nullptr;
 
         if (GetCaster()->HasAura(500784))
             return GetCaster()->GetAura(500784);

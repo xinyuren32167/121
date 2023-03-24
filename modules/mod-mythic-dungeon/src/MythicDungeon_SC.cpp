@@ -71,7 +71,7 @@ public:
     {
        MythicDungeonManager::Update(map, diff);
        InstanceScript* instance = map->ToInstanceMap()->GetInstanceScript();
-       instance->Initialize()
+       instance->Initialize();
     }
 
     void OnPlayerEnterAll(Map* map, Player* player)
