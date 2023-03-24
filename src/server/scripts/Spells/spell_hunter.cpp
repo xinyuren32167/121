@@ -1519,9 +1519,22 @@ class spell_hun_bestial_apply : public SpellScript
             return;
 
         player->AddAura(80132, pet);
-        player->AddAura(80132, player);
+        player->AddAura(80132, player);  
 
         pet->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+
+        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        for (auto const& unit : summonedUnits)
+        {
+            if (!unit || !unit->IsAlive())
+                return;
+
+            if (unit->GetCharmInfo())
+            {
+                player->AddAura(80132, unit);
+                unit->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register() override
@@ -1648,7 +1661,17 @@ class spell_hun_kill_command : public SpellScript
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
-        auto summonedUnits = caster->GetSummonedUnits();
+        std::vector<Unit*> summonedUnits = caster->GetSummonedUnits();
+        for (auto const& unit : summonedUnits)
+        {
+            if (!unit || !unit->IsAlive())
+                return;
+
+            if (unit->GetCharmInfo())
+            {
+                unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+            }
+        }
 
         if (Aura* aura = caster->GetAura(80232))
         {
