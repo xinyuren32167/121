@@ -1305,7 +1305,7 @@ void WorldSession::HandleSetTitleOpcode(WorldPacket& recv_data)
 
 void WorldSession::HandleResetInstancesOpcode(WorldPacket& /*recv_data*/)
 {
-    LOG_DEBUG("network", "WORLD: CMSG_RESET_INSTANCES");
+    LOG_ERROR("network", "WORLD: CMSG_RESET_INSTANCES");
 
     if (Group* group = _player->GetGroup())
     {

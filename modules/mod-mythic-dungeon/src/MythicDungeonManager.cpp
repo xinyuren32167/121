@@ -122,6 +122,24 @@ void MythicDungeonManager::OnMapChanged(Player* player)
     sEluna->SendShowMythicUI(player, true);
 }
 
+void MythicDungeonManager::ReactivateAllGameObject(Map* map)
+{
+    auto objects = map->GetGameObjectBySpawnIdStore();
+    auto creatures = map->GetCreatureBySpawnIdStore();
+
+    for (auto const& object : objects) {
+        if (object.second->GetGoState() != GO_STATE_ACTIVE)
+            continue;
+        object.second->SetGoState(GO_STATE_READY);
+    }
+
+    for (auto const& creature : creatures) {
+        if (creature.second->IsAlive())
+            continue;
+        creature.second->Respawn(true);
+    }
+}
+
 void MythicDungeonManager::Update(Map* map, uint32 diff)
 {
     auto it = m_MythicRun.find(map->GetInstanceId());
@@ -338,6 +356,8 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
 
     m_MythicRun[map->GetInstanceId()] = run;
+
+    ReactivateAllGameObject(map);
 
     if (group) {
 

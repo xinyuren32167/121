@@ -29,6 +29,12 @@ enum DataTypes
     MAX_ENCOUNTERS              = 2
 };
 
+enum NpcEntry
+{
+    NPC_RHAHK_ZOR = 644,
+};
+
+
 enum GameObjects
 {
     GO_FACTORY_DOOR             = 13965,

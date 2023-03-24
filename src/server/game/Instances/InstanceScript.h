@@ -277,6 +277,7 @@ private:
     static void LoadObjectData(ObjectData const* creatureData, ObjectInfoMap& objectInfo);
 
     std::vector<BossInfo> bosses;
+    std::vector<GameObject*> _gameObjects;
     DoorInfoMap doors;
     MinionInfoMap minions;
     ObjectInfoMap _creatureInfo;

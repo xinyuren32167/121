@@ -115,6 +115,7 @@ public:
     static void ApplyAffixesAndOtherUpgrade(Creature* creature, Map* map);
     static void HandleAffixes(Map* map);
     static void OnMapChanged(Player* player);
+    static void ReactivateAllGameObject(Map* map);
     static void Update(Map* map, uint32 diff);
     static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);

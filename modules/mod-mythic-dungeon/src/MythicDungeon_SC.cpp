@@ -70,8 +70,6 @@ public:
     void OnMapUpdate(Map* map, uint32 diff) override
     {
        MythicDungeonManager::Update(map, diff);
-       InstanceScript* instance = map->ToInstanceMap()->GetInstanceScript();
-       instance->Initialize()
     }
 
     void OnPlayerEnterAll(Map* map, Player* player)

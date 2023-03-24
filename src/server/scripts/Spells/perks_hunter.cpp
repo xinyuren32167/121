@@ -2211,9 +2211,6 @@ class rune_hunter_killer_cobra_apply : public AuraScript
 
     Aura* GetRuneAura()
     {
-        if (!GetCaster())
-            return;
-
         if (GetCaster()->HasAura(500784))
             return GetCaster()->GetAura(500784);
 
@@ -2237,6 +2234,9 @@ class rune_hunter_killer_cobra_apply : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster())
+            return;
+
         if (!GetRuneAura())
             return;
 
