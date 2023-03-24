@@ -2010,7 +2010,7 @@ void Roll::targetObjectBuildLink()
     getTarget()->addLootValidatorRef(this);
 }
 
-void Group::SetDungeonDifficulty(Difficulty difficulty)
+void Group::SetDungeonDifficulty(Difficulty difficulty, bool apply)
 {
     m_dungeonDifficulty = difficulty;
     if (!isBGGroup() && !isBFGroup())
@@ -2022,6 +2022,9 @@ void Group::SetDungeonDifficulty(Difficulty difficulty)
 
         CharacterDatabase.Execute(stmt);
     }
+
+    if (apply)
+        return;
 
     for (GroupReference* itr = GetFirstMember(); itr != nullptr; itr = itr->next())
     {

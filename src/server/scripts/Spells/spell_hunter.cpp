@@ -1450,6 +1450,9 @@ class spell_hun_aspect_endurance : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (GetCaster())
+            return;
+
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
         if (!pet)
             return;
@@ -2590,6 +2593,9 @@ class spell_hun_beast_within : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (GetCaster())
+            return;
+
         GetCaster()->RemoveAura(80222);
     }
 

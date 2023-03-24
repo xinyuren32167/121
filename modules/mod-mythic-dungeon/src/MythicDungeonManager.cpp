@@ -351,29 +351,10 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
         player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
     }
 
-    if (group) {
-        if (group->GetLeaderGUID() != player->GetGUID())
-            return;
-
-        if (group->GetMembersCount() <= 1)
-            return;
-
-        auto const& allyList = group->GetMemberSlots();
-
-        for (auto const& target : allyList)
-        {
-            Player* member = ObjectAccessor::FindPlayer(target.guid);
-            if (member) {
-                member->ClearUnitState(UNIT_STATE_ROOT);
-                member->SetControlled(true, UNIT_STATE_ROOT);
-                AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(keyId);
-                member->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
-                if (at) {
-                    member->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true, level);
-                }
-            }
-        }
-    }
+    if(group)
+        group->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS, true);
+    else
+        player->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
 
 }
 
@@ -448,9 +429,28 @@ void MythicDungeonManager::CreateRun(Player* player, uint32 level)
 
     m_MythicRun[player->GetInstanceId()] = run;
 
-    LOG_ERROR("UPDATE", "UPDATE {}", player->GetInstanceId());
-
     sEluna->SendBeginMythicDungeon(player);
+
+    if (Group* group = player->GetGroup()) {
+        if (group->GetLeaderGUID() != player->GetGUID())
+            return;
+
+        if (group->GetMembersCount() <= 1)
+            return;
+
+        auto const& allyList = group->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* member = ObjectAccessor::FindPlayer(target.guid);
+            if (member) {
+                member->ClearUnitState(UNIT_STATE_ROOT);
+                member->SetControlled(true, UNIT_STATE_ROOT);
+                member->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
+                member->TeleportTo(player->GetMapId(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), 0, player, true);
+            }
+        }
+    }
 }
 
 void MythicDungeonManager::OnKillMinion(Player* player, Creature* killed)
