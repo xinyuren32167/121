@@ -2078,10 +2078,6 @@ class rune_hunter_howl : public AuraScript
     {
         Player* player = GetCaster()->ToPlayer();
         Pet* pet = player->GetPet();
-
-        if (!pet)
-            return;
-
         int32 increasedDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
         int32 baseDuration = aurEff->GetAmount();
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -2092,12 +2088,15 @@ class rune_hunter_howl : public AuraScript
 
             auraEff->SetDuration(duration);
 
-            if (pet->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
-                pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
-            else
+            if (pet)
             {
-                player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
-                pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+                if (pet->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
+                    pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+                else
+                {
+                    player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
+                    pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
+                }
             }
 
             if (summonedUnits.size() == 0)
@@ -3144,14 +3143,14 @@ class rune_hunter_on_the_trail_duration : public AuraScript
         Player* player = GetCaster()->ToPlayer();
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         if (Aura* dot = victim->GetAura(RUNE_HUNTER_ON_THE_TRAIL_DOT))
         {
             int32 durationIncrease = aurEff->GetAmount();
             int32 increasedAmount = dot->GetEffect(EFFECT_1)->GetAmount();
-            int32 maxIncrease = dot->GetMaxDuration();
+            int32 maxIncrease = dot->GetSpellInfo()->GetMaxDuration();
 
             if (increasedAmount >= maxIncrease)
                 return;
