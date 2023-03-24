@@ -691,23 +691,11 @@ class rune_hunter_ice_skate : public SpellScript
 
     Aura* GetRuneAura()
     {
-        if (GetOriginalCaster()->HasAura(500328))
-            return GetOriginalCaster()->GetAura(500328);
-
-        if (GetOriginalCaster()->HasAura(500329))
-            return GetOriginalCaster()->GetAura(500329);
-
-        if (GetOriginalCaster()->HasAura(500330))
-            return GetOriginalCaster()->GetAura(500330);
-
-        if (GetOriginalCaster()->HasAura(500331))
-            return GetOriginalCaster()->GetAura(500331);
-
-        if (GetOriginalCaster()->HasAura(500332))
-            return GetOriginalCaster()->GetAura(500332);
-
-        if (GetOriginalCaster()->HasAura(500333))
-            return GetOriginalCaster()->GetAura(500333);
+        for (size_t i = 500328; i < 500334; i++)
+        {
+            if (GetOriginalCaster()->HasAura(i))
+                return GetOriginalCaster()->GetAura(i);
+        }
 
         return nullptr;
     }
@@ -740,37 +728,26 @@ class rune_hunter_playing_with_matches : public SpellScript
 
     Aura* GetRuneAura()
     {
-        if (GetOriginalCaster()->HasAura(500346))
-            return GetOriginalCaster()->GetAura(500346);
-
-        if (GetOriginalCaster()->HasAura(500347))
-            return GetOriginalCaster()->GetAura(500347);
-
-        if (GetOriginalCaster()->HasAura(500348))
-            return GetOriginalCaster()->GetAura(500348);
-
-        if (GetOriginalCaster()->HasAura(500349))
-            return GetOriginalCaster()->GetAura(500349);
-
-        if (GetOriginalCaster()->HasAura(500350))
-            return GetOriginalCaster()->GetAura(500350);
-
-        if (GetOriginalCaster()->HasAura(500351))
-            return GetOriginalCaster()->GetAura(500351);
+        for (size_t i = 500346; i < 500352; i++)
+        {
+            if (GetOriginalCaster()->HasAura(i))
+                return GetOriginalCaster()->GetAura(i);
+        }
 
         return nullptr;
     }
 
     void HandleApplyAura()
     {
+        LOG_ERROR("error", "proc check 1");
         if (!GetRuneAura() || GetCaster()->isDead())
             return;
-
+        LOG_ERROR("error", "proc check caster + rune");
         Unit* unit = GetExplTargetUnit();
 
-        if (!unit || !unit->IsAlive())
+        if (!unit || unit->isDead())
             return;
-
+        LOG_ERROR("error", "proc check target");
         Position dest = unit->GetPosition();
 
         GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), RUNE_HUNTER_PLAYING_WITH_MATCHES_AOE, true);
@@ -1035,13 +1012,22 @@ class rune_hunter_deathblow : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 random = urand(1, 100);
-        int32 procChance = 0;
+        if (!eventInfo.GetDamageInfo()->GetSpellInfo())
+            return;
+
         int32 spellID = eventInfo.GetDamageInfo()->GetSpellInfo()->Id;
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (spellID != SPELL_HUNTER_RAPID_FIRE_DAMAGE && spellID != SPELL_HUNTER_AIMED_SHOT)
             return;
 
-        if (spellID == SPELL_HUNTER_RAPID_FIRE_DAMAGE && eventInfo.GetHitMask() & PROC_EX_CRITICAL_HIT)
+        uint32 random = urand(1, 100);
+        int32 procChance = 0;
+
+        if (spellID == SPELL_HUNTER_RAPID_FIRE_DAMAGE && eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
             procChance = GetAura()->GetEffect(EFFECT_1)->GetAmount();
 
         if (spellID == SPELL_HUNTER_AIMED_SHOT)
@@ -1050,10 +1036,8 @@ class rune_hunter_deathblow : public AuraScript
         if (random > procChance)
             return;
 
-        if (Player* caster = GetCaster()->ToPlayer())
-            caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_SHOT, true);
-
-        GetCaster()->AddAura(SPELL_HUNTER_WEAK_SPOT, GetCaster());
+        caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_SHOT, true);
+        caster->AddAura(SPELL_HUNTER_WEAK_SPOT, caster);
     }
 
     void Register()
@@ -3687,24 +3671,6 @@ class rune_hunter_birds_of_prey : public AuraScript
             if (GetCaster()->HasAura(i))
                 GetCaster()->RemoveAura(i);
         }
-
-        /*if (GetCaster()->HasAura(501344))
-            GetCaster()->RemoveAura(501344);
-
-        if (GetCaster()->HasAura(501345))
-            GetCaster()->RemoveAura(501345);
-
-        if (GetCaster()->HasAura(501346))
-            GetCaster()->RemoveAura(501346);
-
-        if (GetCaster()->HasAura(501347))
-            GetCaster()->RemoveAura(501347);
-
-        if (GetCaster()->HasAura(501348))
-            GetCaster()->RemoveAura(501348);
-
-        if (GetCaster()->HasAura(501349))
-            GetCaster()->RemoveAura(501349);*/
     }
 
     void Register() override

@@ -1073,6 +1073,9 @@ class spell_mage_master_of_elements : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return false;
+
         _spellInfo = eventInfo.GetSpellInfo();
         if (!_spellInfo || !eventInfo.GetActor() || !eventInfo.GetActionTarget())
         {
@@ -1285,6 +1288,9 @@ class spell_mage_fingers_of_frost_proc_aura : public AuraScript
 
     void HandleOnEffectProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (eventInfo.GetSpellPhaseMask() == PROC_SPELL_PHASE_CAST)
         {
             _chance = 100.f;
@@ -1309,6 +1315,9 @@ class spell_mage_fingers_of_frost_proc_aura : public AuraScript
 
     void HandleAfterEffectProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (eventInfo.GetSpellPhaseMask() == PROC_SPELL_PHASE_HIT)
         {
             _chance = 100.f;
@@ -1393,6 +1402,9 @@ class spell_mage_rule_of_threes : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (!GetTalent())
             return;
 
@@ -1433,6 +1445,9 @@ class spell_mage_arcane_meditation : public AuraScript
         if (!GetTalent())
             return;
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         int32 amount = CalculatePct(int32(GetCaster()->GetMaxPower(POWER_MANA)), aurEff->GetAmount());
         
         GetCaster()->CastCustomSpell(18465, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
@@ -1450,6 +1465,9 @@ class spell_mage_improved_fireball : public AuraScript
 
     void HandleDummy(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
 
         if (procInfo.GetHitMask() != PROC_EX_CRITICAL_HIT)
@@ -1461,6 +1479,9 @@ class spell_mage_improved_fireball : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         uint32 procSpell = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
 
         if (GetCaster()->HasAura(procSpell))
@@ -1480,6 +1501,9 @@ class spell_mage_empowered_fire : public AuraScript
 
     void HandleDummy(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         int32 amount = CalculatePct(int32(GetCaster()->GetMaxPower(POWER_MANA)), aurEff->GetAmount());
         GetCaster()->CastCustomSpell(67545, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }

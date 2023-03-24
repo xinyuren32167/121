@@ -48,7 +48,6 @@ class spell_cut_the_veins : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-
         PreventDefaultAction();
 
         if (!GetCaster())
@@ -130,7 +129,7 @@ class spell_tide_of_blood : public AuraScript
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
 
-        if (!target)
+        if (!target || GetCaster()->isDead())
             return;
 
         if (!aura)
@@ -378,7 +377,7 @@ class spell_blood_dance : public AuraScript
     {
         Unit* target = eventInfo.GetProcTarget();
 
-        if (!target)
+        if (!target || target->isDead())
             return;
 
         if (!target->HasAura(47465))
@@ -1011,7 +1010,7 @@ class spell_best_served_cold : public AuraScript
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
 
-        if (!target)
+        if (!target || GetCaster()->isDead())
             return;
 
         uint32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
