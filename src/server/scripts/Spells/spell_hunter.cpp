@@ -1763,7 +1763,7 @@ class spell_hun_readiness_trigger : public AuraScript
     {
         if (Player* caster = GetTarget()->ToPlayer())
         {
-            caster->RemoveSpellCooldown(80149, true);
+            caster->RemoveSpellCooldown(80146, true);
             caster->AddAura(80152, caster);
         }
     }
