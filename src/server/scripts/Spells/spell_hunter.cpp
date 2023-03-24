@@ -2089,7 +2089,7 @@ class spell_hun_murder_crows_check : public AuraScript
             return false;
 
         if (!caster || !caster->IsAlive())
-            return;
+            return false;
 
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())

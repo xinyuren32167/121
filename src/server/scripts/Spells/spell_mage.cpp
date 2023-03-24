@@ -1074,7 +1074,7 @@ class spell_mage_master_of_elements : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         if (!GetCaster() || !GetCaster()->IsAlive())
-            return;
+            return false;
 
         _spellInfo = eventInfo.GetSpellInfo();
         if (!_spellInfo || !eventInfo.GetActor() || !eventInfo.GetActionTarget())
