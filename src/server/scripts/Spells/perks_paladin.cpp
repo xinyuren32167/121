@@ -1029,7 +1029,7 @@ class rune_pal_empyreal_ward : public SpellScript
 
         int32 procSpell = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
 
-        GetCaster()->CastSpell(GetCaster(), procSpell, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetExplTargetUnit(), procSpell, TRIGGERED_FULL_MASK);
     }
 
     void Register()
