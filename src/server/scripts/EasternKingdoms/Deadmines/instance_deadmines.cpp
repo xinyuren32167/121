@@ -35,17 +35,6 @@ public:
             memset(&_encounters, 0, sizeof(_encounters));
         }
 
-        void OnCreatureCreate(Creature* creature) override
-        {
-            switch (creature->GetEntry())
-            {
-            case NPC_RHAHK_ZOR:
-                if (_encounters[TYPE_RHAHK_ZOR] == DONE)
-                    creature->setDeathState(JUST_DIED);
-                break;
-            }
-        }
-
 
         void OnGameObjectCreate(GameObject* gameobject) override
         {
