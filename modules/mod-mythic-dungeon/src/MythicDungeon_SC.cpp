@@ -31,6 +31,13 @@ public:
 
     }
 
+
+    void OnPlayerTeleportTo(Player* player, uint32 level)
+    {
+        MythicDungeonManager::CreateRun(player, level);
+    }
+
+
     void OnCreatureKill(Player* killer, Creature* killed)
     {
         MythicDungeonManager::OnKillBoss(killer, killed);

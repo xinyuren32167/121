@@ -1552,6 +1552,14 @@ void ScriptMgr::AnticheatSetSkipOnePacketForASH(Player* player, bool apply)
     });
 }
 
+void ScriptMgr::OnPlayerTeleportTo(Player* player, uint32 mythicLevel)
+{
+    ExecuteScript<PlayerScript>([&](PlayerScript* script)
+    {
+        script->OnPlayerTeleportTo(player, mythicLevel);
+    });
+}
+
 void ScriptMgr::AnticheatSetCanFlybyServer(Player* player, bool apply)
 {
     ExecuteScript<PlayerScript>([&](PlayerScript* script)

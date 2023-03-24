@@ -260,7 +260,7 @@ public:
     Difficulty GetDifficulty(bool isRaid) const;
     Difficulty GetDungeonDifficulty() const;
     Difficulty GetRaidDifficulty() const;
-    void SetDungeonDifficulty(Difficulty difficulty);
+    void SetDungeonDifficulty(Difficulty difficulty, bool apply = false);
     void SetRaidDifficulty(Difficulty difficulty);
     uint16 InInstance();
     void ResetInstances(uint8 method, bool isRaid, Player* leader);
