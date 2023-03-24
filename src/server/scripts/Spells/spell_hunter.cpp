@@ -1517,6 +1517,9 @@ class spell_hun_aspect_cheetah : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->CastSpell(GetCaster(), 80129, TRIGGERED_FULL_MASK);
     }
 
@@ -1604,6 +1607,10 @@ class spell_hun_steady_shot_concussive : public SpellScript
     void HandleBuff()
     {
         Unit* target = GetExplTargetUnit();
+
+        if (!target || !target->IsAlive())
+            return;
+
         if (Aura* aura = target->GetAura(5116))
         {
             if (aura->GetCasterGUID() == GetCaster()->GetGUID())
@@ -1624,6 +1631,10 @@ class spell_hun_explosive_shot : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* target = GetTarget();
+
+        if (!target || !target->IsAlive())
+            return;
+
         GetCaster()->CastSpell(target, 80137, TRIGGERED_FULL_MASK);
     }
 
@@ -1656,6 +1667,12 @@ class spell_hun_kill_command : public SpellScript
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
         int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
+
+        if (!target || !target->IsAlive())
+            return;
+
+        if (!caster || !caster->IsAlive())
+            return;
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
@@ -1761,7 +1778,12 @@ class spell_hun_readiness_trigger : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Player* caster = GetTarget()->ToPlayer())
+        Player* caster = GetTarget()->ToPlayer();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (caster)
         {
             caster->RemoveSpellCooldown(80146, true);
             caster->AddAura(80152, caster);
@@ -1799,6 +1821,9 @@ class spell_hun_bear_applier : public AuraScript
         Unit* pet = player->GetPet();
 
         if (!pet)
+            return;
+
+        if (!player || !player->IsAlive())
             return;
 
         player->AddAura(49071, pet);
@@ -1875,6 +1900,9 @@ class spell_hun_survival_fittest : public AuraScript
         if (!pet)
             return;
 
+        if (!player || !player->IsAlive())
+            return;
+
         player->AddAura(80162, pet);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -1930,6 +1958,9 @@ class spell_hun_camouflage : public AuraScript
     {
         Player* player = GetCaster()->ToPlayer();
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
 
         for (auto const& unit : summonedUnits)
@@ -1973,6 +2004,9 @@ class spell_hun_death_chakram : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->CastSpell(GetCaster(), 80168, TRIGGERED_FULL_MASK);
     }
 
@@ -1989,6 +2023,10 @@ class spell_hun_cobra_shot : public AuraScript
     void HandleCd(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
+
+        if (!target || !target->IsAlive())
+            return;
+
         int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).CalcValue();
         target->ModifySpellCooldown(SPELL_HUNTER_KILL_COMMAND, amount);
     }
@@ -2009,6 +2047,9 @@ class spell_hun_barbed_shot : public SpellScript
         Unit* pet = player->GetPet();
 
         if (!pet)
+            return;
+
+        if (!player || !player->IsAlive())
             return;
 
         player->AddAura(80174, pet);
@@ -2047,6 +2088,9 @@ class spell_hun_murder_crows_check : public AuraScript
         if (!target)
             return false;
 
+        if (!caster || !caster->IsAlive())
+            return;
+
         if (target->HasAura(80176))
             if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
                 return true;
@@ -2066,6 +2110,9 @@ class spell_hun_murder_crows_reset : public SpellScript
 
     void HandleProc()
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (GetCaster()->HasSpell(80176)) {
             GetCaster()->ToPlayer()->RemoveSpellCooldown(80176, true);
         }
@@ -2089,6 +2136,12 @@ class spell_hun_bloodshed : public SpellScript
         int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
         int32 damage = CalculatePct(ap, ratio);
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
+            return;
+
         pet->CastCustomSpellTrigger(80179, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
@@ -2105,6 +2158,9 @@ class spell_hun_lone_wolf : public AuraScript
     void HandleProc(AuraEffect* aurEff)
     {
         Pet* pet = GetCaster()->ToPlayer()->GetPet();
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
 
         std::vector<Unit*> summonedUnits = GetCaster()->ToPlayer()->GetSummonedUnits();
 
@@ -2126,6 +2182,9 @@ class spell_hun_dire_beast : public SpellScript
 
     void HandleSummon()
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         std::vector<int32> summons = { 400000,400001,400002 };
         int32 summonId = summons[rand() % summons.size()];
 
@@ -2165,6 +2224,9 @@ class spell_hun_call_of_wild : public SpellScript
         if (!petStable)
             return;
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         SpellValue const* value = GetSpellValue();
         uint32 summonAmount = value->EffectBasePoints[EFFECT_2];
 
@@ -2199,6 +2261,9 @@ class spell_hun_call_of_wild_periodic : public SpellScript
         PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
 
         if (!petStable)
+            return;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         Position const& pos = GetCaster()->GetPosition();
@@ -2278,6 +2343,13 @@ class spell_hun_harpoon : public SpellScript
         int32 focusAmount = GetTalentAura()->GetEffect(EFFECT_1)->GetAmount();
         int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
         int32 newFocusAmount = focusAmount / maxTicks;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
+            return;
+
         GetCaster()->CastCustomSpell(target, 80235, &damageRatio, &newFocusAmount, nullptr, true, nullptr, nullptr);
     }
 
@@ -2297,6 +2369,9 @@ class spell_hun_fury_eagle : public SpellScript
         Unit* target = GetExplTargetUnit();
 
         if (!target)
+            return;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         int32 targetHealthPct = target->GetHealthPct();
@@ -2331,6 +2406,12 @@ class spell_hun_flanking_strike : public SpellScript
         if (!pet)
             return;
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
+            return;
+
         pet->GetMotionMaster()->MoveJump(targetPos, 15.0f, 15.0f);
         pet->CastCustomSpellTrigger(80198, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
@@ -2355,6 +2436,12 @@ class spell_hun_coordinated_assault : public SpellScript
         int32 damage = CalculatePct(ap, ratio);
 
         if (!pet)
+            return;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
             return;
 
         pet->CastCustomSpellTrigger(80203, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
@@ -2391,6 +2478,9 @@ class rune_hun_coordinated_bleed : public AuraScript
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
         if (!victim)
+            return;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         int32 damagePct = sSpellMgr->AssertSpellInfo(80202)->GetEffect(EFFECT_1).CalcValue();
@@ -2460,6 +2550,12 @@ class spell_hun_spearhead : public SpellScript
         if (!pet)
             return;
 
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
+            return;
+
         pet->CastCustomSpellTrigger(80207, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
@@ -2476,6 +2572,9 @@ class spell_hun_spearhead_buff : public SpellScript
     void HandleProc()
     {
         if (!GetCaster()->HasSpell(80206))
+            return;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
@@ -2496,6 +2595,9 @@ class spell_hun_cobra_sting : public SpellScript
     void HandleAfterCast()
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
 
         if (Aura* aura = caster->GetAura(24443))
         {
@@ -2568,7 +2670,12 @@ class spell_hun_wild_call : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Player* caster = GetCaster()->ToPlayer())
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (caster)
             caster->RemoveSpellCooldown(80172, true);
     }
 
@@ -2687,7 +2794,7 @@ class spell_hun_animal_companion : public SpellScript
     {
         Player* caster = GetCaster()->ToPlayer();
 
-        if (!caster)
+        if (!caster || !caster->IsAlive())
             return;
 
         if (!caster->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
@@ -2725,9 +2832,17 @@ class spell_hun_arctic_bola : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        Unit* target = procInfo.GetActionTarget();
+
+        if (!target || !target->IsAlive())
+            return;
+
         Player* caster = GetCaster()->ToPlayer();
 
-        caster->CastSpell(procInfo.GetActionTarget(), 80227, true);
+        caster->CastSpell(target, 80227, true);
     }
 
     void Register() override
@@ -2757,6 +2872,12 @@ class spell_hun_careful_aim : public AuraScript
         if (damageDealt <= 0)
             return;
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!victim || !victim->IsAlive())
+            return;
+
         AuraEffect const* currentAura = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2222, 0);
 
         float damage = CalculatePct(int32(damageDealt), currentAura->GetAmount());
@@ -2784,6 +2905,12 @@ class spell_hun_calculated_shot : public SpellScript
 
         Unit* target = GetExplTargetUnit();
         if (!target)
+            return;
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
             return;
 
         int32 targetHealthPct = target->GetHealthPct();
@@ -2839,6 +2966,9 @@ class spell_hun_harpoon_reset : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->ToPlayer()->RemoveSpellCooldown(80190, true);
     }
 
@@ -2855,6 +2985,9 @@ class spell_hun_hunters_prey : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->ToPlayer()->RemoveSpellCooldown(61006, true);
         GetCaster()->ToPlayer()->AddAura(80220, GetCaster());
     }
@@ -2891,6 +3024,9 @@ class spell_hun_noxious_stings : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         int32 buffAmount = aurEff->GetAmount();
 
         GetCaster()->CastCustomSpell(80240, SPELLVALUE_BASE_POINT0, buffAmount, GetCaster());
@@ -2908,6 +3044,9 @@ class spell_hun_hunting_party : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount();
 
         GetCaster()->CastCustomSpell(80241, SPELLVALUE_BASE_POINT0, focusAmount, GetCaster());

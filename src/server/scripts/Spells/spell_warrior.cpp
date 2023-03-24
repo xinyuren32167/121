@@ -1228,6 +1228,12 @@ class spell_warr_retaliation : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!eventInfo.GetProcTarget() || !eventInfo.GetProcTarget()->IsAlive())
+            return;
+
         PreventDefaultAction();
         GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_WARRIOR_RETALIATION_DAMAGE, true, nullptr, aurEff);
     }
@@ -1328,7 +1334,9 @@ class spell_healing_deep_wound : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "Fueled by violence");
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
         GetCaster()->CastCustomSpell(80003, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
@@ -1349,7 +1357,7 @@ class spell_reset_overpower : public AuraScript
 
         Player* player = GetCaster()->ToPlayer();
 
-        if (!player)
+        if (!player || !player->IsAlive())
             return;
 
         if (player->HasSpellCooldown(spellId))
@@ -1374,7 +1382,7 @@ class spell_reset_shield_slam : public AuraScript
     {
         Player* player = GetCaster()->ToPlayer();
 
-        if (!player)
+        if (!player || !player->IsAlive())
             return;
 
         player->RemoveSpellCooldown(47488, true);
@@ -1392,7 +1400,12 @@ class spell_thunderlord : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-        if (Player* target = GetTarget()->ToPlayer())
+        Player* target = GetTarget()->ToPlayer();
+
+        if (!target || !target->IsAlive())
+            return;
+
+        if (target)
             target->ModifySpellCooldown(47437, -1000);
     }
 
@@ -1425,6 +1438,9 @@ class spell_ignore_pain_absorbe : public AuraScript
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
         uint32 maxDamageAbsorbe = aurEff->GetAmount();
         AuraEffect* protEff1 = GetCaster()->GetAuraEffect(80005, EFFECT_1);
@@ -1450,7 +1466,7 @@ class spell_warr_unbridled_fury : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetCaster())
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         if (Aura* recklessness = GetCaster()->GetAura(1719))

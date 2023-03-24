@@ -1195,6 +1195,9 @@ class spell_pal_ret_aura : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (GetCaster()->HasAura(80039))
         {
             float remainingDuration = GetCaster()->GetAura(80039)->GetDuration();
@@ -1238,6 +1241,9 @@ class spell_pal_shield_righteous : public SpellScript
     {
         int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), GetEffectValue());
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->CastCustomSpell(80042, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -1268,6 +1274,9 @@ class spell_pal_infusion_of_light_power : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
 
         if (GetCaster()->HasAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1))
@@ -1418,6 +1427,9 @@ class spell_pal_beacon : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
         {
             int32 heal = eventInfo.GetHealInfo()->GetHeal();
@@ -1581,6 +1593,12 @@ class spell_pal_execution_sentence : public AuraScript
     {
         Unit* Victim = eventInfo.GetDamageInfo()->GetVictim();
 
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!Victim || !Victim->IsAlive())
+            return;
+
         if (!Victim->HasAura(80064))
             return;
 
@@ -1603,6 +1621,9 @@ class spell_pal_execution_sentence_listener : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (GetCaster()->HasAura(80063))
             GetCaster()->RemoveAura(80063);
 
@@ -1612,6 +1633,9 @@ class spell_pal_execution_sentence_listener : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetAura()->GetEffect(EFFECT_1)->GetAmount()));
         float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), GetAura()->GetEffect(EFFECT_2)->GetAmount()));
         float bonusdmg = GetCaster()->GetAura(80063)->GetEffect(EFFECT_1)->GetAmount();
@@ -1634,6 +1658,9 @@ class spell_pal_art_of_the_blade : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (Player* caster = GetTarget()->ToPlayer())
             caster->RemoveSpellCooldown(80045, true);
     }
@@ -1650,7 +1677,12 @@ class spell_pal_art_of_war : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Player* caster = GetTarget()->ToPlayer())
+        Player* caster = GetTarget()->ToPlayer();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (caster)
             caster->ModifySpellCooldown(48801, -aurEff->GetAmount());
     }
 
@@ -1698,6 +1730,11 @@ class spell_pal_crusaders_might : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
+        Player* caster = GetTarget()->ToPlayer();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
         if (Player* target = GetTarget()->ToPlayer())
             target->ModifySpellCooldown(48825, -aurEff->GetAmount());
     }
@@ -1735,6 +1772,9 @@ class spell_pal_glimmer_of_light_heal : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         for (auto const& targetheal : FindTargets())
         {
             GetCaster()->CastSpell(targetheal, 80086, true);
@@ -1780,6 +1820,9 @@ class spell_pal_glimmer_of_light_damage : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         for (auto const& targetdamage : FindTargets())
         {
             GetCaster()->CastSpell(targetdamage, 80085, true);
@@ -1825,10 +1868,13 @@ class spell_pal_shining_light : public AuraScript
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
 
-        if (!target)
+        if (!target || !target->IsAlive())
             return;
 
         if (!aura)
+            return;
+
+        if (!caster || !caster->IsAlive())
             return;
 
         Aura* auraStack = caster->GetAura(80094);
@@ -1874,6 +1920,9 @@ class spell_pal_grand_crusader : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         GetCaster()->ToPlayer()->RemoveSpellCooldown(53595, true);
 
         if (GetCaster()->HasAura(80105))
