@@ -2704,7 +2704,7 @@ class spell_hun_beast_within : public AuraScript
             return;
 
         if (GetCaster()->HasAura(80222))
-            GetCaster()->AddAura(80222, GetCaster());
+            GetCaster()->RemoveAura(80222);
     }
 
     void Register() override
