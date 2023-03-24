@@ -3148,7 +3148,7 @@ class rune_hunter_on_the_trail_duration : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo();
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetVictim();
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

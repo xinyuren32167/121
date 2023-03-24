@@ -339,7 +339,6 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
 
     MythicDungeon dungeon = GetMythicDungeonByMapId(keyId);
 
-
     if (!dungeon.mapId)
         return;
 
@@ -354,12 +353,10 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
     float enemyForces = 0.0f;
     int counting = 10 * IN_MILLISECONDS;
     MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
-
-    m_MythicRun[map->GetInstanceId()] = run;
-
-    ReactivateAllGameObject(map);
+    MythicDungeonManager::HandleChangeDungeonDifficulty(player, DUNGEON_DIFFICULTY_EPIC_PLUS);
 
     if (group) {
+
 
         if (group->GetLeaderGUID() != player->GetGUID())
             return;
@@ -373,25 +370,29 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
         {
             Player* member = ObjectAccessor::FindPlayer(target.guid);
             if (member) {
-                sEluna->SendBeginMythicDungeon(member);
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
                 AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
                 if (at) {
-                    member->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
+                    member->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
                 }
+                m_MythicRun[member->GetInstanceId()] = run;
+                sEluna->SendBeginMythicDungeon(member);
             }
         }
     }
     else {
+
         player->ClearUnitState(UNIT_STATE_ROOT);
         player->SetControlled(true, UNIT_STATE_ROOT);
-        sEluna->SendBeginMythicDungeon(player);
         AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
         if (at) {
-            player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
+            player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
         }
+        m_MythicRun[player->GetInstanceId()] = run;
+        sEluna->SendBeginMythicDungeon(player);
     }
+
 }
 
 void MythicDungeonManager::OnKillBoss(Player* player, Creature* killed)
