@@ -2691,13 +2691,20 @@ class spell_hun_beast_within : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (GetCaster()->HasAura(80221))
             GetCaster()->AddAura(80222, GetCaster());
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(80222);
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (GetCaster()->HasAura(80222))
+            GetCaster()->RemoveAura(80222);
     }
 
     void Register() override
