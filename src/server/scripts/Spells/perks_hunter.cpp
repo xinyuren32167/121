@@ -168,7 +168,7 @@ class rune_hunter_bullseye : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         int32 healthPct = victim->GetHealthPct();
@@ -205,7 +205,7 @@ class rune_hunter_50cal : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
@@ -269,7 +269,7 @@ class rune_hunter_serpent_touch : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         if (!victim->HasAura(SPELL_HUNTER_SERPENT_STING))
@@ -327,7 +327,7 @@ class rune_hunter_poison_injection : public SpellScript
 
         Unit* victim = GetExplTargetUnit();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         int32 latentPoisonID = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
@@ -362,7 +362,7 @@ class rune_hunter_dance_with_death : public AuraScript
 
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return false;
 
         int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, victim), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, victim));
@@ -396,7 +396,7 @@ class rune_hunter_might_of_the_beast : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             GetCaster()->AddAura(procSpell, pet);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -492,7 +492,7 @@ class rune_hunter_natural_mending : public AuraScript
         Aura* runeAura = GetAura();
         Player* target = GetTarget()->ToPlayer();
 
-        if (!runeAura || !target)
+        if (!runeAura || !target || !target->IsAlive())
             return;
 
         int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
@@ -534,7 +534,7 @@ class rune_hunter_rejuvenating_wind : public AuraScript
     {
         Unit* target = GetCaster();
 
-        if (!target)
+        if (!target || !target->IsAlive())
             return;
 
         int32 maxHealth = target->GetMaxHealth();
@@ -586,7 +586,7 @@ class rune_hunter_third_degree_burn : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         int32 debuffSpell = GetAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
@@ -615,7 +615,7 @@ class rune_hunter_rest_in_peace : public AuraScript
     {
         Unit* target = GetCaster();
 
-        if (!target)
+        if (!target || !target->IsAlive())
             return;
 
         if (target->GetHealthPct() >= 100)
@@ -714,7 +714,7 @@ class rune_hunter_ice_skate : public SpellScript
 
         Unit* unit = GetExplTargetUnit();
 
-        if (!unit)
+        if (!unit || !unit->IsAlive())
             return;
 
         Position dest = unit->GetPosition();
@@ -763,7 +763,7 @@ class rune_hunter_playing_with_matches : public SpellScript
 
         Unit* unit = GetExplTargetUnit();
 
-        if (!unit)
+        if (!unit || !unit->IsAlive())
             return;
 
         Position dest = unit->GetPosition();
@@ -785,7 +785,7 @@ class rune_hunter_playing_with_matches_proc : public SpellScript
     {
         Unit* unit = GetExplTargetUnit();
 
-        if (!unit)
+        if (!unit || !unit->IsAlive())
             return;
 
         GetOriginalCaster()->CastSpell(unit, SPELL_HUNTER_IMMOLATION_TRAP_DOT, TRIGGERED_FULL_MASK);
@@ -868,7 +868,7 @@ class rune_hunter_cleave_command_proc : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             GetCaster()->AddAura(procSpell, pet);
     }
 
@@ -891,7 +891,7 @@ class rune_hunter_cleave_command : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
@@ -928,7 +928,7 @@ class rune_hunter_strength_of_the_pack : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             GetCaster()->AddAura(procSpell, pet);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -982,7 +982,7 @@ class rune_hunter_quick_shot : public SpellScript
 
         Unit* victim = GetExplTargetUnit();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         if (Player* caster = GetCaster()->ToPlayer())
@@ -1157,7 +1157,7 @@ class rune_hunter_razor_fragments : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
@@ -1227,7 +1227,7 @@ class rune_hunter_beast_cleave_proc : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             GetCaster()->AddAura(procSpell, pet);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -1263,7 +1263,7 @@ class rune_hunter_beast_cleave : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
@@ -1348,7 +1348,7 @@ class rune_hunter_aspect_of_the_storm : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             pet->CastCustomSpell(RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE, SPELLVALUE_BASE_POINT0, damage, pet, TRIGGERED_FULL_MASK);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -1452,7 +1452,7 @@ class rune_hunter_it_had_to_be_snake : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         Position dest = victim->GetPosition();
@@ -1725,6 +1725,9 @@ class rune_hunter_scent_of_blood : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
         if (GetCaster()->HasAura(500688))
             GetCaster()->RemoveAura(500688);
 
@@ -1762,7 +1765,7 @@ class rune_hunter_deaths_dance : public AuraScript
 
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return false;
 
         int32 criticalChance = std::max<int32>(GetCaster()->GetUnitCriticalChance(BASE_ATTACK, victim), GetCaster()->GetUnitCriticalChance(RANGED_ATTACK, victim));
@@ -1804,7 +1807,7 @@ class rune_hunter_brutal_companion : public AuraScript
     {
         Unit* victim = eventInfo.GetActionTarget();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         if (Player* caster = GetCaster()->ToPlayer())
@@ -1841,7 +1844,7 @@ class rune_hunter_stomp : public AuraScript
 
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             pet->CastCustomSpell(RUNE_HUNTER_STOMP_DAMAGE, SPELLVALUE_BASE_POINT0, damage, pet, TRIGGERED_FULL_MASK);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -1903,7 +1906,7 @@ class rune_hunter_bloodthirsty_wrath : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         if (!GetRuneAura())
@@ -2088,7 +2091,7 @@ class rune_hunter_howl : public AuraScript
 
             auraEff->SetDuration(duration);
 
-            if (pet)
+            if (pet && pet->IsAlive())
             {
                 if (pet->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
                     pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
@@ -2121,7 +2124,7 @@ class rune_hunter_howl : public AuraScript
             player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, player);
             player->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
 
-            if (pet)
+            if (pet && pet->IsAlive())
             {
                 player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
                 pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
@@ -2183,7 +2186,7 @@ class rune_hunter_sustained_anger : public AuraScript
         player->CastSpell(player, procSpell, TRIGGERED_FULL_MASK);
         Pet* pet = player->GetPet();
 
-        if (pet)
+        if (pet && pet->IsAlive())
             pet->CastSpell(pet, procSpell, TRIGGERED_FULL_MASK);
 
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
@@ -2234,7 +2237,7 @@ class rune_hunter_killer_cobra_apply : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         if (!GetRuneAura())
@@ -2247,7 +2250,7 @@ class rune_hunter_killer_cobra_apply : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
         if (GetCaster()->HasAura(500790))
@@ -2379,7 +2382,7 @@ class rune_hunter_thunderslash : public AuraScript
         Unit* actor = eventInfo.GetActor();
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
@@ -2806,7 +2809,7 @@ class rune_hunter_double_impact : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
@@ -2900,7 +2903,7 @@ class rune_hunter_legacy_of_the_windrunner : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         int32 duration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
@@ -3488,7 +3491,7 @@ class rune_hunter_windrunners_barrage : public AuraScript
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!victim)
+        if (!victim || !victim->IsAlive())
             return;
 
         int32 duration = 0;
@@ -3780,7 +3783,7 @@ class rune_hunter_ruthless_marauder_crit : public SpellScript
 
         Unit* target = GetHitUnit();
 
-        if (!target)
+        if (!target || !target->IsAlive())
             return;
 
         int32 healthThreshold = GetRuneAura()->GetEffect(EFFECT_2)->GetAmount();
