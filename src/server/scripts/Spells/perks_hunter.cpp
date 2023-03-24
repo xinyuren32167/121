@@ -216,7 +216,7 @@ class rune_hunter_50cal : public AuraScript
         float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        GetCaster()->CastCustomSpell(RUNE_HUNTER_50CAL_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(RUNE_HUNTER_50CAL_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register()
@@ -902,7 +902,7 @@ class rune_hunter_cleave_command : public AuraScript
         float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
-        eventInfo.GetActor()->CastCustomSpell(RUNE_HUNTER_CLEAVE_COMMAND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+        eventInfo.GetActor()->CastCustomSpell(RUNE_HUNTER_CLEAVE_COMMAND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register()
@@ -1025,35 +1025,30 @@ class rune_hunter_deathblow : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "deathblow CHECK");
-        // return eventInfo.GetDamageInfo();
-        return true;
+        return eventInfo.GetDamageInfo();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "deathblow PROC");
         uint32 random = urand(1, 100);
         int32 procChance = 0;
         int32 spellID = eventInfo.GetDamageInfo()->GetSpellInfo()->Id;
-        LOG_ERROR("error", "deathblow spellID = {}", spellID);
         if (spellID != SPELL_HUNTER_RAPID_FIRE_DAMAGE && spellID != SPELL_HUNTER_AIMED_SHOT)
             return;
 
-        if (spellID == SPELL_HUNTER_RAPID_FIRE_DAMAGE)
+        if (spellID == SPELL_HUNTER_RAPID_FIRE_DAMAGE && eventInfo.GetHitMask() & PROC_EX_CRITICAL_HIT)
             procChance = GetAura()->GetEffect(EFFECT_1)->GetAmount();
 
         if (spellID == SPELL_HUNTER_AIMED_SHOT)
             procChance = GetAura()->GetEffect(EFFECT_0)->GetAmount();
-        LOG_ERROR("error", "deathblow procChance = {} , random = {}", procChance, random);
+
         if (random > procChance)
             return;
-        LOG_ERROR("error", "deathblow PROC 2");
+
         if (Player* caster = GetCaster()->ToPlayer())
             caster->RemoveSpellCooldown(SPELL_HUNTER_KILL_SHOT, true);
-        LOG_ERROR("error", "deathblow cooldown REDUCED");
+
         GetCaster()->AddAura(SPELL_HUNTER_WEAK_SPOT, GetCaster());
-        LOG_ERROR("error", "deathblow aura ADDED");
     }
 
     void Register()
@@ -2083,10 +2078,13 @@ class rune_hunter_howl : public AuraScript
     {
         Player* player = GetCaster()->ToPlayer();
         Pet* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
         int32 increasedDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
         int32 baseDuration = aurEff->GetAmount();
         std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
-
 
         if (Aura* auraEff = player->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
         {
@@ -2094,13 +2092,16 @@ class rune_hunter_howl : public AuraScript
 
             auraEff->SetDuration(duration);
 
-            if (pet && pet->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
+            if (pet->HasAura(SPELL_HUNTER_BESTIAL_WRATH_AURA))
                 pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
             else
             {
                 player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
                 pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(duration);
             }
+
+            if (summonedUnits.size() == 0)
+                return;
 
             for (auto const& unit : summonedUnits)
             {
@@ -2126,6 +2127,9 @@ class rune_hunter_howl : public AuraScript
                 player->AddAura(SPELL_HUNTER_BESTIAL_WRATH_AURA, pet);
                 pet->GetAura(SPELL_HUNTER_BESTIAL_WRATH_AURA)->SetDuration(baseDuration);
             }
+
+            if (summonedUnits.size() == 0)
+                return;
 
             for (auto const& unit : summonedUnits)
             {
@@ -2207,6 +2211,9 @@ class rune_hunter_killer_cobra_apply : public AuraScript
 
     Aura* GetRuneAura()
     {
+        if (!GetCaster())
+            return;
+
         if (GetCaster()->HasAura(500784))
             return GetCaster()->GetAura(500784);
 
@@ -2240,6 +2247,9 @@ class rune_hunter_killer_cobra_apply : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster())
+            return;
+
         if (GetCaster()->HasAura(500790))
             GetCaster()->RemoveAura(500790);
 

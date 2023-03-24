@@ -114,6 +114,7 @@ public:
     static void InitializeConfig();
     static void ApplyAffixesAndOtherUpgrade(Creature* creature, Map* map);
     static void HandleAffixes(Map* map);
+    static void OnMapChanged(Player* player);
     static void Update(Map* map, uint32 diff);
     static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);
@@ -122,13 +123,13 @@ public:
     static void OnPlayerKilledByCreature(Creature* killer, Player* killed);
     static void CompleteMythicDungeon(MythicRun* run, Player* player);
     static void OnPlayerRelease(Player* player);
+    static void InitHighestCompletedDungeonThisWeek(Player* player);
+    static void InitHighestCompletedDungeonThisSeason(Player* player);
+    static void InitHighestCompletedDungeonAllTime(Player* player);
     static MythicDungeon GetMythicDungeonByMapId(uint32 mapId);
     static std::vector<std::string> GetDataMythicRun(Player* player);
     static MythicKey GetCurrentMythicKey(Player* player);
     static uint32 GetMythicScore(Player* player);
-    static void InitHighestCompletedDungeonThisWeek(Player* player);
-    static void InitHighestCompletedDungeonThisSeason(Player* player);
-    static void InitHighestCompletedDungeonAllTime(Player* player);
     static std::vector<std::string> GetWeeklyAffixes(Player* player);
     static std::vector<std::string> GetDungeonsEnabled(Player* player);
 };

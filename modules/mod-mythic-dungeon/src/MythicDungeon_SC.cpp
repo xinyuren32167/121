@@ -11,6 +11,7 @@
 #include "Spell.h"
 #include "MythicDungeonManager.h"
 #include <boost/algorithm/string.hpp>
+#include "InstanceScript.h"
 
  // Add player scripts
 class MythicDungeon_PlayerScripts : public PlayerScript
@@ -34,6 +35,11 @@ public:
     {
         MythicDungeonManager::OnKillBoss(killer, killed);
         MythicDungeonManager::OnKillMinion(killer, killed);
+    }
+
+    void OnMapChanged(Player* player)
+    {
+        MythicDungeonManager::OnMapChanged(player);
     }
 
 
@@ -64,6 +70,8 @@ public:
     void OnMapUpdate(Map* map, uint32 diff) override
     {
        MythicDungeonManager::Update(map, diff);
+       InstanceScript* instance = map->ToInstanceMap()->GetInstanceScript();
+       instance->Initialize()
     }
 
     void OnPlayerEnterAll(Map* map, Player* player)

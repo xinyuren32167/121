@@ -105,6 +105,23 @@ void MythicDungeonManager::HandleAffixes(Map* map)
    // depending of the level of the key we need to handle the affixes.
 }
 
+void MythicDungeonManager::OnMapChanged(Player* player)
+{
+    auto it = m_MythicRun.find(player->GetInstanceId());
+
+    if (it == m_MythicRun.end()) {
+        sEluna->SendShowMythicUI(player, false);
+        return;
+    }
+
+    if (it->second.done) {
+        m_MythicRun.erase(it);
+        return;
+    }
+
+    sEluna->SendShowMythicUI(player, true);
+}
+
 void MythicDungeonManager::Update(Map* map, uint32 diff)
 {
     auto it = m_MythicRun.find(map->GetInstanceId());
@@ -398,6 +415,7 @@ void MythicDungeonManager::OnKillBoss(Player* player, Creature* killed)
     MythicRun* run = &it->second;
     if (MeetTheConditionsToCompleteTheDungeon(run)) {
         CompleteMythicDungeon(run, player);
+        m_MythicRun.erase(it);
     }
 }
 
@@ -551,6 +569,7 @@ void MythicDungeonManager::CompleteMythicDungeon(MythicRun* run, Player* player)
         UpdateOrCreateMythicKey(run, player, increasesAmount);
         sEluna->SendCompletedMythicDungeon(player, run->elapsedTime);
     }
+
 }
 
 void MythicDungeonManager::OnPlayerRelease(Player* player)

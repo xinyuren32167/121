@@ -1547,18 +1547,6 @@ class spell_hun_bestial_apply : public SpellScript
         player->AddAura(80132, player);
 
         pet->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
-
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
-
-        for (auto const& unit : summonedUnits)
-        {
-            if (unit->isDead())
-                continue;
-            player->AddAura(80132, unit);
-
-            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
-                unit->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
-        }
     }
 
     void Register() override
@@ -1616,16 +1604,10 @@ class spell_hun_steady_shot_concussive : public SpellScript
     void HandleBuff()
     {
         Unit* target = GetExplTargetUnit();
-        int32 increaseAmount = sSpellMgr->AssertSpellInfo(5116)->GetEffect(EFFECT_1).CalcValue();
-
-        if (target->HasAura(5116))
+        if (Aura* aura = target->GetAura(5116))
         {
-            Aura* concussive = target->GetAura(5116);
-
-            if (concussive->GetCasterGUID() == GetCaster()->GetGUID())
-            {
-                concussive->SetDuration(concussive->GetDuration() + increaseAmount);
-            }
+            if (aura->GetCasterGUID() == GetCaster()->GetGUID())
+                aura->SetDuration(aura->GetDuration() + aura->GetEffect(EFFECT_1)->GetAmount());
         }
     }
 
@@ -1678,17 +1660,6 @@ class spell_hun_kill_command : public SpellScript
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         auto summonedUnits = caster->GetSummonedUnits();
-
-        for (const auto& unit : summonedUnits)
-        {
-
-            if (unit->isDead())
-                continue;
-
-            if (unit->HasAura(SPELL_HUNTER_ANIMAL_COMPANION))
-                unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
-
-        }
 
         if (Aura* aura = caster->GetAura(80232))
         {
@@ -2526,14 +2497,12 @@ class spell_hun_cobra_sting : public SpellScript
     {
         Player* caster = GetCaster()->ToPlayer();
 
-        if (caster->HasAura(24443))
+        if (Aura* aura = caster->GetAura(24443))
         {
-            int32 procChance = sSpellMgr->AssertSpellInfo(24443)->GetEffect(EFFECT_0).CalcValue();
+            int32 procChance = aura->GetEffect(EFFECT_0)->GetAmount();
             bool didProc = roll_chance_i(procChance);
-            if (didProc == true)
-            {
+            if (didProc)
                 caster->RemoveSpellCooldown(80172, true);
-            }
         }
     }
 
@@ -2640,7 +2609,7 @@ static bool IsSecondaryPetAlreadySummoned(Unit* caster, uint32 petId) {
         return false;
 
     for (const auto& unit : summonedUnits)
-        if (unit->GetEntry() == petId)
+        if (unit->GetCharmInfo() && unit->GetCharmInfo()->GetPetNumber() == petId)
             return true;
 
     return false;
@@ -2698,7 +2667,7 @@ public:
             if (!firstPet)
                 return;
 
-            if (IsSecondaryPetAlreadySummoned(player, firstPet->CreatureId))
+            if (IsSecondaryPetAlreadySummoned(player, firstPet->PetNumber))
                 return;
 
             Position const& pos = player->GetPosition();
@@ -2734,7 +2703,7 @@ class spell_hun_animal_companion : public SpellScript
         if (!firstPet)
             return;
 
-        if (IsSecondaryPetAlreadySummoned(caster, firstPet->CreatureId))
+        if (IsSecondaryPetAlreadySummoned(caster, firstPet->PetNumber))
             return;
 
         Position const& pos = GetCaster()->GetPosition();
