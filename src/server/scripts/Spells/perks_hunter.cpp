@@ -739,15 +739,12 @@ class rune_hunter_playing_with_matches : public SpellScript
 
     void HandleApplyAura()
     {
-        LOG_ERROR("error", "proc check 1");
         if (!GetRuneAura() || GetCaster()->isDead())
             return;
-        LOG_ERROR("error", "proc check caster + rune");
         Unit* unit = GetExplTargetUnit();
 
         if (!unit || unit->isDead())
             return;
-        LOG_ERROR("error", "proc check target");
         Position dest = unit->GetPosition();
 
         GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), RUNE_HUNTER_PLAYING_WITH_MATCHES_AOE, true);
