@@ -1441,6 +1441,7 @@ public:
 
     // Passive Anticheat System
     virtual void AnticheatSetSkipOnePacketForASH(Player* /*player*/, bool /*apply*/) { }
+    virtual void OnPlayerTeleportTo(Player* /*player*/, uint32 /*level*/) { }
     virtual void AnticheatSetCanFlybyServer(Player* /*player*/, bool /*apply*/) { }
     virtual void AnticheatSetUnderACKmount(Player* /*player*/) { }
     virtual void AnticheatSetRootACKUpd(Player* /*player*/) { }
@@ -2367,6 +2368,7 @@ public: /* PlayerScript */
 
     // Anti cheat
     void AnticheatSetSkipOnePacketForASH(Player* player, bool apply);
+    void OnPlayerTeleportTo(Player* player, uint32 mythicLevel);
     void AnticheatSetCanFlybyServer(Player* player, bool apply);
     void AnticheatSetUnderACKmount(Player* player);
     void AnticheatSetRootACKUpd(Player* player);

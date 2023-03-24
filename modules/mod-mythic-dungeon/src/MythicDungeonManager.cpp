@@ -12,6 +12,9 @@ std::map<uint64, MythicKey> MythicDungeonManager::m_PlayerKey = {};
 std::vector<Affixe> MythicDungeonManager::m_WeeklyAffixes = {};
 std::map<uint32, MythicRun> MythicDungeonManager::m_MythicRun = {};
 
+std::map<ObjectGuid, uint32> MythicDungeonManager::m_DelayedCreationRun = {};
+
+
 std::map<uint32, std::map<MythicTypeData, std::vector<MythicPlayerDataCompletion>>>
 MythicDungeonManager::m_MythicDungeonPlayerDataCompletion = {};
 
@@ -102,11 +105,19 @@ void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* 
 
 void MythicDungeonManager::HandleAffixes(Map* map)
 {
-   // depending of the level of the key we need to handle the affixes.
+    // depending of the level of the key we need to handle the affixes.
 }
 
 void MythicDungeonManager::OnMapChanged(Player* player)
 {
+    auto ij = m_DelayedCreationRun.find(player->GetGUID());
+
+    if (ij != m_DelayedCreationRun.end()) {
+        CreateRun(player, ij->second);
+        m_DelayedCreationRun.erase(ij);
+        return;
+    }
+
     auto it = m_MythicRun.find(player->GetInstanceId());
 
     if (it == m_MythicRun.end()) {
@@ -321,12 +332,7 @@ std::vector<std::string> MythicDungeonManager::GetWeeklyAffixes(Player* player)
 
 void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint32 level)
 {
-    Map* map = player->GetMap();
-
-    if (!map)
-        return;
-
-    if (map->GetId() != keyId)
+    if (player->GetMapId() != keyId)
         return;
 
     if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC)
@@ -334,30 +340,18 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
 
     Group* group = player->GetGroup();
 
-    std::vector<MythicDungeonBoss> bosses = {};
-    std::vector<DungeonBoss> DungeonBosses = m_MythicDungeonBosses[keyId];
+    m_DelayedCreationRun[player->GetGUID()] = level;
 
-    MythicDungeon dungeon = GetMythicDungeonByMapId(keyId);
+    player->ClearUnitState(UNIT_STATE_ROOT);
+    player->SetControlled(true, UNIT_STATE_ROOT);
+    AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(keyId);
+    player->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
 
-    if (!dungeon.mapId)
-        return;
-
-    for (auto const& Mythic : DungeonBosses)
-        bosses.push_back({ Mythic.bossId, true });
-
-    uint32 totalDeath = 0;
-    bool started = false;
-    bool chestDecrapeted = false;
-    bool done = false;
-    uint32 elapsedTime = 0;
-    float enemyForces = 0.0f;
-    int counting = 10 * IN_MILLISECONDS;
-    MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
-    MythicDungeonManager::HandleChangeDungeonDifficulty(player, DUNGEON_DIFFICULTY_EPIC_PLUS);
+    if (at) {
+        player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
+    }
 
     if (group) {
-
-
         if (group->GetLeaderGUID() != player->GetGUID())
             return;
 
@@ -372,25 +366,13 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
             if (member) {
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
-                AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
+                AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(keyId);
+                member->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
                 if (at) {
-                    member->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
+                    member->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true, level);
                 }
-                m_MythicRun[member->GetInstanceId()] = run;
-                sEluna->SendBeginMythicDungeon(member);
             }
         }
-    }
-    else {
-
-        player->ClearUnitState(UNIT_STATE_ROOT);
-        player->SetControlled(true, UNIT_STATE_ROOT);
-        AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
-        if (at) {
-            player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
-        }
-        m_MythicRun[player->GetInstanceId()] = run;
-        sEluna->SendBeginMythicDungeon(player);
     }
 
 }
@@ -438,6 +420,37 @@ void MythicDungeonManager::OnKillBoss(Player* player, Creature* killed)
         CompleteMythicDungeon(run, player);
         m_MythicRun.erase(it);
     }
+}
+
+void MythicDungeonManager::CreateRun(Player* player, uint32 level)
+{
+    uint32 keyId = player->GetMapId();
+
+    std::vector<MythicDungeonBoss> bosses = {};
+    std::vector<DungeonBoss> DungeonBosses = m_MythicDungeonBosses[keyId];
+
+    MythicDungeon dungeon = GetMythicDungeonByMapId(keyId);
+
+    if (!dungeon.mapId)
+        return;
+
+    for (auto const& Mythic : DungeonBosses)
+        bosses.push_back({ Mythic.bossId, true });
+
+    uint32 totalDeath = 0;
+    bool started = false;
+    bool chestDecrapeted = false;
+    bool done = false;
+    uint32 elapsedTime = 0;
+    float enemyForces = 0.0f;
+    int counting = 10 * IN_MILLISECONDS;
+    MythicRun run = { keyId, level, dungeon.timeToComplete, started, chestDecrapeted, done, elapsedTime, bosses, enemyForces, totalDeath, counting };
+
+    m_MythicRun[player->GetInstanceId()] = run;
+
+    LOG_ERROR("UPDATE", "UPDATE {}", player->GetInstanceId());
+
+    sEluna->SendBeginMythicDungeon(player);
 }
 
 void MythicDungeonManager::OnKillMinion(Player* player, Creature* killed)

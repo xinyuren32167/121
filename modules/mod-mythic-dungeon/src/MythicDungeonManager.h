@@ -92,6 +92,7 @@ struct Config {
 class MythicDungeonManager {
 private:
 
+    static std::map<ObjectGuid, uint32> m_DelayedCreationRun;
     static std::map<uint32, std::vector<DungeonBoss>> m_MythicDungeonBosses;
     static std::map<uint32, MythicDungeon> m_MythicDungeon;
     static std::map<uint32, std::map<MythicTypeData, std::vector<MythicPlayerDataCompletion>>> m_MythicDungeonPlayerDataCompletion;
@@ -120,6 +121,7 @@ public:
     static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);
     static void OnKillBoss(Player* player, Creature* killed);
+    static void CreateRun(Player* player, uint32 level);
     static void OnKillMinion(Player* player, Creature* killed);
     static void OnPlayerKilledByCreature(Creature* killer, Player* killed);
     static void CompleteMythicDungeon(MythicRun* run, Player* player);
