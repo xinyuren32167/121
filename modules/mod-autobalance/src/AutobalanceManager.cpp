@@ -2,8 +2,6 @@
 #include "PlayerSpecialization.h"
 std::map<uint8, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingPerSpecialization = {};
 std::map<uint32, AutobalanceScalingInfo> AutoBalanceManager::m_OverrideScalingPerCreatureId = {};
-std::map<Difficulty, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingRaidDifficulty = {};
-std::map<Difficulty, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingDungeonDifficulty = {};
 
 std::list<Player*> AutoBalanceManager::GetPlayersMap(Map* map)
 {
@@ -68,6 +66,29 @@ void AutoBalanceManager::InitializeScalingPerSpecialization()
     } while (result->NextRow());
 }
 
+void AutoBalanceManager::InitializeScalingRaid()
+{
+    m_ScalingDungeonDifficulty = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT * FROM scaling_instance");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 mapId = fields[0].Get<uint32>();
+        uint32 difficulty = fields[1].Get<uint32>();
+        double meleeDamage = fields[2].Get<double>();
+        double healthModifier = fields[3].Get<double>();
+        double spellDamageModifier = fields[4].Get<double>();
+        double periodicDamageModifier = fields[5].Get<double>();
+        AutobalanceScalingInfo info = { meleeDamage, healthModifier, spellDamageModifier, periodicDamageModifier };
+        m_ScalingDungeonDifficulty[mapId].insert(std::make_pair(Difficulty(difficulty), info));
+    } while (result->NextRow());
+}
+
 AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* creature)
 {
     if (!map->IsRaid() && !map->IsDungeon())
@@ -80,12 +101,7 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* cr
     Difficulty difficulty = map->GetDifficulty();
     uint8 playerCount = map->GetPlayersCountExceptGMs();
 
-    if (SomeoneIsTooHighLevel(map)) {
-        AutobalanceScalingInfo info = { 1.0f, 1.0f, 1.0f, 1.0f };
-        return info;
-    }
-
-    if (playerCount <= 1) {
+    if (playerCount <= 1 && !isRaid) {
         Player* player = GetFirstPlayerMap(map);
 
         if (!player)
@@ -112,15 +128,11 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* cr
         return match->second;
 
     if (playerCount > 1) {
-        if (isRaid) {
-            auto match = m_ScalingRaidDifficulty.find(map->GetDifficulty());
-            if (match != m_ScalingRaidDifficulty.end())
-                return match->second;
-        }
-        else {
-            auto match = m_ScalingDungeonDifficulty.find(map->GetDifficulty());
-            if (match != m_ScalingDungeonDifficulty.end())
-                return match->second;
+        auto match = m_ScalingDungeonDifficulty.find(map->GetId());
+        if (match != m_ScalingDungeonDifficulty.end()) {
+            auto found = match->second.find(map->GetDifficulty());
+            if (found != match->second.end())
+                return found->second;
         }
     }
 
@@ -142,6 +154,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
         return;
 
     uint8 playerCount = map->GetPlayersCountExceptGMs();
+    bool isRaid = map->IsRaid();
 
     if (playerCount == 0)
         return;
@@ -179,8 +192,9 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     else {
         int8 maxPlayers = map->IsRaid() ? 25 : 5;
         int8 missingPlayers = (maxPlayers - playerCount);
-        float scalingPerPlayer = missingPlayers > 1 ? (missingPlayers * healthModifier) : healthModifier;
-        scaledHealth = missingPlayers > 0 ? maxHealth / scalingPerPlayer : maxHealth;
+        int8 correctPlayerCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
+        float scalingPerPlayer = correctPlayerCount > 1 ? (correctPlayerCount * healthModifier) : healthModifier;
+        scaledHealth = correctPlayerCount > 0 ? maxHealth / scalingPerPlayer : maxHealth;
     }
 
     creature->SetMaxHealth(scaledHealth);

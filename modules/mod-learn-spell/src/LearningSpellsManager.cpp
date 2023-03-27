@@ -24,6 +24,8 @@ void LearningSpellsManager::PreloadAllSpells()
 
 void LearningSpellsManager::GiveSpellsForLevelup(Player* player)
 {
+    player->UpdateSkillsToMaxSkillsForLevel();
+
     auto it = m_Spells.find(player->getClass());
 
     if (it != m_Spells.end()) {

@@ -1,0 +1,1 @@
+UPDATE creature_template SET npcflag = npcflag - 32 WHERE npcflag & 32

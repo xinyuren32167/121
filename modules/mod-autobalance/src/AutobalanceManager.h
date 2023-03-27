@@ -22,10 +22,10 @@ class AutoBalanceManager {
 private:
     static std::map<uint8, AutobalanceScalingInfo> m_ScalingPerSpecialization;
     static std::map<uint32, AutobalanceScalingInfo> m_OverrideScalingPerCreatureId;
-    static std::map<Difficulty, AutobalanceScalingInfo> m_ScalingRaidDifficulty;
-    static std::map<Difficulty, AutobalanceScalingInfo> m_ScalingDungeonDifficulty;
+    static std::map<uint32, std::map<Difficulty, AutobalanceScalingInfo>> m_ScalingDungeonDifficulty;
 public:
     static void InitializeScalingPerSpecialization();
+    static void InitializeScalingRaid();
     static std::list<Player*> GetPlayersMap(Map* map);
     static Player* GetFirstPlayerMap(Map* map);
     static AutobalanceScalingInfo GetScalingInfo(Map* map, Creature* creature);
