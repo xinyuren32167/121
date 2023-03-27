@@ -25,7 +25,6 @@ public:
 
     void OnFirstLogin(Player* player) {
 
-        player->UpdateSkillsToMaxSkillsForLevel();
         LearningSpellsManager::GiveSpellsForLevelup(player);
         switch (player->getClass())
         {
@@ -39,6 +38,7 @@ public:
         default:
             break;
         }
+        player->UpdateSkillsToMaxSkillsForLevel();
     }
 };
 

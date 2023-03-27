@@ -80,8 +80,10 @@ class spell_activate_specialization : public SpellScript
         Specialization newSpec = PlayerSpecialization::m_Specializations[newSpecId];
 
         if (currentSpecId > 0)
-            for (auto const& spellId : PlayerSpecialization::m_SpecSpells[currentSpecId])
+            for (auto const& spellId : PlayerSpecialization::m_SpecSpells[currentSpecId]) {
                 player->removeSpell(spellId, SPEC_MASK_ALL, false, false);
+                player->RemoveAura(spellId);
+            }
 
 
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])

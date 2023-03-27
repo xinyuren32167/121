@@ -437,7 +437,7 @@ class spell_unstable_magic : public AuraScript
             return;
 
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-        GetCaster()->CastCustomSpell(300062, SPELLVALUE_BASE_POINT0, amount, victim, true);
+        GetCaster()->CastCustomSpell(300062, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_IGNORE_AURA_SCALING);
 
     }
 
