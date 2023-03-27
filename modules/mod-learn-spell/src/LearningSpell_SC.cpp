@@ -27,7 +27,6 @@ public:
 
         player->UpdateSkillsToMaxSkillsForLevel();
         LearningSpellsManager::GiveSpellsForLevelup(player);
-
         switch (player->getClass())
         {
         case CLASS_WARRIOR:

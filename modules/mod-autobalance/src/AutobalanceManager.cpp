@@ -2,6 +2,7 @@
 #include "PlayerSpecialization.h"
 std::map<uint8, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingPerSpecialization = {};
 std::map<uint32, AutobalanceScalingInfo> AutoBalanceManager::m_OverrideScalingPerCreatureId = {};
+std::map<uint32, std::map<Difficulty, AutobalanceScalingInfo>> AutoBalanceManager::m_ScalingDungeonDifficulty = {};
 
 std::list<Player*> AutoBalanceManager::GetPlayersMap(Map* map)
 {

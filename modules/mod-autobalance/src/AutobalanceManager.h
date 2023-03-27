@@ -6,10 +6,10 @@
 #include "Creature.h"
 
 struct AutobalanceScalingInfo {
-    float meleeDamageModifier;
-    float healthModifier;
-    float spellDamageModifier;
-    float periodicDamageModifier;
+    double meleeDamageModifier;
+    double healthModifier;
+    double spellDamageModifier;
+    double periodicDamageModifier;
 };
 
 struct CreatureInfo {
