@@ -919,7 +919,7 @@ class spell_warr_devastate : public SpellScript
 
         if (Aura* aureff = GetExplTargetUnit()->GetAura(58567))
         {
-            int32 addedDamages = (GetEffectValue() / 5) * aureff->GetStackAmount();
+            int32 addedDamages = (GetEffectValue() / 2) * aureff->GetStackAmount();
             ApplyPct(addedDamages, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
             damage += addedDamages;
         }
