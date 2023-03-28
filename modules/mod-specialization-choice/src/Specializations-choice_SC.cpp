@@ -79,9 +79,12 @@ class spell_activate_specialization : public SpellScript
         uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
         Specialization newSpec = PlayerSpecialization::m_Specializations[newSpecId];
 
+        if (currentSpecId == HUNTER_MARSKMANSHIP)
+            player->RemoveAura(80182);
+
         if (currentSpecId > 0)
             for (auto const& spellId : PlayerSpecialization::m_SpecSpells[currentSpecId]) {
-                player->removeSpell(spellId, SPEC_MASK_ALL, false, false);
+                player->removeSpell(spellId, SPEC_MASK_ALL, false, true);
                 player->RemoveAura(spellId);
             }
 

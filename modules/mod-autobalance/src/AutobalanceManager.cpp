@@ -1,5 +1,8 @@
 #include "AutobalanceManager.h"
 #include "PlayerSpecialization.h"
+#include "WorldSession.h"
+#include "Chat.h"
+
 std::map<uint8, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingPerSpecialization = {};
 std::map<uint32, AutobalanceScalingInfo> AutoBalanceManager::m_OverrideScalingPerCreatureId = {};
 std::map<uint32, std::map<Difficulty, AutobalanceScalingInfo>> AutoBalanceManager::m_ScalingDungeonDifficulty = {};
@@ -33,6 +36,21 @@ bool AutoBalanceManager::SomeoneIsTooHighLevel(Map* map)
                 return (playerHandle->getLevel() - 3) > minLevel;
 
     return false;
+}
+
+void AutoBalanceManager::SendMessageScalingInfo(Map* map)
+{
+
+    if (!map->IsDungeon() && !map->IsRaid())
+        return;
+
+    std::list<Player*> players = GetPlayersMap(map);
+
+    if (players.size() == 0)
+        return;
+    
+    for (const auto& player : players)
+        ChatHandler(player->GetSession()).SendSysMessage("Scaling for  " + std::to_string(players.size()) + " players.");
 }
 
 Player* AutoBalanceManager::GetFirstPlayerMap(Map* map)
@@ -169,6 +187,8 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
 
     AutobalanceScalingInfo scaling = GetScalingInfo(map, creature);
 
+    LOG_ERROR("playerCount", "scaling.healthModifier {}", scaling.healthModifier);
+
     if (!scaling.healthModifier)
         return;
 
@@ -178,9 +198,6 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
         return;
 
     float healthModifier = scaling.healthModifier;
-
-    if (creature->IsDungeonBoss())
-        healthModifier *= 2;
 
     if (creature->prevMaxHealth <= 0)
         creature->prevMaxHealth = creature->GetMaxHealth();
@@ -193,10 +210,13 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     else {
         int8 maxPlayers = map->IsRaid() ? 25 : 5;
         int8 missingPlayers = (maxPlayers - playerCount);
-        int8 correctPlayerCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
-        float scalingPerPlayer = correctPlayerCount > 1 ? (correctPlayerCount * healthModifier) : healthModifier;
-        scaledHealth = correctPlayerCount > 0 ? maxHealth / scalingPerPlayer : maxHealth;
+        int8 correctedPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
+        double totalReduction = scaling.healthModifier * correctedPlayersCount;
+        scaledHealth = maxHealth - (totalReduction * maxHealth);
     }
+
+    LOG_ERROR("playerCount", "maxHealth {} scaledHealth {}", maxHealth, scaledHealth);
+
 
     creature->SetMaxHealth(scaledHealth);
     creature->SetCreateHealth(scaledHealth);

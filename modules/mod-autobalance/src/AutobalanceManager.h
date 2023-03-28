@@ -36,5 +36,6 @@ public:
     static void ApplyScaleDownMoney(Player* player, Loot* loot);
     static void ApplyScaleDownXp(Player* player, uint32& amount, Unit* victim);
     static bool SomeoneIsTooHighLevel(Map* map);
+    static void SendMessageScalingInfo(Map* map);
 };
 

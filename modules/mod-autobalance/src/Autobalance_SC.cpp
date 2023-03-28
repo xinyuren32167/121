@@ -89,6 +89,19 @@ public:
     }
 };
 
+
+class AutoBalance_AllMapScript : public AllMapScript
+{
+public:
+    AutoBalance_AllMapScript() : AllMapScript("AutoBalance_AllMapScript") { }
+
+    void OnPlayerEnterAll(Map* map, Player* player)
+    {
+        AutoBalanceManager::SendMessageScalingInfo(map);
+    }
+};
+
+
 class AutoBalance_AllCreatureScript : public AllCreatureScript
 {
 public:
@@ -125,6 +138,8 @@ public:
     static bool HandleReloadCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         Eluna::ReloadEluna();
+        AutoBalanceManager::InitializeScalingPerSpecialization();
+        AutoBalanceManager::InitializeScalingRaid();
         return true;
     }
 };
@@ -137,6 +152,7 @@ public:
     void OnBeforeConfigLoad(bool reload) override
     {
         AutoBalanceManager::InitializeScalingPerSpecialization();
+        AutoBalanceManager::InitializeScalingRaid();
     }
 };
 
@@ -148,4 +164,5 @@ void AddSC_Autobalance()
     new Autobalance_WorldScript();
     new AutoBalance_UnitScript();
     new AutoBalance_AllCreatureScript();
+    new AutoBalance_AllMapScript();
 }
