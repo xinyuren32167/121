@@ -4363,7 +4363,6 @@ void Player::BuildPlayerRepop()
     corpse->ResetGhostTime(); // to prevent cheating
     StopMirrorTimers(); // disable timers on bars
     SetByteValue(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_ANIM_TIER, UNIT_BYTE1_FLAG_ALWAYS_STAND); // set and clear other
-    sScriptMgr->OnPlayerReleasedGhost(this);
 }
 
 void Player::ResurrectPlayer(float restore_percent, bool applySickness)

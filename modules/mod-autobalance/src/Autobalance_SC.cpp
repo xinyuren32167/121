@@ -11,6 +11,7 @@
 #include "Spell.h"
 #include "PlayerSpecialization.h"
 #include "AutobalanceManager.h"
+#include "MythicDungeonManager.h"
 
  // Add player scripts
 class Autobalance_PlayerScripts : public PlayerScript
@@ -72,12 +73,6 @@ public:
              
         AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, creature);
 
-        if (!scaling.meleeDamageModifier)
-            return damage;
-
-        if (scaling.meleeDamageModifier == 1)
-            return damage;
-
         if (!(target->GetMap()->IsDungeon() && attacker->GetMap()->IsDungeon()) || (attacker->GetMap()->IsBattleground()
                 && target->GetMap()->IsBattleground()))
             return damage;
@@ -85,7 +80,7 @@ public:
         if ((attacker->IsHunterPet() || attacker->IsPet() || attacker->IsSummon()) && attacker->IsControlledByPlayer())
             return damage;
 
-        return damage * scaling.meleeDamageModifier;
+        return AddPct(damage, MythicDungeonManager::GetDamageMultiplicator(map));
     }
 };
 
@@ -137,7 +132,6 @@ public:
 
     static bool HandleReloadCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
-        Eluna::ReloadEluna();
         AutoBalanceManager::InitializeScalingPerSpecialization();
         AutoBalanceManager::InitializeScalingRaid();
         return true;
@@ -165,4 +159,5 @@ void AddSC_Autobalance()
     new AutoBalance_UnitScript();
     new AutoBalance_AllCreatureScript();
     new AutoBalance_AllMapScript();
+    new Autobalance_CommandsScript();
 }

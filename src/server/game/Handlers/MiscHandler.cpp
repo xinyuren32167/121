@@ -56,7 +56,7 @@
 
 void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
 {
-    LOG_DEBUG("network", "WORLD: Recvd CMSG_REPOP_REQUEST Message");
+    LOG_ERROR("network", "WORLD: Recvd CMSG_REPOP_REQUEST Message");
 
     recv_data.read_skip<uint8>();
 
@@ -80,6 +80,14 @@ void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
 
     //this is spirit release confirm?
     GetPlayer()->RemovePet(nullptr, PET_SAVE_NOT_IN_SLOT, true);
+
+    sScriptMgr->OnPlayerReleasedGhost(GetPlayer());
+
+    bool condition = GetPlayer()->GetMap()->IsDungeon() || GetPlayer()->GetMap()->IsRaid();
+
+    if (condition)
+        return;
+
     GetPlayer()->BuildPlayerRepop();
     GetPlayer()->RepopAtGraveyard();
 }

@@ -96,8 +96,7 @@ public:
 
     void OnAllCreatureUpdate(Creature* creature, uint32 /*diff*/) override
     {
-        Map* map = creature->GetMap();
-        MythicDungeonManager::ApplyAffixesAndOtherUpgrade(creature, map);
+
     }
 };
 

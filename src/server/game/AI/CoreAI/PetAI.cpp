@@ -645,11 +645,16 @@ void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
 
     for (const auto& unit : summonedUnits) {
 
+        if (unit->GetGUID() == GetGUID())
+            continue;
+
         if (unit->isDead())
             continue;
 
-        unit->Attack(target, true);
-        unit->GetAI()->AttackStart(target);
+        if (unit->GetTarget() != target->GetGUID()) {
+            unit->Attack(target, true);
+            unit->GetAI()->AttackStart(target);
+        }
     }
 }
 

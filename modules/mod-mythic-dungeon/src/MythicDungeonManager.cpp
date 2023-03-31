@@ -82,26 +82,32 @@ void MythicDungeonManager::InitializeConfig()
     m_Config = configs.back();
 }
 
-void MythicDungeonManager::ApplyAffixesAndOtherUpgrade(Creature* creature, Map* map)
+double MythicDungeonManager::GetHPMultiplicator(Map* map)
 {
     auto it = m_MythicRun.find(map->GetInstanceId());
 
     if (it == m_MythicRun.end())
-        return;
+        return 0.0;
 
     if (it->second.done)
-        return;
+        return 0.0;
 
-    uint32 level = it->second.level;
-
-    int32 hp = level * 5;
-    int32 damage = level * 10;
-    bool requierement = IsCreatureNpc(creature) && !creature->HasAura(90000);
-
-    if (requierement)
-        creature->CastCustomSpell(creature, 90000, &damage, &hp, nullptr, true);
-
+    return it->second.level * 33.3;
 }
+
+double MythicDungeonManager::GetDamageMultiplicator(Map* map)
+{
+    auto it = m_MythicRun.find(map->GetInstanceId());
+
+    if (it == m_MythicRun.end())
+        return 0.0;
+
+    if (it->second.done)
+        return 0.0;
+
+    return it->second.level * 46.6;
+}
+
 
 void MythicDungeonManager::HandleAffixes(Map* map)
 {
@@ -210,11 +216,17 @@ void MythicDungeonManager::InitializeMythicDungeons()
     do
     {
         Field* fields = result->Fetch();
-        uint32 mapId = fields[0].Get<uint32>();
+        uint32 id = fields[0].Get<uint32>();
         uint32 timeToComplete = fields[1].Get<uint32>();
         uint32 totalCreatureToKill = fields[2].Get<uint32>();
         bool enabled = fields[3].Get<bool>();
-        MythicDungeon dungeon = { mapId, timeToComplete, totalCreatureToKill, enabled };
+        uint32 mapId = fields[4].Get<uint32>();
+        std::string name = fields[5].Get<std::string>();
+        float x = fields[6].Get<float>();
+        float y = fields[7].Get<float>();
+        float z = fields[8].Get<float>();
+        float o = fields[9].Get<float>();
+        MythicDungeon dungeon = { id, timeToComplete, totalCreatureToKill, mapId, name, x, y, z, o, enabled };
         m_MythicDungeon[mapId] = dungeon;
     } while (result->NextRow());
 }
@@ -344,12 +356,10 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 keyId, uint
 
     player->ClearUnitState(UNIT_STATE_ROOT);
     player->SetControlled(true, UNIT_STATE_ROOT);
-    AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(keyId);
     player->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
 
-    if (at) {
-        player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, 0, nullptr, true);
-    }
+    MythicDungeon dungeon = m_MythicDungeon[keyId];
+    player->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
 
     if(group)
         group->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS, true);
@@ -447,7 +457,7 @@ void MythicDungeonManager::CreateRun(Player* player, uint32 level)
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
                 member->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
-                member->TeleportTo(player->GetMapId(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), 0, player, true);
+                member->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
             }
         }
     }
@@ -610,17 +620,9 @@ void MythicDungeonManager::OnPlayerRelease(Player* player)
 {
     Map* map = player->GetMap();
 
-    auto it = m_MythicRun.find(map->GetInstanceId());
-
-    if (it == m_MythicRun.end())
-        return;
-
-    if (!it->second.started)
-        return;
-
     AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(map->GetId());
 
-    player->ResurrectPlayer(50.f);
+    player->ResurrectPlayer(1.0f);
 
     if (at) {
         player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation);

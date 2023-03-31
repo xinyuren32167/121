@@ -2,6 +2,7 @@
 #include "PlayerSpecialization.h"
 #include "WorldSession.h"
 #include "Chat.h"
+#include "MythicDungeonManager.h"
 
 std::map<uint8, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingPerSpecialization = {};
 std::map<uint32, AutobalanceScalingInfo> AutoBalanceManager::m_OverrideScalingPerCreatureId = {};
@@ -48,9 +49,11 @@ void AutoBalanceManager::SendMessageScalingInfo(Map* map)
 
     if (players.size() == 0)
         return;
-    
+
+    std::string mapName = map->GetMapName();
+
     for (const auto& player : players)
-        ChatHandler(player->GetSession()).SendSysMessage("Scaling for  " + std::to_string(players.size()) + " players.");
+        ChatHandler(player->GetSession()).SendSysMessage("Scaling " + mapName + " for " + std::to_string(players.size()) + " players.");
 }
 
 Player* AutoBalanceManager::GetFirstPlayerMap(Map* map)
@@ -99,11 +102,8 @@ void AutoBalanceManager::InitializeScalingRaid()
         Field* fields = result->Fetch();
         uint32 mapId = fields[0].Get<uint32>();
         uint32 difficulty = fields[1].Get<uint32>();
-        double meleeDamage = fields[2].Get<double>();
-        double healthModifier = fields[3].Get<double>();
-        double spellDamageModifier = fields[4].Get<double>();
-        double periodicDamageModifier = fields[5].Get<double>();
-        AutobalanceScalingInfo info = { meleeDamage, healthModifier, spellDamageModifier, periodicDamageModifier };
+        double healthModifier = fields[2].Get<double>();
+        AutobalanceScalingInfo info = { 0, healthModifier, 0, 0 };
         m_ScalingDungeonDifficulty[mapId].insert(std::make_pair(Difficulty(difficulty), info));
     } while (result->NextRow());
 }
@@ -178,7 +178,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (playerCount == 0)
         return;
 
-    bool shouldRecalculate = playerCount != creature->AutobalancePlayerCount;
+    bool shouldRecalculate = (playerCount != creature->AutobalancePlayerCount) || creature->ShouldRecalculate;
 
     if (!shouldRecalculate)
         return;
@@ -186,8 +186,6 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     creature->AutobalancePlayerCount = playerCount;
 
     AutobalanceScalingInfo scaling = GetScalingInfo(map, creature);
-
-    LOG_ERROR("playerCount", "scaling.healthModifier {}", scaling.healthModifier);
 
     if (!scaling.healthModifier)
         return;
@@ -197,7 +195,6 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (!creatureTemplate)
         return;
 
-    float healthModifier = scaling.healthModifier;
 
     if (creature->prevMaxHealth <= 0)
         creature->prevMaxHealth = creature->GetMaxHealth();
@@ -205,8 +202,10 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     uint32 maxHealth = creature->prevMaxHealth;
     uint32 scaledHealth = 0;
 
+    creature->ShouldRecalculate = false;
+
     if (playerCount == 1)
-        scaledHealth = maxHealth * healthModifier;
+        scaledHealth = maxHealth * scaling.healthModifier;
     else {
         int8 maxPlayers = map->IsRaid() ? 25 : 5;
         int8 missingPlayers = (maxPlayers - playerCount);
@@ -215,12 +214,12 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
         scaledHealth = maxHealth - (totalReduction * maxHealth);
     }
 
-    LOG_ERROR("playerCount", "maxHealth {} scaledHealth {}", maxHealth, scaledHealth);
-
+    AddPct(scaledHealth, MythicDungeonManager::GetHPMultiplicator(map));
 
     creature->SetMaxHealth(scaledHealth);
     creature->SetCreateHealth(scaledHealth);
     creature->SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)scaledHealth);
     creature->ResetPlayerDamageReq();
     creature->SetHealth(scaledHealth);
+    
 }

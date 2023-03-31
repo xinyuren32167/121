@@ -193,7 +193,6 @@ class spell_mastery_savant_on_remove : public AuraScript
 };
 
 
-
 // Warrior
 class spell_mastery_deep_wounds : public AuraScript
 {
@@ -208,7 +207,7 @@ class spell_mastery_deep_wounds : public AuraScript
     void HandleBuff(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-        GetCaster()->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, GetTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override

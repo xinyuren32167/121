@@ -11,13 +11,19 @@ enum MythicTypeData {
 };
 
 struct MythicDungeon {
-    uint32 mapId;
+    uint32 id;
     uint32 timeToComplete;
     uint32 totalEnemyForces;
+    uint32 mapId;
+    std::string name;
+    float x;
+    float y;
+    float z;
+    float o;
     bool enable;
     bool operator !()
     {
-        return !mapId;
+        return !id;
     }
 };
 
@@ -51,7 +57,7 @@ struct Affixe {
 };
 
 struct DungeonBoss {
-    uint32 mapId;
+    uint32 dungeonId;
     uint32 order;
     uint32 bossId;
 };
@@ -113,7 +119,9 @@ public:
     static void InitializeRewardsDungeons();
     static void InitializeWeeklyAffixes();
     static void InitializeConfig();
-    static void ApplyAffixesAndOtherUpgrade(Creature* creature, Map* map);
+    static double GetHPMultiplicator(Map* map);
+    static double GetDamageMultiplicator(Map* map);
+
     static void HandleAffixes(Map* map);
     static void OnMapChanged(Player* player);
     static void ReactivateAllGameObject(Map* map);

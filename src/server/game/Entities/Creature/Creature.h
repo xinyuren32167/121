@@ -47,7 +47,8 @@ class Creature : public Unit, public GridObject<Creature>, public MovableMapObje
 public:
 
     // custom
-    uint8 AutobalancePlayerCount;
+    uint8 AutobalancePlayerCount ;
+    bool ShouldRecalculate;
 
     explicit Creature(bool isWorldObject = false);
     ~Creature() override;
