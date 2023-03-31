@@ -909,7 +909,8 @@ class rune_pal_hand_of_the_protector : public AuraScript
         if (healthPct == 100)
             return;
 
-        int32 increasePct = (100 - healthPct) * aurEff->GetAmount();
+        int32 maxPct = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 increasePct = (std::min<int32>(maxPct, (100 - healthPct) * aurEff->GetAmount()));
         int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), increasePct));
 
         GetCaster()->CastCustomSpell(RUNE_PALADIN_HAND_OF_THE_PROTECTOR_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
