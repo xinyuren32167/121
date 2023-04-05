@@ -21,6 +21,7 @@ struct MythicDungeon {
     float z;
     float o;
     bool enable;
+    uint32 itemId;
     bool operator !()
     {
         return !id;
@@ -34,7 +35,7 @@ struct MythicRewardDungeon {
 };
 
 struct MythicKey {
-    uint32 mapId;
+    uint32 dungeonId;
     uint32 level;
 };
 
@@ -68,7 +69,7 @@ struct MythicDungeonBoss {
 };
 
 struct MythicRun {
-    uint32 mapId;
+    uint32 dungeonId;
     uint32 level;
     uint32 timeToComplete;
     bool started;
@@ -98,49 +99,52 @@ struct Config {
 class MythicDungeonManager {
 private:
 
-    static std::map<ObjectGuid, uint32> m_DelayedCreationRun;
-    static std::map<uint32, std::vector<DungeonBoss>> m_MythicDungeonBosses;
+    static Config m_Config;
+    static bool IsCreatureNpc(Creature* creature);
+    static bool MeetTheConditionsToCompleteTheDungeon(MythicRun* run);
+    static std::map<ObjectGuid, MythicKey> m_DelayedCreationRun;
     static std::map<uint32, MythicDungeon> m_MythicDungeon;
+    static std::map<uint32, MythicRun> m_MythicRun;
     static std::map<uint32, std::map<MythicTypeData, std::vector<MythicPlayerDataCompletion>>> m_MythicDungeonPlayerDataCompletion;
+    static std::map<uint32, std::vector<DungeonBoss>> m_MythicDungeonBosses;
     static std::map<uint32, std::vector<MythicRewardDungeon>> m_MythicRewardDungeon;
+    static std::map<uint32, uint32> m_ItemIdToDungeonId;
     static std::map<uint64, MythicKey> m_PlayerKey;
     static std::vector<Affixe> m_WeeklyAffixes;
-    static std::map<uint32, MythicRun> m_MythicRun;
-    static Config m_Config;
     static uint32 GetHighestRunId();
     static void SaveRun(MythicRun* run, Player* player, uint32 increaseAmountKey, uint32 runId = 0);
-    static bool MeetTheConditionsToCompleteTheDungeon(MythicRun* run);
-    static bool IsCreatureNpc(Creature* creature);
     static void UpdateOrCreateMythicKey(MythicRun* run, Player* player, uint32 increaseAmountKey);
+
 public:
-    static void InitializeMythicKeys();
+    static MythicDungeon FindMythicDungeonByItsKeyItemId(uint32 itemId);
+    static MythicDungeon GetMythicDungeonByDungeonId(uint32 mapId);
+    static MythicKey GetCurrentMythicKey(Player* player);
+    static double GetDamageMultiplicator(Map* map);
+    static double GetHPMultiplicator(Map* map);
+    static std::vector<std::string> GetDataMythicRun(Player* player);
+    static std::vector<std::string> GetDungeonsEnabled(Player* player);
+    static std::vector<std::string> GetWeeklyAffixes(Player* player);
+    static uint32 GetMythicScore(Player* player);
+    static void CompleteMythicDungeon(MythicRun* run, Player* player);
+    static void CreateRun(Player* player, MythicKey key);
+    static void HandleAffixes(Map* map);
+    static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
+    static void InitHighestCompletedDungeonAllTime(Player* player);
+    static void InitHighestCompletedDungeonThisSeason(Player* player);
+    static void InitHighestCompletedDungeonThisWeek(Player* player);
+    static void InitializeConfig();
     static void InitializeMythicDungeonBosses();
     static void InitializeMythicDungeons();
+    static void InitializeMythicKeys();
     static void InitializeRewardsDungeons();
     static void InitializeWeeklyAffixes();
-    static void InitializeConfig();
-    static double GetHPMultiplicator(Map* map);
-    static double GetDamageMultiplicator(Map* map);
-
-    static void HandleAffixes(Map* map);
-    static void OnMapChanged(Player* player);
-    static void ReactivateAllGameObject(Map* map);
-    static void Update(Map* map, uint32 diff);
-    static void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
-    static void StartMythicDungeon(Player* player, uint32 keyId, uint32 level);
     static void OnKillBoss(Player* player, Creature* killed);
-    static void CreateRun(Player* player, uint32 level);
     static void OnKillMinion(Player* player, Creature* killed);
+    static void OnMapChanged(Player* player);
     static void OnPlayerKilledByCreature(Creature* killer, Player* killed);
-    static void CompleteMythicDungeon(MythicRun* run, Player* player);
     static void OnPlayerRelease(Player* player);
-    static void InitHighestCompletedDungeonThisWeek(Player* player);
-    static void InitHighestCompletedDungeonThisSeason(Player* player);
-    static void InitHighestCompletedDungeonAllTime(Player* player);
-    static MythicDungeon GetMythicDungeonByMapId(uint32 mapId);
-    static std::vector<std::string> GetDataMythicRun(Player* player);
-    static MythicKey GetCurrentMythicKey(Player* player);
-    static uint32 GetMythicScore(Player* player);
-    static std::vector<std::string> GetWeeklyAffixes(Player* player);
-    static std::vector<std::string> GetDungeonsEnabled(Player* player);
+    static void ReactivateAllGameObject(Map* map);
+    static void SendPreperationMythicDungeon(Player* player);
+    static void StartMythicDungeon(Player* player, uint32 level);
+    static void Update(Map* map, uint32 diff);
 };

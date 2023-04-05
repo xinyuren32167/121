@@ -96,6 +96,13 @@ namespace LuaPlayer
         return 1;
     }
 
+    int StartMythicDungeon(lua_State* L, Player* player)
+    {
+        uint32 level = Eluna::CHECKVAL<uint32>(L, 2);
+        MythicDungeonManager::StartMythicDungeon(player, level);
+        return 0;
+    }
+
 
     int ActivateRune(lua_State* L, Player* player)
     {

@@ -49,7 +49,7 @@ public:
         uint32 hasYelled       = 0;
         uint32 SenatorYells[5] = {3, 4, 5, 6, 7}; // IDs in creature_text database
 
-        boss_draganthaurissanAI(Creature* creature) : BossAI(creature, DATA_EMPEROR){}
+        boss_draganthaurissanAI(Creature* creature) : BossAI(creature, DATA_EMPEROR) {}
 
         void EnterCombat(Unit* /*who*/) override
         {

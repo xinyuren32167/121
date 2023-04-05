@@ -465,7 +465,7 @@ ElunaRegister<Player> PlayerMethods[] =
     { "ActivateSpec", &LuaPlayer::ActivateSpec },
 
     { "GetMythicData", &LuaPlayer::GetMythicData },
-
+    { "StartMythicDungeon", &LuaPlayer::StartMythicDungeon },
 
     { "GetSelection", &LuaPlayer::GetSelection },
     { "GetGMRank", &LuaPlayer::GetGMRank },

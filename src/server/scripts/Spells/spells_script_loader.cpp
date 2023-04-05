@@ -35,11 +35,13 @@ void AddSC_spells_mastery_scripts();
 void AddSC_warrior_perks_scripts();
 void AddSC_paladin_perks_scripts();
 void AddSC_hunter_perks_scripts();
+void AddSC_deathknight_perks_scripts();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddSpellsScripts()
 {
+    AddSC_deathknight_perks_scripts();
     AddSC_mage_perks_scripts();
     AddSC_deathknight_spell_scripts();
     AddSC_druid_spell_scripts();

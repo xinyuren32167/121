@@ -12,6 +12,7 @@
 #include "MythicDungeonManager.h"
 #include <boost/algorithm/string.hpp>
 #include "InstanceScript.h"
+#include "MapMgr.h"
 
  // Add player scripts
 class MythicDungeon_PlayerScripts : public PlayerScript
@@ -29,12 +30,6 @@ public:
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
     {
 
-    }
-
-
-    void OnPlayerTeleportTo(Player* player, uint32 level)
-    {
-        MythicDungeonManager::CreateRun(player, level);
     }
 
 
@@ -100,6 +95,32 @@ public:
     }
 };
 
+class Mythic_Keystone_Item : public ItemScript
+{
+public:
+    Mythic_Keystone_Item() : ItemScript("Mythic_Keystone_Item") { }
+
+    bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
+    {
+        uint32 itemId = item->GetEntry();
+        MythicDungeon dungeon = MythicDungeonManager::FindMythicDungeonByItsKeyItemId(itemId);
+
+        if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC) {
+            ChatHandler(player->GetSession()).SendSysMessage("You are not in Mythic Difficulty!");
+            return false;
+        }
+
+        if (player->GetMap()->GetId() != dungeon.mapId) {
+            Map* map = sMapMgr->FindBaseMap(dungeon.mapId);
+            std::string name = map->GetMapName();
+            ChatHandler(player->GetSession()).SendSysMessage("You can only activate this Mythic Keystone in " + name);
+            return false;
+        }
+
+        MythicDungeonManager::SendPreperationMythicDungeon(player);
+        return true;
+    }
+};
 
 
 class MythicDungeon_WorldScript : public WorldScript
@@ -138,9 +159,6 @@ public:
     static bool HandleStartMythicCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         Player* selectedPlayer = handler->getSelectedPlayer();
-        if (selectedPlayer) {
-            MythicDungeonManager::StartMythicDungeon(selectedPlayer, selectedPlayer->GetMapId(), 20);
-        }
         return true;
     }
 };
@@ -154,4 +172,5 @@ void AddSC_MythicDungeons()
     new MythicDungeon_AllMapScript();
     new MythicDungeon_AllCreatureScript();
     new MythicDungeon_commandsScript();
+    new Mythic_Keystone_Item();
 }

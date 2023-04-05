@@ -652,7 +652,6 @@ void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
             continue;
 
         if (unit->GetTarget() != target->GetGUID()) {
-            unit->Attack(target, true);
             unit->GetAI()->AttackStart(target);
         }
     }

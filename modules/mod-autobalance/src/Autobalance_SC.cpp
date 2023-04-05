@@ -73,8 +73,7 @@ public:
              
         AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, creature);
 
-        if (!(target->GetMap()->IsDungeon() && attacker->GetMap()->IsDungeon()) || (attacker->GetMap()->IsBattleground()
-                && target->GetMap()->IsBattleground()))
+        if (!map->IsDungeon())
             return damage;
 
         if ((attacker->IsHunterPet() || attacker->IsPet() || attacker->IsSummon()) && attacker->IsControlledByPlayer())

@@ -454,6 +454,7 @@ public:
     void SendStartMythicDungeon(Player* pPlayer);
     void SendBeginMythicDungeon(Player* pPlayer);
     void SendCompletedMythicDungeon(Player* pPlayer, uint32 timer);
+    void SendPreperationMythicDungeon(Player* pPlayer, std::string name, uint32 timer, uint32 level);
 
     // Runes
 
