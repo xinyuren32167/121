@@ -680,7 +680,6 @@ MythicDungeon MythicDungeonManager::FindMythicDungeonByItsKeyItemId(uint32 itemI
 }
 
 
-
 bool MythicDungeonManager::MeetTheConditionsToCompleteTheDungeon(MythicRun* run)
 {
     bool allBossesAreDead = true;

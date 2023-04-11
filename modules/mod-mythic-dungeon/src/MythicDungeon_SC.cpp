@@ -105,15 +105,16 @@ public:
         uint32 itemId = item->GetEntry();
         MythicDungeon dungeon = MythicDungeonManager::FindMythicDungeonByItsKeyItemId(itemId);
 
-        if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC) {
-            ChatHandler(player->GetSession()).SendSysMessage("You are not in Mythic Difficulty!");
-            return false;
-        }
 
         if (player->GetMap()->GetId() != dungeon.mapId) {
             Map* map = sMapMgr->FindBaseMap(dungeon.mapId);
             std::string name = map->GetMapName();
             ChatHandler(player->GetSession()).SendSysMessage("You can only activate this Mythic Keystone in " + name);
+            return false;
+        }
+
+        if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC) {
+            ChatHandler(player->GetSession()).SendSysMessage("You are not in Mythic Difficulty!");
             return false;
         }
 
