@@ -365,7 +365,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 level)
         maxLevel = key->second.level;
 
     if (level > maxLevel) {
-        ChatHandler(player->GetSession()).SendSysMessage("Nice try! You can't start you cannot start a dungeon with this level!");
+        ChatHandler(player->GetSession()).SendSysMessage("Nice try! You cannot start a dungeon of this level!");
         return;
     }
 
@@ -380,7 +380,7 @@ void MythicDungeonManager::StartMythicDungeon(Player* player, uint32 level)
     MythicDungeon dungeon = GetMythicDungeonByDungeonId(key->second.dungeonId);
 
     if (!dungeon.id) {
-        ChatHandler(player->GetSession()).SendSysMessage("This dungeon doesn't exist!");
+        ChatHandler(player->GetSession()).SendSysMessage("This dungeon does not exist!");
         return;
     }
 
