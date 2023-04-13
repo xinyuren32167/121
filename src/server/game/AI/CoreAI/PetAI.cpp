@@ -591,10 +591,12 @@ void PetAI::DoAttack(Unit* target, bool chase)
 {
     // Handles attack with or without chase and also resets flags
     // for next update / creature kill
+
     DoAttackSummonedUnits(target, chase);
 
     if (me->Attack(target, true))
     {
+
         // xinef: properly fix fake combat after pet is sent to attack
         if (Unit* owner = me->GetOwner())
             owner->SetUnitFlag(UNIT_FLAG_PET_IN_COMBAT);

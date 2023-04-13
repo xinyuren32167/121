@@ -106,7 +106,6 @@ double MythicDungeonManager::GetDamageMultiplicator(Map* map)
     return it->second.level * 46.6;
 }
 
-
 void MythicDungeonManager::HandleAffixes(Map* map)
 {
     // depending of the level of the key we need to handle the affixes.

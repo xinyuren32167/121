@@ -1743,9 +1743,8 @@ void Player::RegenerateAll()
     m_regenTimerCount += m_regenTimer;
     m_foodEmoteTimerCount += m_regenTimer;
 
-    if(getClass() == CLASS_ROGUE && getClass() == CLASS_DRUID)
+    if(getClass() == CLASS_ROGUE || getClass() == CLASS_DRUID)
         Regenerate(POWER_ENERGY);
-
 
     if (getClass() == CLASS_HUNTER)
         Regenerate(POWER_FOCUS);

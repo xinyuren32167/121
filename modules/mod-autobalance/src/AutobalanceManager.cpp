@@ -118,10 +118,12 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* cr
 
     bool isRaid = map->IsRaid();
     Difficulty difficulty = map->GetDifficulty();
-    uint8 playerCount = map->GetPlayersCountExceptGMs();
+    uint8 playerCount = map->GetPlayers().getSize();
 
     if (playerCount <= 1 && !isRaid) {
-        Player* player = GetFirstPlayerMap(map);
+
+        auto mapPlayer = map->GetPlayers().getFirst();
+        Player* player = mapPlayer->GetSource();
 
         if (!player)
             return {};
@@ -172,7 +174,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (!creature->IsAlive())
         return;
 
-    uint8 playerCount = map->GetPlayersCountExceptGMs();
+    uint8 playerCount = map->GetPlayers().getSize();
     bool isRaid = map->IsRaid();
 
     if (playerCount == 0)
@@ -195,23 +197,20 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (!creatureTemplate)
         return;
 
-
     if (creature->prevMaxHealth <= 0)
         creature->prevMaxHealth = creature->GetMaxHealth();
 
-    uint32 maxHealth = creature->prevMaxHealth;
     uint32 scaledHealth = 0;
-
     creature->ShouldRecalculate = false;
 
     if (playerCount == 1)
-        scaledHealth = maxHealth * scaling.healthModifier;
+        scaledHealth = creature->prevMaxHealth * scaling.healthModifier;
     else {
         int8 maxPlayers = map->IsRaid() ? 25 : 5;
         int8 missingPlayers = (maxPlayers - playerCount);
-        int8 correctedPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
-        double totalReduction = scaling.healthModifier * correctedPlayersCount;
-        scaledHealth = maxHealth - (totalReduction * maxHealth);
+        int8 minPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
+        double totalReduction = scaling.healthModifier * minPlayersCount;
+        scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
     }
 
     AddPct(scaledHealth, MythicDungeonManager::GetHPMultiplicator(map));
