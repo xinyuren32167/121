@@ -61,6 +61,12 @@ enum DruidSpells
     SPELL_DRUID_ENRAGE                      = 5229,
     SPELL_DRUID_ENRAGED_DEFENSE             = 70725,
     SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS     = 70726,
+
+    SPELL_DRUID_FEROCIOUS_BITE              = 48577,
+    SPELL_DRUID_PROWL                       = 5215,
+    SPELL_DRUID_THORNS_SLOW                 = 80500,
+    SPELL_DRUID_MOONKIN_FORM                = 24858,
+    SPELL_DRUID_WRATH                       = 48461,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1173,6 +1179,120 @@ class spell_dru_moonkin_form_passive_proc : public AuraScript
     }
 };
 
+class spell_dru_ferocious_bite : public SpellScript
+{
+    PrepareSpellScript(spell_dru_ferocious_bite);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+        int32 energy = GetCaster()->GetPower(POWER_ENERGY);
+        int32 consumption = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE)->GetEffect(EFFECT_2).CalcValue();
+
+        if (energy > 0)
+        {
+           int32 bonusPercent = std::min<int32>(energy, consumption);
+           int32 bonusDamage = bonusPercent * (sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE)->GetEffect(EFFECT_1).CalcValue());
+           damage += int32(CalculatePct(damage, bonusDamage));
+
+           GetCaster()->ModifyPower(POWER_ENERGY, -bonusPercent);
+        }
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dru_ferocious_bite::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_dru_maim : public SpellScript
+{
+    PrepareSpellScript(spell_dru_maim);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dru_maim::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_dru_prowl : public AuraScript
+{
+    PrepareAuraScript(spell_dru_prowl);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(SPELL_DRUID_PROWL))
+            GetCaster()->RemoveAura(SPELL_DRUID_PROWL);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_prowl::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+class spell_dru_thorns : public AuraScript
+{
+    PrepareAuraScript(spell_dru_thorns);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        Unit* target = eventInfo.GetProcTarget();
+
+        GetCaster()->CastSpell(target, SPELL_DRUID_THORNS_SLOW, true, nullptr, aurEff, GetCasterGUID());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_thorns::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dru_wrath : public SpellScript
+{
+    PrepareSpellScript(spell_dru_wrath);
+
+    void HandleCast()
+    {
+        if (GetCaster()->HasAura(SPELL_DRUID_MOONKIN_FORM))
+        {
+            int32 poweramount = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WRATH)->GetEffect(EFFECT_1).CalcValue();
+
+            GetCaster()->ModifyPower(POWER_RUNIC_POWER, poweramount);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_wrath::HandleCast);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1209,4 +1329,9 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_t10_restoration_4p_bonus);
     RegisterSpellScript(spell_dru_wild_growth);
     RegisterSpellScript(spell_dru_moonkin_form_passive_proc);
+    RegisterSpellScript(spell_dru_ferocious_bite);
+    RegisterSpellScript(spell_dru_maim);
+    RegisterSpellScript(spell_dru_prowl);
+    RegisterSpellScript(spell_dru_thorns);
+    RegisterSpellScript(spell_dru_wrath);
 }

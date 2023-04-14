@@ -3150,7 +3150,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
             case 26884:
             case 48675:
             case 48676:
-            case 5221: // Shred
+            //case 5221: // Shred
             case 6800:
             case 8992:
             case 9829:

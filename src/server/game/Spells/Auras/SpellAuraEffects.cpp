@@ -5811,7 +5811,7 @@ void AuraEffect::HandlePeriodicDummyAuraTick(Unit* target, Unit* caster) const
                 switch (GetSpellInfo()->Id)
                 {
                     // Frenzied Regeneration
-                    case 22842:
+                    /*case 22842:
                         {
                             // Converts up to 10 rage per second into health for $d.  Each point of rage is converted into ${$m2/10}.1% of max health.
                             // Should be manauser
@@ -5827,7 +5827,7 @@ void AuraEffect::HandlePeriodicDummyAuraTick(Unit* target, Unit* caster) const
                             target->CastCustomSpell(target, 22845, &regen, 0, 0, true, 0, this);
                             target->SetPower(POWER_RAGE, rage - mod);
                             break;
-                        }
+                        }*/
                 }
                 break;
             }

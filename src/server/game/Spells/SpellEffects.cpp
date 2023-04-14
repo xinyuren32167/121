@@ -476,7 +476,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
             case SPELLFAMILY_DRUID:
                 {
                     // Ferocious Bite
-                    if (m_caster->GetTypeId() == TYPEID_PLAYER && (m_spellInfo->SpellFamilyFlags[0] & 0x000800000) && m_spellInfo->SpellVisual[0] == 6587)
+                    /*if (m_caster->GetTypeId() == TYPEID_PLAYER && (m_spellInfo->SpellFamilyFlags[0] & 0x000800000) && m_spellInfo->SpellVisual[0] == 6587)
                     {
                         // converts each extra point of energy into ($f1+$AP/410) additional damage
                         float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
@@ -484,9 +484,9 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                         int32 energy = -(m_caster->ModifyPower(POWER_ENERGY, -30));
                         damage += int32(energy * multiple);
                         damage += int32(CalculatePct(m_caster->GetComboPoints() * ap, 7));
-                    }
+                    }*/
                     // Wrath
-                    else if (m_spellInfo->SpellFamilyFlags[0] & 0x00000001)
+                    if (m_spellInfo->SpellFamilyFlags[0] & 0x00000001)
                     {
                         // Improved Insect Swarm
                         if (AuraEffect const* aurEff = m_caster->GetDummyAuraEffect(SPELLFAMILY_DRUID, 1771, 0))
