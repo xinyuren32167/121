@@ -2866,6 +2866,7 @@ enum SkillType
     SKILL_RACIAL_NIGHT_ELF         = 126,
     SKILL_FIRST_AID                = 129,
     SKILL_FERAL_COMBAT             = 134,
+    SKILL_GUARDIAN                 = 135,
     SKILL_STAVES                   = 136,
     SKILL_LANG_THALASSIAN          = 137,
     SKILL_LANG_DRACONIC            = 138,
@@ -2987,10 +2988,11 @@ enum SkillType
     SKILL_PET_WASP                 = 785,
     SKILL_PET_EXOTIC_RHINO         = 786,
     SKILL_PET_EXOTIC_CORE_HOUND    = 787,
-    SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788
+    SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788,
+
 };
 
-#define MAX_SKILL_TYPE               789
+#define MAX_SKILL_TYPE               790
 
 inline SkillType SkillByLockType(LockType locktype)
 {

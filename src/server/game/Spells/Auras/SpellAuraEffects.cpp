@@ -1843,6 +1843,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_BATTLESTANCE:                             // 0x11
         case FORM_DEFENSIVESTANCE:                          // 0x12
         case FORM_BERSERKERSTANCE:                          // 0x13
+        case FORM_MOONKIN:                                  // 0x1F
             PowerType = POWER_RAGE;
             break;
 
@@ -1869,7 +1870,6 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_SHADOW:                                   // 0x1C
         case FORM_FLIGHT:                                   // 0x1D
         case FORM_STEALTH:                                  // 0x1E
-        case FORM_MOONKIN:                                  // 0x1F
         case FORM_SPIRITOFREDEMPTION:                       // 0x20
             break;
         default:

@@ -10310,6 +10310,13 @@ void Player::InitDataForForm(bool reapplyMods)
     switch (form)
     {
         case FORM_GHOUL:
+        case FORM_MOONKIN:
+            {
+                if (getPowerType() != POWER_RUNIC_POWER)
+                    setPowerType(POWER_RUNIC_POWER);
+                break;
+            }
+        break;
         case FORM_CAT:
             {
                 if (getPowerType() != POWER_ENERGY)
