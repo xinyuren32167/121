@@ -1511,8 +1511,7 @@ class spell_hun_bestial_apply : public SpellScript
         Unit* target = GetExplTargetUnit();
         Unit* pet = player->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE)->GetEffect(EFFECT_1).CalcValue();
-
+        int32 ratio = GetEffectValue();
         int32 damage = CalculatePct(ap, ratio);
 
         if (!pet)

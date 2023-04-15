@@ -1185,10 +1185,11 @@ class spell_dru_ferocious_bite : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
+        SpellValue const* value = GetSpellValue();
         int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
         int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
         int32 energy = GetCaster()->GetPower(POWER_ENERGY);
-        int32 consumption = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE)->GetEffect(EFFECT_2).CalcValue();
+        int32 consumption = value->EffectBasePoints[EFFECT_2];
 
         if (energy > 0)
         {
@@ -1279,12 +1280,12 @@ class spell_dru_wrath : public SpellScript
 
     void HandleCast()
     {
-        if (GetCaster()->HasAura(SPELL_DRUID_MOONKIN_FORM))
-        {
-            int32 poweramount = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WRATH)->GetEffect(EFFECT_1).CalcValue();
+        if (!GetCaster()->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
 
-            GetCaster()->ModifyPower(POWER_RUNIC_POWER, poweramount);
-        }
+        SpellValue const* value = GetSpellValue();
+        uint32 astralPower = value->EffectBasePoints[EFFECT_1];
+        GetCaster()->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
     void Register() override
