@@ -67,6 +67,11 @@ enum DruidSpells
     SPELL_DRUID_THORNS_SLOW                 = 80500,
     SPELL_DRUID_MOONKIN_FORM                = 24858,
     SPELL_DRUID_WRATH                       = 48461,
+    SPELL_DRUID_ECLIPSE_BASE                = 80501,
+    SPELL_DRUID_ECLIPSE_SOLAR_STACK         = 80503,
+    SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
+    SPELL_DRUID_ECLIPSE_LUNAR_STACK         = 80504,
+    SPELL_DRUID_ECLIPSE_LUNAR_BUFF          = 80505,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1280,17 +1285,91 @@ class spell_dru_wrath : public SpellScript
 
     void HandleCast()
     {
-        if (!GetCaster()->HasAura(SPELL_DRUID_MOONKIN_FORM))
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_ECLIPSE_BASE) && !caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK))
+        {
+            caster->AddAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK, caster);
+
+            if (caster->GetAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK)->GetStackAmount() == 2)
+            {
+                caster->RemoveAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK);
+
+                caster->AddAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF, caster);
+            }
+        }
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
         SpellValue const* value = GetSpellValue();
         uint32 astralPower = value->EffectBasePoints[EFFECT_1];
-        GetCaster()->ModifyPower(POWER_RUNIC_POWER, astralPower);
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_dru_wrath::HandleCast);
+    }
+};
+
+class spell_dru_starfire : public SpellScript
+{
+    PrepareSpellScript(spell_dru_starfire);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        Unit* target = GetExplTargetUnit();
+
+        caster->CastSpell(target, 80506);
+
+        if (caster->HasAura(SPELL_DRUID_ECLIPSE_BASE) && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK))
+        {
+            caster->AddAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK, caster);
+
+            if (caster->GetAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK)->GetStackAmount() == 2)
+            {
+                caster->RemoveAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK);
+
+                caster->AddAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF, caster);
+            }
+        }
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        SpellValue const* value = GetSpellValue();
+        uint32 astralPower = value->EffectBasePoints[EFFECT_1];
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_starfire::HandleCast);
+    }
+};
+
+class spell_dru_force_of_nature : public SpellScript
+{
+    PrepareSpellScript(spell_dru_force_of_nature);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        SpellValue const* value = GetSpellValue();
+        uint32 astralPower = value->EffectBasePoints[EFFECT_2];
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_force_of_nature::HandleCast);
     }
 };
 
@@ -1335,4 +1414,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_prowl);
     RegisterSpellScript(spell_dru_thorns);
     RegisterSpellScript(spell_dru_wrath);
+    RegisterSpellScript(spell_dru_starfire);
+    RegisterSpellScript(spell_dru_force_of_nature);
 }
