@@ -67,6 +67,7 @@ enum DruidSpells
     SPELL_DRUID_THORNS_SLOW                 = 80500,
     SPELL_DRUID_MOONKIN_FORM                = 24858,
     SPELL_DRUID_WRATH                       = 48461,
+    SPELL_STARFIRE                          = 48465,
     SPELL_DRUID_ECLIPSE_BASE                = 80501,
     SPELL_DRUID_ECLIPSE_SOLAR_STACK         = 80503,
     SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
@@ -1286,19 +1287,7 @@ class spell_dru_wrath : public SpellScript
     void HandleCast()
     {
         Unit* caster = GetCaster();
-
-        if (caster->HasAura(SPELL_DRUID_ECLIPSE_BASE) && !caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK))
-        {
-            caster->AddAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK, caster);
-
-            if (caster->GetAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK)->GetStackAmount() == 2)
-            {
-                caster->RemoveAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK);
-
-                caster->AddAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF, caster);
-            }
-        }
-
+ 
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
@@ -1325,17 +1314,6 @@ class spell_dru_starfire : public SpellScript
 
         caster->CastSpell(target, 80506);
 
-        if (caster->HasAura(SPELL_DRUID_ECLIPSE_BASE) && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK))
-        {
-            caster->AddAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK, caster);
-
-            if (caster->GetAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK)->GetStackAmount() == 2)
-            {
-                caster->RemoveAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK);
-
-                caster->AddAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF, caster);
-            }
-        }
 
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
@@ -1348,6 +1326,41 @@ class spell_dru_starfire : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_dru_starfire::HandleCast);
+    }
+};
+
+class spell_dru_eclipse : public AuraScript {
+
+    PrepareAuraScript(spell_dru_eclipse);
+
+    void handleBuff(Unit* caster, uint32 buffSpellId, uint32 stackSpellId, uint32 maxStack) {
+        if (Aura* aurff = caster->GetAura(stackSpellId)) {
+            aurff->ModStackAmount(1);
+            if (aurff->GetStackAmount() >= maxStack) {
+                caster->AddAura(buffSpellId, caster);
+                caster->RemoveAura(stackSpellId);
+            }
+        }
+        else
+            caster->AddAura(stackSpellId, caster);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        uint32 maxSolarStack = aurEff->GetAmount();
+        uint32 maxLunarStack = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        uint32 spellId = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        if (spellId == SPELL_DRUID_WRATH)
+            handleBuff(caster, SPELL_DRUID_ECLIPSE_SOLAR_BUFF, SPELL_DRUID_ECLIPSE_SOLAR_STACK, maxSolarStack);
+        else
+            handleBuff(caster, SPELL_DRUID_ECLIPSE_LUNAR_BUFF, SPELL_DRUID_ECLIPSE_LUNAR_STACK, maxLunarStack);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_eclipse::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1372,6 +1385,7 @@ class spell_dru_force_of_nature : public SpellScript
         OnCast += SpellCastFn(spell_dru_force_of_nature::HandleCast);
     }
 };
+
 
 void AddSC_druid_spell_scripts()
 {
@@ -1416,4 +1430,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_wrath);
     RegisterSpellScript(spell_dru_starfire);
     RegisterSpellScript(spell_dru_force_of_nature);
+    RegisterSpellScript(spell_dru_eclipse);
+    RegisterSpellScript(spell_dru_starfall);
 }
