@@ -72,6 +72,9 @@ enum DruidSpells
     SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
     SPELL_DRUID_ECLIPSE_LUNAR_STACK         = 80504,
     SPELL_DRUID_ECLIPSE_LUNAR_BUFF          = 80505,
+    SPELL_DRUID_BERSERK_CAT                 = 50334,
+    SPELL_DRUID_RAKE_STUN                   = 80509,
+    SPELL_DRUID_BERSERK_CAT_CRIT            = 80508,
 };
 
 // 1178 - Bear Form (Passive)
@@ -918,18 +921,6 @@ class spell_dru_starfall_dummy : public SpellScript
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
-        // Shapeshifting into an animal form or mounting cancels the effect
-        if (caster->GetCreatureType() == CREATURE_TYPE_BEAST || caster->IsMounted())
-        {
-            if (SpellInfo const* spellInfo = GetTriggeringSpell())
-                caster->RemoveAurasDueToSpell(spellInfo->Id);
-            return;
-        }
-
-        // Any effect which causes you to lose control of your character will supress the starfall effect.
-        if (caster->HasUnitState(UNIT_STATE_CONTROLLED))
-            return;
-
         caster->CastSpell(GetHitUnit(), uint32(GetEffectValue()), true);
     }
 
@@ -1303,7 +1294,7 @@ class spell_dru_wrath : public SpellScript
             return;
 
         SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_1];
+        uint32 astralPower = value->EffectBasePoints[EFFECT_1] + 1;
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1341,7 +1332,7 @@ class spell_dru_starfire : public SpellScript
             return;
 
         SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_1];
+        uint32 astralPower = value->EffectBasePoints[EFFECT_1] + 1;
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1363,13 +1354,67 @@ class spell_dru_force_of_nature : public SpellScript
             return;
 
         SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_2];
+        uint32 astralPower = value->EffectBasePoints[EFFECT_2] + 1;
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_dru_force_of_nature::HandleCast);
+    }
+};
+
+class spell_dru_berserk_cat : public AuraScript
+{
+    PrepareAuraScript(spell_dru_berserk_cat);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 baseProc = aurEff->GetAmount();
+        int32 procChance = GetCaster()->GetComboPoints() * baseProc;
+
+        if (roll_chance_f(procChance))
+        {
+            GetCaster()->CastSpell(eventInfo.GetActionTarget(), 80510);
+        }
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->AddAura(SPELL_DRUID_BERSERK_CAT_CRIT, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(SPELL_DRUID_BERSERK_CAT_CRIT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_berserk_cat::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectProc += AuraEffectProcFn(spell_dru_berserk_cat::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_berserk_cat::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_rake : public SpellScript
+{
+    PrepareSpellScript(spell_dru_rake);
+
+    void HandleCast()
+    {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT))
+            caster->CastSpell(GetExplTargetUnit(), SPELL_DRUID_RAKE_STUN, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_rake::HandleCast);
     }
 };
 
@@ -1380,7 +1425,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_nurturing_instinct);
     RegisterSpellScript(spell_dru_feral_swiftness);
     RegisterSpellScript(spell_dru_omen_of_clarity);
-    RegisterSpellScript(spell_dru_brambles_treant);
+    RegisterSpellScript(spell_dru_brambles_treant); 
     RegisterSpellScript(spell_dru_barkskin);
     RegisterSpellScript(spell_dru_treant_scaling);
     RegisterSpellScript(spell_dru_berserk);
@@ -1400,8 +1445,8 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_rip);
     RegisterSpellScript(spell_dru_savage_defense);
     RegisterSpellAndAuraScriptPair(spell_dru_savage_roar, spell_dru_savage_roar_aura);
-    RegisterSpellScript(spell_dru_starfall_aoe);
-    RegisterSpellScript(spell_dru_starfall_dummy);
+    //RegisterSpellScript(spell_dru_starfall_aoe);
+    //RegisterSpellScript(spell_dru_starfall_dummy);
     RegisterSpellAndAuraScriptPair(spell_dru_survival_instincts, spell_dru_survival_instincts_aura);
     RegisterSpellScript(spell_dru_swift_flight_passive);
     RegisterSpellScript(spell_dru_tiger_s_fury);
@@ -1416,4 +1461,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_wrath);
     RegisterSpellScript(spell_dru_starfire);
     RegisterSpellScript(spell_dru_force_of_nature);
+    RegisterSpellScript(spell_dru_berserk_cat);
+    RegisterSpellScript(spell_dru_rake);
 }
