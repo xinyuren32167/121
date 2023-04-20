@@ -12466,7 +12466,7 @@ uint32 Unit::SpellHealingBonusTaken(Unit* caster, SpellInfo const* spellProto, u
     int32 TakenAdvertisedBenefit = SpellBaseHealingBonusTaken(spellProto->GetSchoolMask());
 
     // Nourish cast, glyph of nourish
-    if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && spellProto->SpellFamilyFlags[1] & 0x2000000 && caster)
+    /*if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && spellProto->SpellFamilyFlags[1] & 0x2000000 && caster)
     {
         bool any = false;
         bool hasglyph = caster->GetAuraEffectDummy(62971);
@@ -12487,7 +12487,7 @@ uint32 Unit::SpellHealingBonusTaken(Unit* caster, SpellInfo const* spellProto, u
                     TakenTotalMod += 0.06f;
             }
         }
-    }
+    }*/
 
     if (damagetype == DOT)
     {

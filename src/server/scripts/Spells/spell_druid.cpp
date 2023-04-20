@@ -53,7 +53,7 @@ enum DruidSpells
     SPELL_DRUID_LIVING_SEED_PROC            = 48504,
     SPELL_DRUID_NATURES_SPLENDOR            = 57865,
     SPELL_DRUID_SURVIVAL_INSTINCTS          = 50322,
-    SPELL_DRUID_SAVAGE_ROAR                 = 62071,
+    //SPELL_DRUID_SAVAGE_ROAR                 = 62071,
     SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178,
     SPELL_DRUID_ITEM_T8_BALANCE_RELIC       = 64950,
     SPELL_DRUID_BEAR_FORM_PASSIVE           = 1178,
@@ -76,6 +76,8 @@ enum DruidSpells
     SPELL_DRUID_BERSERK_CAT                 = 50334,
     SPELL_DRUID_RAKE_STUN                   = 80509,
     SPELL_DRUID_BERSERK_CAT_CRIT            = 80508,
+    SPELL_DRUID_BERSERK_COMBO_GEN           = 80510,
+    SPELL_DRUID_SAVAGE_ROAR                 = 80511,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1305,7 +1307,6 @@ class spell_dru_starfire : public SpellScript
 
         caster->CastSpell(target, 80506);
 
-
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
@@ -1381,16 +1382,6 @@ class spell_dru_berserk_cat : public AuraScript
 {
     PrepareAuraScript(spell_dru_berserk_cat);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        int32 baseProc = aurEff->GetAmount();
-        int32 procChance = GetCaster()->GetComboPoints() * baseProc;
-
-        if (roll_chance_f(procChance))
-        {
-            GetCaster()->CastSpell(eventInfo.GetActionTarget(), 80510);
-        }
-    }
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
@@ -1404,9 +1395,50 @@ class spell_dru_berserk_cat : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_berserk_cat::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectProc += AuraEffectProcFn(spell_dru_berserk_cat::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_berserk_cat::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dru_berserk_cat::HandleApply, EFFECT_1, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_berserk_cat::HandleRemove, EFFECT_1, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_berserk_combo_adder : public SpellScript
+{
+    PrepareSpellScript(spell_dru_berserk_combo_adder);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (!caster->HasAura(SPELL_DRUID_BERSERK_CAT))
+            return;
+
+        int32 baseProc = 20;
+        int32 procChance = GetCaster()->GetComboPoints() * baseProc;
+
+        if (roll_chance_f(procChance))
+        {
+            caster->AddAura(SPELL_DRUID_BERSERK_COMBO_GEN, caster);
+        }
+    }
+
+    void HandleAfter()
+    {
+        if (GetCaster()->HasAura(SPELL_DRUID_BERSERK_COMBO_GEN))
+        {
+            int32 comboAmount = sSpellMgr->AssertSpellInfo(SPELL_DRUID_BERSERK_CAT)->GetEffect(EFFECT_1).CalcValue();
+            GetCaster()->RemoveAura(SPELL_DRUID_BERSERK_COMBO_GEN);
+            Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+            GetCaster()->AddComboPoints(target, 2);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_berserk_combo_adder::HandleCast);
+        AfterCast += SpellCastFn(spell_dru_berserk_combo_adder::HandleAfter);
     }
 };
 
@@ -1431,6 +1463,82 @@ class spell_dru_rake : public SpellScript
     }
 };
 
+class spell_dru_cat_form : public AuraScript
+{
+    PrepareAuraScript(spell_dru_cat_form);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(SPELL_DRUID_SAVAGE_ROAR))
+            GetCaster()->RemoveAura(SPELL_DRUID_SAVAGE_ROAR);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_cat_form::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_lifebloom_new : public AuraScript
+{
+    PrepareAuraScript(spell_dru_lifebloom_new);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_lifebloom_new::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_switftmend : public SpellScript
+{
+    PrepareSpellScript(spell_dru_switftmend);
+
+    AuraEffect* GetAuraEffect()
+    {
+        Unit::AuraEffectList const& RejorRegr = GetExplTargetUnit()->GetAuraEffectsByType(SPELL_AURA_PERIODIC_HEAL);
+        AuraEffect* forcedTargetAura = nullptr;
+        AuraEffect* targetAura = nullptr;
+        for (Unit::AuraEffectList::const_iterator i = RejorRegr.begin(); i != RejorRegr.end(); ++i)
+        {
+            if ((*i)->GetSpellInfo()->SpellFamilyName == SPELLFAMILY_DRUID
+                && (*i)->GetSpellInfo()->SpellFamilyFlags[2] == 0x80000000)
+            {
+                if (GetCaster()->GetGUID() == (*i)->GetCasterGUID())
+                {
+                    if (!forcedTargetAura || (*i)->GetBase()->GetDuration() < forcedTargetAura->GetBase()->GetDuration())
+                        forcedTargetAura = *i;
+                }
+                else if (!targetAura || (*i)->GetBase()->GetDuration() < targetAura->GetBase()->GetDuration())
+                    targetAura = *i;
+            }
+        }
+
+        if (forcedTargetAura)
+            targetAura = forcedTargetAura;
+
+        return targetAura;
+    }
+
+    void HandleCast()
+    {
+        AuraEffect* aura = GetAuraEffect();
+
+        if (aura) {
+            GetExplTargetUnit()->RemoveAura(aura->GetId(), aura->GetCasterGUID());
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_switftmend::HandleCast);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1448,7 +1556,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_idol_lifebloom);
     RegisterSpellScript(spell_dru_innervate);
     RegisterSpellScript(spell_dru_insect_swarm);
-    RegisterSpellScript(spell_dru_lifebloom);
+    //RegisterSpellScript(spell_dru_lifebloom);
     RegisterSpellScript(spell_dru_living_seed);
     RegisterSpellScript(spell_dru_living_seed_proc);
     RegisterSpellScript(spell_dru_moonkin_form_passive);
@@ -1477,4 +1585,8 @@ void AddSC_druid_spell_scripts()
 	RegisterSpellScript(spell_dru_berserk_cat);
     RegisterSpellScript(spell_dru_rake);
 	RegisterSpellScript(spell_dru_eclipse);
+    RegisterSpellScript(spell_dru_berserk_combo_adder);
+    RegisterSpellScript(spell_dru_cat_form);
+    RegisterSpellScript(spell_dru_lifebloom_new);
+    RegisterSpellScript(spell_dru_switftmend);
 }

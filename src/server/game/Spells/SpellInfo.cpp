@@ -2071,7 +2071,7 @@ AuraStateType SpellInfo::LoadAuraState() const
         return AURA_STATE_WARRIOR_VICTORY_RUSH;
 
     // Swiftmend state on Regrowth & Rejuvenation
-    if (SpellFamilyName == SPELLFAMILY_DRUID && SpellFamilyFlags[0] & 0x50)
+    if (SpellFamilyName == SPELLFAMILY_DRUID && SpellFamilyFlags[0] & 0x50 || SpellFamilyFlags[2] & 0x80000000)
         return AURA_STATE_SWIFTMEND;
 
     // Deadly poison aura state
