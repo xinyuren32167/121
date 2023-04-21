@@ -1824,9 +1824,6 @@ class spell_burning_talons : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-
-        PreventDefaultAction();
-
         if (!GetCaster())
             return;
 

@@ -1182,6 +1182,17 @@ class spell_dru_ferocious_bite : public SpellScript
 {
     PrepareSpellScript(spell_dru_ferocious_bite);
 
+    Aura* GetTasteForBloodRuneAura(Unit* caster)
+    {
+        for (size_t i = 700168; i < 700174; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleHit(SpellEffIndex effIndex)
     {
         SpellValue const* value = GetSpellValue();
@@ -1197,6 +1208,33 @@ class spell_dru_ferocious_bite : public SpellScript
            damage += int32(CalculatePct(damage, bonusDamage));
 
            GetCaster()->ModifyPower(POWER_ENERGY, -bonusPercent);
+        }
+
+        if (Aura* runeAura = GetTasteForBloodRuneAura(GetCaster()))
+        {
+            int32 bleedQuantity = 0;
+            auto targetAuras = GetExplTargetUnit()->GetAppliedAuras();
+            for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+            {
+                if (Aura* aura = itr->second->GetBase())
+                {
+                    if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                        continue;
+
+                    SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                    if (auraInfo->SpellFamilyFlags[2] & 0x01000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                    {
+                        bleedQuantity++;
+                    }
+                }
+            }
+
+            if (bleedQuantity >= 0)
+            {
+                int32 percentIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount() * bleedQuantity;
+                damage += int32(CalculatePct(damage, percentIncrease));
+            }
         }
 
         if (Unit* target = GetHitUnit())

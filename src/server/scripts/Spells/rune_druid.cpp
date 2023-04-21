@@ -28,9 +28,11 @@ enum DruidSpells
 
 
     SPELL_BARKSKIN = 22812,
+    SPELL_DASH = 33357,
     SPELL_FRENZIED_REGENERATION = 22842,
     SPELL_INNERVATE = 29166,
     SPELL_IRONFUR = 000,
+    SPELL_RIP = 49800,
     SPELL_STARFALL = 53201,
     SPELL_TIGERS_FURY = 50213,
     SPELL_WILD_GROWTH = 53251,
@@ -39,6 +41,8 @@ enum DruidSpells
     RUNE_DRUID_PROTECTIVE_SKIN_SHIELD = 700068,
 
     RUNE_DRUID_SKYSEC_HOLD_HEAL = 700088,
+
+    RUNE_DRUID_RAMPANT_FEROCITY_DAMAGE = 700181,
 
 };
 
@@ -89,17 +93,12 @@ class rune_druid_lycara_fleeting_glimpse : public AuraScript
 
             return;
         }
-
-
         int32 cooldown = caster->GetSpellCooldownDelay(SPELL_WILD_GROWTH);
-        LOG_ERROR("error", "Cooldown before Cast = {}", cooldown);
         int32 wildGrowthCooldown = sSpellMgr->GetSpellInfo(SPELL_WILD_GROWTH)->GetRecoveryTime();
-        int32 cooldownReduction = wildGrowthCooldown - cooldown;
-        LOG_ERROR("error", "cooldownReduction = {}", cooldownReduction);
 
         caster->CastSpell(GetCaster(), SPELL_WILD_GROWTH, TRIGGERED_FULL_MASK);
-        caster->RemoveSpellCooldown(SPELL_WILD_GROWTH, true);
 
+        caster->ModifySpellCooldown(SPELL_WILD_GROWTH, -wildGrowthCooldown);
         caster->ModifySpellCooldown(SPELL_WILD_GROWTH, cooldown);
     }
 
@@ -380,7 +379,7 @@ class rune_druid_protective_skin : public AuraScript
 
     void Register()
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_druid_protective_skin::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_protective_skin::HandleRemove, EFFECT_0, SPELL_AURA_REDUCE_PUSHBACK, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -438,6 +437,9 @@ class rune_druid_verdant_heart : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (GetCaster()->HasAura(SPELL_BARKSKIN) || GetCaster()->HasAura(SPELL_FRENZIED_REGENERATION))
+            return;
+
         for (size_t i = 700096; i < 700102; i++)
         {
             if (GetCaster()->HasAura(i))
@@ -502,11 +504,6 @@ class rune_druid_well_honed_instincts : public AuraScript
 {
     PrepareAuraScript(rune_druid_well_honed_instincts);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetDamageInfo();
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
@@ -515,12 +512,7 @@ class rune_druid_well_honed_instincts : public AuraScript
         if (!caster || caster->isDead() || caster->HasAura(debuffAura))
             return;
 
-        int32 health = caster->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
-
-        if (health <= 0)
-            return;
-
-        int32 healthPct = (health / caster->GetMaxHealth()) * 100;
+        int32 healthPct = caster->GetHealthPct();
 
         if (healthPct > aurEff->GetAmount())
             return;
@@ -531,8 +523,105 @@ class rune_druid_well_honed_instincts : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_druid_well_honed_instincts::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_druid_well_honed_instincts::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_relentless_hunter : public AuraScript
+{
+    PrepareAuraScript(rune_druid_relentless_hunter);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->RemoveSpellCooldown(SPELL_DASH, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_relentless_hunter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_iron_jaws : public AuraScript
+{
+    PrepareAuraScript(rune_druid_iron_jaws);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procChance = GetCaster()->GetComboPoints() * aurEff->GetAmount();
+        uint32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        int32 procSpell = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_iron_jaws::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_rampant_ferocity : public SpellScript
+{
+    PrepareSpellScript(rune_druid_rampant_ferocity);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700174; i < 700180; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+            
+            if (target->isDead() || !target->HasAura(SPELL_RIP))
+                continue;
+
+            Aura* ripAura = target->GetAura(SPELL_RIP);
+            AuraEffect* ripEff = target->GetAuraEffect(SPELL_RIP, 0);
+
+            int32 remainingTicks = ripAura->GetDuration() / ripEff->GetAmplitude();
+            int32 remainingDamage = ripEff->GetAmount() * remainingTicks;
+            int32 damagePct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = int32(CalculatePct(remainingDamage, damagePct));
+
+            GetCaster()->CastCustomSpell(RUNE_DRUID_RAMPANT_FEROCITY_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_rampant_ferocity::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
 
@@ -552,6 +641,9 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_verdant_heart);
     RegisterSpellScript(rune_druid_natural_order);
     RegisterSpellScript(rune_druid_well_honed_instincts);
+    RegisterSpellScript(rune_druid_relentless_hunter);
+    RegisterSpellScript(rune_druid_iron_jaws);
+    RegisterSpellScript(rune_druid_rampant_ferocity);
 
 
 
