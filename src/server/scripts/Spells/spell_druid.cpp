@@ -1359,12 +1359,15 @@ class spell_dru_starfire : public SpellScript
     }
 };
 
-class spell_dru_eclipse : public AuraScript {
+class spell_dru_eclipse : public AuraScript
+{
 
     PrepareAuraScript(spell_dru_eclipse);
 
-    void handleBuff(Unit* caster, uint32 buffSpellId, uint32 stackSpellId, uint32 maxStack) {
-        if (Aura* aurff = caster->GetAura(stackSpellId)) {
+    void handleBuff(Unit* caster, uint32 buffSpellId, uint32 stackSpellId, uint32 maxStack)
+    {
+        if (Aura* aurff = caster->GetAura(stackSpellId))
+        {
             aurff->ModStackAmount(1);
             if (aurff->GetStackAmount() >= maxStack) {
                 caster->AddAura(buffSpellId, caster);
@@ -1577,6 +1580,46 @@ class spell_dru_switftmend : public SpellScript
     }
 };
 
+class spell_dru_wild_charge : public SpellScript
+{
+    PrepareSpellScript(spell_dru_wild_charge);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        Position targetPos = GetExplTargetUnit()->GetPosition();
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
+            return;
+
+        caster->GetMotionMaster()->MoveJump(targetPos, 20.0f, 25.0f);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_wild_charge::HandleCast);
+    }
+};
+
+class spell_dru_tiger_dash : public AuraScript
+{
+    PrepareAuraScript(spell_dru_tiger_dash);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(80516);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_tiger_dash::HandleProc, EFFECT_0, SPELL_AURA_MOD_INCREASE_SPEED, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1603,7 +1646,8 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_primal_tenacity);
     RegisterSpellScript(spell_dru_rip);
     RegisterSpellScript(spell_dru_savage_defense);
-    RegisterSpellAndAuraScriptPair(spell_dru_savage_roar, spell_dru_savage_roar_aura);
+    RegisterSpellScript(spell_dru_savage_roar);
+    //RegisterSpellAndAuraScriptPair(spell_dru_savage_roar, spell_dru_savage_roar_aura);
     //RegisterSpellScript(spell_dru_starfall_aoe);
     //RegisterSpellScript(spell_dru_starfall_dummy);
     RegisterSpellAndAuraScriptPair(spell_dru_survival_instincts, spell_dru_survival_instincts_aura);
@@ -1627,4 +1671,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_cat_form);
     RegisterSpellScript(spell_dru_lifebloom_new);
     RegisterSpellScript(spell_dru_switftmend);
+    RegisterSpellScript(spell_dru_wild_charge);
+    RegisterSpellScript(spell_dru_tiger_dash);
 }
