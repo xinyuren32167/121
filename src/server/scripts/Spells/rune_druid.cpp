@@ -11,23 +11,26 @@
 
 enum DruidSpells
 {
-    //forms
+    //Forms
     FORM_AQUATIC_FORM = 1066,
     FORM_BEAR_FORM = 5487,
     FORM_DIRE_BEAR_FORM = 9634,
-    FORM_URSOC_FORM = 000,
     FORM_CAT_FORM = 768,
-    FORM_ASHAMANE_FORM = 000,
     FORM_FLIGHT_FORM = 33943,
     FORM_SWIFT_FLIGHT_FORM = 40120,
     FORM_TRAVEL_FORM = 783,
     FORM_SWIFT_TRAVEL_FORM = 000,
     FORM_MOONKIN_FORM = 24858,
-    FORM_TREE_FORM = 000,
 
+    //Incarnations
+    SPELL_INCARNATION_AVATAR_OF_ASHAMANE = 00000,
+    SPELL_INCARNATION_GUARDIAN_OF_URSOC = 00000,
+    SPELL_INCARNATION_TREE_OF_LIFE = 00000,
 
-
+    //Spells
     SPELL_BARKSKIN = 22812,
+    SPELL_BERSERK = 50334,
+    SPELL_BERSERK_BEAR = 00000,
     SPELL_DASH = 33357,
     SPELL_FRENZIED_REGENERATION = 22842,
     SPELL_INNERVATE = 29166,
@@ -36,13 +39,23 @@ enum DruidSpells
     SPELL_STARFALL = 53201,
     SPELL_TIGERS_FURY = 50213,
     SPELL_WILD_GROWTH = 53251,
-
+    
+    //Runes
+    RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_BARKSKIN = 700017,
+    RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY = 700018,
+    RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_WILD_GROWTH = 700019,
 
     RUNE_DRUID_PROTECTIVE_SKIN_SHIELD = 700068,
 
     RUNE_DRUID_SKYSEC_HOLD_HEAL = 700088,
 
     RUNE_DRUID_RAMPANT_FEROCITY_DAMAGE = 700181,
+
+    RUNE_DRUID_GUARDIANS_WRATH_DOT = 700218,
+
+    RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF = 700274,
+
+    RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF = 700282,
 
 };
 
@@ -65,41 +78,25 @@ class rune_druid_lycara_fleeting_glimpse : public AuraScript
         if (GetCaster()->HasAura(FORM_AQUATIC_FORM) || GetCaster()->HasAura(FORM_FLIGHT_FORM) || GetCaster()->HasAura(FORM_SWIFT_FLIGHT_FORM) || GetCaster()->HasAura(FORM_TRAVEL_FORM) || GetCaster()->HasAura(FORM_SWIFT_TRAVEL_FORM))
             return;
 
-        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(FORM_URSOC_FORM))
+        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
         {
-            int32 coolDown = caster->GetSpellCooldownDelay(SPELL_BARKSKIN);
-            int32 arcaneShotCooldown = sSpellMgr->GetSpellInfo(SPELL_BARKSKIN)->GetRecoveryTime();
-            int32 cooldownReduction = arcaneShotCooldown - coolDown;
-
-            caster->CastSpell(GetCaster(), SPELL_BARKSKIN, TRIGGERED_FULL_MASK);
-            caster->ModifySpellCooldown(SPELL_BARKSKIN, -cooldownReduction);
+            caster->CastSpell(GetCaster(), RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_BARKSKIN, TRIGGERED_FULL_MASK);
             return;
         }
 
-        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(FORM_ASHAMANE_FORM))
+        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
         {
-            int32 coolDown = caster->GetSpellCooldownDelay(SPELL_TIGERS_FURY);
-            int32 arcaneShotCooldown = sSpellMgr->GetSpellInfo(SPELL_TIGERS_FURY)->GetRecoveryTime();
-            int32 cooldownReduction = arcaneShotCooldown - coolDown;
-
-            caster->CastSpell(GetCaster(), SPELL_TIGERS_FURY, TRIGGERED_FULL_MASK);
-            caster->ModifySpellCooldown(SPELL_TIGERS_FURY, -cooldownReduction);
+            caster->CastSpell(GetCaster(), RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY, TRIGGERED_FULL_MASK);
             return;
         }
 
         if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
         {
             caster->CastSpell(GetCaster(), SPELL_STARFALL, TRIGGERED_FULL_MASK);
-
             return;
         }
-        int32 cooldown = caster->GetSpellCooldownDelay(SPELL_WILD_GROWTH);
-        int32 wildGrowthCooldown = sSpellMgr->GetSpellInfo(SPELL_WILD_GROWTH)->GetRecoveryTime();
 
-        caster->CastSpell(GetCaster(), SPELL_WILD_GROWTH, TRIGGERED_FULL_MASK);
-
-        caster->ModifySpellCooldown(SPELL_WILD_GROWTH, -wildGrowthCooldown);
-        caster->ModifySpellCooldown(SPELL_WILD_GROWTH, cooldown);
+        caster->CastSpell(GetCaster(), RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_WILD_GROWTH, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -117,10 +114,10 @@ class rune_druid_lycara_teachings : public AuraScript
     {
         int32 buffAura = GetAura()->GetEffect(EFFECT_0)->GetAmount();
 
-        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(FORM_ASHAMANE_FORM))
+        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
             buffAura = GetAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
 
-        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(FORM_URSOC_FORM))
+        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
             buffAura = GetAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
 
         if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
@@ -625,6 +622,249 @@ class rune_druid_rampant_ferocity : public SpellScript
     }
 };
 
+class rune_druid_guardians_wrath : public AuraScript
+{
+    PrepareAuraScript(rune_druid_guardians_wrath);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_GUARDIANS_WRATH_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_GUARDIANS_WRATH_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_guardians_wrath::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_guardians_wrath::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_tooth_and_claw : public SpellScript
+{
+    PrepareSpellScript(rune_druid_tooth_and_claw);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700220; i < 700226; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+
+        if (!GetRuneAura(caster))
+            return;
+
+        if (!target || target->isDead())
+            return;
+         
+        for (size_t i = 700226; i < 700232; i++)
+        {
+            if (!caster->HasAura(i))
+                continue;
+
+            int32 procSpell = caster->GetAura(i)->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+
+            caster->AddAura(procSpell, target);
+            return;
+        }
+    }
+
+
+    void Register() override
+    {
+        OnHit += SpellHitFn(rune_druid_tooth_and_claw::HandleProc);
+    }
+};
+
+class rune_druid_tooth_and_claw_raze : public SpellScript
+{
+    PrepareSpellScript(rune_druid_tooth_and_claw_raze);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700220; i < 700226; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_RIP))
+                continue;
+
+            for (size_t i = 700226; i < 700232; i++)
+            {
+                if (caster->HasAura(i))
+                {
+                    int32 procSpell = caster->GetAura(i)->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+
+                    caster->AddAura(procSpell, target);
+                }
+            }
+        }       
+    }
+
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_tooth_and_claw_raze::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_druid_protector_of_the_grove : public AuraScript
+{
+    PrepareAuraScript(rune_druid_protector_of_the_grove);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!eventInfo.GetHealInfo())
+            return;
+
+        float healDone = eventInfo.GetHealInfo()->GetHeal();
+
+        if (healDone <= 0)
+            return;
+
+        float healStacking = CalculatePct(healDone, aurEff->GetAmount());
+
+        if (healStacking < 1)
+            return;
+
+        if (!caster->HasAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF))
+            caster->AddAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF, caster);
+
+        AuraEffect* buffAura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF)->GetEffect(EFFECT_0);
+
+        int32 maxAmount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), GetAura()->GetEffect(EFFECT_1)->GetAmount());
+        int32 amount = buffAura->GetAmount();
+        amount = std::min<int32>(maxAmount, amount + healStacking);
+
+        buffAura->ChangeAmount(amount);
+
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_protector_of_the_grove::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_protector_of_the_pack : public AuraScript
+{
+    PrepareAuraScript(rune_druid_protector_of_the_pack);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        float damageDone = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDone <= 0)
+            return;
+
+        float damageStacking = CalculatePct(damageDone, aurEff->GetAmount());
+
+        if (!caster->HasAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF))
+            caster->AddAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF, caster);
+
+        AuraEffect* buffAura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF)->GetEffect(EFFECT_0);
+
+        int32 maxAmount = CalculatePct(GetCaster()->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL), GetAura()->GetEffect(EFFECT_1)->GetAmount());
+        int32 amount = buffAura->GetAmount();
+        amount = std::min<int32>(maxAmount, amount + damageStacking);
+
+        buffAura->ChangeAmount(amount);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_protector_of_the_pack::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_protector_of_the_pack::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_blood_mist : public AuraScript
+{
+    PrepareAuraScript(rune_druid_blood_mist);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int32 increasedDuration = aurEff->GetAmplitude();
+        int32 baseDuration = aurEff->GetAmount();
+        int32 berserkSpell = SPELL_BERSERK;
+
+        if (player->HasSpell(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+            berserkSpell = SPELL_INCARNATION_AVATAR_OF_ASHAMANE;
+
+        if (Aura* auraEff = player->GetAura(berserkSpell))
+        {
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + increasedDuration, auraEff->GetMaxDuration() + 10000));
+
+            auraEff->SetDuration(duration);
+        }
+        else
+        {
+            player->AddAura(berserkSpell, player);
+            player->GetAura(berserkSpell)->SetDuration(baseDuration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_blood_mist::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -644,8 +884,14 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_relentless_hunter);
     RegisterSpellScript(rune_druid_iron_jaws);
     RegisterSpellScript(rune_druid_rampant_ferocity);
+    RegisterSpellScript(rune_druid_guardians_wrath);
+    RegisterSpellScript(rune_druid_tooth_and_claw);
+    RegisterSpellScript(rune_druid_protector_of_the_grove);
+    RegisterSpellScript(rune_druid_protector_of_the_pack);
+    RegisterSpellScript(rune_druid_blood_mist);
 
 
 
 
+    
 }
