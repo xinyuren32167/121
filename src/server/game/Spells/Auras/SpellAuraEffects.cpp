@@ -1195,7 +1195,10 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             spellId = 34123;
             break;
         case FORM_TRAVEL:
-            spellId = 5419;
+            if (GetCaster()->getLevel() <= 40)
+                spellId = 5419;
+            else
+                spellId = 80526;
             break;
         case FORM_AQUA:
             spellId = 5421;
