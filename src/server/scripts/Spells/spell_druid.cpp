@@ -1620,26 +1620,6 @@ class spell_dru_tiger_dash : public AuraScript
     }
 };
 
-class spell_dru_ursol_dummy : public SpellScript
-{
-    PrepareSpellScript(spell_dru_ursol_dummy);
-
-    void HandleScriptEffect()
-    {
-        Aura* auraEff = GetCaster()->GetAura(80522);
-        int32 duration = auraEff->GetDuration();
-
-        Position spellPos = GetExplTargetDest()->GetPosition();
-
-        GetCaster()->SummonCreature(500504, spellPos, TEMPSUMMON_TIMED_DESPAWN, duration);
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_dru_ursol_dummy::HandleScriptEffect);
-    }
-};
-
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1693,5 +1673,4 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_switftmend);
     RegisterSpellScript(spell_dru_wild_charge);
     RegisterSpellScript(spell_dru_tiger_dash);
-    RegisterSpellScript(spell_dru_ursol_dummy);
 }
