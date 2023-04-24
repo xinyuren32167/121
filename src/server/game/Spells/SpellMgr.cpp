@@ -3158,7 +3158,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
             case 27001:
             case 27002:
             case 48571:
-            case 48572:
+            //case 48572:
             case 8676: // Ambush
             case 8724:
             case 8725:
