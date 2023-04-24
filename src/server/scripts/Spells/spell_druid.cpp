@@ -1620,6 +1620,27 @@ class spell_dru_tiger_dash : public AuraScript
     }
 };
 
+class spell_dru_prowl_check : public SpellScript
+{
+    PrepareSpellScript(spell_dru_prowl_check);
+
+    void HandleCast()
+    {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (GetCaster()->HasAura(768))
+            return;
+
+        GetCaster()->CastSpell(GetCaster(), 768);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_prowl_check::HandleCast);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1673,4 +1694,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_switftmend);
     RegisterSpellScript(spell_dru_wild_charge);
     RegisterSpellScript(spell_dru_tiger_dash);
+    RegisterSpellScript(spell_dru_prowl_check);
 }
