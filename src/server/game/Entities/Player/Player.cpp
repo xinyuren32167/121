@@ -11343,6 +11343,9 @@ void Player::SendInitialPacketsBeforeAddToMap()
     // SMSG_UPDATE_WORLD_STATE
     // SMSG_POWER_UPDATE
 
+
+    ResyncRunes(MAX_RUNES);
+
     SetMover(this);
 
     sScriptMgr->OnSendInitialPacketsBeforeAddToMap(this, data);
@@ -13136,6 +13139,9 @@ void Player::ConvertRune(uint8 index, RuneType newType)
 
 void Player::ResyncRunes(uint8 count)
 {
+    if (getClass() != CLASS_DEATH_KNIGHT)
+        return;
+
     WorldPacket data(SMSG_RESYNC_RUNES, 4 + count * 2);
     data << uint32(count);
     for (uint32 i = 0; i < count; ++i)
@@ -13157,10 +13163,10 @@ static RuneType runeSlotTypes[MAX_RUNES] =
 {
     /*0*/ RUNE_BLOOD,
     /*1*/ RUNE_BLOOD,
-    /*2*/ RUNE_UNHOLY,
-    /*3*/ RUNE_UNHOLY,
-    /*4*/ RUNE_FROST,
-    /*5*/ RUNE_FROST
+    /*2*/ RUNE_BLOOD,
+    /*3*/ RUNE_BLOOD,
+    /*4*/ RUNE_BLOOD,
+    /*5*/ RUNE_BLOOD
 };
 
 void Player::InitRunes()

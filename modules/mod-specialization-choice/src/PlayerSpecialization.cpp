@@ -65,6 +65,15 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[HUNTER_BEAST] = { 14, 80132, "Beast Mastery", 3 };
     m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3 };
     m_Specializations[HUNTER_SURVIVAL] = { 16, 19306, "Survival", 3 };
+
+    m_Specializations[DK_BLOOD] = { 7, 55212, "Blood", 6 };
+    m_Specializations[DK_FROST] = { 8, 50384, "Frost", 6 };
+    m_Specializations[DK_UNHOLY] = { 9, 49772, "Unholy", 6 };
+
+    m_Specializations[DRUID_BALANCE] = { 10, 80132, "Balance", 11 };
+    m_Specializations[DRUID_FERAL] = { 11, 80140, "Feral", 11 };
+    m_Specializations[DRUID_RESTO] = { 13, 19306, "Restauration", 11 };
+    m_Specializations[DRUID_GUARDIAN] = { 12, 19306, "Guardian", 11 };
 }
 
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
