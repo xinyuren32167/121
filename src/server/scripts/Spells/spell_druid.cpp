@@ -67,7 +67,7 @@ enum DruidSpells
     SPELL_DRUID_THORNS_SLOW                 = 80500,
     SPELL_DRUID_MOONKIN_FORM                = 24858,
     SPELL_DRUID_WRATH                       = 48461,
-    SPELL_STARFIRE                          = 48465,
+    SPELL_DRUID_STARFIRE                    = 48465,
     SPELL_DRUID_ECLIPSE_BASE                = 80501,
     SPELL_DRUID_ECLIPSE_SOLAR_STACK         = 80503,
     SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
@@ -78,6 +78,10 @@ enum DruidSpells
     SPELL_DRUID_BERSERK_CAT_CRIT            = 80508,
     SPELL_DRUID_BERSERK_COMBO_GEN           = 80510,
     SPELL_DRUID_SAVAGE_ROAR                 = 80511,
+    SPELL_DRUID_STELLAR_FLARE_DISPEL        = 80529,
+    SPELL_DRUID_CELESTIAL_ALIGNMENT         = 80531,
+    SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT     = 80532,
+    SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT     = 80533,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1381,13 +1385,16 @@ class spell_dru_eclipse : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+        if (caster->HasAura(SPELL_DRUID_CELESTIAL_ALIGNMENT))
+            return;
+
         uint32 maxSolarStack = aurEff->GetAmount();
         uint32 maxLunarStack = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         uint32 spellId = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
 
-        if (spellId == SPELL_DRUID_WRATH)
+        if (spellId == SPELL_DRUID_WRATH && !caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK) && !caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
             handleBuff(caster, SPELL_DRUID_ECLIPSE_SOLAR_BUFF, SPELL_DRUID_ECLIPSE_SOLAR_STACK, maxSolarStack);
-        else
+        if (spellId == SPELL_DRUID_STARFIRE && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK) && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
             handleBuff(caster, SPELL_DRUID_ECLIPSE_LUNAR_BUFF, SPELL_DRUID_ECLIPSE_LUNAR_STACK, maxLunarStack);
     }
 
@@ -1641,6 +1648,125 @@ class spell_dru_prowl_check : public SpellScript
     }
 };
 
+class spell_dru_stellar_flare_power : public SpellScript
+{
+    PrepareSpellScript(spell_dru_stellar_flare_power);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        SpellValue const* value = GetSpellValue();
+        uint32 astralPower = value->EffectBasePoints[EFFECT_2] + 1;
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_stellar_flare_power::HandleCast);
+    }
+};
+
+class spell_dru_stellar_flare_dispel : public AuraScript
+{
+    PrepareAuraScript(spell_dru_stellar_flare_dispel);
+
+    void HandleDispel(DispelInfo* dispelInfo)
+    {
+        Unit* target = dispelInfo->GetDispeller();
+
+        GetCaster()->CastSpell(target, SPELL_DRUID_STELLAR_FLARE_DISPEL);
+    }
+
+    void Register() override
+    {
+        OnDispel += AuraDispelFn(spell_dru_stellar_flare_dispel::HandleDispel);
+    }
+};
+
+class spell_dru_celestial_alignment : public AuraScript
+{
+    PrepareAuraScript(spell_dru_celestial_alignment);
+
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->AddAura(SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT, GetCaster());
+        GetCaster()->AddAura(SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT);
+        GetCaster()->RemoveAura(SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_celestial_alignment::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_celestial_alignment::HandleRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_astral_communion_power : public SpellScript
+{
+    PrepareSpellScript(spell_dru_astral_communion_power);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        SpellValue const* value = GetSpellValue();
+        uint32 astralPower = value->EffectBasePoints[EFFECT_0] + 1;
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_astral_communion_power::HandleCast);
+    }
+};
+
+class spell_dru_wild_mushroom : public SpellScript
+{
+    PrepareSpellScript(spell_dru_wild_mushroom);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        SpellValue const* value = GetSpellValue();
+        uint32 astralPowerAmount = value->EffectBasePoints[EFFECT_1] + 1;
+        int32 astralPowerBase = value->EffectBasePoints[EFFECT_1] + 1;
+        int32 astralPowerLimit = value->EffectBasePoints[EFFECT_2];
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || astralPowerLimit > 20)
+                continue;
+
+            caster->ModifyPower(POWER_RUNIC_POWER, astralPowerAmount);
+            astralPowerLimit += astralPowerBase;
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_wild_mushroom::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1695,4 +1821,9 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_wild_charge);
     RegisterSpellScript(spell_dru_tiger_dash);
     RegisterSpellScript(spell_dru_prowl_check);
+    RegisterSpellScript(spell_dru_stellar_flare_power);
+    RegisterSpellScript(spell_dru_stellar_flare_dispel);
+    RegisterSpellScript(spell_dru_celestial_alignment);
+    RegisterSpellScript(spell_dru_astral_communion_power);
+    RegisterSpellScript(spell_dru_wild_mushroom);
 }
