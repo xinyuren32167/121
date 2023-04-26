@@ -39,6 +39,7 @@ enum DruidSpells
     SPELL_REJUVENATION = 48441,
     SPELL_RIP = 49800,
     SPELL_STARFALL = 53201,
+    SPELL_SUNFIRE = 80518,
     SPELL_TIGERS_FURY = 50213,
     SPELL_WILD_GROWTH = 53251,
 
@@ -68,6 +69,18 @@ enum DruidSpells
     RUNE_DRUID_GERMINATION_LISTENER = 700437,
 
     RUNE_DRUID_NURTURING_DORMANCY_LISTENER = 700436,
+
+    RUNE_DRUID_SKIN_SHREDDER_DOT = 700468,
+
+    RUNE_DRUID_IMPROVED_SUNFIRE_AOE = 700482,
+
+    RUNE_DRUID_TSUNAMI_DEBUFF = 700514,
+    
+    RUNE_DRUID_NATURAL_SMOLDER_DOT = 700546,
+
+    RUNE_DRUID_MERCILESS_CLAWS_DAMAGE = 700578,
+
+    RUNE_DRUID_BURNING_ATTACKS_DAMAGE = 700596,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -1329,8 +1342,8 @@ class rune_druid_germination : public SpellScript
 
         Aura* rejuvAura = target->GetAura(SPELL_REJUVENATION);
         rejuvAura->SetStackAmount(2);
-       // rejuvAura->RefreshDuration();
-       // rejuvAura->GetEffect(EFFECT_0)->ResetTicks();
+        // rejuvAura->RefreshDuration();
+        // rejuvAura->GetEffect(EFFECT_0)->ResetTicks();
         target->RemoveAura(RUNE_DRUID_GERMINATION_LISTENER);
     }
 
@@ -1444,7 +1457,373 @@ class rune_druid_nurturing_dormancy_listener : public AuraScript
     }
 };
 
+class rune_druid_skin_shredder : public AuraScript
+{
+    PrepareAuraScript(rune_druid_skin_shredder);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_SKIN_SHREDDER_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_SKIN_SHREDDER_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_skin_shredder::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_skin_shredder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_improved_sunfire_proc : public AuraScript
+{
+    PrepareAuraScript(rune_druid_improved_sunfire_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        GetCaster()->CastSpell(victim, RUNE_DRUID_IMPROVED_SUNFIRE_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_improved_sunfire_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_improved_sunfire_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_improved_sunfire : public SpellScript
+{
+    PrepareSpellScript(rune_druid_improved_sunfire);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            caster->AddAura(SPELL_SUNFIRE, target);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_improved_sunfire::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_druid_tsunami : public SpellScript
+{
+    PrepareSpellScript(rune_druid_tsunami);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700508; i < 700514; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 debuffSpell = GetRuneAura(caster)->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            caster->AddAura(debuffSpell, target);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_tsunami::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_104);
+    }
+};
+
+class rune_druid_natural_smolder : public AuraScript
+{
+    PrepareAuraScript(rune_druid_natural_smolder);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_NATURAL_SMOLDER_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_NATURAL_SMOLDER_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_natural_smolder::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_natural_smolder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_invigorating_wounds : public AuraScript
+{
+    PrepareAuraScript(rune_druid_invigorating_wounds);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 powerIncrease = 0;
+
+        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
+        {
+            powerIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            caster->SetPower(POWER_RAGE, caster->GetPower(POWER_RAGE) + powerIncrease);
+            return;
+        }
+
+        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+        {
+            powerIncrease = aurEff->GetAmount();
+            caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + powerIncrease);
+            return;
+        }
+
+        if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
+        {
+            powerIncrease = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+            caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + powerIncrease);
+            return;
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_invigorating_wounds::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_trail_of_blood : public AuraScript
+{
+    PrepareAuraScript(rune_druid_trail_of_blood);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!caster->HasAura(FORM_CAT_FORM) && !caster->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        int32 bleedQuantity = 0;
+        auto targetAuras = target->GetAppliedAuras();
+
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x01000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                    bleedQuantity++;
+            }
+        }
+
+        if (bleedQuantity <= 0)
+            return;
+
+        caster->AddAura(aurEff->GetAmount(), target);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_trail_of_blood::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_trail_of_blood::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_merciless_claws : public AuraScript
+{
+    PrepareAuraScript(rune_druid_merciless_claws);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 bleedQuantity = 0;
+        auto targetAuras = target->GetAppliedAuras();
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x01000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                {
+                    bleedQuantity++;
+                }
+            }
+        }
+
+        if (bleedQuantity <= 0)
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_MERCILESS_CLAWS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_merciless_claws::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_merciless_claws::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_burning_attacks : public AuraScript
+{
+    PrepareAuraScript(rune_druid_burning_attacks);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 amount = 0;
+        auto targetAuras = target->GetAppliedAuras();
+
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x03000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                {
+                    AuraEffect* auraEff = aura->GetEffect(EFFECT_0);
+                    int32 totalTicks = sSpellMgr->AssertSpellInfo(aura->GetId())->GetMaxTicks();
+                    int32 remainingTicks = totalTicks - auraEff->GetTickNumber();
+                    int32 remainingAmount = auraEff->GetAmount() * remainingTicks;
+
+                    amount += remainingAmount;
+                }
+            }
+        }
+
+        if (amount <= 0)
+            return;
+
+        amount = CalculatePct(amount, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_BURNING_ATTACKS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_burning_attacks::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_burning_attacks::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 
 void AddSC_druid_rune_scripts()
@@ -1478,6 +1857,15 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_germination);
     RegisterSpellScript(rune_druid_nurturing_dormancy);
     RegisterSpellScript(rune_druid_nurturing_dormancy_listener);
+    RegisterSpellScript(rune_druid_skin_shredder);
+    RegisterSpellScript(rune_druid_improved_sunfire_proc);
+    RegisterSpellScript(rune_druid_improved_sunfire);
+    RegisterSpellScript(rune_druid_tsunami);
+    RegisterSpellScript(rune_druid_natural_smolder);
+    RegisterSpellScript(rune_druid_invigorating_wounds);
+    RegisterSpellScript(rune_druid_trail_of_blood);
+    RegisterSpellScript(rune_druid_merciless_claws);
+    RegisterSpellScript(rune_druid_burning_attacks);
 
 
 
