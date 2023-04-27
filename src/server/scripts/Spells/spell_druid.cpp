@@ -64,6 +64,7 @@ enum DruidSpells
 
     SPELL_DRUID_FEROCIOUS_BITE              = 48577,
     SPELL_DRUID_PROWL                       = 5215,
+    SPELL_DRUID_CAT_FORM                    = 768,
     SPELL_DRUID_THORNS_SLOW                 = 80500,
     SPELL_DRUID_MOONKIN_FORM                = 24858,
     SPELL_DRUID_WRATH                       = 48461,
@@ -86,6 +87,9 @@ enum DruidSpells
     SPELL_DRUID_FORCE_OF_NATURE             = 33831,
     SPELL_DRUID_STELLAR_FLARE               = 80528,
     SPELL_DRUID_ASTRAL_COMMUNION            = 80534,
+    SPELL_DRUID_SHOOTING_STARS              = 80537,
+    SPELL_DRUID_SHOOTING_STARS_PROC         = 80538,
+    SPELL_DRUID_WILD_MUSHROOM               = 80142,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1641,10 +1645,10 @@ class spell_dru_prowl_check : public SpellScript
         if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
-        if (GetCaster()->HasAura(768))
+        if (GetCaster()->HasAura(SPELL_DRUID_CAT_FORM))
             return;
 
-        GetCaster()->CastSpell(GetCaster(), 768);
+        GetCaster()->CastSpell(GetCaster(), SPELL_DRUID_CAT_FORM);
     }
 
     void Register() override
@@ -1749,7 +1753,7 @@ class spell_dru_wild_mushroom : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(80142);
+        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WILD_MUSHROOM);
         uint32 astralPowerAmount = spell->GetEffect(EFFECT_1).CalcValue(caster);
         int32 astralPowerBase = spell->GetEffect(EFFECT_1).CalcValue(caster);
         int32 astralPowerLimit = spell->GetEffect(EFFECT_2).CalcValue(caster);
@@ -1769,6 +1773,63 @@ class spell_dru_wild_mushroom : public SpellScript
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_wild_mushroom::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class spell_dru_shooting_stars : public AuraScript
+{
+    PrepareAuraScript(spell_dru_shooting_stars);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return; 
+
+        Unit* caster = GetCaster();
+
+        Unit* target = procInfo.GetActionTarget();
+
+        if (!target || !target->IsAlive())
+            return;
+
+        int32 procChance = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        if (procInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+        {
+            procChance = procChance * 2;
+        }
+
+        if (roll_chance_f(procChance))
+        {
+            caster->CastSpell(target, SPELL_DRUID_SHOOTING_STARS_PROC, true);
+        }
+    }
+
+    void Register() override
+    {       
+        OnEffectProc += AuraEffectProcFn(spell_dru_shooting_stars::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dru_shooting_stars_power : public SpellScript
+{
+    PrepareSpellScript(spell_dru_shooting_stars_power);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_SHOOTING_STARS_PROC);
+        uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_shooting_stars_power::HandleCast);
     }
 };
 
@@ -1831,4 +1892,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_celestial_alignment);
     RegisterSpellScript(spell_dru_astral_communion_power);
     RegisterSpellScript(spell_dru_wild_mushroom);
+    RegisterSpellScript(spell_dru_shooting_stars);
+    RegisterSpellScript(spell_dru_shooting_stars_power);
 }
