@@ -374,6 +374,9 @@ struct SpellStackInfo
 typedef std::map<uint32, SpellStackInfo> SpellGroupMap;
 typedef std::map<uint32, SpellGroupStackFlags> SpellGroupStackMap;
 
+typedef std::map<uint8, uint32> CooldownSpellMap;
+typedef std::map<uint8, uint32> AmplitudeSpellMap;
+
 struct SpellThreatEntry
 {
     int32       flatMod;                                    // flat threat-value for this Spell  - default: 0
@@ -630,6 +633,7 @@ private:
 public:
     static SpellMgr* instance();
 
+
     // Spell correctness for client using
     static bool ComputeIsSpellValid(SpellInfo const* spellInfo, bool msg = true);
     static bool IsSpellValid(SpellInfo const* spellInfo);
@@ -715,6 +719,23 @@ public:
         ASSERT(spellInfo);
         return spellInfo;
     }
+
+    uint32 GetAmplitudeSpellForClass(uint8 classe) const
+    {
+        auto it = mAmplitudeSpellMap.find(classe);
+
+        if (it != mAmplitudeSpellMap.end())
+            return it->second;
+    }
+
+    uint32 GetCooldownSpellForClass(uint8 classe) const
+    {
+        auto it = mCooldownSpellMap.find(classe);
+
+        if (it != mCooldownSpellMap.end())
+            return it->second;
+    }
+
     // use this instead of AssertSpellInfo to have the problem logged instead of crashing the server
     [[nodiscard]] SpellInfo const* CheckSpellInfo(uint32 spellId) const
     {
@@ -742,6 +763,7 @@ private:
     // Modifiers
 public:
     // Loading data at server startup
+    void LoadCustomSpellMap();
     void UnloadSpellInfoChains();
     void LoadSpellTalentRanks();
     void LoadSpellRanks();
@@ -798,6 +820,8 @@ private:
     PetDefaultSpellsMap        mPetDefaultSpellsMap;           // only spells not listed in related mPetLevelupSpellMap entry
     SpellInfoMap               mSpellInfoMap;
     TalentAdditionalSet        mTalentSpellAdditionalSet;
+    AmplitudeSpellMap          mAmplitudeSpellMap;
+    CooldownSpellMap           mCooldownSpellMap;
 };
 
 #define sSpellMgr SpellMgr::instance()

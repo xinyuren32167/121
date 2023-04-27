@@ -1473,7 +1473,9 @@ public:
 
     void SetAttackTime(WeaponAttackType att, uint32 val) { SetFloatValue(static_cast<uint16>(UNIT_FIELD_BASEATTACKTIME) + att, val * m_modAttackSpeedPct[att]); }
     void ApplyAttackTimePercentMod(WeaponAttackType att, float val, bool apply);
+
     void ApplyCastTimePercentMod(float val, bool apply);
+    void ApplyCooldownAndAmplitudeReduction();
 
     UnitFlags GetUnitFlags() const { return UnitFlags(GetUInt32Value(UNIT_FIELD_FLAGS)); }
     bool HasUnitFlag(UnitFlags flags) const { return HasFlag(UNIT_FIELD_FLAGS, flags); }

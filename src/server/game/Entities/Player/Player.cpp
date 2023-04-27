@@ -1754,22 +1754,8 @@ void Player::RegenerateAll()
     // Runes act as cooldowns, and they don't need to send any data
     if (getClass() == CLASS_DEATH_KNIGHT)
         for (uint8 i = 0; i < MAX_RUNES; ++i)
-        {
-            // xinef: implement grace
-            if (int32 cd = GetRuneCooldown(i))
-            {
+            if (uint32 cd = GetRuneCooldown(i))
                 SetRuneCooldown(i, (cd > m_regenTimer) ? cd - m_regenTimer : 0);
-                // start grace counter, player must be in combat and rune has to go off cooldown
-                if (IsInCombat() && cd <= m_regenTimer)
-                    SetGracePeriod(i, m_regenTimer - cd + 1); // added 1 because m_regenTimer-cd can be equal 0
-            }
-            // xinef: if grace is started, increase it but no more than cap
-            else if (uint32 grace = GetGracePeriod(i))
-            {
-                if (grace < RUNE_GRACE_PERIOD)
-                    SetGracePeriod(i, std::min<uint32>(grace + m_regenTimer, RUNE_GRACE_PERIOD));
-            }
-        }
 
     if (m_regenTimerCount >= 2000)
     {
@@ -5151,27 +5137,15 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
         float const mult = GetRatingMultiplier(cr);
         float const oldVal = oldRating * mult;
         float const newVal = m_baseRatingValue[cr] * mult;
-        switch (cr)
-        {
-            case CR_HASTE_MELEE:
-                ApplyAttackTimePercentMod(BASE_ATTACK, oldVal, false);
-                ApplyAttackTimePercentMod(OFF_ATTACK, oldVal, false);
-                ApplyAttackTimePercentMod(BASE_ATTACK, newVal, true);
-                ApplyAttackTimePercentMod(OFF_ATTACK, newVal, true);
-                break;
-            case CR_HASTE_RANGED:
-                ApplyAttackTimePercentMod(RANGED_ATTACK, oldVal, false);
-                ApplyAttackTimePercentMod(RANGED_ATTACK, newVal, true);
-                break;
-            case CR_HASTE_SPELL:
-                ApplyCastTimePercentMod(oldVal, false);
-                ApplyCastTimePercentMod(newVal, true);
-                break;
-            default:
-                break;
-        }
+        ApplyAttackTimePercentMod(BASE_ATTACK, oldVal, false);
+        ApplyAttackTimePercentMod(OFF_ATTACK, oldVal, false);
+        ApplyAttackTimePercentMod(BASE_ATTACK, newVal, true);
+        ApplyAttackTimePercentMod(OFF_ATTACK, newVal, true);
+        ApplyAttackTimePercentMod(RANGED_ATTACK, oldVal, false);
+        ApplyAttackTimePercentMod(RANGED_ATTACK, newVal, true);
+        ApplyCastTimePercentMod(oldVal, false);
+        ApplyCastTimePercentMod(newVal, true);
     }
-
     UpdateRating(cr);
 }
 
@@ -7858,6 +7832,59 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
         }
 
         loot = &creature->loot;
+
+        std::list<Creature*> creatures;
+        GetDeadCreatureListInGrid(creatures, 30.f);
+
+        // We remove the creature that we target.
+
+        creatures.erase(
+            std::remove_if(creatures.begin(), creatures.end(), [&](Creature const* c) {
+            return c->GetGUID().GetCounter() == creature->GetGUID().GetCounter();
+        }),
+            creatures.end());
+
+        for (std::list<Creature*>::iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
+        {
+            Creature* newCreature = *itr;
+
+            if (!newCreature)
+                continue;
+
+            Loot* creatureLoot = &newCreature->loot;
+
+            if (!creatureLoot)
+                continue;
+
+            loot->gold += creatureLoot->gold;
+
+            for (auto const item : creatureLoot->items) {
+
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item.itemid);
+
+                if (!itemTemplate)
+                    continue;
+
+                if (itemTemplate->GetMaxStackSize() == 1)
+                    loot->items.push_back(item);
+                else {
+                    auto it = std::find_if(loot->items.begin(),
+                        loot->items.end(),
+                        [&]
+                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item.itemid)
+                        && (lootItem.count < itemTemplate->GetMaxStackSize()); });
+
+                    if (it != loot->items.end())
+                        it->count += item.count;
+                    else
+                        loot->items.push_back(item);
+                }
+            }
+
+            newCreature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+            newCreature->AllLootRemovedFromCorpse();
+            creatureLoot->clear();
+        }
 
         if (loot_type == LOOT_PICKPOCKETING)
         {
@@ -10712,10 +10739,13 @@ void Player::AddSpellAndCategoryCooldowns(SpellInfo const* spellInfo, uint32 ite
             }
         }
 
+
         if (catrec > 0 && !spellInfo->HasAttribute(SPELL_ATTR6_NO_CATEGORY_COOLDOWN_MODS))
         {
             ApplySpellMod(spellInfo->Id, SPELLMOD_COOLDOWN, catrec, spell);
         }
+
+        // Rework cooldown
 
         if (int32 cooldownMod = GetTotalAuraModifier(SPELL_AURA_MOD_COOLDOWN))
         {
@@ -13079,12 +13109,10 @@ void Player::SetTitle(CharTitlesEntry const* title, bool lost)
     GetSession()->SendPacket(&data);
 }
 
-uint32 Player::GetRuneBaseCooldown(uint8 index, bool skipGrace)
+uint32 Player::GetRuneBaseCooldown(uint8 index)
 {
     uint8 rune = GetBaseRune(index);
     uint32 cooldown = RUNE_BASE_COOLDOWN;
-    if (!skipGrace)
-        cooldown -= GetGracePeriod(index) < 250 ? 0 : GetGracePeriod(index) - 250;  // xinef: reduce by grace period, treat first 250ms as instant use of rune
 
     AuraEffectList const& regenAura = GetAuraEffectsByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
     for (AuraEffectList::const_iterator i = regenAura.begin(); i != regenAura.end(); ++i)
@@ -13096,6 +13124,27 @@ uint32 Player::GetRuneBaseCooldown(uint8 index, bool skipGrace)
     return cooldown;
 }
 
+void Player::SetRuneCooldown(uint8 index, uint32 cooldown)
+{
+    uint32 gracePeriod = GetRuneTimer(index);
+
+    if (IsInCombat())
+    {
+        if (gracePeriod < 0xFFFFFFFF && cooldown > 0)
+        {
+            uint32 lessCd = std::min(uint32(2500), gracePeriod);
+            cooldown = (cooldown > lessCd) ? (cooldown - lessCd) : 0;
+            SetLastRuneGraceTimer(index, lessCd);
+        }
+
+        SetRuneTimer(index, 0);
+    }
+
+    m_runes->runes[index].Cooldown = cooldown;
+    m_runes->SetRuneState(index, (cooldown == 0) ? true : false);
+
+    ResyncRunes(MAX_RUNES);
+}
 void Player::RemoveRunesByAuraEffect(AuraEffect const* aura)
 {
     for (uint8 i = 0; i < MAX_RUNES; ++i)
@@ -13142,12 +13191,12 @@ void Player::ResyncRunes(uint8 count)
     if (getClass() != CLASS_DEATH_KNIGHT)
         return;
 
-    WorldPacket data(SMSG_RESYNC_RUNES, 4 + count * 2);
+    WorldPacket data(SMSG_RESYNC_RUNES, 4 + 2 * MAX_RUNES);
     data << uint32(count);
     for (uint32 i = 0; i < count; ++i)
     {
         data << uint8(GetCurrentRune(i));                   // rune type
-        data << uint8(255 - (GetRuneCooldown(i) * 51));     // passed cooldown time (0-255)
+        data << uint8(255 - (GetRuneCooldown(i) * uint32(255) / uint32(RUNE_BASE_COOLDOWN)));     // passed cooldown time (0-255)
     }
     GetSession()->SendPacket(&data);
 }
@@ -13171,7 +13220,7 @@ static RuneType runeSlotTypes[MAX_RUNES] =
 
 void Player::InitRunes()
 {
-    if (getClass() != CLASS_DEATH_KNIGHT)
+   if (getClass() != CLASS_DEATH_KNIGHT)
         return;
 
     m_runes = new Runes;
@@ -13181,10 +13230,11 @@ void Player::InitRunes()
 
     for (uint8 i = 0; i < MAX_RUNES; ++i)
     {
-        SetBaseRune(i, runeSlotTypes[i]);                              // init base types
-        SetCurrentRune(i, runeSlotTypes[i]);                           // init current types
-        SetRuneCooldown(i, 0);                                         // reset cooldowns
-        SetGracePeriod(i, 0);                                          // xinef: reset grace period
+        SetBaseRune(i, runeSlotTypes[i]);                               // init base types
+        SetCurrentRune(i, runeSlotTypes[i]);                            // init current types
+        SetRuneCooldown(i, 0);                                          // reset cooldowns
+        SetRuneTimer(i, 0xFFFFFFFF);                                    // Reset rune flags
+        SetLastRuneGraceTimer(i, 0);
         SetRuneConvertAura(i, nullptr);
         m_runes->SetRuneState(i);
     }

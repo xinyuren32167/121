@@ -2,6 +2,9 @@
 #include <cmath>
 
 std::vector<MasterySpell> CustomStatsManager::m_spellsMastery = {};
+std::map<Classes, uint32> CustomStatsManager::m_cooldownReductionsSpellClasses = {};
+std::map<Classes, uint32> CustomStatsManager::m_dotsReductionsSpellClasses = {};
+
 
 void CustomStatsManager::LoadSpellsMastery()
 {
@@ -19,6 +22,9 @@ void CustomStatsManager::LoadSpellsMastery()
         uint32 auraId = fields[3].Get<uint32>();
         m_spellsMastery.push_back({ talentId, ratingPerPointPct, update, auraId });
     } while (result->NextRow());
+
+
+
 }
 
 void CustomStatsManager::UpdateMastery(Player* player, uint32 rating)

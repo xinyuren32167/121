@@ -2473,15 +2473,15 @@ public:
     [[nodiscard]] RuneType GetBaseRune(uint8 index) const { return RuneType(m_runes->runes[index].BaseRune); }
     [[nodiscard]] RuneType GetCurrentRune(uint8 index) const { return RuneType(m_runes->runes[index].CurrentRune); }
     [[nodiscard]] uint32 GetRuneCooldown(uint8 index) const { return m_runes->runes[index].Cooldown; }
-    [[nodiscard]] uint32 GetGracePeriod(uint8 index) const { return m_runes->runes[index].GracePeriod; }
-    uint32 GetRuneBaseCooldown(uint8 index, bool skipGrace);
+    // [[nodiscard]] uint32 GetGracePeriod(uint8 index) const { return m_runes->runes[index].GracePeriod; }
+    uint32 GetRuneBaseCooldown(uint8 index);
     [[nodiscard]] bool IsBaseRuneSlotsOnCooldown(RuneType runeType) const;
     RuneType GetLastUsedRune() { return m_runes->lastUsedRune; }
     void SetLastUsedRune(RuneType type) { m_runes->lastUsedRune = type; }
     void SetBaseRune(uint8 index, RuneType baseRune) { m_runes->runes[index].BaseRune = baseRune; }
     void SetCurrentRune(uint8 index, RuneType currentRune) { m_runes->runes[index].CurrentRune = currentRune; }
-    void SetRuneCooldown(uint8 index, uint32 cooldown) { m_runes->runes[index].Cooldown = cooldown; m_runes->SetRuneState(index, (cooldown == 0)); }
-    void SetGracePeriod(uint8 index, uint32 period) { m_runes->runes[index].GracePeriod = period; }
+    void SetRuneCooldown(uint8 index, uint32 cooldown);
+    // void SetGracePeriod(uint8 index, uint32 period) { m_runes->runes[index].GracePeriod = period; }
     void SetRuneConvertAura(uint8 index, AuraEffect const* aura) { m_runes->runes[index].ConvertAura = aura; }
     void AddRuneByAuraEffect(uint8 index, RuneType newType, AuraEffect const* aura) { SetRuneConvertAura(index, aura); ConvertRune(index, newType); }
     void RemoveRunesByAuraEffect(AuraEffect const* aura);
@@ -2490,6 +2490,15 @@ public:
     void ResyncRunes(uint8 count);
     void AddRunePower(uint8 index);
     void InitRunes();
+
+    uint32 m_runeGraceCooldown[MAX_RUNES];
+    uint32 m_lastRuneGraceTimers[MAX_RUNES];
+
+    uint32 GetRuneTimer(uint8 index) const { return m_runeGraceCooldown[index]; }
+    void SetRuneTimer(uint8 index, uint32 timer) { m_runeGraceCooldown[index] = timer; }
+    uint32 GetLastRuneGraceTimer(uint8 index) const { return m_lastRuneGraceTimers[index]; }
+    void SetLastRuneGraceTimer(uint8 index, uint32 timer) { m_lastRuneGraceTimers[index] = timer; }
+
 
     void SendRespondInspectAchievements(Player* player) const;
     [[nodiscard]] bool HasAchieved(uint32 achievementId) const;
