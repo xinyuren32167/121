@@ -35,6 +35,7 @@ enum DruidSpells
     SPELL_FRENZIED_REGENERATION = 22842,
     SPELL_INNERVATE = 29166,
     SPELL_IRONFUR = 000,
+    SPELL_MOONFIRE = 48463,
     SPELL_REGROWTH = 48443,
     SPELL_REJUVENATION = 48441,
     SPELL_RIP = 49800,
@@ -42,6 +43,12 @@ enum DruidSpells
     SPELL_SUNFIRE = 80518,
     SPELL_TIGERS_FURY = 50213,
     SPELL_WILD_GROWTH = 53251,
+
+    //Talents
+    SPELL_ECLIPSE_SOLAR = 80502,
+    SPELL_ECLIPSE_LUNAR = 80505,
+    SPELL_CELESTIAL_ALIGNMENT_ECLIPSE_SOLAR = 80532,
+    SPELL_CELESTIAL_ALIGNMENT_ECLIPSE_LUNAR = 80533,
 
     //Runes
     RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_BARKSKIN = 700017,
@@ -75,12 +82,21 @@ enum DruidSpells
     RUNE_DRUID_IMPROVED_SUNFIRE_AOE = 700482,
 
     RUNE_DRUID_TSUNAMI_DEBUFF = 700514,
-    
+
     RUNE_DRUID_NATURAL_SMOLDER_DOT = 700546,
 
     RUNE_DRUID_MERCILESS_CLAWS_DAMAGE = 700578,
 
     RUNE_DRUID_BURNING_ATTACKS_DAMAGE = 700596,
+
+    RUNE_DRUID_BALANCE_OF_ALL_THINGS_ARCANE_BUFF = 700630,
+    RUNE_DRUID_BALANCE_OF_ALL_THINGS_NATURE_BUFF = 700631,
+    RUNE_DRUID_BALANCE_OF_ALL_THINGS_REMOVE_BUFF = 700632,
+
+    RUNE_DRUID_LUNAR_SHRAPNEL_DAMAGE = 700652,
+
+    RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE = 700666,
+    RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE = 700667,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -1825,6 +1841,351 @@ class rune_druid_burning_attacks : public AuraScript
     }
 };
 
+class rune_druid_astral_generation : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_generation);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
+        {
+            int32 powerIncrease = aurEff->GetAmount();
+            caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + powerIncrease);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_astral_generation::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_druid_natures_grace : public AuraScript
+{
+    PrepareAuraScript(rune_druid_natures_grace);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700610; i < 700616; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 buffAura = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        int32 duration = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        caster->AddAura(buffAura, caster);
+        caster->GetAura(buffAura)->SetDuration(duration);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_natures_grace::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_balance_of_all_things_buffs : public AuraScript
+{
+    PrepareAuraScript(rune_druid_balance_of_all_things_buffs);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700624; i < 700630; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 stackAmount = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        if (caster->HasAura(SPELL_ECLIPSE_SOLAR) || caster->HasAura(SPELL_CELESTIAL_ALIGNMENT_ECLIPSE_SOLAR))
+        {
+            caster->AddAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_NATURE_BUFF, caster);
+            caster->GetAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_NATURE_BUFF)->SetStackAmount(stackAmount);
+            caster->AddAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_REMOVE_BUFF, caster);
+        }
+
+        if (caster->HasAura(SPELL_ECLIPSE_LUNAR) || caster->HasAura(SPELL_CELESTIAL_ALIGNMENT_ECLIPSE_LUNAR))
+        {
+            caster->AddAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_ARCANE_BUFF, caster);
+            caster->GetAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_ARCANE_BUFF)->SetStackAmount(stackAmount);
+            caster->AddAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_REMOVE_BUFF, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_balance_of_all_things_buffs::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_balance_of_all_things_listener : public AuraScript
+{
+    PrepareAuraScript(rune_druid_balance_of_all_things_listener);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+        {
+            GetAura()->Remove();
+            return;
+        }
+
+        if (Aura* natureBuff = caster->GetAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_NATURE_BUFF))
+        {
+            if (natureBuff->GetStackAmount() == 1)
+            {
+                natureBuff->Remove();
+
+                if (!caster->HasAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_ARCANE_BUFF))
+                {
+                    GetAura()->Remove();
+                    return;
+                }
+            }
+            natureBuff->ModStackAmount(-1);
+        }
+
+        if (Aura* arcaneBuff = caster->GetAura(RUNE_DRUID_BALANCE_OF_ALL_THINGS_ARCANE_BUFF))
+        {
+            if (arcaneBuff->GetStackAmount() == 1)
+            {
+                arcaneBuff->Remove();
+                GetAura()->Remove();
+                return;
+            }
+            arcaneBuff->ModStackAmount(-1);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_balance_of_all_things_listener::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_druid_lunar_shrapnel : public AuraScript
+{
+    PrepareAuraScript(rune_druid_lunar_shrapnel);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_MOONFIRE))
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_LUNAR_SHRAPNEL_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_lunar_shrapnel::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_lunar_shrapnel::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_lunar_rain : public AuraScript
+{
+    PrepareAuraScript(rune_druid_lunar_rain);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 rand = urand(0, 1);
+
+        if (rand == 0)
+            caster->CastSpell(target, SPELL_MOONFIRE, TRIGGERED_FULL_MASK);
+        else
+            caster->CastSpell(target, SPELL_SUNFIRE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_lunar_rain::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_lunar_rain::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_aetherial_kindling : public AuraScript
+{
+    PrepareAuraScript(rune_druid_aetherial_kindling);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_MOONFIRE) && !target->HasAura(SPELL_SUNFIRE))
+            return;
+
+        int32 maxIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 increase = aurEff->GetAmount();
+
+        if (Aura* moonfire = target->GetAura(SPELL_MOONFIRE))
+        {
+            Aura* listener = target->GetAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE);
+            int32 increasedAmount = listener->GetEffect(EFFECT_0)->GetAmount();
+
+            if (increasedAmount < maxIncrease)
+            {
+                if ((increasedAmount + increase) > maxIncrease)
+                    increase = maxIncrease - increasedAmount;
+
+                int32 duration = moonfire->GetDuration();
+                moonfire->SetDuration(duration + increase);
+                moonfire->GetEffect(EFFECT_0)->ResetTicks();
+
+                listener->GetEffect(EFFECT_0)->SetAmount(increasedAmount + increase);
+            }
+        }
+
+        if (Aura* sunfire = target->GetAura(SPELL_SUNFIRE))
+        {
+            Aura* listener = target->GetAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE);
+            int32 increasedAmount = listener->GetEffect(EFFECT_0)->GetAmount();
+
+            if (increasedAmount >= maxIncrease)
+                return;
+
+            if ((increasedAmount + increase) > maxIncrease)
+                increase = maxIncrease - increasedAmount;
+
+            int32 duration = sunfire->GetDuration();
+            sunfire->SetDuration(duration + increase);
+            sunfire->GetEffect(EFFECT_0)->ResetTicks();
+
+            listener->GetEffect(EFFECT_0)->SetAmount(increasedAmount + increase);
+        }
+
+    };
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_aetherial_kindling::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_aetherial_kindling::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_aetherial_kindling_listener : public AuraScript
+{
+    PrepareAuraScript(rune_druid_aetherial_kindling_listener);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700660; i < 700666; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        if (GetAura()->GetId() == SPELL_MOONFIRE)
+            caster->AddAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE, target);
+
+        if (GetAura()->GetId() == SPELL_SUNFIRE)
+            caster->AddAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE, target);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetAura()->GetId() == SPELL_MOONFIRE && target->HasAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE))
+            target->RemoveAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE);
+
+        if (GetAura()->GetId() == SPELL_SUNFIRE && target->HasAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE))
+            target->RemoveAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_aetherial_kindling_listener::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_aetherial_kindling_listener::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 
 void AddSC_druid_rune_scripts()
 {
@@ -1866,10 +2227,17 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_trail_of_blood);
     RegisterSpellScript(rune_druid_merciless_claws);
     RegisterSpellScript(rune_druid_burning_attacks);
+    RegisterSpellScript(rune_druid_astral_generation);
+    RegisterSpellScript(rune_druid_natures_grace);
+    RegisterSpellScript(rune_druid_balance_of_all_things_buffs);
+    RegisterSpellScript(rune_druid_balance_of_all_things_listener);
+    RegisterSpellScript(rune_druid_lunar_shrapnel);
+    RegisterSpellScript(rune_druid_lunar_rain);
+    RegisterSpellScript(rune_druid_aetherial_kindling);
+    RegisterSpellScript(rune_druid_aetherial_kindling_listener);
 
 
 
-
-
+    
     
 }
