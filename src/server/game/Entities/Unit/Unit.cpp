@@ -8765,7 +8765,7 @@ bool Unit::HandleAuraProc(Unit* victim, uint32 damage, Aura* triggeredByAura, Sp
                                         player->GetBaseRune(i) != RUNE_BLOOD)
                                     continue;
                             }
-                            if (player->GetRuneCooldown(i) != player->GetRuneBaseCooldown(i, false))
+                            if (player->GetRuneCooldown(i) != player->GetRuneBaseCooldown(i - player->GetLastRuneGraceTimer(i)))
                                 continue;
 
                             --runesLeft;
@@ -13689,9 +13689,12 @@ void Unit::ClearInCombat()
     else if (Player* player = ToPlayer())
     {
         player->UpdatePotionCooldown();
-        if (player->getClass() == CLASS_DEATH_KNIGHT)
+        if (getClass() == CLASS_DEATH_KNIGHT)
             for (uint8 i = 0; i < MAX_RUNES; ++i)
-                player->SetGracePeriod(i, 0);
+            {
+                player->SetRuneTimer(i, 0xFFFFFFFF);
+                player->SetLastRuneGraceTimer(i, 0);
+            }
     }
 
     if (Player* player = this->ToPlayer())
@@ -17112,6 +17115,30 @@ void Unit::ApplyCastTimePercentMod(float val, bool apply)
         ApplyPercentModFloatValue(UNIT_MOD_CAST_SPEED, val, !apply);
     else
         ApplyPercentModFloatValue(UNIT_MOD_CAST_SPEED, -val, apply);
+
+    ApplyCooldownAndAmplitudeReduction();
+}
+
+void Unit::ApplyCooldownAndAmplitudeReduction()
+{
+    uint32 amplitudeSpellId = sSpellMgr->GetAmplitudeSpellForClass(getClass());
+    uint32 cooldownSpellId = sSpellMgr->GetCooldownSpellForClass(getClass());
+
+    float speed = GetFloatValue(UNIT_MOD_CAST_SPEED);
+
+    if (speed == 1) {
+        RemoveAura(cooldownSpellId);
+        RemoveAura(amplitudeSpellId);
+        return;
+    }
+
+    float maxSpeed = speed * 100;
+
+    RemoveAura(amplitudeSpellId);
+    CastCustomSpell(amplitudeSpellId, SPELLVALUE_BASE_POINT0, -maxSpeed, this, TRIGGERED_NONE);
+
+    RemoveAura(cooldownSpellId);
+    CastCustomSpell(cooldownSpellId, SPELLVALUE_BASE_POINT0, -maxSpeed, this, TRIGGERED_NONE);
 }
 
 uint32 Unit::GetCastingTimeForBonus(SpellInfo const* spellProto, DamageEffectType damagetype, uint32 CastingTime) const

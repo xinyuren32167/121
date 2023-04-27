@@ -1219,6 +1219,31 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     return true;
 }
 
+void SpellMgr::LoadCustomSpellMap()
+{
+    mCooldownSpellMap[CLASS_DRUID] = 86001;
+    mCooldownSpellMap[CLASS_PALADIN] = 86002;
+    mCooldownSpellMap[CLASS_ROGUE] = 86003;
+    mCooldownSpellMap[CLASS_WARRIOR] = 86004;
+    mCooldownSpellMap[CLASS_SHAMAN] = 86005;
+    mCooldownSpellMap[CLASS_WARLOCK] = 86006;
+    mCooldownSpellMap[CLASS_HUNTER] = 86007;
+    mCooldownSpellMap[CLASS_PRIEST] = 86008;
+    mCooldownSpellMap[CLASS_MAGE] = 86009;
+    mCooldownSpellMap[CLASS_DEATH_KNIGHT] = 86010;
+
+    mAmplitudeSpellMap[CLASS_DRUID] = 86011;
+    mAmplitudeSpellMap[CLASS_PALADIN] = 86012;
+    mAmplitudeSpellMap[CLASS_ROGUE] = 86013;
+    mAmplitudeSpellMap[CLASS_WARRIOR] = 86014;
+    mAmplitudeSpellMap[CLASS_SHAMAN] = 86015;
+    mAmplitudeSpellMap[CLASS_WARLOCK] = 86016;
+    mAmplitudeSpellMap[CLASS_HUNTER] = 86017;
+    mAmplitudeSpellMap[CLASS_PRIEST] = 86018;
+    mAmplitudeSpellMap[CLASS_MAGE] = 86019;
+    mAmplitudeSpellMap[CLASS_DEATH_KNIGHT] = 86020;
+}
+
 void SpellMgr::UnloadSpellInfoChains()
 {
     for (SpellChainMap::iterator itr = mSpellChains.begin(); itr != mSpellChains.end(); ++itr)

@@ -754,6 +754,7 @@ public:
 
     typedef std::map<uint32, uint32> CharacterConversionMap;
 
+
     GameObjectTemplate const* GetGameObjectTemplate(uint32 entry);
     bool IsGameObjectStaticTransport(uint32 entry);
     [[nodiscard]] GameObjectTemplateContainer const* GetGameObjectTemplates() const { return &_gameObjectTemplateStore; }

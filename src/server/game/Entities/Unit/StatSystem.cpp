@@ -951,7 +951,7 @@ void Player::UpdateRuneRegen(RuneType rune)
     for (uint32 i = 0; i < MAX_RUNES; ++i)
         if (GetBaseRune(i) == rune)
         {
-            cooldown = GetRuneBaseCooldown(i, true);
+            cooldown = GetRuneBaseCooldown(i);
             break;
         }
 

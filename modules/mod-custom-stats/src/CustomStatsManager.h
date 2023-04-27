@@ -18,6 +18,8 @@ class CustomStatsManager
 
 private:
     static std::vector<MasterySpell> m_spellsMastery;
+    static std::map<Classes, uint32> m_cooldownReductionsSpellClasses;
+    static std::map<Classes, uint32> m_dotsReductionsSpellClasses;
 public:
     static void LoadSpellsMastery();
     static void UpdateMastery(Player* player, uint32 value);

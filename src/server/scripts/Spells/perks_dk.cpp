@@ -15,9 +15,6 @@ enum DeathKnightSpells
 
 };
 
-class rune_deathknight_diseased_attacks : public AuraScript {
-    PrepareAuraScript(rune_deathknight_diseased_attacks); void Register() { }
-};
 class rune_deathknight_runic_attenuation : public AuraScript {
     PrepareAuraScript(rune_deathknight_runic_attenuation); void Register() { }
 };
@@ -47,9 +44,6 @@ class rune_deathknight_blood_feast : public AuraScript {
 };
 class rune_deathknight_assimilation : public AuraScript {
     PrepareAuraScript(rune_deathknight_assimilation);  void Register() { }
-};
-class rune_deathknight_reinforced_shell : public AuraScript {
-    PrepareAuraScript(rune_deathknight_reinforced_shell);  void Register() { }
 };
 class rune_deathknight_amplification_zone : public AuraScript {
     PrepareAuraScript(rune_deathknight_amplification_zone);  void Register() { }
@@ -586,7 +580,6 @@ class rune_deathknight_high_metabolism : public AuraScript {
 
 void AddSC_deathknight_perks_scripts()
 {
-    RegisterSpellScript(rune_deathknight_diseased_attacks);
     RegisterSpellScript(rune_deathknight_runic_attenuation);
     RegisterSpellScript(rune_deathknight_sudden_doom);
     RegisterSpellScript(rune_deathknight_harbinger_of_doom);
@@ -597,7 +590,6 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_deathknight_anti_magic_barrier);
     RegisterSpellScript(rune_deathknight_blood_feast);
     RegisterSpellScript(rune_deathknight_assimilation);
-    RegisterSpellScript(rune_deathknight_reinforced_shell);
     RegisterSpellScript(rune_deathknight_amplification_zone);
     RegisterSpellScript(rune_deathknight_hammer_of_the_damned);
     RegisterSpellScript(rune_deathknight_blood_transfusion);
