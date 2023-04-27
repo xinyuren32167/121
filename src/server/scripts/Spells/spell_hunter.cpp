@@ -1649,7 +1649,7 @@ class spell_hun_kill_command : public SpellScript
         Unit* target = GetExplTargetUnit();
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue();
+        int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue(caster);
         int32 damage = CalculatePct(ap, ratio);
 
         if (!target || !target->IsAlive())
@@ -1687,7 +1687,7 @@ class spell_hun_kill_command : public SpellScript
     void HandleAfterCast()
     {
         Player* caster = GetCaster()->ToPlayer();
-        int32 procChance = sSpellMgr->AssertSpellInfo(80141)->GetEffect(EFFECT_2).CalcValue();
+        int32 procChance = sSpellMgr->AssertSpellInfo(80141)->GetEffect(EFFECT_2).CalcValue(caster);
         int32 duration = 0;
 
         if (Aura* aura = caster->GetAura(80208))
@@ -2021,7 +2021,7 @@ class spell_hun_cobra_shot : public AuraScript
         if (!target || !target->IsAlive())
             return;
 
-        int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).CalcValue();
+        int32 amount = sSpellMgr->GetSpellInfo(80171)->GetEffect(EFFECT_1).CalcValue(target);
         target->ModifySpellCooldown(SPELL_HUNTER_KILL_COMMAND, amount);
     }
 
@@ -2127,7 +2127,7 @@ class spell_hun_bloodshed : public SpellScript
         Unit* pet = GetCaster()->ToPlayer()->GetPet();
         Unit* target = GetExplTargetUnit();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue();
+        int32 ratio = sSpellMgr->AssertSpellInfo(80179)->GetEffect(EFFECT_2).CalcValue(GetCaster());
         int32 damage = CalculatePct(ap, ratio);
 
         if (!GetCaster() || !GetCaster()->IsAlive())
@@ -2369,7 +2369,7 @@ class spell_hun_fury_eagle : public SpellScript
             return;
 
         int32 targetHealthPct = target->GetHealthPct();
-        int32 hpThreshold = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_2).CalcValue();
+        int32 hpThreshold = sSpellMgr->GetSpellInfo(80194)->GetEffect(EFFECT_2).CalcValue(GetCaster());
 
         if (targetHealthPct < hpThreshold)
         {
@@ -2393,7 +2393,7 @@ class spell_hun_flanking_strike : public SpellScript
         Unit* target = GetExplTargetUnit();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).CalcValue();
+        int32 ratio = sSpellMgr->AssertSpellInfo(80198)->GetEffect(EFFECT_0).CalcValue(caster);
         int32 damage = CalculatePct(ap, ratio);
         Position targetPos = GetExplTargetUnit()->GetPosition();
 
@@ -2426,7 +2426,7 @@ class spell_hun_coordinated_assault : public SpellScript
         Unit* target = GetExplTargetUnit();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80203)->GetEffect(EFFECT_0).CalcValue();
+        int32 ratio = sSpellMgr->AssertSpellInfo(80203)->GetEffect(EFFECT_0).CalcValue(caster);
         int32 damage = CalculatePct(ap, ratio);
 
         if (!pet)
@@ -2477,7 +2477,7 @@ class rune_hun_coordinated_bleed : public AuraScript
         if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
-        int32 damagePct = sSpellMgr->AssertSpellInfo(80202)->GetEffect(EFFECT_1).CalcValue();
+        int32 damagePct = sSpellMgr->AssertSpellInfo(80202)->GetEffect(EFFECT_1).CalcValue(GetCaster());
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), damagePct);
 
         if (victim)
@@ -2538,7 +2538,7 @@ class spell_hun_spearhead : public SpellScript
         Unit* target = GetExplTargetUnit();
         Unit* pet = caster->GetPet();
         float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue();
+        int32 ratio = sSpellMgr->AssertSpellInfo(80207)->GetEffect(EFFECT_0).CalcValue(caster);
         int32 damage = CalculatePct(ap, ratio);
 
         if (!pet)
@@ -2915,7 +2915,7 @@ class spell_hun_calculated_shot : public SpellScript
             return;
 
         int32 targetHealthPct = target->GetHealthPct();
-        int32 hpThreshold = sSpellMgr->GetSpellInfo(80230)->GetEffect(EFFECT_1).CalcValue();
+        int32 hpThreshold = sSpellMgr->GetSpellInfo(80230)->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
         if (targetHealthPct > hpThreshold)
         {

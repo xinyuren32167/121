@@ -68,6 +68,7 @@ enum DruidSpells
     SPELL_DRUID_MOONKIN_FORM                = 24858,
     SPELL_DRUID_WRATH                       = 48461,
     SPELL_DRUID_STARFIRE                    = 48465,
+    SPELL_DRUID_STARFIRE_AOE                = 80506,
     SPELL_DRUID_ECLIPSE_BASE                = 80501,
     SPELL_DRUID_ECLIPSE_SOLAR_STACK         = 80503,
     SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
@@ -82,6 +83,9 @@ enum DruidSpells
     SPELL_DRUID_CELESTIAL_ALIGNMENT         = 80531,
     SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT     = 80532,
     SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT     = 80533,
+    SPELL_DRUID_FORCE_OF_NATURE             = 33831,
+    SPELL_DRUID_STELLAR_FLARE               = 80528,
+    SPELL_DRUID_ASTRAL_COMMUNION            = 80534,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1199,11 +1203,11 @@ class spell_dru_ferocious_bite : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
-        SpellValue const* value = GetSpellValue();
+        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE);
         int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
         int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
         int32 energy = GetCaster()->GetPower(POWER_ENERGY);
-        int32 consumption = value->EffectBasePoints[EFFECT_2];
+        int32 consumption = spell->GetEffect(EFFECT_2).CalcValue(GetCaster());
 
         if (energy > 0)
         {
@@ -1326,8 +1330,8 @@ class spell_dru_wrath : public SpellScript
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_1] + 1;
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WRATH);
+        uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1347,13 +1351,13 @@ class spell_dru_starfire : public SpellScript
 
         Unit* target = GetExplTargetUnit();
 
-        caster->CastSpell(target, 80506);
+        caster->CastSpell(target, SPELL_DRUID_STARFIRE_AOE);
 
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_1] + 1;
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_STARFIRE);
+        uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1415,8 +1419,9 @@ class spell_dru_force_of_nature : public SpellScript
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_2] + 1;
+        
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FORCE_OF_NATURE);
+        uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1659,8 +1664,8 @@ class spell_dru_stellar_flare_power : public SpellScript
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_2] + 1;
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_STELLAR_FLARE);
+        uint32 astralPower = value->GetEffect(EFFECT_2).CalcValue(caster);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1722,8 +1727,8 @@ class spell_dru_astral_communion_power : public SpellScript
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 astralPower = value->EffectBasePoints[EFFECT_0] + 1;
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_ASTRAL_COMMUNION);
+        uint32 astralPower = value->GetEffect(EFFECT_0).CalcValue(caster);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1744,10 +1749,10 @@ class spell_dru_wild_mushroom : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 astralPowerAmount = value->EffectBasePoints[EFFECT_1] + 1;
-        int32 astralPowerBase = value->EffectBasePoints[EFFECT_1] + 1;
-        int32 astralPowerLimit = value->EffectBasePoints[EFFECT_2];
+        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(80142);
+        uint32 astralPowerAmount = spell->GetEffect(EFFECT_1).CalcValue(caster);
+        int32 astralPowerBase = spell->GetEffect(EFFECT_1).CalcValue(caster);
+        int32 astralPowerLimit = spell->GetEffect(EFFECT_2).CalcValue(caster);
 
         for (auto const& object : targets)
         {
