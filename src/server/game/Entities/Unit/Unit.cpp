@@ -5836,6 +5836,24 @@ int32 Unit::GetMaxNegativeAuraModifier(AuraType auratype) const
     return modifier;
 }
 
+struct SchoolCritChance {
+    SpellSchools spellSchool;
+    float critChance;
+};
+
+SpellSchools Unit::GetHighestCritChanceSpellSchool() const
+{
+    std::list<SchoolCritChance> schoolCritChances;
+    for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
+        schoolCritChances.push_back({ SpellSchools(i), GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + i) });
+
+    auto max_it = std::max_element(std::begin(schoolCritChances), std::end(schoolCritChances), [](const SchoolCritChance& a, const SchoolCritChance& b) {
+        return a.critChance < b.critChance;
+    });
+
+    return max_it->spellSchool;
+}
+
 int32 Unit::GetTotalAuraModifierByMiscMask(AuraType auratype, uint32 misc_mask) const
 {
     int32 modifier = 0;
@@ -11868,6 +11886,9 @@ int32 Unit::SpellBaseDamageBonusTaken(SpellSchoolMask schoolMask, bool isDoT)
     return TakenAdvertisedBenefit;
 }
 
+
+
+
 float Unit::SpellDoneCritChance(Unit const* /*victim*/, SpellInfo const* spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType, bool skipEffectCheck) const
 {
     // Mobs can't crit with spells.
@@ -11891,7 +11912,7 @@ float Unit::SpellDoneCritChance(Unit const* /*victim*/, SpellInfo const* spellPr
                     crit_chance = 0.0f;
                 // For other schools
                 else if (GetTypeId() == TYPEID_PLAYER)
-                    crit_chance = GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + GetFirstSchoolInMask(schoolMask));
+                    crit_chance = GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + GetHighestCritChanceSpellSchool());
                 else
                 {
                     crit_chance = (float)m_baseSpellCritChance;
@@ -12233,6 +12254,9 @@ uint32 Unit::SpellCriticalHealingBonus(Unit const* caster, SpellInfo const* spel
 
     return damage;
 }
+
+
+
 
 float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, DamageEffectType damagetype)
 {

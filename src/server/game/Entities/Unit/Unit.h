@@ -2013,6 +2013,7 @@ public:
     int32 GetMaxPositiveAuraModifier(AuraType auratype);
     [[nodiscard]] int32 GetMaxNegativeAuraModifier(AuraType auratype) const;
 
+    [[nodiscard]] SpellSchools  GetHighestCritChanceSpellSchool() const;
     [[nodiscard]] int32 GetTotalAuraModifierByMiscMask(AuraType auratype, uint32 misc_mask) const;
     [[nodiscard]] float GetTotalAuraMultiplierByMiscMask(AuraType auratype, uint32 misc_mask) const;
     int32 GetMaxPositiveAuraModifierByMiscMask(AuraType auratype, uint32 misc_mask, const AuraEffect* except = nullptr) const;
