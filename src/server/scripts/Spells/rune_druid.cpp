@@ -28,11 +28,14 @@ enum DruidSpells
     SPELL_INCARNATION_TREE_OF_LIFE = 00000,
 
     //Spells
+    SPELL_ASTRAL_COMMUNION = 80534,
     SPELL_BARKSKIN = 22812,
     SPELL_BERSERK = 50334,
     SPELL_BERSERK_BEAR = 00000,
+    SPELL_CELESTIAL_ALIGNMENT = 80531,
     SPELL_DASH = 33357,
     SPELL_FRENZIED_REGENERATION = 22842,
+    SPELL_FULL_MOON = 80542,
     SPELL_INNERVATE = 29166,
     SPELL_IRONFUR = 000,
     SPELL_MOONFIRE = 48463,
@@ -40,9 +43,14 @@ enum DruidSpells
     SPELL_REJUVENATION = 48441,
     SPELL_RIP = 49800,
     SPELL_STARFALL = 53201,
+    SPELL_STARFIRE = 48465,
+    SPELL_STARFIRE_AOE = 80506,
+    SPELL_STARSURGE = 80527,
+    SPELL_STELLAR_FLARE = 80528,
     SPELL_SUNFIRE = 80518,
     SPELL_TIGERS_FURY = 50213,
     SPELL_WILD_GROWTH = 53251,
+    SPELL_WRATH = 48461,
 
     //Talents
     SPELL_ECLIPSE_SOLAR = 80502,
@@ -97,6 +105,24 @@ enum DruidSpells
 
     RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE = 700666,
     RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE = 700667,
+
+    RUNE_DRUID_STARLORD_BUFF = 700674,
+
+    RUNE_DRUID_ARCANIC_SMOLDER_DOT = 700706,
+
+    RUNE_DRUID_ASTRAL_SMOLDER_DOT = 700758,
+
+    RUNE_DRUID_POWER_OF_GOLDRINN_DAMAGE = 700770,
+
+    RUNE_DRUID_STARWEAVER_STARFALL_BUFF = 700790,
+    RUNE_DRUID_STARWEAVER_STARSURGE_BUFF = 700791,
+
+    RUNE_DRUID_ORBIT_BREAKER_LISTENER = 700810,
+
+    RUNE_DRUID_SOLSTICE_BUFF = 700818,
+
+    RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF = 700832,
+    RUNE_DRUID_KNOWLEDGE_AGREEMENT_AFTERBUFF = 700833,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -1633,6 +1659,16 @@ class rune_druid_natural_smolder : public AuraScript
         int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_NATURAL_SMOLDER_DOT)->GetMaxTicks();
         int32 amount = damage / maxTicks;
 
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_NATURAL_SMOLDER_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_NATURAL_SMOLDER_DOT);
+        }
+
         GetCaster()->CastCustomSpell(RUNE_DRUID_NATURAL_SMOLDER_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
 
@@ -2185,6 +2221,509 @@ class rune_druid_aetherial_kindling_listener : public AuraScript
     }
 };
 
+class rune_druid_starlord : public AuraScript
+{
+    PrepareAuraScript(rune_druid_starlord);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 duration = aurEff->GetAmount();
+        int32 maxStack = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (!caster->HasAura(RUNE_DRUID_STARLORD_BUFF))
+        {
+            caster->AddAura(RUNE_DRUID_STARLORD_BUFF, caster);
+            caster->GetAura(RUNE_DRUID_STARLORD_BUFF)->SetDuration(duration);
+            return;
+        }
+
+        Aura* casterAura = caster->GetAura(RUNE_DRUID_STARLORD_BUFF);
+
+        if (casterAura->GetStackAmount() == maxStack)
+            return;
+
+        duration = casterAura->GetDuration();
+        casterAura->ModStackAmount(1);
+        casterAura->SetDuration(duration);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_starlord::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_balance_of_power : public AuraScript
+{
+    PrepareAuraScript(rune_druid_balance_of_power);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_MOONFIRE) && !target->HasAura(SPELL_SUNFIRE) && !target->HasAura(SPELL_STELLAR_FLARE))
+            return;
+
+        int32 increase = 0;
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+
+        if (spellId == SPELL_STARFIRE_AOE)
+            increase = aurEff->GetAmount();
+
+        if (spellId == SPELL_WRATH)
+            increase = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (Aura* moonfire = target->GetAura(SPELL_MOONFIRE))
+        {
+            int32 duration = moonfire->GetDuration();
+            moonfire->SetDuration(duration + increase);
+            moonfire->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* sunfire = target->GetAura(SPELL_SUNFIRE))
+        {
+            int32 duration = sunfire->GetDuration();
+            sunfire->SetDuration(duration + increase);
+            sunfire->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* stellarFlare = target->GetAura(SPELL_STELLAR_FLARE))
+        {
+            int32 duration = stellarFlare->GetDuration();
+            stellarFlare->SetDuration(duration + increase);
+            stellarFlare->GetEffect(EFFECT_0)->ResetTicks();
+        }
+    };
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_balance_of_power::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_balance_of_power::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_nightsong_regalia_remove : public SpellScript
+{
+    PrepareSpellScript(rune_druid_nightsong_regalia_remove);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 700694; i < 700700; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(rune_druid_nightsong_regalia_remove::HandleAfterCast);
+    }
+};
+
+class rune_druid_arcanic_smolder : public AuraScript
+{
+    PrepareAuraScript(rune_druid_arcanic_smolder);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_ARCANIC_SMOLDER_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_ARCANIC_SMOLDER_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_ARCANIC_SMOLDER_DOT);
+        }
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_ARCANIC_SMOLDER_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_arcanic_smolder::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_arcanic_smolder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_downing_sun_and_rising_moon : public AuraScript
+{
+    PrepareAuraScript(rune_druid_downing_sun_and_rising_moon);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+        int32 buffAura = 0;
+
+        if (spellId == SPELL_WRATH)
+            buffAura = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (spellId == SPELL_STARFIRE)
+            buffAura = aurEff->GetAmount();
+
+        if (buffAura == 0)
+            return;
+
+        caster->CastSpell(caster, buffAura, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_downing_sun_and_rising_moon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_astral_gift : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_gift);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetCaster()->ToPlayer())
+        {
+            target->ModifySpellCooldown(SPELL_ASTRAL_COMMUNION, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_CELESTIAL_ALIGNMENT, -aurEff->GetAmount());
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_astral_gift::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_astral_smolder : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_smolder);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_ASTRAL_SMOLDER_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_ASTRAL_SMOLDER_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_ASTRAL_SMOLDER_DOT);
+        }
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_ASTRAL_SMOLDER_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_astral_smolder::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_astral_smolder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_power_of_goldrinn : public AuraScript
+{
+    PrepareAuraScript(rune_druid_power_of_goldrinn);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellPower = std::max<int32>(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE));
+        int32 amount = CalculatePct(spellPower, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_POWER_OF_GOLDRINN_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_power_of_goldrinn::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_starweaver : public AuraScript
+{
+    PrepareAuraScript(rune_druid_starweaver);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+        int32 buffAura = 0;
+        int32 procChance = 0;
+
+        if (spellId == SPELL_STARSURGE)
+        {
+            buffAura = RUNE_DRUID_STARWEAVER_STARFALL_BUFF;
+            procChance = aurEff->GetAmount();
+        }
+
+        if (spellId == SPELL_STARFALL)
+        {
+            buffAura = RUNE_DRUID_STARWEAVER_STARSURGE_BUFF;
+            procChance = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        }
+
+        if (buffAura == 0)
+            return;
+
+        int32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        caster->CastSpell(caster, buffAura, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_starweaver::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_orbit_breaker : public AuraScript
+{
+    PrepareAuraScript(rune_druid_orbit_breaker);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+        Unit* caster = eventInfo.GetDamageInfo()->GetAttacker();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!caster->HasAura(RUNE_DRUID_ORBIT_BREAKER_LISTENER))
+        {
+            caster->AddAura(RUNE_DRUID_ORBIT_BREAKER_LISTENER, caster);
+            return;
+        }
+
+        Aura* listener = caster->GetAura(RUNE_DRUID_ORBIT_BREAKER_LISTENER);
+
+        listener->ModStackAmount(1);
+        int32 maxStack = aurEff->GetAmount();
+        int32 currentStack = listener->GetStackAmount();
+
+        if (currentStack < maxStack)
+            return;
+
+        listener->Remove();
+        caster->CastSpell(victim, SPELL_FULL_MOON, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_orbit_breaker::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_orbit_breaker::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_solstice : public AuraScript
+{
+    PrepareAuraScript(rune_druid_solstice);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700812; i < 700818; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 duration = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        caster->AddAura(RUNE_DRUID_SOLSTICE_BUFF, caster);
+        caster->GetAura(RUNE_DRUID_SOLSTICE_BUFF)->SetDuration(duration);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_solstice::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_knowledge_agreement : public AuraScript
+{
+    PrepareAuraScript(rune_druid_knowledge_agreement);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetCaster()->HasAura(FORM_MOONKIN_FORM) || !caster->HasAura(SPELL_CELESTIAL_ALIGNMENT))
+            return;
+
+        int32 spellAstralPower = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (spellAstralPower <= 0)
+            return;
+
+        int32 astralPowerAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount() + spellAstralPower;
+        int32 astralPowerThreshold = aurEff->GetAmount();
+
+        while (astralPowerAccumulated > astralPowerThreshold)
+        {
+            if (!caster->HasAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF))
+                caster->AddAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF, caster);
+            else
+                caster->GetAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF)->ModStackAmount(1);
+
+            astralPowerAccumulated -= astralPowerThreshold;
+        }
+
+        GetAura()->GetEffect(EFFECT_2)->SetAmount(astralPowerAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_knowledge_agreement::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_knowledge_agreement::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_knowledge_agreement_remove : public AuraScript
+{
+    PrepareAuraScript(rune_druid_knowledge_agreement_remove);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 700826; i < 700832; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF))
+            return;
+
+        if (!GetRuneAura(caster))
+        {
+            caster->RemoveAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF);
+            return;
+        }
+
+        int32 duration = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+        int32 stackAmount = caster->GetAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF)->GetStackAmount();
+
+        caster->AddAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_AFTERBUFF, caster);
+
+        Aura* afterBuff = caster->GetAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_AFTERBUFF);
+        afterBuff->SetStackAmount(stackAmount);
+        afterBuff->SetDuration(duration);
+
+        caster->RemoveAura(RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_knowledge_agreement_remove::HandleRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_druid_rune_scripts()
@@ -2235,9 +2774,23 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_lunar_rain);
     RegisterSpellScript(rune_druid_aetherial_kindling);
     RegisterSpellScript(rune_druid_aetherial_kindling_listener);
+    RegisterSpellScript(rune_druid_starlord);
+    RegisterSpellScript(rune_druid_balance_of_power);
+    RegisterSpellScript(rune_druid_nightsong_regalia_remove);
+    RegisterSpellScript(rune_druid_arcanic_smolder);
+    RegisterSpellScript(rune_druid_downing_sun_and_rising_moon);
+    RegisterSpellScript(rune_druid_astral_gift);
+    RegisterSpellScript(rune_druid_astral_smolder);
+    RegisterSpellScript(rune_druid_power_of_goldrinn);
+    RegisterSpellScript(rune_druid_starweaver);
+    RegisterSpellScript(rune_druid_orbit_breaker);
+    RegisterSpellScript(rune_druid_solstice);
+    RegisterSpellScript(rune_druid_knowledge_agreement);
+    RegisterSpellScript(rune_druid_knowledge_agreement_remove);
 
 
 
-    
-    
+
+
+
 }
