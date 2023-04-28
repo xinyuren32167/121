@@ -90,6 +90,13 @@ enum DruidSpells
     SPELL_DRUID_SHOOTING_STARS              = 80537,
     SPELL_DRUID_SHOOTING_STARS_PROC         = 80538,
     SPELL_DRUID_WILD_MUSHROOM               = 80142,
+    SPELL_DRUID_MOON_FALL                   = 80539,
+    SPELL_DRUID_NEW_MOON                    = 80540,
+    SPELL_DRUID_NEW_MOON_AURA               = 80543,
+    SPELL_DRUID_HALF_MOON                   = 80541,
+    SPELL_DRUID_HALF_MOON_AURA              = 80544,
+    SPELL_DRUID_FULL_MOON                   = 80542,
+    SPELL_DRUID_FULL_MOON_AURA              = 80545,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1612,7 +1619,7 @@ class spell_dru_wild_charge : public SpellScript
         if (!target || !target->IsAlive())
             return;
 
-        caster->GetMotionMaster()->MoveJump(targetPos, 20.0f, 25.0f);
+        caster->GetMotionMaster()->MoveJump(targetPos, 15.0f, 15.0f);
     }
 
     void Register() override
@@ -1833,6 +1840,81 @@ class spell_dru_shooting_stars_power : public SpellScript
     }
 };
 
+class spell_dru_moon_fall : public SpellScript
+{
+    PrepareSpellScript(spell_dru_moon_fall);
+
+    void HandlePower(uint32 castSpellId)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(castSpellId);
+        uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
+    }
+
+    void HandleCast()
+    {  
+        Unit* target = GetExplTargetUnit();
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_NEW_MOON_AURA))
+        {
+            caster->CastSpell(target, SPELL_DRUID_NEW_MOON);
+            HandlePower(SPELL_DRUID_NEW_MOON);
+        }
+        else if (caster->HasAura(SPELL_DRUID_HALF_MOON_AURA))
+        {
+            caster->CastSpell(target, SPELL_DRUID_HALF_MOON);
+            HandlePower(SPELL_DRUID_HALF_MOON);
+        }
+        else
+        {
+            caster->CastSpell(target, SPELL_DRUID_FULL_MOON);
+            HandlePower(SPELL_DRUID_FULL_MOON);
+        }  
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_moon_fall::HandleCast);
+    }
+};
+
+class spell_dru_moon_fall_aura : public SpellScript
+{
+    PrepareSpellScript(spell_dru_moon_fall_aura);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_NEW_MOON_AURA))
+        {
+            caster->RemoveAura(SPELL_DRUID_NEW_MOON_AURA);
+            caster->AddAura(SPELL_DRUID_HALF_MOON_AURA, caster);
+        }
+        else if (caster->HasAura(SPELL_DRUID_HALF_MOON_AURA))
+        {
+            caster->RemoveAura(SPELL_DRUID_HALF_MOON_AURA);
+            caster->AddAura(SPELL_DRUID_FULL_MOON_AURA, caster);
+        }
+        else
+        {
+            caster->RemoveAura(SPELL_DRUID_FULL_MOON_AURA);
+            caster->AddAura(SPELL_DRUID_NEW_MOON_AURA, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_moon_fall_aura::HandleCast);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1894,4 +1976,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_wild_mushroom);
     RegisterSpellScript(spell_dru_shooting_stars);
     RegisterSpellScript(spell_dru_shooting_stars_power);
+    RegisterSpellScript(spell_dru_moon_fall);
+    RegisterSpellScript(spell_dru_moon_fall_aura);
 }
