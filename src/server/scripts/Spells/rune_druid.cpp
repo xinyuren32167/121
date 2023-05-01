@@ -123,6 +123,8 @@ enum DruidSpells
 
     RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF = 700832,
     RUNE_DRUID_KNOWLEDGE_AGREEMENT_AFTERBUFF = 700833,
+
+    RUNE_DRUID_BALANCE_BUFF = 700866,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -2724,6 +2726,114 @@ class rune_druid_knowledge_agreement_remove : public AuraScript
     }
 };
 
+class rune_druid_primordial_arcanic_pulsar : public AuraScript
+{
+    PrepareAuraScript(rune_druid_primordial_arcanic_pulsar);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetCaster()->HasAura(FORM_MOONKIN_FORM))
+            return;
+
+        int32 spellAstralPower = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (spellAstralPower <= 0)
+            return;
+
+        int32 astralPowerAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount() + spellAstralPower;
+        int32 celestialDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 astralPowerThreshold = aurEff->GetAmount();
+
+        if (astralPowerAccumulated < astralPowerThreshold)
+        {
+            GetAura()->GetEffect(EFFECT_2)->SetAmount(astralPowerAccumulated);
+            return;
+        }
+
+        if (Aura* celestial = caster->GetAura(SPELL_CELESTIAL_ALIGNMENT))
+        {
+            int32 duration = celestial->GetDuration();
+            celestialDuration = celestialDuration / 2;
+            celestial->SetDuration(duration + celestialDuration);
+        }
+        else
+        {
+            caster->AddAura(SPELL_CELESTIAL_ALIGNMENT, caster);
+            caster->GetAura(SPELL_CELESTIAL_ALIGNMENT)->SetDuration(celestialDuration);
+        }
+        astralPowerAccumulated -= astralPowerThreshold;
+
+        GetAura()->GetEffect(EFFECT_2)->SetAmount(astralPowerAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_primordial_arcanic_pulsar::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_primordial_arcanic_pulsar::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_power_of_elune : public AuraScript
+{
+    PrepareAuraScript(rune_druid_power_of_elune);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_CELESTIAL_ALIGNMENT))
+            return;
+
+        int32 powerIncrease = aurEff->GetAmount();
+        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + powerIncrease);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_power_of_elune::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_druid_balance : public AuraScript
+{
+    PrepareAuraScript(rune_druid_balance);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetCaster()->HasAura(FORM_MOONKIN_FORM))
+            return;
+
+        int32 powerIncrease = aurEff->GetAmount();
+        int32 maxTicks = sSpellMgr->GetSpellInfo(SPELL_ASTRAL_COMMUNION)->GetMaxTicks();
+        int32 amount = powerIncrease / maxTicks;
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_BALANCE_BUFF, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_balance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_druid_rune_scripts()
@@ -2787,10 +2897,13 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_solstice);
     RegisterSpellScript(rune_druid_knowledge_agreement);
     RegisterSpellScript(rune_druid_knowledge_agreement_remove);
+    RegisterSpellScript(rune_druid_primordial_arcanic_pulsar);
+    RegisterSpellScript(rune_druid_power_of_elune);
+    RegisterSpellScript(rune_druid_balance);
 
 
 
 
 
-
+    
 }
