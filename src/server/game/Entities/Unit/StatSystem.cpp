@@ -881,21 +881,24 @@ void Player::UpdateAllSpellCritChances()
 
 void Player::UpdateVersatility()
 {
-    float bonusPct = 0;
-    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_VERSATILITY_PCT);
+    uint32 amount = totalVersatility;
+
+    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
+
     for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
-        bonusPct += (*itr)->GetAmount();
-
-
-    uint32 amount = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_EXPERTISE);
-    float pct = 1 + (bonusPct / 100);
-    amount *= pct;
+        if (HasAura((*itr)->GetBase()->GetId()))
+            amount = AddPct(amount, (*itr)->GetAmount());
 
     if (amount < 0)
         amount = 0;
 
     SetUInt32Value(PLAYER_EXPERTISE, amount);
-    sScriptMgr->OnUpdateVersatility(this, amount);
+
+    RemoveAura(VERSATILITY_SPELL);
+    int32 damageIncreasesPct = round(amount / 40);
+    int32 healingAndAbsbordIncreasePct = round(amount / 40);
+    int32 damageReductionPct = round((amount / 40) * 0.5);
+    CastCustomSpell(ToUnit(), VERSATILITY_SPELL, &damageIncreasesPct, &healingAndAbsbordIncreasePct, &damageReductionPct, true, nullptr, nullptr, GetGUID());
 }
 
 void Player::ApplyManaRegenBonus(int32 amount, bool apply)

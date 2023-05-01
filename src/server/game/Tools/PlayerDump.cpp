@@ -89,8 +89,6 @@ DumpTable const DumpTables[] =
 {
     { "characters",                     DTT_CHARACTER    },
     { "character_account_data",         DTT_CHAR_TABLE   },
-    { "character_achievement",          DTT_CHAR_TABLE   },
-    { "character_achievement_progress", DTT_CHAR_TABLE   },
     { "character_action",               DTT_CHAR_TABLE   },
     { "character_aura",                 DTT_CHAR_TABLE   },
     { "character_declinedname",         DTT_CHAR_TABLE   },

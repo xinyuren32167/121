@@ -5841,11 +5841,12 @@ struct SchoolCritChance {
     float critChance;
 };
 
-SpellSchools Unit::GetHighestCritChanceSpellSchool() const
+SpellSchools Unit::GetHighestCritChanceSpellSchool(SpellSchoolMask mask) const
 {
     std::list<SchoolCritChance> schoolCritChances;
     for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
-        schoolCritChances.push_back({ SpellSchools(i), GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + i) });
+        if (mask & (1 << i))
+            schoolCritChances.push_back({ SpellSchools(i), GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + i) });
 
     auto max_it = std::max_element(std::begin(schoolCritChances), std::end(schoolCritChances), [](const SchoolCritChance& a, const SchoolCritChance& b) {
         return a.critChance < b.critChance;
@@ -11912,7 +11913,7 @@ float Unit::SpellDoneCritChance(Unit const* /*victim*/, SpellInfo const* spellPr
                     crit_chance = 0.0f;
                 // For other schools
                 else if (GetTypeId() == TYPEID_PLAYER)
-                    crit_chance = GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + GetHighestCritChanceSpellSchool());
+                    crit_chance = GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + GetHighestCritChanceSpellSchool(schoolMask));
                 else
                 {
                     crit_chance = (float)m_baseSpellCritChance;

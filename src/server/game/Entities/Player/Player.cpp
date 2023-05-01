@@ -2840,6 +2840,8 @@ void Player::AddNewMailDeliverTime(time_t deliver_time)
 
 bool Player::addTalent(uint32 spellId, uint8 addSpecMask, uint8 oldTalentRank)
 {
+
+    LOG_ERROR("add talent", "add talent {}, {}", GetActiveSpecMask(), addSpecMask);
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!SpellMgr::CheckSpellValid(spellInfo, spellId, true))
         return false;
@@ -4155,7 +4157,7 @@ void Player::DeleteFromDB(ObjectGuid::LowType lowGuid, uint32 accountId, bool up
                 trans->Append(stmt);
 
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENTS);
-                stmt->SetData(0, lowGuid);
+                stmt->SetData(0, accountId);
                 trans->Append(stmt);
 
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT_PROGRESS);
@@ -7836,54 +7838,116 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
         std::list<Creature*> creatures;
         GetDeadCreatureListInGrid(creatures, 30.f);
 
-        // We remove the creature that we target.
-
         creatures.erase(
             std::remove_if(creatures.begin(), creatures.end(), [&](Creature const* c) {
-            return c->GetGUID().GetCounter() == creature->GetGUID().GetCounter();
+            return c->GetGUID() == creature->GetGUID();
         }),
             creatures.end());
 
         for (std::list<Creature*>::iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
         {
-            Creature* newCreature = *itr;
+            Creature* otherCreature = *itr;
 
-            if (!newCreature)
+            if (!otherCreature)
                 continue;
 
-            Loot* creatureLoot = &newCreature->loot;
+            Loot* creatureLoot = &otherCreature->loot;
+
+            if (otherCreature->GetLootRecipient() != this)
+                continue;
 
             if (!creatureLoot)
                 continue;
 
             loot->gold += creatureLoot->gold;
 
-            for (auto const item : creatureLoot->items) {
+            creatureLoot->gold = 0;
 
-                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item.itemid);
+            for (auto item = creatureLoot->items.begin(); item != creatureLoot->items.end(); ++item) {
+
+                if (item->allowedGUIDs.size() > 1) // we skip the items who can be looted with multiple players.
+                    continue;
+
+                if (!item->AllowedForPlayer(this) || item->freeforall)
+                    continue;
+
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->itemid);
 
                 if (!itemTemplate)
                     continue;
 
                 if (itemTemplate->GetMaxStackSize() == 1)
-                    loot->items.push_back(item);
+                    loot->items.push_back(*item);
                 else {
                     auto it = std::find_if(loot->items.begin(),
                         loot->items.end(),
                         [&]
-                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item.itemid)
+                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item->itemid)
                         && (lootItem.count < itemTemplate->GetMaxStackSize()); });
 
                     if (it != loot->items.end())
-                        it->count += item.count;
+                        it->count += item->count;
                     else
-                        loot->items.push_back(item);
+                        loot->items.push_back(*item);
+
                 }
+                item->beingRemoved = true;
             }
 
-            newCreature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
-            newCreature->AllLootRemovedFromCorpse();
-            creatureLoot->clear();
+
+            creatureLoot->items.erase(
+                std::remove_if(
+                    creatureLoot->items.begin(),
+                    creatureLoot->items.end(),
+                    [](const LootItem& item) { return item.beingRemoved; }
+                ),
+                creatureLoot->items.end()
+            );
+          
+
+            for (auto item = creatureLoot->quest_items.begin(); item != creatureLoot->quest_items.end(); ++item) {
+
+                if (!item->AllowedForPlayer(this) || item->freeforall)
+                    continue;
+
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->itemid);
+
+                if (!itemTemplate)
+                    continue;
+
+                if (itemTemplate->GetMaxStackSize() == 1)
+                    loot->quest_items.push_back(*item);
+                else {
+                    auto it = std::find_if(loot->quest_items.begin(),
+                        loot->quest_items.end(),
+                        [&]
+                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item->itemid)
+                        && (lootItem.count < itemTemplate->GetMaxStackSize()); });
+
+                    if (it != loot->quest_items.end())
+                        it->count += item->count;
+                    else
+                        loot->quest_items.push_back(*item);
+
+                }
+                item->beingRemoved = true;
+            }
+
+            creatureLoot->quest_items.erase(
+                std::remove_if(
+                    creatureLoot->quest_items.begin(),
+                    creatureLoot->quest_items.end(),
+                    [](const LootItem& item) { return item.beingRemoved; }
+                ),
+                creatureLoot->quest_items.end()
+            );
+         
+
+            if (creatureLoot->empty()) {
+                otherCreature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                otherCreature->AllLootRemovedFromCorpse();
+                creatureLoot->clear();
+            }
         }
 
         if (loot_type == LOOT_PICKPOCKETING)
@@ -13804,6 +13868,9 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     SetFreeTalentPoints(CurTalentPoints - talentPointsChange);
 
     sScriptMgr->OnPlayerLearnTalents(this, talentId, talentRank, spellId);
+
+    totalVersatility = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_EXPERTISE);
+    UpdateVersatility();
 }
 
 void Player::LearnPetTalent(ObjectGuid petGuid, uint32 talentId, uint32 talentRank)
@@ -14802,6 +14869,7 @@ void Player::_SaveTalents(CharacterDatabaseTransaction trans)
 
 void Player::ActivateSpec(uint8 spec)
 {
+    LOG_ERROR("Spec", "Spec {}", spec);
     // xinef: some basic checks
     if (GetActiveSpec() == spec)
         return;

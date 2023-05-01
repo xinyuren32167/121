@@ -7712,6 +7712,11 @@ void Player::_SaveSpells(CharacterDatabaseTransaction trans)
             stmt->SetData(0, GetGUID().GetCounter());
             stmt->SetData(1, itr->first);
             stmt->SetData(2, itr->second->specMask);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
+            bool isMount = spellInfo->Effects[EFFECT_0].ApplyAuraName == SPELL_AURA_MOUNTED;
+            if (isMount)
+               stmt->SetData(3, GetSession()->GetAccountId());
+                
             trans->Append(stmt);
         }
 

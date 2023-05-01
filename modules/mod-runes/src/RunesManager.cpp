@@ -478,8 +478,8 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING)) {
-        SendPlayerMessage(player, "You can change only your rune inside resting area.");
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) || player->getLevel() <= 10) {
+        SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
         return;
     }
 
@@ -549,6 +549,42 @@ void RunesManager::ResetAllSlots(Player* player)
     sEluna->RefreshSlotsRune(player);
 }
 
+void RunesManager::ActivateLoadout(Player* player, uint64 newLoadoutId)
+{
+    uint32 activeId = GetActiveLoadoutId(player);
+
+    if (activeId == newLoadoutId)
+        return;
+
+    auto match = m_Loadout.find(player->GetGUID().GetCounter());
+
+    auto it = m_SlotRune.find(activeId);
+    if (it != m_SlotRune.end()) {
+        for (auto& slot : it->second) {
+            player->RemoveAura(slot.runeSpellId);
+            SpellConversion(slot.runeId, player, false);
+        }
+    }
+
+    auto ij = m_SlotRune.find(newLoadoutId);
+    if (ij != m_SlotRune.end()) {
+        for (auto& slot : ij->second) {
+            player->AddAura(slot.runeSpellId, player);
+            SpellConversion(slot.runeId, player, true);
+        }
+    }
+
+    if (match != m_Loadout.end())
+        for (auto& loadout : match->second) {
+            if (loadout.id == newLoadoutId)
+                loadout.active = true;
+            if (loadout.id == activeId)
+                loadout.active = false;
+        }
+
+    sEluna->RefreshSlotsRune(player);
+}
+
 void RunesManager::DisableRune(Player* player, uint64 runeId)
 {
     if (!player)
@@ -557,8 +593,8 @@ void RunesManager::DisableRune(Player* player, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING)) {
-        SendPlayerMessage(player, "You can change only your rune inside resting area.");
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) || player->getLevel() <= 10) {
+        SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
         return;
     }
 

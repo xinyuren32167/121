@@ -50,21 +50,21 @@ void PlayerSpecialization::LoadAllSpecsSpells()
 
 void PlayerSpecialization::InitializeSpecializations()
 {
-    m_Specializations[WARRIOR_ARMS] = { 1, 12294, "Arms", 1 };
-    m_Specializations[WARRIOR_FURY] = { 2, 20375, "Fury", 1 };
-    m_Specializations[WARRIOR_PROTECTION] = { 3, 12809, "Protection", 1 };
+    m_Specializations[WARRIOR_ARMS] = { 1, 12294, "Arms", 1, 200000, 31.82,	false,	0 };
+    m_Specializations[WARRIOR_FURY] = { 2, 20375, "Fury", 1, 200003, 24.00, false,	0 };
+    m_Specializations[WARRIOR_PROTECTION] = { 3, 12809, "Protection", 1, 200005, 70.00,	true,	100750 };
 
-    m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 8 };
-    m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 8 };
-    m_Specializations[MAGE_FROST] = { 6, 42842, "Frost", 8 };
+    m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 8, 300111, 29.16, true, 300113 };
+    m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 8, 300109,	46.66,	false,	0 };
+    m_Specializations[MAGE_FROST] = { 6, 42842, "Frost", 8, 300105,	35.00,	false,	0 };
 
-    m_Specializations[PALADIN_HOLY] = { 17, 48782, "Holy", 2 };
-    m_Specializations[PALADIN_PROTECTION] = { 18, 48952, "Protection", 2 };
-    m_Specializations[PALADIN_RETRIBUTION] = { 19, 35395, "Retribution", 2 };
+    m_Specializations[PALADIN_HOLY] = { 17, 48782, "Holy", 2, 400000, 23.33, false,	0 };
+    m_Specializations[PALADIN_PROTECTION] = { 18, 48952, "Protection", 2, 400002, 35.00, true, 400004 };
+    m_Specializations[PALADIN_RETRIBUTION] = { 19, 35395, "Retribution", 2, 400006,	21.88, true, 400008 };
 
-    m_Specializations[HUNTER_BEAST] = { 14, 80132, "Beast Mastery", 3 };
-    m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3 };
-    m_Specializations[HUNTER_SURVIVAL] = { 16, 19306, "Survival", 3 };
+    m_Specializations[HUNTER_BEAST] = { 14, 80132, "Beast Mastery", 3, 500003, 18.42, true,	500006 };
+    m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3, 500004, 56.00,	true, 500007 };
+    m_Specializations[HUNTER_SURVIVAL] = { 16, 19306, "Survival", 3, 500005, 21.12,	true, 500002  };
 
     m_Specializations[DK_BLOOD] = { 7, 55212, "Blood", 6 };
     m_Specializations[DK_FROST] = { 8, 50384, "Frost", 6 };
@@ -99,8 +99,28 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
     }
 
     player->CastCustomSpell(79852, SPELLVALUE_BASE_POINT0, newSpecId, player, TRIGGERED_NONE);
-
 }
+
+
+void PlayerSpecialization::UpdateMastery(Player* player, uint32 rating)
+{
+    uint32 currentSpecId = GetCurrentSpecId(player);
+
+    if (currentSpecId == 0)
+        return;
+
+    Specialization spec = m_Specializations[currentSpecId];
+
+    if (Aura* aura = player->GetAura(spec.masteryTalentId)) {
+        const float value = rating / spec.modifierPerPoint;
+        player->SetMastery(value);
+        if (spec.update) {
+            player->RemoveAura(spec.castSpellId);
+            player->CastSpell(player, spec.castSpellId);
+        }
+    }
+}
+
 
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
 {

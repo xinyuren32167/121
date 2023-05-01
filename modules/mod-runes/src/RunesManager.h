@@ -106,6 +106,7 @@ public:
     static uint32 GetCountActivatedRune(Player* player);
     static void ActivateRune(Player* player, uint32 index, uint64 runeId);
     static void ResetAllSlots(Player* player);
+    static void ActivateLoadout(Player* player, uint64 loadoutId);
     static void CastActivateLoadout(Player* player, uint64 loadoutId);
     static void RemoveSlotsOnCharacterDel(ObjectGuid guid);
     static void ApplyRunesOnLogin(Player* player);

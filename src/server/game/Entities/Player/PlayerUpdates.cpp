@@ -646,6 +646,7 @@ void Player::UpdateRating(CombatRating cr)
     case CR_WEAPON_SKILL_RANGED:
         break;
     case CR_EXPERTISE:
+            totalVersatility = GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_EXPERTISE);
             UpdateVersatility();
         break;
     case CR_ARMOR_PENETRATION:

@@ -22,19 +22,22 @@ class SpecChoice_PlayerScripts : public PlayerScript
 public:
     SpecChoice_PlayerScripts() : PlayerScript("SpecChoice_PlayerScripts") { }
 
-    void OnLogin(Player* player) override
+    void OnUpdateMastery(Player* player, uint32 value)
     {
-
+        PlayerSpecialization::UpdateMastery(player, value);
     }
 
-    void OnCreate(Player* player)
+    void OnLogin(Player* player)
     {
-
+        if (player->getClass() == CLASS_PALADIN) {
+            player->SetMaxPower(POWER_ENERGY, 5);
+            player->SetPower(POWER_ENERGY, 0);
+        }
     }
 
-    void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
+    void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)
     {
-
+        player->UpdateMastery();
     }
 };
 

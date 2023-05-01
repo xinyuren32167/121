@@ -504,7 +504,7 @@ void AchievementMgr::Reset()
 
     m_completedAchievements.clear();
     m_criteriaProgress.clear();
-    DeleteFromDB(m_player->GetGUID().GetCounter());
+    DeleteFromDB(m_player->GetSession()->GetAccountId());
 
     // re-fill data
     CheckAllAchievementCriteria();
@@ -537,16 +537,16 @@ void AchievementMgr::ResetAchievementCriteria(AchievementCriteriaCondition condi
     }
 }
 
-void AchievementMgr::DeleteFromDB(ObjectGuid::LowType lowguid)
+void AchievementMgr::DeleteFromDB(uint32 accountId)
 {
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT);
-    stmt->SetData(0, lowguid);
+    stmt->SetData(0, accountId);
     trans->Append(stmt);
 
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT_PROGRESS);
-    stmt->SetData(0, lowguid);
+    stmt->SetData(0, accountId);
     trans->Append(stmt);
 
     CharacterDatabase.CommitTransaction(trans);
@@ -586,7 +586,7 @@ void AchievementMgr::SaveToDB(CharacterDatabaseTransaction trans)
                 continue;
 
             CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT_PROGRESS_BY_CRITERIA);
-            stmt->SetData(0, GetPlayer()->GetGUID().GetCounter());
+            stmt->SetData(0, GetPlayer()->GetSession()->GetAccountId());
             stmt->SetData(1, iter->first);
             trans->Append(stmt);
 
@@ -594,7 +594,7 @@ void AchievementMgr::SaveToDB(CharacterDatabaseTransaction trans)
             if (iter->second.counter)
             {
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_ACHIEVEMENT_PROGRESS);
-                stmt->SetData(0, GetPlayer()->GetGUID().GetCounter());
+                stmt->SetData(0, GetPlayer()->GetSession()->GetAccountId());
                 stmt->SetData(1, iter->first);
                 stmt->SetData(2, iter->second.counter);
                 stmt->SetData(3, uint32(iter->second.date));

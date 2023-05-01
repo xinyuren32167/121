@@ -2,6 +2,7 @@
 
 #include "Player/Player.h"
 #include "DatabaseEnv.h"
+#include "SharedDefines.h"
 
 struct SpecializationPlayer {
     uint64 guid;
@@ -13,10 +14,14 @@ struct Specialization {
     uint32 spellIcon;
     std::string name;
     uint32 classInfo;
+
+    uint32 masteryTalentId;
+    float modifierPerPoint;
+    bool update;
+    uint32 castSpellId;
 };
 
-
-enum SPECS {
+enum Specializations {
     WARRIOR_ARMS = 1,
     WARRIOR_FURY = 2,
     WARRIOR_PROTECTION = 3,
@@ -60,6 +65,7 @@ public:
     static void LoadAllSpecsSpells();
     static void InitializeSpecializations();
     static void ActivateSpecialization(Player* player, uint32 specId);
+    static void UpdateMastery(Player* player, uint32 rating);
     static uint32 GetCurrentSpecId(Player* player);
     static std::vector<std::string> GetSpecializations(Player* player);
 };

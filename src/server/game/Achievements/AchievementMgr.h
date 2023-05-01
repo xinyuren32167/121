@@ -283,7 +283,7 @@ public:
     ~AchievementMgr();
 
     void Reset();
-    static void DeleteFromDB(ObjectGuid::LowType lowguid);
+    static void DeleteFromDB(uint32 accountId);
     void LoadFromDB(PreparedQueryResult achievementResult, PreparedQueryResult criteriaResult);
     void SaveToDB(CharacterDatabaseTransaction trans);
     void ResetAchievementCriteria(AchievementCriteriaCondition condition, uint32 value, bool evenIfCriteriaComplete = false);
