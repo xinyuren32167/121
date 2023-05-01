@@ -4,7 +4,6 @@
 #include "ElunaIncludes.h"
 #include "LuaEngine.h"
 #include "boost/iterator/counting_iterator.hpp"
-#include "CustomStatsManager.h"
 
 std::map<uint64 /* guid */, uint32 /* specId */> PlayerSpecialization::m_PlayersSpecialization = {};
 std::map<uint32 /* specId */, Specialization> PlayerSpecialization::m_Specializations = {};

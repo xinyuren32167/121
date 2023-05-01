@@ -1915,6 +1915,22 @@ class spell_dru_moon_fall_aura : public SpellScript
     }
 };
 
+class spell_dru_avatar_of_ashamane : public AuraScript
+{
+    PrepareAuraScript(spell_dru_avatar_of_ashamane);
+
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->AddAura(SPELL_DRUID_BERSERK_CAT, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);     
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1978,4 +1994,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_shooting_stars_power);
     RegisterSpellScript(spell_dru_moon_fall);
     RegisterSpellScript(spell_dru_moon_fall_aura);
+    RegisterSpellScript(spell_dru_avatar_of_ashamane);
 }
