@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_DRUID and SPELLFAMILY_GENERIC spells used by druid players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_dru_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_DRUID and SPELLFAMILY_GENERIC spells used by druid players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_dru_".
+  */
 
 #include "Containers.h"
 #include "GridNotifiers.h"
@@ -31,72 +31,73 @@
 
 enum DruidSpells
 {
-    SPELL_DRUID_GLYPH_OF_WILD_GROWTH        = 62970,
-    SPELL_DRUID_NURTURING_INSTINCT_R1       = 47179,
-    SPELL_DRUID_NURTURING_INSTINCT_R2       = 47180,
-    SPELL_DRUID_FERAL_SWIFTNESS_R1          = 17002,
-    SPELL_DRUID_FERAL_SWIFTNESS_R2          = 24866,
-    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_1   = 24867,
-    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_2   = 24864,
-    SPELL_DRUID_BARKSKIN                    = 22812,
-    SPELL_DRUID_GLYPH_OF_BARKSKIN           = 63057,
-    SPELL_DRUID_GLYPH_OF_BARKSKIN_TRIGGER   = 63058,
-    SPELL_DRUID_ENRAGE_MOD_DAMAGE           = 51185,
-    SPELL_DRUID_GLYPH_OF_TYPHOON            = 62135,
-    SPELL_DRUID_IDOL_OF_FERAL_SHADOWS       = 34241,
-    SPELL_DRUID_IDOL_OF_WORSHIP             = 60774,
+    SPELL_DRUID_GLYPH_OF_WILD_GROWTH = 62970,
+    SPELL_DRUID_NURTURING_INSTINCT_R1 = 47179,
+    SPELL_DRUID_NURTURING_INSTINCT_R2 = 47180,
+    SPELL_DRUID_FERAL_SWIFTNESS_R1 = 17002,
+    SPELL_DRUID_FERAL_SWIFTNESS_R2 = 24866,
+    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_1 = 24867,
+    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_2 = 24864,
+    SPELL_DRUID_BARKSKIN = 22812,
+    SPELL_DRUID_GLYPH_OF_BARKSKIN = 63057,
+    SPELL_DRUID_GLYPH_OF_BARKSKIN_TRIGGER = 63058,
+    SPELL_DRUID_ENRAGE_MOD_DAMAGE = 51185,
+    SPELL_DRUID_GLYPH_OF_TYPHOON = 62135,
+    SPELL_DRUID_IDOL_OF_FERAL_SHADOWS = 34241,
+    SPELL_DRUID_IDOL_OF_WORSHIP = 60774,
     SPELL_DRUID_INCREASED_MOONFIRE_DURATION = 38414,
-    SPELL_DRUID_KING_OF_THE_JUNGLE          = 48492,
-    SPELL_DRUID_LIFEBLOOM_ENERGIZE          = 64372,
-    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 33778,
-    SPELL_DRUID_LIVING_SEED_HEAL            = 48503,
-    SPELL_DRUID_LIVING_SEED_PROC            = 48504,
-    SPELL_DRUID_NATURES_SPLENDOR            = 57865,
-    SPELL_DRUID_SURVIVAL_INSTINCTS          = 50322,
+    SPELL_DRUID_KING_OF_THE_JUNGLE = 48492,
+    SPELL_DRUID_LIFEBLOOM_ENERGIZE = 64372,
+    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL = 33778,
+    SPELL_DRUID_LIVING_SEED_HEAL = 48503,
+    SPELL_DRUID_LIVING_SEED_PROC = 48504,
+    SPELL_DRUID_NATURES_SPLENDOR = 57865,
+    SPELL_DRUID_SURVIVAL_INSTINCTS = 50322,
     //SPELL_DRUID_SAVAGE_ROAR                 = 62071,
-    SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178,
-    SPELL_DRUID_ITEM_T8_BALANCE_RELIC       = 64950,
-    SPELL_DRUID_BEAR_FORM_PASSIVE           = 1178,
-    SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE      = 9635,
-    SPELL_DRUID_ENRAGE                      = 5229,
-    SPELL_DRUID_ENRAGED_DEFENSE             = 70725,
-    SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS     = 70726,
+    SPELL_DRUID_TIGER_S_FURY_ENERGIZE = 51178,
+    SPELL_DRUID_ITEM_T8_BALANCE_RELIC = 64950,
+    SPELL_DRUID_BEAR_FORM_PASSIVE = 1178,
+    SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE = 9635,
+    SPELL_DRUID_ENRAGE = 5229,
+    SPELL_DRUID_ENRAGED_DEFENSE = 70725,
+    SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS = 70726,
 
-    SPELL_DRUID_FEROCIOUS_BITE              = 48577,
-    SPELL_DRUID_PROWL                       = 5215,
-    SPELL_DRUID_CAT_FORM                    = 768,
-    SPELL_DRUID_THORNS_SLOW                 = 80500,
-    SPELL_DRUID_MOONKIN_FORM                = 24858,
-    SPELL_DRUID_WRATH                       = 48461,
-    SPELL_DRUID_STARFIRE                    = 48465,
-    SPELL_DRUID_STARFIRE_AOE                = 80506,
-    SPELL_DRUID_ECLIPSE_BASE                = 80501,
-    SPELL_DRUID_ECLIPSE_SOLAR_STACK         = 80503,
-    SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
-    SPELL_DRUID_ECLIPSE_LUNAR_STACK         = 80504,
-    SPELL_DRUID_ECLIPSE_LUNAR_BUFF          = 80505,
-    SPELL_DRUID_BERSERK_CAT                 = 50334,
-    SPELL_DRUID_RAKE_STUN                   = 80509,
-    SPELL_DRUID_BERSERK_CAT_CRIT            = 80508,
-    SPELL_DRUID_BERSERK_COMBO_GEN           = 80510,
-    SPELL_DRUID_SAVAGE_ROAR                 = 80511,
-    SPELL_DRUID_STELLAR_FLARE_DISPEL        = 80529,
-    SPELL_DRUID_CELESTIAL_ALIGNMENT         = 80531,
-    SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT     = 80532,
-    SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT     = 80533,
-    SPELL_DRUID_FORCE_OF_NATURE             = 33831,
-    SPELL_DRUID_STELLAR_FLARE               = 80528,
-    SPELL_DRUID_ASTRAL_COMMUNION            = 80534,
-    SPELL_DRUID_SHOOTING_STARS              = 80537,
-    SPELL_DRUID_SHOOTING_STARS_PROC         = 80538,
-    SPELL_DRUID_WILD_MUSHROOM               = 80142,
-    SPELL_DRUID_MOON_FALL                   = 80539,
-    SPELL_DRUID_NEW_MOON                    = 80540,
-    SPELL_DRUID_NEW_MOON_AURA               = 80543,
-    SPELL_DRUID_HALF_MOON                   = 80541,
-    SPELL_DRUID_HALF_MOON_AURA              = 80544,
-    SPELL_DRUID_FULL_MOON                   = 80542,
-    SPELL_DRUID_FULL_MOON_AURA              = 80545,
+    SPELL_DRUID_FEROCIOUS_BITE = 48577,
+    SPELL_DRUID_PROWL = 5215,
+    SPELL_DRUID_CAT_FORM = 768,
+    SPELL_DRUID_THORNS_SLOW = 80500,
+    SPELL_DRUID_MOONKIN_FORM = 24858,
+    SPELL_DRUID_WRATH = 48461,
+    SPELL_DRUID_STARFIRE = 48465,
+    SPELL_DRUID_STARFIRE_AOE = 80506,
+    SPELL_DRUID_ECLIPSE_BASE = 80501,
+    SPELL_DRUID_ECLIPSE_SOLAR_STACK = 80503,
+    SPELL_DRUID_ECLIPSE_SOLAR_BUFF = 80502,
+    SPELL_DRUID_ECLIPSE_LUNAR_STACK = 80504,
+    SPELL_DRUID_ECLIPSE_LUNAR_BUFF = 80505,
+    SPELL_DRUID_BERSERK_CAT = 50334,
+    SPELL_DRUID_RAKE_STUN = 80509,
+    SPELL_DRUID_BERSERK_CAT_CRIT = 80508,
+    SPELL_DRUID_BERSERK_COMBO_GEN = 80510,
+    SPELL_DRUID_SAVAGE_ROAR = 80511,
+    SPELL_DRUID_STELLAR_FLARE_DISPEL = 80529,
+    SPELL_DRUID_CELESTIAL_ALIGNMENT = 80531,
+    SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT = 80532,
+    SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT = 80533,
+    SPELL_DRUID_FORCE_OF_NATURE = 33831,
+    SPELL_DRUID_STELLAR_FLARE = 80528,
+    SPELL_DRUID_ASTRAL_COMMUNION = 80534,
+    SPELL_DRUID_SHOOTING_STARS = 80537,
+    SPELL_DRUID_SHOOTING_STARS_PROC = 80538,
+    SPELL_DRUID_WILD_MUSHROOM = 80142,
+    SPELL_DRUID_MOON_FALL = 80539,
+    SPELL_DRUID_NEW_MOON = 80540,
+    SPELL_DRUID_NEW_MOON_AURA = 80543,
+    SPELL_DRUID_HALF_MOON = 80541,
+    SPELL_DRUID_HALF_MOON_AURA = 80544,
+    SPELL_DRUID_FULL_MOON = 80542,
+    SPELL_DRUID_FULL_MOON_AURA = 80545,
+    SPELL_DRUID_RADIANT_MOON_AURA = 700910,
 };
 
 // 1178 - Bear Form (Passive)
@@ -120,14 +121,14 @@ class spell_dru_bear_form_passive : public AuraScript
         int32 mod = 0;
         switch (GetId())
         {
-            case SPELL_DRUID_BEAR_FORM_PASSIVE:
-                mod = -48;
-                break;
-            case SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE:
-                mod = -59;
-                break;
-            default:
-                return;
+        case SPELL_DRUID_BEAR_FORM_PASSIVE:
+            mod = -48;
+            break;
+        case SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE:
+            mod = -59;
+            break;
+        default:
+            return;
         }
 
         amount += mod;
@@ -1222,11 +1223,11 @@ class spell_dru_ferocious_bite : public SpellScript
 
         if (energy > 0)
         {
-           int32 bonusPercent = std::min<int32>(energy, consumption);
-           int32 bonusDamage = bonusPercent * (sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE)->GetEffect(EFFECT_1).CalcValue());
-           damage += int32(CalculatePct(damage, bonusDamage));
+            int32 bonusPercent = std::min<int32>(energy, consumption);
+            int32 bonusDamage = bonusPercent * (sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE)->GetEffect(EFFECT_1).CalcValue());
+            damage += int32(CalculatePct(damage, bonusDamage));
 
-           GetCaster()->ModifyPower(POWER_ENERGY, -bonusPercent);
+            GetCaster()->ModifyPower(POWER_ENERGY, -bonusPercent);
         }
 
         if (Aura* runeAura = GetTasteForBloodRuneAura(GetCaster()))
@@ -1337,7 +1338,7 @@ class spell_dru_wrath : public SpellScript
     void HandleCast()
     {
         Unit* caster = GetCaster();
- 
+
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
@@ -1430,7 +1431,7 @@ class spell_dru_force_of_nature : public SpellScript
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
 
-        
+
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FORCE_OF_NATURE);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
@@ -1790,7 +1791,7 @@ class spell_dru_shooting_stars : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
         if (!GetCaster() || !GetCaster()->IsAlive())
-            return; 
+            return;
 
         Unit* caster = GetCaster();
 
@@ -1813,7 +1814,7 @@ class spell_dru_shooting_stars : public AuraScript
     }
 
     void Register() override
-    {       
+    {
         OnEffectProc += AuraEffectProcFn(spell_dru_shooting_stars::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -1857,25 +1858,26 @@ class spell_dru_moon_fall : public SpellScript
     }
 
     void HandleCast()
-    {  
+    {
         Unit* target = GetExplTargetUnit();
         Unit* caster = GetCaster();
 
-        if (caster->HasAura(SPELL_DRUID_NEW_MOON_AURA))
-        {
-            caster->CastSpell(target, SPELL_DRUID_NEW_MOON);
-            HandlePower(SPELL_DRUID_NEW_MOON);
-        }
-        else if (caster->HasAura(SPELL_DRUID_HALF_MOON_AURA))
+
+        if (caster->HasAura(SPELL_DRUID_HALF_MOON_AURA))
         {
             caster->CastSpell(target, SPELL_DRUID_HALF_MOON);
             HandlePower(SPELL_DRUID_HALF_MOON);
         }
-        else
+        else if (caster->HasAura(SPELL_DRUID_FULL_MOON) || caster->HasAura(SPELL_DRUID_RADIANT_MOON_AURA))
         {
             caster->CastSpell(target, SPELL_DRUID_FULL_MOON);
             HandlePower(SPELL_DRUID_FULL_MOON);
-        }  
+        }
+        else
+        {
+            caster->CastSpell(target, SPELL_DRUID_NEW_MOON);
+            HandlePower(SPELL_DRUID_NEW_MOON);
+        }
     }
 
     void Register() override
@@ -1887,6 +1889,17 @@ class spell_dru_moon_fall : public SpellScript
 class spell_dru_moon_fall_aura : public SpellScript
 {
     PrepareSpellScript(spell_dru_moon_fall_aura);
+
+    Aura* GetRadiantMoonlightRuneAura(Unit* caster)
+    {
+        for (size_t i = 700904; i < 700910; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleCast()
     {
@@ -1902,9 +1915,22 @@ class spell_dru_moon_fall_aura : public SpellScript
             caster->RemoveAura(SPELL_DRUID_HALF_MOON_AURA);
             caster->AddAura(SPELL_DRUID_FULL_MOON_AURA, caster);
         }
+        else if (caster->HasAura(SPELL_DRUID_FULL_MOON_AURA))
+        {
+            if (GetRadiantMoonlightRuneAura(caster))
+            {
+                caster->RemoveAura(SPELL_DRUID_FULL_MOON_AURA);
+                caster->AddAura(SPELL_DRUID_RADIANT_MOON_AURA, caster);
+            }
+            else
+            {
+                caster->RemoveAura(SPELL_DRUID_FULL_MOON_AURA);
+                caster->AddAura(SPELL_DRUID_NEW_MOON_AURA, caster);
+            }
+        }
         else
         {
-            caster->RemoveAura(SPELL_DRUID_FULL_MOON_AURA);
+            caster->RemoveAura(SPELL_DRUID_RADIANT_MOON_AURA);
             caster->AddAura(SPELL_DRUID_NEW_MOON_AURA, caster);
         }
     }
@@ -1927,7 +1953,7 @@ class spell_dru_avatar_of_ashamane : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);     
+        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1938,7 +1964,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_nurturing_instinct);
     RegisterSpellScript(spell_dru_feral_swiftness);
     RegisterSpellScript(spell_dru_omen_of_clarity);
-    RegisterSpellScript(spell_dru_brambles_treant); 
+    RegisterSpellScript(spell_dru_brambles_treant);
     RegisterSpellScript(spell_dru_barkskin);
     RegisterSpellScript(spell_dru_treant_scaling);
     RegisterSpellScript(spell_dru_berserk);
@@ -1975,9 +2001,9 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_wrath);
     RegisterSpellScript(spell_dru_starfire);
     RegisterSpellScript(spell_dru_force_of_nature);
-	RegisterSpellScript(spell_dru_berserk_cat);
+    RegisterSpellScript(spell_dru_berserk_cat);
     RegisterSpellScript(spell_dru_rake);
-	RegisterSpellScript(spell_dru_eclipse);
+    RegisterSpellScript(spell_dru_eclipse);
     RegisterSpellScript(spell_dru_berserk_combo_adder);
     RegisterSpellScript(spell_dru_cat_form);
     RegisterSpellScript(spell_dru_lifebloom_new);

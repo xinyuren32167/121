@@ -39,6 +39,7 @@ enum DruidSpells
     SPELL_INNERVATE = 29166,
     SPELL_IRONFUR = 000,
     SPELL_MOONFIRE = 48463,
+    SPELL_MOONFALL = 80539,
     SPELL_REGROWTH = 48443,
     SPELL_REJUVENATION = 48441,
     SPELL_RIP = 49800,
@@ -49,6 +50,7 @@ enum DruidSpells
     SPELL_STELLAR_FLARE = 80528,
     SPELL_SUNFIRE = 80518,
     SPELL_TIGERS_FURY = 50213,
+    SPELL_WARRIOR_OF_ELUNE = 80536,
     SPELL_WILD_GROWTH = 53251,
     SPELL_WRATH = 48461,
 
@@ -125,6 +127,8 @@ enum DruidSpells
     RUNE_DRUID_KNOWLEDGE_AGREEMENT_AFTERBUFF = 700833,
 
     RUNE_DRUID_BALANCE_BUFF = 700866,
+
+    RUNE_DRUID_FUNGAL_GROWTH_DOT = 700874,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -2834,6 +2838,87 @@ class rune_druid_balance : public AuraScript
     }
 };
 
+class rune_druid_fungal_growth : public AuraScript
+{
+    PrepareAuraScript(rune_druid_fungal_growth);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_FUNGAL_GROWTH_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_FUNGAL_GROWTH_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_FUNGAL_GROWTH_DOT);
+        }
+
+        GetCaster()->CastCustomSpell(RUNE_DRUID_FUNGAL_GROWTH_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_fungal_growth::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_fungal_growth::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_call_of_elune : public AuraScript
+{
+    PrepareAuraScript(rune_druid_call_of_elune);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetCaster()->ToPlayer())
+        {
+            target->ModifySpellCooldown(SPELL_WARRIOR_OF_ELUNE, -aurEff->GetAmount());
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_call_of_elune::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_moon_friend : public AuraScript
+{
+    PrepareAuraScript(rune_druid_moon_friend);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetCaster()->ToPlayer())
+        {
+            target->ModifySpellCooldown(SPELL_MOONFALL, -aurEff->GetAmount());
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_moon_friend::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_druid_rune_scripts()
@@ -2900,7 +2985,9 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_primordial_arcanic_pulsar);
     RegisterSpellScript(rune_druid_power_of_elune);
     RegisterSpellScript(rune_druid_balance);
-
+    RegisterSpellScript(rune_druid_fungal_growth);
+    RegisterSpellScript(rune_druid_call_of_elune);
+    RegisterSpellScript(rune_druid_moon_friend);
 
 
 
