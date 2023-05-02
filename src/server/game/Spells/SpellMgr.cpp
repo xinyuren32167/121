@@ -134,7 +134,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto,
                 if (spellproto->SpellFamilyFlags[0] & 0x20000)
                     return DIMINISHING_OPENING_STUN;
                 // Cyclone
-                else if (spellproto->SpellFamilyFlags[1] & 0x20)
+                else if (spellproto->Id == 33786)
                     return DIMINISHING_CYCLONE;
                 // Entangling Roots
                 // Nature's Grasp

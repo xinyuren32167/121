@@ -7304,7 +7304,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                 }
                 break;
             }
-        case SPELLFAMILY_DRUID:
+        /**/case SPELLFAMILY_DRUID:
             {
                 switch (dummySpell->Id)
                 {
@@ -7327,7 +7327,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             break;
                         }
                     // Glyph of Shred
-                    case 54815:
+                    /*case 54815:
                         {
                             if (!target)
                                 return false;
@@ -7357,7 +7357,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             }
                             // if not found Rip
                             return false;
-                        }
+                        }*/
                     // Glyph of Rake
                     case 54821:
                         {
