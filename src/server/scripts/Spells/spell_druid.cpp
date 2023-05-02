@@ -1648,6 +1648,16 @@ class spell_dru_prowl_check : public SpellScript
 {
     PrepareSpellScript(spell_dru_prowl_check);
 
+    SpellCastResult CheckCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (caster->IsInCombat() && !caster->HasAura(SPELL_DRUID_AVATAR_OF_ASHAMANE))
+            return SPELL_FAILED_TARGET_IN_COMBAT;
+
+        return SPELL_CAST_OK;
+    } 
+
     void HandleCast()
     {
         if (!GetCaster() || !GetCaster()->IsAlive())
@@ -1661,6 +1671,7 @@ class spell_dru_prowl_check : public SpellScript
 
     void Register() override
     {
+        OnCheckCast += SpellCheckCastFn(spell_dru_prowl_check::CheckCast);
         OnCast += SpellCastFn(spell_dru_prowl_check::HandleCast);
     }
 };
@@ -1951,9 +1962,15 @@ class spell_dru_avatar_of_ashamane : public AuraScript
         GetCaster()->AddAura(SPELL_DRUID_BERSERK_CAT, GetCaster());
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(SPELL_DRUID_CAT_FORM);
+    }
+
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_avatar_of_ashamane::HandleRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
