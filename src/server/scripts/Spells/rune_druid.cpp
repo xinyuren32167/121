@@ -129,6 +129,8 @@ enum DruidSpells
     RUNE_DRUID_BALANCE_BUFF = 700866,
 
     RUNE_DRUID_FUNGAL_GROWTH_DOT = 700874,
+
+    RUNE_DRUID_DRUID_OF_THE_FLAME_DOT = 700930,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -2919,6 +2921,55 @@ class rune_druid_moon_friend : public AuraScript
     }
 };
 
+class rune_druid_druid_of_the_flame : public AuraScript
+{
+    PrepareAuraScript(rune_druid_druid_of_the_flame);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_CAT_FORM) && !caster->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_DRUID_OF_THE_FLAME_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_DRUID_OF_THE_FLAME_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_DRUID_OF_THE_FLAME_DOT);
+        }
+
+        caster->CastCustomSpell(RUNE_DRUID_DRUID_OF_THE_FLAME_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_druid_of_the_flame::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_druid_of_the_flame::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_druid_rune_scripts()
@@ -2988,6 +3039,7 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_fungal_growth);
     RegisterSpellScript(rune_druid_call_of_elune);
     RegisterSpellScript(rune_druid_moon_friend);
+    RegisterSpellScript(rune_druid_druid_of_the_flame);
 
 
 

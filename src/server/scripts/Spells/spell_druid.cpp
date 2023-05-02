@@ -1865,17 +1865,17 @@ class spell_dru_moon_fall : public SpellScript
 
         if (caster->HasAura(SPELL_DRUID_HALF_MOON_AURA))
         {
-            caster->CastSpell(target, SPELL_DRUID_HALF_MOON);
+            caster->CastSpell(target, SPELL_DRUID_HALF_MOON, TRIGGERED_FULL_MASK);
             HandlePower(SPELL_DRUID_HALF_MOON);
         }
-        else if (caster->HasAura(SPELL_DRUID_FULL_MOON) || caster->HasAura(SPELL_DRUID_RADIANT_MOON_AURA))
+        else if (caster->HasAura(SPELL_DRUID_FULL_MOON_AURA) || caster->HasAura(SPELL_DRUID_RADIANT_MOON_AURA))
         {
-            caster->CastSpell(target, SPELL_DRUID_FULL_MOON);
+            caster->CastSpell(target, SPELL_DRUID_FULL_MOON, TRIGGERED_FULL_MASK);
             HandlePower(SPELL_DRUID_FULL_MOON);
         }
         else
         {
-            caster->CastSpell(target, SPELL_DRUID_NEW_MOON);
+            caster->CastSpell(target, SPELL_DRUID_NEW_MOON, TRIGGERED_FULL_MASK);
             HandlePower(SPELL_DRUID_NEW_MOON);
         }
     }
