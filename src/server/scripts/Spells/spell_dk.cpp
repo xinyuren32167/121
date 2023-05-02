@@ -965,9 +965,11 @@ class spell_dk_anti_magic_zone : public AuraScript
         }
 
         amount = talentSpell->Effects[EFFECT_0].CalcValue(owner);
+        float scaling = talentSpell->Effects[EFFECT_1].CalcValue(owner);
+        uint32 health = owner->GetMaxHealth();
         if (Player* player = owner->ToPlayer())
         {
-            amount += int32(2 * player->GetTotalAttackPowerValue(BASE_ATTACK));
+            amount += AddPct(health, scaling);
         }
     }
 
