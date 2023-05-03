@@ -99,11 +99,14 @@ enum DruidSpells
     SPELL_DRUID_FULL_MOON_AURA              = 80545,
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_AVATAR_OF_ASHAMANE          = 80548,
-    SPELL_DRUID_RIP                         = 49800,
+    SPELL_DRUID_RIP                         = 80558,
+    SPELL_DRUID_RIP_DOT                     = 49800,
     SPELL_DRUID_PRIMAL_WRATH                = 80551,
     SPELL_DRUID_MOONFIRE_CAT                = 80547,
     SPELL_DRUID_SOOTHE_CAT                  = 80554,
     SPELL_DRUID_REMOVE_CORRUPTION_CAT       = 80553,
+    SPELL_DRUID_IRONFUR_BASE                = 80555,
+    SPELL_DRUID_IRONFUR_ARMOR               = 80556,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1980,43 +1983,39 @@ class spell_dru_avatar_of_ashamane : public AuraScript
     }
 };
 
-class spell_dru_primal_wrath : public AuraScript
+class spell_dru_primal_wrath : public SpellScript
 {
-    PrepareAuraScript(spell_dru_primal_wrath);
+    PrepareSpellScript(spell_dru_primal_wrath);
 
-    std::list <Unit*> FindCreatures()
-    {
-        auto const& threatList = GetCaster()->getAttackers();
-        std::list <Unit*> targetAvailable;
-
-        for (auto const& target : threatList)
-        {
-            Position targetpos = target->GetPosition();
-            float distance = GetCaster()->GetDistance(targetpos);
-
-            if (distance <= 8)
-            {
-                targetAvailable.push_back(target);
-            }
-        } return targetAvailable;
-    }
-
-    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
-        int32 duration = GetTarget()->GetAura(SPELL_DRUID_PRIMAL_WRATH)->GetDuration();
 
-        for (auto const& targetNearby : FindCreatures())
+        if (!caster || caster->isDead())
+            return;
+
+        
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_PRIMAL_WRATH);
+        uint32 durationAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
+        
+        uint8 comboPoint = caster->ToPlayer()->GetComboPoints();
+        int32 duration = durationAmount + (durationAmount * comboPoint);
+
+        for (auto const& object : targets)
         {
-            caster->CastSpell(targetNearby, SPELL_DRUID_RIP, TRIGGERED_FULL_MASK);
-            Aura* targetAura = targetNearby->GetAura(SPELL_DRUID_RIP);
-            targetAura->SetDuration(duration);
-        }    
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            caster->AddAura(SPELL_DRUID_RIP_DOT, target);
+            target->GetAura(SPELL_DRUID_RIP_DOT)->SetDuration(duration);
+        }
     }
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_primal_wrath::HandleApply, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_primal_wrath::FilterTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
 
@@ -2044,6 +2043,55 @@ class spell_dru_feline_adept : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_dru_feline_adept::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_dru_feline_adept::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_ironfur : public SpellScript
+{
+    PrepareSpellScript(spell_dru_ironfur);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return;
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_IRONFUR_BASE);
+        uint32 armorPercent = value->GetEffect(EFFECT_0).CalcValue(caster);
+        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_AGILITY), armorPercent);
+
+        GetCaster()->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_dru_ironfur::HandleCast);
+    }
+};
+
+class spell_dru_rip_new : public SpellScript
+{
+    PrepareSpellScript(spell_dru_rip_new);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return;
+
+        Unit* target = GetExplTargetUnit();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_RIP);
+        uint32 durationIncrease = value->GetEffect(EFFECT_0).CalcValue(caster);
+        uint8 comboPoints = caster->ToPlayer()->GetComboPoints();
+        int32 duration = durationIncrease + (durationIncrease * comboPoints);
+        
+        caster->CastSpell(target, SPELL_DRUID_RIP_DOT, TRIGGERED_FULL_MASK);
+        target->GetAura(SPELL_DRUID_RIP_DOT)->SetDuration(duration);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_dru_rip_new::HandleCast);
     }
 };
 
@@ -2113,4 +2161,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_avatar_of_ashamane);
     RegisterSpellScript(spell_dru_primal_wrath);
     RegisterSpellScript(spell_dru_feline_adept);
+    RegisterSpellScript(spell_dru_ironfur);
+    RegisterSpellScript(spell_dru_rip_new);
 }
