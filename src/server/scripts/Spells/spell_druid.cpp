@@ -99,6 +99,11 @@ enum DruidSpells
     SPELL_DRUID_FULL_MOON_AURA              = 80545,
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_AVATAR_OF_ASHAMANE          = 80548,
+    SPELL_DRUID_RIP                         = 49800,
+    SPELL_DRUID_PRIMAL_WRATH                = 80551,
+    SPELL_DRUID_MOONFIRE_CAT                = 80547,
+    SPELL_DRUID_SOOTHE_CAT                  = 80554,
+    SPELL_DRUID_REMOVE_CORRUPTION_CAT       = 80553,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1970,8 +1975,76 @@ class spell_dru_avatar_of_ashamane : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_avatar_of_ashamane::HandleRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_avatar_of_ashamane::HandleRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_primal_wrath : public AuraScript
+{
+    PrepareAuraScript(spell_dru_primal_wrath);
+
+    std::list <Unit*> FindCreatures()
+    {
+        auto const& threatList = GetCaster()->getAttackers();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatList)
+        {
+            Position targetpos = target->GetPosition();
+            float distance = GetCaster()->GetDistance(targetpos);
+
+            if (distance <= 8)
+            {
+                targetAvailable.push_back(target);
+            }
+        } return targetAvailable;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        int32 comboPoints = caster->ToPlayer()->GetComboPoints();
+        int32 duration = GetTarget()->GetAura(SPELL_DRUID_PRIMAL_WRATH)->GetDuration();
+
+        for (auto const& targetNearby : FindCreatures())
+        {
+            caster->AddAura(SPELL_DRUID_RIP, targetNearby);
+            Aura* targetAura = targetNearby->GetAura(SPELL_DRUID_RIP);
+            targetAura->SetDuration(duration);
+        }    
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_primal_wrath::HandleApply, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_feline_adept : public AuraScript
+{
+    PrepareAuraScript(spell_dru_feline_adept);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->learnSpell(SPELL_DRUID_MOONFIRE_CAT);
+        target->learnSpell(SPELL_DRUID_SOOTHE_CAT);
+        target->learnSpell(SPELL_DRUID_REMOVE_CORRUPTION_CAT);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(SPELL_DRUID_MOONFIRE_CAT, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_SOOTHE_CAT, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_REMOVE_CORRUPTION_CAT, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_feline_adept::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_feline_adept::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2039,4 +2112,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_moon_fall);
     RegisterSpellScript(spell_dru_moon_fall_aura);
     RegisterSpellScript(spell_dru_avatar_of_ashamane);
+    RegisterSpellScript(spell_dru_primal_wrath);
+    RegisterSpellScript(spell_dru_feline_adept);
 }
