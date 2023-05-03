@@ -2004,12 +2004,11 @@ class spell_dru_primal_wrath : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
-        int32 comboPoints = caster->ToPlayer()->GetComboPoints();
         int32 duration = GetTarget()->GetAura(SPELL_DRUID_PRIMAL_WRATH)->GetDuration();
 
         for (auto const& targetNearby : FindCreatures())
         {
-            caster->AddAura(SPELL_DRUID_RIP, targetNearby);
+            caster->CastSpell(targetNearby, SPELL_DRUID_RIP, TRIGGERED_FULL_MASK);
             Aura* targetAura = targetNearby->GetAura(SPELL_DRUID_RIP);
             targetAura->SetDuration(duration);
         }    
