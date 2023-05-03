@@ -131,6 +131,12 @@ enum DruidSpells
     RUNE_DRUID_FUNGAL_GROWTH_DOT = 700874,
 
     RUNE_DRUID_DRUID_OF_THE_FLAME_DOT = 700930,
+
+    RUNE_DRUID_LACERATING_CLAWS_DOT = 700962,
+
+    RUNE_DRUID_BERSERKS_FRENZY_DOT = 700974,
+
+    RUNE_DRUID_ASHAMANES_BITE_DOT = 701006,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -2970,6 +2976,222 @@ class rune_druid_druid_of_the_flame : public AuraScript
     }
 };
 
+class rune_druid_lasting_anger : public AuraScript
+{
+    PrepareAuraScript(rune_druid_lasting_anger);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procChance = GetCaster()->GetComboPoints() * aurEff->GetAmount();
+        uint32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        if (Aura* berserk = caster->GetAura(SPELL_BERSERK))
+        {
+            int32 duration = berserk->GetDuration();
+            int32 increase = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+            berserk->SetDuration(duration + increase);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_lasting_anger::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_lacerating_claws : public AuraScript
+{
+    PrepareAuraScript(rune_druid_lacerating_claws);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_CAT_FORM) && !caster->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+            return;
+
+        if (!caster->HasAura(SPELL_BERSERK))
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_LACERATING_CLAWS_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_LACERATING_CLAWS_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_LACERATING_CLAWS_DOT);
+        }
+
+        caster->CastCustomSpell(RUNE_DRUID_LACERATING_CLAWS_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_lacerating_claws::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_lacerating_claws::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_berserks_frenzy : public AuraScript
+{
+    PrepareAuraScript(rune_druid_berserks_frenzy);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_CAT_FORM) && !caster->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+            return;
+
+        if (!caster->HasAura(SPELL_BERSERK))
+            return;
+
+        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damageDealt <= 0)
+            return;
+
+        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_BERSERKS_FRENZY_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_BERSERKS_FRENZY_DOT, 0))
+        {
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_BERSERKS_FRENZY_DOT);
+        }
+
+        caster->CastCustomSpell(RUNE_DRUID_BERSERKS_FRENZY_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_berserks_frenzy::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_berserks_frenzy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_heart_of_the_lion : public AuraScript
+{
+    PrepareAuraScript(rune_druid_heart_of_the_lion);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 reduction = GetCaster()->GetComboPoints() * aurEff->GetAmount();
+
+        caster->ModifySpellCooldown(SPELL_BERSERK, -reduction);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_heart_of_the_lion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_ripping_bite : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ripping_bite);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (Aura* rip = victim->GetAura(SPELL_RIP))
+        {
+            rip->RefreshDuration();
+            rip->GetEffect(EFFECT_0)->ResetTicks();
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_ripping_bite::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_ripping_bite::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_ashamanes_bite : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ashamanes_bite);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (Aura* rip = victim->GetAura(SPELL_RIP))
+        {
+            rip->RefreshDuration();
+            rip->GetEffect(EFFECT_0)->ResetTicks();
+            caster->AddAura(RUNE_DRUID_ASHAMANES_BITE_DOT, victim);
+        }
+
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_ashamanes_bite::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_druid_rune_scripts()
@@ -3040,9 +3262,15 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_call_of_elune);
     RegisterSpellScript(rune_druid_moon_friend);
     RegisterSpellScript(rune_druid_druid_of_the_flame);
+    RegisterSpellScript(rune_druid_lasting_anger);
+    RegisterSpellScript(rune_druid_lacerating_claws);
+    RegisterSpellScript(rune_druid_berserks_frenzy);
+    RegisterSpellScript(rune_druid_heart_of_the_lion);
+    RegisterSpellScript(rune_druid_ripping_bite);
+    RegisterSpellScript(rune_druid_ashamanes_bite);
 
 
 
 
-    
+
 }
