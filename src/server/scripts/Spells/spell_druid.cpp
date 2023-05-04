@@ -61,53 +61,55 @@ enum DruidSpells
     SPELL_DRUID_ENRAGE = 5229,
     SPELL_DRUID_ENRAGED_DEFENSE = 70725,
     SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS = 70726,
-
-    SPELL_DRUID_FEROCIOUS_BITE = 48577,
-    SPELL_DRUID_PROWL = 5215,
-    SPELL_DRUID_CAT_FORM = 768,
-    SPELL_DRUID_THORNS_SLOW = 80500,
-    SPELL_DRUID_MOONKIN_FORM = 24858,
-    SPELL_DRUID_WRATH = 48461,
-    SPELL_DRUID_STARFIRE = 48465,
-    SPELL_DRUID_STARFIRE_AOE = 80506,
-    SPELL_DRUID_ECLIPSE_BASE = 80501,
-    SPELL_DRUID_ECLIPSE_SOLAR_STACK = 80503,
-    SPELL_DRUID_ECLIPSE_SOLAR_BUFF = 80502,
-    SPELL_DRUID_ECLIPSE_LUNAR_STACK = 80504,
-    SPELL_DRUID_ECLIPSE_LUNAR_BUFF = 80505,
-    SPELL_DRUID_BERSERK_CAT = 50334,
-    SPELL_DRUID_RAKE_STUN = 80509,
-    SPELL_DRUID_BERSERK_CAT_CRIT = 80508,
-    SPELL_DRUID_BERSERK_COMBO_GEN = 80510,
-    SPELL_DRUID_SAVAGE_ROAR = 80511,
-    SPELL_DRUID_STELLAR_FLARE_DISPEL = 80529,
-    SPELL_DRUID_CELESTIAL_ALIGNMENT = 80531,
-    SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT = 80532,
-    SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT = 80533,
-    SPELL_DRUID_FORCE_OF_NATURE = 33831,
-    SPELL_DRUID_STELLAR_FLARE = 80528,
-    SPELL_DRUID_ASTRAL_COMMUNION = 80534,
-    SPELL_DRUID_SHOOTING_STARS = 80537,
-    SPELL_DRUID_SHOOTING_STARS_PROC = 80538,
-    SPELL_DRUID_WILD_MUSHROOM = 80142,
-    SPELL_DRUID_MOON_FALL = 80539,
-    SPELL_DRUID_NEW_MOON = 80540,
-    SPELL_DRUID_NEW_MOON_AURA = 80543,
-    SPELL_DRUID_HALF_MOON = 80541,
-    SPELL_DRUID_HALF_MOON_AURA = 80544,
-    SPELL_DRUID_FULL_MOON = 80542,
-    SPELL_DRUID_FULL_MOON_AURA = 80545,
-    SPELL_DRUID_RADIANT_MOON_AURA = 700910,
-    SPELL_DRUID_AVATAR_OF_ASHAMANE = 80548,
-    SPELL_DRUID_RIP = 80558,
-    SPELL_DRUID_RIP_DOT = 49800,
-    SPELL_DRUID_PRIMAL_WRATH = 80551,
-    SPELL_DRUID_MOONFIRE_CAT = 80547,
-    SPELL_DRUID_SOOTHE_CAT = 80554,
-    SPELL_DRUID_REMOVE_CORRUPTION_CAT = 80553,
-    SPELL_DRUID_IRONFUR_BASE = 80555,
-    SPELL_DRUID_IRONFUR_ARMOR = 80556,
-
+    SPELL_DRUID_FEROCIOUS_BITE              = 48577,
+    SPELL_DRUID_PROWL                       = 5215,
+    SPELL_DRUID_CAT_FORM                    = 768,
+    SPELL_DRUID_THORNS_SLOW                 = 80500,
+    SPELL_DRUID_MOONKIN_FORM                = 24858,
+    SPELL_DRUID_WRATH                       = 48461,
+    SPELL_DRUID_STARFIRE                    = 48465,
+    SPELL_DRUID_STARFIRE_AOE                = 80506,
+    SPELL_DRUID_ECLIPSE_BASE                = 80501,
+    SPELL_DRUID_ECLIPSE_SOLAR_STACK         = 80503,
+    SPELL_DRUID_ECLIPSE_SOLAR_BUFF          = 80502,
+    SPELL_DRUID_ECLIPSE_LUNAR_STACK         = 80504,
+    SPELL_DRUID_ECLIPSE_LUNAR_BUFF          = 80505,
+    SPELL_DRUID_BERSERK_CAT                 = 50334,
+    SPELL_DRUID_RAKE_STUN                   = 80509,
+    SPELL_DRUID_BERSERK_CAT_CRIT            = 80508,
+    SPELL_DRUID_BERSERK_COMBO_GEN           = 80510,
+    SPELL_DRUID_SAVAGE_ROAR                 = 80511,
+    SPELL_DRUID_STELLAR_FLARE_DISPEL        = 80529,
+    SPELL_DRUID_CELESTIAL_ALIGNMENT         = 80531,
+    SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT     = 80532,
+    SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT     = 80533,
+    SPELL_DRUID_FORCE_OF_NATURE             = 33831,
+    SPELL_DRUID_STELLAR_FLARE               = 80528,
+    SPELL_DRUID_ASTRAL_COMMUNION            = 80534,
+    SPELL_DRUID_SHOOTING_STARS              = 80537,
+    SPELL_DRUID_SHOOTING_STARS_PROC         = 80538,
+    SPELL_DRUID_WILD_MUSHROOM               = 80142,
+    SPELL_DRUID_MOON_FALL                   = 80539,
+    SPELL_DRUID_NEW_MOON                    = 80540,
+    SPELL_DRUID_NEW_MOON_AURA               = 80543,
+    SPELL_DRUID_HALF_MOON                   = 80541,
+    SPELL_DRUID_HALF_MOON_AURA              = 80544,
+    SPELL_DRUID_FULL_MOON                   = 80542,
+    SPELL_DRUID_FULL_MOON_AURA              = 80545,
+    SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
+    SPELL_DRUID_AVATAR_OF_ASHAMANE          = 80548,
+    SPELL_DRUID_RIP                         = 80558,
+    SPELL_DRUID_RIP_DOT                     = 49800,
+    SPELL_DRUID_PRIMAL_WRATH                = 80551,
+    SPELL_DRUID_MOONFIRE_CAT                = 80547,
+    SPELL_DRUID_SOOTHE_CAT                  = 80554,
+    SPELL_DRUID_REMOVE_CORRUPTION_CAT       = 80553,
+    SPELL_DRUID_IRONFUR_BASE                = 80555,
+    SPELL_DRUID_IRONFUR_ARMOR               = 80556,
+    SPELL_DRUID_URSINE_ADEPT                = 80560,
+    SPELL_DRUID_MOONFIRE_BEAR               = 80559,
+    SPELL_DRUID_SOOTHE_BEAR                 = 80562,
+    SPELL_DRUID_REMOVE_CORRUPTION_BEAR      = 80563,
 
     // Rune Spell
     SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF = 701042,
@@ -2068,9 +2070,30 @@ class spell_dru_ironfur : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_IRONFUR_BASE);
         uint32 armorPercent = value->GetEffect(EFFECT_0).CalcValue(caster);
-        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_AGILITY), armorPercent);
+        int32 armor = CalculatePct(caster->GetStat(STAT_AGILITY), armorPercent);
 
-        GetCaster()->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+        if (caster->HasAura(SPELL_DRUID_URSINE_ADEPT))
+        {
+            if (!caster->HasAura(SPELL_DRUID_IRONFUR_ARMOR))
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+            else
+            {
+                int32 remainingDuration = caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)->GetDuration();
+                int32 increaseDuration = value->GetEffect(EFFECT_1).CalcValue(caster);
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+                caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)->SetDuration(remainingDuration + increaseDuration);
+            }
+        }
+        else
+        {
+            if (!caster->HasAura(SPELL_DRUID_IRONFUR_ARMOR))
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+            else
+            {
+                caster->RemoveAura(SPELL_DRUID_IRONFUR_ARMOR);
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register()
@@ -2102,6 +2125,33 @@ class spell_dru_rip_new : public SpellScript
     void Register()
     {
         OnCast += SpellCastFn(spell_dru_rip_new::HandleCast);
+    }
+};
+
+class spell_dru_ursine_adept : public AuraScript
+{
+    PrepareAuraScript(spell_dru_ursine_adept);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->learnSpell(SPELL_DRUID_MOONFIRE_BEAR);
+        target->learnSpell(SPELL_DRUID_SOOTHE_BEAR);
+        target->learnSpell(SPELL_DRUID_REMOVE_CORRUPTION_BEAR);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(SPELL_DRUID_MOONFIRE_BEAR, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_SOOTHE_BEAR, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_REMOVE_CORRUPTION_BEAR, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_ursine_adept::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_ursine_adept::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2173,4 +2223,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_feline_adept);
     RegisterSpellScript(spell_dru_ironfur);
     RegisterSpellScript(spell_dru_rip_new);
+    RegisterSpellScript(spell_dru_ursine_adept);
 }
