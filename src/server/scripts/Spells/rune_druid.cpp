@@ -23,7 +23,7 @@ enum DruidSpells
     FORM_MOONKIN_FORM = 24858,
 
     //Incarnations
-    SPELL_INCARNATION_AVATAR_OF_ASHAMANE = 00000,
+    SPELL_INCARNATION_AVATAR_OF_ASHAMANE = 80548,
     SPELL_INCARNATION_GUARDIAN_OF_URSOC = 00000,
     SPELL_INCARNATION_TREE_OF_LIFE = 00000,
 
@@ -43,6 +43,7 @@ enum DruidSpells
     SPELL_REGROWTH = 48443,
     SPELL_REJUVENATION = 48441,
     SPELL_RIP = 49800,
+    SPELL_SAVAGE_ROAR = 80511,
     SPELL_STARFALL = 53201,
     SPELL_STARFIRE = 48465,
     SPELL_STARFIRE_AOE = 80506,
@@ -64,79 +65,47 @@ enum DruidSpells
     RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_BARKSKIN = 700017,
     RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY = 700018,
     RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_WILD_GROWTH = 700019,
-
     RUNE_DRUID_PROTECTIVE_SKIN_SHIELD = 700068,
-
     RUNE_DRUID_SKYSEC_HOLD_HEAL = 700088,
-
     RUNE_DRUID_RAMPANT_FEROCITY_DAMAGE = 700181,
-
     RUNE_DRUID_GUARDIANS_WRATH_DOT = 700218,
-
     RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF = 700274,
-
     RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF = 700282,
-
     RUNE_DRUID_DREAM_OF_CENARIUS_DEBUFF = 700380,
-
     RUNE_DRUID_AUTUMN_LEAVES_HEAL = 700414,
-
     RUNE_DRUID_CULTIVATION_HEAL = 700422,
-
     RUNE_DRUID_GERMINATION_LISTENER = 700437,
-
     RUNE_DRUID_NURTURING_DORMANCY_LISTENER = 700436,
-
     RUNE_DRUID_SKIN_SHREDDER_DOT = 700468,
-
     RUNE_DRUID_IMPROVED_SUNFIRE_AOE = 700482,
-
     RUNE_DRUID_TSUNAMI_DEBUFF = 700514,
-
     RUNE_DRUID_NATURAL_SMOLDER_DOT = 700546,
-
     RUNE_DRUID_MERCILESS_CLAWS_DAMAGE = 700578,
-
     RUNE_DRUID_BURNING_ATTACKS_DAMAGE = 700596,
-
     RUNE_DRUID_BALANCE_OF_ALL_THINGS_ARCANE_BUFF = 700630,
     RUNE_DRUID_BALANCE_OF_ALL_THINGS_NATURE_BUFF = 700631,
     RUNE_DRUID_BALANCE_OF_ALL_THINGS_REMOVE_BUFF = 700632,
-
     RUNE_DRUID_LUNAR_SHRAPNEL_DAMAGE = 700652,
-
     RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE = 700666,
     RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE = 700667,
-
     RUNE_DRUID_STARLORD_BUFF = 700674,
-
     RUNE_DRUID_ARCANIC_SMOLDER_DOT = 700706,
-
     RUNE_DRUID_ASTRAL_SMOLDER_DOT = 700758,
-
     RUNE_DRUID_POWER_OF_GOLDRINN_DAMAGE = 700770,
-
     RUNE_DRUID_STARWEAVER_STARFALL_BUFF = 700790,
     RUNE_DRUID_STARWEAVER_STARSURGE_BUFF = 700791,
-
     RUNE_DRUID_ORBIT_BREAKER_LISTENER = 700810,
-
     RUNE_DRUID_SOLSTICE_BUFF = 700818,
-
     RUNE_DRUID_KNOWLEDGE_AGREEMENT_BUFF = 700832,
     RUNE_DRUID_KNOWLEDGE_AGREEMENT_AFTERBUFF = 700833,
-
     RUNE_DRUID_BALANCE_BUFF = 700866,
-
     RUNE_DRUID_FUNGAL_GROWTH_DOT = 700874,
-
     RUNE_DRUID_DRUID_OF_THE_FLAME_DOT = 700930,
-
     RUNE_DRUID_LACERATING_CLAWS_DOT = 700962,
-
     RUNE_DRUID_BERSERKS_FRENZY_DOT = 700974,
-
     RUNE_DRUID_ASHAMANES_BITE_DOT = 701006,
+    RUNE_DRUID_RIP_AND_TEAR_DOT = 701034,
+    RUNE_DRUID_TIGERS_TENACITY_LISTENER = 701086,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -3192,6 +3161,346 @@ class rune_druid_ashamanes_bite : public AuraScript
     }
 };
 
+class rune_druid_rip_and_tear : public AuraScript
+{
+    PrepareAuraScript(rune_druid_rip_and_tear);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701028; i < 701034; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+        Unit* victim = GetAura()->GetOwner()->ToUnit();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 ripAmplitude = aurEff->GetAmplitude();
+        int32 ripDuration = GetAura()->GetDuration();
+        int32 maxRipTicks = ripDuration / ripAmplitude;
+        float damageAmount = aurEff->GetAmount() * maxRipTicks;
+        int32 damage = CalculatePct(damageAmount, GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount());
+        int32 maxTicks = sSpellMgr->GetSpellInfo(RUNE_DRUID_RIP_AND_TEAR_DOT)->GetMaxTicks();
+        int32 amount = damage / maxTicks;
+
+        caster->CastCustomSpell(RUNE_DRUID_RIP_AND_TEAR_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_rip_and_tear::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+class rune_druid_feral_savagery : public AuraScript
+{
+    PrepareAuraScript(rune_druid_feral_savagery);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701050; i < 701056; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 durationPct = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+        float duration = CalculatePct(GetAura()->GetDuration(), durationPct);
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+        caster->GetAura(procSpell)->SetDuration(duration);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_feral_savagery::HandleProc, EFFECT_0, SPELL_AURA_MOD_POWER_REGEN_PERCENT, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+class rune_druid_savage_scream : public AuraScript
+{
+    PrepareAuraScript(rune_druid_savage_scream);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* savageRoar = caster->GetAura(SPELL_SAVAGE_ROAR))
+        {
+            int32 procChance = GetCaster()->GetComboPoints() * aurEff->GetAmount();
+            uint32 random = urand(1, 100);
+
+            if (random > procChance)
+                return;
+
+            savageRoar->Remove();
+            caster->AddAura(SPELL_SAVAGE_ROAR, caster);
+            int32 duration = savageRoar->GetMaxDuration();
+            savageRoar->SetDuration(duration, true);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_savage_scream::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_predators_fury : public AuraScript
+{
+    PrepareAuraScript(rune_druid_predators_fury);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* Victim = eventInfo.GetActionTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        auto targetAuras = Victim->GetAppliedAuras();
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (caster->GetGUID() != aura->GetCasterGUID())
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[2] & 0x01000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                {
+                    caster->RemoveSpellCooldown(SPELL_TIGERS_FURY, true);
+                    return;
+                }
+            }
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_predators_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_raging_fury : public AuraScript
+{
+    PrepareAuraScript(rune_druid_raging_fury);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* tigersFury = caster->GetAura(SPELL_TIGERS_FURY))
+        {
+            int32 duration = tigersFury->GetDuration();
+            int32 increase = caster->GetComboPoints() * aurEff->GetAmount();
+            tigersFury->SetDuration(duration + increase);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_raging_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_tigers_tenacity_cast : public SpellScript
+{
+    PrepareSpellScript(rune_druid_tigers_tenacity_cast);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701080; i < 701086; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 stack = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(RUNE_DRUID_TIGERS_TENACITY_LISTENER, caster);
+        caster->GetAura(RUNE_DRUID_TIGERS_TENACITY_LISTENER)->SetStackAmount(stack);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_druid_tigers_tenacity_cast::HandleCast);
+    }
+};
+
+class rune_druid_tigers_tenacity : public SpellScript
+{
+    PrepareSpellScript(rune_druid_tigers_tenacity);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* listener = caster->GetAura(RUNE_DRUID_TIGERS_TENACITY_LISTENER))
+        {
+            GetCaster()->AddComboPoints(target, 1);
+            listener->ModStackAmount(-1);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(rune_druid_tigers_tenacity::HandleAfterCast);
+    }
+};
+
+class rune_druid_ashamanes_energy : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ashamanes_energy);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        int32 buffAura = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        if (caster->HasAura(SPELL_TIGERS_FURY))
+            caster->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701100; i < 701106; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_ashamanes_energy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_ashamanes_energy::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_ashamanes_energy_proc : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ashamanes_energy_proc);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701094; i < 701100; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 buffAura = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        if (caster->HasAura(SPELL_TIGERS_FURY))
+            caster->AddAura(buffAura, GetCaster());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701100; i < 701106; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_ashamanes_energy_proc::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_ashamanes_energy_proc::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_ashamanes_guidance : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ashamanes_guidance);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetCaster()->HasAura(FORM_CAT_FORM))
+            return;
+
+        int32 ashamaneDuration = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        if (Aura* ashamane = caster->GetAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+        {
+            int32 duration = ashamane->GetDuration();
+            ashamaneDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            ashamane->SetDuration(duration + ashamaneDuration);
+        }
+        else
+        {
+            caster->AddAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE, caster);
+            caster->GetAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE)->SetDuration(ashamaneDuration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_ashamanes_guidance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_druid_rune_scripts()
@@ -3268,9 +3577,19 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_heart_of_the_lion);
     RegisterSpellScript(rune_druid_ripping_bite);
     RegisterSpellScript(rune_druid_ashamanes_bite);
+    RegisterSpellScript(rune_druid_rip_and_tear);
+    RegisterSpellScript(rune_druid_feral_savagery);
+    RegisterSpellScript(rune_druid_savage_scream);
+    RegisterSpellScript(rune_druid_predators_fury);
+    RegisterSpellScript(rune_druid_raging_fury);
+    RegisterSpellScript(rune_druid_tigers_tenacity_cast);
+    RegisterSpellScript(rune_druid_tigers_tenacity);
+    RegisterSpellScript(rune_druid_ashamanes_energy);
+    RegisterSpellScript(rune_druid_ashamanes_energy_proc);
+    RegisterSpellScript(rune_druid_ashamanes_guidance);
 
 
 
 
-
+    
 }
