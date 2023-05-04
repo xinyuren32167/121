@@ -432,6 +432,7 @@ public:
     // setter/getter for for damage done by spell to target of spell hit
     // returns damage calculated before hit, and real dmg done after hit
     int32 GetHitDamage();
+    uint32 GetProcEx();
     void SetHitDamage(int32 damage);
     void PreventHitDamage() { SetHitDamage(0); }
     // setter/getter for for heal done by spell to target of spell hit
