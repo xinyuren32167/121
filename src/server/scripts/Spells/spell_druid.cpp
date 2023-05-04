@@ -107,6 +107,10 @@ enum DruidSpells
     SPELL_DRUID_REMOVE_CORRUPTION_CAT       = 80553,
     SPELL_DRUID_IRONFUR_BASE                = 80555,
     SPELL_DRUID_IRONFUR_ARMOR               = 80556,
+    SPELL_DRUID_URSINE_ADEPT                = 80560,
+    SPELL_DRUID_MOONFIRE_BEAR               = 80559,
+    SPELL_DRUID_SOOTHE_BEAR                 = 80562,
+    SPELL_DRUID_REMOVE_CORRUPTION_BEAR      = 80563,
 };
 
 // 1178 - Bear Form (Passive)
@@ -2058,9 +2062,30 @@ class spell_dru_ironfur : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_IRONFUR_BASE);
         uint32 armorPercent = value->GetEffect(EFFECT_0).CalcValue(caster);
-        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_AGILITY), armorPercent);
+        int32 armor = CalculatePct(caster->GetStat(STAT_AGILITY), armorPercent);
 
-        GetCaster()->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+        if (caster->HasAura(SPELL_DRUID_URSINE_ADEPT))
+        {
+            if (!caster->HasAura(SPELL_DRUID_IRONFUR_ARMOR))
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+            else
+            {
+                int32 remainingDuration = caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)->GetDuration();
+                int32 increaseDuration = value->GetEffect(EFFECT_1).CalcValue(caster);
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+                caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)->SetDuration(remainingDuration + increaseDuration);
+            }
+        }
+        else
+        {
+            if (!caster->HasAura(SPELL_DRUID_IRONFUR_ARMOR))
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+            else
+            {
+                caster->RemoveAura(SPELL_DRUID_IRONFUR_ARMOR);
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register()
@@ -2092,6 +2117,33 @@ class spell_dru_rip_new : public SpellScript
     void Register()
     {
         OnCast += SpellCastFn(spell_dru_rip_new::HandleCast);
+    }
+};
+
+class spell_dru_ursine_adept : public AuraScript
+{
+    PrepareAuraScript(spell_dru_ursine_adept);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->learnSpell(SPELL_DRUID_MOONFIRE_BEAR);
+        target->learnSpell(SPELL_DRUID_SOOTHE_BEAR);
+        target->learnSpell(SPELL_DRUID_REMOVE_CORRUPTION_BEAR);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(SPELL_DRUID_MOONFIRE_BEAR, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_SOOTHE_BEAR, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_REMOVE_CORRUPTION_BEAR, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_ursine_adept::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_ursine_adept::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2163,4 +2215,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_feline_adept);
     RegisterSpellScript(spell_dru_ironfur);
     RegisterSpellScript(spell_dru_rip_new);
+    RegisterSpellScript(spell_dru_ursine_adept);
 }
