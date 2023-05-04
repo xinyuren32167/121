@@ -2065,34 +2065,24 @@ class spell_dru_ironfur : public SpellScript
     void HandleCast()
     {
         Unit* caster = GetCaster();
-        if (!caster || !caster->IsAlive())
-            return;
-
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_IRONFUR_BASE);
         uint32 armorPercent = value->GetEffect(EFFECT_0).CalcValue(caster);
+        int32 increaseDuration = value->GetEffect(EFFECT_1).CalcValue(caster);
         int32 armor = CalculatePct(caster->GetStat(STAT_AGILITY), armorPercent);
 
-        if (caster->HasAura(SPELL_DRUID_URSINE_ADEPT))
-        {
-            if (!caster->HasAura(SPELL_DRUID_IRONFUR_ARMOR))
+        if (Aura* aura = caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)) {
+            if (caster->HasAura(SPELL_DRUID_URSINE_ADEPT)) {
+                int32 remainingDuration = aura->GetDuration();
                 caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
-            else
-            {
-                int32 remainingDuration = caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)->GetDuration();
-                int32 increaseDuration = value->GetEffect(EFFECT_1).CalcValue(caster);
-                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
-                caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)->SetDuration(remainingDuration + increaseDuration);
+                aura->SetDuration(remainingDuration + increaseDuration);
             }
-        }
-        else
-        {
-            if (!caster->HasAura(SPELL_DRUID_IRONFUR_ARMOR))
-                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
-            else
-            {
+            else {
                 caster->RemoveAura(SPELL_DRUID_IRONFUR_ARMOR);
                 caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
             }
+        }
+        else {
+            caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
         }
     }
 

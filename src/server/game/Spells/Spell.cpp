@@ -5374,30 +5374,20 @@ SpellCastResult Spell::CheckRuneCost(uint32 RuneCostID)
     if (src->NoRuneCost())
         return SPELL_CAST_OK;
 
-    int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
+    uint32 runeCost = src->RuneCost[RUNE_BLOOD]; // we always take the blood rune cost because "everything" is a blood rune.
 
-    for (uint32 i = 0; i < RUNE_DEATH; ++i)
-    {
-        runeCost[i] = src->RuneCost[i];
-        if (Player* modOwner = m_caster->GetSpellModOwner())
-            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCost[i], this);
-    }
+    if (Player* modOwner = m_caster->GetSpellModOwner())
+        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCost, this);
 
-    runeCost[RUNE_DEATH] = MAX_RUNES;                       // calculated later
+
+    // We check if they are any rune on cooldown.
 
     for (uint32 i = 0; i < MAX_RUNES; ++i)
     {
         RuneType rune = player->GetCurrentRune(i);
-        if ((player->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
-            runeCost[rune]--;
+        if ((player->GetRuneCooldown(i) == 0))
+            return SPELL_CAST_OK;
     }
-
-    for (uint32 i = 0; i < RUNE_DEATH; ++i)
-        if (runeCost[i] > 0)
-            runeCost[RUNE_DEATH] += runeCost[i];
-
-    if (runeCost[RUNE_DEATH] > MAX_RUNES)
-        return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
 
     return SPELL_CAST_OK;
 }

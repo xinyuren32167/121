@@ -521,6 +521,17 @@ int32 SpellScript::GetHitDamage()
     return m_spell->m_damage;
 }
 
+
+uint32 SpellScript::GetProcEx()
+{
+    if (!IsInTargetHook())
+    {
+        LOG_ERROR("spells.scripts", "Script: `{}` Spell: `{}`: function SpellScript::m_procEx was called, but function has no effect in current hook!", m_scriptName->c_str(), m_scriptSpellId);
+        return 0;
+    }
+    return m_spell->m_procEx;
+}
+
 void SpellScript::SetHitDamage(int32 damage)
 {
     if (!IsInTargetHook())

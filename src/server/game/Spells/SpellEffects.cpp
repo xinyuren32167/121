@@ -3541,23 +3541,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                     spell_bonus = weaponDamage;
                     break;
                 }
-                // Heart Strike
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x1000000)
-                {
-                    float disease_amt = m_spellInfo->Effects[EFFECT_2].CalcValue();
-                    //Death Knight T8 Melee 4P Bonus
-                    if (AuraEffect* aurEff = m_caster->GetAuraEffectDummy(64736) )
-                        AddPct(disease_amt, aurEff->GetAmount());
-
-                    AddPct(totalDamagePercentMod, disease_amt * unitTarget->GetDiseasesByCaster(m_caster->GetGUID()));
-                    break;
-                }
-                // Rune Strike
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x20000000)
-                {
-                    spell_bonus += int32(0.15f * m_caster->GetTotalAttackPowerValue(BASE_ATTACK));
-                }
-
                 break;
             }
     }
