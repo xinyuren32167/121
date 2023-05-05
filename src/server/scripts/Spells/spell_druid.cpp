@@ -31,37 +31,36 @@
 
 enum DruidSpells
 {
-    SPELL_DRUID_GLYPH_OF_WILD_GROWTH        = 62970,
-    SPELL_DRUID_NURTURING_INSTINCT_R1       = 47179,
-    SPELL_DRUID_NURTURING_INSTINCT_R2       = 47180,
-    SPELL_DRUID_FERAL_SWIFTNESS_R1          = 17002,
-    SPELL_DRUID_FERAL_SWIFTNESS_R2          = 24866,
-    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_1   = 24867,
-    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_2   = 24864,
-    SPELL_DRUID_BARKSKIN                    = 22812,
-    SPELL_DRUID_GLYPH_OF_BARKSKIN           = 63057,
-    SPELL_DRUID_GLYPH_OF_BARKSKIN_TRIGGER   = 63058,
-    SPELL_DRUID_ENRAGE_MOD_DAMAGE           = 51185,
-    SPELL_DRUID_GLYPH_OF_TYPHOON            = 62135,
-    SPELL_DRUID_IDOL_OF_FERAL_SHADOWS       = 34241,
-    SPELL_DRUID_IDOL_OF_WORSHIP             = 60774,
+    SPELL_DRUID_GLYPH_OF_WILD_GROWTH = 62970,
+    SPELL_DRUID_NURTURING_INSTINCT_R1 = 47179,
+    SPELL_DRUID_NURTURING_INSTINCT_R2 = 47180,
+    SPELL_DRUID_FERAL_SWIFTNESS_R1 = 17002,
+    SPELL_DRUID_FERAL_SWIFTNESS_R2 = 24866,
+    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_1 = 24867,
+    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_2 = 24864,
+    SPELL_DRUID_BARKSKIN = 22812,
+    SPELL_DRUID_GLYPH_OF_BARKSKIN = 63057,
+    SPELL_DRUID_GLYPH_OF_BARKSKIN_TRIGGER = 63058,
+    SPELL_DRUID_ENRAGE_MOD_DAMAGE = 51185,
+    SPELL_DRUID_GLYPH_OF_TYPHOON = 62135,
+    SPELL_DRUID_IDOL_OF_FERAL_SHADOWS = 34241,
+    SPELL_DRUID_IDOL_OF_WORSHIP = 60774,
     SPELL_DRUID_INCREASED_MOONFIRE_DURATION = 38414,
-    SPELL_DRUID_KING_OF_THE_JUNGLE          = 48492,
-    SPELL_DRUID_LIFEBLOOM_ENERGIZE          = 64372,
-    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 33778,
-    SPELL_DRUID_LIVING_SEED_HEAL            = 48503,
-    SPELL_DRUID_LIVING_SEED_PROC            = 48504,
-    SPELL_DRUID_NATURES_SPLENDOR            = 57865,
-    SPELL_DRUID_SURVIVAL_INSTINCTS          = 50322,
+    SPELL_DRUID_KING_OF_THE_JUNGLE = 48492,
+    SPELL_DRUID_LIFEBLOOM_ENERGIZE = 64372,
+    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL = 33778,
+    SPELL_DRUID_LIVING_SEED_HEAL = 48503,
+    SPELL_DRUID_LIVING_SEED_PROC = 48504,
+    SPELL_DRUID_NATURES_SPLENDOR = 57865,
+    SPELL_DRUID_SURVIVAL_INSTINCTS = 50322,
     //SPELL_DRUID_SAVAGE_ROAR                 = 62071,
-    SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178,
-    SPELL_DRUID_ITEM_T8_BALANCE_RELIC       = 64950,
-    SPELL_DRUID_BEAR_FORM_PASSIVE           = 1178,
-    SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE      = 9635,
-    SPELL_DRUID_ENRAGE                      = 5229,
-    SPELL_DRUID_ENRAGED_DEFENSE             = 70725,
-    SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS     = 70726,
-
+    SPELL_DRUID_TIGER_S_FURY_ENERGIZE = 51178,
+    SPELL_DRUID_ITEM_T8_BALANCE_RELIC = 64950,
+    SPELL_DRUID_BEAR_FORM_PASSIVE = 1178,
+    SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE = 9635,
+    SPELL_DRUID_ENRAGE = 5229,
+    SPELL_DRUID_ENRAGED_DEFENSE = 70725,
+    SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS = 70726,
     SPELL_DRUID_FEROCIOUS_BITE              = 48577,
     SPELL_DRUID_PROWL                       = 5215,
     SPELL_DRUID_CAT_FORM                    = 768,
@@ -111,6 +110,9 @@ enum DruidSpells
     SPELL_DRUID_MOONFIRE_BEAR               = 80559,
     SPELL_DRUID_SOOTHE_BEAR                 = 80562,
     SPELL_DRUID_REMOVE_CORRUPTION_BEAR      = 80563,
+
+    // Rune Spell
+    SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF = 701042,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1228,22 +1230,28 @@ class spell_dru_ferocious_bite : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
+        Unit* caster = GetCaster();
         SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE);
-        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
-        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
-        int32 energy = GetCaster()->GetPower(POWER_ENERGY);
-        int32 consumption = spell->GetEffect(EFFECT_2).CalcValue(GetCaster());
+        int32 damageRatio = caster->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+        int32 energy = caster->GetPower(POWER_ENERGY);
+        int32 consumption = spell->GetEffect(EFFECT_2).CalcValue(caster);
 
-        if (energy > 0)
+        if (caster->HasAura(SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF))
+        {
+            int32 bonusDamage = consumption * (spell->GetEffect(EFFECT_1).CalcValue(caster));
+            damage += int32(CalculatePct(damage, bonusDamage));
+        }
+        else if (energy > 0)
         {
             int32 bonusPercent = std::min<int32>(energy, consumption);
-            int32 bonusDamage = bonusPercent * (sSpellMgr->AssertSpellInfo(SPELL_DRUID_FEROCIOUS_BITE)->GetEffect(EFFECT_1).CalcValue());
+            int32 bonusDamage = bonusPercent * (spell->GetEffect(EFFECT_1).CalcValue(caster));
             damage += int32(CalculatePct(damage, bonusDamage));
 
-            GetCaster()->ModifyPower(POWER_ENERGY, -bonusPercent);
+            caster->ModifyPower(POWER_ENERGY, -bonusPercent);
         }
 
-        if (Aura* runeAura = GetTasteForBloodRuneAura(GetCaster()))
+        if (Aura* runeAura = GetTasteForBloodRuneAura(caster))
         {
             int32 bleedQuantity = 0;
             auto targetAuras = GetExplTargetUnit()->GetAppliedAuras();
@@ -1251,7 +1259,7 @@ class spell_dru_ferocious_bite : public SpellScript
             {
                 if (Aura* aura = itr->second->GetBase())
                 {
-                    if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                    if (caster->GetGUID() != aura->GetCasterGUID())
                         continue;
 
                     SpellInfo const* auraInfo = aura->GetSpellInfo();
@@ -1272,8 +1280,8 @@ class spell_dru_ferocious_bite : public SpellScript
 
         if (Unit* target = GetHitUnit())
         {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
         SetHitDamage(damage);
     }
@@ -1669,7 +1677,7 @@ class spell_dru_prowl_check : public SpellScript
             return SPELL_FAILED_TARGET_IN_COMBAT;
 
         return SPELL_CAST_OK;
-    } 
+    }
 
     void HandleCast()
     {
@@ -1998,10 +2006,10 @@ class spell_dru_primal_wrath : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        
+
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_PRIMAL_WRATH);
         uint32 durationAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
-        
+
         uint8 comboPoint = caster->ToPlayer()->GetComboPoints();
         int32 duration = durationAmount + (durationAmount * comboPoint);
 
@@ -2099,7 +2107,7 @@ class spell_dru_rip_new : public SpellScript
         uint32 durationIncrease = value->GetEffect(EFFECT_0).CalcValue(caster);
         uint8 comboPoints = caster->ToPlayer()->GetComboPoints();
         int32 duration = durationIncrease + (durationIncrease * comboPoints);
-        
+
         caster->CastSpell(target, SPELL_DRUID_RIP_DOT, TRIGGERED_FULL_MASK);
         target->GetAura(SPELL_DRUID_RIP_DOT)->SetDuration(duration);
     }
