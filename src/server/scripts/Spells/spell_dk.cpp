@@ -75,6 +75,8 @@ enum DeathKnightSpells
     SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
     SPELL_DK_HEALING_ABSORB_DEATH_PACT          = 80301,
     SPELL_DK_GLACIAL_ADVANCE_DAMAGE             = 80305,
+    SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE = 80310,
+    SPELL_DK_GLACIAL_CHILL_STREAK_TICK          = 80309,
 };
 
 enum DeathKnightSpellIcons
@@ -103,19 +105,40 @@ class spell_dk_death_pact: public SpellScript
     }
 };
 
-class spell_dk_death_pact : public SpellScript
-{
-    PrepareSpellScript(spell_dk_death_pact);
 
-    void HandleCast()
+class spell_dk_chill_streak : public AuraScript
+{
+    PrepareAuraScript(spell_dk_chill_streak);
+
+    void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        uint32 amount = GetCaster()->CountPctFromMaxHealth(GetEffectValue());
-        GetCaster()->CastCustomSpell(SPELL_DK_HEALING_ABSORB_DEATH_PACT, SPELLVALUE_BASE_POINT0, amount, GetCaster());
+
+        Unit* caster = GetCaster();
+        Unit* target = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* originalCaster = aurEff->GetBase()->GetUnitOwner();
+        int32 currentTick = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+        float range = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 maxTick = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount();
+
+        if (currentTick == maxTick)
+            return;
+
+        Creature* creature = target->FindNearestCreatureWithoutEntry(target->GetGUID(), range, true);
+
+        if (!creature)
+            return;
+
+        originalCaster->CastSpell(creature, SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE, true, nullptr, nullptr, caster->GetGUID());
+        originalCaster->CastCustomSpell(SPELL_DK_GLACIAL_CHILL_STREAK_TICK, SPELLVALUE_BASE_POINT0, currentTick + 1, creature, true, nullptr, nullptr, caster->GetGUID());
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_dk_death_pact::HandleCast);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_chill_streak::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -185,6 +208,80 @@ public:
     CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_dk_spell_glacial_advanceAI(creature);
+    }
+};
+
+
+class npc_dk_spell_frostwyrm : public CreatureScript
+{
+public:
+    npc_dk_spell_frostwyrm() : CreatureScript("npc_dk_spell_frostwyrm") { }
+
+    struct npc_dk_spell_frostwyrmAI : public ScriptedAI
+    {
+        npc_dk_spell_frostwyrmAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 500;
+
+        void Reset() override
+        {
+            if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                Position pos = me->GetFirstCollisionPosition(40.0f, 0);
+                me->GetMotionMaster()->MovePoint(0, pos);
+                me->CombatStop(true);
+                me->AttackStop();
+                me->SetReactState(REACT_PASSIVE);
+
+            }
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 500) {
+                if (Creature* creature = me->FindNearestCreatureWithoutEntry(me->GetGUID(), 40.0f, true)) {
+                    me->CastSpell(creature, 80311);
+                }
+                update = 0;
+            }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override {
+            if (id == 0) {
+                me->DespawnOrUnsummon();
+            }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_dk_spell_frostwyrmAI(creature);
+    }
+};
+
+class spell_dk_frostwyrm : public SpellScript
+{
+    PrepareSpellScript(spell_dk_frostwyrm);
+
+    void HandleSummon()
+    {
+        Position pos = *GetCaster();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = GetCaster()->SummonCreature(500506, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ() + 5.f, pos.GetOrientation(), TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetDuration(), properties);
+        if (!summon)
+            return;
+
+        summon->SetOwnerGUID(GetCaster()->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetTarget();
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_frostwyrm::HandleSummon);
     }
 };
 
@@ -2209,5 +2306,8 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_bone_shield_calculation);
     RegisterSpellScript(spell_dk_death_pact);
     RegisterSpellScript(spell_dk_pillar_of_frost);
+    RegisterSpellScript(spell_dk_chill_streak);
+    RegisterSpellScript(spell_dk_frostwyrm);
     new npc_dk_spell_glacial_advance();
+    new npc_dk_spell_frostwyrm();
 }

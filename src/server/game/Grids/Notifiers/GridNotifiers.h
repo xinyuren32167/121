@@ -1352,12 +1352,12 @@ namespace Acore
     class NearestCreaturWithLiveStateInObjectRangeCheck
     {
     public:
-        NearestCreaturWithLiveStateInObjectRangeCheck(WorldObject const& obj, bool alive, float range)
-            : i_obj(obj), i_alive(alive), i_range(range) {}
+        NearestCreaturWithLiveStateInObjectRangeCheck(WorldObject const& obj, bool alive, float range, ObjectGuid guid)
+            : i_obj(obj), i_alive(alive), i_range(range), i_guid(guid) {}
 
         bool operator()(Creature* u)
         {
-            if (u->IsAlive() == i_alive && i_obj.IsWithinDist(u, i_range) && i_obj.InSamePhase(u))
+            if (u->IsAlive() == i_alive && i_obj.IsWithinDist(u, i_range) && i_obj.InSamePhase(u) && i_guid != u->GetGUID())
             {
                 i_range = i_obj.GetDistance(u);         // use found unit range as new range limit for next check
                 return true;
@@ -1368,6 +1368,7 @@ namespace Acore
         WorldObject const& i_obj;
         bool   i_alive;
         float  i_range;
+        ObjectGuid i_guid;
 
         // prevent clone this object
         NearestCreaturWithLiveStateInObjectRangeCheck(NearestCreaturWithLiveStateInObjectRangeCheck const&);
