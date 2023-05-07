@@ -31,36 +31,39 @@
 
 enum DruidSpells
 {
-    SPELL_DRUID_GLYPH_OF_WILD_GROWTH = 62970,
-    SPELL_DRUID_NURTURING_INSTINCT_R1 = 47179,
-    SPELL_DRUID_NURTURING_INSTINCT_R2 = 47180,
-    SPELL_DRUID_FERAL_SWIFTNESS_R1 = 17002,
-    SPELL_DRUID_FERAL_SWIFTNESS_R2 = 24866,
-    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_1 = 24867,
-    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_2 = 24864,
-    SPELL_DRUID_BARKSKIN = 22812,
-    SPELL_DRUID_GLYPH_OF_BARKSKIN = 63057,
-    SPELL_DRUID_GLYPH_OF_BARKSKIN_TRIGGER = 63058,
-    SPELL_DRUID_ENRAGE_MOD_DAMAGE = 51185,
-    SPELL_DRUID_GLYPH_OF_TYPHOON = 62135,
-    SPELL_DRUID_IDOL_OF_FERAL_SHADOWS = 34241,
-    SPELL_DRUID_IDOL_OF_WORSHIP = 60774,
+    //Old Stuff
+    SPELL_DRUID_GLYPH_OF_WILD_GROWTH        = 62970,
+    SPELL_DRUID_NURTURING_INSTINCT_R1       = 47179,
+    SPELL_DRUID_NURTURING_INSTINCT_R2       = 47180,
+    SPELL_DRUID_FERAL_SWIFTNESS_R1          = 17002,
+    SPELL_DRUID_FERAL_SWIFTNESS_R2          = 24866,
+    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_1   = 24867,
+    SPELL_DRUID_FERAL_SWIFTNESS_PASSIVE_2   = 24864,
+    SPELL_DRUID_BARKSKIN                    = 22812,
+    SPELL_DRUID_GLYPH_OF_BARKSKIN           = 63057,
+    SPELL_DRUID_GLYPH_OF_BARKSKIN_TRIGGER   = 63058,
+    SPELL_DRUID_ENRAGE_MOD_DAMAGE           = 51185,
+    SPELL_DRUID_GLYPH_OF_TYPHOON            = 62135,
+    SPELL_DRUID_IDOL_OF_FERAL_SHADOWS       = 34241,
+    SPELL_DRUID_IDOL_OF_WORSHIP             = 60774,
     SPELL_DRUID_INCREASED_MOONFIRE_DURATION = 38414,
-    SPELL_DRUID_KING_OF_THE_JUNGLE = 48492,
-    SPELL_DRUID_LIFEBLOOM_ENERGIZE = 64372,
-    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL = 33778,
-    SPELL_DRUID_LIVING_SEED_HEAL = 48503,
-    SPELL_DRUID_LIVING_SEED_PROC = 48504,
-    SPELL_DRUID_NATURES_SPLENDOR = 57865,
-    SPELL_DRUID_SURVIVAL_INSTINCTS = 50322,
+    SPELL_DRUID_KING_OF_THE_JUNGLE          = 48492,
+    SPELL_DRUID_LIFEBLOOM_ENERGIZE          = 64372,
+    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 33778,
+    SPELL_DRUID_LIVING_SEED_HEAL            = 48503,
+    SPELL_DRUID_LIVING_SEED_PROC            = 48504,
+    SPELL_DRUID_NATURES_SPLENDOR            = 57865,
+    SPELL_DRUID_SURVIVAL_INSTINCTS          = 50322,
     //SPELL_DRUID_SAVAGE_ROAR                 = 62071,
-    SPELL_DRUID_TIGER_S_FURY_ENERGIZE = 51178,
-    SPELL_DRUID_ITEM_T8_BALANCE_RELIC = 64950,
-    SPELL_DRUID_BEAR_FORM_PASSIVE = 1178,
-    SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE = 9635,
-    SPELL_DRUID_ENRAGE = 5229,
-    SPELL_DRUID_ENRAGED_DEFENSE = 70725,
-    SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS = 70726,
+    SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178,
+    SPELL_DRUID_ITEM_T8_BALANCE_RELIC       = 64950,
+    SPELL_DRUID_BEAR_FORM_PASSIVE           = 1178,
+    SPELL_DRUID_DIRE_BEAR_FORM_PASSIVE      = 9635,
+    SPELL_DRUID_ENRAGE                      = 5229,
+    SPELL_DRUID_ENRAGED_DEFENSE             = 70725,
+    SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS     = 70726,
+
+    //New Stuff
     SPELL_DRUID_FEROCIOUS_BITE              = 48577,
     SPELL_DRUID_PROWL                       = 5215,
     SPELL_DRUID_CAT_FORM                    = 768,
@@ -96,7 +99,6 @@ enum DruidSpells
     SPELL_DRUID_HALF_MOON_AURA              = 80544,
     SPELL_DRUID_FULL_MOON                   = 80542,
     SPELL_DRUID_FULL_MOON_AURA              = 80545,
-    SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_AVATAR_OF_ASHAMANE          = 80548,
     SPELL_DRUID_RIP                         = 80558,
     SPELL_DRUID_RIP_DOT                     = 49800,
@@ -110,8 +112,19 @@ enum DruidSpells
     SPELL_DRUID_MOONFIRE_BEAR               = 80559,
     SPELL_DRUID_SOOTHE_BEAR                 = 80562,
     SPELL_DRUID_REMOVE_CORRUPTION_BEAR      = 80563,
+    SPELL_DRUID_BRISTLING_FUR_PROC          = 80565,
+    SPELL_DRUID_THRASH                      = 80561,
+    SPELL_DRUID_GUARDIAN_HEALTH             = 80569,
+    SPELL_DRUID_GUARDIAN_OF_URSOC           = 80568,
+    SPELL_DRUID_BERSERK_BEAR                = 80566,
+    SPELL_DRUID_BEAR_FORM                   = 5487,
+    SPELL_DRUID_DIRE_BEAR_FORM              = 9634,
+    SPELL_DRUID_RAGE_SLEEPER                = 80570,
+    SPELL_DRUID_RAGE_SLEEPER_BUFFS          = 80571,
+    SPELL_DRUID_RAGE_SLEEPER_HEAL           = 80572,
 
     // Rune Spell
+    SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF = 701042,
 };
 
@@ -1980,18 +1993,20 @@ class spell_dru_avatar_of_ashamane : public AuraScript
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->AddAura(SPELL_DRUID_BERSERK_CAT, GetCaster());
-    }
+        Unit* caster = GetCaster(); 
+        Aura* improvedAura = caster->GetAura(SPELL_DRUID_AVATAR_OF_ASHAMANE);
+        int32 duration = improvedAura->GetDuration();
 
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        GetCaster()->RemoveAura(SPELL_DRUID_CAT_FORM);
+        caster->CastSpell(caster, SPELL_DRUID_CAT_FORM, TRIGGERED_FULL_MASK);
+
+        caster->CastSpell(caster, SPELL_DRUID_BERSERK_CAT, TRIGGERED_FULL_MASK);
+        Aura* catAura = caster->GetAura(SPELL_DRUID_BERSERK_CAT);
+        catAura->SetDuration(duration);             
     }
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_avatar_of_ashamane::HandleRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dru_avatar_of_ashamane::HandleApply, EFFECT_1, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2070,19 +2085,23 @@ class spell_dru_ironfur : public SpellScript
         int32 increaseDuration = value->GetEffect(EFFECT_1).CalcValue(caster);
         int32 armor = CalculatePct(caster->GetStat(STAT_AGILITY), armorPercent);
 
-        if (Aura* aura = caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR)) {
-            if (caster->HasAura(SPELL_DRUID_URSINE_ADEPT)) {
+        if (Aura* aura = caster->GetAura(SPELL_DRUID_IRONFUR_ARMOR))
+        {
+            if (caster->HasAura(SPELL_DRUID_URSINE_ADEPT))
+            {
                 int32 remainingDuration = aura->GetDuration();
-                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, caster, TRIGGERED_FULL_MASK);
                 aura->SetDuration(remainingDuration + increaseDuration);
             }
-            else {
+            else
+            {
                 caster->RemoveAura(SPELL_DRUID_IRONFUR_ARMOR);
-                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, caster, TRIGGERED_FULL_MASK);
             }
         }
-        else {
-            caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+        else
+        {
+            caster->CastCustomSpell(SPELL_DRUID_IRONFUR_ARMOR, SPELLVALUE_BASE_POINT0, armor, caster, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2142,6 +2161,165 @@ class spell_dru_ursine_adept : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_dru_ursine_adept::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_dru_ursine_adept::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_bristling_fur : public AuraScript
+{
+    PrepareAuraScript(spell_dru_bristling_fur);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (!eventInfo.GetDamageInfo() || !eventInfo.GetDamageInfo()->GetDamage())
+            return;
+        
+        int32 damageTaken = eventInfo.GetDamageInfo()->GetDamage();
+        int32 baseRageAmount = aurEff->GetAmount();
+        int32 healthAmount = CalculatePct(caster->GetMaxHealth(), 1);
+        int32 rageAmount = (damageTaken / healthAmount) * baseRageAmount;
+
+        if (damageTaken > healthAmount)
+            caster->CastCustomSpell(SPELL_DRUID_BRISTLING_FUR_PROC, SPELLVALUE_BASE_POINT0, rageAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_bristling_fur::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dru_pulverize : public SpellScript
+{
+    PrepareSpellScript(spell_dru_pulverize);
+
+    SpellCastResult CheckCast()
+    {
+        Unit* target = GetExplTargetUnit();
+        if (!target || !target->IsAlive())
+            return SPELL_FAILED_SPELL_UNAVAILABLE;
+
+        if (!target->HasAura(SPELL_DRUID_THRASH) || target->GetAura(SPELL_DRUID_THRASH)->GetStackAmount() < 2)
+            return SPELL_FAILED_SPELL_UNAVAILABLE;
+
+        return SPELL_CAST_OK;
+    }
+
+    void HandleCast()
+    {    
+        Unit* target = GetExplTargetUnit();
+
+        Aura* aura = target->GetAura(SPELL_DRUID_THRASH);
+        int32 stackAmount = aura->GetStackAmount();
+
+        if (stackAmount == 2)
+            target->RemoveAura(SPELL_DRUID_THRASH);
+        else
+            GetCaster()->SetAuraStack(SPELL_DRUID_THRASH, target, stackAmount += -2);
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_dru_pulverize::CheckCast);
+        OnCast += SpellCastFn(spell_dru_pulverize::HandleCast);
+    }
+};
+
+class spell_dru_guardian_of_ursoc_health : public SpellScript
+{
+    PrepareSpellScript(spell_dru_guardian_of_ursoc_health);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_GUARDIAN_OF_URSOC);
+        uint32 healthIncrease = value->GetEffect(EFFECT_0).CalcValue(caster);
+        int32 bp0 = caster->CountPctFromMaxHealth(healthIncrease);
+        caster->CastCustomSpell(caster, SPELL_DRUID_GUARDIAN_HEALTH, &bp0, nullptr, nullptr, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_guardian_of_ursoc_health::HandleCast);
+    }
+};
+
+class spell_dru_guardian_of_ursoc : public AuraScript
+{
+    PrepareAuraScript(spell_dru_guardian_of_ursoc);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Aura* improvedAura = caster->GetAura(SPELL_DRUID_GUARDIAN_OF_URSOC);
+        int32 duration = improvedAura->GetDuration();
+
+        if (!caster->HasAura(SPELL_DRUID_BEAR_FORM) || !caster->HasAura(SPELL_DRUID_DIRE_BEAR_FORM))
+        {
+            if (caster->HasSpell(SPELL_DRUID_DIRE_BEAR_FORM))
+                caster->CastSpell(caster, SPELL_DRUID_DIRE_BEAR_FORM, TRIGGERED_FULL_MASK);
+            else
+                caster->CastSpell(caster, SPELL_DRUID_BEAR_FORM, TRIGGERED_FULL_MASK);
+        }
+
+        caster->CastSpell(caster, SPELL_DRUID_BERSERK_BEAR, TRIGGERED_FULL_MASK);
+        Aura* catAura = caster->GetAura(SPELL_DRUID_BERSERK_BEAR);
+        catAura->SetDuration(duration);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_dru_guardian_of_ursoc::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_rage_sleeper : public AuraScript
+{
+    PrepareAuraScript(spell_dru_rage_sleeper);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_DRUID_RAGE_SLEEPER_BUFFS, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        caster->RemoveAura(SPELL_DRUID_RAGE_SLEEPER_BUFFS);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_rage_sleeper::HandleApply, EFFECT_0, SPELL_AURA_DAMAGE_SHIELD, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_rage_sleeper::HandleRemove, EFFECT_0, SPELL_AURA_DAMAGE_SHIELD, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_rage_sleeper_leech : public AuraScript
+{
+    PrepareAuraScript(spell_dru_rage_sleeper_leech);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage)
+            {
+                int32 healPct = aurEff->GetAmount();
+                int32 healAmount = CalculatePct(damage, healPct);
+                GetCaster()->CastCustomSpell(SPELL_DRUID_RAGE_SLEEPER_HEAL, SPELLVALUE_BASE_POINT0, healAmount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_rage_sleeper_leech::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2214,4 +2392,10 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_ironfur);
     RegisterSpellScript(spell_dru_rip_new);
     RegisterSpellScript(spell_dru_ursine_adept);
+    RegisterSpellScript(spell_dru_bristling_fur);
+    RegisterSpellScript(spell_dru_pulverize);
+    RegisterSpellScript(spell_dru_guardian_of_ursoc_health);
+    RegisterSpellScript(spell_dru_guardian_of_ursoc);
+    RegisterSpellScript(spell_dru_rage_sleeper);
+    RegisterSpellScript(spell_dru_rage_sleeper_leech);
 }

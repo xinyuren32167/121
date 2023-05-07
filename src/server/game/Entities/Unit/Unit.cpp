@@ -12306,12 +12306,12 @@ float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, D
                 if (victim->HealthBelowPct(50))
                     AddPct(DoneTotalMod, (*i)->GetAmount());
                 break;
-            case 7798: // Glyph of Regrowth
+            /*case 7798: // Glyph of Regrowth
                 {
                     if (victim->GetAuraEffect(SPELL_AURA_PERIODIC_HEAL, SPELLFAMILY_DRUID, 0x40, 0, 0))
                         AddPct(DoneTotalMod, (*i)->GetAmount());
                     break;
-                }
+                }*/
 
             case 7871: // Glyph of Lesser Healing Wave
                 {
