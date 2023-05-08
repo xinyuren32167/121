@@ -122,6 +122,11 @@ enum DruidSpells
     SPELL_DRUID_RAGE_SLEEPER                = 80570,
     SPELL_DRUID_RAGE_SLEEPER_BUFFS          = 80571,
     SPELL_DRUID_RAGE_SLEEPER_HEAL           = 80572,
+    SPELL_DRUID_CENARION_WARD_HEAL          = 80575,
+    SPELL_DRUID_TREE_FORM                   = 33891,
+    SPELL_DRUID_EFFLORESCENCE               = 80577,
+    SPELL_DRUID_EFFLORESCENCE_AURA          = 80578,
+    SPELL_DRUID_EFFLORESCENCE_HEAL          = 80579,
 
     // Rune Spell
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
@@ -2323,6 +2328,117 @@ class spell_dru_rage_sleeper_leech : public AuraScript
     }
 };
 
+class spell_dru_cenarion_ward : public AuraScript
+{
+    PrepareAuraScript(spell_dru_cenarion_ward);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = GetTarget();
+        target->CastSpell(target, SPELL_DRUID_CENARION_WARD_HEAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_cenarion_ward::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dru_tree_of_life : public AuraScript
+{
+    PrepareAuraScript(spell_dru_tree_of_life);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_DRUID_TREE_FORM, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        caster->RemoveAura(SPELL_DRUID_TREE_FORM);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_tree_of_life::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_tree_of_life::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dru_efflorescence : public SpellScript
+{
+    PrepareSpellScript(spell_dru_efflorescence);
+
+    void HandleSummon(SpellEffIndex effIndex)
+    {
+        WorldLocation const* dest = GetHitDest();
+        Position pos = dest->GetPosition();
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
+        uint32 duration = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = GetCaster()->SummonCreature(500507, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
+        if (!summon)
+            return;
+
+        summon->SetOwnerGUID(GetCaster()->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+
+        summon->AddAura(SPELL_DRUID_EFFLORESCENCE_AURA, summon);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_dru_efflorescence::HandleSummon, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+class spell_dru_efflorescence_trigger : public AuraScript
+{
+    PrepareAuraScript(spell_dru_efflorescence_trigger);
+
+    void OnPeriodic(AuraEffect const* /*aurEff*/)
+    {
+        Unit* master = GetUnitOwner()->GetOwner();
+
+        master->CastSpell(GetCaster(), SPELL_DRUID_EFFLORESCENCE_HEAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dru_efflorescence_trigger::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_dru_efflorescence_target_select : public SpellScript
+{
+    PrepareSpellScript(spell_dru_efflorescence_target_select);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
+        uint32 maxTargets = value->GetEffect(EFFECT_0).CalcValue(caster);
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_efflorescence_target_select::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -2398,4 +2514,9 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_guardian_of_ursoc);
     RegisterSpellScript(spell_dru_rage_sleeper);
     RegisterSpellScript(spell_dru_rage_sleeper_leech);
+    RegisterSpellScript(spell_dru_cenarion_ward);
+    RegisterSpellScript(spell_dru_tree_of_life);
+    RegisterSpellScript(spell_dru_efflorescence);
+    RegisterSpellScript(spell_dru_efflorescence_trigger);
+    RegisterSpellScript(spell_dru_efflorescence_target_select);
 }
