@@ -2373,11 +2373,14 @@ class spell_dru_efflorescence : public SpellScript
 
     void HandleSummon(SpellEffIndex effIndex)
     {
+        if (GetCaster()->HasAura(SPELL_DRUID_EFFLORESCENCE))
+            return;
+
         WorldLocation const* dest = GetHitDest();
         Position pos = dest->GetPosition();
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
-        uint32 duration = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        uint32 duration = value->GetDuration();
 
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = GetCaster()->SummonCreature(500507, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
