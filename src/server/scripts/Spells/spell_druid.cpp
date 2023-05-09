@@ -2371,10 +2371,16 @@ class spell_dru_efflorescence : public SpellScript
 {
     PrepareSpellScript(spell_dru_efflorescence);
 
-    void HandleSummon(SpellEffIndex effIndex)
+    SpellCastResult CheckCast()
     {
         if (GetCaster()->HasAura(SPELL_DRUID_EFFLORESCENCE))
-            return;
+            return SPELL_FAILED_ALREADY_HAVE_SUMMON;
+
+        return SPELL_CAST_OK;
+    }
+
+    void HandleSummon(SpellEffIndex effIndex)
+    { 
 
         WorldLocation const* dest = GetHitDest();
         Position pos = dest->GetPosition();
@@ -2398,6 +2404,7 @@ class spell_dru_efflorescence : public SpellScript
 
     void Register() override
     {
+        OnCheckCast += SpellCheckCastFn(spell_dru_efflorescence::CheckCast);
         OnEffectHit += SpellEffectFn(spell_dru_efflorescence::HandleSummon, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
