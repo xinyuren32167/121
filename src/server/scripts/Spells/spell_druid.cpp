@@ -2371,14 +2371,6 @@ class spell_dru_efflorescence : public SpellScript
 {
     PrepareSpellScript(spell_dru_efflorescence);
 
-    SpellCastResult CheckCast()
-    {
-        if (GetCaster()->HasAura(SPELL_DRUID_EFFLORESCENCE))
-            return SPELL_FAILED_ALREADY_HAVE_SUMMON;
-
-        return SPELL_CAST_OK;
-    }
-
     void HandleSummon(SpellEffIndex effIndex)
     { 
 
@@ -2388,6 +2380,17 @@ class spell_dru_efflorescence : public SpellScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
         uint32 duration = value->GetDuration();
 
+        std::vector<Unit*> summonedUnits = GetCaster()->ToPlayer()->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (unit->isDead())
+                continue;
+
+            if (unit->HasAura(SPELL_DRUID_EFFLORESCENCE_AURA))
+                unit->RemoveFromWorld();
+        }
+       
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = GetCaster()->SummonCreature(500507, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
@@ -2404,7 +2407,6 @@ class spell_dru_efflorescence : public SpellScript
 
     void Register() override
     {
-        OnCheckCast += SpellCheckCastFn(spell_dru_efflorescence::CheckCast);
         OnEffectHit += SpellEffectFn(spell_dru_efflorescence::HandleSummon, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
