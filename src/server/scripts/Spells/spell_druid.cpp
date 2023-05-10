@@ -127,6 +127,16 @@ enum DruidSpells
     SPELL_DRUID_EFFLORESCENCE               = 80577,
     SPELL_DRUID_EFFLORESCENCE_AURA          = 80578,
     SPELL_DRUID_EFFLORESCENCE_HEAL          = 80579,
+    SPELL_DRUID_LIFEBLOOM_HOT               = 48451,
+    SPELL_DRUID_REJUVENATION                = 48441,
+    SPELL_DRUID_WILD_GROWTH                 = 53251,
+    SPELL_DRUID_REGROWTH                    = 48443,
+    SPELL_DRUID_NATURES_CURE                = 80573,
+    SPELL_DRUID_YSERAS_GIFT                 = 80583,
+    SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80584,
+    SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80585,
+    SPELL_DRUID_FLOURISH                    = 80587,
+
 
     // Rune Spell
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
@@ -2388,7 +2398,7 @@ class spell_dru_efflorescence : public SpellScript
                 continue;
 
             if (unit->HasAura(SPELL_DRUID_EFFLORESCENCE_AURA))
-                unit->RemoveFromWorld();
+                unit->ToCreature()->DespawnOrUnsummon();
         }
        
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
@@ -2448,6 +2458,160 @@ class spell_dru_efflorescence_target_select : public SpellScript
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_efflorescence_target_select::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class spell_dru_overgrowth : public SpellScript
+{
+    PrepareSpellScript(spell_dru_overgrowth);
+
+    void HandleCast()
+    {
+        Unit* target = GetExplTargetUnit();
+        Unit* caster = GetCaster();
+
+        caster->CastSpell(target, SPELL_DRUID_LIFEBLOOM_HOT, TRIGGERED_FULL_MASK);
+        caster->AddAura(SPELL_DRUID_REJUVENATION, target);
+        caster->AddAura(SPELL_DRUID_WILD_GROWTH, target);
+        caster->AddAura(SPELL_DRUID_REGROWTH, target);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dru_overgrowth::HandleCast);
+    }
+};
+
+class spell_dru_dryad_adept : public AuraScript
+{
+    PrepareAuraScript(spell_dru_dryad_adept);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->learnSpell(SPELL_DRUID_NATURES_CURE);
+        target->learnSpell(SPELL_DRUID_YSERAS_GIFT);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(SPELL_DRUID_NATURES_CURE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_YSERAS_GIFT, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_dryad_adept::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_dryad_adept::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_druid_yseras_gift : public AuraScript
+{
+    PrepareAuraScript(spell_druid_yseras_gift);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        int32 procPct = caster->GetAura(SPELL_DRUID_YSERAS_GIFT)->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), procPct));
+
+        if (caster->GetHealth() < caster->GetMaxHealth())
+            caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_SELF_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, true);
+        else
+            caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, true);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_druid_yseras_gift::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_druid_yseras_gift_target : public SpellScript
+{
+    PrepareSpellScript(spell_druid_yseras_gift_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        uint32 const maxTargets = 1;
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_druid_yseras_gift_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class spell_dru_flourish : public SpellScript
+{
+    PrepareSpellScript(spell_dru_flourish);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        Position casterPos = caster->GetPosition();
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (!player->isDead())
+                {
+                    Unit* dummy = player->ToUnit();
+                    float distance = player->GetDistance(casterPos);
+                    if (dummy && distance <= 60)
+                        targetAvailable.push_back(dummy);
+                }
+        }
+        return targetAvailable;
+    }
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster->GetGroup())
+            return;
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FLOURISH);
+        uint32 durationIncrease = value->GetEffect(EFFECT_0).CalcValue(caster);
+
+        for (auto const& target : FindTargets())
+        {
+            auto targetAuras = target->GetAppliedAuras();
+            for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+            {
+                if (Aura* aura = itr->second->GetBase())
+                {
+                    if (caster->GetGUID() != aura->GetCasterGUID())
+                        continue;
+
+                    SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                    if (auraInfo->SpellFamilyFlags[1] & 0x00400000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                    {
+                        int32 currentDuration = aura->GetDuration();
+                        aura->SetDuration(currentDuration += durationIncrease);
+                        aura->GetEffect(EFFECT_0)->ResetTicks();
+                        aura->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
+                    }
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_dru_flourish::HandleCast);
     }
 };
 
@@ -2531,4 +2695,9 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_efflorescence);
     RegisterSpellScript(spell_dru_efflorescence_trigger);
     RegisterSpellScript(spell_dru_efflorescence_target_select);
+    RegisterSpellScript(spell_dru_overgrowth);
+    RegisterSpellScript(spell_dru_dryad_adept);
+    RegisterSpellScript(spell_druid_yseras_gift);
+    RegisterSpellScript(spell_druid_yseras_gift_target);
+    RegisterSpellScript(spell_dru_flourish);
 }
