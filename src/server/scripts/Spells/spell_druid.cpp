@@ -1393,7 +1393,7 @@ class spell_dru_wrath : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WRATH);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
-        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + astralPower, true);
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
     void Register() override
