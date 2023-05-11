@@ -136,6 +136,9 @@ enum DruidSpells
     SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80584,
     SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80585,
     SPELL_DRUID_FLOURISH                    = 80587,
+    SPELL_DRUID_STELLAR_INNERVATION_R1      = 48516,
+    SPELL_DRUID_STELLAR_INNERVATION_R2      = 48521,
+    SPELL_DRUID_STELLAR_INNERVATION_R3      = 48525,
 
 
     // Rune Spell
@@ -1393,6 +1396,12 @@ class spell_dru_wrath : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WRATH);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
+        if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R1) && caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
+            astralPower += CalculatePct(astralPower, 33);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R2) && caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
+            astralPower += CalculatePct(astralPower, 66);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R3) && caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
+            astralPower += CalculatePct(astralPower, 99);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -1419,6 +1428,12 @@ class spell_dru_starfire : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_STARFIRE);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
+        if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R1) && caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            astralPower += CalculatePct(astralPower, 33);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R2) && caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            astralPower += CalculatePct(astralPower, 66);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R3) && caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            astralPower += CalculatePct(astralPower, 99);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
