@@ -38,10 +38,15 @@ enum DruidSpells
     SPELL_FRENZIED_REGENERATION = 22842,
     SPELL_FULL_MOON = 80542,
     SPELL_INNERVATE = 29166,
-    SPELL_IRONFUR = 000,
+    SPELL_IRONFUR = 80555,
+    SPELL_IRONFUR_AURA = 80556,
     SPELL_MANGLE = 48564,
+    SPELL_MAUL = 48480,
     SPELL_MOONFIRE = 48463,
+    SPELL_MOONFIRE_CAT = 80547,
+    SPELL_MOONFIRE_BEAR = 80559,
     SPELL_MOONFALL = 80539,
+    SPELL_RAZE = 80520,
     SPELL_REGROWTH = 48443,
     SPELL_REJUVENATION = 48441,
     SPELL_RIP = 49800,
@@ -112,6 +117,9 @@ enum DruidSpells
     RUNE_DRUID_FRANTIC_MOMENTUM_BUFF = 701186,
     RUNE_DRUID_BLOODTALONS_LISTENER = 701212,
     RUNE_DRUID_BLOODY_MESS_DAMAGE = 701252,
+    RUNE_DRUID_MATTED_FUR_SHIELD = 701296,
+    RUNE_DRUID_THORNS_OF_IRON_DAMAGE = 701328,
+    RUNE_DRUID_MOONLESS_NIGHT_DAMAGE = 701360,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -3704,7 +3712,7 @@ class rune_druid_bloodtalons : public AuraScript
         }
 
         if (effect2 == 0)
-        {           
+        {
             listener->ModStackAmount(1);
             listener->GetEffect(EFFECT_1)->SetAmount(effect1);
             listener->GetEffect(EFFECT_2)->SetAmount(spellId);
@@ -3842,6 +3850,299 @@ class rune_druid_bloody_mess : public AuraScript
     }
 };
 
+class rune_druid_guardian_of_elune : public AuraScript
+{
+    PrepareAuraScript(rune_druid_guardian_of_elune);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* ironFur = caster->GetAura(SPELL_IRONFUR_AURA))
+        {
+            int32 duration = ironFur->GetDuration();
+            int32 increase = aurEff->GetAmount();
+            ironFur->SetDuration(duration + increase);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_guardian_of_elune::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_druid_vicious_cycle : public AuraScript
+{
+    PrepareAuraScript(rune_druid_vicious_cycle);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = 0;
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+
+        if (spellId == SPELL_MANGLE)
+            procSpell = aurEff->GetAmount();
+
+        if (spellId == SPELL_MAUL || spellId == SPELL_RAZE)
+            procSpell = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_vicious_cycle::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_matted_fur : public AuraScript
+{
+    PrepareAuraScript(rune_druid_matted_fur);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701290; i < 701296; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 attackPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 amount = CalculatePct(attackPower, GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_MATTED_FUR_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_matted_fur::HandleProc, EFFECT_0, SPELL_AURA_REDUCE_PUSHBACK, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(rune_druid_matted_fur::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_layered_mane : public SpellScript
+{
+    PrepareSpellScript(rune_druid_layered_mane);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701316; i < 701322; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleAfterCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procChance = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        int32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        Aura* ironfur = caster->GetAura(SPELL_IRONFUR_AURA);
+        int32 duration = ironfur->GetDuration();
+        ironfur->ModStackAmount(1);
+        ironfur->SetDuration(duration);
+        caster->RemoveSpellCooldown(SPELL_FRENZIED_REGENERATION, true);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(rune_druid_layered_mane::HandleAfterCast);
+    }
+};
+
+class rune_druid_thorns_of_iron : public SpellScript
+{
+    PrepareSpellScript(rune_druid_thorns_of_iron);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701322; i < 701328; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleAfterCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 armor = caster->GetArmor();
+        int32 amount = CalculatePct(armor, GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_THORNS_OF_IRON_DAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(rune_druid_thorns_of_iron::HandleAfterCast);
+    }
+};
+
+class rune_druid_scintillating_moonlight : public AuraScript
+{
+    PrepareAuraScript(rune_druid_scintillating_moonlight);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701342; i < 701348; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, target);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        for (size_t i = 701348; i < 701354; i++)
+        {
+            if (target->HasAura(i))
+                target->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_scintillating_moonlight::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_scintillating_moonlight::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_moonless_night : public AuraScript
+{
+    PrepareAuraScript(rune_druid_moonless_night);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!victim->GetAura(SPELL_MOONFIRE_BEAR))
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damage == 0)
+            return;
+
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_MOONLESS_NIGHT_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_moonless_night::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_moonless_night::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_agressive_growl : public AuraScript
+{
+    PrepareAuraScript(rune_druid_agressive_growl);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701370; i < 701376; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701376; i < 701382; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_agressive_growl::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_agressive_growl::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 
 
 void AddSC_druid_rune_scripts()
@@ -3939,6 +4240,14 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_primal_fury);
     RegisterSpellScript(rune_druid_gore);
     RegisterSpellScript(rune_druid_bloody_mess);
+    RegisterSpellScript(rune_druid_guardian_of_elune);
+    RegisterSpellScript(rune_druid_vicious_cycle);
+    RegisterSpellScript(rune_druid_matted_fur);
+    RegisterSpellScript(rune_druid_layered_mane);
+    RegisterSpellScript(rune_druid_thorns_of_iron);
+    RegisterSpellScript(rune_druid_scintillating_moonlight);
+    RegisterSpellScript(rune_druid_moonless_night);
+    RegisterSpellScript(rune_druid_agressive_growl);
 
 
 
