@@ -114,8 +114,6 @@ public:
         }
 
         uint32 time = 1000;
-        std::vector<uint64> unitsHits;
-
         void Reset() override
         {
             Position pos = me->GetFirstCollisionPosition(40.0f, 0);
