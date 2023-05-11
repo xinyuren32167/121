@@ -53,7 +53,7 @@ void AutoBalanceManager::SendMessageScalingInfo(Map* map)
     std::string mapName = map->GetMapName();
 
     for (const auto& player : players)
-        ChatHandler(player->GetSession()).SendSysMessage("Scaling " + mapName + " for " + std::to_string(players.size()) + " players.");
+        ChatHandler(player->GetSession()).SendSysMessage("Scaling " + mapName + " for " + std::to_string(players.size()) + " player(s).");
 }
 
 Player* AutoBalanceManager::GetFirstPlayerMap(Map* map)

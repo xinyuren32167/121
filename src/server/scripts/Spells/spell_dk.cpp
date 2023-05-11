@@ -77,6 +77,7 @@ enum DeathKnightSpells
     SPELL_DK_GLACIAL_ADVANCE_DAMAGE             = 80305,
     SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE = 80310,
     SPELL_DK_GLACIAL_CHILL_STREAK_TICK          = 80309,
+    SPELL_DK_FROSTWHYRM                         = 80311,
 };
 
 enum DeathKnightSpellIcons
@@ -221,25 +222,24 @@ public:
     {
         npc_dk_spell_frostwyrmAI(Creature* creature) : ScriptedAI(creature) { }
 
-        uint32 update = 500;
+        uint32 update = 250;
 
         void Reset() override
         {
-            if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
                 Position pos = me->GetFirstCollisionPosition(40.0f, 0);
                 me->GetMotionMaster()->MovePoint(0, pos);
                 me->CombatStop(true);
                 me->AttackStop();
                 me->SetReactState(REACT_PASSIVE);
-
-            }
         }
 
         void UpdateAI(uint32 diff) override
         {
-            if (update >= 500) {
-                if (Creature* creature = me->FindNearestCreatureWithoutEntry(me->GetGUID(), 40.0f, true)) {
-                    me->CastSpell(creature, 80311);
+            if (update >= 250) {
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    if (Creature* creature = me->FindNearestCreatureWithoutEntry(me->GetGUID(), 40.0f, true)) {
+                        me->CastSpell(creature, SPELL_DK_FROSTWHYRM, true, nullptr, nullptr, owner->GetGUID());
+                    }
                 }
                 update = 0;
             }
