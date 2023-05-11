@@ -2840,8 +2840,6 @@ void Player::AddNewMailDeliverTime(time_t deliver_time)
 
 bool Player::addTalent(uint32 spellId, uint8 addSpecMask, uint8 oldTalentRank)
 {
-
-    LOG_ERROR("add talent", "add talent {}, {}", GetActiveSpecMask(), addSpecMask);
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!SpellMgr::CheckSpellValid(spellInfo, spellId, true))
         return false;

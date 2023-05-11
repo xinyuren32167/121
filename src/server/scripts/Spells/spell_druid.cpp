@@ -405,8 +405,8 @@ class spell_dru_treant_scaling : public AuraScript
             amount = CalculatePct(std::max<int32>(0, nature), 105);
 
             // xinef: brambles talent
-            if (AuraEffect const* bramblesEff = owner->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DRUID, 53, 2))
-                AddPct(amount, bramblesEff->GetAmount());
+            /*if (AuraEffect const* bramblesEff = owner->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DRUID, 53, 2))
+                AddPct(amount, bramblesEff->GetAmount());*/
         }
     }
 
@@ -2615,6 +2615,29 @@ class spell_dru_flourish : public SpellScript
     }
 };
 
+class spell_dru_moonglow : public AuraScript
+{
+    PrepareAuraScript(spell_dru_moonglow);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        int32 powerAmount = aurEff->GetAmount();
+        caster->ModifyPower(POWER_RUNIC_POWER, powerAmount);     
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_moonglow::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -2622,7 +2645,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_nurturing_instinct);
     RegisterSpellScript(spell_dru_feral_swiftness);
     RegisterSpellScript(spell_dru_omen_of_clarity);
-    RegisterSpellScript(spell_dru_brambles_treant);
+    //RegisterSpellScript(spell_dru_brambles_treant);
     RegisterSpellScript(spell_dru_barkskin);
     RegisterSpellScript(spell_dru_treant_scaling);
     RegisterSpellScript(spell_dru_berserk);
@@ -2700,4 +2723,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_druid_yseras_gift);
     RegisterSpellScript(spell_druid_yseras_gift_target);
     RegisterSpellScript(spell_dru_flourish);
+    RegisterSpellScript(spell_dru_moonglow);
 }
