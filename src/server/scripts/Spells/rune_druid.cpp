@@ -57,6 +57,7 @@ enum DruidSpells
     SPELL_STARSURGE = 80527,
     SPELL_STELLAR_FLARE = 80528,
     SPELL_SUNFIRE = 80518,
+    SPELL_THRASH_BEAR = 80561,
     SPELL_TIGERS_FURY = 50213,
     SPELL_WARRIOR_OF_ELUNE = 80536,
     SPELL_WILD_GROWTH = 53251,
@@ -120,6 +121,16 @@ enum DruidSpells
     RUNE_DRUID_MATTED_FUR_SHIELD = 701296,
     RUNE_DRUID_THORNS_OF_IRON_DAMAGE = 701328,
     RUNE_DRUID_MOONLESS_NIGHT_DAMAGE = 701360,
+    RUNE_DRUID_LEGACY_OF_THE_SLEEPER_HEAL = 701412,
+    RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_1 = 701413,
+    RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_2 = 701414,
+    RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_3 = 701415,
+    RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_4 = 701416,
+    RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_5 = 701417,
+    RUNE_DRUID_ASTRAL_BERSERK_DAMAGE = 701442,
+    RUNE_DRUID_ASTRAL_BERSERK_HEAL = 701443,
+    RUNE_DRUID_BLOOD_FRENZY_RAGE = 701450,
+
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -4141,6 +4152,387 @@ class rune_druid_agressive_growl : public AuraScript
     }
 };
 
+class rune_druid_unchecked_brutality : public AuraScript
+{
+    PrepareAuraScript(rune_druid_unchecked_brutality);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701388; i < 701394; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701394; i < 701400; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_unchecked_brutality::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_unchecked_brutality::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_legacy_of_the_sleeper_apply : public AuraScript
+{
+    PrepareAuraScript(rune_druid_legacy_of_the_sleeper_apply);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701400; i < 701406; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701406; i < 701412; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_legacy_of_the_sleeper_apply::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_legacy_of_the_sleeper_apply::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_legacy_of_the_sleeper : public AuraScript
+{
+    PrepareAuraScript(rune_druid_legacy_of_the_sleeper);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_LEGACY_OF_THE_SLEEPER_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (caster->isDead())
+            return;
+
+        for (size_t i = RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_1; i <= RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_5; i++)
+        {
+            caster->AddAura(i, caster);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_1; i <= RUNE_DRUID_LEGACY_OF_THE_SLEEPER_BUFF_5; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_legacy_of_the_sleeper::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_legacy_of_the_sleeper::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(rune_druid_legacy_of_the_sleeper::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_legacy_of_the_sleeper::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_persistence : public AuraScript
+{
+    PrepareAuraScript(rune_druid_persistence);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701418; i < 701424; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701424; i < 701430; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_persistence::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_persistence::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_astral_berserk : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_berserk);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701430; i < 701436; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetRuneAura(caster) || caster->isDead())
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701436; i < 701442; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_astral_berserk::HandleProc, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_astral_berserk::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_astral_berserk_damage : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_berserk_damage);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 attackPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 amount = CalculatePct(attackPower, GetAura()->GetEffect(EFFECT_0)->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_ASTRAL_BERSERK_DAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_astral_berserk_damage::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_druid_astral_berserk_moonfire : public SpellScript
+{
+    PrepareSpellScript(rune_druid_astral_berserk_moonfire);
+
+    Aura* GetBuffAura(Unit* caster)
+    {
+        for (size_t i = 701436; i < 701442; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetBuffAura(caster))
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            if (!target->HasAura(SPELL_MOONFIRE_BEAR))
+                caster->CastSpell(target, SPELL_MOONFIRE_BEAR, TRIGGERED_FULL_MASK);
+
+            int32 attackPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+            int32 amount = CalculatePct(attackPower, GetBuffAura(caster)->GetEffect(EFFECT_1)->GetAmount());
+
+            caster->CastCustomSpell(RUNE_DRUID_ASTRAL_BERSERK_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_astral_berserk_moonfire::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_druid_blood_frenzy : public AuraScript
+{
+    PrepareAuraScript(rune_druid_blood_frenzy);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0 || !eventInfo.GetSpellInfo())
+            return;
+        LOG_ERROR("error", "spell id = {}", eventInfo.GetSpellInfo()->Id);
+        if (eventInfo.GetSpellInfo()->Id == SPELL_THRASH_BEAR)
+        {
+            //caster->CastSpell(caster, RUNE_DRUID_BLOOD_FRENZY_RAGE, TRIGGERED_FULL_MASK);
+            return;
+        }
+
+        int32 procChance = aurEff->GetAmount();
+        int32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        int32 stackIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (target->HasAura(SPELL_THRASH_BEAR))
+            target->GetAura(SPELL_THRASH_BEAR)->ModStackAmount(stackIncrease);
+        else
+            caster->AddAura(SPELL_THRASH_BEAR, target);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_blood_frenzy::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_blood_frenzy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_blood_frenzy_rage : public AuraScript
+{
+    PrepareAuraScript(rune_druid_blood_frenzy_rage);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701444; i < 701450; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        caster->CastSpell(caster, RUNE_DRUID_BLOOD_FRENZY_RAGE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_blood_frenzy_rage::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
 
 
 
@@ -4248,6 +4640,16 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_scintillating_moonlight);
     RegisterSpellScript(rune_druid_moonless_night);
     RegisterSpellScript(rune_druid_agressive_growl);
+    RegisterSpellScript(rune_druid_unchecked_brutality);
+    RegisterSpellScript(rune_druid_legacy_of_the_sleeper_apply);
+    RegisterSpellScript(rune_druid_legacy_of_the_sleeper);
+    RegisterSpellScript(rune_druid_persistence);
+    RegisterSpellScript(rune_druid_astral_berserk);
+    RegisterSpellScript(rune_druid_astral_berserk_damage);
+    RegisterSpellScript(rune_druid_astral_berserk_moonfire);
+    RegisterSpellScript(rune_druid_blood_frenzy);
+    RegisterSpellScript(rune_druid_blood_frenzy_rage);
+
 
 
 
