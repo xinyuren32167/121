@@ -1768,7 +1768,9 @@ void Player::RegenerateAll()
         }
 
         Regenerate(POWER_RAGE);
-        Regenerate(POWER_RUNIC_POWER);
+
+        if (getClass() == CLASS_DEATH_KNIGHT || getClass() == CLASS_DRUID)
+            Regenerate(POWER_RUNIC_POWER);
 
         m_regenTimerCount -= 2000;
     }

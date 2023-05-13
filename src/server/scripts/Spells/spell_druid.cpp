@@ -1428,6 +1428,42 @@ class spell_dru_starfire : public SpellScript
     }
 };
 
+class spell_dru_nature_balance : public AuraScript
+{
+    PrepareAuraScript(spell_dru_nature_balance);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        uint32 amount = aurEff->GetAmount() * 10;
+        uint32 maxAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+
+        if (caster->IsInCombat())
+            caster->ModifyPower(POWER_RUNIC_POWER, amount, true);
+        else
+            if (caster->GetPower(POWER_RUNIC_POWER) <= maxAmount)
+                caster->ModifyPower(POWER_RUNIC_POWER, amount, true);
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_RUNIC_POWER, -10.f);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_RUNIC_POWER, 3.f);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_nature_balance::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_nature_balance::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dru_nature_balance::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 class spell_dru_eclipse : public AuraScript
 {
 
@@ -2700,4 +2736,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_druid_yseras_gift);
     RegisterSpellScript(spell_druid_yseras_gift_target);
     RegisterSpellScript(spell_dru_flourish);
+    RegisterSpellScript(spell_dru_nature_balance);
 }

@@ -643,9 +643,13 @@ void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
     if (!player)
         return;
 
+
     auto summonedUnits = player->GetSummonedUnits();
 
     for (const auto& unit : summonedUnits) {
+
+        if (!unit->IsInWorld())
+            continue;
 
         if (unit->GetGUID() == GetGUID())
             continue;
@@ -654,9 +658,10 @@ void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
             continue;
 
         if (unit->GetTarget() != target->GetGUID()) {
-            unit->GetAI()->AttackStart(target);
+            // unit->GetAI()->AttackStart(target);
         }
     }
+    
 }
 
 void PetAI::MovementInform(uint32 moveType, uint32 data)

@@ -247,7 +247,6 @@ public:
 
         target->SetMaxPower(POWER_RUNIC_POWER, runePoints);
         target->SetPower(POWER_RUNIC_POWER, runePoints);
-
         return true;
     }
 
