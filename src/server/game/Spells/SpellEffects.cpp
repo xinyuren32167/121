@@ -488,9 +488,15 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                     // Wrath
                     if (m_spellInfo->SpellFamilyFlags[0] & 0x00000001)
                     {
-                        // Improved Insect Swarm
-                        if (AuraEffect const* aurEff = m_caster->GetDummyAuraEffect(SPELLFAMILY_DRUID, 1771, 0))
-                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x00200000, 0, 0))
+                        // Improved Insect Swarm / Stellar Flare
+                        if (AuraEffect const* aurEff = m_caster->GetAura(57849)->GetEffect(EFFECT_0))
+                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
+                                AddPct(damage, aurEff->GetAmount());
+                        else if (AuraEffect const* aurEff = m_caster->GetAura(57850)->GetEffect(EFFECT_0))
+                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
+                                AddPct(damage, aurEff->GetAmount());
+                        else if (AuraEffect const* aurEff = m_caster->GetAura(57851)->GetEffect(EFFECT_0))
+                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
                                 AddPct(damage, aurEff->GetAmount());
                     }
                     break;

@@ -113,7 +113,7 @@ enum DruidSpells
     SPELL_DRUID_SOOTHE_BEAR                 = 80562,
     SPELL_DRUID_REMOVE_CORRUPTION_BEAR      = 80563,
     SPELL_DRUID_BRISTLING_FUR_PROC          = 80565,
-    SPELL_DRUID_THRASH                      = 80561,
+    SPELL_DRUID_THRASH_BEAR                 = 80583,
     SPELL_DRUID_GUARDIAN_HEALTH             = 80569,
     SPELL_DRUID_GUARDIAN_OF_URSOC           = 80568,
     SPELL_DRUID_BERSERK_BEAR                = 80566,
@@ -136,6 +136,9 @@ enum DruidSpells
     SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80584,
     SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80585,
     SPELL_DRUID_FLOURISH                    = 80587,
+    SPELL_DRUID_STELLAR_INNERVATION_R1      = 48516,
+    SPELL_DRUID_STELLAR_INNERVATION_R2      = 48521,
+    SPELL_DRUID_STELLAR_INNERVATION_R3      = 48525,
 
 
     // Rune Spell
@@ -405,8 +408,8 @@ class spell_dru_treant_scaling : public AuraScript
             amount = CalculatePct(std::max<int32>(0, nature), 105);
 
             // xinef: brambles talent
-            if (AuraEffect const* bramblesEff = owner->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DRUID, 53, 2))
-                AddPct(amount, bramblesEff->GetAmount());
+            /*if (AuraEffect const* bramblesEff = owner->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DRUID, 53, 2))
+                AddPct(amount, bramblesEff->GetAmount());*/
         }
     }
 
@@ -1393,7 +1396,13 @@ class spell_dru_wrath : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_WRATH);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
-        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + astralPower, true);
+        if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R1) && caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
+            astralPower += CalculatePct(astralPower, 33);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R2) && caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
+            astralPower += CalculatePct(astralPower, 66);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R3) && caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
+            astralPower += CalculatePct(astralPower, 99);
+        caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
     void Register() override
@@ -1419,6 +1428,12 @@ class spell_dru_starfire : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_STARFIRE);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
+        if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R1) && caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            astralPower += CalculatePct(astralPower, 33);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R2) && caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            astralPower += CalculatePct(astralPower, 66);
+        else if (caster->HasAura(SPELL_DRUID_STELLAR_INNERVATION_R3) && caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            astralPower += CalculatePct(astralPower, 99);
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
@@ -2253,7 +2268,7 @@ class spell_dru_pulverize : public SpellScript
         if (!target || !target->IsAlive())
             return SPELL_FAILED_SPELL_UNAVAILABLE;
 
-        if (!target->HasAura(SPELL_DRUID_THRASH) || target->GetAura(SPELL_DRUID_THRASH)->GetStackAmount() < 2)
+        if (!target->HasAura(SPELL_DRUID_THRASH_BEAR) || target->GetAura(SPELL_DRUID_THRASH_BEAR)->GetStackAmount() < 2)
             return SPELL_FAILED_SPELL_UNAVAILABLE;
 
         return SPELL_CAST_OK;
@@ -2263,13 +2278,13 @@ class spell_dru_pulverize : public SpellScript
     {    
         Unit* target = GetExplTargetUnit();
 
-        Aura* aura = target->GetAura(SPELL_DRUID_THRASH);
+        Aura* aura = target->GetAura(SPELL_DRUID_THRASH_BEAR);
         int32 stackAmount = aura->GetStackAmount();
 
         if (stackAmount == 2)
-            target->RemoveAura(SPELL_DRUID_THRASH);
+            target->RemoveAura(SPELL_DRUID_THRASH_BEAR);
         else
-            GetCaster()->SetAuraStack(SPELL_DRUID_THRASH, target, stackAmount += -2);
+            GetCaster()->SetAuraStack(SPELL_DRUID_THRASH_BEAR, target, stackAmount += -2);
     }
 
     void Register() override
@@ -2651,6 +2666,29 @@ class spell_dru_flourish : public SpellScript
     }
 };
 
+class spell_dru_moonglow : public AuraScript
+{
+    PrepareAuraScript(spell_dru_moonglow);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
+            return;
+
+        int32 powerAmount = aurEff->GetAmount();
+        caster->ModifyPower(POWER_RUNIC_POWER, powerAmount);     
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_moonglow::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -2658,7 +2696,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_nurturing_instinct);
     RegisterSpellScript(spell_dru_feral_swiftness);
     RegisterSpellScript(spell_dru_omen_of_clarity);
-    RegisterSpellScript(spell_dru_brambles_treant);
+    //RegisterSpellScript(spell_dru_brambles_treant);
     RegisterSpellScript(spell_dru_barkskin);
     RegisterSpellScript(spell_dru_treant_scaling);
     RegisterSpellScript(spell_dru_berserk);
@@ -2737,4 +2775,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_druid_yseras_gift_target);
     RegisterSpellScript(spell_dru_flourish);
     RegisterSpellScript(spell_dru_nature_balance);
+    RegisterSpellScript(spell_dru_moonglow);
 }
