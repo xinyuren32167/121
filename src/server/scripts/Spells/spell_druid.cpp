@@ -113,7 +113,7 @@ enum DruidSpells
     SPELL_DRUID_SOOTHE_BEAR                 = 80562,
     SPELL_DRUID_REMOVE_CORRUPTION_BEAR      = 80563,
     SPELL_DRUID_BRISTLING_FUR_PROC          = 80565,
-    SPELL_DRUID_THRASH                      = 80561,
+    SPELL_DRUID_THRASH_BEAR                 = 80583,
     SPELL_DRUID_GUARDIAN_HEALTH             = 80569,
     SPELL_DRUID_GUARDIAN_OF_URSOC           = 80568,
     SPELL_DRUID_BERSERK_BEAR                = 80566,
@@ -2232,7 +2232,7 @@ class spell_dru_pulverize : public SpellScript
         if (!target || !target->IsAlive())
             return SPELL_FAILED_SPELL_UNAVAILABLE;
 
-        if (!target->HasAura(SPELL_DRUID_THRASH) || target->GetAura(SPELL_DRUID_THRASH)->GetStackAmount() < 2)
+        if (!target->HasAura(SPELL_DRUID_THRASH_BEAR) || target->GetAura(SPELL_DRUID_THRASH_BEAR)->GetStackAmount() < 2)
             return SPELL_FAILED_SPELL_UNAVAILABLE;
 
         return SPELL_CAST_OK;
@@ -2242,13 +2242,13 @@ class spell_dru_pulverize : public SpellScript
     {    
         Unit* target = GetExplTargetUnit();
 
-        Aura* aura = target->GetAura(SPELL_DRUID_THRASH);
+        Aura* aura = target->GetAura(SPELL_DRUID_THRASH_BEAR);
         int32 stackAmount = aura->GetStackAmount();
 
         if (stackAmount == 2)
-            target->RemoveAura(SPELL_DRUID_THRASH);
+            target->RemoveAura(SPELL_DRUID_THRASH_BEAR);
         else
-            GetCaster()->SetAuraStack(SPELL_DRUID_THRASH, target, stackAmount += -2);
+            GetCaster()->SetAuraStack(SPELL_DRUID_THRASH_BEAR, target, stackAmount += -2);
     }
 
     void Register() override
