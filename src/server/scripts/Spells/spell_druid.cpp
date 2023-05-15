@@ -1648,14 +1648,23 @@ class spell_dru_lifebloom_new : public AuraScript
 {
     PrepareAuraScript(spell_dru_lifebloom_new);
 
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    void AfterRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
+            return;
+
+        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL);
+    }
+
+    void HandleDispel(DispelInfo* dispelInfo)
     {
         GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_lifebloom_new::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_dru_lifebloom_new::AfterRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        AfterDispel += AuraDispelFn(spell_dru_lifebloom_new::HandleDispel);
     }
 };
 
