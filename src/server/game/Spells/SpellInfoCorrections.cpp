@@ -1251,12 +1251,12 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Lifebloom final bloom
-    ApplySpellFix({ 33778 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({33778}, [](SpellInfo* spellInfo)
     {
         spellInfo->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
         spellInfo->SpellLevel = 0;
         spellInfo->SpellFamilyFlags = flag96(0, 0x10, 0);
-    });
+    });*/
 
     // Owlkin Frenzy
     ApplySpellFix({ 48391 }, [](SpellInfo* spellInfo)

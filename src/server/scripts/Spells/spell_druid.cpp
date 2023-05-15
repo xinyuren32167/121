@@ -49,7 +49,7 @@ enum DruidSpells
     SPELL_DRUID_INCREASED_MOONFIRE_DURATION = 38414,
     SPELL_DRUID_KING_OF_THE_JUNGLE          = 48492,
     SPELL_DRUID_LIFEBLOOM_ENERGIZE          = 64372,
-    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 33778,
+    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 80588,
     SPELL_DRUID_LIVING_SEED_HEAL            = 48503,
     SPELL_DRUID_LIVING_SEED_PROC            = 48504,
     SPELL_DRUID_NATURES_SPLENDOR            = 57865,
@@ -132,9 +132,9 @@ enum DruidSpells
     SPELL_DRUID_WILD_GROWTH                 = 53251,
     SPELL_DRUID_REGROWTH                    = 48443,
     SPELL_DRUID_NATURES_CURE                = 80573,
-    SPELL_DRUID_YSERAS_GIFT                 = 80583,
-    SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80584,
-    SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80585,
+    SPELL_DRUID_YSERAS_GIFT                 = 80584,
+    SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80585,
+    SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80586,
     SPELL_DRUID_FLOURISH                    = 80587,
     SPELL_DRUID_STELLAR_INNERVATION_R1      = 48516,
     SPELL_DRUID_STELLAR_INNERVATION_R2      = 48521,
@@ -2595,6 +2595,9 @@ class spell_druid_yseras_gift_target : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
+        if (!GetCaster()->ToPlayer()->GetGroup())
+            return;
+
         uint32 const maxTargets = 1;
 
         if (targets.size() > maxTargets)
