@@ -144,6 +144,7 @@ enum DruidSpells
     // Rune Spell
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF = 701042,
+    SPELL_DRUID_VERDANCY_EFFLORESCENCE_LISTENER = 701601,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1653,12 +1654,12 @@ class spell_dru_lifebloom_new : public AuraScript
         if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
             return;
 
-        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL);
+        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL, TRIGGERED_FULL_MASK);
     }
 
     void HandleDispel(DispelInfo* dispelInfo)
     {
-        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL);
+        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2507,6 +2508,16 @@ class spell_dru_efflorescence_target_select : public SpellScript
         Unit* caster = GetCaster();
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
         uint32 maxTargets = value->GetEffect(EFFECT_0).CalcValue(caster);
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            caster->AddAura(SPELL_DRUID_VERDANCY_EFFLORESCENCE_LISTENER, target);
+        }
 
         if (targets.size() > maxTargets)
         {
