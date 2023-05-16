@@ -139,6 +139,9 @@ enum DruidSpells
     SPELL_DRUID_STELLAR_INNERVATION_R1      = 48516,
     SPELL_DRUID_STELLAR_INNERVATION_R2      = 48521,
     SPELL_DRUID_STELLAR_INNERVATION_R3      = 48525,
+    SPELL_DRUID_POUNCING_STRIKES            = 80595,
+    SPELL_DRUID_POUNCING_STRIKES_BUFF       = 80596,
+    SPELL_DRUID_LEADER_OF_THE_PACK          = 17007,
 
 
     // Rune Spell
@@ -1351,15 +1354,32 @@ class spell_dru_prowl : public AuraScript
 {
     PrepareAuraScript(spell_dru_prowl);
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT))
+            return;
+
+        if (caster->HasAura(SPELL_DRUID_POUNCING_STRIKES))
+            caster->AddAura(SPELL_DRUID_POUNCING_STRIKES_BUFF, caster);
+    }
+
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (GetCaster()->HasAura(SPELL_DRUID_PROWL))
-            GetCaster()->RemoveAura(SPELL_DRUID_PROWL);
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_PROWL))
+            caster->RemoveAura(SPELL_DRUID_PROWL);
+
+        if (caster->HasAura(SPELL_DRUID_POUNCING_STRIKES))
+            caster->RemoveAura(SPELL_DRUID_POUNCING_STRIKES_BUFF);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_prowl::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dru_prowl::HandleApply, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_dru_prowl::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1551,7 +1571,12 @@ class spell_dru_berserk_cat : public AuraScript
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->AddAura(SPELL_DRUID_BERSERK_CAT_CRIT, GetCaster());
+        Unit* caster = GetCaster();
+
+        caster->AddAura(SPELL_DRUID_BERSERK_CAT_CRIT, caster);
+
+        if (caster->HasAura(SPELL_DRUID_POUNCING_STRIKES_BUFF))
+            caster->RemoveAura(SPELL_DRUID_POUNCING_STRIKES_BUFF);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -1619,7 +1644,7 @@ class spell_dru_rake : public SpellScript
 
         Unit* caster = GetCaster();
 
-        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT))
+        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT) || caster->HasAura(SPELL_DRUID_POUNCING_STRIKES_BUFF))
             caster->CastSpell(GetExplTargetUnit(), SPELL_DRUID_RAKE_STUN, true);
     }
 
@@ -2712,6 +2737,29 @@ class spell_dru_moonglow : public AuraScript
     }
 };
 
+class spell_dru_alpha_of_the_pack : public AuraScript
+{
+    PrepareAuraScript(spell_dru_alpha_of_the_pack);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->learnSpell(SPELL_DRUID_LEADER_OF_THE_PACK);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(SPELL_DRUID_LEADER_OF_THE_PACK, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_alpha_of_the_pack::HandleLearn, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_alpha_of_the_pack::HandleUnlearn, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -2799,4 +2847,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_flourish);
     RegisterSpellScript(spell_dru_nature_balance);
     RegisterSpellScript(spell_dru_moonglow);
+    RegisterSpellScript(spell_dru_alpha_of_the_pack);
 }

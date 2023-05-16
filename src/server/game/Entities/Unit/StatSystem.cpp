@@ -390,13 +390,13 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                     // Check if Predatory Strikes is skilled
                     float mLevelMult = 0.0f;
                     float weapon_bonus = 0.0f;
-                    if (IsInFeralForm())
+                    if (GetShapeshiftForm() == FORM_CAT)
                     {
                         Unit::AuraEffectList const& mDummy = GetAuraEffectsByType(SPELL_AURA_DUMMY);
                         for (Unit::AuraEffectList::const_iterator itr = mDummy.begin(); itr != mDummy.end(); ++itr)
                         {
                             AuraEffect* aurEff = *itr;
-                            if (aurEff->GetSpellInfo()->SpellIconID == 1563)
+                            if (aurEff->GetSpellInfo()->Id == 16972 || aurEff->GetSpellInfo()->Id == 16974 || aurEff->GetSpellInfo()->Id == 16975)
                             {
                                 switch (aurEff->GetEffIndex())
                                 {

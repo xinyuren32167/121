@@ -1200,12 +1200,12 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
         case FORM_BEAR:
             spellId = 1178;
             spellId2 = 21178;
-            HotWSpellId = 24899;
+            //HotWSpellId = 24899;
             break;
         case FORM_DIREBEAR:
             spellId = 9635;
             spellId2 = 21178;
-            HotWSpellId = 24899;
+            //HotWSpellId = 24899;
             break;
         case FORM_BATTLESTANCE:
             spellId = 21156;
@@ -1326,7 +1326,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             }
 
             // Leader of the Pack
-            if (player->HasTalent(17007, player->GetActiveSpec()))
+            if (player->HasSpell(17007))
             {
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(24932);
                 if (spellInfo && spellInfo->Stances & (1 << (GetMiscValue() - 1)))
