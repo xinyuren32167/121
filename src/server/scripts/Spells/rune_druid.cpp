@@ -4681,17 +4681,16 @@ class rune_druid_ursocs_fury : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "ursoc's fury proc");
         return eventInfo.GetDamageInfo();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-        LOG_ERROR("error", "ursoc's fury proc checked");
+
         if (!caster || caster->isDead())
             return;
-        LOG_ERROR("error", "ursoc's fury caster checked");
+
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
 
         if (damage <= 0)
@@ -5026,11 +5025,5 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_brambles);
     RegisterSpellScript(rune_druid_brambles_apply);
     RegisterSpellScript(rune_druid_brambles_damage);
-
-
-
-
-
-
 
 }
