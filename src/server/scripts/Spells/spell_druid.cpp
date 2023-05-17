@@ -1694,9 +1694,20 @@ class spell_dru_lifebloom_new : public AuraScript
     }
 };
 
-class spell_dru_switftmend : public SpellScript
+class spell_dru_swiftmend : public SpellScript
 {
-    PrepareSpellScript(spell_dru_switftmend);
+    PrepareSpellScript(spell_dru_swiftmend);
+
+    Aura* GetVerdantInfusionRuneAura(Unit* caster)
+    {
+        for (size_t i = 701672; i < 701678; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     AuraEffect* GetAuraEffect()
     {
@@ -1726,6 +1737,9 @@ class spell_dru_switftmend : public SpellScript
 
     void HandleCast()
     {
+        if (GetVerdantInfusionRuneAura(GetCaster()))
+            return;
+
         AuraEffect* aura = GetAuraEffect();
 
         if (aura) {
@@ -1735,7 +1749,7 @@ class spell_dru_switftmend : public SpellScript
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_dru_switftmend::HandleCast);
+        OnCast += SpellCastFn(spell_dru_swiftmend::HandleCast);
     }
 };
 
@@ -2810,7 +2824,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_berserk_combo_adder);
     RegisterSpellScript(spell_dru_cat_form);
     RegisterSpellScript(spell_dru_lifebloom_new);
-    RegisterSpellScript(spell_dru_switftmend);
+    RegisterSpellScript(spell_dru_swiftmend);
     RegisterSpellScript(spell_dru_wild_charge);
     RegisterSpellScript(spell_dru_tiger_dash);
     RegisterSpellScript(spell_dru_prowl_check);

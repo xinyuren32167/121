@@ -44,7 +44,7 @@ enum DruidSpells
     SPELL_IRONFUR = 80555,
     SPELL_IRONFUR_AURA = 80556,
     SPELL_LIFEBLOOM = 48451,
-    SPELL_LIFEBLOOM_BLOOM = 33778,
+    SPELL_LIFEBLOOM_BLOOM = 80588,
     SPELL_MANGLE = 48564,
     SPELL_MAUL = 48480,
     SPELL_MOONFIRE = 48463,
@@ -146,7 +146,8 @@ enum DruidSpells
     RUNE_DRUID_VERDANCY_HEAL = 701608,
     RUNE_DRUID_VERDANCY_EFFLORESCENCE_LISTENER = 701601,
     RUNE_DRUID_VERDANCY_LISTENER = 701609,
-
+    RUNE_DRUID_FLORAL_NOURISHMENT_HEAL = 701664,
+    RUNE_DRUID_GROVE_TENDING_HEAL = 701696,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -5257,6 +5258,33 @@ class rune_druid_malornes_rage : public AuraScript
     }
 };
 
+class rune_druid_dark_titans_advice : public AuraScript
+{
+    PrepareAuraScript(rune_druid_dark_titans_advice);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->CastSpell(target, SPELL_LIFEBLOOM_BLOOM, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_dark_titans_advice::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_dark_titans_advice::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 class rune_druid_photosynthesis : public AuraScript
 {
     PrepareAuraScript(rune_druid_photosynthesis);
@@ -5328,7 +5356,7 @@ class rune_druid_photosynthesis_proc : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-
+;
         if (!target->HasAura(RUNE_DRUID_PHOTOSYNTHESIS_BUFF))
             return;
 
@@ -5396,7 +5424,7 @@ class rune_druid_verdancy : public SpellScript
 
             if (target->isDead() || !target->HasAura(RUNE_DRUID_VERDANCY_EFFLORESCENCE_LISTENER))
                 continue;
-            
+
             int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
             int32 powerPct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
             int32 amount = int32(CalculatePct(spellPower, powerPct));
@@ -5445,6 +5473,279 @@ class rune_druid_eternal_bloom : public AuraScript
     {
         DoCheckProc += AuraCheckProcFn(rune_druid_eternal_bloom::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_druid_eternal_bloom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_budding_leaves : public AuraScript
+{
+    PrepareAuraScript(rune_druid_budding_leaves);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_LIFEBLOOM))
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        target->GetAura(SPELL_LIFEBLOOM)->GetEffect(EFFECT_0)->RecalculateAmount(caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_budding_leaves::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_budding_leaves::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_budding_leaves_remove : public AuraScript
+{
+    PrepareAuraScript(rune_druid_budding_leaves_remove);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701622; i < 701628; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(rune_druid_budding_leaves_remove::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_rampant_growth : public AuraScript
+{
+    PrepareAuraScript(rune_druid_rampant_growth);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701628; i < 701634; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        caster->AddAura(SPELL_REGROWTH, target);
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_rampant_growth::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_forests_flow : public AuraScript
+{
+    PrepareAuraScript(rune_druid_forests_flow);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 durationIncrease = aurEff->GetAmount();
+
+        if (Aura* lifebloom = target->GetAura(SPELL_LIFEBLOOM))
+        {
+            int32 duration = lifebloom->GetDuration();
+            int32 increase = std::min<int32>(duration + durationIncrease, lifebloom->GetMaxDuration());
+            lifebloom->SetDuration(increase);
+            lifebloom->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* rejuvenation = target->GetAura(SPELL_REJUVENATION))
+        {
+            int32 duration = rejuvenation->GetDuration();
+            int32 increase = std::min<int32>(duration + durationIncrease, rejuvenation->GetMaxDuration());
+            rejuvenation->SetDuration(increase);
+            rejuvenation->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* regrowth = target->GetAura(SPELL_REGROWTH))
+        {
+            int32 duration = regrowth->GetDuration();
+            int32 increase = std::min<int32>(duration + durationIncrease, regrowth->GetMaxDuration());
+            regrowth->SetDuration(increase);
+            regrowth->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* wildGrowth = target->GetAura(SPELL_WILD_GROWTH))
+        {
+            int32 duration = wildGrowth->GetDuration();
+            int32 increase = std::min<int32>(duration + durationIncrease, wildGrowth->GetMaxDuration());
+            wildGrowth->SetDuration(increase);
+            wildGrowth->GetEffect(EFFECT_0)->ResetTicks();
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_forests_flow::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_forests_flow::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};         
+
+class rune_druid_floral_nourishment : public AuraScript
+{
+    PrepareAuraScript(rune_druid_floral_nourishment);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
+        int32 powerPct = aurEff->GetAmount();
+        int32 amount = int32(CalculatePct(spellPower, powerPct));
+
+        caster->CastCustomSpell(RUNE_DRUID_FLORAL_NOURISHMENT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_floral_nourishment::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_floral_nourishment::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_verdant_infusion : public AuraScript
+{
+    PrepareAuraScript(rune_druid_verdant_infusion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 durationIncrease = aurEff->GetAmount();
+
+        /*Unit::AuraEffectList const& RejorRegr = target->GetAuraEffectsByType(SPELL_AURA_PERIODIC_HEAL);
+        for (Unit::AuraEffectList::const_iterator i = RejorRegr.begin(); i != RejorRegr.end(); ++i)
+        {
+            if ((*i)->GetSpellInfo()->SpellFamilyName == SPELLFAMILY_DRUID
+                && (*i)->GetSpellInfo()->SpellFamilyFlags[1] == 0x00400000)
+            {
+                if (GetCaster()->GetGUID() == (*i)->GetCasterGUID())
+                {
+                    int32 duration = (*i)->GetBase()->GetDuration();
+                    int32 increase = std::min<int32>(duration + durationIncrease, (*i)->GetBase()->GetMaxDuration());
+                    (*i)->GetBase()->SetDuration(increase);
+                    (*i)->ResetTicks();
+                }
+            }
+        }*/
+
+        auto targetAuras = target->GetAppliedAuras();
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (caster->GetGUID() != aura->GetCasterGUID())
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[1] & 0x00400000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                {
+                    int32 duration = aura->GetDuration();
+                    int32 increase = std::min<int32>(duration + durationIncrease, aura->GetMaxDuration());
+                    aura->SetDuration(increase);
+                    aura->GetEffect(EFFECT_0)->ResetTicks();
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_verdant_infusion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_verdant_infusion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_grove_tending : public AuraScript
+{
+    PrepareAuraScript(rune_druid_grove_tending);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
+        int32 powerPct = aurEff->GetAmount();
+        int32 amount = int32(CalculatePct(spellPower, powerPct));
+
+        caster->CastCustomSpell(RUNE_DRUID_GROVE_TENDING_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_grove_tending::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_grove_tending::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -5580,14 +5881,22 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_astral_fury);
     RegisterSpellScript(rune_druid_astral_fury_buff);
     RegisterSpellScript(rune_druid_malornes_rage);
+    RegisterSpellScript(rune_druid_dark_titans_advice);
     RegisterSpellScript(rune_druid_photosynthesis);
+    RegisterSpellScript(rune_druid_photosynthesis_proc);
     RegisterSpellScript(rune_druid_verdancy);
     RegisterSpellScript(rune_druid_eternal_bloom);
+    RegisterSpellScript(rune_druid_budding_leaves);
+    RegisterSpellScript(rune_druid_budding_leaves_remove);
+    RegisterSpellScript(rune_druid_rampant_growth);
+    RegisterSpellScript(rune_druid_forests_flow);
+    RegisterSpellScript(rune_druid_floral_nourishment);
+    RegisterSpellScript(rune_druid_verdant_infusion);
+    RegisterSpellScript(rune_druid_grove_tending);
 
 
 
 
-
-
+    
     
 }
