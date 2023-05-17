@@ -1326,7 +1326,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             }
 
             // Leader of the Pack
-            /*if (player->HasSpell(34297) || player->HasSpell(34300))
+            /*if (player->HasSpell(17007))
             {
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(24932);
                 if (spellInfo && spellInfo->Stances & (1 << (GetMiscValue() - 1)))

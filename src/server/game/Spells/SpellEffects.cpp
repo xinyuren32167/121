@@ -3469,7 +3469,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 {
                     AddComboPointGain(unitTarget, 1);
                 }
-                // Maul - Bite and Tear
+                // Shred - Bite and Tear
                 else if (m_spellInfo->Id == 80557 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
                 {
                     if (AuraEffect const* biteAndTear = m_caster->GetAuraEffectOfRankedSpell(80615, EFFECT_0))
