@@ -3469,10 +3469,16 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 {
                     AddComboPointGain(unitTarget, 1);
                 }
-                // Shred, Maul - Rend and Tear
-                else if (m_spellInfo->SpellFamilyFlags[0] & 0x00008800 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
+                // Maul - Bite and Tear
+                else if (m_spellInfo->Id == 80557 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
                 {
-                    if (AuraEffect const* rendAndTear = m_caster->GetDummyAuraEffect(SPELLFAMILY_DRUID, 2859, 0))
+                    if (AuraEffect const* biteAndTear = m_caster->GetAuraEffectOfRankedSpell(80615, EFFECT_0))
+                        AddPct(totalDamagePercentMod, biteAndTear->GetAmount());
+                }
+                // Raze and Maul - Rend and Tear
+                else if (m_spellInfo->Id == 48480 || m_spellInfo->Id == 80520 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
+                {
+                    if (AuraEffect const* rendAndTear = m_caster->GetAuraEffectOfRankedSpell(48432, EFFECT_0))
                         AddPct(totalDamagePercentMod, rendAndTear->GetAmount());
                 }
                 break;

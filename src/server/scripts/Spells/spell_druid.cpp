@@ -47,7 +47,7 @@ enum DruidSpells
     SPELL_DRUID_IDOL_OF_FERAL_SHADOWS       = 34241,
     SPELL_DRUID_IDOL_OF_WORSHIP             = 60774,
     SPELL_DRUID_INCREASED_MOONFIRE_DURATION = 38414,
-    SPELL_DRUID_KING_OF_THE_JUNGLE          = 48492,
+    SPELL_DRUID_KING_OF_THE_JUNGLE          = 80606,
     SPELL_DRUID_LIFEBLOOM_ENERGIZE          = 64372,
     SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 80588,
     SPELL_DRUID_LIVING_SEED_HEAL            = 48503,
@@ -142,7 +142,13 @@ enum DruidSpells
     SPELL_DRUID_POUNCING_STRIKES            = 80595,
     SPELL_DRUID_POUNCING_STRIKES_BUFF       = 80596,
     SPELL_DRUID_LEADER_OF_THE_PACK          = 17007,
-
+    SPELL_DRUID_TASTE_FOR_BLOOD             = 80609,
+    SPELL_DRUID_TASTE_FOR_BLOOD_PROC        = 80612,
+    SPELL_DRUID_ALPHA_OF_THE_PACK_HEAL      = 80613,
+    SPELL_DRUID_ALPHA_OF_THE_PACK_MANA      = 68285,
+    SPELL_DRUID_ALPHA_OF_THE_PACK_CD        = 80614,
+    SPELL_DRUID_BRUTAL_SLASH                = 80507,
+    SPELL_DRUID_SWIPE_CAT                   = 62078,
 
     // Rune Spell
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
@@ -1082,7 +1088,7 @@ class spell_dru_tiger_s_fury : public SpellScript
 
     void OnHit()
     {
-        if (AuraEffect const* aurEff = GetHitUnit()->GetAuraEffectOfRankedSpell(SPELL_DRUID_KING_OF_THE_JUNGLE, EFFECT_1))
+        if (AuraEffect const* aurEff = GetHitUnit()->GetAuraEffectOfRankedSpell(SPELL_DRUID_KING_OF_THE_JUNGLE, EFFECT_0))
             GetHitUnit()->CastCustomSpell(SPELL_DRUID_TIGER_S_FURY_ENERGIZE, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetHitUnit(), true);
     }
 
@@ -2741,22 +2747,77 @@ class spell_dru_alpha_of_the_pack : public AuraScript
 {
     PrepareAuraScript(spell_dru_alpha_of_the_pack);
 
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return;
+
+        int32 maxHealth = caster->GetMaxHealth();
+        int32 healAmount = aurEff->GetAmount();
+        int32 heal = CalculatePct(maxHealth, healAmount);
+        int32 mana = CalculatePct(caster->GetMaxPower(Powers(POWER_MANA)), healAmount * 2);
+
+        if (!caster->HasAura(SPELL_DRUID_ALPHA_OF_THE_PACK_CD))
+        {
+            caster->CastSpell(caster, SPELL_DRUID_ALPHA_OF_THE_PACK_HEAL, true);
+            caster->CastCustomSpell(SPELL_DRUID_ALPHA_OF_THE_PACK_MANA, SPELLVALUE_BASE_POINT0, mana, caster, TRIGGERED_IGNORE_GCD);
+            caster->CastSpell(caster, SPELL_DRUID_ALPHA_OF_THE_PACK_CD, true);
+        }          
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dru_alpha_of_the_pack::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dru_feral_frenzy : public SpellScript
+{
+    PrepareSpellScript(spell_dru_feral_frenzy);
+
+    void HandleHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DRUID_TASTE_FOR_BLOOD, EFFECT_0);
+        int32 amount = aurEff->GetAmount();
+
+        if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DRUID_TASTE_FOR_BLOOD, EFFECT_0))
+            caster->CastCustomSpell(SPELL_DRUID_TASTE_FOR_BLOOD_PROC, SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), true);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_dru_feral_frenzy::HandleHit);
+    }
+};
+
+class spell_dru_brutal_slash : public AuraScript
+{
+    PrepareAuraScript(spell_dru_brutal_slash);
+
     void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        target->learnSpell(SPELL_DRUID_LEADER_OF_THE_PACK);
+        target->removeSpell(SPELL_DRUID_SWIPE_CAT, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_DRUID_BRUTAL_SLASH);
     }
 
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        target->removeSpell(SPELL_DRUID_LEADER_OF_THE_PACK, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_DRUID_BRUTAL_SLASH, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_DRUID_SWIPE_CAT);
     }
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_alpha_of_the_pack::HandleLearn, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_alpha_of_the_pack::HandleUnlearn, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dru_brutal_slash::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_brutal_slash::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2848,4 +2909,6 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_nature_balance);
     RegisterSpellScript(spell_dru_moonglow);
     RegisterSpellScript(spell_dru_alpha_of_the_pack);
+    RegisterSpellScript(spell_dru_feral_frenzy);
+    RegisterSpellScript(spell_dru_brutal_slash);
 }
