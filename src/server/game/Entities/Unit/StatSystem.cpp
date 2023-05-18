@@ -448,7 +448,64 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                             }
                         }
                     }
+                    else if (GetShapeshiftForm() == FORM_BEAR || GetShapeshiftForm() == FORM_DIREBEAR)
+                    {
+                        Unit::AuraEffectList const& mDummy = GetAuraEffectsByType(SPELL_AURA_DUMMY);
+                        for (Unit::AuraEffectList::const_iterator itr = mDummy.begin(); itr != mDummy.end(); ++itr)
+                        {
+                            AuraEffect* aurEff = *itr;
+                            if (aurEff->GetSpellInfo()->Id == 80645 || aurEff->GetSpellInfo()->Id == 80646 || aurEff->GetSpellInfo()->Id == 80647)
+                            {
+                                switch (aurEff->GetEffIndex())
+                                {
+                                case 0: // Defensive Strikes (effect 0)
+                                    mLevelMult = CalculatePct(1.0f, aurEff->GetAmount());
+                                    break;
+                                case 1: // Defensive Strikes (effect 1)
+                                    if (Item* mainHand = m_items[EQUIPMENT_SLOT_MAINHAND])
+                                    {
+                                        // also gains % attack power from equipped weapon
+                                        ItemTemplate const* proto = mainHand->GetTemplate();
+                                        if (!proto)
+                                            continue;
 
+                                        uint32 ap = proto->getFeralBonus();
+                                        // Get AP Bonuses from weapon
+                                        for (uint8 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+                                        {
+                                            if (i >= proto->StatsCount)
+                                                break;
+
+                                            if (proto->ItemStat[i].ItemStatType == ITEM_MOD_ATTACK_POWER)
+                                                ap += proto->ItemStat[i].ItemStatValue;
+                                        }
+
+                                        // Get AP Bonuses from weapon spells
+                                        for (uint8 i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+                                        {
+                                            // no spell
+                                            if (!proto->Spells[i].SpellId || proto->Spells[i].SpellTrigger != ITEM_SPELLTRIGGER_ON_EQUIP)
+                                                continue;
+
+                                            // check if it is valid spell
+                                            SpellInfo const* spellproto = sSpellMgr->GetSpellInfo(proto->Spells[i].SpellId);
+                                            if (!spellproto)
+                                                continue;
+
+                                            for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
+                                                if (spellproto->Effects[j].ApplyAuraName == SPELL_AURA_MOD_ATTACK_POWER)
+                                                    ap += spellproto->Effects[j].CalcValue();
+                                        }
+
+                                        weapon_bonus = CalculatePct(float(ap), aurEff->GetAmount());
+                                    }
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
+                        }
+                    }
                     switch (GetShapeshiftForm())
                     {
                         case FORM_CAT:
