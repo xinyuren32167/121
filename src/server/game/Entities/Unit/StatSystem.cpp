@@ -25,11 +25,6 @@
 #include "SpellMgr.h"
 #include "Unit.h"
 
-enum SpellDruid {
-    PREDATORY_STRIKES = 16972,
-    DEFENSIVE_STRIKES = 80645
-};
-
 inline bool _ModifyUInt32(bool apply, uint32& baseValue, int32& amount)
 {
     // If amount is negative, change sign and value of apply.
@@ -392,60 +387,123 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                 break;
             case CLASS_DRUID:
                 {
+                    // Check if Predatory Strikes is skilled
                     float mLevelMult = 0.0f;
                     float weapon_bonus = 0.0f;
-                    AuraEffect* talent;
                     if (GetShapeshiftForm() == FORM_CAT)
-                        talent = GetAuraEffectOfRankedSpell(PREDATORY_STRIKES, EFFECT_0);
-
-                    if (GetShapeshiftForm() == FORM_DIREBEAR || GetShapeshiftForm() == FORM_BEAR)
-                        talent = GetAuraEffectOfRankedSpell(DEFENSIVE_STRIKES, EFFECT_0);
-
-                    if (talent) {
-                        switch (talent->GetEffIndex())
+                    {
+                        Unit::AuraEffectList const& mDummy = GetAuraEffectsByType(SPELL_AURA_DUMMY);
+                        for (Unit::AuraEffectList::const_iterator itr = mDummy.begin(); itr != mDummy.end(); ++itr)
                         {
-                        case 0: // Predatory Strikes (effect 0)
-                            mLevelMult = CalculatePct(1.0f, talent->GetAmount());
-                            break;
-                        case 1: // Predatory Strikes (effect 1)
-                            if (Item* mainHand = m_items[EQUIPMENT_SLOT_MAINHAND])
+                            AuraEffect* aurEff = *itr;
+                            if (aurEff->GetSpellInfo()->Id == 16972 || aurEff->GetSpellInfo()->Id == 16974 || aurEff->GetSpellInfo()->Id == 16975)
                             {
-                                // also gains % attack power from equipped weapon
-                                ItemTemplate const* proto = mainHand->GetTemplate();
-                                if (!proto)
-                                    return;
-                                uint32 ap = proto->getFeralBonus();
-                                // Get AP Bonuses from weapon
-                                for (uint8 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+                                switch (aurEff->GetEffIndex())
                                 {
-                                    if (i >= proto->StatsCount)
+                                    case 0: // Predatory Strikes (effect 0)
+                                        mLevelMult = CalculatePct(1.0f, aurEff->GetAmount());
                                         break;
+                                    case 1: // Predatory Strikes (effect 1)
+                                        if (Item* mainHand = m_items[EQUIPMENT_SLOT_MAINHAND])
+                                        {
+                                            // also gains % attack power from equipped weapon
+                                            ItemTemplate const* proto = mainHand->GetTemplate();
+                                            if (!proto)
+                                                continue;
 
-                                    if (proto->ItemStat[i].ItemStatType == ITEM_MOD_ATTACK_POWER)
-                                        ap += proto->ItemStat[i].ItemStatValue;
+                                            uint32 ap = proto->getFeralBonus();
+                                            // Get AP Bonuses from weapon
+                                            for (uint8 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+                                            {
+                                                if (i >= proto->StatsCount)
+                                                    break;
+
+                                                if (proto->ItemStat[i].ItemStatType == ITEM_MOD_ATTACK_POWER)
+                                                    ap += proto->ItemStat[i].ItemStatValue;
+                                            }
+
+                                            // Get AP Bonuses from weapon spells
+                                            for (uint8 i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+                                            {
+                                                // no spell
+                                                if (!proto->Spells[i].SpellId || proto->Spells[i].SpellTrigger != ITEM_SPELLTRIGGER_ON_EQUIP)
+                                                    continue;
+
+                                                // check if it is valid spell
+                                                SpellInfo const* spellproto = sSpellMgr->GetSpellInfo(proto->Spells[i].SpellId);
+                                                if (!spellproto)
+                                                    continue;
+
+                                                for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
+                                                    if (spellproto->Effects[j].ApplyAuraName == SPELL_AURA_MOD_ATTACK_POWER)
+                                                        ap += spellproto->Effects[j].CalcValue();
+                                            }
+
+                                            weapon_bonus = CalculatePct(float(ap), aurEff->GetAmount());
+                                        }
+                                        break;
+                                    default:
+                                        break;
                                 }
-
-                                // Get AP Bonuses from weapon spells
-                                for (uint8 i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
-                                {
-                                    // no spell
-                                    if (!proto->Spells[i].SpellId || proto->Spells[i].SpellTrigger != ITEM_SPELLTRIGGER_ON_EQUIP)
-                                        continue;
-
-                                    // check if it is valid spell
-                                    SpellInfo const* spellproto = sSpellMgr->GetSpellInfo(proto->Spells[i].SpellId);
-                                    if (!spellproto)
-                                        continue;
-
-                                    for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
-                                        if (spellproto->Effects[j].ApplyAuraName == SPELL_AURA_MOD_ATTACK_POWER)
-                                            ap += spellproto->Effects[j].CalcValue();
-                                }
-                                weapon_bonus = CalculatePct(float(ap), talent->GetAmount());
                             }
-                            break;
-                        default:
-                            break;
+                        }
+                    }
+                    else if (GetShapeshiftForm() == FORM_BEAR || GetShapeshiftForm() == FORM_DIREBEAR)
+                    {
+                        Unit::AuraEffectList const& mDummy = GetAuraEffectsByType(SPELL_AURA_DUMMY);
+                        for (Unit::AuraEffectList::const_iterator itr = mDummy.begin(); itr != mDummy.end(); ++itr)
+                        {
+                            AuraEffect* aurEff = *itr;
+                            if (aurEff->GetSpellInfo()->Id == 80645 || aurEff->GetSpellInfo()->Id == 80646 || aurEff->GetSpellInfo()->Id == 80647)
+                            {
+                                switch (aurEff->GetEffIndex())
+                                {
+                                case 0: // Defensive Strikes (effect 0)
+                                    mLevelMult = CalculatePct(1.0f, aurEff->GetAmount());
+                                    break;
+                                case 1: // Defensive Strikes (effect 1)
+                                    if (Item* mainHand = m_items[EQUIPMENT_SLOT_MAINHAND])
+                                    {
+                                        // also gains % attack power from equipped weapon
+                                        ItemTemplate const* proto = mainHand->GetTemplate();
+                                        if (!proto)
+                                            continue;
+
+                                        uint32 ap = proto->getFeralBonus();
+                                        // Get AP Bonuses from weapon
+                                        for (uint8 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+                                        {
+                                            if (i >= proto->StatsCount)
+                                                break;
+
+                                            if (proto->ItemStat[i].ItemStatType == ITEM_MOD_ATTACK_POWER)
+                                                ap += proto->ItemStat[i].ItemStatValue;
+                                        }
+
+                                        // Get AP Bonuses from weapon spells
+                                        for (uint8 i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+                                        {
+                                            // no spell
+                                            if (!proto->Spells[i].SpellId || proto->Spells[i].SpellTrigger != ITEM_SPELLTRIGGER_ON_EQUIP)
+                                                continue;
+
+                                            // check if it is valid spell
+                                            SpellInfo const* spellproto = sSpellMgr->GetSpellInfo(proto->Spells[i].SpellId);
+                                            if (!spellproto)
+                                                continue;
+
+                                            for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
+                                                if (spellproto->Effects[j].ApplyAuraName == SPELL_AURA_MOD_ATTACK_POWER)
+                                                    ap += spellproto->Effects[j].CalcValue();
+                                        }
+
+                                        weapon_bonus = CalculatePct(float(ap), aurEff->GetAmount());
+                                    }
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
                         }
                     }
                     switch (GetShapeshiftForm())
