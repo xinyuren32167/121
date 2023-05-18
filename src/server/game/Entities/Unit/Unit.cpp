@@ -7372,7 +7372,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             return false;
                         }
                     // Leader of the Pack
-                    case 24932:
+                    /*case 24932:
                         {
                             if (triggerAmount <= 0)
                                 return false;
@@ -7387,7 +7387,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             if (GetTypeId() == TYPEID_PLAYER && !ToPlayer()->HasSpellCooldown(34299))
                                 CastCustomSpell(this, 68285, &basepoints1, 0, 0, true, 0, triggeredByAura);
                             break;
-                        }
+                        }*/
                     // Healing Touch (Dreamwalker Raiment set)
                     case 28719:
                         {
@@ -12106,10 +12106,17 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                 switch (spellProto->SpellFamilyName)
                 {
                 case SPELLFAMILY_DRUID:
-                    // Rend and Tear - bonus crit chance for Ferocious Bite on bleeding targets
-                    if (spellProto->SpellFamilyFlags[0] & 0x00800000 && spellProto->SpellIconID == 1680 && HasAuraState(AURA_STATE_BLEEDING))
+                    // Bite and Tear - bonus crit chance for Ferocious Bite on bleeding targets
+                    if (spellProto->Id == 48577 && HasAuraState(AURA_STATE_BLEEDING))
                     {
-                        if (AuraEffect const* rendAndTear = caster->GetDummyAuraEffect(SPELLFAMILY_DRUID, 2859, 1))
+                        if (AuraEffect const* biteAndTear = GetAuraEffectOfRankedSpell(80615, EFFECT_1))
+                            crit_chance += biteAndTear->GetAmount();
+                        break;
+                    }
+                    // Rend and Tear - bonus crit chance for Raze/Maul on bleeding targets
+                    else if (spellProto->Id == 48480 || spellProto->Id == 80520 && HasAuraState(AURA_STATE_BLEEDING))
+                    {
+                        if (AuraEffect const* rendAndTear = GetAuraEffectOfRankedSpell(48432, EFFECT_1))
                             crit_chance += rendAndTear->GetAmount();
                         break;
                     }
