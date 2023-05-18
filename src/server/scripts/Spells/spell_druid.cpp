@@ -49,7 +49,7 @@ enum DruidSpells
     SPELL_DRUID_INCREASED_MOONFIRE_DURATION = 38414,
     SPELL_DRUID_KING_OF_THE_JUNGLE          = 48492,
     SPELL_DRUID_LIFEBLOOM_ENERGIZE          = 64372,
-    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 33778,
+    SPELL_DRUID_LIFEBLOOM_FINAL_HEAL        = 80588,
     SPELL_DRUID_LIVING_SEED_HEAL            = 48503,
     SPELL_DRUID_LIVING_SEED_PROC            = 48504,
     SPELL_DRUID_NATURES_SPLENDOR            = 57865,
@@ -132,18 +132,22 @@ enum DruidSpells
     SPELL_DRUID_WILD_GROWTH                 = 53251,
     SPELL_DRUID_REGROWTH                    = 48443,
     SPELL_DRUID_NATURES_CURE                = 80573,
-    SPELL_DRUID_YSERAS_GIFT                 = 80583,
-    SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80584,
-    SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80585,
+    SPELL_DRUID_YSERAS_GIFT                 = 80584,
+    SPELL_DRUID_YSERAS_GIFT_SELF_HEAL       = 80585,
+    SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL       = 80586,
     SPELL_DRUID_FLOURISH                    = 80587,
     SPELL_DRUID_STELLAR_INNERVATION_R1      = 48516,
     SPELL_DRUID_STELLAR_INNERVATION_R2      = 48521,
     SPELL_DRUID_STELLAR_INNERVATION_R3      = 48525,
+    SPELL_DRUID_POUNCING_STRIKES            = 80595,
+    SPELL_DRUID_POUNCING_STRIKES_BUFF       = 80596,
+    SPELL_DRUID_LEADER_OF_THE_PACK          = 17007,
 
 
     // Rune Spell
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF = 701042,
+    SPELL_DRUID_VERDANCY_EFFLORESCENCE_LISTENER = 701601,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1350,15 +1354,32 @@ class spell_dru_prowl : public AuraScript
 {
     PrepareAuraScript(spell_dru_prowl);
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT))
+            return;
+
+        if (caster->HasAura(SPELL_DRUID_POUNCING_STRIKES))
+            caster->AddAura(SPELL_DRUID_POUNCING_STRIKES_BUFF, caster);
+    }
+
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (GetCaster()->HasAura(SPELL_DRUID_PROWL))
-            GetCaster()->RemoveAura(SPELL_DRUID_PROWL);
+        Unit* caster = GetCaster();
+
+        if (caster->HasAura(SPELL_DRUID_PROWL))
+            caster->RemoveAura(SPELL_DRUID_PROWL);
+
+        if (caster->HasAura(SPELL_DRUID_POUNCING_STRIKES))
+            caster->RemoveAura(SPELL_DRUID_POUNCING_STRIKES_BUFF);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_prowl::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dru_prowl::HandleApply, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_dru_prowl::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1550,7 +1571,12 @@ class spell_dru_berserk_cat : public AuraScript
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->AddAura(SPELL_DRUID_BERSERK_CAT_CRIT, GetCaster());
+        Unit* caster = GetCaster();
+
+        caster->AddAura(SPELL_DRUID_BERSERK_CAT_CRIT, caster);
+
+        if (caster->HasAura(SPELL_DRUID_POUNCING_STRIKES_BUFF))
+            caster->RemoveAura(SPELL_DRUID_POUNCING_STRIKES_BUFF);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -1618,7 +1644,7 @@ class spell_dru_rake : public SpellScript
 
         Unit* caster = GetCaster();
 
-        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT))
+        if (caster->HasAura(SPELL_DRUID_BERSERK_CAT) || caster->HasAura(SPELL_DRUID_POUNCING_STRIKES_BUFF))
             caster->CastSpell(GetExplTargetUnit(), SPELL_DRUID_RAKE_STUN, true);
     }
 
@@ -1648,14 +1674,23 @@ class spell_dru_lifebloom_new : public AuraScript
 {
     PrepareAuraScript(spell_dru_lifebloom_new);
 
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    void AfterRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
-        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL);
+        if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
+            return;
+
+        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleDispel(DispelInfo* dispelInfo)
+    {
+        GetCaster()->CastSpell(GetTarget(), SPELL_DRUID_LIFEBLOOM_FINAL_HEAL, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_dru_lifebloom_new::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_dru_lifebloom_new::AfterRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        AfterDispel += AuraDispelFn(spell_dru_lifebloom_new::HandleDispel);
     }
 };
 
@@ -2499,6 +2534,16 @@ class spell_dru_efflorescence_target_select : public SpellScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
         uint32 maxTargets = value->GetEffect(EFFECT_0).CalcValue(caster);
 
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            caster->AddAura(SPELL_DRUID_VERDANCY_EFFLORESCENCE_LISTENER, target);
+        }
+
         if (targets.size() > maxTargets)
         {
             targets.sort(Acore::HealthPctOrderPred());
@@ -2586,6 +2631,9 @@ class spell_druid_yseras_gift_target : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
+        if (!GetCaster()->ToPlayer()->GetGroup())
+            return;
+
         uint32 const maxTargets = 1;
 
         if (targets.size() > maxTargets)
@@ -2689,6 +2737,29 @@ class spell_dru_moonglow : public AuraScript
     }
 };
 
+class spell_dru_alpha_of_the_pack : public AuraScript
+{
+    PrepareAuraScript(spell_dru_alpha_of_the_pack);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->learnSpell(SPELL_DRUID_LEADER_OF_THE_PACK);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->removeSpell(SPELL_DRUID_LEADER_OF_THE_PACK, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_alpha_of_the_pack::HandleLearn, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_alpha_of_the_pack::HandleUnlearn, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -2776,4 +2847,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_flourish);
     RegisterSpellScript(spell_dru_nature_balance);
     RegisterSpellScript(spell_dru_moonglow);
+    RegisterSpellScript(spell_dru_alpha_of_the_pack);
 }

@@ -7304,7 +7304,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                 }
                 break;
             }
-        /**/case SPELLFAMILY_DRUID:
+        case SPELLFAMILY_DRUID:
             {
                 switch (dummySpell->Id)
                 {

@@ -31,15 +31,20 @@ enum DruidSpells
     SPELL_ASTRAL_COMMUNION = 80534,
     SPELL_BARKSKIN = 22812,
     SPELL_BERSERK = 50334,
-    SPELL_BERSERK_BEAR = 00000,
+    SPELL_BERSERK_BEAR = 80566,
     SPELL_CELESTIAL_ALIGNMENT = 80531,
     SPELL_DASH = 33357,
+    SPELL_EFFLORESCENCE = 80577,
+    SPELL_EFFLORESCENCE_AURA = 80578,
+    SPELL_EFFLORESCENCE_HEAL = 80579,
     SPELL_FERAL_FRENZY = 80549,
     SPELL_FRENZIED_REGENERATION = 22842,
     SPELL_FULL_MOON = 80542,
     SPELL_INNERVATE = 29166,
     SPELL_IRONFUR = 80555,
     SPELL_IRONFUR_AURA = 80556,
+    SPELL_LIFEBLOOM = 48451,
+    SPELL_LIFEBLOOM_BLOOM = 33778,
     SPELL_MANGLE = 48564,
     SPELL_MAUL = 48480,
     SPELL_MOONFIRE = 48463,
@@ -135,6 +140,12 @@ enum DruidSpells
     RUNE_DRUID_BRAMBLES_DAMAGE = 701514,
     RUNE_DRUID_BRAMBLES_BUFF = 701515,
     RUNE_DRUID_BRAMBLES_AOE_DAMAGE = 701516,
+    RUNE_DRUID_AFTER_THE_WILDFIRE_AOE_HEAL = 701542,
+    RUNE_DRUID_ELUNES_FAVORED_HEAL = 701556,
+    RUNE_DRUID_PHOTOSYNTHESIS_BUFF = 701600,
+    RUNE_DRUID_VERDANCY_HEAL = 701608,
+    RUNE_DRUID_VERDANCY_EFFLORESCENCE_LISTENER = 701601,
+    RUNE_DRUID_VERDANCY_LISTENER = 701609,
 
 };
 
@@ -4648,6 +4659,25 @@ class rune_druid_everlasting_encasement : public AuraScript
         return nullptr;
     }
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 maxStacks = 3;
+
+        if (GetRuneAura(caster))
+            maxStacks += GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        int32 thrashStacks = GetAura()->GetStackAmount();
+
+        if (thrashStacks > maxStacks)
+            GetAura()->SetStackAmount(maxStacks);
+    }
+
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetAura()->GetCaster();
@@ -4671,6 +4701,7 @@ class rune_druid_everlasting_encasement : public AuraScript
 
     void Register()
     {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_everlasting_encasement::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
         OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_everlasting_encasement::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
     }
 };
@@ -4900,6 +4931,522 @@ class rune_druid_brambles_damage : public AuraScript
     }
 };
 
+class rune_druid_ursine_vigor : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ursine_vigor);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701518; i < 701524; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        caster->AddAura(procSpell, caster);
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_ursine_vigor::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+class rune_druid_son_of_ursoc : public AuraScript
+{
+    PrepareAuraScript(rune_druid_son_of_ursoc);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* target = GetCaster()->ToPlayer())
+        {
+            target->ModifySpellCooldown(SPELL_BERSERK_BEAR, -aurEff->GetAmount());
+            target->ModifySpellCooldown(SPELL_INCARNATION_GUARDIAN_OF_URSOC, -aurEff->GetAmount());
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_son_of_ursoc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_after_the_wildfire : public AuraScript
+{
+    PrepareAuraScript(rune_druid_after_the_wildfire);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = eventInfo.GetActor()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (spellRage <= 0 || eventInfo.GetSpellInfo()->PowerType != POWER_RAGE)
+            return;
+
+        int32 rageAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount() + spellRage;
+        int32 attackPowerPct = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 attackPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 rageThreshold = aurEff->GetAmount();
+
+        if (rageAccumulated > rageThreshold)
+        {
+            rageAccumulated -= rageThreshold;
+            int32 amount = CalculatePct(attackPower, attackPowerPct);
+
+            caster->CastCustomSpell(RUNE_DRUID_AFTER_THE_WILDFIRE_AOE_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+
+        GetAura()->GetEffect(EFFECT_2)->SetAmount(rageAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_after_the_wildfire::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_after_the_wildfire::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_elunes_favored : public AuraScript
+{
+    PrepareAuraScript(rune_druid_elunes_favored);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_BEAR_FORM) && !caster->HasAura(FORM_DIRE_BEAR_FORM))
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damage <= 0 || eventInfo.GetDamageInfo()->GetSchoolMask() != SPELL_SCHOOL_MASK_ARCANE)
+            return;
+
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_ELUNES_FAVORED_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_BEAR_FORM) && !caster->HasAura(FORM_DIRE_BEAR_FORM))
+            return;
+
+        int32 procSpell = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701550; i < 701556; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_elunes_favored::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_elunes_favored::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(rune_druid_elunes_favored::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_elunes_favored::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_elunes_favored_buff : public AuraScript
+{
+    PrepareAuraScript(rune_druid_elunes_favored_buff);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701544; i < 701550; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701550; i < 701556; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_elunes_favored_buff::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_elunes_favored_buff::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_astral_fury : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_fury);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_BEAR_FORM) && !caster->HasAura(FORM_DIRE_BEAR_FORM))
+            return;
+
+        int32 procSpell = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701564; i < 701570; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_astral_fury::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_astral_fury::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_astral_fury_buff : public AuraScript
+{
+    PrepareAuraScript(rune_druid_astral_fury_buff);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701558; i < 701564; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701564; i < 701570; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_astral_fury_buff::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_astral_fury_buff::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_malornes_rage : public AuraScript
+{
+    PrepareAuraScript(rune_druid_malornes_rage);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(FORM_BEAR_FORM) && !caster->HasAura(FORM_DIRE_BEAR_FORM))
+            return;
+
+        int32 procChance = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+            procChance *= 2;
+
+        int32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        int32 rageIncrease = aurEff->GetAmount();
+        int32 procSpell = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+
+        caster->ModifyPower(POWER_RAGE, rageIncrease);
+        caster->AddAura(procSpell, caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_malornes_rage::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_malornes_rage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_photosynthesis : public AuraScript
+{
+    PrepareAuraScript(rune_druid_photosynthesis);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701588; i < 701594; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        if (target == caster)
+            caster->AddAura(procSpell, target);
+        else
+            caster->AddAura(RUNE_DRUID_PHOTOSYNTHESIS_BUFF, target);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* owner = GetAura()->GetOwner()->ToUnit();
+
+        for (size_t i = 701594; i < 701601; i++)
+        {
+            if (owner->HasAura(i))
+                owner->RemoveAura(i);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_photosynthesis::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_photosynthesis::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_photosynthesis_proc : public AuraScript
+{
+    PrepareAuraScript(rune_druid_photosynthesis_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target->HasAura(RUNE_DRUID_PHOTOSYNTHESIS_BUFF))
+            return;
+
+        int32 procChance = aurEff->GetAmount();
+        int32 random = urand(1, 100);
+
+        if (random > procChance)
+            return;
+
+        caster->CastSpell(target, SPELL_LIFEBLOOM_BLOOM, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701594; i < 701601; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_photosynthesis_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_photosynthesis_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_photosynthesis_proc::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_verdancy : public SpellScript
+{
+    PrepareSpellScript(rune_druid_verdancy);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701602; i < 701608; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        if (targets.size() == 0)
+            return;
+
+        int32 targetHealed = 0;
+        int32 maxTarget = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+        targets.sort(Acore::HealthPctOrderPred());
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(RUNE_DRUID_VERDANCY_EFFLORESCENCE_LISTENER))
+                continue;
+            
+            int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
+            int32 powerPct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = int32(CalculatePct(spellPower, powerPct));
+
+            caster->CastCustomSpell(RUNE_DRUID_VERDANCY_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+
+            targetHealed++;
+
+            if (targetHealed == maxTarget)
+                return;
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_verdancy::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class rune_druid_eternal_bloom : public AuraScript
+{
+    PrepareAuraScript(rune_druid_eternal_bloom);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_LIFEBLOOM))
+            return;
+
+        target->GetAura(SPELL_LIFEBLOOM)->RefreshDuration();
+        target->GetAura(SPELL_LIFEBLOOM)->GetEffect(EFFECT_0)->ResetTicks();
+        caster->CastSpell(target, SPELL_LIFEBLOOM_BLOOM, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_eternal_bloom::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_eternal_bloom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 
 
@@ -5025,5 +5572,16 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_brambles);
     RegisterSpellScript(rune_druid_brambles_apply);
     RegisterSpellScript(rune_druid_brambles_damage);
+    RegisterSpellScript(rune_druid_ursine_vigor);
+    RegisterSpellScript(rune_druid_son_of_ursoc);
+    RegisterSpellScript(rune_druid_after_the_wildfire);
+    RegisterSpellScript(rune_druid_elunes_favored);
+    RegisterSpellScript(rune_druid_elunes_favored_buff);
+    RegisterSpellScript(rune_druid_astral_fury);
+    RegisterSpellScript(rune_druid_astral_fury_buff);
+    RegisterSpellScript(rune_druid_malornes_rage);
+    RegisterSpellScript(rune_druid_photosynthesis);
+    RegisterSpellScript(rune_druid_verdancy);
+    RegisterSpellScript(rune_druid_eternal_bloom);
 
 }
