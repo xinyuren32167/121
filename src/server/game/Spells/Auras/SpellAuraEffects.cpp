@@ -6605,6 +6605,13 @@ void AuraEffect::HandlePeriodicHealAurasTick(Unit* target, Unit* caster) const
                 if (AuraEffect* aurEff = caster->GetAuraEffect(70658, 0))
                     AddPct(drop, -aurEff->GetAmount());
 
+            // Rune - Unstoppable Growth
+            for (size_t i = 701756; i < 701760; i++)
+            {
+                if (AuraEffect* aurEff = caster->GetAuraEffect(i, 0))
+                    AddPct(drop, -aurEff->GetAmount());
+            }
+
             damage += GetTotalTicks() * tempAmount * (6 - (drop * tickNumber)) * 0.01f;
         }
 

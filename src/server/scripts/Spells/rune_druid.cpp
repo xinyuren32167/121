@@ -37,11 +37,13 @@ enum DruidSpells
     SPELL_EFFLORESCENCE = 80577,
     SPELL_EFFLORESCENCE_AURA = 80578,
     SPELL_EFFLORESCENCE_HEAL = 80579,
+    SPELL_EFFLORESCENCE_LISTENER = 701601,
     SPELL_FERAL_FRENZY = 80549,
     SPELL_FLOURISH = 80587,
     SPELL_FRENZIED_REGENERATION = 22842,
     SPELL_FULL_MOON = 80542,
     SPELL_INNERVATE = 29166,
+    SPELL_IRONBARK = 80580,
     SPELL_IRONFUR = 80555,
     SPELL_IRONFUR_AURA = 80556,
     SPELL_LIFEBLOOM = 48451,
@@ -148,13 +150,16 @@ enum DruidSpells
     RUNE_DRUID_ELUNES_FAVORED_HEAL = 701556,
     RUNE_DRUID_PHOTOSYNTHESIS_BUFF = 701600,
     RUNE_DRUID_VERDANCY_HEAL = 701608,
-    RUNE_DRUID_VERDANCY_EFFLORESCENCE_LISTENER = 701601,
     RUNE_DRUID_VERDANCY_LISTENER = 701609,
     RUNE_DRUID_FLORAL_NOURISHMENT_HEAL = 701664,
     RUNE_DRUID_GROVE_TENDING_HEAL = 701696,
     RUNE_DRUID_REGENESIS_HEAL = 701722,
     RUNE_DRUID_EARLY_HARVEST_HEAL = 701768,
     RUNE_DRUID_NATURES_ESSENCE_HEAL = 701784,
+    RUNE_DRUID_EMBRACE_OF_THE_DREAM_HEAL = 701792,
+    RUNE_DRUID_EMBRACE_OF_THE_DREAM_LISTENER = 701793,
+    RUNE_DRUID_SPRING_BLOSSOM_HOT = 701818,
+    RUNE_DRUID_STONEBARK_HEAL = 701848,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -5429,7 +5434,7 @@ class rune_druid_verdancy : public SpellScript
         {
             Unit* target = object->ToUnit();
 
-            if (target->isDead() || !target->HasAura(RUNE_DRUID_VERDANCY_EFFLORESCENCE_LISTENER))
+            if (target->isDead() || !target->HasAura(SPELL_EFFLORESCENCE_LISTENER))
                 continue;
 
             int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
@@ -5812,11 +5817,6 @@ class rune_druid_dreamstate : public AuraScript
 {
     PrepareAuraScript(rune_druid_dreamstate);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetHealInfo();
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
@@ -5832,7 +5832,6 @@ class rune_druid_dreamstate : public AuraScript
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_druid_dreamstate::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_druid_dreamstate::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -5953,7 +5952,7 @@ class rune_druid_early_harvest : public AuraScript
         if (!target || target->isDead())
             return;
 
-        if (!GetRuneAura(caster->ToUnit()))
+        if (!GetRuneAura(caster))
             return;
 
         int32 healthPct = target->GetHealthPct();
@@ -5961,7 +5960,7 @@ class rune_druid_early_harvest : public AuraScript
         if (healthPct == 100)
         {
             int32 amount = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
-            caster->ModifySpellCooldown(SPELL_INCARNATION_TREE_OF_LIFE, -amount);
+            caster->ModifySpellCooldown(SPELL_INNERVATE, -amount);
         }
         else
         {
@@ -6022,6 +6021,234 @@ class rune_druid_natures_essence : public AuraScript
         OnEffectApply += AuraEffectApplyFn(rune_druid_natures_essence::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
     }
 };
+
+class rune_druid_embrace_the_dream : public SpellScript
+{
+    PrepareSpellScript(rune_druid_embrace_the_dream);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701786; i < 701792; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_REJUVENATION) && !target->HasAura(SPELL_REGROWTH))
+                continue;
+
+            int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
+            int32 powerPct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = int32(CalculatePct(spellPower, powerPct));
+
+            caster->CastCustomSpell(RUNE_DRUID_EMBRACE_OF_THE_DREAM_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_embrace_the_dream::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class rune_druid_tearstone_of_elune : public AuraScript
+{
+    PrepareAuraScript(rune_druid_tearstone_of_elune);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->AddAura(SPELL_REJUVENATION, target);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_tearstone_of_elune::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_tearstone_of_elune::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_deep_rooted : public AuraScript
+{
+    PrepareAuraScript(rune_druid_deep_rooted);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701800; i < 701806; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetAura()->GetCaster()->ToPlayer();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 healthPct = target->GetHealthPct();
+        int32 healthThreshold = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        if (healthPct > healthThreshold)
+            return;
+
+        int32 auraId = GetAura()->GetId();
+
+        caster->AddAura(auraId, target);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_deep_rooted::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_spring_blossoms : public AuraScript
+{
+    PrepareAuraScript(rune_druid_spring_blossoms);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
+        int32 powerPct = aurEff->GetAmount();
+        int32 amount = int32(CalculatePct(spellPower, powerPct));
+
+        if (AuraEffect* protEff = victim->GetAuraEffect(RUNE_DRUID_SPRING_BLOSSOM_HOT, 0))
+        {
+            int32 hotDuration = protEff->GetBase()->GetMaxDuration();
+            float maxTicks = hotDuration / protEff->GetAmplitude();
+            int32 remainingTicks = maxTicks - protEff->GetTickNumber();
+            int32 remainingAmount = protEff->GetAmount() * remainingTicks;
+            int32 remainingAmountPerTick = remainingAmount / maxTicks;
+
+            amount += remainingAmountPerTick;
+            victim->RemoveAura(RUNE_DRUID_SPRING_BLOSSOM_HOT);
+        }
+
+        caster->CastCustomSpell(RUNE_DRUID_SPRING_BLOSSOM_HOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_spring_blossoms::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_spring_blossoms::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_sprouts : public AuraScript
+{
+    PrepareAuraScript(rune_druid_sprouts);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!victim->HasAura(SPELL_REJUVENATION))
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        caster->CastSpell(victim, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_sprouts::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_sprouts::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_stonebark : public AuraScript
+{
+    PrepareAuraScript(rune_druid_stonebark);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* victim = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!victim->HasAura(SPELL_IRONBARK))
+            return;
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        int32 amount = CalculatePct(heal, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_DRUID_STONEBARK_HEAL, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_stonebark::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_stonebark::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -6173,10 +6400,16 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_inner_peace);
     RegisterSpellScript(rune_druid_early_harvest);
     RegisterSpellScript(rune_druid_natures_essence);
+    RegisterSpellScript(rune_druid_embrace_the_dream);
+    RegisterSpellScript(rune_druid_tearstone_of_elune);
+    RegisterSpellScript(rune_druid_deep_rooted);
+    RegisterSpellScript(rune_druid_spring_blossoms);
+    RegisterSpellScript(rune_druid_sprouts);
+    RegisterSpellScript(rune_druid_stonebark);
 
 
 
 
 
-
+    
 }
