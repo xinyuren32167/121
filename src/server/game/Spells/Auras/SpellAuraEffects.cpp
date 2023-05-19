@@ -6593,7 +6593,7 @@ void AuraEffect::HandlePeriodicHealAurasTick(Unit* target, Unit* caster) const
     else
     {
         // Wild Growth = amount + (6 - 2*doneTicks) * ticks* amount / 100
-        if (GetSpellInfo()->SpellFamilyName == SPELLFAMILY_DRUID && GetSpellInfo()->Id == 53251 || GetSpellInfo()->Id == 700019)
+        /*if (GetSpellInfo()->SpellFamilyName == SPELLFAMILY_DRUID && GetSpellInfo()->Id == 53251 || GetSpellInfo()->Id == 700019)
         {
             uint32 tickNumber = GetTickNumber() - 1;
             int32 tempAmount = m_spellInfo->Effects[m_effIndex].CalcValue(caster, &m_baseAmount, nullptr);
@@ -6613,7 +6613,7 @@ void AuraEffect::HandlePeriodicHealAurasTick(Unit* target, Unit* caster) const
             }
 
             damage += GetTotalTicks() * tempAmount * (6 - (drop * tickNumber)) * 0.01f;
-        }
+        }*/
 
         if (GetBase()->GetType() == DYNOBJ_AURA_TYPE)
             damage = caster->SpellHealingBonusDone(target, GetSpellInfo(), damage, DOT, GetEffIndex(), 0.0f, GetBase()->GetStackAmount());

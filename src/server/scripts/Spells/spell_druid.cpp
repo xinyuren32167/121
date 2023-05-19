@@ -1192,16 +1192,9 @@ class spell_dru_t10_restoration_4p_bonus : public SpellScript
 };
 
 // -48438 - Wild Growth
-/*class spell_dru_wild_growth : public SpellScript
+class spell_dru_wild_growth : public SpellScript
 {
     PrepareSpellScript(spell_dru_wild_growth);
-
-    bool Validate(SpellInfo const* spellInfo) override
-    {
-        if (spellInfo->Effects[EFFECT_1].IsEffect() || spellInfo->Effects[EFFECT_1].CalcValue() <= 0)
-            return false;
-        return true;
-    }
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
@@ -1231,7 +1224,50 @@ class spell_dru_t10_restoration_4p_bonus : public SpellScript
 
 private:
     std::list<WorldObject*> _targets;
-};*/
+};
+
+class spell_dru_wild_growth_periodic : public AuraScript
+{
+    PrepareAuraScript(spell_dru_wild_growth_periodic);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster->GetGroup())
+            return;
+
+        uint32 amount = aurEff->GetAmount();
+        float drop = 2;
+
+        // Rune - Unstoppable Growth
+        for (size_t i = 701756; i < 701760; i++)
+        {
+            if (AuraEffect* eff = caster->GetAuraEffect(i, 0))
+                AddPct(drop, -eff->GetAmount());
+        }
+
+        int32 duration = GetAura()->GetMaxDuration();
+        int32 totalTicks = GetAura()->GetMaxDuration() / GetAura()->GetEffect(EFFECT_0)->GetAmplitude();
+        int32 totalHealAmount = amount * totalTicks;
+        int32 tickNumber = aurEff->GetTickNumber() - 1;
+        int32 healAmount = totalHealAmount * (1 - std::pow(drop, tickNumber)) / (1 - drop);
+        GetAura()->GetEffect(EFFECT_0)->ChangeAmount(std::max(1, healAmount));
+    }    
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        int32 spellId = aurEff->GetId();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+        if (!target->IsPlayer() || !target->ToPlayer()->GetGroup())
+            target->RemoveAura(spellId);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_wild_growth_periodic::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dru_wild_growth_periodic::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
+    }
+};
 
 // -50334 - Berserk
 class spell_dru_berserk : public SpellScript
@@ -2989,7 +3025,8 @@ void AddSC_druid_spell_scripts()
     //RegisterSpellScript(spell_dru_tiger_s_fury);
     RegisterSpellScript(spell_dru_typhoon);
     RegisterSpellScript(spell_dru_t10_restoration_4p_bonus);
-    //RegisterSpellScript(spell_dru_wild_growth);
+    RegisterSpellScript(spell_dru_wild_growth);
+    RegisterSpellScript(spell_dru_wild_growth_periodic);
     RegisterSpellScript(spell_dru_moonkin_form_passive_proc);
     RegisterSpellScript(spell_dru_ferocious_bite);
     RegisterSpellScript(spell_dru_maim);
