@@ -1236,8 +1236,8 @@ class spell_dru_wild_growth_periodic : public AuraScript
         if (!caster->GetGroup())
             return;
 
-        uint32 amount = aurEff->GetAmount();
-        float drop = 2;
+        int32 amount = aurEff->GetAmount();
+        float drop = 2.0f;
 
         // Rune - Unstoppable Growth
         for (size_t i = 701756; i < 701760; i++)
@@ -1246,12 +1246,9 @@ class spell_dru_wild_growth_periodic : public AuraScript
                 AddPct(drop, -eff->GetAmount());
         }
 
-        int32 duration = GetAura()->GetMaxDuration();
-        int32 totalTicks = GetAura()->GetMaxDuration() / GetAura()->GetEffect(EFFECT_0)->GetAmplitude();
-        int32 totalHealAmount = amount * totalTicks;
-        int32 tickNumber = aurEff->GetTickNumber() - 1;
-        int32 healAmount = totalHealAmount * (1 - std::pow(drop, tickNumber)) / (1 - drop);
-        GetAura()->GetEffect(EFFECT_0)->ChangeAmount(std::max(1, healAmount));
+        drop *= (aurEff->GetTickNumber() - 1);
+        AddPct(amount, 6.f - drop);
+        GetAura()->GetEffect(EFFECT_0)->ChangeAmount(std::max(1, amount));
     }    
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
