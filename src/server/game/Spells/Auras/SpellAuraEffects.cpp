@@ -1183,7 +1183,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
     {
         case FORM_CAT:
             spellId = 3025;
-            HotWSpellId = 24900;
+            //HotWSpellId = 24900;
             break;
         case FORM_TREE:
             spellId = 34123;
@@ -1340,7 +1340,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                     target->CastSpell(target, 66530, true);
             }
             // Heart of the Wild
-            if (HotWSpellId)
+            /*if (HotWSpellId)
             {
                 // hacky, but the only way as spell family is not SPELLFAMILY_DRUID
                 Unit::AuraEffectList const& mModTotalStatPct = target->GetAuraEffectsByType(SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE);
@@ -1355,7 +1355,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                         break;
                     }
                 }
-            }
+            }*/
             switch (GetMiscValue())
             {
                 case FORM_CAT:
@@ -1363,7 +1363,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                     if (target->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_DRUID, 0, 0x10000000, 0))
                         target->CastSpell(target, 62071, true);
                     // Nurturing Instinct
-                    if (AuraEffect const* aurEff = target->GetAuraEffect(SPELL_AURA_MOD_SPELL_HEALING_OF_STAT_PERCENT, SPELLFAMILY_DRUID, 2254, 0))
+                    if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(33872, EFFECT_0))
                     {
                         uint32 spellId3 = 0;
                         switch (aurEff->GetId())
@@ -1385,7 +1385,35 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                     }
                     break;
                 case FORM_DIREBEAR:
+                    if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(80653, EFFECT_0))
+                    {
+                        uint32 spellId3 = 0;
+                        switch (aurEff->GetId())
+                        {
+                        case 80653:
+                            spellId3 = 80655;
+                            break;
+                        case 80654:
+                            spellId3 = 80656;
+                            break;
+                        }
+                        target->CastSpell(target, spellId3, true, nullptr, this, target->GetGUID());
+                    }
                 case FORM_BEAR:
+                    if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(80653, EFFECT_0))
+                    {
+                        uint32 spellId3 = 0;
+                        switch (aurEff->GetId())
+                        {
+                        case 80653:
+                            spellId3 = 80655;
+                            break;
+                        case 80654:
+                            spellId3 = 80656;
+                            break;
+                        }
+                        target->CastSpell(target, spellId3, true, nullptr, this, target->GetGUID());
+                    }
                     // Master Shapeshifter - Bear
                     if (AuraEffect const* aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0))
                     {
