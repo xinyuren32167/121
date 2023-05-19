@@ -154,6 +154,7 @@ enum DruidSpells
     RUNE_DRUID_GROVE_TENDING_HEAL = 701696,
     RUNE_DRUID_REGENESIS_HEAL = 701722,
     RUNE_DRUID_EARLY_HARVEST_HEAL = 701768,
+    RUNE_DRUID_NATURES_ESSENCE_HEAL = 701784,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -5978,6 +5979,50 @@ class rune_druid_early_harvest : public AuraScript
     }
 };
 
+class rune_druid_natures_essence : public AuraScript
+{
+    PrepareAuraScript(rune_druid_natures_essence);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701778; i < 701784; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetAura()->GetCaster()->ToPlayer();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        if (!GetRuneAura(caster->ToUnit()))
+            return;
+
+        int32 healthPct = target->GetHealthPct();
+
+        int32 spellPower = caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL);
+        int32 powerPct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = int32(CalculatePct(spellPower, powerPct));
+
+        caster->CastCustomSpell(RUNE_DRUID_NATURES_ESSENCE_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_natures_essence::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 
@@ -6127,4 +6172,11 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_regenesis);
     RegisterSpellScript(rune_druid_inner_peace);
     RegisterSpellScript(rune_druid_early_harvest);
+    RegisterSpellScript(rune_druid_natures_essence);
+
+
+
+
+
+
 }
