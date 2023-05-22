@@ -450,6 +450,46 @@ class spell_mastery_sniper_training : public SpellScript
     }
 };
 
+//Druid
+class spell_mastery_astral_invocation : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_astral_invocation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleCast(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 natureDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        int32 arcaneDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+
+        int32 schoolMask = procInfo.GetSpellInfo()->GetSchoolMask();
+
+        if (schoolMask & SPELL_SCHOOL_MASK_NATURE)
+        {
+            int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
+            int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);
+            GetCaster()->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, pctDamage, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+
+        if (schoolMask & SPELL_SCHOOL_MASK_ARCANE)
+        {
+            int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
+            int32 pctDamage = CalculatePct(rawDamage, arcaneDamageBonus);
+            GetCaster()->CastCustomSpell(700003, SPELLVALUE_BASE_POINT0, pctDamage, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_astral_invocation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_astral_invocation::HandleCast, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
@@ -469,4 +509,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_hand_of_light);
     RegisterSpellScript(spell_mastery_master_of_beasts);
     RegisterSpellScript(spell_mastery_sniper_training);
+    RegisterSpellScript(spell_mastery_astral_invocation);
 }

@@ -12048,16 +12048,10 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                             // cumulative effect - don't break
 
                             // Starfire
-                            if (spellProto->SpellFamilyFlags[0] & 0x4 && spellProto->SpellIconID == 1485)
+                            if (spellProto->Id == 80528)
                             {
                                 // Improved Insect Swarm / Stellar Flare
-                                if (AuraEffect const* aurEff = caster->GetAura(57849)->GetEffect(EFFECT_0))
-                                    if (GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
-                                        crit_chance += aurEff->GetAmount();
-                                else if (AuraEffect const* aurEff = caster->GetAura(57850)->GetEffect(EFFECT_0))
-                                    if (GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
-                                        crit_chance += aurEff->GetAmount();
-                                else if (AuraEffect const* aurEff = caster->GetAura(57851)->GetEffect(EFFECT_0))
+                                if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(57849, EFFECT_0))
                                     if (GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
                                         crit_chance += aurEff->GetAmount();
                                 break;

@@ -486,17 +486,11 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                         damage += int32(CalculatePct(m_caster->GetComboPoints() * ap, 7));
                     }*/
                     // Wrath
-                    if (m_spellInfo->SpellFamilyFlags[0] & 0x00000001)
+                    if (m_spellInfo->Id == 48461)
                     {
                         // Improved Insect Swarm / Stellar Flare
-                        if (AuraEffect const* aurEff = m_caster->GetAura(57849)->GetEffect(EFFECT_0))
-                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
-                                AddPct(damage, aurEff->GetAmount());
-                        else if (AuraEffect const* aurEff = m_caster->GetAura(57850)->GetEffect(EFFECT_0))
-                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
-                                AddPct(damage, aurEff->GetAmount());
-                        else if (AuraEffect const* aurEff = m_caster->GetAura(57851)->GetEffect(EFFECT_0))
-                            if (unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x40000000, 0, 0))
+                        if (AuraEffect const* aurEff = m_caster->GetAuraEffectOfRankedSpell(57849, EFFECT_0))
+                            if (unitTarget->HasAura(80528))
                                 AddPct(damage, aurEff->GetAmount());
                     }
                     break;
