@@ -33,6 +33,7 @@ enum DruidSpells
     SPELL_BERSERK = 50334,
     SPELL_BERSERK_BEAR = 80566,
     SPELL_CELESTIAL_ALIGNMENT = 80531,
+    SPELL_CLEARCASTING = 16870,
     SPELL_DASH = 33357,
     SPELL_EFFLORESCENCE = 80577,
     SPELL_EFFLORESCENCE_AURA = 80578,
@@ -74,6 +75,9 @@ enum DruidSpells
     SPELL_WARRIOR_OF_ELUNE = 80536,
     SPELL_WILD_GROWTH = 53251,
     SPELL_WRATH = 48461,
+    SPELL_YSERAS_GIFT = 80584,
+    SPELL_YSERAS_GIFT_SELF_HEAL = 80585,
+    SPELL_YSERAS_GIFT_GROUP_HEAL = 80586,
 
     //Talents
     SPELL_ECLIPSE_SOLAR = 80502,
@@ -160,6 +164,14 @@ enum DruidSpells
     RUNE_DRUID_EMBRACE_OF_THE_DREAM_LISTENER = 701793,
     RUNE_DRUID_SPRING_BLOSSOM_HOT = 701818,
     RUNE_DRUID_STONEBARK_HEAL = 701848,
+    RUNE_DRUID_REGENERATIVE_HEARTWOOD_HEAL = 701862,
+    RUNE_DRUID_REGENERATIVE_HEARTWOOD_LISTENER = 701863,
+    RUNE_DRUID_IRONWOOD_THORNS_DAMAGE = 701876,
+    RUNE_DRUID_REFORESTATION_LISTENER = 701890,
+    RUNE_DRUID_I_IS_GROOT_BUFF = 701898,
+    RUNE_DRUID_I_IS_GROOT_SILENCE = 701899,
+    RUNE_DRUID_I_IS_GROOT_HEAL = 701900,
+    RUNE_DRUID_I_IS_GROOT_DEBUFF = 701901,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -1047,8 +1059,8 @@ class rune_druid_abundance : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_druid_abundance::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_druid_abundance::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(rune_druid_abundance::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_abundance::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -6249,6 +6261,432 @@ class rune_druid_stonebark : public AuraScript
     }
 };
 
+class rune_druid_regenerative_heartwood : public AuraScript
+{
+    PrepareAuraScript(rune_druid_regenerative_heartwood);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701856; i < 701862; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 healPct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        int32 healAmount = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+
+        int32 amount = CalculatePct(healAmount, healPct);
+
+        GetRuneAura(caster)->GetEffect(EFFECT_2)->SetAmount(amount);
+        caster->CastSpell(target, RUNE_DRUID_REGENERATIVE_HEARTWOOD_LISTENER, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_regenerative_heartwood::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
+    }
+};
+
+class rune_druid_regenerative_heartwood_heal : public SpellScript
+{
+    PrepareSpellScript(rune_druid_regenerative_heartwood_heal);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701856; i < 701862; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_IRONBARK))
+                continue;
+
+            int32 amount = GetRuneAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+
+            caster->CastCustomSpell(RUNE_DRUID_REGENERATIVE_HEARTWOOD_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_druid_regenerative_heartwood_heal::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class rune_druid_ironwood_thorns : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ironwood_thorns);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701864; i < 701870; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        caster->AddAura(procSpell, target);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 701870; i < 701876; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                GetCaster()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_ironwood_thorns::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_ironwood_thorns::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_ironwood_thorns_reflect : public AuraScript
+{
+    PrepareAuraScript(rune_druid_ironwood_thorns_reflect);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* owner = GetAura()->GetOwner()->ToUnit();
+        Unit* attacker = eventInfo.GetDamageInfo()->GetAttacker();
+
+        if (!attacker || attacker->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damagePct = aurEff->GetAmount();
+        int32 amount = CalculatePct(damage, damagePct);
+
+        owner->CastCustomSpell(RUNE_DRUID_IRONWOOD_THORNS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, attacker, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_druid_ironwood_thorns_reflect::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_druid_ironwood_thorns_reflect::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_cenarius_guidance : public AuraScript
+{
+    PrepareAuraScript(rune_druid_cenarius_guidance);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetHealInfo())
+            return;
+
+        Unit* caster = GetAura()->GetCaster();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 durationIncrease = 0;
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+
+        if (spellId == SPELL_LIFEBLOOM_BLOOM)
+            durationIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (spellId == SPELL_REGROWTH && eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+            durationIncrease = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+
+        if (spellId == 0)
+            return;
+
+        caster->ToPlayer()->ModifySpellCooldown(SPELL_INCARNATION_TREE_OF_LIFE, -durationIncrease);
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_INCARNATION_TREE_OF_LIFE))
+            return;
+
+        caster->CastSpell(caster, SPELL_CLEARCASTING, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_cenarius_guidance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_cenarius_guidance::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_druid_reforestation : public AuraScript
+{
+    PrepareAuraScript(rune_druid_reforestation);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 swiftmendNumber = aurEff->GetAmount();
+        caster->CastSpell(caster, RUNE_DRUID_REFORESTATION_LISTENER, TRIGGERED_FULL_MASK);
+
+        if (caster->GetAura(RUNE_DRUID_REFORESTATION_LISTENER)->GetStackAmount() < swiftmendNumber)
+            return;
+
+        if (Aura* tree = caster->GetAura(SPELL_INCARNATION_TREE_OF_LIFE))
+        {
+            int32 duration = tree->GetDuration();
+            int32 treeIncrease = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+            tree->SetDuration(duration + treeIncrease);
+        }
+        else
+        {
+            int32 treeDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            caster->AddAura(SPELL_INCARNATION_TREE_OF_LIFE, caster);
+            caster->GetAura(SPELL_INCARNATION_TREE_OF_LIFE)->SetDuration(treeDuration);
+        }
+
+        caster->RemoveAura(RUNE_DRUID_REFORESTATION_LISTENER);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_druid_reforestation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_druid_i_is_groot : public AuraScript
+{
+    PrepareAuraScript(rune_druid_i_is_groot);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        // Set absorbtion amount to unlimited
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        // If damage kills us
+        if (remainingHealth <= 0 && !victim->HasAura(RUNE_DRUID_I_IS_GROOT_DEBUFF))
+        {
+            // Cast healing spell, completely avoid damage
+            absorbAmount = dmgInfo.GetDamage();
+
+            int32 debuffDuration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            int32 duration = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+            int32 amplitude = sSpellMgr->GetSpellInfo(RUNE_DRUID_I_IS_GROOT_HEAL)->GetEffect(EFFECT_0).Amplitude;
+            int32 healPct = GetAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+            int32 healAmount = CalculatePct(victim->GetMaxHealth(), healPct);
+            int32 tickNbr = duration / amplitude;
+            int32 amount = healAmount / tickNbr;
+
+            victim->AddAura(RUNE_DRUID_I_IS_GROOT_BUFF, victim);
+            victim->AddAura(RUNE_DRUID_I_IS_GROOT_DEBUFF, victim);
+            victim->AddAura(RUNE_DRUID_I_IS_GROOT_SILENCE, victim);
+            victim->CastCustomSpell(RUNE_DRUID_I_IS_GROOT_HEAL, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+
+            victim->GetAura(RUNE_DRUID_I_IS_GROOT_BUFF)->SetDuration(duration);
+            victim->GetAura(RUNE_DRUID_I_IS_GROOT_SILENCE)->SetDuration(duration);
+            victim->GetAura(RUNE_DRUID_I_IS_GROOT_DEBUFF)->SetDuration(debuffDuration);
+            victim->GetAura(RUNE_DRUID_I_IS_GROOT_HEAL)->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(rune_druid_i_is_groot::CalculateAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(rune_druid_i_is_groot::Absorb, EFFECT_2);
+    }
+};
+
+class rune_druid_waking_dream : public AuraScript
+{
+    PrepareAuraScript(rune_druid_waking_dream);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 701902; i < 701908; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        for (size_t i = 701908; i < 701914; i++)
+        {
+            if (i == procSpell)
+                continue;
+
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        if (Aura* buffAura = caster->GetAura(procSpell))
+        {
+            buffAura->ModStackAmount(1);
+            return;
+        }
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+        {
+            for (size_t i = 701908; i < 701914; i++)
+            {
+                if (caster->HasAura(i))
+                    caster->RemoveAura(i);
+            }
+            return;
+        }
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        for (size_t i = 701908; i < 701914; i++)
+        {
+            if (i == procSpell)
+                continue;
+
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        if (Aura* buffAura = caster->GetAura(procSpell))
+            buffAura->ModStackAmount(-1);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_waking_dream::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_waking_dream::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_druid_waking_dream_apply : public AuraScript
+{
+    PrepareAuraScript(rune_druid_waking_dream_apply);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_YSERAS_GIFT))
+            return;
+
+        caster->GetAura(SPELL_YSERAS_GIFT)->GetEffect(EFFECT_0)->ResetPeriodic();
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_YSERAS_GIFT))
+            return;
+
+        for (size_t i = 701908; i < 701914; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        caster->GetAura(SPELL_YSERAS_GIFT)->GetEffect(EFFECT_0)->ResetPeriodic();
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_druid_waking_dream_apply::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_waking_dream_apply::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 
@@ -6406,6 +6844,15 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_spring_blossoms);
     RegisterSpellScript(rune_druid_sprouts);
     RegisterSpellScript(rune_druid_stonebark);
+    RegisterSpellScript(rune_druid_regenerative_heartwood);
+    RegisterSpellScript(rune_druid_regenerative_heartwood_heal);
+    RegisterSpellScript(rune_druid_ironwood_thorns);
+    RegisterSpellScript(rune_druid_ironwood_thorns_reflect);
+    RegisterSpellScript(rune_druid_cenarius_guidance);
+    RegisterSpellScript(rune_druid_reforestation);
+    RegisterSpellScript(rune_druid_i_is_groot);
+    RegisterSpellScript(rune_druid_waking_dream);
+    RegisterSpellScript(rune_druid_waking_dream_apply);
 
 
 
