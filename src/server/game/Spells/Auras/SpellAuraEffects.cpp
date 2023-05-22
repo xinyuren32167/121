@@ -1332,11 +1332,11 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 if (spellInfo && spellInfo->Stances & (1 << (GetMiscValue() - 1)))
                     target->CastSpell(target, 24932, true, nullptr, this, target->GetGUID());
             }*/
-            // Improved Barkskin - apply/remove armor bonus due to shapeshift
+            // Improved Barkskin/Ironbark - apply/remove armor bonus due to shapeshift
             if (player->HasTalent(63410, player->GetActiveSpec()) || player->HasTalent(63411, player->GetActiveSpec()))
             {
                 target->RemoveAurasDueToSpell(66530);
-                if (GetMiscValue() == FORM_TRAVEL || GetMiscValue() == FORM_NONE) // "while in Travel Form or while not shapeshifted"
+                if (GetMiscValue() == FORM_TRAVEL || GetMiscValue() == FORM_AQUA || GetMiscValue() == FORM_FLIGHT || GetMiscValue() == FORM_FLIGHT_EPIC) // "while in Travel Form or while not shapeshifted"
                     target->CastSpell(target, 66530, true);
             }
             // Heart of the Wild
@@ -1378,7 +1378,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                         target->CastSpell(target, spellId3, true, nullptr, this, target->GetGUID());
                     }
                     // Master Shapeshifter - Cat
-                    if (AuraEffect const* aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0))
+                    if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(48411, EFFECT_0))
                     {
                         int32 bp = aurEff->GetAmount();
                         target->CastCustomSpell(target, 48420, &bp, nullptr, nullptr, true);
@@ -1415,7 +1415,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                         target->CastSpell(target, spellId3, true, nullptr, this, target->GetGUID());
                     }
                     // Master Shapeshifter - Bear
-                    if (AuraEffect const* aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0))
+                    if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(48411, EFFECT_0))
                     {
                         int32 bp = aurEff->GetAmount();
                         target->CastCustomSpell(target, 48418, &bp, nullptr, nullptr, true);
@@ -1429,7 +1429,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                     break;
                 case FORM_MOONKIN:
                     // Master Shapeshifter - Moonkin
-                    if (AuraEffect const* aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0))
+                    if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(48411, EFFECT_0))
                     {
                         int32 bp = aurEff->GetAmount();
                         target->CastCustomSpell(target, 48421, &bp, nullptr, nullptr, true);
@@ -1439,11 +1439,11 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                     break;
                 // Master Shapeshifter - Tree of Life
                 case FORM_TREE:
-                    if (AuraEffect const* aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0))
+                    /*if (AuraEffect const* aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0))
                     {
                         int32 bp = aurEff->GetAmount();
                         target->CastCustomSpell(target, 48422, &bp, nullptr, nullptr, true);
-                    }
+                    }*/
                     break;
             }
         }
@@ -1455,7 +1455,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
         if (spellId2)
             target->RemoveOwnedAura(spellId2);
 
-        // Improved Barkskin - apply/remove armor bonus due to shapeshift
+        // Improved Barkskin/Ironbark - apply/remove armor bonus due to shapeshift
         if (player)
         {
             if (player->HasTalent(63410, player->GetActiveSpec()) || player->HasTalent(63411, player->GetActiveSpec()))
