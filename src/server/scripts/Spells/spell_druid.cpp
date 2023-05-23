@@ -775,7 +775,7 @@ class spell_dru_living_seed_proc : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         PreventDefaultAction();
-        GetTarget()->CastCustomSpell(SPELL_DRUID_LIVING_SEED_HEAL, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetTarget(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(SPELL_DRUID_LIVING_SEED_HEAL, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetTarget(), TRIGGERED_FULL_MASK);
         
     }
 
@@ -1213,8 +1213,7 @@ class spell_dru_wild_growth : public SpellScript
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
-        uint32 maxTargets = 5;
-        maxTargets += GetCaster()->HasAura(SPELL_DRUID_GLYPH_OF_WILD_GROWTH) ? 1 : 0;
+        uint32 maxTargets = GetCaster()->HasAura(SPELL_DRUID_GLYPH_OF_WILD_GROWTH) ? 6 : 5;
 
         if (GetGroupGrowthRuneAura(GetCaster()))
             maxTargets += GetGroupGrowthRuneAura(GetCaster())->GetEffect(EFFECT_1)->GetAmount();
@@ -2704,10 +2703,10 @@ class spell_druid_yseras_gift : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
-        int32 procPct = caster->GetAura(SPELL_DRUID_YSERAS_GIFT)->GetEffect(EFFECT_0)->GetAmount();
-        int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), procPct));
+        int32 procPct = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = int32(CalculatePct(caster->GetMaxHealth(), procPct));
 
-        if (caster->GetHealth() < caster->GetMaxHealth())
+        if (caster->GetHealthPct() < 100)
             caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_SELF_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
         else
             caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);

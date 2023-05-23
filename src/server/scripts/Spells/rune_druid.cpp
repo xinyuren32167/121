@@ -6443,10 +6443,10 @@ class rune_druid_cenarius_guidance : public AuraScript
         int32 spellId = eventInfo.GetSpellInfo()->Id;
 
         if (spellId == SPELL_LIFEBLOOM_BLOOM)
-            durationIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            durationIncrease = GetAura()->GetEffect(EFFECT_0)->GetAmount();
 
         if (spellId == SPELL_REGROWTH && eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
-            durationIncrease = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+            durationIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
 
         if (spellId == 0)
             return;
@@ -6470,7 +6470,7 @@ class rune_druid_cenarius_guidance : public AuraScript
     void Register()
     {
         OnEffectProc += AuraEffectProcFn(rune_druid_cenarius_guidance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_cenarius_guidance::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_cenarius_guidance::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -6540,7 +6540,10 @@ class rune_druid_i_is_groot : public AuraScript
             int32 healAmount = CalculatePct(victim->GetMaxHealth(), healPct);
             int32 tickNbr = duration / amplitude;
             int32 amount = healAmount / tickNbr;
-
+            LOG_ERROR("error", "duration = {}, Amplitude = {}", duration, amplitude);
+            LOG_ERROR("error", "duration/Amplitude = 20, tickNbr = {}", tickNbr);
+            LOG_ERROR("error", "Maxhealth = {}, healPct = {}, Heal = {}", victim->GetMaxHealth(), healPct, healAmount);
+            LOG_ERROR("error", "Heal/tickNbr = {} should be : 567,85", amount);
             victim->AddAura(RUNE_DRUID_I_IS_GROOT_BUFF, victim);
             victim->AddAura(RUNE_DRUID_I_IS_GROOT_DEBUFF, victim);
             victim->AddAura(RUNE_DRUID_I_IS_GROOT_SILENCE, victim);
@@ -6658,7 +6661,8 @@ class rune_druid_waking_dream_apply : public AuraScript
         if (!caster->HasAura(SPELL_YSERAS_GIFT))
             return;
 
-        caster->GetAura(SPELL_YSERAS_GIFT)->GetEffect(EFFECT_0)->ResetPeriodic();
+        caster->RemoveAura(SPELL_YSERAS_GIFT);
+        caster->AddAura(SPELL_YSERAS_GIFT, caster);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -6682,7 +6686,7 @@ class rune_druid_waking_dream_apply : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_druid_waking_dream_apply::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectApply += AuraEffectApplyFn(rune_druid_waking_dream_apply::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(rune_druid_waking_dream_apply::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
