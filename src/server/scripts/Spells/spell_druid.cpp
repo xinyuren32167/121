@@ -1196,12 +1196,27 @@ class spell_dru_wild_growth : public SpellScript
 {
     PrepareSpellScript(spell_dru_wild_growth);
 
+    Aura* GetGroupGrowthRuneAura(Unit* caster)
+    {
+        for (size_t i = 701750; i < 701756; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
-        uint32 const maxTargets = GetCaster()->HasAura(SPELL_DRUID_GLYPH_OF_WILD_GROWTH) ? 6 : 5;
+        uint32 maxTargets = 5;
+        maxTargets += GetCaster()->HasAura(SPELL_DRUID_GLYPH_OF_WILD_GROWTH) ? 1 : 0;
 
+        if (GetGroupGrowthRuneAura(GetCaster()))
+            maxTargets += GetGroupGrowthRuneAura(GetCaster())->GetEffect(EFFECT_1)->GetAmount();
+            
         if (targets.size() > maxTargets)
         {
             targets.sort(Acore::HealthPctOrderPred());
