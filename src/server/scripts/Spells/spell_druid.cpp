@@ -752,7 +752,8 @@ class spell_dru_living_seed : public AuraScript
         }
 
         int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
-        GetTarget()->CastCustomSpell(SPELL_DRUID_LIVING_SEED_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true, nullptr, aurEff);
+        GetTarget()->CastCustomSpell(SPELL_DRUID_LIVING_SEED_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_FULL_MASK);
+        
     }
 
     void Register() override
@@ -774,7 +775,8 @@ class spell_dru_living_seed_proc : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         PreventDefaultAction();
-        GetTarget()->CastCustomSpell(SPELL_DRUID_LIVING_SEED_HEAL, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetTarget(), true, nullptr, aurEff);
+        GetTarget()->CastCustomSpell(SPELL_DRUID_LIVING_SEED_HEAL, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetTarget(), TRIGGERED_FULL_MASK);
+        
     }
 
     void Register() override
@@ -2719,9 +2721,9 @@ class spell_druid_yseras_gift : public AuraScript
         int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), procPct));
 
         if (caster->GetHealth() < caster->GetMaxHealth())
-            caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_SELF_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, true);
+            caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_SELF_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
         else
-            caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, true);
+            caster->CastCustomSpell(SPELL_DRUID_YSERAS_GIFT_ALLY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override

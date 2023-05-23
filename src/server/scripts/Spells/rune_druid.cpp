@@ -6528,7 +6528,7 @@ class rune_druid_i_is_groot : public AuraScript
         Unit* victim = GetTarget();
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         // If damage kills us
-        if (remainingHealth <= 0 && !victim->HasAura(RUNE_DRUID_I_IS_GROOT_DEBUFF))
+        if (remainingHealth <= 0 && !victim->HasAura(RUNE_DRUID_I_IS_GROOT_DEBUFF) && victim->HasAura(SPELL_INCARNATION_TREE_OF_LIFE))
         {
             // Cast healing spell, completely avoid damage
             absorbAmount = dmgInfo.GetDamage();
