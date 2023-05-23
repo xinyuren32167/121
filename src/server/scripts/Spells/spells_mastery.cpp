@@ -502,16 +502,37 @@ class spell_mastery_razor_claws: public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        Unit* caster = GetCaster();
+        float mastery = caster->ToPlayer()->GetMastery();
         SpellInfo const* spell = sSpellMgr->AssertSpellInfo(700004);
-        int32 bleedDamage = spell->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
+        int32 damageBonus = spell->GetEffect(EFFECT_0).CalcValue(caster) + mastery;
 
-        GetCaster()->CastCustomSpell(700005, SPELLVALUE_BASE_POINT0, bleedDamage, GetCaster(), TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(caster, 700005, &damageBonus, &damageBonus, nullptr, true, nullptr, nullptr);
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_mastery_razor_claws::HandleCast);
+    }
+};
+
+class spell_mastery_natures_guardian : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_natures_guardian);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        float mastery = caster->ToPlayer()->GetMastery();
+        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(700007);
+        int32 damageBonus = spell->GetEffect(EFFECT_0).CalcValue(caster) + mastery;
+
+        caster->CastCustomSpell(caster, 700005, &damageBonus, &damageBonus, nullptr, true, nullptr, nullptr);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_natures_guardian::HandleCast);
     }
 };
 
@@ -536,4 +557,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_sniper_training);
     RegisterSpellScript(spell_mastery_astral_invocation);
     RegisterSpellScript(spell_mastery_razor_claws);
+    RegisterSpellScript(spell_mastery_natures_guardian);
 }
