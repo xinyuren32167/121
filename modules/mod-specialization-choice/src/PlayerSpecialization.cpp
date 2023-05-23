@@ -71,8 +71,8 @@ void PlayerSpecialization::InitializeSpecializations()
 
     m_Specializations[DRUID_BALANCE] = { 10, 80536, "Balance", 11, 700000, 7.00, false, 0 };
     m_Specializations[DRUID_FERAL] = { 11, 80549, "Feral", 11, 700004, 17.50, true, 700006 };
-    m_Specializations[DRUID_RESTO] = { 13, 53251, "Restoration", 11 };
     m_Specializations[DRUID_GUARDIAN] = { 12, 80510, "Guardian", 11 };
+    m_Specializations[DRUID_RESTO] = { 13, 53251, "Restoration", 11 };
 }
     
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
