@@ -10,6 +10,11 @@
 #include "Log.h"
 #include "Object.h"
 
+enum Masteries
+{
+
+};
+
 // Mage
 class spell_icicle_ice_lance : public SpellScript
 {
@@ -465,21 +470,22 @@ class spell_mastery_astral_invocation : public AuraScript
         float mastery = GetCaster()->ToPlayer()->GetMastery();
         int32 natureDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
         int32 arcaneDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+        Unit* target = procInfo.GetActionTarget();
 
         int32 schoolMask = procInfo.GetSpellInfo()->GetSchoolMask();
 
-        if (schoolMask & SPELL_SCHOOL_MASK_NATURE)
+        if (schoolMask & SPELL_SCHOOL_MASK_NATURE && target->HasAura(80518))
         {
             int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
-            int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);
-            GetCaster()->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, pctDamage, GetCaster(), TRIGGERED_FULL_MASK);
+            int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);           
+            GetCaster()->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, std::max(1,pctDamage), target, TRIGGERED_FULL_MASK);
         }
 
-        if (schoolMask & SPELL_SCHOOL_MASK_ARCANE)
+        if (schoolMask & SPELL_SCHOOL_MASK_ARCANE && target->HasAura(48463))
         {
             int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
             int32 pctDamage = CalculatePct(rawDamage, arcaneDamageBonus);
-            GetCaster()->CastCustomSpell(700003, SPELLVALUE_BASE_POINT0, pctDamage, GetCaster(), TRIGGERED_FULL_MASK);
+            GetCaster()->CastCustomSpell(700003, SPELLVALUE_BASE_POINT0, std::max(1, pctDamage), target, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -487,6 +493,24 @@ class spell_mastery_astral_invocation : public AuraScript
     {
         DoCheckProc += AuraCheckProcFn(spell_mastery_astral_invocation::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_mastery_astral_invocation::HandleCast, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_razor_claws: public SpellScript
+{
+    PrepareSpellScript(spell_mastery_razor_claws);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bleedDamage = (GetCaster()->GetAura(700004)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(700005, SPELLVALUE_BASE_POINT0, bleedDamage, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_razor_claws::HandleCast);
     }
 };
 
@@ -510,4 +534,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_master_of_beasts);
     RegisterSpellScript(spell_mastery_sniper_training);
     RegisterSpellScript(spell_mastery_astral_invocation);
+    RegisterSpellScript(spell_mastery_razor_claws);
 }

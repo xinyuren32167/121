@@ -69,12 +69,12 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[DK_FROST] = { 8, 50384, "Frost", 6 };
     m_Specializations[DK_UNHOLY] = { 9, 49772, "Unholy", 6 };
 
-    m_Specializations[DRUID_BALANCE] = { 10, 80132, "Balance", 11 };
-    m_Specializations[DRUID_FERAL] = { 11, 80140, "Feral", 11 };
-    m_Specializations[DRUID_RESTO] = { 13, 19306, "Restauration", 11 };
-    m_Specializations[DRUID_GUARDIAN] = { 12, 19306, "Guardian", 11 };
+    m_Specializations[DRUID_BALANCE] = { 10, 80536, "Balance", 11, 700000, 7, false, 0 };
+    m_Specializations[DRUID_FERAL] = { 11, 80549, "Feral", 11, 700004, 	17.5, false, 0 };
+    m_Specializations[DRUID_RESTO] = { 13, 80582, "Restauration", 11 };
+    m_Specializations[DRUID_GUARDIAN] = { 12, 80512, "Guardian", 11 };
 }
-
+    
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
 {
 

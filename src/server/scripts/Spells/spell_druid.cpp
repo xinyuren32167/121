@@ -1233,11 +1233,9 @@ class spell_dru_wild_growth_periodic : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Player* caster = GetCaster()->ToPlayer();
-        if (!caster->GetGroup())
-            return;
 
         int32 amount = aurEff->GetAmount();
-        float drop = 2.0f;
+        float drop = 20.0f;
 
         // Rune - Unstoppable Growth
         for (size_t i = 701756; i < 701760; i++)
@@ -1250,19 +1248,8 @@ class spell_dru_wild_growth_periodic : public AuraScript
         GetAura()->GetEffect(EFFECT_0)->ChangeAmount(std::max(1, finalAmount));
     }
 
-    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        int32 casterGroup = GetCaster()->ToPlayer()->GetGroup()->GetGUID();
-        int32 spellId = aurEff->GetId();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
-        int32 targetGroup = target->ToPlayer()->GetGroup()->GetGUID();
-        if (!target->IsPlayer() || !target->ToPlayer()->GetGroup() || casterGroup != targetGroup)
-            target->RemoveAura(spellId);
-    }
-
     void Register() override
-    {
-        OnEffectApply += AuraEffectApplyFn(spell_dru_wild_growth_periodic::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    {        
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_dru_wild_growth_periodic::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
     }
 };
