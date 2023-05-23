@@ -503,7 +503,8 @@ class spell_mastery_razor_claws: public SpellScript
     void HandleCast()
     {
         float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bleedDamage = (GetCaster()->GetAura(700004)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(700004);
+        int32 bleedDamage = spell->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
 
         GetCaster()->CastCustomSpell(700005, SPELLVALUE_BASE_POINT0, bleedDamage, GetCaster(), TRIGGERED_FULL_MASK);
     }

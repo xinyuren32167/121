@@ -2900,11 +2900,11 @@ class spell_dru_feral_frenzy : public SpellScript
         if (!caster || !caster->IsAlive())
             return;
 
-        AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DRUID_TASTE_FOR_BLOOD, EFFECT_0);
-        int32 amount = aurEff->GetAmount();
-
         if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DRUID_TASTE_FOR_BLOOD, EFFECT_0))
+        {
+            int32 amount = aurEff->GetAmount();
             caster->CastCustomSpell(SPELL_DRUID_TASTE_FOR_BLOOD_PROC, SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), true);
+        }        
     }
 
     void Register() override
