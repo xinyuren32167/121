@@ -156,6 +156,7 @@ enum DruidSpells
     SPELL_DRUID_NURTURING_PRESENCE_R2       = 80656,
     SPELL_DRUID_MAUL                        = 48480,
     SPELL_DRUID_RAZE                        = 80520,
+    SPELL_DRUID_INCARNATION_TREE_OF_LIFE    = 80576,
 
     // Rune Spell
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
@@ -1211,12 +1212,17 @@ class spell_dru_wild_growth : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+        Unit* caster = GetCaster();
 
-        uint32 maxTargets = GetCaster()->HasAura(SPELL_DRUID_GLYPH_OF_WILD_GROWTH) ? 6 : 5;
+        targets.remove_if(Acore::RaidCheck(caster, false));
 
-        if (GetGroupGrowthRuneAura(GetCaster()))
-            maxTargets += GetGroupGrowthRuneAura(GetCaster())->GetEffect(EFFECT_1)->GetAmount();
+        uint32 maxTargets = 5;
+
+        if (GetGroupGrowthRuneAura(caster))
+            maxTargets += GetGroupGrowthRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        if (caster->HasAura(SPELL_DRUID_INCARNATION_TREE_OF_LIFE))
+            maxTargets += caster->GetAura(SPELL_DRUID_INCARNATION_TREE_OF_LIFE)->GetEffect(EFFECT_1)->GetAmount();
             
         if (targets.size() > maxTargets)
         {
@@ -2736,10 +2742,19 @@ class spell_druid_yseras_gift_target : public SpellScript
         }
     }
 
+    void SetTargets(std::list<WorldObject*>& targets)
+    {
+        targets = _targets;
+    }
+
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_druid_yseras_gift_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_druid_yseras_gift_target::SetTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
     }
+
+private:
+    std::list<WorldObject*> _targets;
 };
 
 class spell_dru_flourish : public SpellScript
