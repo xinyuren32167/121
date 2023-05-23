@@ -516,6 +516,21 @@ class spell_mastery_razor_claws: public SpellScript
     }
 };
 
+class spell_mastery_razor_claws_unlearn : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_razor_claws_unlearn);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(700005);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_mastery_razor_claws_unlearn::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 class spell_mastery_natures_guardian : public SpellScript
 {
     PrepareSpellScript(spell_mastery_natures_guardian);
@@ -525,14 +540,86 @@ class spell_mastery_natures_guardian : public SpellScript
         Unit* caster = GetCaster();
         float mastery = caster->ToPlayer()->GetMastery();
         SpellInfo const* spell = sSpellMgr->AssertSpellInfo(700007);
-        int32 damageBonus = spell->GetEffect(EFFECT_0).CalcValue(caster) + mastery;
+        int32 healthPct = spell->GetEffect(EFFECT_0).CalcValue(caster) + mastery;
+        int32 healthBonus = CalculatePct(caster->GetMaxHealth(), healthPct);
+        int32 attackBonus = spell->GetEffect(EFFECT_2).CalcValue(caster) + mastery;
 
-        caster->CastCustomSpell(caster, 700005, &damageBonus, &damageBonus, nullptr, true, nullptr, nullptr);
+        caster->CastCustomSpell(caster, 700008, &healthBonus, &healthBonus, &attackBonus, true, nullptr, nullptr);
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_mastery_natures_guardian::HandleCast);
+    }
+};
+
+class spell_mastery_natures_guardian_unlearn : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_natures_guardian_unlearn);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(700008);
+        GetCaster()->ToPlayer()->UpdateMaxHealth();
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mastery_natures_guardian_unlearn::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_mastery_harmony : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_harmony);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        int32 defaultValue = aurEff->GetAmount();
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 healPct = defaultValue + mastery;
+
+        if (!procInfo.GetHealInfo())
+            return;
+        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 700011)
+            return;
+
+        int32 healAmount = procInfo.GetHealInfo()->GetHeal();
+
+        Unit* target = procInfo.GetActionTarget();
+        if (!target)
+            return;
+
+        auto targetAuras = target->GetAppliedAuras();
+        std::list <Aura*> totalHots;
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyFlags[1] & 0x00400000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                {
+                    totalHots.push_back(aura);
+                }
+            }
+        }
+
+        int32 healMulti = healPct * totalHots.size();
+
+        int32 finalAmount = CalculatePct(healAmount, healMulti);
+        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 50464)
+            finalAmount *= 3;
+
+        GetCaster()->CastCustomSpell(700011, SPELLVALUE_BASE_POINT0, std::max(1,finalAmount), target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_harmony::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -558,4 +645,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_astral_invocation);
     RegisterSpellScript(spell_mastery_razor_claws);
     RegisterSpellScript(spell_mastery_natures_guardian);
+    RegisterSpellScript(spell_mastery_razor_claws_unlearn);
+    RegisterSpellScript(spell_mastery_natures_guardian_unlearn);
+    RegisterSpellScript(spell_mastery_harmony);
 }
