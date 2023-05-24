@@ -1475,7 +1475,7 @@ class spell_dru_thorns : public AuraScript
 
         Unit* target = eventInfo.GetProcTarget();
 
-        GetCaster()->CastSpell(target, SPELL_DRUID_THORNS_SLOW, true, nullptr, aurEff, GetCasterGUID());
+        GetCaster()->CastSpell(target, SPELL_DRUID_THORNS_SLOW, TRIGGERED_FULL_MASK, nullptr, aurEff, GetCasterGUID());
     }
 
     void Register() override
@@ -2382,7 +2382,7 @@ class spell_dru_bristling_fur : public AuraScript
 
         if (AuraEffect const* kingForest = caster->GetAuraEffectOfRankedSpell(SPELL_DRUID_KING_OF_THE_FOREST, EFFECT_0))
         {
-            caster->CastCustomSpell(SPELL_DRUID_ENRAGE_MOD_DAMAGE, SPELLVALUE_BASE_POINT0, kingForest->GetAmount(), caster, true);
+            caster->CastCustomSpell(SPELL_DRUID_ENRAGE_MOD_DAMAGE, SPELLVALUE_BASE_POINT0, kingForest->GetAmount(), caster, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2438,7 +2438,7 @@ class spell_dru_guardian_of_ursoc_health : public SpellScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_GUARDIAN_OF_URSOC);
         uint32 healthIncrease = value->GetEffect(EFFECT_0).CalcValue(caster);
         int32 bp0 = caster->CountPctFromMaxHealth(healthIncrease);
-        caster->CastCustomSpell(caster, SPELL_DRUID_GUARDIAN_HEALTH, &bp0, nullptr, nullptr, true);
+        caster->CastCustomSpell(caster, SPELL_DRUID_GUARDIAN_HEALTH, &bp0, nullptr, nullptr, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2863,7 +2863,7 @@ class spell_dru_pack_leader : public AuraScript
         if (!caster->HasAura(SPELL_DRUID_PACK_LEADER_CD))
         {
             caster->CastSpell(caster, SPELL_DRUID_PACK_LEADER_HEAL, TRIGGERED_FULL_MASK);
-            caster->CastCustomSpell(SPELL_DRUID_PACK_LEADER_MANA, SPELLVALUE_BASE_POINT0, mana, caster, TRIGGERED_IGNORE_GCD);
+            caster->CastCustomSpell(SPELL_DRUID_PACK_LEADER_MANA, SPELLVALUE_BASE_POINT0, mana, caster, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_DRUID_PACK_LEADER_CD, TRIGGERED_FULL_MASK);
         }
     }
@@ -2917,7 +2917,7 @@ class spell_dru_feral_frenzy : public SpellScript
         if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DRUID_TASTE_FOR_BLOOD, EFFECT_0))
         {
             int32 amount = aurEff->GetAmount();
-            caster->CastCustomSpell(SPELL_DRUID_TASTE_FOR_BLOOD_PROC, SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), true);
+            caster->CastCustomSpell(SPELL_DRUID_TASTE_FOR_BLOOD_PROC, SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), TRIGGERED_FULL_MASK);
         }        
     }
 
