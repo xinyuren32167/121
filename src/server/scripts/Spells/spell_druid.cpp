@@ -1522,7 +1522,7 @@ class spell_dru_starfire : public SpellScript
 
         Unit* target = GetExplTargetUnit();
 
-        caster->CastSpell(target, SPELL_DRUID_STARFIRE_AOE);
+        caster->CastSpell(target, SPELL_DRUID_STARFIRE_AOE, TRIGGERED_FULL_MASK);
 
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
@@ -1725,7 +1725,7 @@ class spell_dru_rake : public SpellScript
         Unit* caster = GetCaster();
 
         if (caster->HasAura(SPELL_DRUID_BERSERK_CAT) || caster->HasAura(SPELL_DRUID_POUNCING_STRIKES_BUFF))
-            caster->CastSpell(GetExplTargetUnit(), SPELL_DRUID_RAKE_STUN, true);
+            caster->CastSpell(GetExplTargetUnit(), SPELL_DRUID_RAKE_STUN, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1935,7 +1935,7 @@ class spell_dru_stellar_flare_dispel : public AuraScript
     {
         Unit* target = dispelInfo->GetDispeller();
 
-        GetCaster()->CastSpell(target, SPELL_DRUID_STELLAR_FLARE_DISPEL);
+        GetCaster()->CastSpell(target, SPELL_DRUID_STELLAR_FLARE_DISPEL, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2049,7 +2049,7 @@ class spell_dru_shooting_stars : public AuraScript
 
         if (roll_chance_f(procChance))
         {
-            caster->CastSpell(target, SPELL_DRUID_SHOOTING_STARS_PROC, true);
+            caster->CastSpell(target, SPELL_DRUID_SHOOTING_STARS_PROC, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2862,9 +2862,9 @@ class spell_dru_pack_leader : public AuraScript
 
         if (!caster->HasAura(SPELL_DRUID_PACK_LEADER_CD))
         {
-            caster->CastSpell(caster, SPELL_DRUID_PACK_LEADER_HEAL, true);
+            caster->CastSpell(caster, SPELL_DRUID_PACK_LEADER_HEAL, TRIGGERED_FULL_MASK);
             caster->CastCustomSpell(SPELL_DRUID_PACK_LEADER_MANA, SPELLVALUE_BASE_POINT0, mana, caster, TRIGGERED_IGNORE_GCD);
-            caster->CastSpell(caster, SPELL_DRUID_PACK_LEADER_CD, true);
+            caster->CastSpell(caster, SPELL_DRUID_PACK_LEADER_CD, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2891,9 +2891,9 @@ class spell_dru_family_bear : public AuraScript
 
         if (!caster->HasAura(SPELL_DRUID_FAMILY_BEAR_CD))
         {
-            caster->CastSpell(caster, SPELL_DRUID_FAMILY_BEAR_HEAL, true);
+            caster->CastSpell(caster, SPELL_DRUID_FAMILY_BEAR_HEAL, TRIGGERED_FULL_MASK);
             caster->CastCustomSpell(SPELL_DRUID_FAMILY_BEAR_MANA, SPELLVALUE_BASE_POINT0, mana, caster, TRIGGERED_IGNORE_GCD);
-            caster->CastSpell(caster, SPELL_DRUID_FAMILY_BEAR_CD, true);
+            caster->CastSpell(caster, SPELL_DRUID_FAMILY_BEAR_CD, TRIGGERED_FULL_MASK);
         }          
     }
 
