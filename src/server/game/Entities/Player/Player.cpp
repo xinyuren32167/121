@@ -2940,6 +2940,14 @@ void Player::_removeTalentAurasAndSpells(uint32 spellId)
         if (spellInfo->Effects[i].TriggerSpell > 0)
             RemoveAurasDueToSpell(spellInfo->Effects[i].TriggerSpell);
 
+        // molly: Moon Fall Unlearn hack
+        if (spellInfo->Id == 80539 && HasAura(80543) || HasAura(80544) || HasAura(80545))
+        {
+            RemoveAurasDueToSpell(80543);
+            RemoveAurasDueToSpell(80544);
+            RemoveAurasDueToSpell(80545);
+        }   
+
         // xinef: remove temporary spells added by talent
         // xinef: recursively remove all learnt spells
         if (spellInfo->Effects[i].TriggerSpell > 0 && spellInfo->Effects[i].Effect == SPELL_EFFECT_LEARN_SPELL)
