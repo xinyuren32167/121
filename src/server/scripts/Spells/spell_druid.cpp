@@ -1277,7 +1277,7 @@ class spell_dru_wild_growth_periodic : public AuraScript
 };
 
 // -50334 - Berserk
-class spell_dru_berserk : public SpellScript
+/*class spell_dru_berserk : public SpellScript
 {
     PrepareSpellScript(spell_dru_berserk);
 
@@ -1288,7 +1288,6 @@ class spell_dru_berserk : public SpellScript
         if (caster->GetTypeId() == TYPEID_PLAYER)
         {
             // Remove tiger fury / mangle(bear)
-            const uint32 TigerFury[6] = { 5217, 6793, 9845, 9846, 50212, 50213 };
             const uint32 DireMaul[6] = { 33878, 33986, 33987, 48563, 48564 };
 
             // remove aura
@@ -1305,7 +1304,7 @@ class spell_dru_berserk : public SpellScript
     {
         AfterCast += SpellCastFn(spell_dru_berserk::HandleAfterCast);
     }
-};
+};*/
 
 // 24905 - Moonkin Form (Passive)
 class spell_dru_moonkin_form_passive_proc : public AuraScript
@@ -2192,11 +2191,14 @@ class spell_dru_avatar_of_ashamane : public AuraScript
         Aura* improvedAura = caster->GetAura(SPELL_DRUID_AVATAR_OF_ASHAMANE);
         int32 duration = improvedAura->GetDuration();
 
-        caster->CastSpell(caster, SPELL_DRUID_CAT_FORM, TRIGGERED_FULL_MASK);
-
         caster->CastSpell(caster, SPELL_DRUID_BERSERK_CAT, TRIGGERED_FULL_MASK);
         Aura* catAura = caster->GetAura(SPELL_DRUID_BERSERK_CAT);
-        catAura->SetDuration(duration);             
+        catAura->SetDuration(duration);
+
+        if (caster->HasAura(SPELL_DRUID_CAT_FORM))
+            return;
+
+        caster->CastSpell(caster, SPELL_DRUID_CAT_FORM, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -3006,6 +3008,33 @@ class spell_dru_replacer_ursoc : public AuraScript
     }
 };
 
+class spell_dru_replacer_ashamane : public AuraScript
+{
+    PrepareAuraScript(spell_dru_replacer_ashamane);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_DRUID_BERSERK_CAT, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_DRUID_AVATAR_OF_ASHAMANE);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_DRUID_AVATAR_OF_ASHAMANE, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_DRUID_BERSERK_CAT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_replacer_ashamane::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dru_replacer_ashamane::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -3016,7 +3045,7 @@ void AddSC_druid_spell_scripts()
     //RegisterSpellScript(spell_dru_brambles_treant);
     RegisterSpellScript(spell_dru_barkskin);
     RegisterSpellScript(spell_dru_treant_scaling);
-    RegisterSpellScript(spell_dru_berserk);
+    //RegisterSpellScript(spell_dru_berserk);
     RegisterSpellScript(spell_dru_dash);
     RegisterSpellScript(spell_dru_enrage);
     RegisterSpellScript(spell_dru_glyph_of_starfire);
@@ -3100,4 +3129,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_brutal_slash);
     RegisterSpellScript(spell_dru_nurturing_presence);
     RegisterSpellScript(spell_dru_replacer_ursoc);
+    RegisterSpellScript(spell_dru_replacer_ashamane);
 }

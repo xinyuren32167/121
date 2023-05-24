@@ -3164,6 +3164,7 @@ class rune_druid_heart_of_the_lion : public AuraScript
         int32 reduction = GetCaster()->GetComboPoints() * aurEff->GetAmount();
 
         caster->ModifySpellCooldown(SPELL_BERSERK, -reduction);
+        caster->ModifySpellCooldown(SPELL_INCARNATION_AVATAR_OF_ASHAMANE, -reduction);
     }
 
     void Register()
