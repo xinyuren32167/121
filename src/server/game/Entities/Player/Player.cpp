@@ -140,6 +140,14 @@ enum CharacterCustomizeFlags
     CHAR_CUSTOMIZE_FLAG_RACE            = 0x00100000        // name, gender, race, etc...
 };
 
+enum CustomSpells
+{
+    SPELL_DRUID_MOON_FALL               = 80539,
+    SPELL_DRUID_MOON_FALL_NEW_MOON      = 80543,
+    SPELL_DRUID_MOON_FALL_HALF_MOON     = 80544,
+    SPELL_DRUID_MOON_FALL_FULL_MOON     = 80545,
+};
+
 static uint32 copseReclaimDelay[MAX_DEATH_COUNT] = { 30, 60, 120 };
 
 // we can disable this warning for this since it only
@@ -2941,11 +2949,11 @@ void Player::_removeTalentAurasAndSpells(uint32 spellId)
             RemoveAurasDueToSpell(spellInfo->Effects[i].TriggerSpell);
 
         // molly: Moon Fall Unlearn hack
-        if (spellInfo->Id == 80539 && HasAura(80543) || HasAura(80544) || HasAura(80545))
+        if (spellInfo->Id == SPELL_DRUID_MOON_FALL && HasAura(SPELL_DRUID_MOON_FALL_NEW_MOON) || HasAura(SPELL_DRUID_MOON_FALL_HALF_MOON) || HasAura(SPELL_DRUID_MOON_FALL_FULL_MOON))
         {
-            RemoveAurasDueToSpell(80543);
-            RemoveAurasDueToSpell(80544);
-            RemoveAurasDueToSpell(80545);
+            RemoveAurasDueToSpell(SPELL_DRUID_MOON_FALL_NEW_MOON);
+            RemoveAurasDueToSpell(SPELL_DRUID_MOON_FALL_HALF_MOON);
+            RemoveAurasDueToSpell(SPELL_DRUID_MOON_FALL_FULL_MOON);
         }   
 
         // xinef: remove temporary spells added by talent
