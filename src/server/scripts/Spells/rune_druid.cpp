@@ -2634,10 +2634,22 @@ class rune_druid_orbit_breaker : public AuraScript
         caster->CastSpell(victim, SPELL_FULL_MOON, TRIGGERED_FULL_MASK);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_DRUID_ORBIT_BREAKER_LISTENER))
+            caster->RemoveAura(RUNE_DRUID_ORBIT_BREAKER_LISTENER);
+    }
+
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_druid_orbit_breaker::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_druid_orbit_breaker::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_druid_orbit_breaker::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
