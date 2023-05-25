@@ -2232,8 +2232,7 @@ class spell_dru_primal_wrath : public SpellScript
             if (target->isDead())
                 continue;
 
-            caster->AddAura(SPELL_DRUID_RIP_DOT, target);
-            target->GetAura(SPELL_DRUID_RIP_DOT)->SetDuration(duration);
+            caster->CastCustomSpell(SPELL_DRUID_RIP_DOT, SPELLVALUE_AURA_DURATION, duration, target, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2324,8 +2323,7 @@ class spell_dru_rip_new : public SpellScript
         uint8 comboPoints = caster->ToPlayer()->GetComboPoints();
         int32 duration = durationIncrease + (durationIncrease * comboPoints);
 
-        caster->CastSpell(target, SPELL_DRUID_RIP_DOT, TRIGGERED_FULL_MASK);
-        target->GetAura(SPELL_DRUID_RIP_DOT)->SetDuration(duration);
+        caster->CastCustomSpell(SPELL_DRUID_RIP_DOT, SPELLVALUE_AURA_DURATION, duration, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()

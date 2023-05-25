@@ -172,6 +172,7 @@ enum DruidSpells
     RUNE_DRUID_I_IS_GROOT_SILENCE = 701899,
     RUNE_DRUID_I_IS_GROOT_HEAL = 701900,
     RUNE_DRUID_I_IS_GROOT_DEBUFF = 701901,
+    RUNE_DRUID_INVIGORATING_WOUNDS_COOLDOWN = 80678,
 };
 
 class rune_druid_lycara_fleeting_glimpse : public AuraScript
@@ -1741,26 +1742,31 @@ class rune_druid_invigorating_wounds : public AuraScript
 
         int32 powerIncrease = 0;
 
-        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
+        if (!caster->HasAura(RUNE_DRUID_INVIGORATING_WOUNDS_COOLDOWN))
         {
-            powerIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
-            caster->SetPower(POWER_RAGE, caster->GetPower(POWER_RAGE) + powerIncrease);
-            return;
-        }
+            caster->AddAura(RUNE_DRUID_INVIGORATING_WOUNDS_COOLDOWN, caster);
 
-        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
-        {
-            powerIncrease = aurEff->GetAmount();
-            caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + powerIncrease);
-            return;
-        }
+            if (caster->HasAura(FORM_BEAR_FORM) || caster->HasAura(FORM_DIRE_BEAR_FORM) || caster->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
+            {
+                powerIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+                caster->SetPower(POWER_RAGE, caster->GetPower(POWER_RAGE) + powerIncrease);
+                return;
+            }
 
-        if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
-        {
-            powerIncrease = GetAura()->GetEffect(EFFECT_2)->GetAmount();
-            caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + powerIncrease);
-            return;
-        }
+            if (caster->HasAura(FORM_CAT_FORM) || caster->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+            {
+                powerIncrease = aurEff->GetAmount();
+                caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + powerIncrease);
+                return;
+            }
+
+            if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
+            {
+                powerIncrease = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+                caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + powerIncrease);
+                return;
+            }
+        } 
     }
 
     void Register()
