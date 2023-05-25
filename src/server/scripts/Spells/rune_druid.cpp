@@ -1910,6 +1910,7 @@ class rune_druid_burning_attacks : public AuraScript
                 }
             }
         }
+
         if (amount <= 0)
             return;
 
