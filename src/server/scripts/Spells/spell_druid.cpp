@@ -3128,4 +3128,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_nurturing_presence);
     RegisterSpellScript(spell_dru_replacer_ursoc);
     RegisterSpellScript(spell_dru_replacer_ashamane);
+    RegisterSpellScript(spell_dru_raze);
 }
