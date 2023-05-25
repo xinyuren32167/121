@@ -1899,7 +1899,7 @@ class rune_druid_burning_attacks : public AuraScript
 
                 SpellInfo const* auraInfo = aura->GetSpellInfo();
 
-                if (auraInfo->SpellFamilyFlags[2] & 0x03000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                if (auraInfo->SpellFamilyFlags[2] & 0x01000000 || auraInfo->SpellFamilyFlags[2] & 0x02000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
                 {
                     AuraEffect* auraEff = aura->GetEffect(EFFECT_0);
                     int32 totalTicks = sSpellMgr->AssertSpellInfo(aura->GetId())->GetMaxTicks();
@@ -3012,7 +3012,7 @@ class rune_druid_druid_of_the_flame : public AuraScript
             int32 remainingAmount = protEff->GetAmount() * remainingTicks;
             int32 remainingAmountPerTick = remainingAmount / maxTicks;
 
-            amount += remainingAmountPerTick;
+            amount += std::min<int32>(CalculatePct(remainingAmountPerTick, 50), CalculatePct(caster->GetMaxHealth(), 10));
             victim->RemoveAura(RUNE_DRUID_DRUID_OF_THE_FLAME_DOT);
         }
 
@@ -6553,10 +6553,7 @@ class rune_druid_i_is_groot : public AuraScript
             int32 healAmount = CalculatePct(victim->GetMaxHealth(), healPct);
             int32 tickNbr = duration / amplitude;
             int32 amount = healAmount / tickNbr;
-            LOG_ERROR("error", "duration = {}, Amplitude = {}", duration, amplitude);
-            LOG_ERROR("error", "duration/Amplitude = 20, tickNbr = {}", tickNbr);
-            LOG_ERROR("error", "Maxhealth = {}, healPct = {}, Heal = {}", victim->GetMaxHealth(), healPct, healAmount);
-            LOG_ERROR("error", "Heal/tickNbr = {} should be : 567,85", amount);
+
             victim->AddAura(RUNE_DRUID_I_IS_GROOT_BUFF, victim);
             victim->AddAura(RUNE_DRUID_I_IS_GROOT_DEBUFF, victim);
             victim->AddAura(RUNE_DRUID_I_IS_GROOT_SILENCE, victim);
