@@ -328,13 +328,18 @@ class spell_dk_blood_strike : public SpellScript
     {
         int32 damage = GetEffectValue();
 
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(49930);
+        uint32 diseaseBonus = value->GetEffect(EFFECT_2).CalcValue(GetCaster());
+
+        float diseasePct = diseaseBonus / 10;
+
         if (Unit* target = GetHitUnit())
         {
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
             uint32 count = target->GetDiseasesByCaster(GetCaster()->GetGUID());
-            int32 bp = int32(count * 12.5f);
+            int32 bp = int32(count * diseasePct);
             AddPct(damage, bp);
         }
 

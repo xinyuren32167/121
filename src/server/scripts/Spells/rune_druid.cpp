@@ -6707,10 +6707,6 @@ class rune_druid_waking_dream_apply : public AuraScript
     }
 };
 
-
-
-
-
 void AddSC_druid_rune_scripts()
 {
     RegisterSpellScript(rune_druid_lycara_fleeting_glimpse);

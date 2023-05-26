@@ -493,6 +493,23 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                             if (unitTarget->HasAura(80528))
                                 AddPct(damage, aurEff->GetAmount());
                     }
+                    // Mangle (Cat): CP
+                    else if (m_spellInfo->SpellFamilyFlags[1] & 0x400)
+                    {
+                        AddComboPointGain(unitTarget, 1);
+                    }
+                    // Shred - Bite and Tear
+                    else if (m_spellInfo->Id == 80557 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
+                    {
+                        if (AuraEffect const* biteAndTear = m_caster->GetAuraEffectOfRankedSpell(80615, EFFECT_0))
+                            AddPct(damage, biteAndTear->GetAmount());
+                    }
+                    // Raze and Maul - Rend and Tear
+                    else if (m_spellInfo->Id == 48480 || m_spellInfo->Id == 80520 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
+                    {
+                        if (AuraEffect const* rendAndTear = m_caster->GetAuraEffectOfRankedSpell(48432, EFFECT_0))
+                            AddPct(damage, rendAndTear->GetAmount());
+                    }
                     break;
                 }
             case SPELLFAMILY_ROGUE:
@@ -3458,23 +3475,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
             }
         case SPELLFAMILY_DRUID:
             {
-                // Mangle (Cat): CP
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x400)
-                {
-                    AddComboPointGain(unitTarget, 1);
-                }
-                // Shred - Bite and Tear
-                else if (m_spellInfo->Id == 80557 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
-                {
-                    if (AuraEffect const* biteAndTear = m_caster->GetAuraEffectOfRankedSpell(80615, EFFECT_0))
-                        AddPct(totalDamagePercentMod, biteAndTear->GetAmount());
-                }
-                // Raze and Maul - Rend and Tear
-                else if (m_spellInfo->Id == 48480 || m_spellInfo->Id == 80520 && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
-                {
-                    if (AuraEffect const* rendAndTear = m_caster->GetAuraEffectOfRankedSpell(48432, EFFECT_0))
-                        AddPct(totalDamagePercentMod, rendAndTear->GetAmount());
-                }
                 break;
             }
         case SPELLFAMILY_HUNTER:
