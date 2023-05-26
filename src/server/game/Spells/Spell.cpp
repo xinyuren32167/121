@@ -5454,11 +5454,11 @@ void Spell::TakeRunePower(bool didHit)
             }
         }
     }
-    uint32 totalRuneCost = runeCost[RUNE_BLOOD]; // we always take the blood rune cost because "everything" is a blood rune.
+    uint32 totalRuneCost = runeCostData->RuneCost[RUNE_BLOOD]; // we always take the blood rune cost because "everything" is a blood rune.
 
     // you can gain some runic power when use runes
     if (didHit)
-        if (int32 rp = int32((totalRuneCost * 10.f) * sWorld->getRate(RATE_POWER_RUNICPOWER_INCOME)))
+        if (int32 rp = int32((totalRuneCost * 100.f) * sWorld->getRate(RATE_POWER_RUNICPOWER_INCOME)))
             player->ModifyPower(POWER_RUNIC_POWER, int32(rp));
 }
 
