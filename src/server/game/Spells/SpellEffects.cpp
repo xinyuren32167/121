@@ -5827,7 +5827,7 @@ void Spell::EffectActivateRune(SpellEffIndex effIndex)
 
     for (uint32 j = 0; j < MAX_RUNES && count > 0; ++j)
     {
-        if (player->GetRuneCooldown(j) && player->GetCurrentRune(j) == RuneType(m_spellInfo->Effects[effIndex].MiscValue))
+        if (player->GetRuneCooldown(j))
         {
             player->SetRuneCooldown(j, 0);
             --count;
