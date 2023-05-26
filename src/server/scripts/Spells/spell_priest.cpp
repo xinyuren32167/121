@@ -750,7 +750,6 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
             {
                 AddPct(heal, aurEff->GetAmount());
             }
-
             if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_PRIEST_TWIN_DISCIPLINE_R1, EFFECT_0))
             {
                 AddPct(heal, aurEff->GetAmount());
@@ -763,7 +762,6 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
             {
                 AddPct(heal, aurEff->GetAmount());
             }
-
             SetEffectValue(heal);
         }
     }

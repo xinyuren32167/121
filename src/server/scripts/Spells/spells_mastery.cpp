@@ -471,7 +471,6 @@ class spell_mastery_astral_invocation : public AuraScript
         int32 natureDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
         int32 arcaneDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
         Unit* target = procInfo.GetActionTarget();
-
         int32 schoolMask = procInfo.GetSpellInfo()->GetSchoolMask();
 
         if (schoolMask & SPELL_SCHOOL_MASK_NATURE && target->HasAura(80518))

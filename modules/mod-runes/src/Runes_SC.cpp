@@ -141,6 +141,7 @@ public:
         RunesManager::LoadAllLoadout();
         RunesManager::LoadAllSlotRune();
         RunesManager::LoadAllProgression();
+        RunesManager::LoadSpellsConversion();
     }
 };
 
