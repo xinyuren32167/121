@@ -73,11 +73,17 @@ enum DeathKnightSpells
     SPELL_DK_UNHOLY_PRESENCE_TRIGGERED          = 49772,
     SPELL_DK_WILL_OF_THE_NECROPOLIS_TALENT_R1   = 49189,
     SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
+
+    //NEW STUFF
     SPELL_DK_HEALING_ABSORB_DEATH_PACT          = 80301,
     SPELL_DK_GLACIAL_ADVANCE_DAMAGE             = 80305,
     SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE = 80310,
     SPELL_DK_GLACIAL_CHILL_STREAK_TICK          = 80309,
     SPELL_DK_FROSTWHYRM                         = 80311,
+    SPELL_DK_FROST_FEVER_RUNIC                  = 59921,
+    SPELL_DK_LICHBORNE_LEECH                    = 80316,
+    SPELL_DK_BLOOD_TAP                          = 45529,
+    SPELL_DK_BONE_SHIELD                        = 49222,
 };
 
 enum DeathKnightSpellIcons
@@ -152,7 +158,8 @@ class spell_dk_bone_shield_calculation : public AuraScript
     {
         if (Unit* caster = GetCaster())
         {
-            int32 scaling = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BONE_SHIELD);
+            int32 scaling = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
             uint32 str = caster->GetStat(STAT_STRENGTH);
             amount = ApplyPct(str, scaling);
         }
@@ -730,8 +737,12 @@ class spell_dk_bone_shield : public AuraScript
     void HandleProc(ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
-        if (!eventInfo.GetSpellInfo() || !eventInfo.GetSpellInfo()->IsTargetingArea())
-            DropCharge();
+        ModStackAmount(-1);
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BLOOD_TAP);
+        uint32 reduction = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_BLOOD_TAP, reduction);
     }
 
     void Register() override
@@ -2206,6 +2217,7 @@ class spell_dk_vampiric_blood : public AuraScript
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_vampiric_blood::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_INCREASE_HEALTH);
     }
 };
+
 // 52284 - Will of the Necropolis
 class spell_dk_will_of_the_necropolis : public AuraScript
 {
@@ -2263,6 +2275,82 @@ class spell_dk_will_of_the_necropolis : public AuraScript
     }
 };
 
+class spell_dk_frost_fever : public AuraScript
+{
+    PrepareAuraScript(spell_dk_frost_fever);
+
+    void OnPeriodic(AuraEffect const* /*aurEff*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_FROST_FEVER);
+        uint32 procChance = value->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (roll_chance_f(procChance) && caster->getLevel() > 2) //UNLESS YOU CHECK FOR THE LEVEL, DANCING RUNE BLADE CRASHES (IT IS SET AT LEVEL 1)
+        {
+            caster->CastSpell(caster, SPELL_DK_FROST_FEVER_RUNIC, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_frost_fever::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
+class spell_dk_lichborne_leech : public AuraScript
+{
+    PrepareAuraScript(spell_dk_lichborne_leech);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage)
+            {
+                int32 healPct = aurEff->GetAmount();
+                int32 healAmount = CalculatePct(damage, healPct);
+                GetCaster()->CastCustomSpell(SPELL_DK_LICHBORNE_LEECH, SPELLVALUE_BASE_POINT0, healAmount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_lichborne_leech::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_raise_dead_new : public SpellScript
+{
+    PrepareSpellScript(spell_dk_raise_dead_new);
+
+    uint32 GetGhoulSpellId()
+    {
+        // Do we have talent Master of Ghouls?
+        if (GetCaster()->HasAura(SPELL_DK_MASTER_OF_GHOULS))
+            // summon as pet
+            return GetSpellInfo()->Effects[EFFECT_2].CalcValue();
+
+        // or guardian
+        return GetSpellInfo()->Effects[EFFECT_1].CalcValue();
+    }
+
+    void HandleRaiseDead()
+    {
+        GetCaster()->CastSpell(GetCaster(), GetGhoulSpellId(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_raise_dead_new::HandleRaiseDead);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -2300,7 +2388,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_improved_unholy_presence);
     RegisterSpellScript(spell_dk_pestilence);
     RegisterSpellScript(spell_dk_presence);
-    RegisterSpellScript(spell_dk_raise_dead);
+    //RegisterSpellScript(spell_dk_raise_dead);
     RegisterSpellScript(spell_dk_rune_tap_party);
     RegisterSpellScript(spell_dk_scent_of_blood);
     RegisterSpellScript(spell_dk_scourge_strike);
@@ -2313,6 +2401,9 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_pillar_of_frost);
     RegisterSpellScript(spell_dk_chill_streak);
     RegisterSpellScript(spell_dk_frostwyrm);
+    RegisterSpellScript(spell_dk_frost_fever);
+    RegisterSpellScript(spell_dk_lichborne_leech);
+    RegisterSpellScript(spell_dk_raise_dead_new);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
