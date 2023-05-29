@@ -2289,7 +2289,7 @@ class spell_dk_frost_fever : public AuraScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_FROST_FEVER);
         uint32 procChance = value->GetEffect(EFFECT_1).CalcValue(caster);
 
-        if (roll_chance_f(procChance) && caster->getLevel() > 2) //UNLESS YOU CHECK FOR THE LEVEL, DANCING RUNE BLADE CRASHES (IT IS SET AT LEVEL 1)
+        if (roll_chance_f(procChance) && caster->GetTypeId() == TYPEID_PLAYER)
         {
             caster->CastSpell(caster, SPELL_DK_FROST_FEVER_RUNIC, TRIGGERED_FULL_MASK);
         }
