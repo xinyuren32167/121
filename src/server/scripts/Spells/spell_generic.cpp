@@ -304,6 +304,9 @@ class spell_gen_reduced_above_60_aura : public AuraScript
     }
 };
 
+
+
+
 /* 69664 - Aquanos Laundry                      (spell_q20438_q24556_aquantos_laundry)
    38724 - Magic Sucker Device (Success Visual) (spell_q10838_demoniac_scryer_visual) */
 class spell_gen_relocaste_dest : public SpellScript

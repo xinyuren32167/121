@@ -84,6 +84,9 @@ enum DeathKnightSpells
     SPELL_DK_LICHBORNE_LEECH                    = 80316,
     SPELL_DK_BLOOD_TAP                          = 45529,
     SPELL_DK_BONE_SHIELD                        = 49222,
+
+
+    SPELL_DK_BREATH_OF_SINDRAGOSA               = 80314,
 };
 
 enum DeathKnightSpellIcons
@@ -109,6 +112,47 @@ class spell_dk_death_pact: public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_dk_death_pact::HandleCast);
+    }
+};
+
+
+class spell_dk_breath_of_sindragosa : public AuraScript
+{
+    PrepareAuraScript(spell_dk_breath_of_sindragosa);
+
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        uint32 cost = GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (caster->GetPower(POWER_RUNIC_POWER) <= cost) {
+            caster->RemoveAura(SPELL_DK_BREATH_OF_SINDRAGOSA);
+            caster->ModifyPower(POWER_RUNIC_POWER, 20);
+            return false;
+        }
+
+        return true;
+    }
+
+    void PeriodicTick(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        uint32 cost = GetSpellInfo()->ManaCost;
+        caster->ModifyPower(POWER_RUNIC_POWER, -cost);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->ModifyPower(POWER_RUNIC_POWER, 20);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_breath_of_sindragosa::CheckProc);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_breath_of_sindragosa::PeriodicTick, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_dk_breath_of_sindragosa::HandleProc, EFFECT_0, SPELL_AURA_MOD_PERCENT_STAT);
     }
 };
 
@@ -2289,7 +2333,7 @@ class spell_dk_frost_fever : public AuraScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_FROST_FEVER);
         uint32 procChance = value->GetEffect(EFFECT_1).CalcValue(caster);
 
-        if (roll_chance_f(procChance) && caster->getLevel() > 2) //UNLESS YOU CHECK FOR THE LEVEL, DANCING RUNE BLADE CRASHES (IT IS SET AT LEVEL 1)
+        if (roll_chance_f(procChance) && caster->GetTypeId() == TYPEID_PLAYER)
         {
             caster->CastSpell(caster, SPELL_DK_FROST_FEVER_RUNIC, TRIGGERED_FULL_MASK);
         }
@@ -2304,7 +2348,6 @@ class spell_dk_frost_fever : public AuraScript
 class spell_dk_lichborne_leech : public AuraScript
 {
     PrepareAuraScript(spell_dk_lichborne_leech);
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
@@ -2404,6 +2447,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_frost_fever);
     RegisterSpellScript(spell_dk_lichborne_leech);
     RegisterSpellScript(spell_dk_raise_dead_new);
+    RegisterSpellScript(spell_dk_breath_of_sindragosa);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

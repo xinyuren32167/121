@@ -519,15 +519,6 @@ class AuraScript : public _SpellScript
     // internal use classes & functions
     // DO NOT THESE IN SCRIPTS
 public:
-    Aura* GetRankRune(uint32 rankOneSpellId)
-    {
-        for (int rank = 0; rank <= 5; rank++) {
-            if (GetCaster()->HasAura(rankOneSpellId + rank))
-                return GetCaster()->GetAura(rankOneSpellId + rank);
-        }
-        return nullptr;
-    }
-
 #define AURASCRIPT_FUNCTION_TYPE_DEFINES(CLASSNAME) \
         typedef bool(CLASSNAME::*AuraCheckAreaTargetFnType)(Unit* target); \
         typedef void(CLASSNAME::*AuraDispelFnType)(DispelInfo* dispelInfo); \
