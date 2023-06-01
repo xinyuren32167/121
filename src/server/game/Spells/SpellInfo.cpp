@@ -1726,12 +1726,12 @@ bool SpellInfo::ValidateAttribute6SpellDamageMods(Unit const* caster, const Aura
 
     // Xinef we have a hook to decide which auras should profit to the spell, by default no profits
     // Xinef: Scourge Strike - Trigger
-    if (Id == 70890 && auraEffect)
+    /*if (Id == 70890 && auraEffect)
     {
         SpellInfo const* auraInfo = auraEffect->GetSpellInfo();
         return auraInfo->SpellIconID == 3086 ||
                (auraInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && (auraInfo->SpellFamilyFlags & flag96(8388608, 64, 16) || auraInfo->SpellIconID == 235 || auraInfo->SpellIconID == 154));
-    }
+    }*/
     // Xinef: Necrosis, no profits for done and taken
     else if (Id == 51460)
         return false;

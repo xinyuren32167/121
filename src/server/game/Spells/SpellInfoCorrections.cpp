@@ -804,7 +804,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     // Dancing Rune Weapon
     ApplySpellFix({ 49028 }, [](SpellInfo* spellInfo)
     {
-        spellInfo->Effects[EFFECT_2].Effect = 0;
+        //spellInfo->Effects[EFFECT_2].Effect = 0;
         spellInfo->ProcFlags |= PROC_FLAG_DONE_MELEE_AUTO_ATTACK;
     });
 
@@ -834,7 +834,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Scourge Strike trigger
-    ApplySpellFix({ 70890 }, [](SpellInfo* spellInfo)
+    ApplySpellFix({70890}, [](SpellInfo* spellInfo)
     {
         spellInfo->AttributesEx3 |= SPELL_ATTR3_SUPRESS_CASTER_PROCS;
     });

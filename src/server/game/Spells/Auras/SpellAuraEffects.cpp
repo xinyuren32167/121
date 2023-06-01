@@ -5893,10 +5893,10 @@ void AuraEffect::HandlePeriodicDummyAuraTick(Unit* target, Unit* caster) const
         case SPELLFAMILY_DEATHKNIGHT:
             switch (GetId())
             {
-                case 49016: // Hysteria
+                /*case 49016: // Hysteria
                     uint32 damage = uint32(target->CountPctFromMaxHealth(1));
                     Unit::DealDamage(target, target, damage, nullptr, NODAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, false);
-                    break;
+                    break;*/
             }
             // Blood of the North
             // Reaping

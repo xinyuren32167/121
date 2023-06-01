@@ -206,7 +206,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto,
                 if (spellproto->SpellIconID == 2797)
                     return DIMINISHING_DISORIENT;
                 // Mark of Blood
-                else if ((spellproto->SpellFamilyFlags[0] & 0x10000000) && spellproto->SpellIconID == 2285)
+                else if (spellproto->Id == 49005)
                     return DIMINISHING_LIMITONLY;
                 break;
             }

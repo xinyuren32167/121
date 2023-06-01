@@ -3489,15 +3489,15 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
         case SPELLFAMILY_DEATHKNIGHT:
             {
                 // Plague Strike
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x1)
+                /*if (m_spellInfo->SpellFamilyFlags[0] & 0x1)
                 {
                     // Glyph of Plague Strike
                     if (AuraEffect const* aurEff = m_caster->GetAuraEffect(58657, EFFECT_0))
                         AddPct(totalDamagePercentMod, aurEff->GetAmount());
                     break;
-                }
+                }*/
                 // Blood Strike
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x400000)
+                /*if (m_spellInfo->SpellFamilyFlags[0] & 0x400000)
                 {
                     float disease_amt = m_spellInfo->Effects[EFFECT_2].CalcValue();
                     //Death Knight T8 Melee 4P Bonus
@@ -3511,18 +3511,18 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                         if (unitTarget->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
                             AddPct(totalDamagePercentMod, 20.0f);
                     break;
-                }
+                }*/
                 // Death Strike
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x10)
+                /*if (m_spellInfo->SpellFamilyFlags[0] & 0x10)
                 {
                     // Glyph of Death Strike
                     if (AuraEffect const* aurEff = m_caster->GetAuraEffect(59336, EFFECT_0))
                         if (uint32 runic = std::min<uint32>(m_caster->GetPower(POWER_RUNIC_POWER), aurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue()))
                             AddPct(totalDamagePercentMod, runic);
                     break;
-                }
+                }*/
                 // Obliterate (12.5% more damage per disease)
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x20000)
+                /*if (m_spellInfo->Id == 51425)
                 {
                     bool consumeDiseases = true;
                     // Annihilation
@@ -3538,7 +3538,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
 
                     AddPct(totalDamagePercentMod, disease_amt * unitTarget->GetDiseasesByCaster(m_caster->GetGUID(), consumeDiseases) / 2.0f);
                     break;
-                }
+                }*/
                 // Blood-Caked Strike - Blood-Caked Blade
                 if (m_spellInfo->SpellIconID == 1736)
                 {
