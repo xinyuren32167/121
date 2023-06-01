@@ -867,10 +867,10 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Death Pact
-    ApplySpellFix({ 48743 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({48743}, [](SpellInfo* spellInfo)
     {
         spellInfo->AttributesEx &= ~SPELL_ATTR1_EXCLUDE_CASTER;
-    });
+    });*/
 
     // Raise Ally (trigger)
     ApplySpellFix({ 46619 }, [](SpellInfo* spellInfo)

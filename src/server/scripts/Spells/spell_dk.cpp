@@ -95,7 +95,10 @@ enum DeathKnightSpells
     SPELL_DK_SUMMON_GARGOYLE_LISTENER           = 80328,
     SPELL_DK_VIRULENT_PLAGUE_PROC               = 80333,
     SPELL_DK_BREATH_OF_SINDRAGOSA               = 80314,
-
+    SPELL_DK_DEATH_STRIKE                       = 49924,
+    SPELL_DK_IMPROVED_DEATH_STRIKE              = 62905,
+    SPELL_DK_SACRIFICAL_PACT_BASE               = 80335,
+    SPELL_DK_SACRIFICAL_PACT_EXPLOSION          = 80336,
 };
 
 enum DeathKnightSpellIcons
@@ -1689,9 +1692,11 @@ class spell_dk_death_strike : public SpellScript
         if (Unit* target = GetHitUnit())
         {
             uint32 count = target->GetDiseasesByCaster(caster->GetGUID());
-            int32 bp = int32(count * caster->CountPctFromMaxHealth(int32(GetSpellInfo()->Effects[EFFECT_0].DamageMultiplier)));
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_DEATH_STRIKE);
+            uint32 healPct = value->GetEffect(EFFECT_1).CalcValue(caster);
+            int32 bp = int32(count * caster->CountPctFromMaxHealth(int32(healPct)));
             // Improved Death Strike
-            if (AuraEffect const* aurEff = caster->GetAuraEffect(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_DEATHKNIGHT, DK_ICON_ID_IMPROVED_DEATH_STRIKE, 0))
+            if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_DEATH_STRIKE, EFFECT_0))
                 AddPct(bp, caster->CalculateSpellDamage(caster, aurEff->GetSpellInfo(), 2));
             caster->CastCustomSpell(caster, SPELL_DK_DEATH_STRIKE_HEAL, &bp, nullptr, nullptr, false);
         }
@@ -2567,6 +2572,60 @@ class spell_dk_virulent_plague : public AuraScript
     }
 };
 
+class spell_dk_sacrifical_pact : public SpellScript
+{
+    PrepareSpellScript(spell_dk_sacrifical_pact);
+
+    SpellCastResult CheckCast()
+    {
+        // Check if we have valid targets, otherwise skip spell casting here
+        if (Player* player = GetCaster()->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Creature* undeadPet = (*itr)->ToCreature())
+                    if (undeadPet->IsAlive() &&
+                        undeadPet->GetOwnerGUID() == player->GetGUID() &&
+                        undeadPet->GetEntry() == 26125 &&
+                        undeadPet->IsWithinDist(player, 100.0f, false))
+                        return SPELL_CAST_OK;
+
+        return SPELL_FAILED_NO_PET;
+    }
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::vector<Unit*> summonedUnits = caster->GetSummonedUnits();
+
+
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (!unit->IsInWorld())
+                continue;
+
+            if (unit->isDead())
+                continue;
+
+            if (unit->GetEntry() == 26125)
+            {
+                SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_SACRIFICAL_PACT_BASE);
+                int32 hpPct = value->GetEffect(EFFECT_0).CalcValue(GetCaster());
+
+                int32 healAmount = CalculatePct(caster->GetMaxHealth(), hpPct);
+                caster->CastCustomSpell(SPELL_DK_SACRIFICAL_PACT_EXPLOSION, SPELLVALUE_BASE_POINT2, healAmount, unit, TRIGGERED_FULL_MASK);
+
+                break;
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_dk_sacrifical_pact::CheckCast);
+        OnCast += SpellCastFn(spell_dk_sacrifical_pact::HandleCast);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -2627,6 +2686,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_summon_gargoyle_power);
     RegisterSpellScript(spell_dk_virulent_plague);
     RegisterSpellScript(spell_dk_breath_of_sindragosa);
+    RegisterSpellScript(spell_dk_sacrifical_pact);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

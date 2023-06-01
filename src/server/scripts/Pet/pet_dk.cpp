@@ -328,12 +328,15 @@ class spell_pet_dk_gargoyle_strike : public SpellScript
             int32 attackDamage = owner->GetTotalAttackPowerValue(BASE_ATTACK);
             damage = CalculatePct(attackDamage, 50);
 
-            int32 damageBonus = caster->GetAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF)->GetStackAmount();
+            damage = caster->SpellDamageBonusDone(GetExplTargetUnit(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+            damage = GetExplTargetUnit()->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+            /*int32 damageBonus = caster->GetAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF)->GetStackAmount(); //molly: legacy from first iteration, keep in case we change the core
 
             if (damageBonus > 0)
             {
                 damage += CalculatePct(damage, damageBonus);
-            }
+            }*/
         }
 
         SetHitDamage(damage);
