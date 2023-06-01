@@ -75,6 +75,7 @@ enum DeathKnightSpells
     SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
 
     //NEW STUFF
+    SPELL_DK_DEATH_PACT                         = 48473,
     SPELL_DK_HEALING_ABSORB_DEATH_PACT          = 80301,
     SPELL_DK_GLACIAL_ADVANCE_DAMAGE             = 80305,
     SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE = 80310,
@@ -84,6 +85,15 @@ enum DeathKnightSpells
     SPELL_DK_LICHBORNE_LEECH                    = 80316,
     SPELL_DK_BLOOD_TAP                          = 45529,
     SPELL_DK_BONE_SHIELD                        = 49222,
+    SPELL_DK_PLAGUE_STRIKE                      = 49921,
+    SPELL_DK_OBLITERATE                         = 51425,
+    SPELL_DK_FESTERING_WOUND                    = 80322,
+    SPELL_DK_FESTERING_WOUND_PROC               = 80323,
+    SPELL_DK_SCOURGE_STRIKE_SHADOW              = 80325,
+    SPELL_DK_SUMMON_GARGOYLE_ENERGY             = 80326,
+    SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF        = 80327,
+    SPELL_DK_SUMMON_GARGOYLE_LISTENER           = 80328,
+    SPELL_DK_VIRULENT_PLAGUE_PROC               = 80333,
 };
 
 enum DeathKnightSpellIcons
@@ -102,13 +112,16 @@ class spell_dk_death_pact: public SpellScript
 
     void HandleCast()
     {
-        uint32 amount = GetCaster()->CountPctFromMaxHealth(GetEffectValue());
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_DEATH_PACT);
+        int32 hpPct = value->GetEffect(EFFECT_0).CalcValue(GetCaster());
+
+        uint32 amount = GetCaster()->CountPctFromMaxHealth(hpPct);
         GetCaster()->CastCustomSpell(SPELL_DK_HEALING_ABSORB_DEATH_PACT, SPELLVALUE_BASE_POINT0, amount, GetCaster());
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_dk_death_pact::HandleCast);
+        AfterCast += SpellCastFn(spell_dk_death_pact::HandleCast);
     }
 };
 
@@ -2351,11 +2364,172 @@ class spell_dk_raise_dead_new : public SpellScript
     }
 };
 
+class spell_dk_obliterate : public SpellScript
+{
+    PrepareSpellScript(spell_dk_obliterate);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        int32 damage = GetEffectValue();
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_OBLITERATE);
+        uint32 diseaseBonus = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        float diseasePct = diseaseBonus / 10;
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+            uint32 count = target->GetDiseasesByCaster(GetCaster()->GetGUID());
+            int32 bp = int32(count * diseasePct);
+            AddPct(damage, bp);
+
+            target->RemoveAura(SPELL_DK_FROST_FEVER);
+            target->RemoveAura(SPELL_DK_BLOOD_PLAGUE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dk_obliterate::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_dk_festering_wound : public AuraScript
+{
+    PrepareAuraScript(spell_dk_festering_wound);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (!GetTarget()->IsAlive())
+            GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+    };
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_festering_wound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_festering_wound::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dk_scourge_strike_new : public SpellScript
+{
+    PrepareSpellScript(spell_dk_scourge_strike_new);
+
+    void HandleHit()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+
+        ObjectGuid guid = caster->GetGUID();
+        if (Aura* targetAura = target->GetAura(SPELL_DK_FESTERING_WOUND, guid))
+        {
+            targetAura->ModStackAmount(-1);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_scourge_strike_new::HandleHit);
+    }
+};
+
+class spell_dk_summon_gargoyle_energy : public SpellScript
+{
+    PrepareSpellScript(spell_dk_summon_gargoyle_energy);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_DK_SUMMON_GARGOYLE_ENERGY, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_DK_SUMMON_GARGOYLE_LISTENER, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_summon_gargoyle_energy::HandleCast);
+    }
+};
+
+class spell_dk_summon_gargoyle_power : public AuraScript
+{
+    PrepareAuraScript(spell_dk_summon_gargoyle_power);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Aura* aura = GetAura();
+        Player* target = GetTarget()->ToPlayer();
+
+        if (!aura || !target || target->isDead())
+            return;
+
+        int32 spellRunic = (eventInfo.GetSpellInfo()->ManaCost) / 10;
+
+        if (spellRunic <= 0)
+            return;
+
+        std::vector<Unit*> summonedUnits = target->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (!unit->IsInWorld())
+                continue;
+
+            if (unit->isDead())
+                continue;
+
+            if (Aura * targetAura = unit->GetAura(SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF))
+            {
+                targetAura->ModStackAmount(spellRunic);
+            }
+        }
+
+        int32 currentAmount = aurEff->GetAmount();
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_summon_gargoyle_power::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_summon_gargoyle_power::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_virulent_plague : public AuraScript
+{
+    PrepareAuraScript(spell_dk_virulent_plague);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetTarget(), SPELL_DK_VIRULENT_PLAGUE_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_virulent_plague::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
-    RegisterSpellScript(spell_dk_raise_ally);
-    RegisterSpellScript(spell_dk_raise_ally_trigger);
+    //RegisterSpellScript(spell_dk_raise_ally);
+    //RegisterSpellScript(spell_dk_raise_ally_trigger);
     RegisterSpellScript(spell_dk_aotd_taunt);
     RegisterSpellScript(spell_dk_master_of_ghouls);
     RegisterSpellAndAuraScriptPair(spell_dk_chains_of_ice, spell_dk_chains_of_ice_aura);
@@ -2391,7 +2565,7 @@ void AddSC_deathknight_spell_scripts()
     //RegisterSpellScript(spell_dk_raise_dead);
     RegisterSpellScript(spell_dk_rune_tap_party);
     RegisterSpellScript(spell_dk_scent_of_blood);
-    RegisterSpellScript(spell_dk_scourge_strike);
+    //RegisterSpellScript(spell_dk_scourge_strike);
     RegisterSpellScript(spell_dk_spell_deflection);
     RegisterSpellScript(spell_dk_vampiric_blood);
     RegisterSpellScript(spell_dk_will_of_the_necropolis);
@@ -2404,6 +2578,12 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_frost_fever);
     RegisterSpellScript(spell_dk_lichborne_leech);
     RegisterSpellScript(spell_dk_raise_dead_new);
+    RegisterSpellScript(spell_dk_obliterate);
+    RegisterSpellScript(spell_dk_festering_wound);
+    RegisterSpellScript(spell_dk_scourge_strike_new);
+    RegisterSpellScript(spell_dk_summon_gargoyle_energy);
+    RegisterSpellScript(spell_dk_summon_gargoyle_power);
+    RegisterSpellScript(spell_dk_virulent_plague);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

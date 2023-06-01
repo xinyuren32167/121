@@ -43,7 +43,8 @@ enum DeathKnightSpells
     SPELL_DK_DISMISS_GARGOYLE       = 50515,
     SPELL_DK_SANCTUARY              = 54661,
     SPELL_DK_NIGHT_OF_THE_DEAD      = 62137,
-    SPELL_DK_PET_SCALING            = 61017
+    SPELL_DK_PET_SCALING            = 61017,
+    SPELL_DK_GARGOYLE_DAMAGE_BUFF   = 80327
 };
 
 class npc_pet_dk_ebon_gargoyle : public CreatureScript
@@ -55,7 +56,7 @@ public:
     {
         npc_pet_dk_ebon_gargoyleAI(Creature* creature) : ScriptedAI(creature)
         {
-            _despawnTimer = 36000; // 30 secs + 4 fly out + 2 initial attack timer
+            _despawnTimer = 31000; // 25 secs + 4 fly out + 2 initial attack timer (molly: changed from 30 sec)
             _despawning = false;
             _initialSelection = true;
             _targetGUID.Clear();
@@ -76,6 +77,9 @@ public:
             Unit* owner = me->GetOwner();
             if (!owner)
                 return;
+
+            // molly: added for accumulative damage aura
+            owner->AddAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF, me);
 
             // Xinef: Night of the Dead avoidance
             if (Aura* aur = me->GetAura(SPELL_DK_NIGHT_OF_THE_DEAD))
@@ -313,16 +317,26 @@ class spell_pet_dk_gargoyle_strike : public SpellScript
 
     void HandleDamageCalc(SpellEffIndex /*effIndex*/)
     {
-        int32 damage = 60;
+        int32 damage = GetEffectValue();
         if (Unit* caster = GetCaster())
         {
-            if (caster->getLevel() >= 60)
+            if (!caster->HasAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF))
+                return;
+
+            Unit* owner = GetCaster()->GetOwner();
+
+            int32 attackDamage = owner->GetTotalAttackPowerValue(BASE_ATTACK);
+            damage = CalculatePct(attackDamage, 50);
+
+            int32 damageBonus = caster->GetAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF)->GetStackAmount();
+
+            if (damageBonus > 0)
             {
-                damage += (caster->getLevel() - 60) * 4;
+                damage += CalculatePct(damage, damageBonus);
             }
         }
 
-        SetEffectValue(damage);
+        SetHitDamage(damage);
     }
 
     void Register() override
