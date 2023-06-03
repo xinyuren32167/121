@@ -99,6 +99,8 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_DEATH_STRIKE              = 62905,
     SPELL_DK_SACRIFICAL_PACT_BASE               = 80335,
     SPELL_DK_SACRIFICAL_PACT_EXPLOSION          = 80336,
+    SPELL_DK_RUNIC_CORRUPTION                   = 80342,
+    SPELL_DK_SOUL_REAPER_PERIODIC               = 80343,
 };
 
 enum DeathKnightSpellIcons
@@ -2402,7 +2404,8 @@ class spell_dk_raise_dead_new : public SpellScript
 
     void HandleRaiseDead()
     {
-        GetCaster()->CastSpell(GetCaster(), GetGhoulSpellId(), TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, GetGhoulSpellId(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2626,6 +2629,55 @@ class spell_dk_sacrifical_pact : public SpellScript
     }
 };
 
+class spell_dk_asphyxiate : public AuraScript
+{
+    PrepareAuraScript(spell_dk_asphyxiate);
+
+    void HandleEffectApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        target->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_STRANGULATE);
+    }
+
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        target->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_NONE);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_asphyxiate::HandleEffectApply, EFFECT_0, SPELL_AURA_MOD_STUN, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_asphyxiate::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_STUN, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dk_soul_reaper : public AuraScript
+{
+    PrepareAuraScript(spell_dk_soul_reaper);
+
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetTarget();
+        if (target->GetHealthPct() <= 35 && caster->IsAlive())
+            GetCaster()->CastSpell(target, SPELL_DK_SOUL_REAPER_PERIODIC, TRIGGERED_FULL_MASK);
+    };
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_DK_RUNIC_CORRUPTION, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_soul_reaper::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_dk_soul_reaper::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -2687,6 +2739,8 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_virulent_plague);
     RegisterSpellScript(spell_dk_breath_of_sindragosa);
     RegisterSpellScript(spell_dk_sacrifical_pact);
+    RegisterSpellScript(spell_dk_asphyxiate);
+    RegisterSpellScript(spell_dk_soul_reaper);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
