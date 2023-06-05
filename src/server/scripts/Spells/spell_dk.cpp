@@ -2763,7 +2763,8 @@ class spell_dk_rune_of_apocalypse : public AuraScript
     {
         Unit* owner = GetCaster();
         Unit* pet = GetAura()->GetOwner()->ToUnit();
-        Unit* target = GetTarget();
+        Unit* target = eventInfo.GetActionTarget();
+        LOG_ERROR("error", "{}", target->GetName());
 
         if (!owner->IsAlive())
             return;
@@ -2777,9 +2778,8 @@ class spell_dk_rune_of_apocalypse : public AuraScript
         };
 
         uint32 random = urand(0, procs.size() - 1);
-        LOG_ERROR("error", "{}", random);
         uint32 spellIdToProc = procs[random];
-        LOG_ERROR("error", "{}", spellIdToProc);
+
         if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_PESTILENCE)
         {
             int32 ap = owner->GetTotalAttackPowerValue(BASE_ATTACK);
