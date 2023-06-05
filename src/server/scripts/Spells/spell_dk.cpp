@@ -101,6 +101,14 @@ enum DeathKnightSpells
     SPELL_DK_SACRIFICAL_PACT_EXPLOSION          = 80336,
     SPELL_DK_RUNIC_CORRUPTION                   = 80342,
     SPELL_DK_SOUL_REAPER_PERIODIC               = 80343,
+    SPELL_DK_RUNE_OF_SANGUINATION               = 80345,
+    SPELL_DK_RUNE_OF_SANGUINATION_HEAL          = 80346,
+    SPELL_DK_RUNE_OF_SPELLWARDING_SHIELD        = 80347,
+    SPELL_DK_RUNE_APOCALYPSE_PET_AURA           = 80350,
+    SPELL_DK_RUNE_APOCALYPSE_DEATH              = 80351,
+    SPELL_DK_RUNE_APOCALYPSE_WAR                = 80352,
+    SPELL_DK_RUNE_APOCALYPSE_FAMINE             = 80353,
+    SPELL_DK_RUNE_APOCALYPSE_PESTILENCE         = 80354,
 };
 
 enum DeathKnightSpellIcons
@@ -2611,12 +2619,7 @@ class spell_dk_sacrifical_pact : public SpellScript
 
             if (unit->GetEntry() == 26125)
             {
-                SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_SACRIFICAL_PACT_BASE);
-                int32 hpPct = value->GetEffect(EFFECT_0).CalcValue(GetCaster());
-
-                int32 healAmount = CalculatePct(caster->GetMaxHealth(), hpPct);
-                caster->CastCustomSpell(SPELL_DK_SACRIFICAL_PACT_EXPLOSION, SPELLVALUE_BASE_POINT2, healAmount, unit, TRIGGERED_FULL_MASK);
-
+                caster->CastSpell(unit, SPELL_DK_SACRIFICAL_PACT_EXPLOSION, TRIGGERED_FULL_MASK);
                 break;
             }
         }
@@ -2675,6 +2678,127 @@ class spell_dk_soul_reaper : public AuraScript
     {
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_soul_reaper::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
         OnEffectProc += AuraEffectProcFn(spell_dk_soul_reaper::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_rune_of_sanguination : public SpellScript
+{
+    PrepareSpellScript(spell_dk_rune_of_sanguination);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        if (GetCaster()->HasAura(SPELL_DK_RUNE_OF_SANGUINATION))
+        {
+            int32 damage = GetEffectValue();
+
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_RUNE_OF_SANGUINATION);
+            uint32 diseaseBonus = value->GetEffect(EFFECT_0).CalcValue(GetCaster());
+
+            if (Unit* target = GetHitUnit())
+            {
+                int32 increase = 100 - (GetExplTargetUnit()->GetHealthPct());
+
+                damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+                damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+                AddPct(damage, increase);
+            }
+
+            SetHitDamage(damage);
+        };
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dk_rune_of_sanguination::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_dk_rune_of_sanguination_heal : public AuraScript
+{
+    PrepareAuraScript(spell_dk_rune_of_sanguination_heal);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && GetCaster()->GetHealthPct() <= 35)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage)
+            {
+                int32 healPct = aurEff->GetAmount();
+                int32 healAmount = CalculatePct(damage, healPct) / 8;
+                GetCaster()->CastCustomSpell(SPELL_DK_RUNE_OF_SANGUINATION_HEAL, SPELLVALUE_BASE_POINT0, healAmount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_rune_of_sanguination_heal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_rune_of_spellwarding : public AuraScript
+{
+    PrepareAuraScript(spell_dk_rune_of_spellwarding);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 shieldPct = aurEff->GetAmount();
+        int32 shieldAmount = CalculatePct(GetCaster()->GetMaxHealth(), shieldPct);
+        GetCaster()->CastCustomSpell(SPELL_DK_RUNE_OF_SPELLWARDING_SHIELD, SPELLVALUE_BASE_POINT0, shieldAmount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_rune_of_spellwarding::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_rune_of_apocalypse : public AuraScript
+{
+    PrepareAuraScript(spell_dk_rune_of_apocalypse);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* owner = GetCaster();
+        Unit* pet = GetAura()->GetOwner()->ToUnit();
+        Unit* target = GetTarget();
+
+        if (!owner->IsAlive())
+            return;
+
+        std::vector<uint32> procs =
+        {
+                SPELL_DK_RUNE_APOCALYPSE_DEATH,
+                SPELL_DK_RUNE_APOCALYPSE_WAR,
+                SPELL_DK_RUNE_APOCALYPSE_FAMINE,
+                SPELL_DK_RUNE_APOCALYPSE_PESTILENCE
+        };
+
+        uint32 random = urand(0, procs.size() - 1);
+        LOG_ERROR("error", "{}", random);
+        uint32 spellIdToProc = procs[random];
+        LOG_ERROR("error", "{}", spellIdToProc);
+        if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_PESTILENCE)
+        {
+            int32 ap = owner->GetTotalAttackPowerValue(BASE_ATTACK);
+            int32 damageAmount = CalculatePct(ap, 5);
+            pet->CastCustomSpell(SPELL_DK_RUNE_APOCALYPSE_PESTILENCE, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
+        }
+        else if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_FAMINE)
+        {
+            owner->CastSpell(owner, spellIdToProc, TRIGGERED_FULL_MASK);
+        }
+        else
+        {
+            owner->CastSpell(target, spellIdToProc, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_rune_of_apocalypse::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2741,6 +2865,10 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_sacrifical_pact);
     RegisterSpellScript(spell_dk_asphyxiate);
     RegisterSpellScript(spell_dk_soul_reaper);
+    RegisterSpellScript(spell_dk_rune_of_sanguination);
+    RegisterSpellScript(spell_dk_rune_of_sanguination_heal);
+    RegisterSpellScript(spell_dk_rune_of_spellwarding);
+    RegisterSpellScript(spell_dk_rune_of_apocalypse);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

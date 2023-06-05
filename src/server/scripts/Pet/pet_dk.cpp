@@ -44,7 +44,9 @@ enum DeathKnightSpells
     SPELL_DK_SANCTUARY              = 54661,
     SPELL_DK_NIGHT_OF_THE_DEAD      = 62137,
     SPELL_DK_PET_SCALING            = 61017,
-    SPELL_DK_GARGOYLE_DAMAGE_BUFF   = 80327
+    SPELL_DK_GARGOYLE_DAMAGE_BUFF   = 80327,
+    SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA = 80349,
+    SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA    = 80350
 };
 
 class npc_pet_dk_ebon_gargoyle : public CreatureScript
@@ -245,6 +247,15 @@ public:
     struct npc_pet_dk_ghoulAI : public CombatAI
     {
         npc_pet_dk_ghoulAI(Creature* c) : CombatAI(c) { }
+
+        void InitializeAI() override //molly: Rune of the Apocalypse
+        {
+            Unit* owner = me->GetOwner();
+            if (!owner || !owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
+                return;
+            
+            owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
+        }
 
         void JustDied(Unit* /*who*/) override
         {
