@@ -2764,7 +2764,6 @@ class spell_dk_rune_of_apocalypse : public AuraScript
         Unit* owner = GetCaster();
         Unit* pet = GetAura()->GetOwner()->ToUnit();
         Unit* target = eventInfo.GetActionTarget();
-        LOG_ERROR("error", "{}", target->GetName());
 
         if (!owner->IsAlive())
             return;
@@ -2789,6 +2788,10 @@ class spell_dk_rune_of_apocalypse : public AuraScript
         else if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_FAMINE)
         {
             owner->CastSpell(owner, spellIdToProc, TRIGGERED_FULL_MASK);
+        }
+        else if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_DEATH)
+        {
+            pet->CastSpell(target, spellIdToProc, TRIGGERED_FULL_MASK);
         }
         else
         {

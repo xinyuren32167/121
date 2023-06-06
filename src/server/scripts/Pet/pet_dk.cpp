@@ -285,8 +285,14 @@ public:
             ((Minion*)me)->SetFollowAngle(rand_norm() * 2 * M_PI);
 
             // Heroism / Bloodlust immunity
-            me->ApplySpellImmune(0, IMMUNITY_ID, 32182, true);
-            me->ApplySpellImmune(0, IMMUNITY_ID, 2825, true);
+            //me->ApplySpellImmune(0, IMMUNITY_ID, 32182, true);
+            //me->ApplySpellImmune(0, IMMUNITY_ID, 2825, true);
+
+            Unit* owner = me->GetOwner();
+            if (!owner || !owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
+                return;
+
+            owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
         }
     };
 
