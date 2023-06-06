@@ -2763,7 +2763,7 @@ class spell_dk_rune_of_apocalypse : public AuraScript
     {
         Unit* owner = GetCaster();
         Unit* pet = GetAura()->GetOwner()->ToUnit();
-        Unit* target = GetTarget();
+        Unit* target = eventInfo.GetActionTarget();
 
         if (!owner->IsAlive())
             return;
