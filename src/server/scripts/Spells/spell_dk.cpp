@@ -2777,18 +2777,12 @@ class spell_dk_rune_of_apocalypse : public AuraScript
         };
 
         uint32 random = urand(0, procs.size() - 1);
-        LOG_ERROR("error", "{}", random);
         uint32 spellIdToProc = procs[random];
-        LOG_ERROR("error", "{}", spellIdToProc);
         if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_PESTILENCE)
         {
             int32 ap = owner->GetTotalAttackPowerValue(BASE_ATTACK);
             int32 damageAmount = CalculatePct(ap, 5);
             pet->CastCustomSpell(SPELL_DK_RUNE_APOCALYPSE_PESTILENCE, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
-        }
-        else if (spellIdToProc == SPELL_DK_RUNE_APOCALYPSE_FAMINE)
-        {
-            owner->CastSpell(owner, spellIdToProc, TRIGGERED_FULL_MASK);
         }
         else
         {

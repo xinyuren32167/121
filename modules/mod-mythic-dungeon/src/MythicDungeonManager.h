@@ -114,7 +114,6 @@ private:
     static uint32 GetHighestRunId();
     static void SaveRun(MythicRun* run, Player* player, uint32 increaseAmountKey, uint32 runId = 0);
     static void UpdateOrCreateMythicKey(MythicRun* run, Player* player, uint32 increaseAmountKey);
-
 public:
     static MythicDungeon FindMythicDungeonByItsKeyItemId(uint32 itemId);
     static MythicDungeon GetMythicDungeonByDungeonId(uint32 mapId);

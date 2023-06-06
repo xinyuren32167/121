@@ -61,7 +61,6 @@ public:
         MythicDungeonManager::OnPlayerRelease(player);
     }
 
-
 };
 
 class MythicDungeon_AllMapScript : public AllMapScript
