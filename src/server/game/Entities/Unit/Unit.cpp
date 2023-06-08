@@ -12984,7 +12984,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
         if (GetEntry() == 27893)
         {
             if (Unit* owner = GetOwner())
-                return owner->MeleeDamageBonusDone(victim, pdamage, attType, spellProto, damageSchoolMask) / 2;
+                return owner->MeleeDamageBonusDone(victim, pdamage, attType, spellProto, damageSchoolMask); //It was /2 but it does full damage
         }
     }
 
