@@ -109,7 +109,12 @@ enum DeathKnightSpells
     SPELL_DK_RUNE_APOCALYPSE_WAR                = 80352,
     SPELL_DK_RUNE_APOCALYPSE_FAMINE             = 80353,
     SPELL_DK_RUNE_APOCALYPSE_PESTILENCE         = 80354,
-
+    SPELL_DK_DEATHS_CARESS                      = 80361,
+    SPELL_DK_MARROWREND                         = 80362,
+    SPELL_DK_GOREFIENDS_GRASP_PULL              = 80364,
+    SPELL_DK_TOMBSTONE_BUFF                     = 80366,
+    SPELL_DK_BONESTORM                          = 80367,
+    SPELL_DK_BONESTORM_HEAL                     = 80369,
     SPELL_DK_DARK_TRANSFORMATION_DAMAGE         = 80401,
     SPELL_DK_DARK_TRANSFORMATION_POWERUP        = 80402,
 };
@@ -2847,6 +2852,200 @@ class spell_dk_rune_of_apocalypse : public AuraScript
     }
 };
 
+class spell_dk_remove_impairing_auras : public SpellScript
+{
+    PrepareSpellScript(spell_dk_remove_impairing_auras);
+
+    void HandleScriptEffect(SpellEffIndex /* effIndex */)
+    {
+        GetHitUnit()->RemoveMovementImpairingAuras(true);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dk_remove_impairing_auras::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_APPLY_AURA);
+    }
+};
+
+class spell_dk_deaths_caress : public SpellScript
+{
+    PrepareSpellScript(spell_dk_deaths_caress);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_DEATHS_CARESS);
+        int32 stackAmount = value->GetEffect(EFFECT_2).CalcValue(GetCaster());
+
+        if (Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD))
+            aura->ModStackAmount(stackAmount);
+        else
+        {
+            caster->CastSpell(caster, SPELL_DK_BONE_SHIELD, TRIGGERED_FULL_MASK);
+
+            Aura* newAura = caster->GetAura(SPELL_DK_BONE_SHIELD);
+            newAura->ModStackAmount(stackAmount - 1);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_deaths_caress::HandleCast);
+    }
+};
+
+class spell_dk_marrowrend : public SpellScript
+{
+    PrepareSpellScript(spell_dk_marrowrend);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_MARROWREND);
+        int32 stackAmount = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        if (Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD))
+            aura->ModStackAmount(stackAmount);
+        else
+        {
+            caster->CastSpell(caster, SPELL_DK_BONE_SHIELD, TRIGGERED_FULL_MASK);
+
+            Aura* newAura = caster->GetAura(SPELL_DK_BONE_SHIELD);
+            newAura->ModStackAmount(stackAmount - 1);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_marrowrend::HandleCast);
+    }
+};
+
+class spell_dk_gorefiends_grasp : public SpellScript
+{
+    PrepareSpellScript(spell_dk_gorefiends_grasp);
+
+    void FindTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* initialTarget = GetExplTargetUnit();
+        Position targetPos = initialTarget->GetPosition();
+        if (targets.size() > 0)
+        {
+            for (auto const& target : targets)
+                if(Creature* creatureTarget = target->ToCreature())
+                    if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
+                    {
+                        float distance = target->GetDistance(initialTarget);
+                        if (distance <= 15)
+                            if (Unit* unit = target->ToUnit())
+                                unit->CastSpell(initialTarget, SPELL_DK_GOREFIENDS_GRASP_PULL, TRIGGERED_FULL_MASK);
+                    }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_gorefiends_grasp::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+    }
+};
+
+class spell_dk_tombstone : public SpellScript
+{
+    PrepareSpellScript(spell_dk_tombstone);
+
+    SpellCastResult CheckCast()
+    {
+        if (!GetCaster()->HasAura(SPELL_DK_BONE_SHIELD))
+            return SPELL_FAILED_SPELL_UNAVAILABLE;
+
+        return SPELL_CAST_OK;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        int32 maxHealth = caster->GetMaxHealth();
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_TOMBSTONE_BUFF);
+        int32 removalAmount = value->GetEffect(EFFECT_2).CalcValue(GetCaster());
+        int32 energyAmount = value->GetEffect(EFFECT_0).CalcValue(GetCaster());
+        int32 absorbPct = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD);
+        int32 stackAmount = aura->GetStackAmount();
+
+        if (stackAmount <= removalAmount)
+        {
+            energyAmount *= stackAmount;
+            absorbPct *= stackAmount;
+            int32 absorbAmount = CalculatePct(maxHealth, absorbPct);
+            caster->CastCustomSpell(caster, SPELL_DK_TOMBSTONE_BUFF, &energyAmount, &absorbAmount, nullptr, TRIGGERED_FULL_MASK);
+            caster->RemoveAura(SPELL_DK_BONE_SHIELD);
+        }
+        else
+        {
+            energyAmount *= removalAmount;
+            absorbPct *= removalAmount;
+            int32 absorbAmount = CalculatePct(maxHealth, absorbPct);
+            caster->CastCustomSpell(caster, SPELL_DK_TOMBSTONE_BUFF, &energyAmount, &absorbAmount, nullptr, TRIGGERED_FULL_MASK);
+            aura->SetStackAmount(stackAmount - removalAmount);
+        }
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_dk_tombstone::CheckCast);
+        OnCast += SpellCastFn(spell_dk_tombstone::HandleCast);
+    }
+};
+
+class spell_dk_bonestorm : public SpellScript
+{
+    PrepareSpellScript(spell_dk_bonestorm);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_DK_BONESTORM);
+        uint32 healPct = spell->GetEffect(EFFECT_1).CalcValue(caster);
+        int32 healAmount = targets.size() * healPct;
+        if (targets.size() > 5)
+            healAmount = 15;
+
+        caster->CastCustomSpell(SPELL_DK_BONESTORM_HEAL, SPELLVALUE_BASE_POINT0, healAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_bonestorm::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+    }
+};
+
+class spell_dk_bonestorm_duration : public AuraScript
+{
+    PrepareAuraScript(spell_dk_bonestorm_duration);
+
+    void HandleEffectApply(AuraEffect const*  aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        int32 duration = caster->GetPower(POWER_RUNIC_POWER) / aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+        caster->SetPower(POWER_RUNIC_POWER, 0);
+
+        aurEff->GetBase()->SetDuration(duration * 100);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_bonestorm_duration::HandleEffectApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -2914,6 +3113,13 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_rune_of_sanguination_heal);
     RegisterSpellScript(spell_dk_rune_of_spellwarding);
     RegisterSpellScript(spell_dk_rune_of_apocalypse);
+    RegisterSpellScript(spell_dk_remove_impairing_auras);
+    RegisterSpellScript(spell_dk_deaths_caress);
+    RegisterSpellScript(spell_dk_marrowrend);
+    RegisterSpellScript(spell_dk_gorefiends_grasp);
+    RegisterSpellScript(spell_dk_tombstone);
+    RegisterSpellScript(spell_dk_bonestorm);
+    RegisterSpellScript(spell_dk_bonestorm_duration);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
