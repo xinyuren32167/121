@@ -255,6 +255,8 @@ public:
                 return;
             
             owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
+
+            me->setPowerType(POWER_ENERGY);
         }
 
         void JustDied(Unit* /*who*/) override

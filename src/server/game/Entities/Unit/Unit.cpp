@@ -3244,7 +3244,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
         // Reduce dodge chance by attacker expertise rating
 
         // xinef: cant dodge while casting or while stunned
-        if (dodgeChance < 0 || victim->IsNonMeleeSpellCast(false, false, true) || victim->HasUnitState(UNIT_STATE_CONTROLLED))
+        if ((dodgeChance < 0 || victim->IsNonMeleeSpellCast(false, false, true) || victim->HasUnitState(UNIT_STATE_CONTROLLED)) && spellInfo->Id != 80370)
             dodgeChance = 0;
 
         tmp += dodgeChance;
@@ -3257,7 +3257,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
         // Roll parry
         int32 parryChance = int32(victim->GetUnitParryChance() * 100.0f);
         // xinef: cant parry while casting or while stunned
-        if (parryChance < 0 || victim->IsNonMeleeSpellCast(false, false, true) || victim->HasUnitState(UNIT_STATE_CONTROLLED))
+        if ((parryChance < 0 || victim->IsNonMeleeSpellCast(false, false, true) || victim->HasUnitState(UNIT_STATE_CONTROLLED)) && spellInfo->Id != 80370)
             parryChance = 0;
 
         tmp += parryChance;
@@ -11582,7 +11582,7 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
         // Add flat bonus from spell damage versus
         DoneTotal += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_FLAT_SPELL_DAMAGE_VERSUS, creatureTypeMask);
     }
-
+    
     // done scripted mod (take it from owner)
     Unit* owner = GetOwner() ? GetOwner() : this;
     AuraEffectList const& mOverrideClassScript = owner->GetAuraEffectsByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
@@ -11635,8 +11635,26 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
     // Check for table values
     float coeff = spellProto->Effects[effIndex].BonusMultiplier;
     SpellBonusEntry const* bonus = sSpellMgr->GetSpellBonusData(spellProto->Id);
+
+    float totalMin = 0.f;
+    float totalMax = 0.f;
+
+
     if (bonus)
     {
+        bool isMeleeAbility = spellProto->DmgClass == SPELL_DAMAGE_CLASS_MELEE && getClass() != CLASS_DRUID;
+
+        if (isMeleeAbility) {
+            for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
+            {
+                float tmpMin, tmpMax;
+                CalculateMinMaxDamage(BASE_ATTACK, false, true, tmpMin, tmpMax, i);
+                totalMin += tmpMin;
+                totalMax += tmpMax;
+            }
+        }
+        
+
         if (damagetype == DOT)
         {
             coeff = bonus->dot_damage;
@@ -11675,8 +11693,8 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
 
         DoneTotal += int32(DoneAdvertisedBenefit * coeff * factorMod);
     }
-
-    float tmpDamage = (float(pdamage) + DoneTotal) * DoneTotalMod;
+    float average_damage = (totalMin + totalMax) / 2;
+    float tmpDamage = (float(pdamage) + DoneTotal) * DoneTotalMod + average_damage;
     // apply spellmod to Done damage (flat and pct)
     if (Player* modOwner = GetSpellModOwner())
         modOwner->ApplySpellMod(spellProto->Id, damagetype == DOT ? SPELLMOD_DOT : SPELLMOD_DAMAGE, tmpDamage);

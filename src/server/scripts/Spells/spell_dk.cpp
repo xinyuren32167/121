@@ -109,6 +109,9 @@ enum DeathKnightSpells
     SPELL_DK_RUNE_APOCALYPSE_WAR                = 80352,
     SPELL_DK_RUNE_APOCALYPSE_FAMINE             = 80353,
     SPELL_DK_RUNE_APOCALYPSE_PESTILENCE         = 80354,
+
+    SPELL_DK_DARK_TRANSFORMATION_DAMAGE         = 80401,
+    SPELL_DK_DARK_TRANSFORMATION_POWERUP        = 80402,
 };
 
 enum DeathKnightSpellIcons
@@ -227,8 +230,7 @@ class spell_dk_bone_shield_calculation : public AuraScript
     {
         if (Unit* caster = GetCaster())
         {
-            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BONE_SHIELD);
-            int32 scaling = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+            int32 scaling = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
             uint32 str = caster->GetStat(STAT_STRENGTH);
             amount = ApplyPct(str, scaling);
         }
@@ -2595,7 +2597,7 @@ class spell_dk_sacrifical_pact : public SpellScript
                 if (Creature* undeadPet = (*itr)->ToCreature())
                     if (undeadPet->IsAlive() &&
                         undeadPet->GetOwnerGUID() == player->GetGUID() &&
-                        undeadPet->GetEntry() == 26125 &&
+                        undeadPet->GetEntry() == NPC_DK_GHOUL &&
                         undeadPet->IsWithinDist(player, 100.0f, false))
                         return SPELL_CAST_OK;
 
@@ -2617,7 +2619,7 @@ class spell_dk_sacrifical_pact : public SpellScript
             if (unit->isDead())
                 continue;
 
-            if (unit->GetEntry() == 26125)
+            if (unit->GetEntry() == NPC_DK_GHOUL)
             {
                 caster->CastSpell(unit, SPELL_DK_SACRIFICAL_PACT_EXPLOSION, TRIGGERED_FULL_MASK);
                 break;
@@ -2629,6 +2631,55 @@ class spell_dk_sacrifical_pact : public SpellScript
     {
         OnCheckCast += SpellCheckCastFn(spell_dk_sacrifical_pact::CheckCast);
         OnCast += SpellCastFn(spell_dk_sacrifical_pact::HandleCast);
+    }
+};
+
+
+class spell_dk_dark_transformation : public SpellScript
+{
+    PrepareSpellScript(spell_dk_dark_transformation);
+
+    SpellCastResult CheckCast()
+    {
+        // Check if we have valid targets, otherwise skip spell casting here
+        if (Player* player = GetCaster()->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Creature* undeadPet = (*itr)->ToCreature())
+                    if (undeadPet->IsAlive() &&
+                        undeadPet->GetOwnerGUID() == player->GetGUID() &&
+                        undeadPet->GetEntry() == NPC_DK_GHOUL &&
+                        undeadPet->IsWithinDist(player, 100.0f, false))
+                        return SPELL_CAST_OK;
+
+        return SPELL_FAILED_NO_PET;
+    }
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::vector<Unit*> summonedUnits = caster->GetSummonedUnits();
+
+        for (auto const& unit : summonedUnits)
+        {
+            if (!unit->IsInWorld())
+                continue;
+
+            if (unit->isDead())
+                continue;
+
+            if (unit->GetEntry() == NPC_DK_GHOUL)
+            {
+                caster->CastSpell(unit, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK);
+                caster->CastSpell(unit, SPELL_DK_DARK_TRANSFORMATION_POWERUP, TRIGGERED_FULL_MASK);
+                break;
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_dk_dark_transformation::CheckCast);
+        OnCast += SpellCastFn(spell_dk_dark_transformation::HandleCast);
     }
 };
 
