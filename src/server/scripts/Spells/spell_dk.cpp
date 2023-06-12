@@ -119,6 +119,9 @@ enum DeathKnightSpells
     SPELL_DK_DARK_TRANSFORMATION_POWERUP        = 80402,
     SPELL_DK_CONSUMPTION                        = 80371,
     SPELL_DK_CONSUMPTION_HEAL                   = 80372,
+    SPELL_DK_EPIDEMIC_SINGLE                    = 80376,
+    SPELL_DK_EPIDEMIC_AOE                       = 80377,
+    SPELL_DK_VIRULENT_PLAGUE                    = 80332,
 };
 
 enum DeathKnightSpellIcons
@@ -3076,6 +3079,108 @@ class spell_dk_consumption : public SpellScript
     }
 };
 
+class spell_dk_festering_strike : public SpellScript
+{
+    PrepareSpellScript(spell_dk_festering_strike);
+
+    void HandleCast()
+    {
+        Unit* target = GetExplTargetUnit();
+
+        uint32 randomAmount = urand(1,2);
+
+        target->GetAura(SPELL_DK_FESTERING_WOUND, GetCaster()->GetGUID())->ModStackAmount(randomAmount);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_dk_festering_strike::HandleCast);
+    }
+};
+
+class spell_dk_epidemic : public SpellScript
+{
+    PrepareSpellScript(spell_dk_epidemic);
+
+    void FindTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        if (targets.size() > 0)
+        {
+            for (auto const& target : targets)
+                if (Unit* unit = target->ToUnit())
+                    if (unit->HasAura(SPELL_DK_VIRULENT_PLAGUE) && !unit->isDead())
+                    {
+                        unit->RemoveAura(SPELL_DK_VIRULENT_PLAGUE);
+                        caster->CastSpell(unit, SPELL_DK_EPIDEMIC_SINGLE, TRIGGERED_FULL_MASK);
+                        caster->CastSpell(unit, SPELL_DK_EPIDEMIC_AOE, TRIGGERED_FULL_MASK);
+                    }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_epidemic::FindTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class spell_dk_vile_contagion : public SpellScript
+{
+    PrepareSpellScript(spell_dk_vile_contagion);
+
+    void CountTargets(std::list<WorldObject*>& targetList)
+    {
+        Unit* caster = GetCaster();
+
+        uint32 _targetCount;
+
+        int32 targetCount = GetSpellInfo()->Effects[EFFECT_0].CalcValue(caster);
+        Acore::Containers::RandomResize(targetList, targetCount);
+        _targetCount = targetList.size();
+
+        Unit* initialTarget = GetExplTargetUnit();
+        
+        if (_targetCount > 0)
+        {
+            for (auto const& target : targetList)
+                if (Unit* unit = target->ToUnit())
+                    if (Aura* aura = initialTarget->GetAura(SPELL_DK_FESTERING_WOUND))
+                    {
+                        if (unit->isDead())
+                            continue;
+                        int32 stackAmount = aura->GetStackAmount();
+
+                        caster->CastSpell(unit, SPELL_DK_FESTERING_WOUND, TRIGGERED_FULL_MASK);
+                        unit->GetAura(SPELL_DK_FESTERING_WOUND)->SetStackAmount(stackAmount);
+                    }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_vile_contagion::CountTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class spell_dk_unholy_assault : public SpellScript
+{
+    PrepareSpellScript(spell_dk_unholy_assault);
+
+    void HandleCast()
+    {
+        Unit* target = GetExplTargetUnit();
+
+        uint32 amount = GetSpellInfo()->Effects[EFFECT_1].CalcValue(GetCaster());
+
+        target->GetAura(SPELL_DK_FESTERING_WOUND, GetCaster()->GetGUID())->ModStackAmount(amount);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_dk_unholy_assault::HandleCast);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3151,6 +3256,10 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_bonestorm);
     RegisterSpellScript(spell_dk_bonestorm_duration);
     RegisterSpellScript(spell_dk_consumption);
+    RegisterSpellScript(spell_dk_festering_strike);
+    RegisterSpellScript(spell_dk_epidemic);
+    RegisterSpellScript(spell_dk_vile_contagion);
+    RegisterSpellScript(spell_dk_unholy_assault);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
