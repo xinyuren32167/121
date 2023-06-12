@@ -380,27 +380,30 @@ class spell_dk_pillar_of_frost : public AuraScript
         Unit* caster = GetCaster();
         uint32 runeSpent = 0;
 
-        if (SpellInfo const* spell = eventInfo.GetSpellInfo()) {
+        if (SpellInfo const* spell = eventInfo.GetSpellInfo())
+        {
             SpellRuneCostEntry const* src = sSpellRuneCostStore.LookupEntry(spell->RuneCostID);
-            if (src) {
+            if (src)
+            {
                 runeSpent = src->RuneCost[RUNE_BLOOD]; // we always take the blood rune cost because "everything" cost a blood rune.
             }
         }
 
-        int32 bonusStrength = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 baseStrength = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 bonusStrength = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
 
         if (runeSpent < 0)
             return;
 
-        int32 newAmount = bonusStrength * runeSpent;
+        int32 newAmount = baseStrength + (bonusStrength * runeSpent);
 
-        aurEff->GetBase()->GetEffect(EFFECT_0)->ChangeAmount(newAmount, true, true);
+        aurEff->GetBase()->GetEffect(EFFECT_1)->ChangeAmount(newAmount, true, true);
     }
 
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_dk_pillar_of_frost::HandleProc, EFFECT_0, SPELL_AURA_MOD_PERCENT_STAT);
+        OnEffectProc += AuraEffectProcFn(spell_dk_pillar_of_frost::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
