@@ -389,15 +389,15 @@ class spell_dk_pillar_of_frost : public AuraScript
             }
         }
 
-        int32 baseStrength = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
-        int32 bonusStrength = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+        int32 baseStrength = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        int32 bonusStrength = GetAura()->GetEffect(EFFECT_0)->GetAmount();
 
         if (runeSpent < 0)
             return;
 
         int32 newAmount = baseStrength + (bonusStrength * runeSpent);
 
-        aurEff->GetBase()->GetEffect(EFFECT_1)->ChangeAmount(newAmount, true, true);
+        GetAura()->GetEffect(EFFECT_1)->ChangeAmount(newAmount, true, true);
     }
 
 
