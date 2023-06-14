@@ -10423,6 +10423,13 @@ void Player::InitDataForForm(bool reapplyMods)
                 break;
             }
         break;
+        case FORM_SHADOW:
+        {
+            if (getPowerType() != POWER_RUNIC_POWER)
+                setPowerType(POWER_RUNIC_POWER);
+            break;
+        }
+        break;
         case FORM_CAT:
             {
                 if (getPowerType() != POWER_ENERGY)

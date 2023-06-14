@@ -1888,7 +1888,7 @@ bool Pet::addSpell(uint32 spellId, ActiveStates active /*= ACT_DECIDE*/, PetSpel
     return true;
 }
 
-bool Pet::learnSpell(uint32 spell_id)
+bool Pet::learnSpell(uint32 spell_id, bool sendPacket)
 {
     // prevent duplicated entires in spell book
     if (!addSpell(spell_id))
@@ -1898,6 +1898,7 @@ bool Pet::learnSpell(uint32 spell_id)
     {
         WorldPackets::Pet::PetLearnedSpell packet;
         packet.SpellID = spell_id;
+        if(sendPacket)
         m_owner->SendDirectMessage(packet.Write());
         m_owner->PetSpellInitialize();
     }
@@ -1944,7 +1945,7 @@ void Pet::InitLevelupSpellsForLevel()
     }
 }
 
-bool Pet::unlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab)
+bool Pet::unlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab, bool sendPacket)
 {
     if (removeSpell(spell_id, learn_prev, clear_ab))
     {
@@ -1952,6 +1953,7 @@ bool Pet::unlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab)
         {
             WorldPackets::Pet::PetUnlearnedSpell packet;
             packet.SpellID = spell_id;
+            if(sendPacket)
             m_owner->SendDirectMessage(packet.Write());
         }
 

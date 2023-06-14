@@ -108,10 +108,10 @@ public:
     void _LoadSpells(PreparedQueryResult result);
 
     bool addSpell(uint32 spellId, ActiveStates active = ACT_DECIDE, PetSpellState state = PETSPELL_NEW, PetSpellType type = PETSPELL_NORMAL);
-    bool learnSpell(uint32 spell_id);
+    bool learnSpell(uint32 spell_id, bool sendPacket = true);
     void learnSpellHighRank(uint32 spellid);
     void InitLevelupSpellsForLevel();
-    bool unlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab = true);
+    bool unlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab = true, bool sendPacket = true);
     bool removeSpell(uint32 spell_id, bool learn_prev, bool clear_ab = true);
     void CleanupActionBar();
     std::string GenerateActionBarData() const;
