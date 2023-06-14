@@ -1348,8 +1348,8 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_HUNTER_PET_SCALING_04, this);
             AddAura(SPELL_PET_AVOIDANCE, this);
             SetCreateHealth(4 * petlevel);
-            SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - 30 - (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.006f));
-            SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel - 30 + (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.006f));
+            SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - 30 - (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.15f));
+            SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel - 30 + (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.15f));
             SetReactState(REACT_DEFENSIVE);
             break;
         }

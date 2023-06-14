@@ -1351,7 +1351,7 @@ class spell_dk_blood_gorged : public AuraScript
             return;
         }
 
-        int32 bp = static_cast<int32>(damageInfo->GetDamage() * 1.5f);
+        int32 bp = static_cast<int32>(damageInfo->GetDamage() * 1.0f);
         GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, bp, _procTarget, true, nullptr, aurEff);
     }
 
@@ -2265,16 +2265,9 @@ class spell_dk_festering_wound : public AuraScript
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
     }
 
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        if (!GetTarget()->IsAlive())
-            GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
-    };
-
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_dk_festering_wound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        OnEffectRemove += AuraEffectRemoveFn(spell_dk_festering_wound::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2291,6 +2284,8 @@ class spell_dk_scourge_strike_new : public SpellScript
         if (Aura* targetAura = target->GetAura(SPELL_DK_FESTERING_WOUND, guid))
         {
             targetAura->ModStackAmount(-1);
+
+            caster->CastSpell(target, SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -3027,6 +3022,7 @@ class spell_dk_frost_presence : public AuraScript
 class spell_dk_unholy_presence_heal : public AuraScript
 {
     PrepareAuraScript(spell_dk_unholy_presence_heal);
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
