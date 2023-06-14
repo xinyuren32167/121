@@ -1777,7 +1777,7 @@ void Player::RegenerateAll()
 
         Regenerate(POWER_RAGE);
 
-        if (getClass() == CLASS_DEATH_KNIGHT || getClass() == CLASS_DRUID)
+        if (getClass() == CLASS_DEATH_KNIGHT || getClass() == CLASS_DRUID || getClass() == CLASS_PRIEST)
             Regenerate(POWER_RUNIC_POWER);
 
         m_regenTimerCount -= 2000;
