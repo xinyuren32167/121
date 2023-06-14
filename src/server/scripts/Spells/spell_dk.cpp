@@ -30,6 +30,7 @@
 #include "SpellScript.h"
 #include "Totem.h"
 #include "UnitAI.h"
+#include "Pet.h"
 
 enum DeathKnightSpells
 {
@@ -2434,6 +2435,8 @@ class spell_dk_dark_transformation : public SpellScript
 {
     PrepareSpellScript(spell_dk_dark_transformation);
 
+    std::vector<uint32> spells = { 47468, 47481 };
+
     SpellCastResult CheckCast()
     {
         // Check if we have valid targets, otherwise skip spell casting here
@@ -2452,20 +2455,16 @@ class spell_dk_dark_transformation : public SpellScript
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
-        std::vector<Unit*> summonedUnits = caster->GetSummonedUnits();
+        auto summonedUnits = caster->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
-            if (!unit->IsInWorld())
-                continue;
-
-            if (unit->isDead())
-                continue;
-
             if (unit->GetEntry() == NPC_DK_GHOUL)
             {
                 caster->CastSpell(unit, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK);
-                caster->CastSpell(unit, SPELL_DK_DARK_TRANSFORMATION_POWERUP, TRIGGERED_FULL_MASK);
+                unit->ToPet()->unlearnSpell(47468, false, true, false);
+                unit->ToPet()->learnSpell(80403, false);
+                unit->SetDisplayId(1693);
                 break;
             }
         }
@@ -3125,6 +3124,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_bloody_strikes);
     RegisterSpellScript(spell_dk_blood_presence);
     RegisterSpellScript(spell_dk_unholy_presence_heal);
+    RegisterSpellScript(spell_dk_dark_transformation);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
