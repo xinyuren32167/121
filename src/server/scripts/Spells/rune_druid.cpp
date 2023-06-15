@@ -6869,10 +6869,4 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_i_is_groot);
     RegisterSpellScript(rune_druid_waking_dream);
     RegisterSpellScript(rune_druid_waking_dream_apply);
-
-
-
-
-
-    
 }

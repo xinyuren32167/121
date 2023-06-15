@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_PRIEST and SPELLFAMILY_GENERIC spells used by priest players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_pri_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_PRIEST and SPELLFAMILY_GENERIC spells used by priest players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_pri_".
+  */
 
 #include "GridNotifiers.h"
 #include "Player.h"
@@ -31,46 +31,47 @@
 
 enum PriestSpells
 {
-    SPELL_PRIEST_DIVINE_AEGIS                       = 47753,
-    SPELL_PRIEST_EMPOWERED_RENEW                    = 63544,
-    SPELL_PRIEST_GLYPH_OF_CIRCLE_OF_HEALING         = 55675,
-    SPELL_PRIEST_GLYPH_OF_LIGHTWELL                 = 55673,
-    SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL    = 56161,
-    SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL               = 48153,
-    SPELL_PRIEST_ITEM_EFFICIENCY                    = 37595,
-    SPELL_PRIEST_LIGHTWELL_CHARGES                  = 59907,
-    SPELL_PRIEST_MANA_LEECH_PROC                    = 34650,
-    SPELL_PRIEST_PENANCE_R1                         = 47540,
-    SPELL_PRIEST_PENANCE_R1_DAMAGE                  = 47758,
-    SPELL_PRIEST_PENANCE_R1_HEAL                    = 47757,
-    SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED        = 33619,
-    SPELL_PRIEST_REFLECTIVE_SHIELD_R1               = 33201,
-    SPELL_PRIEST_SHADOW_WORD_DEATH                  = 32409,
-    SPELL_PRIEST_T9_HEALING_2P                      = 67201,
-    SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL              = 64085,
+    SPELL_PRIEST_DEVOURING_PLAGUE = 48300,
+    SPELL_PRIEST_DIVINE_AEGIS = 47753,
+    SPELL_PRIEST_EMPOWERED_RENEW = 63544,
+    SPELL_PRIEST_GLYPH_OF_CIRCLE_OF_HEALING = 55675,
+    SPELL_PRIEST_GLYPH_OF_LIGHTWELL = 55673,
+    SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL = 56161,
+    SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL = 48153,
+    SPELL_PRIEST_ITEM_EFFICIENCY = 37595,
+    SPELL_PRIEST_LIGHTWELL_CHARGES = 59907,
+    SPELL_PRIEST_MANA_LEECH_PROC = 34650,
+    SPELL_PRIEST_PENANCE_R1 = 47540,
+    SPELL_PRIEST_PENANCE_R1_DAMAGE = 47758,
+    SPELL_PRIEST_PENANCE_R1_HEAL = 47757,
+    SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED = 33619,
+    SPELL_PRIEST_REFLECTIVE_SHIELD_R1 = 33201,
+    SPELL_PRIEST_SHADOW_WORD_DEATH = 32409,
+    SPELL_PRIEST_T9_HEALING_2P = 67201,
+    SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
 
-    SPELL_GENERIC_ARENA_DAMPENING                   = 74410,
-    SPELL_GENERIC_BATTLEGROUND_DAMPENING            = 74411,
-    SPELL_PRIEST_TWIN_DISCIPLINE_R1                 = 47586,
-    SPELL_PRIEST_SPIRITUAL_HEALING_R1               = 14898,
-    SPELL_PRIEST_DIVINE_PROVIDENCE_R1               = 47562
+    SPELL_GENERIC_ARENA_DAMPENING = 74410,
+    SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
+    SPELL_PRIEST_TWIN_DISCIPLINE_R1 = 47586,
+    SPELL_PRIEST_SPIRITUAL_HEALING_R1 = 14898,
+    SPELL_PRIEST_DIVINE_PROVIDENCE_R1 = 47562
 };
 
 enum PriestSpellIcons
 {
-    PRIEST_ICON_ID_BORROWED_TIME                    = 2899,
-    PRIEST_ICON_ID_EMPOWERED_RENEW_TALENT           = 3021,
-    PRIEST_ICON_ID_PAIN_AND_SUFFERING               = 2874,
+    PRIEST_ICON_ID_BORROWED_TIME = 2899,
+    PRIEST_ICON_ID_EMPOWERED_RENEW_TALENT = 3021,
+    PRIEST_ICON_ID_PAIN_AND_SUFFERING = 2874,
 };
 
 enum Mics
 {
-    PRIEST_LIGHTWELL_NPC_1                          = 31897,
-    PRIEST_LIGHTWELL_NPC_2                          = 31896,
-    PRIEST_LIGHTWELL_NPC_3                          = 31895,
-    PRIEST_LIGHTWELL_NPC_4                          = 31894,
-    PRIEST_LIGHTWELL_NPC_5                          = 31893,
-    PRIEST_LIGHTWELL_NPC_6                          = 31883
+    PRIEST_LIGHTWELL_NPC_1 = 31897,
+    PRIEST_LIGHTWELL_NPC_2 = 31896,
+    PRIEST_LIGHTWELL_NPC_3 = 31895,
+    PRIEST_LIGHTWELL_NPC_4 = 31894,
+    PRIEST_LIGHTWELL_NPC_5 = 31893,
+    PRIEST_LIGHTWELL_NPC_6 = 31883
 };
 
 class spell_pri_shadowfiend_scaling : public AuraScript
@@ -163,7 +164,7 @@ class spell_pri_circle_of_healing : public SpellScript
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
-        uint32 const maxTargets = GetCaster()->HasAura(SPELL_PRIEST_GLYPH_OF_CIRCLE_OF_HEALING) ? 6 : 5; // Glyph of Circle of Healing
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
         if (targets.size() > maxTargets)
         {
@@ -223,14 +224,6 @@ class spell_pri_divine_hymn : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
-
-        uint32 const maxTargets = 3;
-
-        if (targets.size() > maxTargets)
-        {
-            targets.sort(Acore::HealthPctOrderPred());
-            targets.resize(maxTargets);
-        }
     }
 
     void Register() override
@@ -390,12 +383,12 @@ class spell_pri_lightwell : public SpellScript
         uint32 lightwellRenew = 0;
         switch (caster->GetEntry())
         {
-            case PRIEST_LIGHTWELL_NPC_1: lightwellRenew = 7001; break;
-            case PRIEST_LIGHTWELL_NPC_2: lightwellRenew = 27873; break;
-            case PRIEST_LIGHTWELL_NPC_3: lightwellRenew = 27874; break;
-            case PRIEST_LIGHTWELL_NPC_4: lightwellRenew = 28276; break;
-            case PRIEST_LIGHTWELL_NPC_5: lightwellRenew = 48084; break;
-            case PRIEST_LIGHTWELL_NPC_6: lightwellRenew = 48085; break;
+        case PRIEST_LIGHTWELL_NPC_1: lightwellRenew = 7001; break;
+        case PRIEST_LIGHTWELL_NPC_2: lightwellRenew = 27873; break;
+        case PRIEST_LIGHTWELL_NPC_3: lightwellRenew = 27874; break;
+        case PRIEST_LIGHTWELL_NPC_4: lightwellRenew = 28276; break;
+        case PRIEST_LIGHTWELL_NPC_5: lightwellRenew = 48084; break;
+        case PRIEST_LIGHTWELL_NPC_6: lightwellRenew = 48085; break;
         }
 
         // proc a spellcast
@@ -784,7 +777,7 @@ class spell_pri_renew : public AuraScript
 
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
-        return ValidateSpellInfo({SPELL_PRIEST_EMPOWERED_RENEW});
+        return ValidateSpellInfo({ SPELL_PRIEST_EMPOWERED_RENEW });
     }
 
     void HandleApplyEffect(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
@@ -814,20 +807,34 @@ class spell_pri_shadow_word_death : public SpellScript
 {
     PrepareSpellScript(spell_pri_shadow_word_death);
 
-    void HandleDamage()
+    void HandleDamage(SpellEffIndex effIndex)
     {
-        int32 damage = GetHitDamage();
+        Unit* target = GetHitUnit();
+        int32 damage = GetEffectValue();
+        ApplyPct(damage, GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW));
 
-        // Pain and Suffering reduces damage
-        if (AuraEffect* aurEff = GetCaster()->GetDummyAuraEffect(SPELLFAMILY_PRIEST, PRIEST_ICON_ID_PAIN_AND_SUFFERING, EFFECT_1))
-            AddPct(damage, aurEff->GetAmount());
+        if (!target)
+            return;
 
-        GetCaster()->CastCustomSpell(GetCaster(), SPELL_PRIEST_SHADOW_WORD_DEATH, &damage, 0, 0, true);
+        damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+        int32 targetHealthPct = target->GetHealthPct();
+
+        if (GetExplTargetUnit()->HealthBelowPct(20))
+            damage *= GetSpellInfo()->GetEffect(EFFECT_0).BonusMultiplier;
+        else if (GetExplTargetUnit()->HealthBelowPct(50))
+            damage *= GetSpellInfo()->GetEffect(EFFECT_0).DamageMultiplier;
+
+        SetHitDamage(damage);
+
+        if (target->GetHealth() > damage)
+            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnHit += SpellHitFn(spell_pri_shadow_word_death::HandleDamage);
+        OnEffectHitTarget += SpellEffectFn(spell_pri_shadow_word_death::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -841,49 +848,16 @@ class spell_pri_vampiric_touch : public AuraScript
         return ValidateSpellInfo({ SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL });
     }
 
-    void HandleDispel(DispelInfo* /*dispelInfo*/)
+    void HandleDispel(DispelInfo* dispelInfo)
     {
         if (Unit* caster = GetCaster())
-            if (Unit* target = GetUnitOwner())
-                if (AuraEffect const* aurEff = GetEffect(EFFECT_1))
-                {
-                    int32 damage = aurEff->GetBaseAmount();
-                    damage = aurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue(caster, &damage, nullptr) * 8;
-                    // backfire damage
-                    caster->CastCustomSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL, &damage, nullptr, nullptr, true, nullptr, aurEff);
-                }
-    }
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        if (!eventInfo.GetActionTarget() || GetOwner()->GetGUID() != eventInfo.GetActionTarget()->GetGUID())
-        {
-            return false;
-        }
-
-        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
-        if (!spellInfo || spellInfo->SpellFamilyName != SPELLFAMILY_PRIEST || !(spellInfo->SpellFamilyFlags[0] & 0x00002000))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        PreventDefaultAction();
-        if (Unit* actor = eventInfo.GetActor())
-        {
-            actor->CastSpell(actor, 57669, true, nullptr, aurEff);
-        }
+            if (Unit* target = dispelInfo->GetDispeller())
+                    caster->CastSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         AfterDispel += AuraDispelFn(spell_pri_vampiric_touch::HandleDispel);
-        DoCheckProc += AuraCheckProcFn(spell_pri_vampiric_touch::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_pri_vampiric_touch::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -924,6 +898,87 @@ class spell_pri_mind_control : public AuraScript
     }
 };
 
+class spell_pri_desperate_prayer : public AuraScript
+{
+    PrepareAuraScript(spell_pri_desperate_prayer);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        amount = GetUnitOwner()->CountPctFromMaxHealth(amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_desperate_prayer::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_INCREASE_HEALTH);
+    }
+};
+
+class spell_pri_devouring_plague : public AuraScript
+{
+    PrepareAuraScript(spell_pri_devouring_plague);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetOwner()->ToUnit();
+        LOG_ERROR("error", "proc");
+        if (target->isDead() || !target->HasAura(SPELL_PRIEST_DEVOURING_PLAGUE))
+            return;
+        LOG_ERROR("error", "aura check");
+        Aura* devouring = target->GetAura(SPELL_PRIEST_DEVOURING_PLAGUE);
+        AuraEffect* devouringEff = GetEffect(0);
+
+        int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+        int32 remainingTicks = devouring->GetDuration() / devouringEff->GetAmplitude();
+        uint32 damage = devouringEff->GetAmount();
+        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
+
+        int32 amount = damage * remainingTicks;
+        int32 heal = int32(CalculatePct(amount, 30));
+
+        caster->CastCustomSpell(target, 63675, &amount, nullptr, nullptr, true, nullptr, GetEffect(0));
+        caster->CastCustomSpell(caster, 75999, &heal, nullptr, nullptr, true, nullptr, GetEffect(0));
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_devouring_plague::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+//class spell_pri_devouring_plague : public SpellScript
+//{
+//    PrepareSpellScript(spell_pri_devouring_plague);
+//
+//    void HandleDamage()
+//    {
+//        Unit* caster = GetCaster();
+//        Unit* target = GetHitUnit();
+//
+//        if (target->isDead() || !target->HasAura(SPELL_PRIEST_DEVOURING_PLAGUE))
+//            return;
+//
+//        Aura* devouring = target->GetAura(SPELL_PRIEST_DEVOURING_PLAGUE);
+//        AuraEffect* devouringEff = devouring->GetEffect(EFFECT_0);
+//
+//        int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+//        int32 remainingTicks = devouring->GetDuration() / devouringEff->GetAmplitude();
+//        uint32 damage = devouringEff->GetAmount();
+//        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
+//
+//        int32 amount = damage * remainingTicks;
+//        int32 heal = int32(CalculatePct(amount, 30));
+//
+//        caster->CastCustomSpell(target, 63675, &amount, nullptr, nullptr, true, nullptr, devouringEff);
+//        caster->CastCustomSpell(caster, 75999, &heal, nullptr, nullptr, true, nullptr, devouringEff);
+//    }
+//
+//    void Register() override
+//    {
+//        BeforeHit += BeforeSpellHitFn(spell_pri_devouring_plague::HandleDamage);
+//    }
+//};
+
 void AddSC_priest_spell_scripts()
 {
     RegisterSpellScript(spell_pri_shadowfiend_scaling);
@@ -947,4 +1002,8 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_shadow_word_death);
     RegisterSpellScript(spell_pri_vampiric_touch);
     RegisterSpellScript(spell_pri_mind_control);
+    RegisterSpellScript(spell_pri_desperate_prayer);
+    RegisterSpellScript(spell_pri_devouring_plague);
+
+    
 }

@@ -8327,16 +8327,16 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
             }
         case SPELLFAMILY_DEATHKNIGHT:
             {
-                // Improved Blood Presence
+                /*// Improved Blood Presence
                 if (dummySpell->SpellIconID == 2636)
                 {
                     if (GetTypeId() != TYPEID_PLAYER)
                         return false;
                     basepoints0 = CalculatePct(int32(damage), triggerAmount);
                     break;
-                }
+                }*/
                 // Butchery
-                if (dummySpell->SpellIconID == 2664)
+                if (dummySpell->Id == 48978 || dummySpell->Id == 49483)
                 {
                     basepoints0 = triggerAmount;
                     triggered_spell_id = 50163;
@@ -8369,7 +8369,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     return true;
                 }
                 // Vendetta
-                if (dummySpell->SpellFamilyFlags[0] & 0x10000)
+                if (dummySpell->Id == 49015 || dummySpell->Id == 50154 || dummySpell->Id == 55136)
                 {
                     basepoints0 = int32(CountPctFromMaxHealth(triggerAmount));
                     triggered_spell_id = 50181;
@@ -8743,7 +8743,7 @@ bool Unit::HandleAuraProc(Unit* victim, uint32 damage, Aura* triggeredByAura, Sp
                 // Reaping
                 // Death Rune Mastery
                 // xinef: Icon 22 is used for item bonus, skip
-                if (dummySpell->SpellIconID == 3041 || (dummySpell->SpellIconID == 22 && dummySpell->Id != 62459) || dummySpell->SpellIconID == 2622)
+                /*if (dummySpell->SpellIconID == 3041 || (dummySpell->SpellIconID == 22 && dummySpell->Id != 62459) || dummySpell->SpellIconID == 2622)
                 {
                     *handled = true;
                     // Convert recently used Blood Rune to Death Rune
@@ -8794,7 +8794,7 @@ bool Unit::HandleAuraProc(Unit* victim, uint32 damage, Aura* triggeredByAura, Sp
                         return true;
                     }
                     return false;
-                }
+                }*/
                 break;
             }
         case SPELLFAMILY_WARRIOR:
@@ -9301,14 +9301,14 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                         }
                     }
                     // Blood Presence (Improved)
-                    else if (auraSpellInfo->Id == 63611)
+                    /*else if (auraSpellInfo->Id == 63611)
                     {
                         if (GetTypeId() != TYPEID_PLAYER)
                             return false;
 
                         trigger_spell_id = 50475;
                         basepoints0 = CalculatePct(int32(damage), triggerAmount);
-                    }
+                    }*/
                     break;
                 }
         }
