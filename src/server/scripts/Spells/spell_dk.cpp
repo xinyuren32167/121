@@ -2653,8 +2653,6 @@ class spell_dk_dark_transformation : public SpellScript
 {
     PrepareSpellScript(spell_dk_dark_transformation);
 
-    std::vector<uint32> spells = { 47468, 47481 };
-
     SpellCastResult CheckCast()
     {
         // Check if we have valid targets, otherwise skip spell casting here
@@ -2680,6 +2678,7 @@ class spell_dk_dark_transformation : public SpellScript
             if (unit->GetEntry() == NPC_DK_GHOUL)
             {
                 caster->CastSpell(unit, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK);
+                caster->AddAura(SPELL_DK_DARK_TRANSFORMATION_POWERUP, unit);
                 unit->ToPet()->unlearnSpell(47468, false, true, false);
                 unit->ToPet()->learnSpell(80403, false);
                 unit->SetDisplayId(1693);
@@ -2688,10 +2687,29 @@ class spell_dk_dark_transformation : public SpellScript
         }
     }
 
+
     void Register() override
     {
         OnCheckCast += SpellCheckCastFn(spell_dk_dark_transformation::CheckCast);
         OnCast += SpellCastFn(spell_dk_dark_transformation::HandleCast);
+    }
+};
+
+class spell_dk_dark_transformation_expire : public AuraScript {
+
+    PrepareAuraScript(spell_dk_dark_transformation_expire);
+  
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        target->DeMorph();
+        target->ToPet()->unlearnSpell(80403, false, true, false);
+        target->ToPet()->learnSpell(47468, false);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_dark_transformation_expire::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3260,6 +3278,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_vile_contagion);
     RegisterSpellScript(spell_dk_unholy_assault);
     RegisterSpellScript(spell_dk_dark_transformation);
+    RegisterSpellScript(spell_dk_dark_transformation_expire);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
