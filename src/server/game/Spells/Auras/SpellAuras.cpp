@@ -1513,7 +1513,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 if (GetSpellInfo()->SpellFamilyFlags[0] & 0x02000000 && GetEffect(0))
                 {
                     // Improved Devouring Plague
-                    if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 3790, 1))
+                   /*if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 3790, 1))
                     {
                         uint32 damage = GetEffect(0)->GetAmount();
                         damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
@@ -1522,7 +1522,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
 
                         caster->CastCustomSpell(target, 63675, &basepoints0, nullptr, nullptr, true, nullptr, GetEffect(0));
                         caster->CastCustomSpell(caster, 75999, &heal, nullptr, nullptr, true, nullptr, GetEffect(0));
-                    }
+                    }*/
                 }
                 // Power Word: Shield
                 else if (m_spellInfo->SpellFamilyFlags[0] & 0x1 && m_spellInfo->SpellFamilyFlags[2] & 0x400 && GetEffect(0))
