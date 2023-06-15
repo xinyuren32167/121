@@ -858,17 +858,16 @@ class spell_pri_vampiric_touch : public AuraScript
                     caster->CastSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL, TRIGGERED_FULL_MASK);
     }
 
-    void HandleHeal(AuraEffect* aurEff, int32& amount, bool& canBeRecalculated)
+    void HandleHeal(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
         Unit* caster = GetCaster();
         Unit* target = GetOwner()->ToUnit();
-        int32 damage = aurEff->GetAmount();
         int32 healPct = GetEffect(EFFECT_2)->GetAmount();
 
-        damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
-        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        amount = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE, EFFECT_0);
+        amount = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE);
 
-        int32 heal = int32(CalculatePct(damage, healPct));
+        int32 heal = int32(CalculatePct(amount, healPct));
 
         GetCaster()->CastCustomSpell(SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
     }
