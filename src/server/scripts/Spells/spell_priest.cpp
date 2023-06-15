@@ -32,6 +32,8 @@
 enum PriestSpells
 {
     SPELL_PRIEST_DEVOURING_PLAGUE = 48300,
+    SPELL_PRIEST_DEVOURING_PLAGUE_EXTRA_DAMAGE = 63675,
+    SPELL_PRIEST_DEVOURING_PLAGUE_HEAL = 75999,
     SPELL_PRIEST_DIVINE_AEGIS = 47753,
     SPELL_PRIEST_EMPOWERED_RENEW = 63544,
     SPELL_PRIEST_GLYPH_OF_CIRCLE_OF_HEALING = 55675,
@@ -49,6 +51,7 @@ enum PriestSpells
     SPELL_PRIEST_SHADOW_WORD_DEATH = 32409,
     SPELL_PRIEST_T9_HEALING_2P = 67201,
     SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
+    SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL = 76000,
 
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
@@ -855,9 +858,25 @@ class spell_pri_vampiric_touch : public AuraScript
                     caster->CastSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL, TRIGGERED_FULL_MASK);
     }
 
+    void HandleHeal(AuraEffect* aurEff, int32& amount, bool& canBeRecalculated)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetOwner()->ToUnit();
+        int32 damage = aurEff->GetAmount();
+        int32 healPct = GetEffect(EFFECT_2)->GetAmount();
+
+        damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+        int32 heal = int32(CalculatePct(damage, healPct));
+
+        GetCaster()->CastCustomSpell(SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+    }
+
     void Register() override
     {
         AfterDispel += AuraDispelFn(spell_pri_vampiric_touch::HandleDispel);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_vampiric_touch::HandleHeal, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
     }
 };
 
@@ -913,71 +932,83 @@ class spell_pri_desperate_prayer : public AuraScript
     }
 };
 
-class spell_pri_devouring_plague : public AuraScript
+class spell_pri_devouring_plague : public SpellScript
 {
-    PrepareAuraScript(spell_pri_devouring_plague);
+    PrepareSpellScript(spell_pri_devouring_plague);
 
-    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    void HandleExtraDamage(SpellMissInfo missInfo)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetOwner()->ToUnit();
+        Unit* target = GetHitUnit();
         LOG_ERROR("error", "proc");
         if (target->isDead() || !target->HasAura(SPELL_PRIEST_DEVOURING_PLAGUE))
             return;
         LOG_ERROR("error", "aura check");
         Aura* devouring = target->GetAura(SPELL_PRIEST_DEVOURING_PLAGUE);
-        AuraEffect* devouringEff = GetEffect(0);
+        AuraEffect* devouringEff = devouring->GetEffect(EFFECT_0);
 
         int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
         int32 remainingTicks = devouring->GetDuration() / devouringEff->GetAmplitude();
         uint32 damage = devouringEff->GetAmount();
         damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
 
-        int32 amount = damage * remainingTicks;
-        int32 heal = int32(CalculatePct(amount, 30));
+        int32 amount = damage * remainingTicks + 1;
+        int32 heal = int32(CalculatePct(amount, healPct));
 
-        caster->CastCustomSpell(target, 63675, &amount, nullptr, nullptr, true, nullptr, GetEffect(0));
-        caster->CastCustomSpell(caster, 75999, &heal, nullptr, nullptr, true, nullptr, GetEffect(0));
+        caster->CastCustomSpell(target, SPELL_PRIEST_DEVOURING_PLAGUE_EXTRA_DAMAGE, &amount, nullptr, nullptr, true, nullptr, devouringEff);
+        caster->CastCustomSpell(caster, SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, &heal, nullptr, nullptr, true, nullptr, devouringEff);
+    }
+
+    void HandleHealing()
+    {
+        Unit* caster = GetCaster();
+        int32 damage = GetHitDamage();
+        int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+
+        int32 heal = int32(CalculatePct(damage, healPct));
+
+        GetCaster()->CastCustomSpell(SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_devouring_plague::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        BeforeHit += BeforeSpellHitFn(spell_pri_devouring_plague::HandleExtraDamage);
+        OnHit += SpellHitFn(spell_pri_devouring_plague::HandleHealing);
     }
 };
 
-//class spell_pri_devouring_plague : public SpellScript
-//{
-//    PrepareSpellScript(spell_pri_devouring_plague);
-//
-//    void HandleDamage()
-//    {
-//        Unit* caster = GetCaster();
-//        Unit* target = GetHitUnit();
-//
-//        if (target->isDead() || !target->HasAura(SPELL_PRIEST_DEVOURING_PLAGUE))
-//            return;
-//
-//        Aura* devouring = target->GetAura(SPELL_PRIEST_DEVOURING_PLAGUE);
-//        AuraEffect* devouringEff = devouring->GetEffect(EFFECT_0);
-//
-//        int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
-//        int32 remainingTicks = devouring->GetDuration() / devouringEff->GetAmplitude();
-//        uint32 damage = devouringEff->GetAmount();
-//        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
-//
-//        int32 amount = damage * remainingTicks;
-//        int32 heal = int32(CalculatePct(amount, 30));
-//
-//        caster->CastCustomSpell(target, 63675, &amount, nullptr, nullptr, true, nullptr, devouringEff);
-//        caster->CastCustomSpell(caster, 75999, &heal, nullptr, nullptr, true, nullptr, devouringEff);
-//    }
-//
-//    void Register() override
-//    {
-//        BeforeHit += BeforeSpellHitFn(spell_pri_devouring_plague::HandleDamage);
-//    }
-//};
+class spell_pri_periodic_leech : public AuraScript
+{
+    PrepareAuraScript(spell_pri_periodic_leech);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetOwner()->ToUnit();
+        int32 damage = aurEff->GetAmount();
+        int32 healPct = GetEffect(EFFECT_2)->GetAmount();
+
+        damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+        int32 heal = int32(CalculatePct(damage, healPct));
+        int32 procSpell = 0;
+
+        if (GetAura()->GetId() == SPELL_PRIEST_DEVOURING_PLAGUE)
+            procSpell = SPELL_PRIEST_DEVOURING_PLAGUE_HEAL;
+        else if (GetAura()->GetId() == SPELL_PRIEST_DEVOURING_PLAGUE)
+            procSpell = SPELL_PRIEST_DEVOURING_PLAGUE_HEAL;
+        else
+            return;
+
+        GetCaster()->CastCustomSpell(SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_pri_periodic_leech::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
 
 void AddSC_priest_spell_scripts()
 {
