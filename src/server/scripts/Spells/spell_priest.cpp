@@ -41,11 +41,17 @@ enum PriestSpells
     SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL = 56161,
     SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL = 48153,
     SPELL_PRIEST_ITEM_EFFICIENCY = 37595,
+    SPELL_PRIEST_LEAP_OF_FAITH = 81003,
+    SPELL_PRIEST_LEAP_OF_FAITH_PROC = 81004,
+    SPELL_PRIEST_LEAP_OF_FAITH_GRAB = 81005,
     SPELL_PRIEST_LIGHTWELL_CHARGES = 59907,
     SPELL_PRIEST_MANA_LEECH_PROC = 34650,
+    SPELL_PRIEST_MASS_RESURRECTION = 81002,
     SPELL_PRIEST_PENANCE_R1 = 47540,
     SPELL_PRIEST_PENANCE_R1_DAMAGE = 47758,
     SPELL_PRIEST_PENANCE_R1_HEAL = 47757,
+    SPELL_PRIEST_POWER_WORD_LIFE = 81006,
+    SPELL_PRIEST_POWER_WORD_LIFE_LISTENER = 81007,
     SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED = 33619,
     SPELL_PRIEST_REFLECTIVE_SHIELD_R1 = 33201,
     SPELL_PRIEST_SHADOW_WORD_DEATH = 32409,
@@ -855,7 +861,7 @@ class spell_pri_vampiric_touch : public AuraScript
     {
         if (Unit* caster = GetCaster())
             if (Unit* target = dispelInfo->GetDispeller())
-                    caster->CastSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL, TRIGGERED_FULL_MASK);
+                caster->CastSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL, TRIGGERED_FULL_MASK);
     }
 
     void HandleProc(AuraEffect const* aurEff)
@@ -917,6 +923,7 @@ class spell_pri_mind_control : public AuraScript
     }
 };
 
+// 19243 - Desperate Prayer
 class spell_pri_desperate_prayer : public AuraScript
 {
     PrepareAuraScript(spell_pri_desperate_prayer);
@@ -932,6 +939,7 @@ class spell_pri_desperate_prayer : public AuraScript
     }
 };
 
+// 48300 - Devouring Plague
 class spell_pri_devouring_plague : public SpellScript
 {
     PrepareSpellScript(spell_pri_devouring_plague);
@@ -977,6 +985,7 @@ class spell_pri_devouring_plague : public SpellScript
     }
 };
 
+// 48300 - Devouring Plague
 class spell_pri_devouring_plague_heal : public AuraScript
 {
     PrepareAuraScript(spell_pri_devouring_plague_heal);
@@ -996,6 +1005,193 @@ class spell_pri_devouring_plague_heal : public AuraScript
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_pri_devouring_plague_heal::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
     }
 };
+
+// 81001 - Mass Resurrection
+class spell_pri_mass_resurrection : public SpellScript
+{
+    PrepareSpellScript(spell_pri_mass_resurrection);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->isDead())
+                {
+                    Unit* dummy = player->ToUnit();
+                    if (dummy)
+                        targetAvailable.push_back(dummy);
+                }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup())
+            return;
+
+        for (auto const& target : FindTargets())
+        {
+            GetCaster()->CastSpell(target, SPELL_PRIEST_MASS_RESURRECTION, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_pri_mass_resurrection::HandleProc);
+    }
+};
+
+// 81003 - Leap of Faith
+class spell_pri_leap_of_faith : public SpellScript
+{
+    PrepareSpellScript(spell_pri_leap_of_faith);
+
+    SpellCastResult CheckCast()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+
+        //if (target->GetTypeId() != TYPEID_PLAYER)
+        //    return SPELL_FAILED_TARGET_NOT_PLAYER;
+
+        if (caster->HasUnitState(UNIT_STATE_JUMPING) || caster->HasUnitMovementFlag(MOVEMENTFLAG_FALLING))
+            return SPELL_FAILED_MOVING;
+
+        return SPELL_CAST_OK;
+    }
+
+    void HandleBaseDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+        Unit* baseTarget = GetExplTargetUnit();
+        Creature* targetCreature = GetHitCreature();
+
+        if (caster != target)
+        {
+                caster->CastSpell(target, SPELL_PRIEST_LEAP_OF_FAITH_PROC, true);
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
+                if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
+                    target->InterruptNonMeleeSpells(true);
+        }
+        else
+            baseTarget->CastSpell(caster, SPELL_PRIEST_LEAP_OF_FAITH_PROC, true);
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        float casterZ = GetCaster()->GetPositionZ(); // for Ring of Valor
+        WorldLocation gripPos = *GetExplTargetDest();
+        if (Unit* target = GetHitUnit())
+            if (!target->HasAuraType(SPELL_AURA_DEFLECT_SPELLS) || target->HasUnitState(UNIT_STATE_STUNNED)) // Deterrence
+            {
+                if (target != GetCaster())
+                {
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
+                    if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
+                        target->InterruptNonMeleeSpells(false, 0, false);
+                }
+
+                if (target->GetMapId() == 618) // for Ring of Valor
+                    gripPos.m_positionZ = std::max(casterZ + 0.2f, 28.5f);
+
+                target->CastSpell(gripPos.GetPositionX(), gripPos.GetPositionY(), gripPos.GetPositionZ(), SPELL_PRIEST_LEAP_OF_FAITH_GRAB, true);
+            }
+    }
+
+    void Register() override
+    {
+        if (m_scriptSpellId == SPELL_PRIEST_LEAP_OF_FAITH)
+        {
+            OnCheckCast += SpellCheckCastFn(spell_pri_leap_of_faith::CheckCast);
+            OnEffectHitTarget += SpellEffectFn(spell_pri_leap_of_faith::HandleBaseDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+        else
+            OnEffectHitTarget += SpellEffectFn(spell_pri_leap_of_faith::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 81006 - Power Word: Life
+class spell_pri_power_word_life : public SpellScript
+{
+    PrepareSpellScript(spell_pri_power_word_life);
+
+    void HandleHeal(SpellEffIndex effIndex)
+    {
+        Unit* target = GetHitUnit();
+        Unit* caster = GetCaster();
+        int32 heal = GetEffectValue();
+
+        ApplyPct(heal, GetCaster()->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_HOLY));
+
+        if (!target)
+            return;
+
+        heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
+        heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
+
+        int32 healthThreshold = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+        int32 healIncrease = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (target->HealthBelowPct(healthThreshold))
+        {
+            ApplyPct(heal, healIncrease);
+            caster->AddAura(SPELL_PRIEST_POWER_WORD_LIFE_LISTENER, caster);
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_PRIEST_POWER_WORD_LIFE_LISTENER))
+            return;
+        
+        caster->ToPlayer()->ModifySpellCooldown(SPELL_PRIEST_POWER_WORD_LIFE, -GetSpellInfo()->GetEffect(EFFECT_1).Amplitude);   
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_power_word_life::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+        AfterHit += SpellHitFn(spell_pri_power_word_life::HandleProc);
+    }
+};
+
+// 81008 - Void Shift
+class spell_pri_void_shift : public SpellScript
+{
+    PrepareSpellScript(spell_pri_void_shift);
+
+    void HandleProc(SpellEffIndex effIndex)
+    {
+        Unit* target = GetHitUnit();
+        Unit* caster = GetCaster();
+
+        int32 minPct = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
+        int32 targetHealthPct = std::max<int32>(target->GetHealthPct(), minPct);
+        int32 casterHealthPct = std::max<int32>(caster->GetHealthPct(), minPct);
+
+        caster->SetHealth(CalculatePct(targetHealthPct, caster->GetMaxHealth()));
+        target->SetHealth(CalculatePct(casterHealthPct, target->GetMaxHealth()));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_void_shift::HandleProc, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+
 
 void AddSC_priest_spell_scripts()
 {
@@ -1023,6 +1219,10 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_desperate_prayer);
     RegisterSpellScript(spell_pri_devouring_plague);
     RegisterSpellScript(spell_pri_devouring_plague_heal);
+    RegisterSpellScript(spell_pri_mass_resurrection);
+    RegisterSpellScript(spell_pri_leap_of_faith);
+    RegisterSpellScript(spell_pri_power_word_life);
+    RegisterSpellScript(spell_pri_void_shift);
 
     
 }
