@@ -1904,7 +1904,9 @@ void Player::Regenerate(Powers power)
                 AddPct(addvalue, (*i)->GetAmount());
 
         // Butchery requires combat for this effect
-        if (power != POWER_RUNIC_POWER || IsInCombat())
+        if (power != POWER_RUNIC_POWER || IsInCombat() && HasAura(48978) || HasAura(48483))
+            addvalue += float(GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, power) * ((power != POWER_ENERGY) ? m_regenTimerCount : m_regenTimer)) / (5.0f * IN_MILLISECONDS);
+        else if (power != POWER_RUNIC_POWER || HasAura(48455) || HasAura(50147))
             addvalue += float(GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, power) * ((power != POWER_ENERGY) ? m_regenTimerCount : m_regenTimer)) / (5.0f * IN_MILLISECONDS);
     }
 

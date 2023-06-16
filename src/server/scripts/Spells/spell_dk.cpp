@@ -3126,7 +3126,7 @@ class spell_dk_improved_bloodworms_health_low : public AuraScript
                 if (!unit || !unit->IsAlive())
                     continue;
 
-                if (AuraEffect const* aura = unit->GetAura(50453, victim->GetGUID())->GetEffect(EFFECT_0))
+                if (AuraEffect const* aura = unit->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH, victim->GetGUID())->GetEffect(EFFECT_0))
                 {
                     int32 healAmount = aura->GetBase()->GetStackAmount();
 
