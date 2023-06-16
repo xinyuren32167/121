@@ -126,6 +126,12 @@ enum DeathKnightSpells
     SPELL_DK_BLOOD_PRESENCE_ADDITIONAL          = 61261,
     SPELL_DK_FROST_PRESENCE_ADDITIONAL          = 49772,
     SPELL_DK_UNHOLY_PRESENCE_HEAL               = 50475,
+    SPELL_DK_MIGHT_OF_MOGRAINE                  = 49023,
+    SPELL_DK_DANCING_RUNE_WEAPON                = 49028,
+    SPELL_DK_IMPROVED_BLOODWORMS                = 80391,
+    SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
+    SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
+    SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
 };
 
 enum DeathKnightSpellIcons
@@ -812,10 +818,17 @@ class spell_dk_bone_shield : public AuraScript
         PreventDefaultAction();
         ModStackAmount(-1);
 
+        Player* caster = GetCaster()->ToPlayer();
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BLOOD_TAP);
         uint32 reduction = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
-        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_BLOOD_TAP, reduction);
+        caster->ModifySpellCooldown(SPELL_DK_BLOOD_TAP, reduction);
+
+        if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DK_MIGHT_OF_MOGRAINE, EFFECT_1))
+        {
+            int32 dancingReduction = aurEff->GetAmount(); 
+            caster->ModifySpellCooldown(SPELL_DK_DANCING_RUNE_WEAPON, dancingReduction);
+        }
     }
 
     void Register() override
@@ -1353,7 +1366,7 @@ class spell_dk_blood_gorged : public AuraScript
 
         int32 bp = static_cast<int32>(damageInfo->GetDamage() * 1.0f);
         GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, bp, _procTarget, true, nullptr, aurEff);
-    }
+    } 
 
     void Register() override
     {
@@ -3061,6 +3074,97 @@ class spell_dk_unholy_presence_heal : public AuraScript
     }
 };
 
+class spell_dk_might_of_mograine : public SpellScript
+{
+    PrepareSpellScript(spell_dk_might_of_mograine);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DK_MIGHT_OF_MOGRAINE, EFFECT_0))
+        {
+            int32 charges = aurEff->GetAmount();
+
+            if (Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD))
+                aura->ModStackAmount(charges);
+            else
+            {
+                caster->CastSpell(caster, SPELL_DK_BONE_SHIELD, TRIGGERED_FULL_MASK);
+
+                Aura* newAura = caster->GetAura(SPELL_DK_BONE_SHIELD);
+                newAura->ModStackAmount(charges - 1);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_might_of_mograine::HandleCast);
+    }
+};
+
+class spell_dk_improved_bloodworms_health_low : public AuraScript
+{
+    PrepareAuraScript(spell_dk_improved_bloodworms_health_low);
+    
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        // Set absorbtion amount to unlimited
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Player* victim = GetTarget()->ToPlayer();
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        uint32 allowedHealth = victim->CountPctFromMaxHealth(20);
+        if (remainingHealth < int32(allowedHealth))
+        {
+            std::vector<Unit*> summonedUnits = victim->GetSummonedUnits();
+            for (auto const& unit : summonedUnits)
+            {
+                if (!unit || !unit->IsAlive())
+                    continue;
+
+                if (AuraEffect const* aura = unit->GetAura(50453, victim->GetGUID())->GetEffect(EFFECT_0))
+                {
+                    int32 healAmount = aura->GetBase()->GetStackAmount();
+
+                    unit->CastCustomSpell(SPELL_DK_IMPROVED_BLOODWORMS_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, TRIGGERED_FULL_MASK);
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_improved_bloodworms_health_low::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_dk_improved_bloodworms_health_low::Absorb, EFFECT_0);
+    }
+};
+
+class spell_dk_improved_bloodworms_death : public AuraScript
+{
+    PrepareAuraScript(spell_dk_improved_bloodworms_death);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* owner = GetTarget()->GetOwner();
+        Unit* bloodworm = GetTarget();
+        if (!owner->IsAlive())
+            return;
+
+        int32 healAmount = owner->GetAura(50453)->GetEffect(EFFECT_0)->GetAmount();
+
+        bloodworm->CastCustomSpell(SPELL_DK_IMPROVED_BLOODWORMS_HEAL, SPELLVALUE_BASE_POINT0, healAmount, owner, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_improved_bloodworms_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3140,6 +3244,9 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_unholy_presence_heal);
     RegisterSpellScript(spell_dk_dark_transformation);
     RegisterSpellScript(spell_dk_dark_transformation_expire);
+    RegisterSpellScript(spell_dk_might_of_mograine);
+    RegisterSpellScript(spell_dk_improved_bloodworms_health_low);
+    RegisterSpellScript(spell_dk_improved_bloodworms_death);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

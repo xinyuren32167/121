@@ -1664,7 +1664,7 @@ class spell_hun_kill_command : public SpellScript
         for (auto const& unit : summonedUnits)
         {
             if (!unit || !unit->IsAlive())
-                return;
+                continue;
 
             if (unit->GetCharmInfo())
             {

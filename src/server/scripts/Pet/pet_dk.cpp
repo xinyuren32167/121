@@ -357,7 +357,6 @@ class spell_pet_dk_gargoyle_strike : public SpellScript
                 damage += CalculatePct(damage, damageBonus);
             }*/
         }
-
         SetHitDamage(damage);
     }
 
