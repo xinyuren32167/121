@@ -132,6 +132,7 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
     SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
     SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
+    SPELL_DK_ARMY_OF_THE_DEAD                   = 42651,
 };
 
 enum DeathKnightSpellIcons
@@ -2988,6 +2989,7 @@ class spell_dk_unholy_assault : public SpellScript
     }
 };
 
+
 class spell_dk_bloody_strikes : public AuraScript
 {
     PrepareAuraScript(spell_dk_bloody_strikes);
@@ -2996,6 +2998,9 @@ class spell_dk_bloody_strikes : public AuraScript
     {
         if (eventInfo.GetActionTarget()->HasAura(SPELL_DK_BLOOD_PLAGUE))
             return true;
+
+
+        return false;
     }
 
     void Register() override
@@ -3102,6 +3107,37 @@ class spell_dk_might_of_mograine : public SpellScript
         OnCast += SpellCastFn(spell_dk_might_of_mograine::HandleCast);
     }
 };
+
+
+class spell_dk_apocalyspe : public SpellScript
+{
+    PrepareSpellScript(spell_dk_apocalyspe);
+
+    void HandleCast()
+    {
+        Unit* target = GetExplTargetUnit();
+
+        if (Aura* targetAura = target->GetAura(SPELL_DK_FESTERING_WOUND))
+        {
+            int32 stackAmount = targetAura->GetStackAmount();
+            int32 maxFesteringWound = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(GetCaster());
+            int32 maxStackAmount = std::min(stackAmount, maxFesteringWound);
+            targetAura->ModStackAmount(-maxStackAmount);
+
+            for (size_t i = 0; i < stackAmount; i++) {
+
+                GetCaster()->CastCustomSpell(SPELL_DK_ARMY_OF_THE_DEAD, SPELLVALUE_AURA_DURATION, 20000, GetCaster(), TRIGGERED_FULL_MASK);
+                GetCaster()->CastSpell(target, SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_apocalyspe::HandleCast);
+    }
+};
+
 
 class spell_dk_improved_bloodworms_health_low : public AuraScript
 {
@@ -3247,6 +3283,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_might_of_mograine);
     RegisterSpellScript(spell_dk_improved_bloodworms_health_low);
     RegisterSpellScript(spell_dk_improved_bloodworms_death);
+    RegisterSpellScript(spell_dk_apocalyspe);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
