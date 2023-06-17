@@ -9475,13 +9475,13 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                 return false;
         }
         // Rime
-        else if (auraSpellInfo->SpellIconID == 56)
+        else if (auraSpellInfo->Id == 49188 || auraSpellInfo->Id == 56822 || auraSpellInfo->Id == 59057)
         {
             if (GetTypeId() != TYPEID_PLAYER)
                 return false;
 
             // Howling Blast
-            ToPlayer()->RemoveCategoryCooldown(1248);
+            ToPlayer()->RemoveSpellCooldown(80321, true);
         }
     }
 
@@ -11353,7 +11353,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
             case 7277:
                 {
                     // Merciless Combat
-                    if ((*i)->GetSpellInfo()->SpellIconID == 2656)
+                    if ((*i)->GetSpellInfo()->Id == 49024 || (*i)->GetSpellInfo()->Id == 49538)
                     {
                         if( (spellProto && spellProto->SpellFamilyFlags[0] & 0x2) || spellProto->SpellFamilyFlags[1] & 0x2 )
                             if (!victim->HealthAbovePct(35))
@@ -13114,7 +13114,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
             case 7277:
                 {
                     // Merciless Combat
-                    if ((*i)->GetSpellInfo()->SpellIconID == 2656)
+                    if ((*i)->GetSpellInfo()->Id == 49024 || (*i)->GetSpellInfo()->Id == 49538)
                     {
                         if (!victim->HealthAbovePct(35))
                             AddPct(DoneTotalMod, (*i)->GetAmount());

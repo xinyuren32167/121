@@ -132,6 +132,14 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
     SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
     SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
+    SPELL_DK_ANNIHILATION                       = 51468,
+    SPELL_DK_DEATHCHILL_TALENT                  = 80397,
+    SPELL_DK_DEATHCHILL_AOE                     = 80398,
+    SPELL_DK_DEATHCHILL_SINGLE                  = 80399,
+    SPELL_DK_REMORSELESS_WINTER                 = 80306,
+    SPELL_DK_CHAINS_OF_ICE                      = 80334,
+    SPELL_DK_FROSTSCYTHE                        = 80302,
+    SPELL_DK_RIME_PROC                          = 59052,
 };
 
 enum DeathKnightSpellIcons
@@ -2241,6 +2249,8 @@ class spell_dk_obliterate : public SpellScript
     {
         int32 damage = GetEffectValue();
 
+        bool consumeDiseases = true;
+
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_OBLITERATE);
         uint32 diseaseBonus = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
@@ -2255,8 +2265,16 @@ class spell_dk_obliterate : public SpellScript
             int32 bp = int32(count * diseasePct);
             AddPct(damage, bp);
 
-            target->RemoveAura(SPELL_DK_FROST_FEVER);
-            target->RemoveAura(SPELL_DK_BLOOD_PLAGUE);
+            if (AuraEffect const* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(SPELL_DK_ANNIHILATION, EFFECT_0))
+                if (roll_chance_i(aurEff->GetAmount()))
+                    consumeDiseases = false;
+
+            if (consumeDiseases == true)
+            {
+                target->RemoveAura(SPELL_DK_FROST_FEVER);
+                target->RemoveAura(SPELL_DK_BLOOD_PLAGUE);
+                target->RemoveAura(SPELL_DK_FESTERING_WOUND);
+            }
         }
 
         SetHitDamage(damage);
@@ -3165,6 +3183,63 @@ class spell_dk_improved_bloodworms_death : public AuraScript
     }
 };
 
+class spell_dk_deathchill : public SpellScript
+{
+    PrepareSpellScript(spell_dk_deathchill);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (caster->HasAura(SPELL_DK_DEATHCHILL_TALENT))
+        {
+            int32 spellID = GetSpellInfo()->Id;
+
+            if (spellID == SPELL_DK_REMORSELESS_WINTER)
+                caster->CastSpell(caster, SPELL_DK_DEATHCHILL_AOE, TRIGGERED_FULL_MASK);
+            else
+                caster->CastSpell(GetExplTargetUnit(), SPELL_DK_DEATHCHILL_SINGLE, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_deathchill::HandleCast);
+    }
+};
+
+class spell_dk_rime : public AuraScript
+{
+    PrepareAuraScript(spell_dk_rime);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 damageAmount = aurEff->GetAmount();
+
+        int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        if (procSpell == SPELL_DK_FROSTSCYTHE)
+        {
+            if (!roll_chance_i(22))
+            {
+                caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
+        else
+        {
+            if (!roll_chance_i(45))
+            {
+                caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_rime::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3247,6 +3322,8 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_might_of_mograine);
     RegisterSpellScript(spell_dk_improved_bloodworms_health_low);
     RegisterSpellScript(spell_dk_improved_bloodworms_death);
+    RegisterSpellScript(spell_dk_deathchill);
+    RegisterSpellScript(spell_dk_rime);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
