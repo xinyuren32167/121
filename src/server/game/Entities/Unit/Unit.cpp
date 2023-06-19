@@ -8384,7 +8384,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     break;
                 }
                 // Threat of Thassarian
-                if (dummySpell->SpellIconID == 2023)
+                if (dummySpell->Id == 65661 || dummySpell->Id == 66191 || dummySpell->Id == 66192)
                 {
                     // Must Dual Wield
                     if (!procSpell || !haveOffhandWeapon())
@@ -8396,100 +8396,30 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     switch (procSpell->Id)
                     {
                         // Obliterate
-                        case 49020:
-                            triggered_spell_id = 66198;
-                            break;                            // Rank 1
-                        case 51423:
-                            triggered_spell_id = 66972;
-                            break;                            // Rank 2
-                        case 51424:
-                            triggered_spell_id = 66973;
-                            break;                            // Rank 3
                         case 51425:
                             triggered_spell_id = 66974;
-                            break;                            // Rank 4
+                            break;
 
                         // Frost Strike
-                        case 49143:
-                            triggered_spell_id = 66196;
-                            break;                            // Rank 1
-                        case 51416:
-                            triggered_spell_id = 66958;
-                            break;                            // Rank 2
-                        case 51417:
-                            triggered_spell_id = 66959;
-                            break;                            // Rank 3
-                        case 51418:
-                            triggered_spell_id = 66960;
-                            break;                            // Rank 4
-                        case 51419:
-                            triggered_spell_id = 66961;
-                            break;                            // Rank 5
                         case 55268:
                             triggered_spell_id = 66962;
-                            break;                            // Rank 6
+                            break;
 
                         // Plague Strike
-                        case 45462:
-                            triggered_spell_id = 66216;
-                            break;                            // Rank 1
-                        case 49917:
-                            triggered_spell_id = 66988;
-                            break;                            // Rank 2
-                        case 49918:
-                            triggered_spell_id = 66989;
-                            break;                            // Rank 3
-                        case 49919:
-                            triggered_spell_id = 66990;
-                            break;                            // Rank 4
-                        case 49920:
-                            triggered_spell_id = 66991;
-                            break;                            // Rank 5
                         case 49921:
                             triggered_spell_id = 66992;
-                            break;                            // Rank 6
+                            break;
 
                         // Death Strike
-                        case 49998:
-                            triggered_spell_id = 66188;
-                            break;                            // Rank 1
-                        case 49999:
-                            triggered_spell_id = 66950;
-                            break;                            // Rank 2
-                        case 45463:
-                            triggered_spell_id = 66951;
-                            break;                            // Rank 3
-                        case 49923:
-                            triggered_spell_id = 66952;
-                            break;                            // Rank 4
                         case 49924:
                             triggered_spell_id = 66953;
-                            break;                            // Rank 5
+                            break;
 
-                        // Rune Strike
-                        case 56815:
-                            triggered_spell_id = 66217;
-                            break;                            // Rank 1
+                        // Frostscythe
+                        case 80302:
+                            triggered_spell_id = 80407;
+                            break;
 
-                        // Blood Strike
-                        case 45902:
-                            triggered_spell_id = 66215;
-                            break;                            // Rank 1
-                        case 49926:
-                            triggered_spell_id = 66975;
-                            break;                            // Rank 2
-                        case 49927:
-                            triggered_spell_id = 66976;
-                            break;                            // Rank 3
-                        case 49928:
-                            triggered_spell_id = 66977;
-                            break;                            // Rank 4
-                        case 49929:
-                            triggered_spell_id = 66978;
-                            break;                            // Rank 5
-                        case 49930:
-                            triggered_spell_id = 66979;
-                            break;                            // Rank 6
                         default:
                             return false;
                     }
@@ -11374,6 +11304,13 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                 {
                     if (victim->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DEATHKNIGHT, 0, 0x02000000, 0))
                         AddPct(DoneTotalMod, (*i)->GetSpellInfo()->GetRank() * 2.0f);
+                    break;
+                }
+            // Molly : Chillblains
+            case 50040:
+                {
+                    if (victim->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
+                        AddPct(DoneTotalMod, (*i)->GetAmount());
                     break;
                 }
             // Twisted Faith
