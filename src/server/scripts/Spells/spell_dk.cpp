@@ -148,7 +148,8 @@ enum DeathKnightSpells
     SPELL_DK_SENSITIZATION_HOLY                 = 80416,
     SPELL_DK_SENSITIZATION_ARCANE               = 80417,
     SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
-
+    SPELL_DK_DEATH_AND_DECAY                    = 49938,
+    SPELL_DK_DEFILE                             = 80405,
 };
 
 enum DeathKnightSpellIcons
@@ -3366,6 +3367,33 @@ class spell_dk_sensitization : public AuraScript
     }
 };
 
+class spell_dk_contagion_replacer : public AuraScript
+{
+    PrepareAuraScript(spell_dk_contagion_replacer);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_DK_DEATH_AND_DECAY, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_DK_DEFILE);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_DK_DEFILE, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_DK_DEATH_AND_DECAY);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_contagion_replacer::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_contagion_replacer::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3456,7 +3484,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_apocalyspe);
     RegisterSpellScript(spell_dk_contagions_periodic_tick);
     RegisterSpellScript(spell_dk_contagious_summon);
-
+    RegisterSpellScript(spell_dk_contagion_replacer);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
