@@ -31,11 +31,16 @@
 
 enum PriestSpells
 {
+    SPELL_PRIEST_AUTONEMENT = 81009,
+    SPELL_PRIEST_AUTONEMENT_AURA = 81010,
+    SPELL_PRIEST_AUTONEMENT_AOE = 81011,
+    SPELL_PRIEST_AUTONEMENT_HEAL = 81012,
     SPELL_PRIEST_DEVOURING_PLAGUE = 48300,
     SPELL_PRIEST_DEVOURING_PLAGUE_EXTRA_DAMAGE = 63675,
     SPELL_PRIEST_DEVOURING_PLAGUE_HEAL = 75999,
     SPELL_PRIEST_DIVINE_AEGIS = 47753,
     SPELL_PRIEST_EMPOWERED_RENEW = 63544,
+    SPELL_PRIEST_FLASH_HEAL = 48071,
     SPELL_PRIEST_GLYPH_OF_CIRCLE_OF_HEALING = 55675,
     SPELL_PRIEST_GLYPH_OF_LIGHTWELL = 55673,
     SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL = 56161,
@@ -44,6 +49,8 @@ enum PriestSpells
     SPELL_PRIEST_LEAP_OF_FAITH = 81003,
     SPELL_PRIEST_LEAP_OF_FAITH_PROC = 81004,
     SPELL_PRIEST_LEAP_OF_FAITH_GRAB = 81005,
+    SPELL_PRIEST_LIGHTS_WRATH_BUFF = 81023,
+    SPELL_PRIEST_LIGHTS_WRATH_AOE = 81024,
     SPELL_PRIEST_LIGHTWELL_CHARGES = 59907,
     SPELL_PRIEST_MANA_LEECH_PROC = 34650,
     SPELL_PRIEST_MASS_RESURRECTION = 81002,
@@ -52,8 +59,14 @@ enum PriestSpells
     SPELL_PRIEST_PENANCE_R1_HEAL = 47757,
     SPELL_PRIEST_POWER_WORD_LIFE = 81006,
     SPELL_PRIEST_POWER_WORD_LIFE_LISTENER = 81007,
+    SPELL_PRIEST_POWER_WORD_RADIANCE = 00000,
+    SPELL_PRIEST_POWER_WORD_SHIELD = 48066,
+    SPELL_PRIEST_PURGE_THE_WICKED = 81017,
+    SPELL_PRIEST_PURGE_THE_WICKED_AOE = 81018,
+    SPELL_PRIEST_RAPTURE = 81019,
     SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED = 33619,
     SPELL_PRIEST_REFLECTIVE_SHIELD_R1 = 33201,
+    SPELL_PRIEST_RENEW = 48068,
     SPELL_PRIEST_SHADOW_WORD_DEATH = 32409,
     SPELL_PRIEST_T9_HEALING_2P = 67201,
     SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
@@ -588,7 +601,13 @@ class spell_pri_penance : public SpellScript
             if (caster->IsFriendlyTo(unitTarget))
                 caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_R1_HEAL, rank), false);
             else
+            {
                 caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_R1_DAMAGE, rank), false);
+
+                if (unitTarget->HasAura(SPELL_PRIEST_PURGE_THE_WICKED))
+                    caster->CastSpell(unitTarget, SPELL_PRIEST_PURGE_THE_WICKED_AOE, TRIGGERED_FULL_MASK);
+            }
+
         }
     }
 
@@ -618,11 +637,39 @@ class spell_pri_penance : public SpellScript
     }
 };
 
-// -17 - Power Word: Shield
-static int32 CalculateSpellAmount(Unit* caster, int32 amount, SpellInfo const* spellInfo, const AuraEffect* aurEff)
+// -47540 - Penance Purge the Wicked
+class spell_pri_penance_purge : public SpellScript
 {
-    // +80.68% from sp bonus
-    float bonus = 0.8068f;
+    PrepareSpellScript(spell_pri_penance_purge);
+
+    bool Load() override
+    {
+        return GetCaster()->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* unitTarget = GetHitUnit();
+
+        if (!unitTarget->IsAlive())
+            return;
+
+        if (unitTarget->HasAura(SPELL_PRIEST_PURGE_THE_WICKED))
+            caster->CastSpell(unitTarget, SPELL_PRIEST_PURGE_THE_WICKED_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_penance_purge::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// -17 - Power Word: Shield
+static int32 CalculateSpellAmount(Unit* caster, float ratio, int32 amount, SpellInfo const* spellInfo, const AuraEffect* aurEff)
+{
+    // ratio from sp bonus
+    float bonus = ratio/100;
 
     // Borrowed Time
     if (AuraEffect const* borrowedTime = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, PRIEST_ICON_ID_BORROWED_TIME, EFFECT_1))
@@ -636,6 +683,10 @@ static int32 CalculateSpellAmount(Unit* caster, int32 amount, SpellInfo const* s
     bonus *= caster->CalculateLevelPenalty(spellInfo);
 
     amount += int32(bonus);
+
+    // Rapture
+    if (AuraEffect const* rapture = caster->GetAuraEffect(SPELL_PRIEST_RAPTURE, EFFECT_2))
+        AddPct(amount, rapture->GetAmount());
 
     // Twin Disciplines
     if (AuraEffect const* twinDisciplines = caster->GetAuraEffect(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_PRIEST, 0x400000, 0, 0, caster->GetGUID()))
@@ -671,8 +722,9 @@ class spell_pri_power_word_shield_aura : public AuraScript
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
     {
         canBeRecalculated = false;
+        float ratio = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
         if (Unit* caster = GetCaster())
-            amount = CalculateSpellAmount(caster, amount, GetSpellInfo(), aurEff);
+            amount = CalculateSpellAmount(caster, ratio, amount, GetSpellInfo(), aurEff);
     }
 
     void ReflectDamage(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
@@ -691,10 +743,25 @@ class spell_pri_power_word_shield_aura : public AuraScript
             }
     }
 
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_PRIEST_AUTONEMENT))
+            return;
+
+        caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+    }
+
     void Register() override
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_power_word_shield_aura::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
         AfterEffectAbsorb += AuraEffectAbsorbFn(spell_pri_power_word_shield_aura::ReflectDamage, EFFECT_0);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_power_word_shield_aura::HandleProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
 
@@ -712,7 +779,8 @@ class spell_pri_power_word_shield : public SpellScript
         if (AuraEffect* aurEff = target->GetAuraEffect(SPELL_AURA_SCHOOL_ABSORB, (SpellFamilyNames)GetSpellInfo()->SpellFamilyName, GetSpellInfo()->SpellIconID, EFFECT_0))
         {
             int32 newAmount = GetSpellInfo()->Effects[EFFECT_0].CalcValue(caster, nullptr, nullptr);
-            newAmount = CalculateSpellAmount(caster, newAmount, GetSpellInfo(), aurEff);
+            float ratio = GetSpellInfo()->Effects[EFFECT_1].CalcValue(caster, nullptr, nullptr);
+            newAmount = CalculateSpellAmount(caster, ratio, newAmount, GetSpellInfo(), aurEff);
 
             if (aurEff->GetAmount() > newAmount)
                 return SPELL_FAILED_AURA_BOUNCED;
@@ -726,6 +794,31 @@ class spell_pri_power_word_shield : public SpellScript
         OnCheckCast += SpellCheckCastFn(spell_pri_power_word_shield::CheckCast);
     }
 };
+
+//// 48066 - Power Word: Shield
+//class spell_pri_power_word_shield_atonement : public AuraScript
+//{
+//    PrepareAuraScript(spell_pri_power_word_shield_atonement);
+//
+//    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+//    {
+//        Unit* caster = GetCaster();
+//        Unit* target = GetUnitOwner();
+//
+//        if (!caster || caster->isDead())
+//            return;
+//        LOG_ERROR("error", "shield amount = {}", GetAura()->GetEffect(EFFECT_0)->GetAmount());
+//        if (!caster->HasAura(SPELL_PRIEST_AUTONEMENT))
+//            return;
+//        
+//        caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectApply += AuraEffectApplyFn(spell_pri_power_word_shield_atonement::HandleProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
+//    }
+//};
 
 // 33110 - Prayer of Mending Heal
 class spell_pri_prayer_of_mending_heal : public SpellScript
@@ -1077,10 +1170,10 @@ class spell_pri_leap_of_faith : public SpellScript
 
         if (caster != target)
         {
-                caster->CastSpell(target, SPELL_PRIEST_LEAP_OF_FAITH_PROC, true);
-                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
-                if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
-                    target->InterruptNonMeleeSpells(true);
+            caster->CastSpell(target, SPELL_PRIEST_LEAP_OF_FAITH_PROC, true);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
+            if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
+                target->InterruptNonMeleeSpells(true);
         }
         else
             baseTarget->CastSpell(caster, SPELL_PRIEST_LEAP_OF_FAITH_PROC, true);
@@ -1156,8 +1249,8 @@ class spell_pri_power_word_life : public SpellScript
 
         if (!caster->HasAura(SPELL_PRIEST_POWER_WORD_LIFE_LISTENER))
             return;
-        
-        caster->ToPlayer()->ModifySpellCooldown(SPELL_PRIEST_POWER_WORD_LIFE, -GetSpellInfo()->GetEffect(EFFECT_1).Amplitude);   
+
+        caster->ToPlayer()->ModifySpellCooldown(SPELL_PRIEST_POWER_WORD_LIFE, -GetSpellInfo()->GetEffect(EFFECT_1).Amplitude);
     }
 
     void Register() override
@@ -1191,6 +1284,250 @@ class spell_pri_void_shift : public SpellScript
     }
 };
 
+// 81009 - Atonement
+class spell_pri_atonement : public AuraScript
+{
+    PrepareAuraScript(spell_pri_atonement);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_FLASH_HEAL || eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_RENEW)
+        {
+            caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+            return;
+        }
+
+        if (!eventInfo.GetDamageInfo() || eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+        GetAura()->GetEffect(EFFECT_1)->SetAmount(amount);
+        LOG_ERROR("error", "amount = {}", amount);
+        caster->CastSpell(caster, SPELL_PRIEST_AUTONEMENT_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_atonement::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 81011 - Atonement AOE
+class spell_pri_atonement_heal : public SpellScript
+{
+    PrepareSpellScript(spell_pri_atonement_heal);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        LOG_ERROR("error", "aoe proc");
+        if (!caster || caster->isDead())
+            return;
+
+        int32 amount = caster->GetAura(SPELL_PRIEST_AUTONEMENT)->GetEffect(EFFECT_1)->GetAmount();
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                continue;
+
+            LOG_ERROR("error", "amount = {}", amount);
+            caster->CastCustomSpell(SPELL_PRIEST_AUTONEMENT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_atonement_heal::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+// 81013 - Power Word: Radiance
+class spell_pri_power_word_radiance : public SpellScript
+{
+    PrepareSpellScript(spell_pri_power_word_radiance);
+
+    void HandleProc(SpellEffIndex effIndex)
+    {
+        Unit* target = GetHitUnit();
+        Unit* caster = GetCaster();
+
+        int32 durationPct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA))
+        {
+            int32 duration = CalculatePct(atonement->GetMaxDuration(), durationPct);
+
+            if (atonement->GetDuration() > duration)
+                return;
+
+            atonement->SetDuration(duration);
+            return;
+        }
+
+        caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+
+        Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA);
+        int32 duration = CalculatePct(atonement->GetMaxDuration(), durationPct);
+        atonement->SetDuration(duration);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_power_word_radiance::HandleProc, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
+// 81018 - Purge the Wicked AOE
+class spell_pri_purge_the_wicked : public SpellScript
+{
+    PrepareSpellScript(spell_pri_purge_the_wicked);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED))
+                continue;
+
+            if (target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
+                continue;
+
+            caster->AddAura(SPELL_PRIEST_PURGE_THE_WICKED, target);
+            return;
+        }
+
+        caster->AddAura(SPELL_PRIEST_PURGE_THE_WICKED, GetExplTargetUnit());
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_purge_the_wicked::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+// 81019 - Rapture
+class spell_pri_rapture : public SpellScript
+{
+    PrepareSpellScript(spell_pri_rapture);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        player->RemoveSpellCooldown(SPELL_PRIEST_POWER_WORD_SHIELD, true);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_pri_rapture::HandleProc);
+    }
+};
+
+// 81021 - Evangelism
+class spell_pri_evangelism : public SpellScript
+{
+    PrepareSpellScript(spell_pri_evangelism);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 durationIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            if (Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                atonement->SetDuration(atonement->GetDuration() + durationIncrease);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_evangelism::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+// 81022 - Light's Wrath
+class spell_pri_light_wrath : public SpellScript
+{
+    PrepareSpellScript(spell_pri_light_wrath);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        caster->CastSpell(caster, SPELL_PRIEST_LIGHTS_WRATH_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_pri_light_wrath::HandleProc);
+    }
+};
+
+// 81024 - Light's Wrath AOE
+class spell_pri_light_wrath_check : public SpellScript
+{
+    PrepareSpellScript(spell_pri_light_wrath_check);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 atonementAmount = 0;
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                atonementAmount++;
+        }
+
+        if (atonementAmount == 0)
+            return;
+
+        caster->AddAura(SPELL_PRIEST_LIGHTS_WRATH_BUFF, caster);
+        caster->GetAura(SPELL_PRIEST_LIGHTS_WRATH_BUFF)->SetStackAmount(atonementAmount);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_light_wrath_check::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -1210,6 +1547,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mind_sear);
     RegisterSpellScript(spell_pri_pain_and_suffering_proc);
     RegisterSpellScript(spell_pri_penance);
+    RegisterSpellScript(spell_pri_penance_purge);
     RegisterSpellAndAuraScriptPair(spell_pri_power_word_shield, spell_pri_power_word_shield_aura);
     RegisterSpellScript(spell_pri_prayer_of_mending_heal);
     RegisterSpellScript(spell_pri_renew);
@@ -1223,6 +1561,14 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_leap_of_faith);
     RegisterSpellScript(spell_pri_power_word_life);
     RegisterSpellScript(spell_pri_void_shift);
+    RegisterSpellScript(spell_pri_atonement);
+    RegisterSpellScript(spell_pri_atonement_heal);
+    RegisterSpellScript(spell_pri_power_word_radiance);
+    RegisterSpellScript(spell_pri_purge_the_wicked);
+    RegisterSpellScript(spell_pri_rapture);
+    RegisterSpellScript(spell_pri_evangelism);
+    RegisterSpellScript(spell_pri_light_wrath);
+    RegisterSpellScript(spell_pri_light_wrath_check);
 
-    
+
 }

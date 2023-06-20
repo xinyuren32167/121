@@ -132,8 +132,24 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
     SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
     SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
+	SPELL_DK_ANNIHILATION                       = 51468,
+    SPELL_DK_DEATHCHILL_TALENT                  = 80397,
+    SPELL_DK_DEATHCHILL_AOE                     = 80398,
+    SPELL_DK_DEATHCHILL_SINGLE                  = 80399,
+    SPELL_DK_REMORSELESS_WINTER                 = 80306,
+    SPELL_DK_CHAINS_OF_ICE                      = 80334,
+    SPELL_DK_FROSTSCYTHE                        = 80302,
+    SPELL_DK_RIME_PROC                          = 59052,
+	SPELL_DK_ARMY_OF_THE_DEAD                   = 42651,
+    SPELL_DK_SENSITIZATION_FROST                = 80412,
+    SPELL_DK_SENSITIZATION_SHADOW               = 80413,
+    SPELL_DK_SENSITIZATION_FIRE                 = 80414,
+    SPELL_DK_SENSITIZATION_NATURE               = 80415,
+    SPELL_DK_SENSITIZATION_HOLY                 = 80416,
+    SPELL_DK_SENSITIZATION_ARCANE               = 80417,
     SPELL_DK_ARMY_OF_THE_DEAD                   = 42651,
     SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
+
 };
 
 enum DeathKnightSpellIcons
@@ -2243,6 +2259,8 @@ class spell_dk_obliterate : public SpellScript
     {
         int32 damage = GetEffectValue();
 
+        bool consumeDiseases = true;
+
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_OBLITERATE);
         uint32 diseaseBonus = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
@@ -2257,8 +2275,16 @@ class spell_dk_obliterate : public SpellScript
             int32 bp = int32(count * diseasePct);
             AddPct(damage, bp);
 
-            target->RemoveAura(SPELL_DK_FROST_FEVER);
-            target->RemoveAura(SPELL_DK_BLOOD_PLAGUE);
+            if (AuraEffect const* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(SPELL_DK_ANNIHILATION, EFFECT_0))
+                if (roll_chance_i(aurEff->GetAmount()))
+                    consumeDiseases = false;
+
+            if (consumeDiseases == true)
+            {
+                target->RemoveAura(SPELL_DK_FROST_FEVER);
+                target->RemoveAura(SPELL_DK_BLOOD_PLAGUE);
+                target->RemoveAura(SPELL_DK_FESTERING_WOUND);
+            }
         }
 
         SetHitDamage(damage);
@@ -3051,8 +3077,8 @@ class spell_dk_frost_presence : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dk_frost_presence::HandleEffectApply, EFFECT_0, SPELL_AURA_MOD_BASE_RESISTANCE_PCT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_dk_frost_presence::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_BASE_RESISTANCE_PCT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dk_frost_presence::HandleEffectApply, EFFECT_0, SPELL_AURA_MOD_MELEE_HASTE , AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_frost_presence::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_HASTE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3202,7 +3228,6 @@ class spell_dk_improved_bloodworms_death : public AuraScript
     }
 };
 
-
 class spell_dk_contagions_periodic_tick : public AuraScript
 {
     PrepareAuraScript(spell_dk_contagions_periodic_tick);
@@ -3248,6 +3273,97 @@ class spell_dk_contagious_summon : public SpellScript
     void Register() override
     {
         OnEffectHit += SpellEffectFn(spell_dk_contagious_summon::HandleSummon, EFFECT_2, SPELL_EFFECT_DUMMY);
+    }
+};
+
+class spell_dk_deathchill : public SpellScript
+{
+    PrepareSpellScript(spell_dk_deathchill);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (caster->HasAura(SPELL_DK_DEATHCHILL_TALENT))
+        {
+            int32 spellID = GetSpellInfo()->Id;
+
+            if (spellID == SPELL_DK_REMORSELESS_WINTER)
+                caster->CastSpell(caster, SPELL_DK_DEATHCHILL_AOE, TRIGGERED_FULL_MASK);
+            else
+                caster->CastSpell(GetExplTargetUnit(), SPELL_DK_DEATHCHILL_SINGLE, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_deathchill::HandleCast);
+    }
+};
+
+class spell_dk_rime : public AuraScript
+{
+    PrepareAuraScript(spell_dk_rime);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 damageAmount = aurEff->GetAmount();
+
+        int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        if (procSpell == SPELL_DK_FROSTSCYTHE)
+        {
+            if (!roll_chance_i(22))
+            {
+                caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
+        else
+        {
+            if (!roll_chance_i(45))
+            {
+                caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_rime::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_sensitization : public AuraScript
+{
+    PrepareAuraScript(spell_dk_sensitization);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* target = eventInfo.GetActionTarget();
+            Unit* caster = GetCaster();
+            int32 amount = aurEff->GetAmount();
+            SpellSchoolMask type = eventInfo.GetSpellInfo()->GetSchoolMask();
+
+            if (type == 16) //FROST
+                caster->CastCustomSpell(SPELL_DK_SENSITIZATION_FROST, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            else if (type == 32) //SHADOW
+                caster->CastCustomSpell(SPELL_DK_SENSITIZATION_SHADOW, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            else if (type == 4) //FIRE
+                caster->CastCustomSpell(SPELL_DK_SENSITIZATION_FIRE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            else if (type == 8) //NATURE
+                caster->CastCustomSpell(SPELL_DK_SENSITIZATION_NATURE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            else if (type == 2) //HOLY
+                caster->CastCustomSpell(SPELL_DK_SENSITIZATION_HOLY, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            else
+                caster->CastCustomSpell(SPELL_DK_SENSITIZATION_ARCANE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_sensitization::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3327,15 +3443,21 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_unholy_assault);
     RegisterSpellScript(spell_dk_bloody_strikes);
     RegisterSpellScript(spell_dk_blood_presence);
+    RegisterSpellScript(spell_dk_frost_presence);
     RegisterSpellScript(spell_dk_unholy_presence_heal);
     RegisterSpellScript(spell_dk_dark_transformation);
     RegisterSpellScript(spell_dk_dark_transformation_expire);
     RegisterSpellScript(spell_dk_might_of_mograine);
     RegisterSpellScript(spell_dk_improved_bloodworms_health_low);
     RegisterSpellScript(spell_dk_improved_bloodworms_death);
+	RegisterSpellScript(spell_dk_deathchill);
+    RegisterSpellScript(spell_dk_rime);
+	RegisterSpellScript(spell_dk_apocalyspe);
+    RegisterSpellScript(spell_dk_sensitization);
     RegisterSpellScript(spell_dk_apocalyspe);
     RegisterSpellScript(spell_dk_contagions_periodic_tick);
     RegisterSpellScript(spell_dk_contagious_summon);
+
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
