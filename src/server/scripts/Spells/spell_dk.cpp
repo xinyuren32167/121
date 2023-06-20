@@ -133,6 +133,7 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
     SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
     SPELL_DK_ARMY_OF_THE_DEAD                   = 42651,
+    SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
 };
 
 enum DeathKnightSpellIcons
@@ -2289,10 +2290,10 @@ class spell_dk_scourge_strike_new : public SpellScript
 {
     PrepareSpellScript(spell_dk_scourge_strike_new);
 
-    void HandleHit()
+    void HandleHit(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetExplTargetUnit();
+        Unit* target = GetHitUnit();
 
         ObjectGuid guid = caster->GetGUID();
         if (Aura* targetAura = target->GetAura(SPELL_DK_FESTERING_WOUND, guid))
@@ -2305,7 +2306,7 @@ class spell_dk_scourge_strike_new : public SpellScript
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_dk_scourge_strike_new::HandleHit);
+        OnEffectHitTarget += SpellEffectFn(spell_dk_scourge_strike_new::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -3201,6 +3202,55 @@ class spell_dk_improved_bloodworms_death : public AuraScript
     }
 };
 
+
+class spell_dk_contagions_periodic_tick : public AuraScript
+{
+    PrepareAuraScript(spell_dk_contagions_periodic_tick);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        Position position = caster->GetPosition();
+        Creature* creature = caster->FindNearestCreature(500508, 10.f, true);
+        float radius = GetSpellInfo()->Effects[EFFECT_0].CalcRadius(caster);
+        if (creature) {
+            Position pos = creature->GetPosition();
+            float distance = caster->GetDistance(pos);
+            if (distance <= radius)
+                caster->AddAura(SPELL_DK_CONTAGIOUS_TARGET_INCREASE, caster);
+            else
+                caster->RemoveAura(SPELL_DK_CONTAGIOUS_TARGET_INCREASE);
+        }
+        else {
+            caster->RemoveAura(SPELL_DK_CONTAGIOUS_TARGET_INCREASE);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_contagions_periodic_tick::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+    }
+};
+
+class spell_dk_contagious_summon : public SpellScript
+{
+    PrepareSpellScript(spell_dk_contagious_summon);
+
+    void HandleSummon(SpellEffIndex effIndex)
+    {
+        WorldLocation const* dest = GetHitDest();
+        Position pos = dest->GetPosition();
+
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = GetCaster()->SummonCreature(500508, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ() + 5.f, pos.GetOrientation(), TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetDuration(), properties);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_dk_contagious_summon::HandleSummon, EFFECT_2, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3284,6 +3334,8 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_improved_bloodworms_health_low);
     RegisterSpellScript(spell_dk_improved_bloodworms_death);
     RegisterSpellScript(spell_dk_apocalyspe);
+    RegisterSpellScript(spell_dk_contagions_periodic_tick);
+    RegisterSpellScript(spell_dk_contagious_summon);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
