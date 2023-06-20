@@ -1694,7 +1694,7 @@ struct SpellEntry
     uint32    MaxAffectedTargets;                                   // 212      m_maxTargets
     uint32    DmgClass;                                             // 213      m_defenseType
     uint32    PreventionType;                                       // 214      m_preventionType
-    uint32    StanceBarOrder;                                       // 215      m_stanceBarOrder not used
+    //uint32    StanceBarOrder;                                       // 215      m_stanceBarOrder not used
     std::array<float, MAX_SPELL_EFFECTS> EffectDamageMultiplier;    // 216-218  m_effectChainAmplitude
     //uint32    MinFactionId;                                       // 219      m_minFactionID not used
     //uint32    MinReputation;                                      // 220      m_minReputation not used
