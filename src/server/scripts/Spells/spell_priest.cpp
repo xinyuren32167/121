@@ -45,6 +45,8 @@ enum PriestSpells
     SPELL_PRIEST_GLYPH_OF_LIGHTWELL = 55673,
     SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL = 56161,
     SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL = 48153,
+    SPELL_PRIEST_HOLY_WORD_CHASTISE = 81026,
+    SPELL_PRIEST_HOLY_WORD_SERENITY = 81025,
     SPELL_PRIEST_ITEM_EFFICIENCY = 37595,
     SPELL_PRIEST_LEAP_OF_FAITH = 81003,
     SPELL_PRIEST_LEAP_OF_FAITH_PROC = 81004,
@@ -1387,6 +1389,22 @@ class spell_pri_power_word_radiance : public SpellScript
     }
 };
 
+// 81015 - Power Word: Barrier
+class spell_pri_power_word_barrier : public SpellScript
+{
+    PrepareSpellScript(spell_pri_power_word_barrier);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+       // targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_power_word_barrier::FilterTargets, EFFECT_ALL, TARGET_UNIT_SRC_AREA_ALLY);
+    }
+};
+
 // 81018 - Purge the Wicked AOE
 class spell_pri_purge_the_wicked : public SpellScript
 {
@@ -1528,6 +1546,52 @@ class spell_pri_light_wrath_check : public SpellScript
     }
 };
 
+// 81025 - Holy Word: Serenity / 48071 - Flash Heal / 6064 - Heal
+class spell_pri_holy_word_serenity_cooldown : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_word_serenity_cooldown);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player || player->isDead())
+            return;
+
+        int32 cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SERENITY)->GetEffect(EFFECT_1).CalcValue(player);
+
+        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_WORD_SERENITY, -cooldownReduction);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_pri_holy_word_serenity_cooldown::HandleProc);
+    }
+};
+
+// 81026 - Holy Word: Chastise / 48123 - Smite
+class spell_pri_holy_word_chastise_cooldown : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_word_chastise_cooldown);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player || player->isDead())
+            return;
+
+        int32 cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_CHASTISE)->GetEffect(EFFECT_2).CalcValue(player);
+
+        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_WORD_CHASTISE, -cooldownReduction);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_pri_holy_word_chastise_cooldown::HandleProc);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -1564,11 +1628,14 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_atonement);
     RegisterSpellScript(spell_pri_atonement_heal);
     RegisterSpellScript(spell_pri_power_word_radiance);
+    RegisterSpellScript(spell_pri_power_word_barrier);
     RegisterSpellScript(spell_pri_purge_the_wicked);
     RegisterSpellScript(spell_pri_rapture);
     RegisterSpellScript(spell_pri_evangelism);
     RegisterSpellScript(spell_pri_light_wrath);
     RegisterSpellScript(spell_pri_light_wrath_check);
+    RegisterSpellScript(spell_pri_holy_word_serenity_cooldown);
+    RegisterSpellScript(spell_pri_holy_word_chastise_cooldown);
 
-
+    
 }
