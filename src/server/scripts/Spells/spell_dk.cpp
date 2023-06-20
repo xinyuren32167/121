@@ -147,7 +147,6 @@ enum DeathKnightSpells
     SPELL_DK_SENSITIZATION_NATURE               = 80415,
     SPELL_DK_SENSITIZATION_HOLY                 = 80416,
     SPELL_DK_SENSITIZATION_ARCANE               = 80417,
-    SPELL_DK_ARMY_OF_THE_DEAD                   = 42651,
     SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
 
 };
