@@ -883,42 +883,6 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
     }
 };
 
-// -139 - Renew
-class spell_pri_renew : public AuraScript
-{
-    PrepareAuraScript(spell_pri_renew);
-
-    bool Load() override
-    {
-        return GetCaster() && GetCaster()->GetTypeId() == TYPEID_PLAYER;
-    }
-
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ SPELL_PRIEST_EMPOWERED_RENEW });
-    }
-
-    void HandleApplyEffect(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            // Empowered Renew
-            if (AuraEffect const* empoweredRenewAurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, PRIEST_ICON_ID_EMPOWERED_RENEW_TALENT, EFFECT_1))
-            {
-                uint32 heal = GetEffect(EFFECT_0)->GetAmount();
-                heal = GetTarget()->SpellHealingBonusTaken(caster, GetSpellInfo(), heal, DOT);
-
-                int32 basepoints0 = empoweredRenewAurEff->GetAmount() * GetEffect(EFFECT_0)->GetTotalTicks() * int32(heal) / 100;
-                caster->CastCustomSpell(GetTarget(), SPELL_PRIEST_EMPOWERED_RENEW, &basepoints0, nullptr, nullptr, true, nullptr, aurEff);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_renew::HandleApplyEffect, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
-    }
-};
 
 // -32379 - Shadow Word Death
 class spell_pri_shadow_word_death : public SpellScript
@@ -1415,12 +1379,12 @@ class spell_pri_power_word_barrier : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+        targets.clear();
     }
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_power_word_barrier::FilterTargets, EFFECT_ALL, TARGET_UNIT_SRC_AREA_ALLY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_power_word_barrier::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
     }
 };
 
@@ -1736,8 +1700,8 @@ class spell_pri_holy_word_salvation : public SpellScript
         Unit* target = GetHitUnit();
         Unit* caster = GetCaster();
 
-        caster->AddAura(SPELL_PRIEST_RENEW, target);
-        caster->AddAura(SPELL_PRIEST_HOLY_WORD_SALVATION_MENDING, target);
+        caster->CastSpell(target, SPELL_PRIEST_RENEW, true);
+        caster->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_STACK, 2, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1781,13 +1745,18 @@ class spell_pri_divine_word : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+
         int32 spellID = eventInfo.GetSpellInfo()->Id;
 
         if (spellID == SPELL_PRIEST_HOLY_WORD_CHASTISE)
             caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_CHASTISE, caster);
 
-        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTITY)
-            caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SANCTIFY, GetTarget());
+        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTITY) {
+            if (Unit* selectedUnit = ObjectAccessor::GetUnit(*caster, caster->GetTarget()))
+                caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SANCTIFY, selectedUnit);
+            else
+                caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SANCTIFY, caster);
+        }
 
         if (spellID == SPELL_PRIEST_HOLY_WORD_SERENITY)
             caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SERENITY, caster);       
@@ -1821,7 +1790,6 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_penance_purge);
     RegisterSpellAndAuraScriptPair(spell_pri_power_word_shield, spell_pri_power_word_shield_aura);
     RegisterSpellScript(spell_pri_prayer_of_mending_heal);
-    RegisterSpellScript(spell_pri_renew);
     RegisterSpellScript(spell_pri_shadow_word_death);
     RegisterSpellScript(spell_pri_vampiric_touch);
     RegisterSpellScript(spell_pri_mind_control);
