@@ -46,7 +46,13 @@ enum DeathKnightSpells
     SPELL_DK_PET_SCALING            = 61017,
     SPELL_DK_GARGOYLE_DAMAGE_BUFF   = 80327,
     SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA = 80349,
-    SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA    = 80350
+    SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA    = 80350,
+    SPELL_DK_INFECTED_CLAWS_R1                  = 49224,
+    SPELL_DK_INFECTED_CLAWS_R2                  = 49610,
+    SPELL_DK_INFECTED_CLAWS_R3                  = 49611,
+    SPELL_DK_INFECTED_CLAWS_R1_PET              = 80422,
+    SPELL_DK_INFECTED_CLAWS_R2_PET              = 80423,
+    SPELL_DK_INFECTED_CLAWS_R3_PET              = 80424
 };
 
 class npc_pet_dk_ebon_gargoyle : public CreatureScript
@@ -85,7 +91,7 @@ public:
 
             // Xinef: Night of the Dead avoidance
             if (Aura* aur = me->GetAura(SPELL_DK_NIGHT_OF_THE_DEAD))
-                if (AuraEffect* aurEff = owner->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DEATHKNIGHT, 2718, 0))
+                if (AuraEffect* aurEff = owner->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DEATHKNIGHT, 2718, 1))
                 {
                     if (aur->GetEffect(0))
                     {
@@ -250,13 +256,21 @@ public:
 
         void InitializeAI() override //molly: Rune of the Apocalypse
         {
-            Unit* owner = me->GetOwner();
-            if (!owner || !owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
-                return;
-            
-            owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
-
             me->setPowerType(POWER_ENERGY);
+
+            Unit* owner = me->GetOwner();
+            if (!owner)
+                return;
+
+            if (owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
+                owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
+
+            if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R1))
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R1_PET, me);
+            else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R2))
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R2_PET, me);
+            else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R3))
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R3_PET, me);
         }
 
         void JustDied(Unit* /*who*/) override
@@ -291,10 +305,18 @@ public:
             //me->ApplySpellImmune(0, IMMUNITY_ID, 2825, true);
 
             Unit* owner = me->GetOwner();
-            if (!owner || !owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
+            if (!owner)
                 return;
 
-            owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
+            if (owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
+                owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
+
+            if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R1))
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R1_PET, me);
+            else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R2))
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R2_PET, me);
+            else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R3))
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R3_PET, me);
         }
     };
 

@@ -11302,8 +11302,8 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
             // Rage of Rivendare
             case 7293:
                 {
-                    if (victim->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DEATHKNIGHT, 0, 0x02000000, 0))
-                        AddPct(DoneTotalMod, (*i)->GetSpellInfo()->GetRank() * 2.0f);
+                    if (victim->HasAura(59879)) //Blood Plague
+                        AddPct(DoneTotalMod, (*i)->GetAmount());
                     break;
                 }
             // Molly : Chillblains
@@ -11554,8 +11554,8 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
                 AddPct(DoneTotal, aurEff->GetAmount());
 
         // Impurity
-        if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
-            AddPct(ApCoeffMod, aurEff->GetAmount());
+        /*if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
+            AddPct(ApCoeffMod, aurEff->GetAmount());*/
 
         // Blood Boil - bonus for diseased targets
         if (spellProto->SpellFamilyFlags[0] & 0x00040000)
@@ -12355,8 +12355,8 @@ uint32 Unit::SpellHealingBonusDone(Unit* victim, SpellInfo const* spellProto, ui
     {
         case SPELLFAMILY_DEATHKNIGHT:
             // Impurity
-            if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
-                AddPct(ApCoeffMod, aurEff->GetAmount());
+            /*if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
+                AddPct(ApCoeffMod, aurEff->GetAmount());*/
 
             break;
     }

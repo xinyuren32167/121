@@ -774,13 +774,13 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Impurity
-    ApplySpellFix({ 49220, 49633, 49635, 49636, 49638 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({49220, 49633, 49635, 49636, 49638}, [](SpellInfo* spellInfo)
     {
         spellInfo->Effects[EFFECT_0].Effect = SPELL_EFFECT_APPLY_AURA;
         spellInfo->Effects[EFFECT_0].ApplyAuraName = SPELL_AURA_DUMMY;
         spellInfo->Effects[EFFECT_0].TargetA = SpellImplicitTargetInfo(TARGET_UNIT_CASTER);
         spellInfo->SpellFamilyName = SPELLFAMILY_DEATHKNIGHT;
-    });
+    });*/
 
     // Deadly Aggression (Deadly Gladiator's Death Knight Relic, item: 42620)
     ApplySpellFix({ 60549 }, [](SpellInfo* spellInfo)
@@ -840,10 +840,10 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Blood-caked Blade - Blood-caked Strike trigger
-    ApplySpellFix({ 50463 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({50463}, [](SpellInfo* spellInfo)
     {
         spellInfo->AttributesEx3 |= SPELL_ATTR3_SUPRESS_CASTER_PROCS;
-    });
+    });*/
 
     // Blood Gorged
     ApplySpellFix({ 61274, 61275, 61276, 61277,61278 }, [](SpellInfo* spellInfo)

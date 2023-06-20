@@ -552,7 +552,7 @@ class spell_dk_raise_ally : public SpellScript
 
                 // Avoidance, Night of the Dead
                 if (Aura* aur = ghoul->AddAura(62137, ghoul))
-                    if (AuraEffect* aurEff = GetCaster()->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DEATHKNIGHT, 2718, 0))
+                    if (AuraEffect* aurEff = GetCaster()->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_DEATHKNIGHT, 2718, 1))
                         if (aur->GetEffect(0))
                             aur->GetEffect(0)->SetAmount(-aurEff->GetSpellInfo()->Effects[EFFECT_2].CalcValue());
 
@@ -1087,8 +1087,8 @@ class spell_dk_pet_scaling : public AuraScript
             int32 modifier = 33;
 
             // xinef: impurity
-            if (owner->GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
-                modifier = 40;
+            /*if (owner->GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
+                modifier = 40;*/
 
             amount = CalculatePct(std::max<int32>(0, owner->GetTotalAttackPowerValue(BASE_ATTACK)), modifier);
 
@@ -3394,6 +3394,28 @@ class spell_dk_contagion_replacer : public AuraScript
     }
 };
 
+class spell_dk_infected_claws : public AuraScript
+{
+    PrepareAuraScript(spell_dk_infected_claws);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* owner = GetCaster();
+        Unit* pet = GetAura()->GetOwner()->ToUnit();
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!owner->IsAlive())
+            return;
+
+        owner->CastSpell(target, SPELL_DK_FESTERING_WOUND, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_infected_claws::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3408,7 +3430,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_rune_of_the_fallen_crusader);
     RegisterSpellScript(spell_dk_bone_shield);
     RegisterSpellScript(spell_dk_hungering_cold);
-    RegisterSpellScript(spell_dk_blood_caked_blade);
+    //RegisterSpellScript(spell_dk_blood_caked_blade);
     RegisterSpellScript(spell_dk_dancing_rune_weapon);
     RegisterSpellScript(spell_dk_dancing_rune_weapon_visual);
     RegisterSpellScript(spell_dk_scent_of_blood_trigger);
@@ -3485,6 +3507,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_contagions_periodic_tick);
     RegisterSpellScript(spell_dk_contagious_summon);
     RegisterSpellScript(spell_dk_contagion_replacer);
+    RegisterSpellScript(spell_dk_infected_claws);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
