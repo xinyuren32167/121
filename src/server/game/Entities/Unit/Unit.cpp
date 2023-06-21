@@ -8384,7 +8384,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     break;
                 }
                 // Threat of Thassarian
-                if (dummySpell->Id == 65661 || dummySpell->Id == 66191 || dummySpell->Id == 66192)
+                /*if (dummySpell->Id == 65661 || dummySpell->Id == 66191 || dummySpell->Id == 66192)
                 {
                     // Must Dual Wield
                     if (!procSpell || !haveOffhandWeapon())
@@ -8441,7 +8441,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                         CastSpell(target, triggered_spell_id, true, castItem, triggeredByAura, originalCaster);
                     SetCantProc(false);
                     return true;
-                }
+                }*/
                 // Runic Power Back on Snare/Root
                 if (dummySpell->Id == 61257)
                 {

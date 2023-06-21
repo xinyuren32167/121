@@ -150,6 +150,12 @@ enum DeathKnightSpells
     SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
     SPELL_DK_DEATH_AND_DECAY                    = 49938,
     SPELL_DK_DEFILE                             = 80405,
+    SPELL_DK_DEATH_STRIKE_THASSARIAN            = 66953,
+    SPELL_DK_FROST_STRIKE_THASSARIAN            = 66962,
+    SPELL_DK_OBLITERATE_THASSARIAN              = 66974,
+    SPELL_DK_PLAGUE_STRIKE_THASSARIAN           = 66992,
+    SPELL_DK_FROSTSCYTHE_THASSARIAN             = 80407,
+    SPELL_DK_FROST_STRIKE                       = 55268,
 };
 
 enum DeathKnightSpellIcons
@@ -3416,6 +3422,44 @@ class spell_dk_infected_claws : public AuraScript
     }
 };
 
+class spell_dk_thassarian : public AuraScript
+{
+    PrepareAuraScript(spell_dk_thassarian);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+
+        if (spellId == SPELL_DK_DEATH_STRIKE)
+        {
+            caster->CastSpell(target, SPELL_DK_DEATH_STRIKE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_FROST_STRIKE)
+        {
+            caster->CastSpell(target, SPELL_DK_FROST_STRIKE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_OBLITERATE)
+        {
+            caster->CastSpell(target, SPELL_DK_OBLITERATE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_PLAGUE_STRIKE)
+        {
+            caster->CastSpell(target, SPELL_DK_PLAGUE_STRIKE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_FROSTSCYTHE)
+        {
+            caster->CastSpell(target, SPELL_DK_FROSTSCYTHE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_thassarian::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3508,6 +3552,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_contagious_summon);
     RegisterSpellScript(spell_dk_contagion_replacer);
     RegisterSpellScript(spell_dk_infected_claws);
+    RegisterSpellScript(spell_dk_thassarian);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
