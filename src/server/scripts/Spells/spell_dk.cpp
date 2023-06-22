@@ -44,6 +44,7 @@ enum DeathKnightSpells
     SPELL_DK_ANTI_MAGIC_SHELL_TALENT            = 51052,
     SPELL_DK_BLACK_ICE_R1                       = 49140,
     SPELL_DK_BLOOD_BOIL_TRIGGERED               = 65658,
+    SPELL_DK_BLOOD_GORGED                       = 50453,
     SPELL_DK_BLOOD_GORGED_HEAL                  = 50454,
     SPELL_DK_UNHOLY_PRESENCE                    = 48266,
     SPELL_DK_CORPSE_EXPLOSION_TRIGGERED         = 43999,
@@ -132,6 +133,9 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
     SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
     SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
+    SPELL_DK_IMPROVED_BLOODWORMS_R1             = 80391,
+    SPELL_DK_IMPROVED_BLOODWORMS_R2             = 80392,
+    SPELL_DK_IMPROVED_BLOODWORMS_R3             = 80393,
 	SPELL_DK_ANNIHILATION                       = 51468,
     SPELL_DK_DEATHCHILL_TALENT                  = 80397,
     SPELL_DK_DEATHCHILL_AOE                     = 80398,
@@ -1390,6 +1394,9 @@ class spell_dk_blood_gorged : public AuraScript
 
         int32 bp = static_cast<int32>(damageInfo->GetDamage() * 1.0f);
         GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, bp, _procTarget, true, nullptr, aurEff);
+
+        if (GetTarget()->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH))
+            GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->ModStackAmount(bp);
     } 
 
     void Register() override
@@ -3220,10 +3227,17 @@ class spell_dk_improved_bloodworms_death : public AuraScript
     {
         Unit* owner = GetTarget()->GetOwner();
         Unit* bloodworm = GetTarget();
+        int32 healAmount = 0;
+        int32 damage = GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->GetStackAmount();
         if (!owner->IsAlive())
             return;
 
-        int32 healAmount = owner->GetAura(50453)->GetEffect(EFFECT_0)->GetAmount();
+        if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R1))
+            healAmount = CalculatePct(damage, 15);
+        else if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R2))
+            healAmount = CalculatePct(damage, 30);
+        else if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R3))
+            healAmount = CalculatePct(damage, 45);
 
         bloodworm->CastCustomSpell(SPELL_DK_IMPROVED_BLOODWORMS_HEAL, SPELLVALUE_BASE_POINT0, healAmount, owner, TRIGGERED_FULL_MASK);
     }
