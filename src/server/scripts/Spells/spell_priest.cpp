@@ -87,6 +87,10 @@ enum PriestSpells
     SPELL_PRIEST_T9_HEALING_2P = 67201,
     SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
     SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL = 81000,
+    SPELL_PRIEST_VOID_BOLT = 81045,
+    SPELL_PRIEST_VOID_ERUPTION = 81042,
+    SPELL_PRIEST_VOID_ERUPTION_DAMAGE = 81043,
+    SPELL_PRIEST_VOIDFORM = 81044,
 
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
@@ -1049,6 +1053,12 @@ class spell_pri_devouring_plague : public SpellScript
         int32 heal = int32(CalculatePct(damage, healPct));
 
         GetCaster()->CastCustomSpell(SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+
+        if (Aura* voidform = caster->GetAura(SPELL_PRIEST_VOIDFORM))
+        {
+            int32 durationIncrease = voidform->GetEffect(EFFECT_0)->GetAmplitude();
+            voidform->SetDuration(voidform->GetDuration() + durationIncrease);
+        }
     }
 
     void Register() override
@@ -1592,7 +1602,7 @@ class spell_pri_holy_fire : public SpellScript
         {
             Aura* holyFire = target->GetAura(SPELL_PRIEST_HOLY_FIRE);
             int32 duration = holyFire->GetDuration();
-            
+
             caster->AddAura(SPELL_PRIEST_EMPYREAL_BLAZE_LISTENER, target);
             target->GetAura(SPELL_PRIEST_EMPYREAL_BLAZE_LISTENER)->GetEffect(EFFECT_0)->SetAmount(duration);
         }
@@ -1759,12 +1769,115 @@ class spell_pri_divine_word : public AuraScript
         }
 
         if (spellID == SPELL_PRIEST_HOLY_WORD_SERENITY)
-            caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SERENITY, caster);       
+            caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SERENITY, caster);
     }
 
     void Register()
     {
         OnEffectProc += AuraEffectProcFn(spell_pri_divine_word::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 81042 - Void Eruption 
+class spell_pri_void_eruption : public SpellScript
+{
+    PrepareSpellScript(spell_pri_void_eruption);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_PRIEST_VOIDFORM))
+            caster->CastSpell(target, SPELL_PRIEST_VOID_BOLT, TRIGGERED_FULL_MASK);
+        else
+        {
+            caster->AddAura(SPELL_PRIEST_VOIDFORM, caster);
+            caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnHit += SpellHitFn(spell_pri_void_eruption::HandleProc);
+    }
+};
+
+// 81044 - Voidform 
+class spell_pri_void_eruption_cooldown : public AuraScript
+{
+    PrepareAuraScript(spell_pri_void_eruption_cooldown);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (player->HasSpellCooldown(SPELL_PRIEST_VOID_ERUPTION))
+        {
+            int32 cooldownChange = 6000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
+            player->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
+        }
+        else
+        {
+            player->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 6000);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        player->ToPlayer()->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_void_eruption_cooldown::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_void_eruption_cooldown::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// All Insanity Generation EFFECT_1 On Cast
+class spell_pri_insanity_on_cast : public SpellScript
+{
+    PrepareSpellScript(spell_pri_insanity_on_cast);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        int32 insanityAmount = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + insanityAmount, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_pri_insanity_on_cast::HandleProc);
+    }
+};
+
+// All Insanity Generation EFFECT_1 On Periodic
+class spell_pri_insanity_on_periodic : public AuraScript
+{
+    PrepareAuraScript(spell_pri_insanity_on_periodic);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        int32 insanityAmount = aurEff->GetAmount();
+
+        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + insanityAmount, true);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_pri_insanity_on_periodic::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -1818,7 +1931,11 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_word_salvation);
     RegisterSpellScript(spell_pri_holy_word_salvation_cooldown);
     RegisterSpellScript(spell_pri_divine_word);
+    RegisterSpellScript(spell_pri_void_eruption);
+    RegisterSpellScript(spell_pri_void_eruption_cooldown);
+    RegisterSpellScript(spell_pri_insanity_on_cast);
+    RegisterSpellScript(spell_pri_insanity_on_periodic);
 
 
-
+    
 }
