@@ -83,8 +83,11 @@ enum PriestSpells
     SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED = 33619,
     SPELL_PRIEST_REFLECTIVE_SHIELD_R1 = 33201,
     SPELL_PRIEST_RENEW = 48068,
-    SPELL_PRIEST_SHADOW_WORD_DEATH = 32409,
+    SPELL_PRIEST_SHADOW_WORD_DEATH = 48158,
+    SPELL_PRIEST_SHADOW_WORD_DEATH_AURA = 48189,
+    SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
     SPELL_PRIEST_T9_HEALING_2P = 67201,
+    SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
     SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
     SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL = 81000,
     SPELL_PRIEST_VOID_BOLT = 81045,
@@ -564,13 +567,20 @@ class spell_pri_pain_and_suffering_proc : public SpellScript
 
     void HandleEffectScriptEffect(SpellEffIndex /*effIndex*/)
     {
-        // Refresh Shadow Word: Pain on target
+        // Refresh Shadow Word: Pain and Vampiric Touch on target
         if (Unit* unitTarget = GetHitUnit())
-            if (AuraEffect* aur = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, 0x8000, 0, 0, GetCaster()->GetGUID()))
+        {
+            if (AuraEffect* aur = unitTarget->GetAuraEffect(SPELL_PRIEST_SHADOW_WORD_PAIN, EFFECT_0))
             {
                 aur->GetBase()->RefreshTimersWithMods();
                 aur->ChangeAmount(aur->CalculateAmount(aur->GetCaster()), false);
             }
+            if (AuraEffect* aur = unitTarget->GetAuraEffect(SPELL_PRIEST_VAMPIRIC_TOUCH, EFFECT_0))
+            {
+                aur->GetBase()->RefreshTimersWithMods();
+                aur->ChangeAmount(aur->CalculateAmount(aur->GetCaster()), false);
+            }
+        }
     }
 
     void Register() override
@@ -892,6 +902,17 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
 class spell_pri_shadow_word_death : public SpellScript
 {
     PrepareSpellScript(spell_pri_shadow_word_death);
+
+    Aura* GetDeathTapTalent(Unit* caster)
+    {
+        for (size_t i = 81076; i < 81079; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleDamage(SpellEffIndex effIndex)
     {
@@ -1305,7 +1326,7 @@ class spell_pri_atonement : public AuraScript
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
         GetAura()->GetEffect(EFFECT_1)->SetAmount(amount);
-
+        LOG_ERROR("error", "damage = {}, CalculatedAmount = {}, amount = {}", damage, damage * 0.4, amount);
         caster->CastSpell(caster, SPELL_PRIEST_AUTONEMENT_AOE, TRIGGERED_FULL_MASK);
     }
 
@@ -1335,6 +1356,9 @@ class spell_pri_atonement_heal : public SpellScript
 
             if (target->isDead() || !target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
                 continue;
+
+            amount = GetCaster()->SpellHealingBonusDone(target, GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE, amount);
+            amount = target->SpellHealingBonusTaken(GetCaster(), GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE);
 
             caster->CastCustomSpell(SPELL_PRIEST_AUTONEMENT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
@@ -1881,6 +1905,36 @@ class spell_pri_insanity_on_periodic : public AuraScript
     }
 };
 
+// 81076 - Death Tap
+class spell_pri_death_tap : public AuraScript
+{
+    PrepareAuraScript(spell_pri_death_tap);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || !caster)
+            return;
+
+        if (!target->HasAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
+            return;
+
+        int32 rand = urand(1, 100);
+
+        if (rand > aurEff->GetAmount())
+            return;
+
+        caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_death_tap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -1935,7 +1989,8 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_void_eruption_cooldown);
     RegisterSpellScript(spell_pri_insanity_on_cast);
     RegisterSpellScript(spell_pri_insanity_on_periodic);
+    RegisterSpellScript(spell_pri_death_tap);
 
 
-    
+
 }
