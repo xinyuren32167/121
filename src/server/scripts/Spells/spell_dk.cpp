@@ -44,6 +44,7 @@ enum DeathKnightSpells
     SPELL_DK_ANTI_MAGIC_SHELL_TALENT            = 51052,
     SPELL_DK_BLACK_ICE_R1                       = 49140,
     SPELL_DK_BLOOD_BOIL_TRIGGERED               = 65658,
+    SPELL_DK_BLOOD_GORGED                       = 50453,
     SPELL_DK_BLOOD_GORGED_HEAL                  = 50454,
     SPELL_DK_UNHOLY_PRESENCE                    = 48266,
     SPELL_DK_CORPSE_EXPLOSION_TRIGGERED         = 43999,
@@ -132,6 +133,9 @@ enum DeathKnightSpells
     SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
     SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
     SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
+    SPELL_DK_IMPROVED_BLOODWORMS_R1             = 80391,
+    SPELL_DK_IMPROVED_BLOODWORMS_R2             = 80392,
+    SPELL_DK_IMPROVED_BLOODWORMS_R3             = 80393,
 	SPELL_DK_ANNIHILATION                       = 51468,
     SPELL_DK_DEATHCHILL_TALENT                  = 80397,
     SPELL_DK_DEATHCHILL_AOE                     = 80398,
@@ -150,6 +154,12 @@ enum DeathKnightSpells
     SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
     SPELL_DK_DEATH_AND_DECAY                    = 49938,
     SPELL_DK_DEFILE                             = 80405,
+    SPELL_DK_DEATH_STRIKE_THASSARIAN            = 66953,
+    SPELL_DK_FROST_STRIKE_THASSARIAN            = 66962,
+    SPELL_DK_OBLITERATE_THASSARIAN              = 66974,
+    SPELL_DK_PLAGUE_STRIKE_THASSARIAN           = 66992,
+    SPELL_DK_FROSTSCYTHE_THASSARIAN             = 80407,
+    SPELL_DK_FROST_STRIKE                       = 55268,
     MASTERY_DK_UNHOLY                           = 600005,
     NPC_CONTAGION_AREA                          = 500508,
 };
@@ -1389,6 +1399,9 @@ class spell_dk_blood_gorged : public AuraScript
 
         int32 bp = static_cast<int32>(damageInfo->GetDamage() * 1.0f);
         GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, bp, _procTarget, true, nullptr, aurEff);
+
+        if (GetTarget()->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH))
+            GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->ModStackAmount(bp);
     } 
 
     void Register() override
@@ -3220,10 +3233,17 @@ class spell_dk_improved_bloodworms_death : public AuraScript
     {
         Unit* owner = GetTarget()->GetOwner();
         Unit* bloodworm = GetTarget();
+        int32 healAmount = 0;
+        int32 damage = GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->GetStackAmount();
         if (!owner->IsAlive())
             return;
 
-        int32 healAmount = owner->GetAura(50453)->GetEffect(EFFECT_0)->GetAmount();
+        if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R1))
+            healAmount = CalculatePct(damage, 15);
+        else if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R2))
+            healAmount = CalculatePct(damage, 30);
+        else if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R3))
+            healAmount = CalculatePct(damage, 45);
 
         bloodworm->CastCustomSpell(SPELL_DK_IMPROVED_BLOODWORMS_HEAL, SPELLVALUE_BASE_POINT0, healAmount, owner, TRIGGERED_FULL_MASK);
     }
@@ -3433,6 +3453,44 @@ class spell_dk_infected_claws : public AuraScript
     }
 };
 
+class spell_dk_thassarian : public AuraScript
+{
+    PrepareAuraScript(spell_dk_thassarian);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
+        int32 spellId = eventInfo.GetSpellInfo()->Id;
+
+        if (spellId == SPELL_DK_DEATH_STRIKE)
+        {
+            caster->CastSpell(target, SPELL_DK_DEATH_STRIKE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_FROST_STRIKE)
+        {
+            caster->CastSpell(target, SPELL_DK_FROST_STRIKE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_OBLITERATE)
+        {
+            caster->CastSpell(target, SPELL_DK_OBLITERATE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_PLAGUE_STRIKE)
+        {
+            caster->CastSpell(target, SPELL_DK_PLAGUE_STRIKE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+        else if (spellId == SPELL_DK_FROSTSCYTHE)
+        {
+            caster->CastSpell(target, SPELL_DK_FROSTSCYTHE_THASSARIAN, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_dk_thassarian::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3525,6 +3583,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_contagious_summon);
     RegisterSpellScript(spell_dk_contagion_replacer);
     RegisterSpellScript(spell_dk_infected_claws);
+    RegisterSpellScript(spell_dk_thassarian);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

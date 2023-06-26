@@ -1773,7 +1773,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     // Shadow Affinity
                     if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 178, 1))
                     {
-                        int32 basepoints0 = aurEff->GetAmount() * caster->GetCreateMana() / 100;
+                        int32 basepoints0 = aurEff->GetAmount();
                         caster->CastCustomSpell(caster, 64103, &basepoints0, nullptr, nullptr, true, nullptr, GetEffect(0));
                     }
                 }

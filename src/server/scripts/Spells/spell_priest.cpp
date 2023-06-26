@@ -85,10 +85,17 @@ enum PriestSpells
     SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED = 33619,
     SPELL_PRIEST_REFLECTIVE_SHIELD_R1 = 33201,
     SPELL_PRIEST_RENEW = 48068,
-    SPELL_PRIEST_SHADOW_WORD_DEATH = 32409,
+    SPELL_PRIEST_SHADOW_WORD_DEATH = 48158,
+    SPELL_PRIEST_SHADOW_WORD_DEATH_AURA = 48189,
+    SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
     SPELL_PRIEST_T9_HEALING_2P = 67201,
+    SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
     SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
     SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL = 81000,
+    SPELL_PRIEST_VOID_BOLT = 81045,
+    SPELL_PRIEST_VOID_ERUPTION = 81042,
+    SPELL_PRIEST_VOID_ERUPTION_DAMAGE = 81043,
+    SPELL_PRIEST_VOIDFORM = 81044,
 
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
@@ -531,13 +538,20 @@ class spell_pri_pain_and_suffering_proc : public SpellScript
 
     void HandleEffectScriptEffect(SpellEffIndex /*effIndex*/)
     {
-        // Refresh Shadow Word: Pain on target
+        // Refresh Shadow Word: Pain and Vampiric Touch on target
         if (Unit* unitTarget = GetHitUnit())
-            if (AuraEffect* aur = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, 0x8000, 0, 0, GetCaster()->GetGUID()))
+        {
+            if (AuraEffect* aur = unitTarget->GetAuraEffect(SPELL_PRIEST_SHADOW_WORD_PAIN, EFFECT_0))
             {
                 aur->GetBase()->RefreshTimersWithMods();
                 aur->ChangeAmount(aur->CalculateAmount(aur->GetCaster()), false);
             }
+            if (AuraEffect* aur = unitTarget->GetAuraEffect(SPELL_PRIEST_VAMPIRIC_TOUCH, EFFECT_0))
+            {
+                aur->GetBase()->RefreshTimersWithMods();
+                aur->ChangeAmount(aur->CalculateAmount(aur->GetCaster()), false);
+            }
+        }
     }
 
     void Register() override
@@ -860,6 +874,17 @@ class spell_pri_shadow_word_death : public SpellScript
 {
     PrepareSpellScript(spell_pri_shadow_word_death);
 
+    Aura* GetDeathTapTalent(Unit* caster)
+    {
+        for (size_t i = 81076; i < 81079; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleDamage(SpellEffIndex effIndex)
     {
         Unit* target = GetHitUnit();
@@ -1020,6 +1045,12 @@ class spell_pri_devouring_plague : public SpellScript
         int32 heal = int32(CalculatePct(damage, healPct));
 
         GetCaster()->CastCustomSpell(SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+
+        if (Aura* voidform = caster->GetAura(SPELL_PRIEST_VOIDFORM))
+        {
+            int32 durationIncrease = voidform->GetEffect(EFFECT_0)->GetAmplitude();
+            voidform->SetDuration(voidform->GetDuration() + durationIncrease);
+        }
     }
 
     void Register() override
@@ -1266,7 +1297,7 @@ class spell_pri_atonement : public AuraScript
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
         GetAura()->GetEffect(EFFECT_1)->SetAmount(amount);
-
+        LOG_ERROR("error", "damage = {}, CalculatedAmount = {}, amount = {}", damage, damage * 0.4, amount);
         caster->CastSpell(caster, SPELL_PRIEST_AUTONEMENT_AOE, TRIGGERED_FULL_MASK);
     }
 
@@ -1296,6 +1327,9 @@ class spell_pri_atonement_heal : public SpellScript
 
             if (target->isDead() || !target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
                 continue;
+
+            amount = GetCaster()->SpellHealingBonusDone(target, GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE, amount);
+            amount = target->SpellHealingBonusTaken(GetCaster(), GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE);
 
             caster->CastCustomSpell(SPELL_PRIEST_AUTONEMENT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
@@ -1563,7 +1597,7 @@ class spell_pri_holy_fire : public SpellScript
         {
             Aura* holyFire = target->GetAura(SPELL_PRIEST_HOLY_FIRE);
             int32 duration = holyFire->GetDuration();
-            
+
             caster->AddAura(SPELL_PRIEST_EMPYREAL_BLAZE_LISTENER, target);
             target->GetAura(SPELL_PRIEST_EMPYREAL_BLAZE_LISTENER)->GetEffect(EFFECT_0)->SetAmount(duration);
         }
@@ -1730,12 +1764,145 @@ class spell_pri_divine_word : public AuraScript
         }
 
         if (spellID == SPELL_PRIEST_HOLY_WORD_SERENITY)
-            caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SERENITY, caster);       
+            caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SERENITY, caster);
     }
 
     void Register()
     {
         OnEffectProc += AuraEffectProcFn(spell_pri_divine_word::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 81042 - Void Eruption 
+class spell_pri_void_eruption : public SpellScript
+{
+    PrepareSpellScript(spell_pri_void_eruption);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_PRIEST_VOIDFORM))
+            caster->CastSpell(target, SPELL_PRIEST_VOID_BOLT, TRIGGERED_FULL_MASK);
+        else
+        {
+            caster->AddAura(SPELL_PRIEST_VOIDFORM, caster);
+            caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnHit += SpellHitFn(spell_pri_void_eruption::HandleProc);
+    }
+};
+
+// 81044 - Voidform 
+class spell_pri_void_eruption_cooldown : public AuraScript
+{
+    PrepareAuraScript(spell_pri_void_eruption_cooldown);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (player->HasSpellCooldown(SPELL_PRIEST_VOID_ERUPTION))
+        {
+            int32 cooldownChange = 6000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
+            player->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
+        }
+        else
+        {
+            player->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 6000);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        player->ToPlayer()->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_void_eruption_cooldown::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_void_eruption_cooldown::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// All Insanity Generation EFFECT_1 On Cast
+class spell_pri_insanity_on_cast : public SpellScript
+{
+    PrepareSpellScript(spell_pri_insanity_on_cast);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        int32 insanityAmount = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + insanityAmount, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_pri_insanity_on_cast::HandleProc);
+    }
+};
+
+// All Insanity Generation EFFECT_1 On Periodic
+class spell_pri_insanity_on_periodic : public AuraScript
+{
+    PrepareAuraScript(spell_pri_insanity_on_periodic);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        int32 insanityAmount = aurEff->GetAmount();
+
+        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + insanityAmount, true);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_pri_insanity_on_periodic::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+// 81076 - Death Tap
+class spell_pri_death_tap : public AuraScript
+{
+    PrepareAuraScript(spell_pri_death_tap);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || !caster)
+            return;
+
+        if (!target->HasAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
+            return;
+
+        int32 rand = urand(1, 100);
+
+        if (rand > aurEff->GetAmount())
+            return;
+
+        caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_death_tap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1789,6 +1956,11 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_word_salvation);
     RegisterSpellScript(spell_pri_holy_word_salvation_cooldown);
     RegisterSpellScript(spell_pri_divine_word);
+    RegisterSpellScript(spell_pri_void_eruption);
+    RegisterSpellScript(spell_pri_void_eruption_cooldown);
+    RegisterSpellScript(spell_pri_insanity_on_cast);
+    RegisterSpellScript(spell_pri_insanity_on_periodic);
+    RegisterSpellScript(spell_pri_death_tap);
 
 
 
