@@ -31,6 +31,8 @@
 
 enum PriestSpells
 {
+    SPELL_PRIEST_LIGHTWELL_RENEW  = 48085,
+    SPELL_PRIEST_LIGHTWELL_CHARGE = 59907,
     SPELL_PRIEST_AUTONEMENT = 81009,
     SPELL_PRIEST_AUTONEMENT_AURA = 81010,
     SPELL_PRIEST_AUTONEMENT_AOE = 81011,
@@ -402,85 +404,54 @@ class spell_pri_item_greater_heal_refund : public AuraScript
     }
 };
 
-// 60123 - Lightwell
+
 class spell_pri_lightwell : public SpellScript
 {
     PrepareSpellScript(spell_pri_lightwell);
 
-    bool Load() override
+    void FilterTargets(std::list<WorldObject*>& targets)
     {
-        return GetCaster()->GetTypeId() == TYPEID_UNIT;
-    }
-
-    void HandleScriptEffect(SpellEffIndex /* effIndex */)
-    {
-        Creature* caster = GetCaster()->ToCreature();
-        if (!caster || !caster->IsSummon())
-            return;
-
-        uint32 lightwellRenew = 0;
-        switch (caster->GetEntry())
+        targets.remove_if(Acore::ObjectGUIDCheck(GetCaster()->GetGUID(), true));
+        targets.remove_if([&](WorldObject* target) -> bool
         {
-        case PRIEST_LIGHTWELL_NPC_1: lightwellRenew = 7001; break;
-        case PRIEST_LIGHTWELL_NPC_2: lightwellRenew = 27873; break;
-        case PRIEST_LIGHTWELL_NPC_3: lightwellRenew = 27874; break;
-        case PRIEST_LIGHTWELL_NPC_4: lightwellRenew = 28276; break;
-        case PRIEST_LIGHTWELL_NPC_5: lightwellRenew = 48084; break;
-        case PRIEST_LIGHTWELL_NPC_6: lightwellRenew = 48085; break;
-        }
+            return !target->ToUnit() || target->ToUnit()->HealthAbovePct(50) || target->ToUnit()->HasAura(SPELL_PRIEST_LIGHTWELL_RENEW);
+        });
 
-        // proc a spellcast
-        if (Aura* chargesAura = caster->GetAura(SPELL_PRIEST_LIGHTWELL_CHARGES))
+        if (!targets.empty())
         {
-            caster->CastSpell(GetHitUnit(), lightwellRenew, caster->ToTempSummon()->GetSummonerGUID());
-            if (chargesAura->ModCharges(-1))
-                caster->ToTempSummon()->UnSummon();
+            Acore::Containers::RandomResize(targets, 1);
         }
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_pri_lightwell::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_lightwell::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ALLY);
     }
 };
 
-// -7001 - Lightwell Renew
 class spell_pri_lightwell_renew : public AuraScript
 {
     PrepareAuraScript(spell_pri_lightwell_renew);
 
-    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (Unit* caster = GetCaster())
-        {
-            // Bonus from Glyph of Lightwell
-            if (AuraEffect* modHealing = caster->GetAuraEffect(SPELL_PRIEST_GLYPH_OF_LIGHTWELL, EFFECT_0))
-                AddPct(amount, modHealing->GetAmount());
-        }
-    }
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
 
-    void HandleUpdateSpellclick(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            if (Player* player = GetTarget()->ToPlayer())
-            {
-                UpdateData data;
-                WorldPacket packet;
-                caster->BuildValuesUpdateBlockForPlayer(&data, player);
-                data.BuildPacket(&packet);
-                player->SendDirectMessage(&packet);
-            }
+        if (Aura* aura = caster->GetAura(SPELL_PRIEST_LIGHTWELL_CHARGE)) {
+            if (aura->GetCharges() <= 0)
+                aura->Remove();
+            else
+                aura->SetCharges(aura->GetCharges() - 1);
         }
     }
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_lightwell_renew::CalculateAmount, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
-        AfterEffectApply += AuraEffectApplyFn(spell_pri_lightwell_renew::HandleUpdateSpellclick, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
-        AfterEffectRemove += AuraEffectRemoveFn(spell_pri_lightwell_renew::HandleUpdateSpellclick, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_lightwell_renew::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_HEAL , AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
+
 
 // 8129 - Mana Burn
 class spell_pri_mana_burn : public SpellScript

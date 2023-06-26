@@ -4491,6 +4491,9 @@ void AuraEffect::HandleModHitChance(AuraApplication const* aurApp, uint8 mode, b
 
     Unit* target = aurApp->GetTarget();
 
+    if(target->GetTypeId() == TYPEID_PLAYER)
+        target->ToPlayer()->UpdateMastery();
+
     /* f(target->GetTypeId() == TYPEID_PLAYER)
     {
         target->ToPlayer()->UpdateMeleeHitChances();

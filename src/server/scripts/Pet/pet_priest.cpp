@@ -46,9 +46,8 @@ struct npc_pet_pri_lightwell : public TotemAI
             me->SetMaxHealth(hp);
             me->SetHealth(hp);
             me->SetLevel(owner->getLevel());
+            me->CastSpell(me, SPELL_PRIEST_LIGHTWELL_CHARGES);
         }
-
-        me->CastSpell(me, SPELL_PRIEST_LIGHTWELL_CHARGES, false); // Spell for Lightwell Charges
         TotemAI::InitializeAI();
     }
 };

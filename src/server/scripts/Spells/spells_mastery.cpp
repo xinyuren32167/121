@@ -12,7 +12,10 @@
 
 enum Masteries
 {
-
+    MASTERY_DK_UNHOLY = 600005,
+    MASTER_DK_BLOOD   = 590001,
+    MASTER_DK_BLOOD_INCREASE_AP = 590002,
+    SPELL_DK_BlOOD_SHIELD = 590003,
 };
 
 // Mage
@@ -281,6 +284,8 @@ class spell_mastery_critical_block_on_remove : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_mastery_critical_block_on_remove::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
+
+
 
 
 //Paladin
@@ -622,6 +627,132 @@ class spell_mastery_harmony : public AuraScript
     }
 };
 
+
+// DK
+class spell_mastery_frozen_hearth : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_frozen_hearth);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(600000)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(600001, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_frozen_hearth::HandleCast);
+    }
+};
+
+class spell_mastery_dreadblade : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_dreadblade);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTERY_DK_UNHOLY)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(600004, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_dreadblade::HandleCast);
+    }
+};
+
+class spell_dk_pet_scaling_damage : public AuraScript
+{
+    PrepareAuraScript(spell_dk_pet_scaling_damage);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (!GetCaster())
+            return;
+
+        if (AuraEffect const* aureff = GetCaster()->GetAuraEffectOfRankedSpell(49220, EFFECT_0))
+            amount += aureff->GetAmount();
+
+        Aura* mastery = GetCaster()->GetAura(MASTERY_DK_UNHOLY);
+        Player* player = GetCaster()->ToPlayer();
+
+        if (mastery && player)
+           amount += mastery->GetEffect(EFFECT_0)->GetAmount() + player->GetMastery();
+    }
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 1 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        GetEffect(aurEff->GetEffIndex())->RecalculateAmount();
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_pet_scaling_damage::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_dk_pet_scaling_damage::CalcPeriodic, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_pet_scaling_damage::HandlePeriodic, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+    }
+};
+
+
+class spell_mastery_bloodshield : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_bloodshield);
+
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = aurEff->GetAmount() + mastery;
+        int32 damage = procInfo.GetHealInfo()->GetHeal();
+        int32 shieldBonus = ApplyPct(damage, bonus);
+
+        if (Aura* shield = GetCaster()->GetAura(SPELL_DK_BlOOD_SHIELD)) {
+            int32 currentAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+            shield->GetEffect(EFFECT_0)->ChangeAmount(shieldBonus + currentAmount);
+        } else
+            GetCaster()->CastCustomSpell(SPELL_DK_BlOOD_SHIELD, SPELLVALUE_BASE_POINT0, shieldBonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_bloodshield::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_bloodshield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_bloodshield_attack_power : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_bloodshield_attack_power);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTER_DK_BLOOD)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+        GetCaster()->CastCustomSpell(MASTER_DK_BLOOD_INCREASE_AP, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_bloodshield_attack_power::HandleCast);
+    }
+};
+
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
@@ -647,4 +778,9 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_razor_claws_unlearn);
     RegisterSpellScript(spell_mastery_natures_guardian_unlearn);
     RegisterSpellScript(spell_mastery_harmony);
+    RegisterSpellScript(spell_mastery_frozen_hearth);
+    RegisterSpellScript(spell_dk_pet_scaling_damage);
+    RegisterSpellScript(spell_mastery_dreadblade);
+    RegisterSpellScript(spell_mastery_bloodshield);
+    RegisterSpellScript(spell_mastery_bloodshield_attack_power);
 }

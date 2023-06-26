@@ -189,7 +189,9 @@ enum PetScalingSpells
     SPELL_NIGHT_OF_THE_DEAD_AVOIDANCE   = 62137,
     SPELL_DK_PET_SCALING_01             = 51996,
     SPELL_DK_PET_SCALING_02             = 54566,
-    SPELL_DK_PET_SCALING_03             = 61697
+    SPELL_DK_PET_SCALING_03             = 61697,
+    SPELL_DK_PET_SCALING_04             = 600003,
+    SPELL_IMPROVED_BLOODWORMS           = 80390,
 };
 
 #define PET_FOLLOW_DIST  1.0f

@@ -240,8 +240,6 @@ class rune_druid_lycara_teachings : public AuraScript
             buffAura = GetAura()->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
 
         GetCaster()->AddAura(buffAura, GetCaster());
-        GetCaster()->ToPlayer()->UpdateMastery();
-        GetCaster()->ToPlayer()->UpdateVersatility();
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -400,7 +398,6 @@ class rune_druid_lycara_teachings_moonkin : public AuraScript
         int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
 
         GetCaster()->AddAura(buffAura, GetCaster());
-        GetCaster()->ToPlayer()->UpdateMastery();
 
     }
 
@@ -418,7 +415,6 @@ class rune_druid_lycara_teachings_moonkin : public AuraScript
         int32 buffAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
 
         GetCaster()->AddAura(buffAura, GetCaster());
-        GetCaster()->ToPlayer()->UpdateMastery();
     }
 
     void Register() override

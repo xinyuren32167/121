@@ -150,6 +150,8 @@ enum DeathKnightSpells
     SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
     SPELL_DK_DEATH_AND_DECAY                    = 49938,
     SPELL_DK_DEFILE                             = 80405,
+    MASTERY_DK_UNHOLY                           = 600005,
+    NPC_CONTAGION_AREA                          = 500508,
 };
 
 enum DeathKnightSpellIcons
@@ -1177,6 +1179,9 @@ class spell_dk_pet_scaling : public AuraScript
     }
 };
 
+
+
+
 // 50462 - Anti-Magic Zone (on raid member)
 class spell_dk_anti_magic_shell_raid : public AuraScript
 {
@@ -1743,7 +1748,8 @@ class spell_dk_death_strike : public SpellScript
             // Improved Death Strike
             if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_DEATH_STRIKE, EFFECT_0))
                 AddPct(bp, caster->CalculateSpellDamage(caster, aurEff->GetSpellInfo(), 2));
-            caster->CastCustomSpell(caster, SPELL_DK_DEATH_STRIKE_HEAL, &bp, nullptr, nullptr, false);
+
+            GetCaster()->CastCustomSpell(SPELL_DK_DEATH_STRIKE_HEAL, SPELLVALUE_BASE_POINT0, bp, caster);
         }
     }
 
@@ -3236,7 +3242,7 @@ class spell_dk_contagions_periodic_tick : public AuraScript
     {
         Unit* caster = GetCaster();
         Position position = caster->GetPosition();
-        Creature* creature = caster->FindNearestCreature(500508, 10.f, true);
+        Creature* creature = caster->FindNearestCreature(NPC_CONTAGION_AREA, 10.f, true);
         float radius = GetSpellInfo()->Effects[EFFECT_0].CalcRadius(caster);
         if (creature) {
             Position pos = creature->GetPosition();
@@ -3249,10 +3255,21 @@ class spell_dk_contagions_periodic_tick : public AuraScript
         else {
             caster->RemoveAura(SPELL_DK_CONTAGIOUS_TARGET_INCREASE);
         }
+
+    }
+
+
+    void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster)
+            return;
     }
 
     void Register() override
     {
+        // OnEffectRemove += AuraEffectRemoveFn(spell_dk_contagions_periodic_tick::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_contagions_periodic_tick::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
     }
 };

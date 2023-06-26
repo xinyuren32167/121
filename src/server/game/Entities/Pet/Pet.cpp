@@ -1340,13 +1340,16 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_DK_PET_SCALING_01, this);
             AddAura(SPELL_DK_PET_SCALING_02, this);
             AddAura(SPELL_DK_PET_SCALING_03, this);
+            owner->AddAura(SPELL_DK_PET_SCALING_04, this);
             break;
         }
         case NPC_BLOODWORM:
         {
             // Xinef: Hit / Expertise scaling
             AddAura(SPELL_HUNTER_PET_SCALING_04, this);
+            owner->AddAura(SPELL_DK_PET_SCALING_04, this);
             AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_IMPROVED_BLOODWORMS, this);
             SetCreateHealth(4 * petlevel);
             SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - 30 - (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.15f));
             SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel - 30 + (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.15f));
@@ -1360,6 +1363,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_DK_PET_SCALING_02, this);
             AddAura(SPELL_DK_PET_SCALING_03, this);
             AddAura(SPELL_PET_AVOIDANCE, this);
+            owner->AddAura(SPELL_DK_PET_SCALING_04, this);
 
             SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)));
             SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)));
@@ -1386,6 +1390,8 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
         // xinef: fixes orc death knight command racial
         if (owner->getRace() == RACE_ORC)
             CastSpell(this, SPELL_ORC_RACIAL_COMMAND_DK, true, nullptr, nullptr, owner->GetGUID());
+
+        owner->AddAura(SPELL_DK_PET_SCALING_04, this);
 
         // Avoidance, Night of the Dead
         if (Aura* aur = AddAura(SPELL_NIGHT_OF_THE_DEAD_AVOIDANCE, this))

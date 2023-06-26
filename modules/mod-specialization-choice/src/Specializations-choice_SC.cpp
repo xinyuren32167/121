@@ -33,6 +33,11 @@ public:
             player->SetMaxPower(POWER_ENERGY, 5);
             player->SetPower(POWER_ENERGY, 0);
         }
+
+        if (player->getClass() == CLASS_WARLOCK) {
+            player->SetMaxPower(POWER_RUNIC_POWER, 25);
+            player->SetPower(POWER_RUNIC_POWER, 0);
+        }
     }
 
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)

@@ -65,9 +65,9 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3, 500004, 56.00,	true, 500007 };
     m_Specializations[HUNTER_SURVIVAL] = { 16, 19306, "Survival", 3, 500005, 21.12,	true, 500002  };
 
-    m_Specializations[DK_BLOOD] = { 7, 55212, "Blood", 6 };
-    m_Specializations[DK_FROST] = { 8, 50384, "Frost", 6 };
-    m_Specializations[DK_UNHOLY] = { 9, 49772, "Unholy", 6 };
+    m_Specializations[DK_BLOOD] = { 7, 50371, "Blood", 6, 590001, 17.50, true, 590004 };
+    m_Specializations[DK_FROST] = { 8, 50385, "Frost", 6, 600000, 17.50, true, 600002 };
+    m_Specializations[DK_UNHOLY] = { 9, 50392, "Unholy", 6, 600005, 15.5, true, 590000 };
 
     m_Specializations[DRUID_BALANCE] = { 10, 80536, "Balance", 11, 700000, 7.00, false, 0 };
     m_Specializations[DRUID_FERAL] = { 11, 80549, "Feral", 11, 700004, 17.50, true, 700006 };

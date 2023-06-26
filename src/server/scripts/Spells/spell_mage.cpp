@@ -161,7 +161,6 @@ class spell_mage_mastery_combustion : public SpellScript
 
     void HandleAfterCast()
     {
-        GetCaster()->ToPlayer()->UpdateMastery();
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -182,7 +181,6 @@ class spell_mage_combustion_on_remove : public AuraScript
     void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         GetCaster()->RemoveAura(11129);
-        GetCaster()->ToPlayer()->UpdateMastery();
     }
 
     void Register() override
