@@ -42,6 +42,10 @@ enum RogueSpells
     SPELL_ROGUE_SHIV_TRIGGERED                  = 5940,
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST   = 57933,
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC        = 59628,
+
+    //OURS
+    SPELL_ROGUE_BACKSTAB                        = 82001,
+    SPELL_ROGUE_ANESTHETIC_POISON               = 57982,
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -675,6 +679,85 @@ class spell_rog_tricks_of_the_trade_proc : public AuraScript
     }
 };
 
+class spell_rog_backstab : public SpellScript
+{
+    PrepareSpellScript(spell_rog_backstab);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        if (Unit* target = GetHitUnit())
+        {
+            if (!target->HasInArc(M_PI, caster))
+            {
+                int32 damage = GetEffectValue();
+                SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_BACKSTAB);
+                uint32 damageBonus = value->GetEffect(EFFECT_1).CalcValue(caster);
+
+                damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+                damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+                AddPct(damage, damageBonus);
+
+                SetHitDamage(damage);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_backstab::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_rog_deadly_throw : public SpellScript
+{
+    PrepareSpellScript(spell_rog_deadly_throw);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_deadly_throw::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_rog_eviscerate : public SpellScript
+{
+    PrepareSpellScript(spell_rog_eviscerate);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_eviscerate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -686,8 +769,11 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_nerves_of_steel);
     RegisterSpellScript(spell_rog_preparation);
     RegisterSpellScript(spell_rog_prey_on_the_weak);
-    RegisterSpellScript(spell_rog_rupture);
+    //RegisterSpellScript(spell_rog_rupture);
     RegisterSpellScript(spell_rog_shiv);
     RegisterSpellScript(spell_rog_tricks_of_the_trade);
     RegisterSpellScript(spell_rog_tricks_of_the_trade_proc);
+    RegisterSpellScript(spell_rog_backstab);
+    RegisterSpellScript(spell_rog_deadly_throw);
+    RegisterSpellScript(spell_rog_eviscerate);
 }

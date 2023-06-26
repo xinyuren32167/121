@@ -3147,7 +3147,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
             case 52743: // Head Smack
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_REQ_TARGET_FACING_CASTER;
                 break;
-            case 53: // Backstab
+            //case 53: // Backstab
             case 2589:
             case 2590:
             case 2591:
@@ -3184,7 +3184,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
             case 27002:
             case 48571:
             //case 48572:
-            case 8676: // Ambush
+            //case 8676: // Ambush
             case 8724:
             case 8725:
             case 11267:

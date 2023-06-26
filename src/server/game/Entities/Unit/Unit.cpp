@@ -12014,9 +12014,9 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                             break;
                         case SPELLFAMILY_ROGUE:
                             // Shiv-applied poisons can't crit
-                            if (caster->FindCurrentSpellBySpellId(5938))
+                            /*if (caster->FindCurrentSpellBySpellId(5938))
                                 crit_chance = 0.0f;
-                            break;
+                            break;*/
                         case SPELLFAMILY_PALADIN:
                             // Flash of light
                             if (spellProto->SpellFamilyFlags[0] & 0x40000000)

@@ -563,7 +563,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                         }
                     }
                     // Eviscerate
-                    else if (m_spellInfo->SpellFamilyFlags[0] & 0x00020000)
+                    /*else if (m_spellInfo->SpellFamilyFlags[0] & 0x00020000)
                     {
                         if (m_caster->GetTypeId() == TYPEID_PLAYER)
                         {
@@ -577,7 +577,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                                     damage += combo * 40;
                             }
                         }
-                    }
+                    }*/
                     break;
                 }
             case SPELLFAMILY_HUNTER:
@@ -3412,7 +3412,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
         case SPELLFAMILY_ROGUE:
             {
                 // Fan of Knives, Hemorrhage, Ghostly Strike
-                if ((m_spellInfo->SpellFamilyFlags[1] & 0x40000)
+                /*if ((m_spellInfo->SpellFamilyFlags[1] & 0x40000)
                         || (m_spellInfo->SpellFamilyFlags[0] & 0x6000000))
                 {
                     // Hemorrhage
@@ -3425,9 +3425,9 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                         if (Item* item = m_caster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
                             if (item->GetTemplate()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
                                 AddPct(totalDamagePercentMod, 50.0f);
-                }
+                }*/
                 // Mutilate (for each hand)
-                else if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
+                if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
                 {
                     bool found = false;
                     // fast check
