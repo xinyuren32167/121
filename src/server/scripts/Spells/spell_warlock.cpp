@@ -1332,33 +1332,6 @@ class spell_warlock_summon_darkhound : public SpellScript
         for (size_t i = 0; i < totalSummons; i++)
         {
             int32 duration = GetSpellInfo()->GetDuration();
-            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, duration);
-            if (target) {
-                summon->AI()->AttackStart(target);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_warlock_summon_darkhound::HandleCast);
-    }
-};
-
-class spell_warlock_summon_darkhound : public SpellScript
-{
-    PrepareSpellScript(spell_warlock_summon_darkhound);
-
-    void HandleCast()
-    {
-        Player* player = GetCaster()->ToPlayer();
-        Unit* target = GetExplTargetUnit();
-
-        int32 totalSummons = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
-
-        for (size_t i = 0; i < totalSummons; i++)
-        {
-            int32 duration = GetSpellInfo()->GetDuration();
             TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration);
             if (target) {
                 summon->AI()->AttackStart(target);
@@ -1372,6 +1345,7 @@ class spell_warlock_summon_darkhound : public SpellScript
     }
 };
 
+// 83002
 class spell_warlock_hand_of_guldan : public SpellScript
 {
     PrepareSpellScript(spell_warlock_hand_of_guldan);
@@ -1381,6 +1355,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
         int32 runicPower = GetCaster()->GetPower(POWER_RUNIC_POWER);
         uint8 maxSummon = std::max(runicPower, 3);
         Player* player = GetCaster()->ToPlayer();
+
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
             {
