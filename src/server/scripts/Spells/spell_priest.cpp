@@ -31,7 +31,7 @@
 
 enum PriestSpells
 {
-    SPELL_PRIEST_LIGHTWELL_RENEW  = 48085,
+    SPELL_PRIEST_LIGHTWELL_RENEW = 48085,
     SPELL_PRIEST_LIGHTWELL_CHARGE = 59907,
     SPELL_PRIEST_AUTONEMENT = 81009,
     SPELL_PRIEST_AUTONEMENT_AURA = 81010,
@@ -86,8 +86,11 @@ enum PriestSpells
     SPELL_PRIEST_REFLECTIVE_SHIELD_R1 = 33201,
     SPELL_PRIEST_RENEW = 48068,
     SPELL_PRIEST_SHADOW_WORD_DEATH = 48158,
+    SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE = 32409,
     SPELL_PRIEST_SHADOW_WORD_DEATH_AURA = 48189,
     SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
+    SPELL_PRIEST_SHADOWY_APPARITIONS_AOE = 81085,
+    SPELL_PRIEST_SHADOWY_APPARITIONS_DAMAGE = 81086,
     SPELL_PRIEST_T9_HEALING_2P = 67201,
     SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
     SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL = 64085,
@@ -420,9 +423,9 @@ class spell_pri_lightwell : public SpellScript
     {
         targets.remove_if(Acore::ObjectGUIDCheck(GetCaster()->GetGUID(), true));
         targets.remove_if([&](WorldObject* target) -> bool
-        {
-            return !target->ToUnit() || target->ToUnit()->HealthAbovePct(50) || target->ToUnit()->HasAura(SPELL_PRIEST_LIGHTWELL_RENEW);
-        });
+            {
+                return !target->ToUnit() || target->ToUnit()->HealthAbovePct(50) || target->ToUnit()->HasAura(SPELL_PRIEST_LIGHTWELL_RENEW);
+            });
 
         if (!targets.empty())
         {
@@ -878,6 +881,7 @@ class spell_pri_shadow_word_death : public SpellScript
     {
         Unit* target = GetHitUnit();
         int32 damage = GetEffectValue();
+
         ApplyPct(damage, GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW));
 
         if (!target)
@@ -888,15 +892,15 @@ class spell_pri_shadow_word_death : public SpellScript
 
         int32 targetHealthPct = target->GetHealthPct();
 
-        if (GetExplTargetUnit()->HealthBelowPct(20))
+        if (target->HealthBelowPct(20))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
-        else if (GetExplTargetUnit()->HealthBelowPct(50))
+        else if (target->HealthBelowPct(50))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
 
         SetHitDamage(damage);
 
         if (target->GetHealth() > damage)
-            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1895,6 +1899,143 @@ class spell_pri_death_tap : public AuraScript
     }
 };
 
+// 81083 - Shadowy Apparitions
+class spell_pri_shadowy_apparitions : public AuraScript
+{
+    PrepareAuraScript(spell_pri_shadowy_apparitions);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || !caster)
+            return;
+
+        int32 shadowNbr = aurEff->GetAmount();
+
+        if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+            shadowNbr = GetEffect(EFFECT_1)->GetAmount();
+
+        GetEffect(EFFECT_2)->SetAmount(shadowNbr);
+        caster->CastSpell(caster, SPELL_PRIEST_SHADOWY_APPARITIONS_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_shadowy_apparitions::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 81085 - Shadowy Apparitions Aoe
+class spell_pri_shadowy_apparitions_aoe : public SpellScript
+{
+    PrepareSpellScript(spell_pri_shadowy_apparitions_aoe);
+
+    Aura* GetTalentAura()
+    {
+        for (size_t i = 81083; i < 81085; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!GetTalentAura())
+            return;
+
+        int32 shadowNbr = GetTalentAura()->GetEffect(EFFECT_2)->GetAmount();
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+                continue;
+
+            int32 shadow = shadowNbr;
+            
+            while (shadow > 0)
+            {
+                Position pos = caster->GetNearPosition(urand(1,5), urand(1,5));
+                SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+                Creature* summon = caster->SummonCreature(900000, pos, TEMPSUMMON_MANUAL_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
+
+                if (!summon)
+                    return;
+
+                summon->SetOwnerGUID(caster->GetGUID());
+                summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                summon->SetReactState(REACT_PASSIVE);
+                summon->SetTarget(target->GetGUID());
+
+                shadow--;
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_shadowy_apparitions_aoe::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+// Shadowy Apparition Pet
+class npc_pri_shadowy_apparitions : public CreatureScript
+{
+public:
+    npc_pri_shadowy_apparitions() : CreatureScript("npc_pri_shadowy_apparitions") { }
+
+    struct spell_pri_shadowy_apparitionsAI : public ScriptedAI
+    {
+        spell_pri_shadowy_apparitionsAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 250;
+
+        void Reset() override
+        {
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 250) {
+                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                {
+                    Position pos = target->GetPosition();
+                    me->GetMotionMaster()->MovePoint(0, pos);
+                }
+                update = 0;
+            }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override {
+            if (id == 0) {
+                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                    me->CastSpell(target, SPELL_PRIEST_SHADOWY_APPARITIONS_DAMAGE, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
+
+                me->DespawnOrUnsummon();
+            }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new spell_pri_shadowy_apparitionsAI(creature);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -1950,7 +2091,11 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_insanity_on_cast);
     RegisterSpellScript(spell_pri_insanity_on_periodic);
     RegisterSpellScript(spell_pri_death_tap);
+    RegisterSpellScript(spell_pri_shadowy_apparitions);
+    RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
 
 
 
+
+    new npc_pri_shadowy_apparitions();
 }
