@@ -56,8 +56,6 @@ public:
             if (!owner)
                 return;
         }
-
-
     };
 
     CreatureAI* GetAI(Creature* creature) const override
