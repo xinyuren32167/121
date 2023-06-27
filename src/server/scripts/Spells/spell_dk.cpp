@@ -2408,7 +2408,8 @@ class spell_dk_summon_gargoyle_power : public AuraScript
 
             if (Aura* targetAura = unit->GetAura(SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF))
             {
-                targetAura->GetEffect(EFFECT_0)->ChangeAmount(spellRunic);
+                int32 baseValue = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+                targetAura->GetEffect(EFFECT_0)->ChangeAmount(baseValue + spellRunic);
             }
         }
     }
