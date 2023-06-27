@@ -35,7 +35,7 @@ public:
         }
 
         if (player->getClass() == CLASS_WARLOCK) {
-            player->SetMaxPower(POWER_RUNIC_POWER, 25);
+            player->SetMaxPower(POWER_RUNIC_POWER, 250);
             player->SetPower(POWER_RUNIC_POWER, 0);
         }
     }

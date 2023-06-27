@@ -2316,6 +2316,33 @@ TempSummon* WorldObject::SummonCreature(uint32 entry, const Position& pos, TempS
     return nullptr;
 }
 
+TempSummon* WorldObject::SummonCreatureGuardian(uint32 entry, Unit* target, Player* player, uint32 duration) const
+{
+    if (Map* map = FindMap())
+    {
+
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+
+        uint32 dist = urand(1, 3);
+        uint32 angle = urand(1, 3);
+
+        Position pos = target->GetNearPosition(dist, angle);
+
+        if (TempSummon* summon = map->SummonCreature(entry, pos, properties, duration, (WorldObject*)this))
+        {
+            summon->SetTempSummonType(TEMPSUMMON_TIMED_DESPAWN);
+
+            summon->GetMotionMaster()->Clear(false);
+            summon->GetMotionMaster()->MoveFollow(player, dist, angle, MOTION_SLOT_ACTIVE);
+            ((Guardian*)summon)->InitStatsForLevel(ToPlayer()->getLevel());
+
+            return summon;
+        }
+    }
+
+    return nullptr;
+}
+
 GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime, bool checkTransport, GOSummonType summonType)
 {
     if (!IsInWorld())

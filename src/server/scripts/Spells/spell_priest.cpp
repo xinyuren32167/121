@@ -455,7 +455,7 @@ class spell_pri_lightwell_renew : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_lightwell_renew::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_HEAL , AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_lightwell_renew::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
 

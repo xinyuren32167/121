@@ -1388,8 +1388,6 @@ class spell_dk_blood_gorged : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        PreventDefaultAction();
-
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
 
         if (!damageInfo || !damageInfo->GetDamage())
@@ -1400,8 +1398,13 @@ class spell_dk_blood_gorged : public AuraScript
         int32 bp = static_cast<int32>(damageInfo->GetDamage() * 1.0f);
         GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, bp, _procTarget, true, nullptr, aurEff);
 
-        if (GetTarget()->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH))
-            GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->ModStackAmount(bp);
+        if (Aura* aura = GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)) {
+            AuraEffect* effect = aura->GetEffect(EFFECT_0);
+            effect->SetAmount(effect->GetAmount() + bp);
+        }
+
+        /* /if (GetTarget()->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH))
+            GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->ModStackAmount(bp); */
     } 
 
     void Register() override
@@ -2383,10 +2386,9 @@ class spell_dk_summon_gargoyle_power : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Aura* aura = GetAura();
         Player* target = GetTarget()->ToPlayer();
 
-        if (!aura || !target || target->isDead())
+        if (!target || target->isDead())
             return;
 
         int32 spellRunic = (eventInfo.GetSpellInfo()->ManaCost) / 10;
@@ -2404,13 +2406,11 @@ class spell_dk_summon_gargoyle_power : public AuraScript
             if (unit->isDead())
                 continue;
 
-            if (Aura * targetAura = unit->GetAura(SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF))
+            if (Aura* targetAura = unit->GetAura(SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF))
             {
-                targetAura->ModStackAmount(spellRunic);
+                targetAura->GetEffect(EFFECT_0)->ChangeAmount(spellRunic);
             }
         }
-
-        int32 currentAmount = aurEff->GetAmount();
     }
 
     void Register() override
@@ -3042,9 +3042,8 @@ class spell_dk_bloody_strikes : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetActionTarget()->HasAura(SPELL_DK_BLOOD_PLAGUE))
+        if (eventInfo.GetActionTarget() && eventInfo.GetActionTarget()->HasAura(SPELL_DK_BLOOD_PLAGUE))
             return true;
-
 
         return false;
     }
@@ -3184,7 +3183,6 @@ class spell_dk_apocalyspe : public SpellScript
     }
 };
 
-
 class spell_dk_improved_bloodworms_health_low : public AuraScript
 {
     PrepareAuraScript(spell_dk_improved_bloodworms_health_low);
@@ -3208,11 +3206,19 @@ class spell_dk_improved_bloodworms_health_low : public AuraScript
                 if (!unit || !unit->IsAlive())
                     continue;
 
-                if (AuraEffect const* aura = unit->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH, victim->GetGUID())->GetEffect(EFFECT_0))
+                if (Aura* aura = unit->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH))
                 {
-                    int32 healAmount = aura->GetBase()->GetStackAmount();
+                    int32 healAmount = aura->GetEffect(EFFECT_0)->GetAmount();
+
+                    if (victim->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R1))
+                        healAmount = CalculatePct(healAmount, 15);
+                    else if (victim->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R2))
+                        healAmount = CalculatePct(healAmount, 30);
+                    else if (victim->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R3))
+                        healAmount = CalculatePct(healAmount, 45);
 
                     unit->CastCustomSpell(SPELL_DK_IMPROVED_BLOODWORMS_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, TRIGGERED_FULL_MASK);
+                    unit->Kill(unit, unit);
                 }
             }
         }
@@ -3229,14 +3235,17 @@ class spell_dk_improved_bloodworms_death : public AuraScript
 {
     PrepareAuraScript(spell_dk_improved_bloodworms_death);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* owner = GetTarget()->GetOwner();
-        Unit* bloodworm = GetTarget();
-        int32 healAmount = 0;
-        int32 damage = GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->GetStackAmount();
-        if (!owner->IsAlive())
+        Unit* owner = GetCaster()->GetOwner();
+
+        if (!owner)
             return;
+
+        Unit* bloodworm = GetCaster();
+        int32 healAmount = 0;
+
+        int32 damage = aurEff->GetAmount();
 
         if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R1))
             healAmount = CalculatePct(damage, 15);
@@ -3250,7 +3259,7 @@ class spell_dk_improved_bloodworms_death : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_dk_improved_bloodworms_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_improved_bloodworms_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 

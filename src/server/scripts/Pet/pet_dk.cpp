@@ -359,6 +359,7 @@ class spell_pet_dk_gargoyle_strike : public SpellScript
     void HandleDamageCalc(SpellEffIndex /*effIndex*/)
     {
         int32 damage = GetEffectValue();
+
         if (Unit* caster = GetCaster())
         {
             if (!caster->HasAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF))
@@ -371,14 +372,8 @@ class spell_pet_dk_gargoyle_strike : public SpellScript
 
             damage = caster->SpellDamageBonusDone(GetExplTargetUnit(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
             damage = GetExplTargetUnit()->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-
-            /*int32 damageBonus = caster->GetAura(SPELL_DK_GARGOYLE_DAMAGE_BUFF)->GetStackAmount(); //molly: legacy from first iteration, keep in case we change the core
-
-            if (damageBonus > 0)
-            {
-                damage += CalculatePct(damage, damageBonus);
-            }*/
         }
+
         SetHitDamage(damage);
     }
 

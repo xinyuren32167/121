@@ -65,6 +65,14 @@ enum WarlockSpells
     SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC          = 18371
 };
 
+
+enum PET_WARLOCKS {
+
+    PET_DARKHOUND = 600600,
+    PET_WILDIMP = 600601,
+
+};
+
 enum WarlockSpellIcons
 {
     WARLOCK_ICON_ID_IMPROVED_LIFE_TAP               = 208,
@@ -1309,6 +1317,87 @@ class spell_warl_glyph_of_felguard : public AuraScript
     }
 };
 
+// 83000
+class spell_warlock_summon_darkhound : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_darkhound);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+
+        int32 totalSummons = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+
+        for (size_t i = 0; i < totalSummons; i++)
+        {
+            int32 duration = GetSpellInfo()->GetDuration();
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, duration);
+            if (target) {
+                summon->AI()->AttackStart(target);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_summon_darkhound::HandleCast);
+    }
+};
+
+class spell_warlock_summon_darkhound : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_darkhound);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+
+        int32 totalSummons = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+
+        for (size_t i = 0; i < totalSummons; i++)
+        {
+            int32 duration = GetSpellInfo()->GetDuration();
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration);
+            if (target) {
+                summon->AI()->AttackStart(target);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_summon_darkhound::HandleCast);
+    }
+};
+
+class spell_warlock_hand_of_guldan : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_hand_of_guldan);
+
+    void HandleHitTarget(SpellEffIndex /*effIndex*/)
+    {
+        int32 runicPower = GetCaster()->GetPower(POWER_RUNIC_POWER);
+        uint8 maxSummon = std::max(runicPower, 3);
+        Player* player = GetCaster()->ToPlayer();
+        if (Unit* target = GetHitUnit()) {
+            for (size_t i = 0; i < maxSummon; i++)
+            {
+                TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 9999999);
+                if (target)
+                   summon->AI()->AttackStart(target);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warlock_hand_of_guldan::HandleHitTarget, EFFECT_0, SPELL_EFFECT_TRIGGER_MISSILE);
+    }
+};
+
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -1341,4 +1430,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_drain_soul);
     RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_glyph_of_felguard);
+    RegisterSpellScript(spell_warlock_summon_darkhound);
 }
