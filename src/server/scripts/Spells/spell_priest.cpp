@@ -869,21 +869,10 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
 };
 
 
-// -32379 - Shadow Word Death
+// -32379 - Shadow Word: Death
 class spell_pri_shadow_word_death : public SpellScript
 {
     PrepareSpellScript(spell_pri_shadow_word_death);
-
-    Aura* GetDeathTapTalent(Unit* caster)
-    {
-        for (size_t i = 81076; i < 81079; i++)
-        {
-            if (caster->HasAura(i))
-                return caster->GetAura(i);
-        }
-
-        return nullptr;
-    }
 
     void HandleDamage(SpellEffIndex effIndex)
     {
@@ -900,9 +889,9 @@ class spell_pri_shadow_word_death : public SpellScript
         int32 targetHealthPct = target->GetHealthPct();
 
         if (GetExplTargetUnit()->HealthBelowPct(20))
-            damage *= GetSpellInfo()->GetEffect(EFFECT_0).BonusMultiplier;
+            damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (GetExplTargetUnit()->HealthBelowPct(50))
-            damage *= GetSpellInfo()->GetEffect(EFFECT_0).DamageMultiplier;
+            damage *= GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
 
         SetHitDamage(damage);
 
