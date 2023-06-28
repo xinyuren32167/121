@@ -355,11 +355,11 @@ public:
 
         void Reset() override
         {
-                Position pos = me->GetFirstCollisionPosition(40.0f, 0);
-                me->GetMotionMaster()->MovePoint(0, pos);
-                me->CombatStop(true);
-                me->AttackStop();
-                me->SetReactState(REACT_PASSIVE);
+            Position pos = me->GetFirstCollisionPosition(40.0f, 0);
+            me->GetMotionMaster()->MovePoint(0, pos);
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
         }
 
         void UpdateAI(uint32 diff) override

@@ -1353,11 +1353,13 @@ class spell_warlock_hand_of_guldan : public SpellScript
     void HandleHitTarget(SpellEffIndex /*effIndex*/)
     {
         int32 runicPower = GetCaster()->GetPower(POWER_RUNIC_POWER);
-        uint8 maxSummon = std::max(runicPower, 3);
+        uint8 maxSummon = std::min(runicPower, 3);
         Player* player = GetCaster()->ToPlayer();
 
+        player->ModifyPower(POWER_RUNIC_POWER, maxSummon);
+
         if (Unit* target = GetHitUnit()) {
-            for (size_t i = 0; i < maxSummon; i++)
+            for (size_t i = 1; i < maxSummon; i++)
             {
                 TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 9999999);
                 if (target)
@@ -1406,4 +1408,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_glyph_of_felguard);
     RegisterSpellScript(spell_warlock_summon_darkhound);
+    RegisterSpellScript(spell_warlock_hand_of_guldan);
 }
