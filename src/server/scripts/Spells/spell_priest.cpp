@@ -2080,13 +2080,14 @@ class mastery_pri_echo_of_light : public AuraScript
 {
     PrepareAuraScript(mastery_pri_echo_of_light);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-
-        if (!eventInfo.GetHealInfo() || eventInfo.GetHealInfo()->GetHeal() <= 0)
-            return;
-
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
         if (Aura* hot = target->GetAura(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT))
@@ -2097,7 +2098,7 @@ class mastery_pri_echo_of_light : public AuraScript
             int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
 
             caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
-            hot->Remove();
+           // hot->Remove();
         }
 
         int32 heal = eventInfo.GetHealInfo()->GetHeal();
@@ -2113,6 +2114,7 @@ class mastery_pri_echo_of_light : public AuraScript
 
     void Register()
     {
+        DoCheckProc += AuraCheckProcFn(mastery_pri_echo_of_light::CheckProc);
         OnEffectProc += AuraEffectProcFn(mastery_pri_echo_of_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
