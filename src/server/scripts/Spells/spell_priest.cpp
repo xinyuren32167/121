@@ -104,7 +104,13 @@ enum PriestSpells
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
     SPELL_PRIEST_TWIN_DISCIPLINE_R1 = 47586,
     SPELL_PRIEST_SPIRITUAL_HEALING_R1 = 14898,
-    SPELL_PRIEST_DIVINE_PROVIDENCE_R1 = 47562
+    SPELL_PRIEST_DIVINE_PROVIDENCE_R1 = 47562,
+
+    MASTERY_PRIEST_GRACE = 900000,
+    MASTERY_PRIEST_ECHO_OF_LIGHT_HOT = 900006,
+    MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL = 900007,
+    MASTERY_PRIEST_SHADOW_WEAVING = 900008,
+    MASTERY_PRIEST_SHADOW_WEAVING_AURA = 900009,
 };
 
 enum PriestSpellIcons
@@ -1960,10 +1966,10 @@ class spell_pri_shadowy_apparitions_aoe : public SpellScript
                 continue;
 
             int32 shadow = shadowNbr;
-            
+
             while (shadow > 0)
             {
-                Position pos = caster->GetNearPosition(urand(1,5), urand(1,5));
+                Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
                 SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
                 Creature* summon = caster->SummonCreature(900000, pos, TEMPSUMMON_MANUAL_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
 
@@ -2036,6 +2042,123 @@ public:
     }
 };
 
+// 900000 - Mastery: Grace / 81010 - Atonement
+class mastery_pri_grace : public AuraScript
+{
+    PrepareAuraScript(mastery_pri_grace);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
+
+        if (!caster || !caster->HasAura(MASTERY_PRIEST_GRACE))
+            return;
+
+        int32 baseAmount = caster->GetAura(MASTERY_PRIEST_GRACE)->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = baseAmount + caster->ToPlayer()->GetMastery();
+
+        caster->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        player->ToPlayer()->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(mastery_pri_grace::HandleProc, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(mastery_pri_grace::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 900005 - Mastery: Echo of Light
+class mastery_pri_echo_of_light : public AuraScript
+{
+    PrepareAuraScript(mastery_pri_echo_of_light);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!eventInfo.GetHealInfo() || eventInfo.GetHealInfo()->GetHeal() <= 0)
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (Aura* hot = target->GetAura(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT))
+        {
+            AuraEffect* hotEff = hot->GetEffect(EFFECT_0);
+
+            int32 remainingTicks = hot->GetDuration() / hotEff->GetAmplitude();
+            int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
+
+            caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
+            hot->Remove();
+        }
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        int32 basePct = aurEff->GetAmount();
+        int32 pct = basePct + caster->ToPlayer()->GetMastery();
+        int32 maxTicks = sSpellMgr->AssertSpellInfo(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT)->GetMaxTicks();
+
+        ApplyPct(heal, pct);
+        int32 amount = heal / maxTicks;
+
+        caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(mastery_pri_echo_of_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 900008 - Mastery: Shadow Weaving
+class mastery_pri_shadow_weaving : public AuraScript
+{
+    PrepareAuraScript(mastery_pri_shadow_weaving);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
+
+        if (!caster || !caster->HasAura(MASTERY_PRIEST_SHADOW_WEAVING))
+            return;
+
+        int32 baseAmount = caster->GetAura(MASTERY_PRIEST_SHADOW_WEAVING)->GetEffect(EFFECT_0)->GetAmount();
+        int32 amount = baseAmount + caster->ToPlayer()->GetMastery();
+
+        if (Aura* aura = target->GetAura(MASTERY_PRIEST_SHADOW_WEAVING_AURA))
+        {
+            aura->GetEffect(EFFECT_0)->ChangeAmount(amount);
+            aura->ModStackAmount(1);
+        }
+
+        caster->CastCustomSpell(MASTERY_PRIEST_SHADOW_WEAVING_AURA, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
+
+        if (Aura* aura = target->GetAura(MASTERY_PRIEST_SHADOW_WEAVING_AURA))
+            aura->ModStackAmount(-1);
+        
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(mastery_pri_shadow_weaving::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(mastery_pri_shadow_weaving::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -2093,9 +2216,12 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_death_tap);
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
+    RegisterSpellScript(mastery_pri_grace);
+    RegisterSpellScript(mastery_pri_echo_of_light);
+    RegisterSpellScript(mastery_pri_shadow_weaving);
 
 
 
-
+    
     new npc_pri_shadowy_apparitions();
 }
