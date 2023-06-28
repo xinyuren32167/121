@@ -32,7 +32,7 @@
 
 enum WarlockSpells
 {
-
+    SPELL_WILDIMP_FIREBOLT = 83003,
 };
 
 
@@ -41,20 +41,73 @@ class npc_pet_warlock_wildimp : public CreatureScript
 public:
     npc_pet_warlock_wildimp() : CreatureScript("npc_pet_warlock_wildimp") { }
 
-    struct npc_pet_warlock_wildimpAI : public CombatAI
+    struct npc_pet_warlock_wildimpAI : ScriptedAI
     {
-        npc_pet_warlock_wildimpAI(Creature* creature) : CombatAI(creature) { }
+        npc_pet_warlock_wildimpAI(Creature* creature) : ScriptedAI(creature) { }
 
-        uint32 attackTimer;
+        uint32 attackTimer = 0;
+        uint32 attackCount = 0;
+        float angle;
+        float dist; 
+        float scalingFirebolt;
+        bool alreadyFollowing;
+        Unit* owner;
+
+        void Reset() override
+        {
+            me->SetReactState(REACT_DEFENSIVE);
+        }
+
+        Unit* GetOwnerTarget(ObjectGuid target) {
+            if (Unit* targetOwner = ObjectAccessor::GetUnit(*owner, target))
+                return targetOwner;
+
+            return nullptr;
+        }
+
+        void AttackStart(Unit* who) override
+        {
+            ScriptedAI::AttackStart(who);
+        }
 
         void InitializeAI() override
         {
-            CombatAI::InitializeAI();
+            ScriptedAI::InitializeAI();
+            owner = me->GetOwner();
+            if (owner) {
+                SpellInfo const* spell = sSpellMgr->GetSpellInfo(SPELL_WILDIMP_FIREBOLT);
+                if (spell)
+                    scalingFirebolt = spell->GetEffect(EFFECT_0).BonusMultiplier;
+            }
+        }
 
-            Unit* owner = me->GetOwner();
+        void UpdateAI(uint32 diff) override
+        {
+            attackTimer += diff;
 
-            if (!owner)
-                return;
+            if (attackTimer >= 2000) {
+                int32 fireSpellPower = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+                int32 damage = fireSpellPower * scalingFirebolt;
+                int32 spellPower = std::max(1, damage);
+                if (Unit* target = GetOwnerTarget(owner->GetTarget())) {
+                    me->CastCustomSpell(83003, SPELLVALUE_BASE_POINT0, spellPower, target);
+                }
+                else {
+                    if (!alreadyFollowing) {
+                        me->GetMotionMaster()->Clear(false);
+                        me->GetMotionMaster()->MoveFollow(owner, urand(1, 2), urand(1, 2));
+                    }
+                }
+                attackTimer = 0;
+            }
+        }
+
+        void SpellHitTarget(Unit* target, SpellInfo const* spell)
+        {
+            if (attackCount >= 10)
+                me->DespawnOrUnsummon();
+            else
+                attackCount++;
         }
     };
 

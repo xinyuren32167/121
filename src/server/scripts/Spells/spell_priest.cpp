@@ -2098,7 +2098,7 @@ class mastery_pri_echo_of_light : public AuraScript
             int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
 
             caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
-           // hot->Remove();
+            hot->Remove();
         }
 
         int32 heal = eventInfo.GetHealInfo()->GetHeal();
