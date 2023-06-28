@@ -22,7 +22,7 @@ enum Masteries
     MASTERY_PRIEST_ECHO_OF_LIGHT_HOT = 900006,
     MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL = 900007,
     MASTERY_PRIEST_SHADOW_WEAVING = 900008,
-    MASTERY_PRIEST_SHADOW_WEAVING_AURA = 900009,
+    MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE = 900009,
 };
 
 // Mage
@@ -780,9 +780,7 @@ class spell_mastery_pri_grace : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* player = GetCaster()->ToPlayer();
 
-        player->ToPlayer()->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
     }
 
     void Register() override
@@ -815,7 +813,6 @@ class spell_mastery_pri_echo_of_light : public AuraScript
             int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
 
             caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
-            hot->Remove();
         }
 
         int32 heal = eventInfo.GetHealInfo()->GetHeal();
@@ -843,34 +840,43 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 basePct = aurEff->GetAmount();
 
-        if (Aura* hot = target->GetAura(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT))
+        int32 pct = basePct + caster->ToPlayer()->GetMastery();
+        int32 amountPct = 0;
+
+        // Voidform Check
+        if (caster->HasAura(81044))
+            amountPct = (pct * 3);
+        else
         {
-            AuraEffect* hotEff = hot->GetEffect(EFFECT_0);
+            // Vampiric Touch Check
+            if (target->HasAura(48160))
+                amountPct += pct;
 
-            int32 remainingTicks = hot->GetDuration() / hotEff->GetAmplitude();
-            int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
+            // Shadow Word: Pain Check
+            if (target->HasAura(48125))
+                amountPct += pct;
 
-            caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
-            // hot->Remove();
+            // Devouring Plague Check
+            if (target->HasAura(48300))
+                amountPct += pct;
         }
 
-        int32 heal = eventInfo.GetHealInfo()->GetHeal();
-        int32 basePct = aurEff->GetAmount();
-        int32 pct = basePct + caster->ToPlayer()->GetMastery();
-        int32 maxTicks = sSpellMgr->AssertSpellInfo(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT)->GetMaxTicks();
+        if (amountPct == 0)
+            return;
 
-        ApplyPct(heal, pct);
-        int32 amount = heal / maxTicks;
+        int32 amount = CalculatePct(damage, amountPct);
 
-        caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
