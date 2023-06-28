@@ -45,7 +45,29 @@ enum RogueSpells
 
     //OURS
     SPELL_ROGUE_BACKSTAB                        = 82001,
+
+    //POISONS
+    //LETHAL
     SPELL_ROGUE_ANESTHETIC_POISON               = 57982,
+    SPELL_ROGUE_ANESTHETIC_POISON_PROC          = 57981,
+    SPELL_ROGUE_WOUND_POISON                    = 57978,
+    SPELL_ROGUE_WOUND_POISON_PROC               = 57975,
+    SPELL_ROGUE_DEADLY_POISON                   = 57973,
+    SPELL_ROGUE_DEADLY_POISON_PROC              = 57970,
+    SPELL_ROGUE_INSTANT_POISON                  = 57968,
+    SPELL_ROGUE_INSTANT_POISON_PROC             = 57965,
+
+    //NON_LETHAL
+    SPELL_ROGUE_NUMBING_POISON                  = 5761,
+    SPELL_ROGUE_NUMBING_POISON_PROC             = 5760,
+    SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
+    SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
+    SPELL_ROGUE_AMPLIFYING_POISON               = 82005,
+    SPELL_ROGUE_AMPLIFYING_POISON_PROC          = 82006,
+    SPELL_ROGUE_VAMPIRIC_POISON                 = 82007,
+    SPELL_ROGUE_VAMPIRIC_POISON_PROC            = 82008,
+    SPELL_ROGUE_VAMPIRIC_POISON_HEAL            = 82009,
+
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -263,7 +285,7 @@ class spell_rog_deadly_poison : public SpellScript
                         continue;
 
                     // Do not reproc deadly
-                    if (spellInfo->SpellFamilyFlags.IsEqual(0x10000, 0x80000, 0))
+                    if (spellInfo->Id == SPELL_ROGUE_DEADLY_POISON_PROC)
                         continue;
 
                     if (spellInfo->IsPositive())
@@ -758,6 +780,43 @@ class spell_rog_eviscerate : public SpellScript
     }
 };
 
+class spell_rog_vampiric_poison : public SpellScript
+{
+    PrepareSpellScript(spell_rog_vampiric_poison);
+
+    uint8 _stackAmount;
+
+    void HandleBeforeHit(SpellMissInfo missInfo)
+    {
+        if (missInfo != SPELL_MISS_NONE)
+        {
+            return;
+        }
+
+        if (Unit* target = GetHitUnit())
+            if (auto* aurEff = target->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC, GetCaster()->GetGUID()))
+                _stackAmount = aurEff->GetStackAmount();
+
+        LOG_ERROR("error", "{}", _stackAmount);
+    }
+
+    void HandleAfterHit()
+    {
+        if (_stackAmount < 5)
+            return;
+
+        Unit* caster = GetCaster();
+
+        caster->CastSpell(caster, SPELL_ROGUE_VAMPIRIC_POISON_HEAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        BeforeHit += BeforeSpellHitFn(spell_rog_vampiric_poison::HandleBeforeHit);
+        AfterHit += SpellHitFn(spell_rog_vampiric_poison::HandleAfterHit);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -776,4 +835,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_backstab);
     RegisterSpellScript(spell_rog_deadly_throw);
     RegisterSpellScript(spell_rog_eviscerate);
+    RegisterSpellScript(spell_rog_vampiric_poison);
 }

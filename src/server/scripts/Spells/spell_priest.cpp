@@ -2037,8 +2037,6 @@ public:
     }
 };
 
-
-
 void AddSC_priest_spell_scripts()
 {
     RegisterSpellScript(spell_pri_shadowfiend_scaling);

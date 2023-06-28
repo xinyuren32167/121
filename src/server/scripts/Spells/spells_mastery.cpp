@@ -759,7 +759,7 @@ class spell_mastery_bloodshield_attack_power : public SpellScript
     }
 };
 
-// 900000 - Mastery: Grace / 81010 - Atonement
+// Priest
 class spell_mastery_pri_grace : public AuraScript
 {
     PrepareAuraScript(spell_mastery_pri_grace);
@@ -790,7 +790,6 @@ class spell_mastery_pri_grace : public AuraScript
     }
 };
 
-// 900005 - Mastery: Echo of Light
 class spell_mastery_pri_echo_of_light : public AuraScript
 {
     PrepareAuraScript(spell_mastery_pri_echo_of_light);
@@ -833,7 +832,6 @@ class spell_mastery_pri_echo_of_light : public AuraScript
     }
 };
 
-// 900008 - Mastery: Shadow Weaving
 class spell_mastery_pri_shadow_weaving : public AuraScript
 {
     PrepareAuraScript(spell_mastery_pri_shadow_weaving);
@@ -885,9 +883,6 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_mastery_pri_shadow_weaving::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
-
-
 
 void AddSC_spells_mastery_scripts()
 {
