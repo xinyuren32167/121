@@ -727,10 +727,10 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Envenom
-    ApplySpellFix({ 32645, 32684, 57992, 57993 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({32645, 32684, 57992, 57993}, [](SpellInfo* spellInfo)
     {
         spellInfo->Dispel = DISPEL_NONE;
-    });
+    });*/
 
     ApplySpellFix({
         64014,  // Expedition Base Camp Teleport

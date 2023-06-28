@@ -515,7 +515,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
             case SPELLFAMILY_ROGUE:
                 {
                     // Envenom
-                    if (m_spellInfo->SpellFamilyFlags[1] & 0x00000008)
+                    /*if (m_spellInfo->SpellFamilyFlags[1] & 0x00000008)
                     {
                         if (Player* player = m_caster->ToPlayer())
                         {
@@ -561,7 +561,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                                     damage += combo * 40;
                             }
                         }
-                    }
+                    }*/
                     // Eviscerate
                     /*else if (m_spellInfo->SpellFamilyFlags[0] & 0x00020000)
                     {

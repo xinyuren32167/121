@@ -796,8 +796,6 @@ class spell_rog_vampiric_poison : public SpellScript
         if (Unit* target = GetHitUnit())
             if (auto* aurEff = target->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC, GetCaster()->GetGUID()))
                 _stackAmount = aurEff->GetStackAmount();
-
-        LOG_ERROR("error", "{}", _stackAmount);
     }
 
     void HandleAfterHit()
@@ -814,6 +812,44 @@ class spell_rog_vampiric_poison : public SpellScript
     {
         BeforeHit += BeforeSpellHitFn(spell_rog_vampiric_poison::HandleBeforeHit);
         AfterHit += SpellHitFn(spell_rog_vampiric_poison::HandleAfterHit);
+    }
+};
+
+class spell_rog_envenom : public SpellScript
+{
+    PrepareSpellScript(spell_rog_envenom);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        int32 damageRatio = caster->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            if (auto* aurEff = target->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC, caster->GetGUID()))
+            {
+                int32 stackAmount = aurEff->GetStackAmount();
+                if (stackAmount >= 10)
+                {
+                    SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_AMPLIFYING_POISON);
+                    uint32 damagePct = spell->GetEffect(EFFECT_1).CalcValue(caster);
+
+                    aurEff->SetStackAmount(stackAmount - 10);
+                    damage += CalculatePct(damage, damagePct);
+                }
+            }
+
+            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_envenom::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -836,4 +872,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_deadly_throw);
     RegisterSpellScript(spell_rog_eviscerate);
     RegisterSpellScript(spell_rog_vampiric_poison);
+    RegisterSpellScript(spell_rog_envenom);
 }
