@@ -62,7 +62,8 @@ enum WarlockSpells
     SPELL_WARLOCK_SIPHON_LIFE_HEAL                  = 63106,
     SPELL_WARLOCK_UNSTABLE_AFFLICTION_DISPEL        = 31117,
     SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1            = 18213,
-    SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC          = 18371
+    SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC          = 18371,
+    SPELL_FELBOAR_CHARGE                            = 83005,
 };
 
 
@@ -70,7 +71,7 @@ enum PET_WARLOCKS {
 
     PET_DARKHOUND = 600600,
     PET_WILDIMP = 600601,
-
+    PET_FELBOAR = 600602,
 };
 
 enum WarlockSpellIcons
@@ -1333,15 +1334,34 @@ class spell_warlock_summon_darkhound : public SpellScript
         {
             int32 duration = GetSpellInfo()->GetDuration();
             TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration);
-            if (target) {
-                summon->AI()->AttackStart(target);
-            }
         }
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_warlock_summon_darkhound::HandleCast);
+    }
+};
+
+class spell_warlock_summon_felboar : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_felboar);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int32 totalSummons = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+
+        for (size_t i = 0; i < totalSummons; i++)
+        {
+            int32 duration = GetSpellInfo()->GetDuration();
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELBOAR, player, player, duration);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_summon_felboar::HandleCast);
     }
 };
 
@@ -1409,4 +1429,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_glyph_of_felguard);
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
+    RegisterSpellScript(spell_warlock_summon_felboar);
 }

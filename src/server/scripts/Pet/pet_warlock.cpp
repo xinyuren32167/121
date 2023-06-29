@@ -36,6 +36,14 @@ enum WarlockSpells
 };
 
 
+static Unit* GetOwnerTarget(Unit* owner) {
+    if (Unit* targetOwner = ObjectAccessor::GetUnit(*owner, owner->GetTarget()))
+        if (owner->IsInCombat())
+            return targetOwner;
+
+    return nullptr;
+}
+
 class npc_pet_warlock_wildimp : public CreatureScript
 {
 public:
@@ -57,13 +65,7 @@ public:
         {
             me->SetReactState(REACT_DEFENSIVE);
         }
-
-        Unit* GetOwnerTarget(ObjectGuid target) {
-            if (Unit* targetOwner = ObjectAccessor::GetUnit(*owner, target))
-                return targetOwner;
-
-            return nullptr;
-        }
+       
 
         void AttackStart(Unit* who) override
         {
@@ -89,14 +91,12 @@ public:
                 int32 fireSpellPower = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
                 int32 damage = fireSpellPower * scalingFirebolt;
                 int32 spellPower = std::max(1, damage);
-                if (Unit* target = GetOwnerTarget(owner->GetTarget())) {
+                if (Unit* target = GetOwnerTarget(owner)) {
                     me->CastCustomSpell(83003, SPELLVALUE_BASE_POINT0, spellPower, target);
                 }
                 else {
-                    if (!alreadyFollowing) {
-                        me->GetMotionMaster()->Clear(false);
-                        me->GetMotionMaster()->MoveFollow(owner, urand(1, 2), urand(1, 2));
-                    }
+                    me->GetMotionMaster()->Clear(false);
+                    me->GetMotionMaster()->MoveFollow(owner, urand(1, 2), urand(1, 2));
                 }
                 attackTimer = 0;
             }
@@ -117,7 +117,67 @@ public:
     }
 };
 
+
+class npc_pet_warlock_felboar : public CreatureScript
+{
+public:
+    npc_pet_warlock_felboar() : CreatureScript("npc_pet_warlock_felboar") { }
+
+    struct npc_pet_warlock_felboarAI : ScriptedAI
+    {
+        npc_pet_warlock_felboarAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 checkTarget = 0;
+        Unit* owner;
+        bool charge;
+
+        void Reset() override
+        {
+            me->SetReactState(REACT_DEFENSIVE);
+        }
+
+
+        void AttackStart(Unit* who) override
+        {
+            ScriptedAI::AttackStart(who);
+        }
+
+        void InitializeAI() override
+        {
+            ScriptedAI::InitializeAI();
+            owner = me->GetOwner();
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            checkTarget += diff;
+
+            if (checkTarget >= 1000) {
+                int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+                int32 damage = shadow * 1.53;
+                int32 spellPower = std::max(1, damage);
+                if (Unit* enemy = GetOwnerTarget(owner)) {
+                    if (!charge) {
+                        me->CastCustomSpell(83005, SPELLVALUE_BASE_POINT0, shadow, enemy);
+                        charge = true;
+                    }
+                    if (!me->GetTarget()) {
+                        me->AI()->AttackStart(enemy);
+                    }
+                }
+                checkTarget = 0;
+            }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_pet_warlock_felboarAI(creature);
+    }
+};
+
 void AddSC_warlock_pet_scripts()
 {
     new npc_pet_warlock_wildimp();
+    new npc_pet_warlock_felboar();
 }
