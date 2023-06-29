@@ -58,7 +58,7 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_WORD_CHASTISE = 81026,
     SPELL_PRIEST_HOLY_WORD_SALVATION = 81032,
     SPELL_PRIEST_HOLY_WORD_SALVATION_MENDING = 81040,
-    SPELL_PRIEST_HOLY_WORD_SANCTITY = 81029,
+    SPELL_PRIEST_HOLY_WORD_SANCTIFY = 81029,
     SPELL_PRIEST_HOLY_WORD_SERENITY = 81025,
     SPELL_PRIEST_ITEM_EFFICIENCY = 37595,
     SPELL_PRIEST_LEAP_OF_FAITH = 81003,
@@ -1641,9 +1641,9 @@ class spell_pri_empyreal_blaze : public SpellScript
 };
 
 // 81025 - Holy Word: Sanctify / 48072 - Prayer of Healing / 48068 - Renew
-class spell_pri_holy_word_sanctity_cooldown : public SpellScript
+class spell_pri_holy_word_sanctify_cooldown : public SpellScript
 {
-    PrepareSpellScript(spell_pri_holy_word_sanctity_cooldown);
+    PrepareSpellScript(spell_pri_holy_word_sanctify_cooldown);
 
     void HandleProc()
     {
@@ -1652,20 +1652,20 @@ class spell_pri_holy_word_sanctity_cooldown : public SpellScript
         if (!player || player->isDead())
             return;
 
-        int32 cooldownReduction = 2000;
+        int32 cooldownReduction = 0;
 
         if (GetSpellInfo()->Id == SPELL_PRIEST_PRAYER_OF_HEALING)
-            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SERENITY)->GetEffect(EFFECT_1).CalcValue(player);
+            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SANCTIFY)->GetEffect(EFFECT_1).CalcValue(player);
 
         if (GetSpellInfo()->Id == SPELL_PRIEST_RENEW)
-            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SERENITY)->GetEffect(EFFECT_2).CalcValue(player);
+            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SANCTIFY)->GetEffect(EFFECT_2).CalcValue(player);
 
-        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTITY, -cooldownReduction);
+        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTIFY, -cooldownReduction);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_pri_holy_word_sanctity_cooldown::HandleProc);
+        OnCast += SpellCastFn(spell_pri_holy_word_sanctify_cooldown::HandleProc);
     }
 };
 
@@ -1679,7 +1679,7 @@ class spell_pri_apotheosis : public SpellScript
         Player* player = GetCaster()->ToPlayer();
 
         player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_CHASTISE, true);
-        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTITY, true);
+        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTIFY, true);
         player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SERENITY, true);
     }
 
@@ -1750,7 +1750,7 @@ class spell_pri_divine_word : public AuraScript
         if (spellID == SPELL_PRIEST_HOLY_WORD_CHASTISE)
             caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_CHASTISE, caster);
 
-        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTITY) {
+        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTIFY) {
             if (Unit* selectedUnit = ObjectAccessor::GetUnit(*caster, caster->GetTarget()))
                 caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SANCTIFY, selectedUnit);
             else
@@ -2080,7 +2080,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_word_chastise_cooldown);
     RegisterSpellScript(spell_pri_holy_fire);
     RegisterSpellScript(spell_pri_empyreal_blaze);
-    RegisterSpellScript(spell_pri_holy_word_sanctity_cooldown);
+    RegisterSpellScript(spell_pri_holy_word_sanctify_cooldown);
     RegisterSpellScript(spell_pri_apotheosis);
     RegisterSpellScript(spell_pri_holy_word_salvation);
     RegisterSpellScript(spell_pri_holy_word_salvation_cooldown);

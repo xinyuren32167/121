@@ -20,6 +20,7 @@ enum Masteries
     // Priest
     MASTERY_PRIEST_GRACE = 900000,
     MASTERY_PRIEST_GRACE_APPLIER = 900001,
+    MASTERY_PRIEST_GRACE_BUFF = 900002,
     MASTERY_PRIEST_ECHO_OF_LIGHT_HOT = 900006,
     MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL = 900007,
     MASTERY_PRIEST_SHADOW_WEAVING = 900008,
@@ -772,7 +773,7 @@ class spell_mastery_pri_grace : public SpellScript
         float mastery = GetCaster()->ToPlayer()->GetMastery();
         int32 bonus = (GetCaster()->GetAura(MASTERY_PRIEST_GRACE)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
 
-        GetCaster()->CastCustomSpell(MASTERY_PRIEST_GRACE_APPLIER, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(MASTERY_PRIEST_GRACE_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
