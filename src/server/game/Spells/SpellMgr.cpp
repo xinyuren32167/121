@@ -3391,7 +3391,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
 
             // Xinef: NOT CUSTOM, cant add in DBC CORRECTION because i need to swap effects, too much work to do there
             // Envenom
-            case 32645:
+            /*case 32645:
             case 32684:
             case 57992:
             case 57993:
@@ -3401,7 +3401,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                     spellInfo->Effects[EFFECT_2] = info;
                     break;
                 }
-
+                */
             // Xinef: Cooldown overwrites
             // Jotunheim Rapid-Fire Harpoon: Energy Reserve
             case 56585:

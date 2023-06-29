@@ -56,18 +56,19 @@ enum RogueSpells
     SPELL_ROGUE_DEADLY_POISON_PROC              = 57970,
     SPELL_ROGUE_INSTANT_POISON                  = 57968,
     SPELL_ROGUE_INSTANT_POISON_PROC             = 57965,
-
-    //NON_LETHAL
-    SPELL_ROGUE_NUMBING_POISON                  = 5761,
-    SPELL_ROGUE_NUMBING_POISON_PROC             = 5760,
-    SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
-    SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
     SPELL_ROGUE_AMPLIFYING_POISON               = 82005,
     SPELL_ROGUE_AMPLIFYING_POISON_PROC          = 82006,
     SPELL_ROGUE_VAMPIRIC_POISON                 = 82007,
     SPELL_ROGUE_VAMPIRIC_POISON_PROC            = 82008,
     SPELL_ROGUE_VAMPIRIC_POISON_HEAL            = 82009,
 
+    //NON_LETHAL
+    SPELL_ROGUE_NUMBING_POISON                  = 5761,
+    SPELL_ROGUE_NUMBING_POISON_PROC             = 5760,
+    SPELL_ROGUE_NUMBING_POISON_CONCENTRATED     = 82010, //shiv
+    SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
+    SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
+    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, // shiv
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -827,19 +828,18 @@ class spell_rog_envenom : public SpellScript
 
         if (Unit* target = GetHitUnit())
         {
-            if (auto* aurEff = target->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC, caster->GetGUID()))
+            if (auto* aurEff = target->GetAura(SPELL_ROGUE_AMPLIFYING_POISON_PROC, caster->GetGUID()))
             {
                 int32 stackAmount = aurEff->GetStackAmount();
                 if (stackAmount >= 10)
                 {
                     SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_AMPLIFYING_POISON);
-                    uint32 damagePct = spell->GetEffect(EFFECT_1).CalcValue(caster);
+                    uint32 damagePct = spell->GetEffect(EFFECT_0).CalcValue(caster);
 
                     aurEff->SetStackAmount(stackAmount - 10);
                     damage += CalculatePct(damage, damagePct);
                 }
             }
-
             damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
@@ -850,6 +850,57 @@ class spell_rog_envenom : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_envenom::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_rog_shiv_poison : public SpellScript
+{
+    PrepareSpellScript(spell_rog_shiv_poison);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (Unit* target = GetHitUnit())
+        {
+            Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+            if (!item)
+                return;
+
+            // item combat enchantments
+            for (uint8 slot = 0; slot < MAX_ENCHANTMENT_SLOT; ++slot)
+            {
+                SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(item->GetEnchantmentId(EnchantmentSlot(slot)));
+                if (!enchant)
+                    continue;
+
+                for (uint8 s = 0; s < 3; ++s)
+                {
+                    if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
+                        continue;
+
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(enchant->spellid[s]);
+                    if (!spellInfo)
+                    {
+                        LOG_ERROR("misc", "Player::CastItemCombatSpell Enchant {}, player (Name: {}, {}) cast unknown spell {} -SHIV-",
+                            enchant->ID, player->GetName(), player->GetGUID().ToString(), enchant->spellid[s]);
+                        continue;
+                    }
+                    // Proc only rogue poisons
+                    if (spellInfo->SpellFamilyName != SPELLFAMILY_ROGUE || spellInfo->Dispel != DISPEL_POISON)
+                        continue;
+
+                    if (spellInfo->Id == SPELL_ROGUE_NUMBING_POISON_PROC)
+                        player->CastSpell(target, SPELL_ROGUE_NUMBING_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+                    else if (spellInfo->Id == SPELL_ROGUE_ATROPHIC_POISON_PROC)
+                        player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+                }
+            }
+        } 
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_shiv_poison::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -873,4 +924,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_eviscerate);
     RegisterSpellScript(spell_rog_vampiric_poison);
     RegisterSpellScript(spell_rog_envenom);
+    RegisterSpellScript(spell_rog_shiv_poison);
 }
