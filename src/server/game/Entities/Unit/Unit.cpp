@@ -8203,7 +8203,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     break;
                 }
                 // Flametongue Weapon (Passive)
-                if (dummySpell->SpellFamilyFlags[0] & 0x200000)
+                if (dummySpell->Id == 58788)
                 {
                     if (GetTypeId() != TYPEID_PLAYER  || !victim || !victim->IsAlive() || !castItem || !castItem->IsEquipped())
                         return false;
@@ -8214,13 +8214,18 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             || (attType == OFF_ATTACK && procFlag & PROC_FLAG_DONE_MAINHAND_ATTACK))
                         return false;
 
-                    float fire_onhit = float(CalculatePct(dummySpell->Effects[EFFECT_0]. CalcValue(), 1.0f));
+                    float spellPowerRatio = float(CalculatePct(dummySpell->Effects[EFFECT_0].CalcValue(), 1.0f));
+                    float attackPowerRatio = float(CalculatePct(dummySpell->Effects[EFFECT_1].CalcValue(), 1.0f));
 
                     float add_spellpower = (float)(SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE)
                                                    + victim->SpellBaseDamageBonusTaken(SPELL_SCHOOL_MASK_FIRE));
 
+                    float add_attackpower = (float)(SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NORMAL)
+                                                   + victim->SpellBaseDamageBonusTaken(SPELL_SCHOOL_MASK_NORMAL));
+
                     // 1.3speed = 5%, 2.6speed = 10%, 4.0 speed = 15%, so, 1.0speed = 3.84%
-                    ApplyPct(add_spellpower, 3.84f);
+                    ApplyPct(add_spellpower, spellPowerRatio);
+                    ApplyPct(add_attackpower, attackPowerRatio);
 
                     // Enchant on Off-Hand and ready?
                     if (castItem->GetSlot() == EQUIPMENT_SLOT_OFFHAND && procFlag & PROC_FLAG_DONE_OFFHAND_ATTACK)
@@ -8228,7 +8233,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                         float BaseWeaponSpeed = GetAttackTime(OFF_ATTACK) / 1000.0f;
 
                         // Value1: add the tooltip damage by swingspeed + Value2: add spelldmg by swingspeed
-                        basepoints0 = int32((fire_onhit * BaseWeaponSpeed) + (add_spellpower * BaseWeaponSpeed));
+                        basepoints0 = int32((add_spellpower * BaseWeaponSpeed) + (add_attackpower * BaseWeaponSpeed));
                         triggered_spell_id = 10444;
                     }
 
@@ -8238,7 +8243,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                         float BaseWeaponSpeed = GetAttackTime(BASE_ATTACK) / 1000.0f;
 
                         // Value1: add the tooltip damage by swingspeed +  Value2: add spelldmg by swingspeed
-                        basepoints0 = int32((fire_onhit * BaseWeaponSpeed) + (add_spellpower * BaseWeaponSpeed));
+                        basepoints0 = int32((add_spellpower * BaseWeaponSpeed) + (add_attackpower * BaseWeaponSpeed));
                         triggered_spell_id = 10444;
                     }
 

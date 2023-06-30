@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_SHAMAN and SPELLFAMILY_GENERIC spells used by shaman players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_sha_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_SHAMAN and SPELLFAMILY_GENERIC spells used by shaman players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_sha_".
+  */
 
 #include "GridNotifiers.h"
 #include "ScriptMgr.h"
@@ -31,41 +31,45 @@
 
 enum ShamanSpells
 {
-    SPELL_SHAMAN_GLYPH_OF_FERAL_SPIRIT          = 63271,
-    SPELL_SHAMAN_ANCESTRAL_AWAKENING_PROC       = 52752,
-    SPELL_SHAMAN_BIND_SIGHT                     = 6277,
-    SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT         = 52025,
-    SPELL_SHAMAN_EARTH_SHIELD_HEAL              = 379,
-    SPELL_SHAMAN_ELEMENTAL_MASTERY              = 16166,
-    SPELL_SHAMAN_EXHAUSTION                     = 57723,
-    SPELL_SHAMAN_FIRE_NOVA_R1                   = 1535,
-    SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1         = 8349,
-    SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD          = 63279,
-    SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM  = 55456,
-    SPELL_SHAMAN_GLYPH_OF_MANA_TIDE             = 55441,
-    SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM          = 62132,
-    SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD          = 23552,
-    SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD_DAMAGE   = 27635,
-    SPELL_SHAMAN_ITEM_MANA_SURGE                = 23571,
-    SPELL_SHAMAN_LAVA_FLOWS_R1                  = 51480,
-    SPELL_SHAMAN_LAVA_FLOWS_TRIGGERED_R1        = 64694,
-    SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE     = 52032,
-    SPELL_SHAMAN_MANA_TIDE_TOTEM                = 39609,
-    SPELL_SHAMAN_SATED                          = 57724,
-    SPELL_SHAMAN_STORM_EARTH_AND_FIRE           = 51483,
-    SPELL_SHAMAN_TOTEM_EARTHBIND_EARTHGRAB      = 64695,
-    SPELL_SHAMAN_TOTEM_EARTHBIND_TOTEM          = 6474,
-    SPELL_SHAMAN_TOTEM_EARTHEN_POWER            = 59566,
-    SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL      = 52042,
-    SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1    = 51554,
-    SPELL_SHAMAN_STORMSTRIKE                    = 17364,
-    SPELL_SHAMAN_LAVA_LASH                      = 60103
+    SPELL_SHAMAN_GLYPH_OF_FERAL_SPIRIT = 63271,
+    SPELL_SHAMAN_ANCESTRAL_AWAKENING_PROC = 52752,
+    SPELL_SHAMAN_BIND_SIGHT = 6277,
+    SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT = 52025,
+    SPELL_SHAMAN_EARTH_SHIELD_HEAL = 379,
+    SPELL_SHAMAN_EARTHLIVING_WEAPON = 51994,
+    SPELL_SHAMAN_ELEMENTAL_MASTERY = 16166,
+    SPELL_SHAMAN_EXHAUSTION = 57723,
+    SPELL_SHAMAN_FIRE_NOVA = 84000,
+    SPELL_SHAMAN_FIRE_NOVA_DAMAGE = 84001,
+    //SPELL_SHAMAN_FIRE_NOVA_R1                 = 1535,
+    //SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1       = 8349,
+    SPELL_SHAMAN_FLAME_SHOCK = 49233,
+    SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD = 63279,
+    SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM = 55456,
+    SPELL_SHAMAN_GLYPH_OF_MANA_TIDE = 55441,
+    SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM = 62132,
+    SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD = 23552,
+    SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD_DAMAGE = 27635,
+    SPELL_SHAMAN_ITEM_MANA_SURGE = 23571,
+    SPELL_SHAMAN_LAVA_FLOWS_R1 = 51480,
+    SPELL_SHAMAN_LAVA_FLOWS_TRIGGERED_R1 = 64694,
+    SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE = 52032,
+    SPELL_SHAMAN_MANA_TIDE_TOTEM = 39609,
+    SPELL_SHAMAN_SATED = 57724,
+    SPELL_SHAMAN_STORM_EARTH_AND_FIRE = 51483,
+    SPELL_SHAMAN_TOTEM_EARTHBIND_EARTHGRAB = 64695,
+    SPELL_SHAMAN_TOTEM_EARTHBIND_TOTEM = 6474,
+    SPELL_SHAMAN_TOTEM_EARTHEN_POWER = 59566,
+    SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL = 52042,
+    SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1 = 51554,
+    SPELL_SHAMAN_STORMSTRIKE = 17364,
+    SPELL_SHAMAN_LAVA_LASH = 60103
 };
 
 enum ShamanSpellIcons
 {
-    SHAMAN_ICON_ID_RESTORATIVE_TOTEMS           = 338,
-    SHAMAN_ICON_ID_SHAMAN_LAVA_FLOW             = 3087
+    SHAMAN_ICON_ID_RESTORATIVE_TOTEMS = 338,
+    SHAMAN_ICON_ID_SHAMAN_LAVA_FLOW = 3087
 };
 
 class spell_sha_totem_of_wrath : public SpellScript
@@ -657,28 +661,19 @@ class spell_sha_earthliving_weapon : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        auto chance = 20;
         Unit* caster = eventInfo.GetActor();
+        auto chance = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_EARTHLIVING_WEAPON)->GetEffect(EFFECT_1).CalcValue(caster);
+
         if (!caster || !eventInfo.GetProcTarget())
-        {
             return false;
-        }
 
         if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
-        {
             if (spellInfo->Id == SPELL_SHAMAN_EARTH_SHIELD_HEAL)
-            {
                 return false;
-            }
-        }
 
         if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1, EFFECT_1, caster->GetGUID()))
-        {
             if (eventInfo.GetProcTarget()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
-            {
                 chance += aurEff->GetAmount();
-            }
-        }
 
         return roll_chance_i(chance);
     }
@@ -689,57 +684,57 @@ class spell_sha_earthliving_weapon : public AuraScript
     }
 };
 
-// -1535 - Fire Nova
-class spell_sha_fire_nova : public SpellScript
-{
-    PrepareSpellScript(spell_sha_fire_nova);
-
-    bool Validate(SpellInfo const* spellInfo) override
-    {
-        SpellInfo const* firstRankSpellInfo = sSpellMgr->GetSpellInfo(SPELL_SHAMAN_FIRE_NOVA_R1);
-        if (!firstRankSpellInfo || !spellInfo->IsRankOf(firstRankSpellInfo))
-            return false;
-
-        uint8 rank = spellInfo->GetRank();
-        if (!sSpellMgr->GetSpellWithRank(SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1, rank, true))
-            return false;
-        return true;
-    }
-
-    SpellCastResult CheckFireTotem()
-    {
-        // fire totem
-        Unit* caster = GetCaster();
-        if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[1]))
-        {
-            if (!caster->IsWithinDistInMap(totem, caster->GetSpellMaxRangeForTarget(totem, GetSpellInfo())))
-                return SPELL_FAILED_OUT_OF_RANGE;
-            return SPELL_CAST_OK;
-        }
-        else
-        {
-            SetCustomCastResultMessage(SPELL_CUSTOM_ERROR_MUST_HAVE_FIRE_TOTEM);
-            return SPELL_FAILED_CUSTOM_ERROR;
-        }
-    }
-
-    void HandleDummy(SpellEffIndex /*effIndex*/)
-    {
-        Unit* caster = GetCaster();
-        if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[1]))
-        {
-            uint8 rank = GetSpellInfo()->GetRank();
-            if (totem->IsTotem())
-                caster->CastSpell(totem, sSpellMgr->GetSpellWithRank(SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1, rank), true);
-        }
-    }
-
-    void Register() override
-    {
-        OnCheckCast += SpellCheckCastFn(spell_sha_fire_nova::CheckFireTotem);
-        OnEffectHitTarget += SpellEffectFn(spell_sha_fire_nova::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
-    }
-};
+//// -1535 - Fire Nova
+//class spell_sha_fire_nova : public SpellScript
+//{
+//    PrepareSpellScript(spell_sha_fire_nova);
+//
+//    bool Validate(SpellInfo const* spellInfo) override
+//    {
+//        SpellInfo const* firstRankSpellInfo = sSpellMgr->GetSpellInfo(SPELL_SHAMAN_FIRE_NOVA_R1);
+//        if (!firstRankSpellInfo || !spellInfo->IsRankOf(firstRankSpellInfo))
+//            return false;
+//
+//        uint8 rank = spellInfo->GetRank();
+//        if (!sSpellMgr->GetSpellWithRank(SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1, rank, true))
+//            return false;
+//        return true;
+//    }
+//
+//    SpellCastResult CheckFireTotem()
+//    {
+//        // fire totem
+//        Unit* caster = GetCaster();
+//        if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[1]))
+//        {
+//            if (!caster->IsWithinDistInMap(totem, caster->GetSpellMaxRangeForTarget(totem, GetSpellInfo())))
+//                return SPELL_FAILED_OUT_OF_RANGE;
+//            return SPELL_CAST_OK;
+//        }
+//        else
+//        {
+//            SetCustomCastResultMessage(SPELL_CUSTOM_ERROR_MUST_HAVE_FIRE_TOTEM);
+//            return SPELL_FAILED_CUSTOM_ERROR;
+//        }
+//    }
+//
+//    void HandleDummy(SpellEffIndex /*effIndex*/)
+//    {
+//        Unit* caster = GetCaster();
+//        if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[1]))
+//        {
+//            uint8 rank = GetSpellInfo()->GetRank();
+//            if (totem->IsTotem())
+//                caster->CastSpell(totem, sSpellMgr->GetSpellWithRank(SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1, rank), true);
+//        }
+//    }
+//
+//    void Register() override
+//    {
+//        OnCheckCast += SpellCheckCastFn(spell_sha_fire_nova::CheckFireTotem);
+//        OnEffectHitTarget += SpellEffectFn(spell_sha_fire_nova::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+//    }
+//};
 
 // -8050 - Flame Shock
 class spell_sha_flame_shock : public AuraScript
@@ -948,7 +943,7 @@ class spell_sha_lava_lash : public SpellScript
 {
     PrepareSpellScript(spell_sha_lava_lash)
 
-    bool Load() override
+        bool Load() override
     {
         return GetCaster()->GetTypeId() == TYPEID_PLAYER;
     }
@@ -1086,7 +1081,7 @@ class spell_sha_flurry_proc : public AuraScript
         // Should not proc from Windfury Attack, Stormstrike and Lava Lash
         if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
         {
-            constexpr std::array<uint32, 2> spellIcons = {SPELL_SHAMAN_STORMSTRIKE, SPELL_SHAMAN_LAVA_LASH};
+            constexpr std::array<uint32, 2> spellIcons = { SPELL_SHAMAN_STORMSTRIKE, SPELL_SHAMAN_LAVA_LASH };
             const auto found = std::find(std::begin(spellIcons), std::end(spellIcons), spellInfo->Id);
 
             if ((spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && (spellInfo->SpellFamilyFlags[0] & 0x00800000) != 0) || found != std::end(spellIcons))
@@ -1103,6 +1098,34 @@ class spell_sha_flurry_proc : public AuraScript
         DoCheckProc += AuraCheckProcFn(spell_sha_flurry_proc::CheckProc);
     }
 };
+
+// 84000 - Fire Nova
+class spell_sha_fire_nova : public SpellScript
+{
+    PrepareSpellScript(spell_sha_fire_nova);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_SHAMAN_FLAME_SHOCK))
+                continue;
+
+            caster->CastSpell(target, SPELL_SHAMAN_FIRE_NOVA_DAMAGE, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_fire_nova::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+
 
 void AddSC_shaman_spell_scripts()
 {
