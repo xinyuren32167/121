@@ -3427,7 +3427,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                                 AddPct(totalDamagePercentMod, 50.0f);
                 }*/
                 // Mutilate (for each hand)
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
+                /*if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
                 {
                     bool found = false;
                     // fast check
@@ -3449,7 +3449,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
 
                     if (found)
                         AddPct(totalDamagePercentMod, 20.0f);          // 120% if poisoned
-                }
+                }*/
                 break;
             }
         case SPELLFAMILY_PALADIN:
