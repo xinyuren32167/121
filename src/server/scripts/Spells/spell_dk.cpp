@@ -937,7 +937,7 @@ class spell_dk_dancing_rune_weapon : public AuraScript
         SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
         if (!spellInfo)
             return true;
-
+         
         // Death Coil exception, Check if spell is from spellbook
         if (spellInfo->Id != SPELL_DK_DEATH_COIL_DAMAGE && !eventInfo.GetActor()->ToPlayer()->HasActiveSpell(spellInfo->Id))
             return false;

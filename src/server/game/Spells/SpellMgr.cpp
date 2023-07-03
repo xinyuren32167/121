@@ -3385,9 +3385,9 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
             case 50315: // Disco Ball
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NO_PVP_FLAG;
                 break;
-            case 14183: // Premeditation
+            /*case 14183: // Premeditation
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_DONT_BREAK_STEALTH;
-                break;
+                break;*/
 
             // Xinef: NOT CUSTOM, cant add in DBC CORRECTION because i need to swap effects, too much work to do there
             // Envenom
