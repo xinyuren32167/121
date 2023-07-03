@@ -74,9 +74,9 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[DRUID_RESTO] = { 12, 53251, "Restoration", 11, 700010, 70.00, false, 0 };
     m_Specializations[DRUID_GUARDIAN] = { 13, 80510, "Guardian", 11, 700007, 70.00, true, 700009 };
 
-    m_Specializations[PRIEST_DISCI] = { 29, 80536, "Discipline", 5, 900000, 25.93, true, 900001 };
-    m_Specializations[PRIEST_HOLY] = { 30, 80549, "Holy", 5, 900005, 28.00, false, 0 };
-    m_Specializations[PRIEST_SHADOW] = { 31, 53251, "Shadow", 5, 900008, 70.00, false, 0 };
+    m_Specializations[PRIEST_DISCI] = { 29, 48066, "Discipline", 5, 900000, 25.93, true, 900001 };
+    m_Specializations[PRIEST_HOLY] = { 30, 48078, "Holy", 5, 900005, 28.00, false, 0 };
+    m_Specializations[PRIEST_SHADOW] = { 31, 81048, "Shadow", 5, 900008, 70.00, false, 0 };
 }
     
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
