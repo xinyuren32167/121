@@ -767,45 +767,65 @@ class spell_sha_flame_shock : public AuraScript
     }
 };
 
-// 52041, 52046, 52047, 52048, 52049, 52050, 58759, 58760, 58761 - Healing Stream Totem
-class spell_sha_healing_stream_totem : public SpellScript
+//// 58761 - Healing Stream Totem
+//class spell_sha_healing_stream_totem : public SpellScript
+//{
+//    PrepareSpellScript(spell_sha_healing_stream_totem);
+//
+//    bool Validate(SpellInfo const* /*spellInfo*/) override
+//    {
+//        return ValidateSpellInfo({ SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM, SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL });
+//    }
+//
+//    void HandleDummy(SpellEffIndex effIndex)
+//    {
+//        int32 damage = GetEffectValue();
+//        SpellInfo const* triggeringSpell = GetTriggeringSpell();
+//        if (Unit* target = GetHitUnit())
+//            if (Unit* caster = GetCaster())
+//            {
+//                if (Unit* owner = caster->GetOwner())
+//                {
+//                    if (triggeringSpell)
+//                        damage = int32(owner->SpellHealingBonusDone(target, triggeringSpell, damage, HEAL, effIndex));
+//
+//                    // Restorative Totems
+//                    if (AuraEffect* dummy = owner->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_SHAMAN, SHAMAN_ICON_ID_RESTORATIVE_TOTEMS, 1))
+//                        AddPct(damage, dummy->GetAmount());
+//
+//                    damage = int32(target->SpellHealingBonusTaken(owner, triggeringSpell, damage, HEAL));
+//                }
+//                caster->CastCustomSpell(target, SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL, &damage, 0, 0, true, 0, 0, GetOriginalCaster()->GetGUID());
+//            }
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectHitTarget += SpellEffectFn(spell_sha_healing_stream_totem::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+//    }
+//};
+
+// 58765 - Healing Stream Totem
+class spell_sha_healing_stream_totem_target : public SpellScript
 {
-    PrepareSpellScript(spell_sha_healing_stream_totem);
+    PrepareSpellScript(spell_sha_healing_stream_totem_target);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
+    void FilterTargets(std::list<WorldObject*>& targets)
     {
-        return ValidateSpellInfo({ SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM, SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL });
-    }
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
-    void HandleDummy(SpellEffIndex effIndex)
-    {
-        int32 damage = GetEffectValue();
-        SpellInfo const* triggeringSpell = GetTriggeringSpell();
-        if (Unit* target = GetHitUnit())
-            if (Unit* caster = GetCaster())
-            {
-                if (Unit* owner = caster->GetOwner())
-                {
-                    if (triggeringSpell)
-                        damage = int32(owner->SpellHealingBonusDone(target, triggeringSpell, damage, HEAL, effIndex));
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(GetCaster());
 
-                    // Restorative Totems
-                    if (AuraEffect* dummy = owner->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_SHAMAN, SHAMAN_ICON_ID_RESTORATIVE_TOTEMS, 1))
-                        AddPct(damage, dummy->GetAmount());
-
-                    // Glyph of Healing Stream Totem
-                    if (AuraEffect const* aurEff = owner->GetAuraEffect(SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM, EFFECT_0))
-                        AddPct(damage, aurEff->GetAmount());
-
-                    damage = int32(target->SpellHealingBonusTaken(owner, triggeringSpell, damage, HEAL));
-                }
-                caster->CastCustomSpell(target, SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL, &damage, 0, 0, true, 0, 0, GetOriginalCaster()->GetGUID());
-            }
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_healing_stream_totem::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_healing_stream_totem_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
     }
 };
 
@@ -1125,6 +1145,54 @@ class spell_sha_fire_nova : public SpellScript
     }
 };
 
+// 58799 - Frostbrand Weapon Damage
+class spell_sha_frostbrand_weapon : public SpellScript
+{
+    PrepareSpellScript(spell_sha_frostbrand_weapon);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* target = GetHitUnit();
+        Unit* caster = GetCaster();
+        int32 damage = GetEffectValue();
+
+        if (!target || target->isDead())
+            return;
+
+        damage += CalculatePct(caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), GetSpellInfo()->GetEffect(effIndex).BonusMultiplier);
+        damage += CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetSpellInfo()->GetEffect(effIndex).DamageMultiplier);
+        damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_frostbrand_weapon::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// All Maelstrom Generation EFFECT_2 On Cast
+class spell_sha_maelstrom_on_cast : public SpellScript
+{
+    PrepareSpellScript(spell_sha_maelstrom_on_cast);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        int32 maelstromAmount = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+
+        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + maelstromAmount, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_maelstrom_on_cast::HandleProc);
+    }
+};
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -1146,7 +1214,8 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_earthliving_weapon);
     RegisterSpellScript(spell_sha_fire_nova);
     RegisterSpellScript(spell_sha_flame_shock);
-    RegisterSpellScript(spell_sha_healing_stream_totem);
+    //RegisterSpellScript(spell_sha_healing_stream_totem);
+    RegisterSpellScript(spell_sha_healing_stream_totem_target);
     RegisterSpellScript(spell_sha_heroism);
     RegisterSpellScript(spell_sha_item_lightning_shield);
     RegisterSpellScript(spell_sha_item_lightning_shield_trigger);
@@ -1158,4 +1227,11 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_sentry_totem);
     RegisterSpellScript(spell_sha_thunderstorm);
     RegisterSpellScript(spell_sha_flurry_proc);
+    RegisterSpellScript(spell_sha_frostbrand_weapon);
+    RegisterSpellScript(spell_sha_maelstrom_on_cast);
+
+    
+
+
+    
 }
