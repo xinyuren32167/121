@@ -959,6 +959,7 @@ uint32 Player::GetItemEnchant(EquipmentSlots itemSlot, SpellFamilyNames familyNa
             }
         }
     }
+    return 0;
 }
 
 void Player::UpdateAllSpellCritChances()

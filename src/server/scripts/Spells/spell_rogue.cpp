@@ -873,12 +873,12 @@ class spell_rog_shiv_poison : public SpellScript
         {
             Player* player = GetCaster()->ToPlayer();
 
-            int32 enchantID = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON);
-
-            if (enchantID == SPELL_ROGUE_NUMBING_POISON_PROC)
-                player->CastSpell(target, SPELL_ROGUE_NUMBING_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
-            else if (enchantID == SPELL_ROGUE_ATROPHIC_POISON_PROC)
-                player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+            if (uint32 enchantID = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON)) {
+                if (enchantID == SPELL_ROGUE_NUMBING_POISON_PROC)
+                    player->CastSpell(target, SPELL_ROGUE_NUMBING_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+                if (enchantID == SPELL_ROGUE_ATROPHIC_POISON_PROC)
+                    player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+            }
         } 
     }
 
@@ -1045,10 +1045,10 @@ class spell_rog_poisoned_knife : public SpellScript
         {
             Player* player = GetCaster()->ToPlayer();
 
-            if (int32 mainHand = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (uint32 mainHand = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
                 player->CastSpell(target, mainHand, TRIGGERED_FULL_MASK);
 
-            if(int32 offHand = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if(uint32 offHand = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
                 player->CastSpell(target, offHand, TRIGGERED_FULL_MASK);
         }
     }
