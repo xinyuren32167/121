@@ -69,9 +69,14 @@ enum WarlockSpells
 
 enum PET_WARLOCKS {
 
+
+    // lesser
     PET_DARKHOUND = 600600,
-    PET_WILDIMP = 600601,
     PET_FELBOAR = 600602,
+    PET_WILDIMP = 600601,
+
+    // Greater
+    PET_DEMONIC_TYRAN = 600603,
 };
 
 enum WarlockSpellIcons
@@ -1351,6 +1356,7 @@ class spell_warlock_summon_felboar : public SpellScript
     {
         Player* player = GetCaster()->ToPlayer();
         int32 totalSummons = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+        Unit* target = GetExplTargetUnit();
 
         for (size_t i = 0; i < totalSummons; i++)
         {
@@ -1365,6 +1371,38 @@ class spell_warlock_summon_felboar : public SpellScript
     }
 };
 
+
+class spell_warlock_demonic_tyrant : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_demonic_tyrant);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+
+        int32 duration = GetSpellInfo()->GetDuration();
+        GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration);
+
+        for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+            if (Unit* pet = *itr)
+                if (TempSummon* summon = pet->ToTempSummon())
+                {
+                    if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
+                        summon->SetTimer(summon->GetTimer() + timerIncrease);
+
+                }
+                    
+
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_demonic_tyrant::HandleCast);
+    }
+};
+
 // 83002
 class spell_warlock_hand_of_guldan : public SpellScript
 {
@@ -1376,10 +1414,10 @@ class spell_warlock_hand_of_guldan : public SpellScript
         uint8 maxSummon = std::min(runicPower, 3);
         Player* player = GetCaster()->ToPlayer();
 
-        player->ModifyPower(POWER_RUNIC_POWER, maxSummon);
+        player->ModifyPower(POWER_RUNIC_POWER, -maxSummon);
 
         if (Unit* target = GetHitUnit()) {
-            for (size_t i = 1; i < maxSummon; i++)
+            for (size_t i = 0; i < maxSummon; i++)
             {
                 TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 9999999);
                 if (target)
@@ -1388,8 +1426,15 @@ class spell_warlock_hand_of_guldan : public SpellScript
         }
     }
 
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        if(!targets.empty())
+            targets.resize(1);
+    }
+
     void Register() override
     {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_hand_of_guldan::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
         OnEffectHitTarget += SpellEffectFn(spell_warlock_hand_of_guldan::HandleHitTarget, EFFECT_0, SPELL_EFFECT_TRIGGER_MISSILE);
     }
 };
@@ -1430,4 +1475,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
     RegisterSpellScript(spell_warlock_summon_felboar);
+    RegisterSpellScript(spell_warlock_demonic_tyrant);
 }

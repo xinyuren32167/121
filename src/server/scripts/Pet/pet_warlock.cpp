@@ -33,6 +33,16 @@
 enum WarlockSpells
 {
     SPELL_WILDIMP_FIREBOLT = 83003,
+    SPELL_CHARGE_FELBOAR    = 83005,
+    SPELL_DEMONBOLT         = 83008
+};
+
+enum PET_WARLOCKS {
+
+    PET_DARKHOUND = 600600,
+    PET_WILDIMP = 600601,
+    PET_FELBOAR = 600602,
+    PET_DEMONIC_TYRAN = 600603,
 };
 
 
@@ -42,6 +52,19 @@ static Unit* GetOwnerTarget(Unit* owner) {
             return targetOwner;
 
     return nullptr;
+}
+
+static bool hasSummonedDemonicTyrant(Unit* owner)
+{
+    bool isSummoned = false;
+
+    for (Unit::ControlSet::const_iterator itr = owner->m_Controlled.begin(); itr != owner->m_Controlled.end(); ++itr)
+        if ((*itr)->IsAlive() && (*itr)->GetEntry() == PET_DEMONIC_TYRAN)
+        {
+            isSummoned = true;
+            break;
+        }
+    return isSummoned;
 }
 
 class npc_pet_warlock_wildimp : public CreatureScript
@@ -65,7 +88,6 @@ public:
         {
             me->SetReactState(REACT_DEFENSIVE);
         }
-       
 
         void AttackStart(Unit* who) override
         {
@@ -76,6 +98,7 @@ public:
         {
             ScriptedAI::InitializeAI();
             owner = me->GetOwner();
+
             if (owner) {
                 SpellInfo const* spell = sSpellMgr->GetSpellInfo(SPELL_WILDIMP_FIREBOLT);
                 if (spell)
@@ -88,15 +111,15 @@ public:
             attackTimer += diff;
 
             if (attackTimer >= 2000) {
-                int32 fireSpellPower = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
-                int32 damage = fireSpellPower * scalingFirebolt;
-                int32 spellPower = std::max(1, damage);
+                int32 damage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_FIRE, scalingFirebolt);
                 if (Unit* target = GetOwnerTarget(owner)) {
-                    me->CastCustomSpell(83003, SPELLVALUE_BASE_POINT0, spellPower, target);
+                    me->CastCustomSpell(83003, SPELLVALUE_BASE_POINT0, damage, target);
                 }
                 else {
-                    me->GetMotionMaster()->Clear(false);
-                    me->GetMotionMaster()->MoveFollow(owner, urand(1, 2), urand(1, 2));
+                    if (!me->IsInCombat()) {
+                        me->GetMotionMaster()->Clear(false);
+                        me->GetMotionMaster()->MoveFollow(owner, urand(1, 2), urand(1, 2));
+                    }
                 }
                 attackTimer = 0;
             }
@@ -104,6 +127,9 @@ public:
 
         void SpellHitTarget(Unit* target, SpellInfo const* spell)
         {
+            if (hasSummonedDemonicTyrant(owner))
+                return;
+
             if (attackCount >= 10)
                 me->DespawnOrUnsummon();
             else
@@ -118,66 +144,93 @@ public:
 };
 
 
-class npc_pet_warlock_felboar : public CreatureScript
+struct npc_pet_warlock_felboar : public ScriptedAI
 {
-public:
-    npc_pet_warlock_felboar() : CreatureScript("npc_pet_warlock_felboar") { }
+    npc_pet_warlock_felboar(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
 
-    struct npc_pet_warlock_felboarAI : ScriptedAI
+    void InitializeAI() override
     {
-        npc_pet_warlock_felboarAI(Creature* creature) : ScriptedAI(creature) { }
+        owner = me->GetCharmerOrOwnerPlayerOrPlayerItself();
+    }
 
-        uint32 checkTarget = 0;
-        Unit* owner;
-        bool charge;
 
-        void Reset() override
+    void UpdateAI(uint32 diff) override
+    {
+        if (_initAttack)
         {
-            me->SetReactState(REACT_DEFENSIVE);
-        }
-
-
-        void AttackStart(Unit* who) override
-        {
-            ScriptedAI::AttackStart(who);
-        }
-
-        void InitializeAI() override
-        {
-            ScriptedAI::InitializeAI();
-            owner = me->GetOwner();
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            checkTarget += diff;
-
-            if (checkTarget >= 1000) {
-                int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-                int32 damage = shadow * 1.53;
-                int32 spellPower = std::max(1, damage);
-                if (Unit* enemy = GetOwnerTarget(owner)) {
-                    if (!charge) {
-                        me->CastCustomSpell(83005, SPELLVALUE_BASE_POINT0, shadow, enemy);
-                        charge = true;
+            if (owner->IsInCombat()) {
+                if (Unit* target = owner->GetSelectedUnit())
+                    if (me->CanCreatureAttack(target)) {
+                        int32 damage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 1.53);
+                        me->CastCustomSpell(SPELL_CHARGE_FELBOAR, SPELLVALUE_BASE_POINT0, damage, target);
+                        AttackStart(target);
+                        _initAttack = false;
                     }
-                    if (!me->GetTarget()) {
-                        me->AI()->AttackStart(enemy);
-                    }
-                }
-                checkTarget = 0;
             }
         }
-    };
 
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_pet_warlock_felboarAI(creature);
+        if (!UpdateVictim())
+            return;
+
+        DoMeleeAttackIfReady();
     }
+
+private:
+    EventMap _events;
+    bool _initAttack;
+    Player* owner;
+    int32 shadow;
 };
+
+
+struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
+{
+    npc_pet_warlock_demonic_tyrant(Creature* creature) : ScriptedAI(creature) { }
+
+    void InitializeAI() override
+    {
+        _events.Reset();
+        _events.ScheduleEvent(1, 2000);
+        owner = me->GetCharmerOrOwnerPlayerOrPlayerItself();
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        if (!owner->IsInCombat())
+            return;
+
+        if (!UpdateVictim())
+            return;
+
+        _events.Update(diff);
+
+        while (uint32 eventId = _events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case 1:
+                if (Unit* target = owner->GetSelectedUnit()) {
+                    int32 spellDamage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.53);
+                    me->CastCustomSpell(SPELL_DEMONBOLT, SPELLVALUE_BASE_POINT0, spellDamage, target);
+                    _events.ScheduleEvent(1, 2000);
+                }
+                break;
+            }
+        }
+
+        DoMeleeAttackIfReady();
+    }
+
+private:
+    EventMap _events;
+    Player* owner;
+    int32 shadow;
+};
+
 
 void AddSC_warlock_pet_scripts()
 {
     new npc_pet_warlock_wildimp();
-    new npc_pet_warlock_felboar();
+    RegisterCreatureAI(npc_pet_warlock_felboar);
+    RegisterCreatureAI(npc_pet_warlock_demonic_tyrant);
 }

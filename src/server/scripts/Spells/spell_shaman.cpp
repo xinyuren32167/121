@@ -355,6 +355,34 @@ class spell_sha_fire_elemental_scaling : public AuraScript
     }
 };
 
+
+class spell_sha_earth_elemental_scaling : public AuraScript
+{
+    PrepareAuraScript(spell_sha_earth_elemental_scaling);
+
+    void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            amount = CalculatePct(std::max<int32>(0, owner->GetResistance(SPELL_SCHOOL_MASK_NORMAL)), amount);
+        }
+    }
+
+    void CalculateStatAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            amount = CalculatePct(std::max<int32>(0, owner->GetStat(STAT_STAMINA)), amount);
+        }
+    }
+
+    void Register() override
+    {
+       DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_elemental_scaling::CalculateResistanceAmount, EFFECT_ALL, SPELL_AURA_MOD_RESISTANCE);
+       DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_elemental_scaling::CalculateStatAmount, EFFECT_ALL, SPELL_AURA_MOD_STAT);
+    }
+};
+
 // 52759 - Ancestral Awakening (Proc)
 class spell_sha_ancestral_awakening_proc : public SpellScript
 {
@@ -1135,4 +1163,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_sentry_totem);
     RegisterSpellScript(spell_sha_thunderstorm);
     RegisterSpellScript(spell_sha_flurry_proc);
+    RegisterSpellScript(spell_sha_earth_elemental_scaling);
 }

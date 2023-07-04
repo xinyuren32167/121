@@ -11823,6 +11823,13 @@ int32 Unit::SpellBaseDamageBonusDone(SpellSchoolMask schoolMask)
     return DoneAdvertisedBenefit;
 }
 
+int32 Unit::CalculateSpellDamageWithRatio(SpellSchoolMask schoolMask, float ratio)
+{
+    int32 spellPower = SpellBaseDamageBonusDone(schoolMask);
+    int32 damage = spellPower * ratio;
+    return std::min(1, damage);
+}
+
 int32 Unit::SpellBaseDamageBonusTaken(SpellSchoolMask schoolMask, bool isDoT)
 {
     int32 TakenAdvertisedBenefit = 0;

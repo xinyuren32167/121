@@ -1115,23 +1115,6 @@ class spell_dru_swift_flight_passive : public AuraScript
     }
 };
 
-// -5217 - Tiger's Fury
-/*class spell_dru_tiger_s_fury : public SpellScript
-{
-    PrepareSpellScript(spell_dru_tiger_s_fury);
-
-    void OnHit()
-    {
-        if (AuraEffect const* aurEff = GetHitUnit()->GetAuraEffectOfRankedSpell(SPELL_DRUID_KING_OF_THE_JUNGLE, EFFECT_0))
-            GetHitUnit()->CastCustomSpell(SPELL_DRUID_TIGER_S_FURY_ENERGIZE, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetHitUnit(), true);
-    }
-
-    void Register() override
-    {
-        AfterHit += SpellHitFn(spell_dru_tiger_s_fury::OnHit);
-    }
-};*/
-
 // -61391 - Typhoon
 class spell_dru_typhoon : public SpellScript
 {

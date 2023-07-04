@@ -2092,9 +2092,5 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_death_tap);
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
-
-
-
-    
     new npc_pri_shadowy_apparitions();
 }
