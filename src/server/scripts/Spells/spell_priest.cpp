@@ -2130,6 +2130,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellAndAuraScriptPair(spell_pri_power_word_shield, spell_pri_power_word_shield_aura);
     RegisterSpellScript(spell_pri_prayer_of_mending_heal);
     RegisterSpellScript(spell_pri_shadow_word_death);
+    RegisterSpellScript(spell_pri_shadow_word_death_after_damage);
     RegisterSpellScript(spell_pri_vampiric_touch);
     RegisterSpellScript(spell_pri_mind_control);
     RegisterSpellScript(spell_pri_desperate_prayer);
@@ -2165,7 +2166,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
 
-
+    
 
 
     new npc_pri_shadowy_apparitions();
