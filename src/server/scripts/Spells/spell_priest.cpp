@@ -892,7 +892,7 @@ class spell_pri_shadow_word_death : public SpellScript
         damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
         int32 targetHealthPct = target->GetHealthPct();
-
+        LOG_ERROR("error", "death proc");
         if (target->HealthBelowPct(20))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
@@ -900,13 +900,84 @@ class spell_pri_shadow_word_death : public SpellScript
 
         SetHitDamage(damage);
 
-        if (target->GetHealth() > damage)
-            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
+
+    /*void HandleReflect()
+    {
+        Unit* target = GetHitUnit();
+        int32 damage = GetHitDamage();
+
+        if (!target)
+            return;
+        LOG_ERROR("error", "damage = {}", damage);
+        if (target->IsAlive())
+            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+    }*/
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_shadow_word_death::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        // AfterHit += SpellHitFn(spell_pri_shadow_word_death::HandleReflect);
+    }
+};
+
+// 48189 - Shadow Word: Death 
+class spell_pri_shadow_word_death_after_damage : public AuraScript
+{
+    PrepareAuraScript(spell_pri_shadow_word_death_after_damage);
+
+    Aura* GetDeathTapAura()
+    {
+        for (size_t i = 81076; i < 81079; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || !caster)
+            return;
+
+        if (GetDeathTapAura())
+        {
+            int32 rand = urand(1, 100);
+
+            if (rand > GetDeathTapAura()->GetEffect(EFFECT_0)->GetAmount())
+                return;
+
+            caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+        }
+
+        GetAura()->GetEffect(EFFECT_0)->SetAmount(0);
+        GetAura()->Remove();
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = aurEff->GetAmount();
+
+        if (amount <= 0)
+            return;
+
+        if (GetUnitOwner()->isDead())
+            return;
+
+        caster->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_shadow_word_death_after_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_death_after_damage::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1871,34 +1942,35 @@ class spell_pri_insanity_on_periodic : public AuraScript
 };
 
 // 81076 - Death Tap
-class spell_pri_death_tap : public AuraScript
-{
-    PrepareAuraScript(spell_pri_death_tap);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetProcTarget();
-
-        if (!target || !caster)
-            return;
-
-        if (!target->HasAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
-            return;
-
-        int32 rand = urand(1, 100);
-
-        if (rand > aurEff->GetAmount())
-            return;
-
-        caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
-    }
-
-    void Register()
-    {
-        OnEffectProc += AuraEffectProcFn(spell_pri_death_tap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
+//class spell_pri_death_tap : public AuraScript
+//{
+//    PrepareAuraScript(spell_pri_death_tap);
+//
+//    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+//    {
+//        Unit* caster = GetCaster();
+//        Unit* target = eventInfo.GetProcTarget();
+//
+//        if (!target || !caster)
+//            return;
+//
+//        if (Aura* deathAura = target->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
+//        {
+//            int32 rand = urand(1, 100);
+//
+//            if (rand > aurEff->GetAmount())
+//                return;
+//
+//            caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+//            deathAura->GetEffect(EFFECT_0)->SetAmount(0);
+//        }
+//    }
+//
+//    void Register()
+//    {
+//        OnEffectProc += AuraEffectProcFn(spell_pri_death_tap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+//    }
+//};
 
 // 81083 - Shadowy Apparitions
 class spell_pri_shadowy_apparitions : public AuraScript
@@ -2089,12 +2161,12 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_void_eruption_cooldown);
     RegisterSpellScript(spell_pri_insanity_on_cast);
     RegisterSpellScript(spell_pri_insanity_on_periodic);
-    RegisterSpellScript(spell_pri_death_tap);
+    //RegisterSpellScript(spell_pri_death_tap);
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
 
 
 
-    
+
     new npc_pri_shadowy_apparitions();
 }
