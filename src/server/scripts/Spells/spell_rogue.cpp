@@ -45,6 +45,14 @@ enum RogueSpells
 
     //OURS
     SPELL_ROGUE_BACKSTAB                        = 82001,
+    SPELL_ROGUE_BLADE_FLURRY                    = 13877,
+    SPELL_ROG_BLADE_FLURRY_SELECTION            = 82012,
+    SPELL_ROG_BLADE_FLURRY_DAMAGE               = 82013,
+    SPELL_ROGUE_KILLING_SPREE_FLURRY_DMG        = 82014,
+    SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR          = 82018,
+    SPELL_ROGUE_SHADOWSTRIKE_TELEPORT           = 82017,
+    SPELL_ROGUE_SLICE_AND_DICE                  = 6774,
+    SPELL_ROGUE_MARKED_FOR_DEATH                = 82022,
 
     //POISONS
     //LETHAL
@@ -56,18 +64,19 @@ enum RogueSpells
     SPELL_ROGUE_DEADLY_POISON_PROC              = 57970,
     SPELL_ROGUE_INSTANT_POISON                  = 57968,
     SPELL_ROGUE_INSTANT_POISON_PROC             = 57965,
-
-    //NON_LETHAL
-    SPELL_ROGUE_NUMBING_POISON                  = 5761,
-    SPELL_ROGUE_NUMBING_POISON_PROC             = 5760,
-    SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
-    SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
     SPELL_ROGUE_AMPLIFYING_POISON               = 82005,
     SPELL_ROGUE_AMPLIFYING_POISON_PROC          = 82006,
     SPELL_ROGUE_VAMPIRIC_POISON                 = 82007,
     SPELL_ROGUE_VAMPIRIC_POISON_PROC            = 82008,
     SPELL_ROGUE_VAMPIRIC_POISON_HEAL            = 82009,
 
+    //NON_LETHAL
+    SPELL_ROGUE_NUMBING_POISON                  = 5761,
+    SPELL_ROGUE_NUMBING_POISON_PROC             = 5760,
+    SPELL_ROGUE_NUMBING_POISON_CONCENTRATED     = 82010, //shiv
+    SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
+    SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
+    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, // shiv
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -404,6 +413,8 @@ public:
                     GetTarget()->ToPlayer()->UpdatePosition(dest, true);
 
                     GetTarget()->CastSpell(target, SPELL_ROGUE_KILLING_SPREE_WEAPON_DMG, TriggerCastFlags(TRIGGERED_FULL_MASK & ~TRIGGERED_DONT_REPORT_CAST_ERROR));
+                    if (GetTarget()->HasAura(SPELL_ROGUE_BLADE_FLURRY))
+                        GetTarget()->CastSpell(target, SPELL_ROGUE_KILLING_SPREE_FLURRY_DMG, TriggerCastFlags(TRIGGERED_FULL_MASK & ~TRIGGERED_DONT_REPORT_CAST_ERROR));
                     break;
                 }
                 else
@@ -827,19 +838,18 @@ class spell_rog_envenom : public SpellScript
 
         if (Unit* target = GetHitUnit())
         {
-            if (auto* aurEff = target->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC, caster->GetGUID()))
+            if (auto* aurEff = target->GetAura(SPELL_ROGUE_AMPLIFYING_POISON_PROC, caster->GetGUID()))
             {
                 int32 stackAmount = aurEff->GetStackAmount();
                 if (stackAmount >= 10)
                 {
                     SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_AMPLIFYING_POISON);
-                    uint32 damagePct = spell->GetEffect(EFFECT_1).CalcValue(caster);
+                    uint32 damagePct = spell->GetEffect(EFFECT_0).CalcValue(caster);
 
                     aurEff->SetStackAmount(stackAmount - 10);
                     damage += CalculatePct(damage, damagePct);
                 }
             }
-
             damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
@@ -850,6 +860,202 @@ class spell_rog_envenom : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_envenom::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_rog_shiv_poison : public SpellScript
+{
+    PrepareSpellScript(spell_rog_shiv_poison);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Player* player = GetCaster()->ToPlayer();
+
+            int32 enchantID = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON);
+
+            if (enchantID == SPELL_ROGUE_NUMBING_POISON_PROC)
+                player->CastSpell(target, SPELL_ROGUE_NUMBING_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+            else if (enchantID == SPELL_ROGUE_ATROPHIC_POISON_PROC)
+                player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+        } 
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_shiv_poison::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+class spell_rog_blade_flurry_new : public AuraScript
+{
+    PrepareAuraScript(spell_rog_blade_flurry_new);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage)
+            {
+                int32 damagePct = aurEff->GetAmount();
+                int32 damageAmount = CalculatePct(damage, damagePct);
+                GetCaster()->CastCustomSpell(SPELL_ROG_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_blade_flurry_new::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_blade_flurry_triggered : public SpellScript
+{
+    PrepareSpellScript(spell_rog_blade_flurry_triggered);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Spell* spell = GetSpell();
+            int32 damage = GetEffectValue();
+            Unit* caster = GetCaster();
+            SpellInfo const* flurry = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_BLADE_FLURRY);
+            int32 targetCount = flurry->GetEffect(EFFECT_2).CalcValue(caster);
+
+            std::list<WorldObject*> targets;
+            spell->SearchAreaTargets(targets, 5.0f, target, caster, TARGET_OBJECT_TYPE_UNIT, TARGET_CHECK_ENEMY, nullptr);
+            targets.remove(target);
+
+            if (targets.size() > 0)
+            {
+                targets.resize(targetCount);
+                for (auto const& enemy : targets)
+                    if (Unit* creatureTarget = enemy->ToUnit())
+                    {
+                        caster->CastCustomSpell(SPELL_ROG_BLADE_FLURRY_DAMAGE, SPELLVALUE_BASE_POINT0, damage, creatureTarget, TRIGGERED_FULL_MASK);
+                    }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_blade_flurry_triggered::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+class spell_rog_shadowstrike_activator : public AuraScript
+{
+    PrepareAuraScript(spell_rog_shadowstrike_activator);
+
+    void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR, TRIGGERED_FULL_MASK);
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->GetAura(SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR)->SetDuration(500);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_shadowstrike_activator::OnApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rog_shadowstrike_activator::OnRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_rog_shadowstrike : public SpellScript
+{
+    PrepareSpellScript(spell_rog_shadowstrike);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (caster->HasAura(SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR))
+            caster->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_SHADOWSTRIKE_TELEPORT, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_rog_shadowstrike::HandleCast);
+    }
+};
+
+class spell_rog_premeditation : public AuraScript
+{
+    PrepareAuraScript(spell_rog_premeditation);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            if (caster->HasAura(SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR))
+            {
+                Unit* target = eventInfo.GetActionTarget();
+                int32 duration = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+                if (Aura* aura = caster->GetAura(SPELL_ROGUE_SLICE_AND_DICE))
+                {
+                    caster->AddComboPoints(target, aurEff->GetAmount());
+
+                    if (aura->GetDuration() < duration)
+                        aura->SetDuration(duration);
+                }
+                else
+                    caster->CastCustomSpell(SPELL_ROGUE_SLICE_AND_DICE, SPELLVALUE_AURA_DURATION, duration, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_premeditation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_marked_for_death : public AuraScript
+{
+    PrepareAuraScript(spell_rog_marked_for_death);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_marked_for_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_poisoned_knife : public SpellScript
+{
+    PrepareSpellScript(spell_rog_poisoned_knife);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Player* player = GetCaster()->ToPlayer();
+
+            if (int32 mainHand = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+                player->CastSpell(target, mainHand, TRIGGERED_FULL_MASK);
+
+            if(int32 offHand = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+                player->CastSpell(target, offHand, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_poisoned_knife::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -873,4 +1079,12 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_eviscerate);
     RegisterSpellScript(spell_rog_vampiric_poison);
     RegisterSpellScript(spell_rog_envenom);
+    RegisterSpellScript(spell_rog_shiv_poison);
+    RegisterSpellScript(spell_rog_blade_flurry_new);
+    RegisterSpellScript(spell_rog_blade_flurry_triggered);
+    RegisterSpellScript(spell_rog_shadowstrike_activator);
+    RegisterSpellScript(spell_rog_shadowstrike);
+    RegisterSpellScript(spell_rog_premeditation);
+    RegisterSpellScript(spell_rog_marked_for_death);
+    RegisterSpellScript(spell_rog_poisoned_knife);
 }

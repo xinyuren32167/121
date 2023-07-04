@@ -2915,7 +2915,7 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
     // Rockbiter Weapon apply to both weapon
     if (!itemTarget)
         return;
-    if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellFamilyFlags[0] & 0x400000)
+    /*if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellFamilyFlags[0] & 0x400000)
     {
         uint32 spell_id = 0;
 
@@ -2978,7 +2978,7 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
             }
         }
         return;
-    }
+    }*/
     if (!itemTarget)
         return;
 
@@ -3002,22 +3002,22 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
 
     // rogue family enchantments exception by duration
     if (m_spellInfo->Id == 38615)
-        duration = 1800;                                    // 30 mins
+        duration = 7200;                                    // 30 mins
     // other rogue family enchantments always 1 hour (some have spell damage=0, but some have wrong data in EffBasePoints)
     else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE)
-        duration = 3600;                                    // 1 hour
+        duration = 7200;                                    // 1 hour
     // shaman family enchantments
     else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN)
-        duration = 1800;                                    // 30 mins
+        duration = 7200;                                    // 30 mins
     // other cases with this SpellVisual already selected
     else if (m_spellInfo->SpellVisual[0] == 215)
-        duration = 1800;                                    // 30 mins
+        duration = 7200;                                    // 30 mins
     // some fishing pole bonuses except Glow Worm which lasts full hour
     else if (m_spellInfo->SpellVisual[0] == 563 && m_spellInfo->Id != 64401)
         duration = 600;                                     // 10 mins
     // shaman rockbiter enchantments
     else if (m_spellInfo->SpellVisual[0] == 0)
-        duration = 1800;                                    // 30 mins
+        duration = 7200;                                    // 30 mins
     else if (m_spellInfo->Id == 29702)
         duration = 300;                                     // 5 mins
     else if (m_spellInfo->Id == 37360)
@@ -3359,7 +3359,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                                 AddPct(totalDamagePercentMod, 50.0f);
                 }*/
                 // Mutilate (for each hand)
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
+                /*if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
                 {
                     bool found = false;
                     // fast check
@@ -3381,7 +3381,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
 
                     if (found)
                         AddPct(totalDamagePercentMod, 20.0f);          // 120% if poisoned
-                }
+                }*/
                 break;
             }
         case SPELLFAMILY_PALADIN:

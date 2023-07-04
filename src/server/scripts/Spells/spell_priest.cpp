@@ -58,7 +58,7 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_WORD_CHASTISE = 81026,
     SPELL_PRIEST_HOLY_WORD_SALVATION = 81032,
     SPELL_PRIEST_HOLY_WORD_SALVATION_MENDING = 81040,
-    SPELL_PRIEST_HOLY_WORD_SANCTITY = 81029,
+    SPELL_PRIEST_HOLY_WORD_SANCTIFY = 81029,
     SPELL_PRIEST_HOLY_WORD_SERENITY = 81025,
     SPELL_PRIEST_ITEM_EFFICIENCY = 37595,
     SPELL_PRIEST_LEAP_OF_FAITH = 81003,
@@ -892,7 +892,7 @@ class spell_pri_shadow_word_death : public SpellScript
         damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
         int32 targetHealthPct = target->GetHealthPct();
-
+        LOG_ERROR("error", "death proc");
         if (target->HealthBelowPct(20))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
@@ -900,13 +900,84 @@ class spell_pri_shadow_word_death : public SpellScript
 
         SetHitDamage(damage);
 
-        if (target->GetHealth() > damage)
-            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
+
+    /*void HandleReflect()
+    {
+        Unit* target = GetHitUnit();
+        int32 damage = GetHitDamage();
+
+        if (!target)
+            return;
+        LOG_ERROR("error", "damage = {}", damage);
+        if (target->IsAlive())
+            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+    }*/
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_shadow_word_death::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        // AfterHit += SpellHitFn(spell_pri_shadow_word_death::HandleReflect);
+    }
+};
+
+// 48189 - Shadow Word: Death 
+class spell_pri_shadow_word_death_after_damage : public AuraScript
+{
+    PrepareAuraScript(spell_pri_shadow_word_death_after_damage);
+
+    Aura* GetDeathTapAura()
+    {
+        for (size_t i = 81076; i < 81079; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || !caster)
+            return;
+
+        if (GetDeathTapAura())
+        {
+            int32 rand = urand(1, 100);
+
+            if (rand > GetDeathTapAura()->GetEffect(EFFECT_0)->GetAmount())
+                return;
+
+            caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+        }
+
+        GetAura()->GetEffect(EFFECT_0)->SetAmount(0);
+        GetAura()->Remove();
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = aurEff->GetAmount();
+
+        if (amount <= 0)
+            return;
+
+        if (GetUnitOwner()->isDead())
+            return;
+
+        caster->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_shadow_word_death_after_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_death_after_damage::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1641,9 +1712,9 @@ class spell_pri_empyreal_blaze : public SpellScript
 };
 
 // 81025 - Holy Word: Sanctify / 48072 - Prayer of Healing / 48068 - Renew
-class spell_pri_holy_word_sanctity_cooldown : public SpellScript
+class spell_pri_holy_word_sanctify_cooldown : public SpellScript
 {
-    PrepareSpellScript(spell_pri_holy_word_sanctity_cooldown);
+    PrepareSpellScript(spell_pri_holy_word_sanctify_cooldown);
 
     void HandleProc()
     {
@@ -1652,20 +1723,20 @@ class spell_pri_holy_word_sanctity_cooldown : public SpellScript
         if (!player || player->isDead())
             return;
 
-        int32 cooldownReduction = 2000;
+        int32 cooldownReduction = 0;
 
         if (GetSpellInfo()->Id == SPELL_PRIEST_PRAYER_OF_HEALING)
-            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SERENITY)->GetEffect(EFFECT_1).CalcValue(player);
+            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SANCTIFY)->GetEffect(EFFECT_1).CalcValue(player);
 
         if (GetSpellInfo()->Id == SPELL_PRIEST_RENEW)
-            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SERENITY)->GetEffect(EFFECT_2).CalcValue(player);
+            cooldownReduction = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_WORD_SANCTIFY)->GetEffect(EFFECT_2).CalcValue(player);
 
-        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTITY, -cooldownReduction);
+        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTIFY, -cooldownReduction);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_pri_holy_word_sanctity_cooldown::HandleProc);
+        OnCast += SpellCastFn(spell_pri_holy_word_sanctify_cooldown::HandleProc);
     }
 };
 
@@ -1679,7 +1750,7 @@ class spell_pri_apotheosis : public SpellScript
         Player* player = GetCaster()->ToPlayer();
 
         player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_CHASTISE, true);
-        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTITY, true);
+        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTIFY, true);
         player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SERENITY, true);
     }
 
@@ -1750,7 +1821,7 @@ class spell_pri_divine_word : public AuraScript
         if (spellID == SPELL_PRIEST_HOLY_WORD_CHASTISE)
             caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_CHASTISE, caster);
 
-        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTITY) {
+        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTIFY) {
             if (Unit* selectedUnit = ObjectAccessor::GetUnit(*caster, caster->GetTarget()))
                 caster->AddAura(SPELL_PRIEST_DIVINE_FAVOR_SANCTIFY, selectedUnit);
             else
@@ -1871,34 +1942,35 @@ class spell_pri_insanity_on_periodic : public AuraScript
 };
 
 // 81076 - Death Tap
-class spell_pri_death_tap : public AuraScript
-{
-    PrepareAuraScript(spell_pri_death_tap);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetProcTarget();
-
-        if (!target || !caster)
-            return;
-
-        if (!target->HasAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
-            return;
-
-        int32 rand = urand(1, 100);
-
-        if (rand > aurEff->GetAmount())
-            return;
-
-        caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
-    }
-
-    void Register()
-    {
-        OnEffectProc += AuraEffectProcFn(spell_pri_death_tap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
+//class spell_pri_death_tap : public AuraScript
+//{
+//    PrepareAuraScript(spell_pri_death_tap);
+//
+//    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+//    {
+//        Unit* caster = GetCaster();
+//        Unit* target = eventInfo.GetProcTarget();
+//
+//        if (!target || !caster)
+//            return;
+//
+//        if (Aura* deathAura = target->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
+//        {
+//            int32 rand = urand(1, 100);
+//
+//            if (rand > aurEff->GetAmount())
+//                return;
+//
+//            caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+//            deathAura->GetEffect(EFFECT_0)->SetAmount(0);
+//        }
+//    }
+//
+//    void Register()
+//    {
+//        OnEffectProc += AuraEffectProcFn(spell_pri_death_tap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+//    }
+//};
 
 // 81083 - Shadowy Apparitions
 class spell_pri_shadowy_apparitions : public AuraScript
@@ -2058,6 +2130,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellAndAuraScriptPair(spell_pri_power_word_shield, spell_pri_power_word_shield_aura);
     RegisterSpellScript(spell_pri_prayer_of_mending_heal);
     RegisterSpellScript(spell_pri_shadow_word_death);
+    RegisterSpellScript(spell_pri_shadow_word_death_after_damage);
     RegisterSpellScript(spell_pri_vampiric_touch);
     RegisterSpellScript(spell_pri_mind_control);
     RegisterSpellScript(spell_pri_desperate_prayer);
@@ -2080,7 +2153,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_word_chastise_cooldown);
     RegisterSpellScript(spell_pri_holy_fire);
     RegisterSpellScript(spell_pri_empyreal_blaze);
-    RegisterSpellScript(spell_pri_holy_word_sanctity_cooldown);
+    RegisterSpellScript(spell_pri_holy_word_sanctify_cooldown);
     RegisterSpellScript(spell_pri_apotheosis);
     RegisterSpellScript(spell_pri_holy_word_salvation);
     RegisterSpellScript(spell_pri_holy_word_salvation_cooldown);
@@ -2089,7 +2162,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_void_eruption_cooldown);
     RegisterSpellScript(spell_pri_insanity_on_cast);
     RegisterSpellScript(spell_pri_insanity_on_periodic);
-    RegisterSpellScript(spell_pri_death_tap);
+    //RegisterSpellScript(spell_pri_death_tap);
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
     new npc_pri_shadowy_apparitions();

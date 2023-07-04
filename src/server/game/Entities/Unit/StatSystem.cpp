@@ -930,6 +930,37 @@ void Player::UpdateMastery()
     sScriptMgr->OnUpdateMastery(this, amount);
 }
 
+uint32 Player::GetItemEnchant(EquipmentSlots itemSlot, SpellFamilyNames familyName, DispelType dispelType)
+{
+    Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, itemSlot);
+    if (item)
+    {
+        // item combat enchantments
+        for (uint8 slot = 0; slot < MAX_ENCHANTMENT_SLOT; ++slot)
+        {
+            SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(item->GetEnchantmentId(EnchantmentSlot(slot)));
+            if (!enchant)
+                continue;
+
+            for (uint8 s = 0; s < 3; ++s)
+            {
+                if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
+                    continue;
+
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(enchant->spellid[s]);
+                if (!spellInfo)
+                    continue;
+
+                // check type
+                if (spellInfo->SpellFamilyName != familyName || spellInfo->Dispel != dispelType)
+                    continue;
+
+                return enchant->spellid[s];
+            }
+        }
+    }
+}
+
 void Player::UpdateAllSpellCritChances()
 {
     for (int i = SPELL_SCHOOL_NORMAL; i < MAX_SPELL_SCHOOL; ++i)

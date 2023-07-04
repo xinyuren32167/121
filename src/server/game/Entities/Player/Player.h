@@ -1949,6 +1949,9 @@ public:
     uint32 totalMastery = 0;
     uint32 totalVersatility = 0;
 
+    /* Get Item Enchant */
+    uint32 GetItemEnchant(EquipmentSlots itemSlot, SpellFamilyNames familyName, DispelType dispelType);
+
     void UpdateAllSpellCritChances();
     void UpdateSpellCritChance(uint32 school);
     void UpdateArmorPenetration(int32 amount);

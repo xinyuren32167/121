@@ -4633,7 +4633,7 @@ void Player::ApplyEnchantment(Item* item, EnchantmentSlot slot, bool apply, bool
                     }
                     break;
                 }
-                case ITEM_ENCHANTMENT_TYPE_TOTEM:           // Shaman Rockbiter Weapon
+                /*case ITEM_ENCHANTMENT_TYPE_TOTEM:           // Shaman Rockbiter Weapon
                 {
                     if (getClass() == CLASS_SHAMAN)
                     {
@@ -4650,7 +4650,7 @@ void Player::ApplyEnchantment(Item* item, EnchantmentSlot slot, bool apply, bool
                         }
                     }
                     break;
-                }
+                }*/
                 case ITEM_ENCHANTMENT_TYPE_USE_SPELL:
                     // processed in Player::CastItemUseSpell
                     break;
