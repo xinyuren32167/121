@@ -52,6 +52,7 @@ enum RogueSpells
     SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR          = 82018,
     SPELL_ROGUE_SHADOWSTRIKE_TELEPORT           = 82017,
     SPELL_ROGUE_SLICE_AND_DICE                  = 6774,
+    SPELL_ROGUE_MARKED_FOR_DEATH                = 82022,
 
     //POISONS
     //LETHAL
@@ -868,42 +869,16 @@ class spell_rog_shiv_poison : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
-        Player* player = GetCaster()->ToPlayer();
         if (Unit* target = GetHitUnit())
         {
-            Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-            if (!item)
-                return;
+            Player* player = GetCaster()->ToPlayer();
 
-            // item combat enchantments
-            for (uint8 slot = 0; slot < MAX_ENCHANTMENT_SLOT; ++slot)
-            {
-                SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(item->GetEnchantmentId(EnchantmentSlot(slot)));
-                if (!enchant)
-                    continue;
+            int32 enchantID = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON);
 
-                for (uint8 s = 0; s < 3; ++s)
-                {
-                    if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
-                        continue;
-
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(enchant->spellid[s]);
-                    if (!spellInfo)
-                    {
-                        LOG_ERROR("misc", "Player::CastItemCombatSpell Enchant {}, player (Name: {}, {}) cast unknown spell {} -SHIV-",
-                            enchant->ID, player->GetName(), player->GetGUID().ToString(), enchant->spellid[s]);
-                        continue;
-                    }
-                    // Proc only rogue poisons
-                    if (spellInfo->SpellFamilyName != SPELLFAMILY_ROGUE || spellInfo->Dispel != DISPEL_POISON)
-                        continue;
-
-                    if (spellInfo->Id == SPELL_ROGUE_NUMBING_POISON_PROC)
-                        player->CastSpell(target, SPELL_ROGUE_NUMBING_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
-                    else if (spellInfo->Id == SPELL_ROGUE_ATROPHIC_POISON_PROC)
-                        player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
-                }
-            }
+            if (enchantID == SPELL_ROGUE_NUMBING_POISON_PROC)
+                player->CastSpell(target, SPELL_ROGUE_NUMBING_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
+            else if (enchantID == SPELL_ROGUE_ATROPHIC_POISON_PROC)
+                player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
         } 
     }
 
@@ -1044,6 +1019,46 @@ class spell_rog_premeditation : public AuraScript
     }
 };
 
+class spell_rog_marked_for_death : public AuraScript
+{
+    PrepareAuraScript(spell_rog_marked_for_death);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_marked_for_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_poisoned_knife : public SpellScript
+{
+    PrepareSpellScript(spell_rog_poisoned_knife);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Player* player = GetCaster()->ToPlayer();
+
+            if (int32 mainHand = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+                player->CastSpell(target, mainHand, TRIGGERED_FULL_MASK);
+
+            if(int32 offHand = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+                player->CastSpell(target, offHand, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_poisoned_knife::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1070,4 +1085,6 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_shadowstrike_activator);
     RegisterSpellScript(spell_rog_shadowstrike);
     RegisterSpellScript(spell_rog_premeditation);
+    RegisterSpellScript(spell_rog_marked_for_death);
+    RegisterSpellScript(spell_rog_poisoned_knife);
 }

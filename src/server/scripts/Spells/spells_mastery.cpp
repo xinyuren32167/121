@@ -761,9 +761,8 @@ class spell_mastery_bloodshield_attack_power : public SpellScript
     }
 };
 
-// Priest
 
-// 900000 - Mastery: Grace
+// Priest
 class spell_mastery_pri_grace : public SpellScript
 {
     PrepareSpellScript(spell_mastery_pri_grace);
@@ -909,6 +908,4 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_pri_grace);
     RegisterSpellScript(spell_mastery_pri_echo_of_light);
     RegisterSpellScript(spell_mastery_pri_shadow_weaving);
-
-
 }
