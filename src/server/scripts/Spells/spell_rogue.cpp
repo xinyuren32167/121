@@ -899,7 +899,7 @@ class spell_rog_blade_flurry_new : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-            if (damage)
+            if (damage && GetCaster()->IsAlive())
             {
                 int32 damagePct = aurEff->GetAmount();
                 int32 damageAmount = CalculatePct(damage, damagePct);
@@ -1069,13 +1069,12 @@ class spell_rog_deathmark : public AuraScript
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
-            uint32 damage = eventInfo.GetDamageInfo()->GetDamage();;
-            if (damage)
+            Unit* caster = GetCaster();
+            uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage && caster->IsAlive())
             {
-                Unit* caster = GetCaster();
-                int32 damagePct = aurEff->GetAmount();
+                int32 damagePct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
                 uint32 damageAmount = CalculatePct(damage, damagePct);
-                
                 Unit* target = eventInfo.GetActionTarget();
 
                 caster->CastCustomSpell(SPELL_ROGUE_DEATHMARK_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
@@ -1085,7 +1084,7 @@ class spell_rog_deathmark : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_rog_deathmark::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_rog_deathmark::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
     }
 };
 
