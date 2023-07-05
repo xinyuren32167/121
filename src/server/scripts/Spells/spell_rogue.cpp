@@ -53,6 +53,8 @@ enum RogueSpells
     SPELL_ROGUE_SHADOWSTRIKE_TELEPORT           = 82017,
     SPELL_ROGUE_SLICE_AND_DICE                  = 6774,
     SPELL_ROGUE_MARKED_FOR_DEATH                = 82022,
+    SPELL_ROGUE_DEATHMARK                       = 82025,
+    SPELL_ROGUE_DEATHMARK_PROC                  = 82026,
 
     //POISONS
     //LETHAL
@@ -1059,6 +1061,34 @@ class spell_rog_poisoned_knife : public SpellScript
     }
 };
 
+class spell_rog_deathmark : public AuraScript
+{
+    PrepareAuraScript(spell_rog_deathmark);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            uint32 damage = eventInfo.GetDamageInfo()->GetDamage();;
+            if (damage)
+            {
+                Unit* caster = GetCaster();
+                int32 damagePct = aurEff->GetAmount();
+                uint32 damageAmount = CalculatePct(damage, damagePct);
+                
+                Unit* target = eventInfo.GetActionTarget();
+
+                caster->CastCustomSpell(SPELL_ROGUE_DEATHMARK_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_deathmark::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1087,4 +1117,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_premeditation);
     RegisterSpellScript(spell_rog_marked_for_death);
     RegisterSpellScript(spell_rog_poisoned_knife);
+    RegisterSpellScript(spell_rog_deathmark);
 }
