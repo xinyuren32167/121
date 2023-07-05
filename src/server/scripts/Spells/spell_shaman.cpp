@@ -48,11 +48,13 @@ enum ShamanSpells
     SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM = 55456,
     SPELL_SHAMAN_GLYPH_OF_MANA_TIDE = 55441,
     SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM = 62132,
+    SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA = 58765,
     SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD = 23552,
     SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD_DAMAGE = 27635,
     SPELL_SHAMAN_ITEM_MANA_SURGE = 23571,
     SPELL_SHAMAN_LAVA_FLOWS_R1 = 51480,
     SPELL_SHAMAN_LAVA_FLOWS_TRIGGERED_R1 = 64694,
+    SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE = 52032,
     SPELL_SHAMAN_MANA_TIDE_TOTEM = 39609,
     SPELL_SHAMAN_SATED = 57724,
@@ -842,8 +844,8 @@ class spell_sha_healing_stream_totem_target : public SpellScript
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
-        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(GetCaster());
-
+        uint32 const maxTargets = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA)->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        LOG_ERROR("error", "target nbr = {}", maxTargets);
         if (targets.size() > maxTargets)
         {
             targets.sort(Acore::HealthPctOrderPred());
@@ -1258,4 +1260,9 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_frostbrand_weapon);
     RegisterSpellScript(spell_sha_maelstrom_on_cast);
     RegisterSpellScript(spell_sha_earth_elemental_scaling);
+
+
+
+
+    
 }
