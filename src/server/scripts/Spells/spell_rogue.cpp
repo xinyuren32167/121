@@ -43,8 +43,6 @@ enum RogueSpells
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST   = 57933,
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC        = 59628,
 
-    SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
-
     //OURS
     SPELL_ROGUE_BACKSTAB                        = 82001,
     SPELL_ROGUE_BLADE_FLURRY                    = 13877,
@@ -58,7 +56,7 @@ enum RogueSpells
     SPELL_ROGUE_DEATHMARK                       = 82025,
     SPELL_ROGUE_DEATHMARK_PROC                  = 82026,
     SPELL_ROGUE_SERRATED_BONE_SPIKE             = 82032,
-    SPELL_ROGUE_SERRATED_BONE_SPIKE_COMBOPOINT  = 82033,
+    SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
 
     //POISONS
     //LETHAL
@@ -1170,20 +1168,37 @@ class spell_rog_serrated_bone_spike : public SpellScript
     {
         Unit* caster = GetCaster();
         Unit* target = GetExplTargetUnit();
-        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_SERRATED_BONE_SPIKE_COMBOPOINT);
-        int32 basePoints = value->GetEffect(EFFECT_0).CalcValue(caster);
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_SERRATED_BONE_SPIKE);
+        int32 points = 1;
+        int32 additionalPoints = value->GetEffect(EFFECT_0).CalcValue(caster);
 
         if (Aura* aura = caster->GetAura(SPELL_ROGUE_SERRATED_BONE_SPIKE))
         {
             uint32 stackAmount = aura->GetStackAmount();
-            basePoints += stackAmount;
+            points += stackAmount * additionalPoints;
         }
-        caster->CastCustomSpell(SPELL_ROGUE_SERRATED_BONE_SPIKE_COMBOPOINT, SPELLVALUE_BASE_POINT0, basePoints, target, TRIGGERED_FULL_MASK);
+        caster->AddComboPoints(target, points);
     }
 
     void Register() override
     {
         BeforeHit += BeforeSpellHitFn(spell_rog_serrated_bone_spike::HandleHit);
+    }
+};
+
+class spell_rog_serrated_bone_spike_death : public AuraScript
+{
+    PrepareAuraScript(spell_rog_serrated_bone_spike_death);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_SERRATED_BONE_SPIKE, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_serrated_bone_spike_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1220,4 +1235,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_crimson_tempest_dot);
     RegisterSpellScript(spell_rog_serrated_bone_spike);
     RegisterSpellScript(spell_rog_blade_rush);
+    RegisterSpellScript(spell_rog_serrated_bone_spike_death);
 }
