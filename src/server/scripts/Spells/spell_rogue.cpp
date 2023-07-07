@@ -43,6 +43,8 @@ enum RogueSpells
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST   = 57933,
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC        = 59628,
 
+    SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
+
     //OURS
     SPELL_ROGUE_BACKSTAB                        = 82001,
     SPELL_ROGUE_BLADE_FLURRY                    = 13877,
@@ -1059,6 +1061,25 @@ class spell_rog_poisoned_knife : public SpellScript
     }
 };
 
+
+// 82031, 82030
+class spell_rog_blade_rush : public SpellScript
+{
+    PrepareSpellScript(spell_rog_blade_rush);
+
+    void HandleHit()
+    {
+        if (Unit* target = GetHitUnit())
+            GetCaster()->CastSpell(target, SPELL_ROGUE_BLADE_RUSH_AOE);
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_blade_rush::HandleHit);
+    }
+};
+
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1087,4 +1108,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_premeditation);
     RegisterSpellScript(spell_rog_marked_for_death);
     RegisterSpellScript(spell_rog_poisoned_knife);
+    RegisterSpellScript(spell_rog_blade_rush);
 }

@@ -10876,7 +10876,7 @@ bool RedirectSpellEvent::Execute(uint64  /*e_time*/, uint32  /*p_time*/)
         for (Unit::AuraEffectList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
             if (*itr == _auraEffect)
             {
-                (*itr)->GetBase()->DropCharge(AURA_REMOVE_BY_DEFAULT);
+                // (*itr)->GetBase()->DropCharge(AURA_REMOVE_BY_DEFAULT);
                 return true;
             }
     }
@@ -10913,7 +10913,7 @@ Unit* Unit::GetMagicHitRedirectTarget(Unit* victim, SpellInfo const* spellInfo)
                         queueTime = magnet->m_Events.CalculateTime((uint64)floor(dist / spellInfo->Speed * 1000.0f));
                     }
 
-                    magnet->m_Events.AddEvent(new KillMagnetEvent(*magnet), queueTime);
+                    // magnet->m_Events.AddEvent(new KillMagnetEvent(*magnet), queueTime);
                 }
 
                 return magnet;
@@ -16883,40 +16883,21 @@ void Unit::AddComboPoints(Unit* target, int8 count)
         return;
     }
 
-    if (target && target != m_comboTarget)
-    {
-        if (m_comboTarget)
-        {
-            m_comboTarget->RemoveComboPointHolder(this);
-        }
-
-        m_comboTarget = target;
-        m_comboPoints = count;
-        target->AddComboPointHolder(this);
-    }
-    else
-    {
-        m_comboPoints = std::max<int8>(std::min<int8>(m_comboPoints + count, 5), 0);
-    }
-
+    m_comboPoints = std::max<int8>(std::min<int8>(m_comboPoints + count, 5), 0);
     SendComboPoints();
 }
 
 void Unit::ClearComboPoints()
 {
-    if (!m_comboTarget)
+    if (m_comboPoints ==  0)
     {
         return;
     }
 
-    // remove Premed-like effects
-    // (NB: this Aura retains the CP while it's active - now that CP have reset, it shouldn't be there anymore)
     RemoveAurasByType(SPELL_AURA_RETAIN_COMBO_POINTS);
 
     m_comboPoints = 0;
     SendComboPoints();
-    m_comboTarget->RemoveComboPointHolder(this);
-    m_comboTarget = nullptr;
 }
 
 void Unit::SendComboPoints()
@@ -16926,7 +16907,8 @@ void Unit::SendComboPoints()
         return;
     }
 
-    PackedGuid const packGUID = m_comboTarget ? m_comboTarget->GetPackGUID() : PackedGuid();
+    Unit* unit = ObjectAccessor::GetUnit(*this, GetTarget());
+    PackedGuid const packGUID = unit ? unit->GetPackGUID() : PackedGuid();
     if (Player* playerMe = ToPlayer())
     {
         WorldPacket data(SMSG_UPDATE_COMBO_POINTS, packGUID.size() + 1);

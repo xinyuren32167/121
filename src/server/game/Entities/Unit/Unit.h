@@ -2291,8 +2291,8 @@ public:
 
     ///-----------Combo point system-------------------
        // This unit having CP on other units
-    [[nodiscard]] uint8 GetComboPoints(Unit const* who = nullptr) const { return (who && m_comboTarget != who) ? 0 : m_comboPoints; }
-    [[nodiscard]] uint8 GetComboPoints(ObjectGuid const& guid) const { return (m_comboTarget && m_comboTarget->GetGUID() == guid) ? m_comboPoints : 0; }
+    [[nodiscard]] uint8 GetComboPoints(Unit const* who = nullptr) const { return m_comboPoints; }
+    [[nodiscard]] uint8 GetComboPoints(ObjectGuid const& guid) const { return m_comboPoints; }
     [[nodiscard]] Unit* GetComboTarget() const { return m_comboTarget; }
     [[nodiscard]] ObjectGuid const GetComboTargetGUID() const { return m_comboTarget ? m_comboTarget->GetGUID() : ObjectGuid::Empty; }
     void AddComboPoints(Unit* target, int8 count);
