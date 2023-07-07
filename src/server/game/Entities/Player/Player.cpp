@@ -11389,6 +11389,7 @@ Player* Player::GetSelectedPlayer() const
 void Player::SetSelection(ObjectGuid guid)
 {
     SetGuidValue(UNIT_FIELD_TARGET, guid);
+    SendComboPoints();
 
     if (NeedSendSpectatorData())
         ArenaSpectator::SendCommand_GUID(FindMap(), GetGUID(), "TRG", guid);

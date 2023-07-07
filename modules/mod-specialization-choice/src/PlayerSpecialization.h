@@ -14,11 +14,11 @@ struct Specialization {
     uint32 spellIcon;
     std::string name;
     uint32 classInfo;
-
     uint32 masteryTalentId;
     float modifierPerPoint;
     bool update;
     uint32 castSpellId;
+    Powers powerType;
 };
 
 enum Specializations {
