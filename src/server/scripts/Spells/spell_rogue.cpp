@@ -55,6 +55,8 @@ enum RogueSpells
     SPELL_ROGUE_SHADOWSTRIKE_TELEPORT           = 82017,
     SPELL_ROGUE_SLICE_AND_DICE                  = 6774,
     SPELL_ROGUE_MARKED_FOR_DEATH                = 82022,
+    SPELL_ROGUE_DEATHMARK                       = 82025,
+    SPELL_ROGUE_DEATHMARK_PROC                  = 82026,
 
     //POISONS
     //LETHAL
@@ -899,7 +901,7 @@ class spell_rog_blade_flurry_new : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-            if (damage)
+            if (damage && GetCaster()->IsAlive())
             {
                 int32 damagePct = aurEff->GetAmount();
                 int32 damageAmount = CalculatePct(damage, damagePct);
@@ -1061,8 +1063,33 @@ class spell_rog_poisoned_knife : public SpellScript
     }
 };
 
+class spell_rog_deathmark : public AuraScript
+{
+    PrepareAuraScript(spell_rog_deathmark);
 
-// 82031, 82030
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage && caster->IsAlive())
+            {
+                int32 damagePct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+                uint32 damageAmount = CalculatePct(damage, damagePct);
+                Unit* target = eventInfo.GetActionTarget();
+
+                caster->CastCustomSpell(SPELL_ROGUE_DEATHMARK_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_deathmark::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
 class spell_rog_blade_rush : public SpellScript
 {
     PrepareSpellScript(spell_rog_blade_rush);
@@ -1078,6 +1105,7 @@ class spell_rog_blade_rush : public SpellScript
         AfterHit += SpellHitFn(spell_rog_blade_rush::HandleHit);
     }
 };
+
 
 
 void AddSC_rogue_spell_scripts()
@@ -1108,5 +1136,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_premeditation);
     RegisterSpellScript(spell_rog_marked_for_death);
     RegisterSpellScript(spell_rog_poisoned_knife);
-    RegisterSpellScript(spell_rog_blade_rush);
+    RegisterSpellScript(spell_rog_deathmark);
+        RegisterSpellScript(spell_rog_blade_rush);
+
 }
