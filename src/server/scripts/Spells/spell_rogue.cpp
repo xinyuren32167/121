@@ -1137,6 +1137,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_marked_for_death);
     RegisterSpellScript(spell_rog_poisoned_knife);
     RegisterSpellScript(spell_rog_deathmark);
-        RegisterSpellScript(spell_rog_blade_rush);
-
+    RegisterSpellScript(spell_rog_blade_rush);
 }

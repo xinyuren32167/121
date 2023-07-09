@@ -16909,6 +16909,18 @@ void Unit::ClearComboPoints()
     SendComboPoints();
 }
 
+
+void Unit::SendDirectMessageComboPoints(PackedGuid const packGUID)
+{
+    if (Player* playerMe = ToPlayer())
+    {
+        WorldPacket data(SMSG_UPDATE_COMBO_POINTS, packGUID.size() + 1);
+        data << packGUID;
+        data << uint8(m_comboPoints);
+        playerMe->SendDirectMessage(&data);
+    }
+}
+
 void Unit::SendComboPoints()
 {
     if (m_cleanupDone)
@@ -16918,12 +16930,17 @@ void Unit::SendComboPoints()
 
     Unit* unit = ObjectAccessor::GetUnit(*this, GetTarget());
     PackedGuid const packGUID = unit ? unit->GetPackGUID() : PackedGuid();
-    if (Player* playerMe = ToPlayer())
+
+    SendDirectMessageComboPoints(GetPackGUID());
+    SendDirectMessageComboPoints(packGUID);
+
+    auto const& threatList = GetThreatMgr().GetThreatList();
+    for (auto i = threatList.begin(); i != threatList.end(); ++i)
     {
-        WorldPacket data(SMSG_UPDATE_COMBO_POINTS, packGUID.size() + 1);
-        data << packGUID;
-        data << uint8(m_comboPoints);
-        playerMe->SendDirectMessage(&data);
+        if (Unit* target = ObjectAccessor::GetUnit(*this, (*i)->getUnitGuid()))
+        {
+            SendDirectMessageComboPoints(target->GetPackGUID());
+        }
     }
 
     ObjectGuid ownerGuid = GetCharmerOrOwnerGUID();

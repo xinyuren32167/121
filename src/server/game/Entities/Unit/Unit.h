@@ -2298,6 +2298,7 @@ public:
     void AddComboPoints(Unit* target, int8 count);
     void AddComboPoints(int8 count) { AddComboPoints(nullptr, count); }
     void ClearComboPoints();
+    void SendDirectMessageComboPoints(PackedGuid const packGUID);
     void SendComboPoints();
     // Other units having CP on this unit
     void AddComboPointHolder(Unit* unit) { m_ComboPointHolders.insert(unit); }
