@@ -43,8 +43,6 @@ enum RogueSpells
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST   = 57933,
     SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC        = 59628,
 
-    SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
-
     //OURS
     SPELL_ROGUE_BACKSTAB                        = 82001,
     SPELL_ROGUE_BLADE_FLURRY                    = 13877,
@@ -57,6 +55,9 @@ enum RogueSpells
     SPELL_ROGUE_MARKED_FOR_DEATH                = 82022,
     SPELL_ROGUE_DEATHMARK                       = 82025,
     SPELL_ROGUE_DEATHMARK_PROC                  = 82026,
+    SPELL_ROGUE_SERRATED_BONE_SPIKE             = 82032,
+    SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
+    SPELL_ROGUE_KINGSBANE_COMBOPOINT            = 82038,
 
     //POISONS
     //LETHAL
@@ -1027,7 +1028,6 @@ class spell_rog_marked_for_death : public AuraScript
 {
     PrepareAuraScript(spell_rog_marked_for_death);
 
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
@@ -1069,17 +1069,19 @@ class spell_rog_deathmark : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        if (Unit* target = eventInfo.GetActionTarget())
         {
-            Unit* caster = GetCaster();
-            uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
-            if (damage && caster->IsAlive())
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && target->HasAura(SPELL_ROGUE_DEATHMARK))
             {
-                int32 damagePct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
-                uint32 damageAmount = CalculatePct(damage, damagePct);
-                Unit* target = eventInfo.GetActionTarget();
+                Unit* caster = GetCaster();
+                uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+                if (damage && caster->IsAlive())
+                {
+                    int32 damagePct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+                    uint32 damageAmount = CalculatePct(damage, damagePct);
 
-                caster->CastCustomSpell(SPELL_ROGUE_DEATHMARK_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(SPELL_ROGUE_DEATHMARK_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
+                }
             }
         }
     }
@@ -1087,6 +1089,29 @@ class spell_rog_deathmark : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_rog_deathmark::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_crimson_tempest : public SpellScript
+{
+    PrepareSpellScript(spell_rog_crimson_tempest);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_crimson_tempest::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -1106,7 +1131,122 @@ class spell_rog_blade_rush : public SpellScript
     }
 };
 
+class spell_rog_crimson_tempest_dot : public AuraScript
+{
+    PrepareAuraScript(spell_rog_crimson_tempest_dot);
 
+    bool Load() override
+    {
+        Unit* caster = GetCaster();
+        return caster && caster->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    {
+        if (Unit* caster = GetCaster())
+        {
+            canBeRecalculated = false;
+
+            uint32 ap = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+            uint32 damage = CalculatePct(ap, 14);
+
+            amount = damage;
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_rog_crimson_tempest_dot::CalculateAmount, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
+class spell_rog_serrated_bone_spike : public SpellScript
+{
+    PrepareSpellScript(spell_rog_serrated_bone_spike);
+
+    void HandleHit(SpellMissInfo missInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_SERRATED_BONE_SPIKE);
+        int32 points = 1;
+        int32 additionalPoints = value->GetEffect(EFFECT_0).CalcValue(caster);
+
+        if (Aura* aura = caster->GetAura(SPELL_ROGUE_SERRATED_BONE_SPIKE))
+        {
+            uint32 stackAmount = aura->GetStackAmount();
+            points += stackAmount * additionalPoints;
+        }
+        caster->AddComboPoints(target, points);
+    }
+
+    void Register() override
+    {
+        BeforeHit += BeforeSpellHitFn(spell_rog_serrated_bone_spike::HandleHit);
+    }
+};
+
+class spell_rog_serrated_bone_spike_death : public AuraScript
+{
+    PrepareAuraScript(spell_rog_serrated_bone_spike_death);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_SERRATED_BONE_SPIKE, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_serrated_bone_spike_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_kingsbane : public AuraScript
+{
+    PrepareAuraScript(spell_rog_kingsbane);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        AuraEffect* effect = GetEffect(EFFECT_1);
+        uint32 damage = effect->GetAmount();
+        uint32 damageIncrease = aurEff->GetAmount();
+
+        damage += CalculatePct(damage, damageIncrease);
+        effect->ChangeAmount(damage);
+        effect->ResetTicks();
+        effect->CalculatePeriodic(GetCaster());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_rog_kingsbane::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_rog_kingsbane::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_kingsbane_combopoint : public SpellScript
+{
+    PrepareSpellScript(spell_rog_kingsbane_combopoint);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_KINGSBANE_COMBOPOINT, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_kingsbane_combopoint::HandleHit, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
 
 void AddSC_rogue_spell_scripts()
 {
@@ -1137,5 +1277,12 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_marked_for_death);
     RegisterSpellScript(spell_rog_poisoned_knife);
     RegisterSpellScript(spell_rog_deathmark);
+    RegisterSpellScript(spell_rog_crimson_tempest);
+    RegisterSpellScript(spell_rog_crimson_tempest_dot);
+    RegisterSpellScript(spell_rog_serrated_bone_spike);
     RegisterSpellScript(spell_rog_blade_rush);
+    RegisterSpellScript(spell_rog_serrated_bone_spike_death);
+    RegisterSpellScript(spell_rog_kingsbane);
+    RegisterSpellScript(spell_rog_kingsbane_combopoint);
+        RegisterSpellScript(spell_rog_blade_rush);
 }

@@ -63,6 +63,7 @@ enum ShamanSpells
     SPELL_SHAMAN_TOTEM_EARTHBIND_TOTEM = 6474,
     SPELL_SHAMAN_TOTEM_EARTHEN_POWER = 59566,
     SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL = 52042,
+    SPELL_SHAMAN_WINDFURY_WEAPON_AURA = 33757,
     SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1 = 51554,
     SPELL_SHAMAN_STORMSTRIKE = 17364,
     SPELL_SHAMAN_LAVA_LASH = 60103
@@ -488,43 +489,43 @@ class spell_sha_bloodlust : public SpellScript
 };
 
 // -1064 - Chain Heal
-class spell_sha_chain_heal : public SpellScript
-{
-    PrepareSpellScript(spell_sha_chain_heal);
-
-    bool Load() override
-    {
-        firstHeal = true;
-        riptide = false;
-        return true;
-    }
-
-    void HandleHeal(SpellEffIndex /*effIndex*/)
-    {
-        if (firstHeal)
-        {
-            // Check if the target has Riptide
-            if (AuraEffect* aurEff = GetHitUnit()->GetAuraEffect(SPELL_AURA_PERIODIC_HEAL, SPELLFAMILY_SHAMAN, 0, 0, 0x10, GetCaster()->GetGUID()))
-            {
-                riptide = true;
-                // Consume it
-                GetHitUnit()->RemoveAura(aurEff->GetBase());
-            }
-            firstHeal = false;
-        }
-        // Riptide increases the Chain Heal effect by 25%
-        if (riptide)
-            SetHitHeal(GetHitHeal() * 1.25f);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_chain_heal::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
-    }
-
-    bool firstHeal;
-    bool riptide;
-};
+//class spell_sha_chain_heal : public SpellScript
+//{
+//    PrepareSpellScript(spell_sha_chain_heal);
+//
+//    bool Load() override
+//    {
+//        firstHeal = true;
+//        riptide = false;
+//        return true;
+//    }
+//
+//    void HandleHeal(SpellEffIndex /*effIndex*/)
+//    {
+//        if (firstHeal)
+//        {
+//            // Check if the target has Riptide
+//            if (AuraEffect* aurEff = GetHitUnit()->GetAuraEffect(SPELL_AURA_PERIODIC_HEAL, SPELLFAMILY_SHAMAN, 0, 0, 0x10, GetCaster()->GetGUID()))
+//            {
+//                riptide = true;
+//                // Consume it
+//                GetHitUnit()->RemoveAura(aurEff->GetBase());
+//            }
+//            firstHeal = false;
+//        }
+//        // Riptide increases the Chain Heal effect by 25%
+//        if (riptide)
+//            SetHitHeal(GetHitHeal() * 1.25f);
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectHitTarget += SpellEffectFn(spell_sha_chain_heal::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+//    }
+//
+//    bool firstHeal;
+//    bool riptide;
+//};
 
 // 8171 - Cleansing Totem (Pulse)
 class spell_sha_cleansing_totem_pulse : public SpellScript
@@ -559,30 +560,30 @@ class spell_sha_earth_shield : public AuraScript
         return ValidateSpellInfo({ SPELL_SHAMAN_EARTH_SHIELD_HEAL, SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD });
     }
 
-    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            int32 baseAmount = amount;
-            amount = caster->SpellHealingBonusDone(GetUnitOwner(), GetSpellInfo(), amount, HEAL, aurEff->GetEffIndex());
-            // xinef: taken should be calculated at every heal
-            //amount = GetUnitOwner()->SpellHealingBonusTaken(caster, GetSpellInfo(), amount, HEAL);
+    //void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    //{
+    //    if (Unit* caster = GetCaster())
+    //    {
+    //        int32 baseAmount = amount;
+    //        amount = caster->SpellHealingBonusDone(GetUnitOwner(), GetSpellInfo(), amount, HEAL, aurEff->GetEffIndex());
+    //        // xinef: taken should be calculated at every heal
+    //        //amount = GetUnitOwner()->SpellHealingBonusTaken(caster, GetSpellInfo(), amount, HEAL);
 
-            // Glyph of Earth Shield
-            //! WORKAROUND
-            //! this glyphe is a proc
-            if (AuraEffect* glyphe = caster->GetAuraEffect(SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD, EFFECT_0))
-                AddPct(amount, glyphe->GetAmount());
+    //        // Glyph of Earth Shield
+    //        //! WORKAROUND
+    //        //! this glyphe is a proc
+    //        if (AuraEffect* glyphe = caster->GetAuraEffect(SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD, EFFECT_0))
+    //            AddPct(amount, glyphe->GetAmount());
 
-            // xinef: Improved Shields
-            if ((baseAmount = amount - baseAmount))
-                if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_SHAMAN, 19, EFFECT_1))
-                {
-                    ApplyPct(baseAmount, aurEff->GetAmount());
-                    amount += baseAmount;
-                }
-        }
-    }
+    //        // xinef: Improved Shields
+    //        if ((baseAmount = amount - baseAmount))
+    //            if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_SHAMAN, 19, EFFECT_1))
+    //            {
+    //                ApplyPct(baseAmount, aurEff->GetAmount());
+    //                amount += baseAmount;
+    //            }
+    //    }
+    //}
 
     bool CheckProc(ProcEventInfo&  /*eventInfo*/)
     {
@@ -592,13 +593,13 @@ class spell_sha_earth_shield : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo&  /*eventInfo*/)
     {
         PreventDefaultAction();
-        GetTarget()->CastCustomSpell(SPELL_SHAMAN_EARTH_SHIELD_HEAL, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetTarget(), true, nullptr, aurEff, GetCasterGUID());
-        GetTarget()->AddSpellCooldown(SPELL_SHAMAN_EARTH_SHIELD_HEAL, 0, 3500);
+        GetTarget()->CastSpell(GetTarget(), SPELL_SHAMAN_EARTH_SHIELD_HEAL, TRIGGERED_FULL_MASK);
+        GetTarget()->AddSpellCooldown(SPELL_SHAMAN_EARTH_SHIELD_HEAL, 0, 3000);
     }
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_shield::CalculateAmount, EFFECT_0, SPELL_AURA_DUMMY);
+        //DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_shield::CalculateAmount, EFFECT_0, SPELL_AURA_DUMMY);
         DoCheckProc += AuraCheckProcFn(spell_sha_earth_shield::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_earth_shield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
@@ -1006,9 +1007,10 @@ class spell_sha_lava_lash : public SpellScript
             int32 hitDamage = GetHitDamage();
             if (caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
-                // Damage is increased by 25% if your off-hand weapon is enchanted with Flametongue.
-                if (caster->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_SHAMAN, 0x200000, 0, 0))
+                // Damage is increased by 100% if your off-hand weapon is enchanted with Flametongue.
+                if (caster->GetAuraEffect(SPELL_SHAMAN_WINDFURY_WEAPON_AURA, 0))
                     AddPct(hitDamage, damage);
+
                 SetHitDamage(hitDamage);
             }
         }
@@ -1236,7 +1238,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ancestral_awakening_proc);
     RegisterSpellScript(spell_sha_astral_shift);
     RegisterSpellScript(spell_sha_bloodlust);
-    RegisterSpellScript(spell_sha_chain_heal);
+    //RegisterSpellScript(spell_sha_chain_heal);
     RegisterSpellScript(spell_sha_cleansing_totem_pulse);
     RegisterSpellScript(spell_sha_earth_shield);
     RegisterSpellScript(spell_sha_earthbind_totem);
