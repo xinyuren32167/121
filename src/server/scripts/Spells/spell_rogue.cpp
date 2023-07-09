@@ -57,6 +57,7 @@ enum RogueSpells
     SPELL_ROGUE_DEATHMARK_PROC                  = 82026,
     SPELL_ROGUE_SERRATED_BONE_SPIKE             = 82032,
     SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
+    SPELL_ROGUE_KINGSBANE_COMBOPOINT            = 82038,
 
     //POISONS
     //LETHAL
@@ -1027,7 +1028,6 @@ class spell_rog_marked_for_death : public AuraScript
 {
     PrepareAuraScript(spell_rog_marked_for_death);
 
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
@@ -1202,6 +1202,52 @@ class spell_rog_serrated_bone_spike_death : public AuraScript
     }
 };
 
+class spell_rog_kingsbane : public AuraScript
+{
+    PrepareAuraScript(spell_rog_kingsbane);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        AuraEffect* effect = GetEffect(EFFECT_1);
+        uint32 damage = effect->GetAmount();
+        uint32 damageIncrease = aurEff->GetAmount();
+
+        damage += CalculatePct(damage, damageIncrease);
+        effect->ChangeAmount(damage);
+        effect->ResetTicks();
+        effect->CalculatePeriodic(GetCaster());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_rog_kingsbane::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_rog_kingsbane::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_kingsbane_combopoint : public SpellScript
+{
+    PrepareSpellScript(spell_rog_kingsbane_combopoint);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_KINGSBANE_COMBOPOINT, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_kingsbane_combopoint::HandleHit, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1236,4 +1282,6 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_serrated_bone_spike);
     RegisterSpellScript(spell_rog_blade_rush);
     RegisterSpellScript(spell_rog_serrated_bone_spike_death);
+    RegisterSpellScript(spell_rog_kingsbane);
+    RegisterSpellScript(spell_rog_kingsbane_combopoint);
 }
