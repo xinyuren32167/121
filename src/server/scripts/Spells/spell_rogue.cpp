@@ -1284,4 +1284,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_serrated_bone_spike_death);
     RegisterSpellScript(spell_rog_kingsbane);
     RegisterSpellScript(spell_rog_kingsbane_combopoint);
+        RegisterSpellScript(spell_rog_blade_rush);
 }
