@@ -32,7 +32,12 @@
 enum ShamanSpells
 {
     SPELL_SHAMAN_GLYPH_OF_FERAL_SPIRIT = 63271,
+
     SPELL_SHAMAN_ANCESTRAL_AWAKENING_PROC = 52752,
+    SPELL_SHAMAN_ANCESTRAL_GUIDANCE = 84010,
+    SPELL_SHAMAN_ANCESTRAL_GUIDANCE_AOE = 84011,
+    SPELL_SHAMAN_ANCESTRAL_GUIDANCE_HEAL = 84012,
+    SPELL_SHAMAN_ANCESTRAL_VISION = 84006,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
     SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT = 52025,
     SPELL_SHAMAN_EARTH_SHIELD_HEAL = 379,
@@ -385,8 +390,8 @@ class spell_sha_earth_elemental_scaling : public AuraScript
 
     void Register() override
     {
-       DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_elemental_scaling::CalculateResistanceAmount, EFFECT_ALL, SPELL_AURA_MOD_RESISTANCE);
-       DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_elemental_scaling::CalculateStatAmount, EFFECT_ALL, SPELL_AURA_MOD_STAT);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_elemental_scaling::CalculateResistanceAmount, EFFECT_ALL, SPELL_AURA_MOD_RESISTANCE);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_elemental_scaling::CalculateStatAmount, EFFECT_ALL, SPELL_AURA_MOD_STAT);
     }
 };
 
@@ -999,14 +1004,16 @@ class spell_sha_lava_lash : public SpellScript
         return GetCaster()->GetTypeId() == TYPEID_PLAYER;
     }
 
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleDummy(SpellEffIndex effIndex)
     {
         if (Player* caster = GetCaster()->ToPlayer())
         {
             int32 damage = GetEffectValue();
             int32 hitDamage = GetHitDamage();
+
             if (caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
+                int32 flametongueIncrease = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
                 // Damage is increased by 100% if your off-hand weapon is enchanted with Flametongue.
                 if (caster->GetAuraEffect(SPELL_SHAMAN_WINDFURY_WEAPON_AURA, 0))
                     AddPct(hitDamage, damage);
@@ -1018,7 +1025,7 @@ class spell_sha_lava_lash : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_lash::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_lash::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -1225,6 +1232,128 @@ class spell_sha_maelstrom_on_cast : public SpellScript
     }
 };
 
+// 84005 - Ancestral Vision
+class spell_sha_ancestral_vision : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ancestral_vision);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->isDead())
+                {
+                    Unit* dummy = player->ToUnit();
+                    if (dummy)
+                        targetAvailable.push_back(dummy);
+                }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup())
+            return;
+
+        for (auto const& target : FindTargets())
+        {
+            GetCaster()->CastSpell(target, SPELL_SHAMAN_ANCESTRAL_VISION, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_sha_ancestral_vision::HandleProc);
+    }
+};
+
+// 84010 - Ancestral Guidance
+class spell_sha_ancestral_guidance : public AuraScript
+{
+    PrepareAuraScript(spell_sha_ancestral_guidance);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActor() && eventInfo.GetProcTarget();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+        Unit* target = eventInfo.GetProcTarget();
+
+        int32 amountPct = aurEff->GetAmount();
+        int32 amount = 0;
+
+        if (eventInfo.GetDamageInfo())
+            amount += eventInfo.GetDamageInfo()->GetDamage();
+
+        if (eventInfo.GetHealInfo())
+            amount += eventInfo.GetHealInfo()->GetHeal();
+
+        if (amount == 0)
+            return;
+
+        ApplyPct(amount, amountPct);
+        GetEffect(EFFECT_1)->SetAmount(amount);
+
+        caster->CastSpell(caster, SPELL_SHAMAN_ANCESTRAL_GUIDANCE_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_ancestral_guidance::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_ancestral_guidance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 84011 - Ancestral Guidance targets
+class spell_sha_ancestral_guidance_healing : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ancestral_guidance_healing);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (Aura* ancestralGuidance = caster->GetAura(SPELL_SHAMAN_ANCESTRAL_GUIDANCE))
+        {
+            uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
+            int32 amount = ancestralGuidance->GetEffect(EFFECT_1)->GetAmount();
+
+            if (targets.size() > maxTargets)
+            {
+                targets.sort(Acore::HealthPctOrderPred());
+                targets.resize(maxTargets);
+            }
+
+            for (auto const& object : targets)
+            {
+                Unit* target = object->ToUnit();
+
+                if (target->isDead())
+                    continue;
+
+                caster->CastCustomSpell(SPELL_SHAMAN_ANCESTRAL_GUIDANCE_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_ancestral_guidance_healing::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -1262,7 +1391,9 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_frostbrand_weapon);
     RegisterSpellScript(spell_sha_maelstrom_on_cast);
     RegisterSpellScript(spell_sha_earth_elemental_scaling);
-
+    RegisterSpellScript(spell_sha_ancestral_vision);
+    RegisterSpellScript(spell_sha_ancestral_guidance);
+    RegisterSpellScript(spell_sha_ancestral_guidance_healing);
 
 
 
