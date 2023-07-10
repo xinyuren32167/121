@@ -1238,7 +1238,7 @@ class spell_rog_kingsbane_combopoint : public SpellScript
     {
         if (Unit* target = GetHitUnit())
         {
-            GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_KINGSBANE_COMBOPOINT, TRIGGERED_FULL_MASK);
+            GetCaster()->CastSpell(target, SPELL_ROGUE_KINGSBANE_COMBOPOINT, TRIGGERED_FULL_MASK);
         }
     }
 
