@@ -9435,9 +9435,9 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
     {
         // Auras which should proc on area aura source (caster in this case):
         // Turn the Tables
-        case 52914:
+        /*case 52914:
         case 52915:
-        case 52910:
+        case 52910:*/
         // Honor Among Thieves
         case 51699:
             {
