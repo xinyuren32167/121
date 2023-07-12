@@ -85,6 +85,7 @@ public:
 
     uint32 GetTickNumber() const { return m_tickNumber; }
     int32 GetTotalTicks() const;
+    int32 GetRemaningTicks() const { return GetTotalTicks() - m_tickNumber; };
     void ResetPeriodic(bool resetPeriodicTimer = false) { if (resetPeriodicTimer) m_periodicTimer = m_amplitude; m_tickNumber = 0;}
     void ResetTicks() { m_tickNumber = 0; }
 

@@ -3312,6 +3312,9 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_SHARE_DAMAGE;
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_IGNORE_ARMOR;
                 break;
+            case 82048: // Gloomblade
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_SHARE_DAMAGE;
+                break;
             case 72293: // Mark of the Fallen Champion (Deathbringer Saurfang)
             case 72347: // Lock Players and Tap Chest (Gunship Battle)
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;

@@ -81,7 +81,14 @@ enum RogueSpells
     SPELL_ROGUE_NUMBING_POISON_CONCENTRATED     = 82010, //shiv
     SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
     SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
-    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, // shiv
+    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, // shiv+
+
+
+    SPELL_ROGUE_FLAGELLATION_MASTERY            = 82035,
+    SPELL_ROGUE_FLAGELLATION_DAMAGE             = 82039,
+
+    SPELL_ROGUE_SHADOW_BLADES                   = 82043,
+
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -1193,6 +1200,7 @@ class spell_rog_serrated_bone_spike_death : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+
         GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_SERRATED_BONE_SPIKE, true);
     }
 
@@ -1238,7 +1246,7 @@ class spell_rog_kingsbane_combopoint : public SpellScript
     {
         if (Unit* target = GetHitUnit())
         {
-            GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_KINGSBANE_COMBOPOINT, TRIGGERED_FULL_MASK);
+            GetCaster()->CastSpell(target, SPELL_ROGUE_KINGSBANE_COMBOPOINT, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1247,6 +1255,117 @@ class spell_rog_kingsbane_combopoint : public SpellScript
         OnEffectHitTarget += SpellEffectFn(spell_rog_kingsbane_combopoint::HandleHit, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
+
+class spell_rog_flagellation : public AuraScript
+{
+    PrepareAuraScript(spell_rog_flagellation);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* player = GetCaster()->ToPlayer()) {
+            uint32 comboPoints = player->GetComboPoints();
+            int32 attackPowerPct = aurEff->GetAmount();
+            int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), comboPoints * attackPowerPct);
+            if (Unit* target = ObjectAccessor::GetUnit(*player, player->GetTarget())) {
+                GetCaster()->CastCustomSpell(SPELL_ROGUE_FLAGELLATION_MASTERY, SPELLVALUE_AURA_STACK, comboPoints, target, TRIGGERED_FULL_MASK);
+                GetCaster()->CastCustomSpell(SPELL_ROGUE_FLAGELLATION_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Aura* flagellationMastery = GetCaster()->GetAura(SPELL_ROGUE_FLAGELLATION_MASTERY);
+        if (flagellationMastery) {
+            int32 duration = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+            flagellationMastery->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_flagellation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_flagellation::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+class spell_rog_shadow_blade : public AuraScript
+{
+    PrepareAuraScript(spell_rog_shadow_blade);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && GetCaster()->GetTarget();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 attackPowerPct = aurEff->GetAmount();
+        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        damage = CalculatePct(damage, attackPowerPct);
+
+        if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget()))
+            GetCaster()->CastCustomSpell(SPELL_ROGUE_SHADOW_BLADES, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+       
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_rog_shadow_blade::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_rog_shadow_blade::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
+
+class spell_rog_black_powder : public SpellScript
+{
+    PrepareSpellScript(spell_rog_black_powder);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_black_powder::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
+class spell_rog_vampiric_burst : public SpellScript
+{
+    PrepareSpellScript(spell_rog_vampiric_burst);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 ratio = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(GetCaster());
+        if (Aura* aura = GetCaster()->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC)) {
+            AuraEffect* effect = aura->GetEffect(EFFECT_0);
+            uint32 remaningTicks = effect->GetRemaningTicks();
+            uint32 remaningDamage = effect->GetAmount() / remaningTicks;
+            int32 heal = CalculatePct(remaningDamage, ratio);
+            GetCaster()->CastCustomSpell(SPELL_ROGUE_VAMPIRIC_POISON_HEAL, SPELLVALUE_BASE_POINT0, heal, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_rog_vampiric_burst::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
 
 void AddSC_rogue_spell_scripts()
 {
@@ -1284,5 +1403,9 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_serrated_bone_spike_death);
     RegisterSpellScript(spell_rog_kingsbane);
     RegisterSpellScript(spell_rog_kingsbane_combopoint);
-        RegisterSpellScript(spell_rog_blade_rush);
+    RegisterSpellScript(spell_rog_blade_rush);
+    RegisterSpellScript(spell_rog_flagellation);
+    RegisterSpellScript(spell_rog_black_powder);
+    RegisterSpellScript(spell_rog_shadow_blade);
+    RegisterSpellScript(spell_rog_vampiric_burst);
 }
