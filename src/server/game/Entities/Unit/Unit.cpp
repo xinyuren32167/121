@@ -8064,7 +8064,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
 
                             // Value gained from additional AP
                             basepoints0 = int32(extra_attack_power / 14.0f * GetAttackTime(attType) / 1000);
-                            LOG_ERROR("error", "extraAP = {}", extra_attack_power);
+
                             if (procFlag & PROC_FLAG_DONE_MAINHAND_ATTACK)
                                 triggered_spell_id = 25504;
 
@@ -8076,7 +8076,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                                 return false;
 
                             // apply cooldown before cast to prevent processing itself
-                            player->AddSpellCooldown(dummySpell->Id, 0, 3 * IN_MILLISECONDS);
+                            // player->AddSpellCooldown(dummySpell->Id, 0, 3 * IN_MILLISECONDS);
 
                             // Attack Twice
                             for (uint32 i = 0; i < 2; ++i)
@@ -9435,9 +9435,9 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
     {
         // Auras which should proc on area aura source (caster in this case):
         // Turn the Tables
-        case 52914:
+        /*case 52914:
         case 52915:
-        case 52910:
+        case 52910:*/
         // Honor Among Thieves
         case 51699:
             {
