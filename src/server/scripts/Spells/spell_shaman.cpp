@@ -39,6 +39,8 @@ enum ShamanSpells
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE_HEAL = 84012,
     SPELL_SHAMAN_ANCESTRAL_VISION = 84006,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
+    SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
+    SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE = 84034,
     SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT = 52025,
     SPELL_SHAMAN_EARTH_SHIELD_HEAL = 379,
     SPELL_SHAMAN_EARTHLIVING_WEAPON = 51994,
@@ -1436,6 +1438,73 @@ class spell_sha_elemental_blast : public SpellScript
     }
 };
 
+// 84026 - Stormbringer
+class spell_sha_stormbringer: public AuraScript
+{
+    PrepareAuraScript(spell_sha_stormbringer);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActor();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = eventInfo.GetActor()->ToPlayer();
+
+        caster->RemoveSpellCooldown(SPELL_SHAMAN_STORMSTRIKE, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_stormbringer::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_stormbringer::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 84032 - Crash Lightning
+class spell_sha_crash_lightning : public SpellScript
+{
+    PrepareSpellScript(spell_sha_crash_lightning);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        if (targets.size() >= maxTargets)
+            GetCaster()->AddAura(SPELL_SHAMAN_CRASH_LIGHTNING_AURA, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_crash_lightning::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_24);
+    }
+};
+
+// 84033 - Crash Lightning Aura
+class spell_sha_crash_lightning_proc : public AuraScript
+{
+    PrepareAuraScript(spell_sha_crash_lightning_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActor();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        caster->CastSpell(caster, SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_crash_lightning_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_crash_lightning_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 
@@ -1480,8 +1549,11 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ancestral_guidance_healing);
     RegisterSpellScript(spell_sha_ascendance_flame);
     RegisterSpellScript(spell_sha_elemental_blast);
+    RegisterSpellScript(spell_sha_stormbringer);
+    RegisterSpellScript(spell_sha_crash_lightning);
+    RegisterSpellScript(spell_sha_crash_lightning_proc);
 
 
-
+    
     
 }
