@@ -1387,6 +1387,7 @@ class spell_sha_ascendance_flame : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
+
         for (auto const& object : targets)
         {
             Unit* target = object->ToUnit();
@@ -1414,22 +1415,32 @@ class spell_sha_elemental_blast : public SpellScript
 {
     PrepareSpellScript(spell_sha_elemental_blast);
 
+    struct Ratings
+    {
+        uint32 value;
+        uint32 spellId;
+    };
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
 
-        int32 critAmount = caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE));
-        int32 masteryAmount = caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE));
-        int32 hasteAmount = caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HASTE_MELEE));
+        Ratings arr[] = {
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_CRIT },
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_HASTE },
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HASTE_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_MASTERY },
+        };
 
-        if (critAmount >= masteryAmount && critAmount >= hasteAmount)
-            caster->AddAura(SPELL_SHAMAN_ELEMENTAL_BLAST_CRIT, caster);
+        int size = sizeof(arr) / sizeof(arr[0]);
 
-        if (hasteAmount >= masteryAmount && hasteAmount >= critAmount)
-            caster->AddAura(SPELL_SHAMAN_ELEMENTAL_BLAST_HASTE, caster);
+        auto highestRating = std::max_element(arr, arr + sizeof(arr) / sizeof(arr[0]), [](const Ratings& a, const Ratings& b) {
+            return a.value < b.value;
+        });
 
-        if (masteryAmount >= critAmount && masteryAmount >= hasteAmount)
-            caster->AddAura(SPELL_SHAMAN_ELEMENTAL_BLAST_MASTERY, caster);
+        caster->AddAura(highestRating->spellId, caster);
     }
 
     void Register() override
