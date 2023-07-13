@@ -62,6 +62,10 @@ enum RogueSpells
     SPELL_ROGUE_FLAGELLATION_DAMAGE             = 82039,
     SPELL_ROGUE_SHADOW_BLADES                   = 82043,
     SPELL_ROGUE_COUNTERATTACK_PROC              = 82053,
+    SPELL_ROGUE_SECRET_TECHNIQUE                = 82057,
+    SPELL_ROGUE_SECRET_TECHNIQUE_AURA           = 82060,
+    SPELL_ROGUE_VAMPIRIC_BURST_HEAL             = 82061,
+    SPELL_ROGUE_SINISTER_CALLING_PROC           = 82063,
 
     //POISONS
     //LETHAL
@@ -85,14 +89,7 @@ enum RogueSpells
     SPELL_ROGUE_NUMBING_POISON_CONCENTRATED     = 82010, //shiv
     SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
     SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
-    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, // shiv+
-
-    SPELL_ROGUE_FLAGELLATION_MASTERY            = 82035,
-    SPELL_ROGUE_FLAGELLATION_DAMAGE             = 82039,
-
-    SPELL_ROGUE_SHADOW_BLADES                   = 82043,
-    SPELL_ROGUE_SECRET_TECHNIQUE                = 82057,
-
+    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, //shiv
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -1425,12 +1422,13 @@ class spell_rog_vampiric_burst : public SpellScript
 
     void HandleCast()
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+        Unit* caster = GetCaster();
+        Unit* target = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
 
         if (!target)
             return;
 
-        int32 ratio = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(GetCaster());
+        int32 ratio = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
 
         Aura* aura = target->GetAura(SPELL_ROGUE_VAMPIRIC_POISON_PROC);
 
@@ -1441,10 +1439,9 @@ class spell_rog_vampiric_burst : public SpellScript
         uint32 remaningTicks = effect->GetRemaningTicks();
         uint32 remaningDamage = effect->GetAmount() / remaningTicks;
         int32 heal = CalculatePct(remaningDamage, ratio);
-        GetCaster()->CastCustomSpell(SPELL_ROGUE_VAMPIRIC_POISON_HEAL, SPELLVALUE_BASE_POINT0, heal, GetCaster(), TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(SPELL_ROGUE_VAMPIRIC_BURST_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
         aura->Remove();
     }
-
 
     void Register() override
     {
@@ -1493,6 +1490,64 @@ class spell_rog_sinister_strike : public SpellScript
     }
 };
 
+class spell_rog_secret_technique_teacher : public AuraScript
+{
+    PrepareAuraScript(spell_rog_secret_technique_teacher);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_ROGUE_SECRET_TECHNIQUE);
+        target->CastSpell(target, SPELL_ROGUE_SECRET_TECHNIQUE_AURA, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_ROGUE_SECRET_TECHNIQUE, SPEC_MASK_ALL, false);
+        target->RemoveAura(SPELL_ROGUE_SECRET_TECHNIQUE_AURA);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_secret_technique_teacher::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_secret_technique_teacher::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_rog_sinister_calling : public AuraScript
+{
+    PrepareAuraScript(spell_rog_sinister_calling);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo()->Id != SPELL_ROGUE_SINISTER_CALLING_PROC;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Unit* target = eventInfo.GetActionTarget())
+        {
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+            {
+                Unit* caster = GetCaster();
+                uint32 damageAmount = aurEff->GetAmount();
+                uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), damageAmount);
+                if (damage && caster->IsAlive())
+                    caster->CastCustomSpell(SPELL_ROGUE_SINISTER_CALLING_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_rog_sinister_calling::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_rog_sinister_calling::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1530,7 +1585,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_kingsbane);
     RegisterSpellScript(spell_rog_kingsbane_combopoint);
     RegisterSpellScript(spell_rog_blade_rush);
-    RegisterSpellScript(spell_rog_flagellation);\
+    RegisterSpellScript(spell_rog_flagellation);
     RegisterSpellScript(spell_rog_black_powder);
     RegisterSpellScript(spell_rog_shadow_blade);
     RegisterSpellScript(spell_rog_vampiric_burst);
@@ -1538,4 +1593,6 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_sinister_strike);
     RegisterSpellScript(spell_rog_secret_technique_AuraScript);
     new spell_rog_secret_technique();
+    RegisterSpellScript(spell_rog_secret_technique_teacher);
+    RegisterSpellScript(spell_rog_sinister_calling);
 }
