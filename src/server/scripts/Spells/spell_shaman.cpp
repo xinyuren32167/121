@@ -38,6 +38,8 @@ enum ShamanSpells
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE_AOE = 84011,
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE_HEAL = 84012,
     SPELL_SHAMAN_ANCESTRAL_VISION = 84006,
+    SPELL_SHAMAN_ASCENDANCE_WATER_AOE_HEAL = 84042,
+    SPELL_SHAMAN_ASCENDANCE_WATER_HEAL = 84043,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
     SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE = 84034,
@@ -1438,7 +1440,7 @@ class spell_sha_elemental_blast : public SpellScript
 
         auto highestRating = std::max_element(arr, arr + sizeof(arr) / sizeof(arr[0]), [](const Ratings& a, const Ratings& b) {
             return a.value < b.value;
-        });
+            });
 
         caster->AddAura(highestRating->spellId, caster);
     }
@@ -1450,7 +1452,7 @@ class spell_sha_elemental_blast : public SpellScript
 };
 
 // 84026 - Stormbringer
-class spell_sha_stormbringer: public AuraScript
+class spell_sha_stormbringer : public AuraScript
 {
     PrepareAuraScript(spell_sha_stormbringer);
 
@@ -1516,6 +1518,87 @@ class spell_sha_crash_lightning_proc : public AuraScript
     }
 };
 
+// 84040 - Ascendance (Water)
+class spell_sha_ascendance_water : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ascendance_water);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        int32 targetNumber = targets.size();
+
+        if (targetNumber == 0)
+            return;
+
+        int32 SpRation = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
+        int32 totalAmount = CalculatePct(caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL), SpRation);
+        int32 amount = totalAmount / targetNumber;
+
+        GetCaster()->CastCustomSpell(SPELL_SHAMAN_ASCENDANCE_WATER_AOE_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_ascendance_water::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+// 84041 - Ascendance (Water) Aura
+class spell_sha_ascendance_water_proc : public AuraScript
+{
+    PrepareAuraScript(spell_sha_ascendance_water_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+        Unit* caster = eventInfo.GetHealInfo()->GetHealer();
+        int32 healAmount = eventInfo.GetHealInfo()->GetHeal();
+        int32 healPct = aurEff->GetAmount();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 amount = CalculatePct(healAmount, healPct);
+        GetCaster()->CastCustomSpell(SPELL_SHAMAN_ASCENDANCE_WATER_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_ascendance_water_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_ascendance_water_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 84046 - Downpour
+class spell_sha_downpour : public SpellScript
+{
+    PrepareSpellScript(spell_sha_downpour);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        int32 targetQte = targets.size();
+        int32 cooldownPerTarget = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (targetQte == 0)
+            return;
+
+        int32 cooldown = cooldownPerTarget * targetQte;
+
+        caster->AddSpellCooldown(GetSpellInfo()->Id, 0, cooldown);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_downpour::FilterTargets, EFFECT_0, TARGET_DEST_DYNOBJ_ALLY);
+    }
+};
 
 
 
@@ -1563,8 +1646,11 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_stormbringer);
     RegisterSpellScript(spell_sha_crash_lightning);
     RegisterSpellScript(spell_sha_crash_lightning_proc);
+    RegisterSpellScript(spell_sha_ascendance_water);
+    RegisterSpellScript(spell_sha_ascendance_water_proc);
+    RegisterSpellScript(spell_sha_downpour);
 
 
-    
-    
+
+
 }
