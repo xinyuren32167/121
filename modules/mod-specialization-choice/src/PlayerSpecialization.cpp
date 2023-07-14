@@ -78,15 +78,13 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[PRIEST_HOLY] = { 30, 48078, "Holy", 5, 900005, 28.00, false, 0, POWER_ALL };
     m_Specializations[PRIEST_SHADOW] = { 31, 81048, "Shadow", 5, 900008, 70.00, false, 0, POWER_ALL };
 
+    m_Specializations[SHAMAN_ELEMENTAL] = { 23, 57993, "Elemental", 7, 800000, 20.59, true, 0, POWER_RUNIC_POWER };
+    m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 51690, "Enchancement", 7, 800005, 24.14, false, 0, POWER_MANA };
+    m_Specializations[SHAMAN_RESTAURATION] = { 25, 82016 , "Restauration", 7, 800008, 14.28, true, 0, POWER_MANA };
 
-    m_Specializations[SHAMAN_ELEMENTAL] = { 23, 57993, "Elemental", 5, 800000, 20.59, true, 0, POWER_RUNIC_POWER };
-    m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 51690, "Enchancement", 5, 800005, 24.14, false, 0, POWER_MANA };
-    m_Specializations[SHAMAN_RESTAURATION] = { 25, 82016 , "Restauration", 5, 800008, 14.28, true, 0, POWER_MANA };
-
-    m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 5, 800000, 20.59, true, 0, POWER_ALL };
-    m_Specializations[ROGUE_COMBAT] = { 21, 51690, "Combat", 5, 800005, 24.14, false, 0, POWER_ALL };
-    m_Specializations[ROGUE_SUBTLETY] = { 22, 82016 , "Subtlety", 5, 800008, 14.28, true, 0, POWER_ALL };
-
+    m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 4, 1100000, 20.59, true, 1100001, POWER_ALL };
+    m_Specializations[ROGUE_COMBAT] = { 21, 51690, "Combat", 4, 1100003, 24.14, false, 0, POWER_ALL };
+    m_Specializations[ROGUE_SUBTLETY] = { 22, 82016 , "Subtlety", 4, 1100005, 14.28, true, 1100006, POWER_ALL };
 }
     
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)

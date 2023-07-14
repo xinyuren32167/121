@@ -25,6 +25,14 @@ enum Masteries
     MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL = 900007,
     MASTERY_PRIEST_SHADOW_WEAVING = 900008,
     MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE = 900009,
+
+    // Rogue
+    MASTERY_ROGUE_POTENT_ASSASSIN = 1100000,
+    MASTERY_ROGUE_POTENT_ASSASSIN_BUFF = 1100002,
+    MASTERY_ROGUE_MAIN_GAUCHE = 1100003,
+    MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE = 1100004,
+    MASTERY_ROGUE_EXECUTIONER = 1100005,
+    MASTERY_ROGUE_EXECUTIONER_BUFF = 1100007,
 };
 
 // Mage
@@ -295,8 +303,6 @@ class spell_mastery_critical_block_on_remove : public AuraScript
 };
 
 
-
-
 //Paladin
 class spell_mastery_lightbringer : public AuraScript
 {
@@ -468,6 +474,7 @@ class spell_mastery_sniper_training : public SpellScript
         OnCast += SpellCastFn(spell_mastery_sniper_training::HandleCast);
     }
 };
+
 
 //Druid
 class spell_mastery_astral_invocation : public AuraScript
@@ -712,7 +719,6 @@ class spell_dk_pet_scaling_damage : public AuraScript
     }
 };
 
-
 class spell_mastery_bloodshield : public AuraScript
 {
     PrepareAuraScript(spell_mastery_bloodshield);
@@ -875,6 +881,73 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
     }
 };
 
+
+// Rogue
+class spell_mastery_rog_potent_assassin: public SpellScript
+{
+    PrepareSpellScript(spell_mastery_rog_potent_assassin);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTERY_ROGUE_POTENT_ASSASSIN)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(MASTERY_ROGUE_POTENT_ASSASSIN_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_rog_potent_assassin::HandleCast);
+    }
+};
+
+class spell_mastery_rog_main_gauche : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_rog_main_gauche);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 basePct = aurEff->GetAmount();
+        int32 pct = basePct + caster->ToPlayer()->GetMastery();
+
+        int32 amount = CalculatePct(damage, pct);
+
+        caster->CastCustomSpell(MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_rog_main_gauche::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_rog_main_gauche::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mastery_rog_executioner: public SpellScript
+{
+    PrepareSpellScript(spell_mastery_rog_executioner);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTERY_ROGUE_EXECUTIONER)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(MASTERY_ROGUE_EXECUTIONER_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_rog_executioner::HandleCast);
+    }
+};
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_icicle_ice_lance);
@@ -908,4 +981,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_pri_grace);
     RegisterSpellScript(spell_mastery_pri_echo_of_light);
     RegisterSpellScript(spell_mastery_pri_shadow_weaving);
+    RegisterSpellScript(spell_mastery_rog_potent_assassin);
+    RegisterSpellScript(spell_mastery_rog_main_gauche);
+    RegisterSpellScript(spell_mastery_rog_executioner);
 }
