@@ -1523,22 +1523,21 @@ class spell_rog_sinister_calling : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetSpellInfo()->Id != SPELL_ROGUE_SINISTER_CALLING_PROC;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() >0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Unit* target = eventInfo.GetActionTarget())
-        {
-            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
-            {
-                Unit* caster = GetCaster();
-                uint32 damageAmount = aurEff->GetAmount();
-                uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), damageAmount);
-                if (damage && caster->IsAlive())
-                    caster->CastCustomSpell(SPELL_ROGUE_SINISTER_CALLING_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
-            }
-        }
+        Unit* target = eventInfo.GetActionTarget();
+        Unit* caster = GetCaster();
+
+        if (!target || caster->isDead())
+            return;
+
+        uint32 damageAmount = aurEff->GetAmount();
+        uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), damageAmount);
+
+        caster->CastCustomSpell(SPELL_ROGUE_SINISTER_CALLING_PROC, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
