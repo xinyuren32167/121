@@ -34,6 +34,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include "Mythic.h"
 
 class ElunaEventProcessor;
 

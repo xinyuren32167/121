@@ -86,11 +86,6 @@ enum RogueSpells
     SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
     SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
     SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, // shiv+
-
-    SPELL_ROGUE_FLAGELLATION_MASTERY            = 82035,
-    SPELL_ROGUE_FLAGELLATION_DAMAGE             = 82039,
-
-    SPELL_ROGUE_SHADOW_BLADES                   = 82043,
     SPELL_ROGUE_SECRET_TECHNIQUE                = 82057,
 
 };
@@ -1487,6 +1482,8 @@ class spell_rog_sinister_strike : public SpellScript
 
         SetHitDamage(damage);
     }
+   
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_sinister_strike::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);

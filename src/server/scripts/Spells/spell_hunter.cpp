@@ -1998,7 +1998,7 @@ class spell_hun_death_chakram : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         GetCaster()->CastSpell(GetCaster(), 80168, TRIGGERED_FULL_MASK);
