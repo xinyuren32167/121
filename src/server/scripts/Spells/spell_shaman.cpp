@@ -40,6 +40,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ANCESTRAL_VISION = 84006,
     SPELL_SHAMAN_ASCENDANCE_WATER_AOE_HEAL = 84042,
     SPELL_SHAMAN_ASCENDANCE_WATER_HEAL = 84043,
+    SPELL_SHAMAN_ASTRAL_SHIFT = 84007,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
     SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE = 84034,
@@ -440,38 +441,38 @@ class spell_sha_ancestral_awakening_proc : public SpellScript
     }
 };
 
-// 51474 - Astral Shift
-class spell_sha_astral_shift : public AuraScript
-{
-    PrepareAuraScript(spell_sha_astral_shift);
-
-    uint32 absorbPct;
-
-    bool Load() override
-    {
-        absorbPct = GetSpellInfo()->Effects[EFFECT_0].CalcValue(GetCaster());
-        return true;
-    }
-
-    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
-    {
-        // Set absorbtion amount to unlimited
-        amount = -1;
-    }
-
-    void Absorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
-    {
-        // reduces all damage taken while stun, fear or silence
-        if (GetTarget()->GetUnitFlags() & (UNIT_FLAG_FLEEING | UNIT_FLAG_SILENCED) || (GetTarget()->GetUnitFlags() & (UNIT_FLAG_STUNNED) && GetTarget()->HasAuraWithMechanic(1 << MECHANIC_STUN)))
-            absorbAmount = CalculatePct(dmgInfo.GetDamage(), absorbPct);
-    }
-
-    void Register() override
-    {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_astral_shift::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
-        OnEffectAbsorb += AuraEffectAbsorbFn(spell_sha_astral_shift::Absorb, EFFECT_0);
-    }
-};
+//// 51474 - Astral Shift
+//class spell_sha_astral_shift : public AuraScript
+//{
+//    PrepareAuraScript(spell_sha_astral_shift);
+//
+//    uint32 absorbPct;
+//
+//    bool Load() override
+//    {
+//        absorbPct = GetSpellInfo()->Effects[EFFECT_0].CalcValue(GetCaster());
+//        return true;
+//    }
+//
+//    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+//    {
+//        // Set absorbtion amount to unlimited
+//        amount = -1;
+//    }
+//
+//    void Absorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
+//    {
+//        // reduces all damage taken while stun, fear or silence
+//        if (GetTarget()->GetUnitFlags() & (UNIT_FLAG_FLEEING | UNIT_FLAG_SILENCED) || (GetTarget()->GetUnitFlags() & (UNIT_FLAG_STUNNED) && GetTarget()->HasAuraWithMechanic(1 << MECHANIC_STUN)))
+//            absorbAmount = CalculatePct(dmgInfo.GetDamage(), absorbPct);
+//    }
+//
+//    void Register() override
+//    {
+//        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_astral_shift::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+//        OnEffectAbsorb += AuraEffectAbsorbFn(spell_sha_astral_shift::Absorb, EFFECT_0);
+//    }
+//};
 
 // 2825 - Bloodlust
 class spell_sha_bloodlust : public SpellScript
@@ -1431,9 +1432,9 @@ class spell_sha_elemental_blast : public SpellScript
            { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE)),
                     SPELL_SHAMAN_ELEMENTAL_BLAST_CRIT },
            { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE)),
-                    SPELL_SHAMAN_ELEMENTAL_BLAST_HASTE },
-           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HASTE_MELEE)),
                     SPELL_SHAMAN_ELEMENTAL_BLAST_MASTERY },
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HASTE_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_HASTE },
         };
 
         int size = sizeof(arr) / sizeof(arr[0]);
@@ -1600,6 +1601,48 @@ class spell_sha_downpour : public SpellScript
     }
 };
 
+// 51474 - Improved Astral Shift
+class spell_sha_improved_astral_shift : public AuraScript
+{
+    PrepareAuraScript(spell_sha_improved_astral_shift);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        const SpellInfo* procSpell = eventInfo.GetSpellInfo();
+
+        return (procSpell->GetAllEffectsMechanicMask() & ((1 << MECHANIC_SILENCE) | (1 << MECHANIC_STUN) | (1 << MECHANIC_FEAR)));
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Unit* caster = GetCaster();
+        int32 duration = aurEff->GetAmount();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* auraEff = caster->GetAura(SPELL_SHAMAN_ASTRAL_SHIFT))
+        {
+            duration += auraEff->GetDuration();
+            auraEff->SetDuration(duration);
+        }
+        else
+        {
+            caster->AddAura(SPELL_SHAMAN_ASTRAL_SHIFT, caster);
+            caster->GetAura(SPELL_SHAMAN_ASTRAL_SHIFT)->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_improved_astral_shift::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_improved_astral_shift::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -1611,7 +1654,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_feral_spirit_scaling);
     RegisterSpellScript(spell_sha_fire_elemental_scaling);
     RegisterSpellScript(spell_sha_ancestral_awakening_proc);
-    RegisterSpellScript(spell_sha_astral_shift);
+    //RegisterSpellScript(spell_sha_astral_shift);
     RegisterSpellScript(spell_sha_bloodlust);
     //RegisterSpellScript(spell_sha_chain_heal);
     RegisterSpellScript(spell_sha_cleansing_totem_pulse);
@@ -1649,6 +1692,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ascendance_water);
     RegisterSpellScript(spell_sha_ascendance_water_proc);
     RegisterSpellScript(spell_sha_downpour);
+    RegisterSpellScript(spell_sha_improved_astral_shift);
 
 
 
