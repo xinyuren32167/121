@@ -38,6 +38,7 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include "Mythic.h"
 
 class Unit;
 class WorldPacket;

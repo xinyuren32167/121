@@ -1,4 +1,11 @@
 
+#include <list>
+#include <map>
+#include <mutex>
+#include <unordered_map>
+
+#include "Group.h"
+
 #ifndef AZEROTHCORE_MYTHIC_H
 #define AZEROTHCORE_MYTHIC_H
 

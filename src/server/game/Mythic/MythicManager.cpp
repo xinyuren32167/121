@@ -193,7 +193,7 @@ std::vector<std::string> MythicManager::GetDataMythicRun(Player* player)
    Mythic* mythic = player->GetMap()->GetMythic();
 
     if (!mythic)
-        return;
+        return {};
 
     std::vector<std::string> elements = {};
     std::string first =
