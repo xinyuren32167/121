@@ -973,7 +973,8 @@ class spell_rog_shadowstrike_activator : public AuraScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetCaster()->GetAura(SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR)->SetDuration(500);
+        if (Aura* aura = GetCaster()->GetAura(SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR))
+            aura->SetDuration(500);
     }
 
     void Register() override

@@ -5885,13 +5885,13 @@ void AuraEffect::HandlePeriodicDummyAuraTick(Unit* target, Unit* caster) const
                 break;
             }
         case SPELLFAMILY_SHAMAN:
-            if (GetId() == 52179) // Astral Shift
-            {
-                // Periodic need for remove visual on stun/fear/silence lost
-                if (!(target->GetUnitFlags() & (UNIT_FLAG_STUNNED | UNIT_FLAG_FLEEING | UNIT_FLAG_SILENCED)))
-                    target->RemoveAurasDueToSpell(52179);
-                break;
-            }
+            //if (GetId() == 52179) // Astral Shift
+            //{
+            //    // Periodic need for remove visual on stun/fear/silence lost
+            //    if (!(target->GetUnitFlags() & (UNIT_FLAG_STUNNED | UNIT_FLAG_FLEEING | UNIT_FLAG_SILENCED)))
+            //        target->RemoveAurasDueToSpell(52179);
+            //    break;
+            //}
             break;
         case SPELLFAMILY_DEATHKNIGHT:
             switch (GetId())
