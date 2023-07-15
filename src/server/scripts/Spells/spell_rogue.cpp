@@ -1223,14 +1223,15 @@ class spell_rog_kingsbane : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        Unit* caster = GetCaster();
         AuraEffect* effect = GetEffect(EFFECT_1);
-        uint32 damage = effect->GetAmount();
+        uint32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 26);
         uint32 damageIncrease = aurEff->GetAmount();
 
         damage += CalculatePct(damage, damageIncrease);
         effect->ChangeAmount(damage);
         effect->ResetTicks();
-        effect->CalculatePeriodic(GetCaster());
+        effect->CalculatePeriodic(caster);
     }
 
     void Register() override
