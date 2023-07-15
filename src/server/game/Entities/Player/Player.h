@@ -1380,7 +1380,7 @@ public:
     void LoadPet();
 
     bool AddItem(uint32 itemId, uint32 count);
-    Item* CreateMythicKey(uint32 keyId);
+    Item* AddItem(uint32 itemId);
 
     /*********************************************************/
     /***                    GOSSIP SYSTEM                  ***/
@@ -1613,6 +1613,9 @@ public:
     void SendNewMail();
     void UpdateNextMailTimeAndUnreads();
     void AddNewMailDeliverTime(time_t deliver_time);
+
+
+    void SendNewMailWithItem(uint32 itemId);
 
     void RemoveMail(uint32 id);
 

@@ -9,10 +9,10 @@
 #include "RunesManager.h"
 #include "LuaEngine.h"
 #include "Spell.h"
-#include "MythicDungeonManager.h"
 #include <boost/algorithm/string.hpp>
 #include "InstanceScript.h"
 #include "MapMgr.h"
+#include "Mythic/MythicManager.h"
 
  // Add player scripts
 class MythicDungeon_PlayerScripts : public PlayerScript
@@ -22,9 +22,7 @@ public:
 
     void OnLogin(Player* player) override
     {
-        MythicDungeonManager::InitHighestCompletedDungeonAllTime(player);
-        MythicDungeonManager::InitHighestCompletedDungeonThisSeason(player);
-        MythicDungeonManager::InitHighestCompletedDungeonThisWeek(player);
+       
     }
 
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
@@ -35,19 +33,18 @@ public:
 
     void OnCreatureKill(Player* killer, Creature* killed)
     {
-        MythicDungeonManager::OnKillBoss(killer, killed);
-        MythicDungeonManager::OnKillMinion(killer, killed);
+       
     }
 
     void OnMapChanged(Player* player)
     {
-        MythicDungeonManager::OnMapChanged(player);
+        
     }
 
 
     void OnPlayerKilledByCreature(Creature* killer, Player* killed)
     {
-        MythicDungeonManager::OnPlayerKilledByCreature(killer, killed);
+       
     }
 
 
@@ -58,41 +55,10 @@ public:
 
     void OnPlayerReleasedGhost(Player* player)
     {
-        MythicDungeonManager::OnPlayerRelease(player);
-    }
-
-};
-
-class MythicDungeon_AllMapScript : public AllMapScript
-{
-public:
-    MythicDungeon_AllMapScript() : AllMapScript("MythicDungeon_AllMapScript") { }
-   
-    void OnMapUpdate(Map* map, uint32 diff) override
-    {
-       MythicDungeonManager::Update(map, diff);
-    }
-
-    void OnPlayerEnterAll(Map* map, Player* player)
-    {
-
+       
     }
 };
 
-class MythicDungeon_AllCreatureScript : public AllCreatureScript
-{
-public:
-    MythicDungeon_AllCreatureScript()
-        : AllCreatureScript("MythicDungeon_AllCreatureScript")
-    {
-
-    }
-
-    void OnAllCreatureUpdate(Creature* creature, uint32 /*diff*/) override
-    {
-
-    }
-};
 
 class Mythic_Keystone_Item : public ItemScript
 {
@@ -102,12 +68,21 @@ public:
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
     {
         uint32 itemId = item->GetEntry();
-        MythicDungeon dungeon = MythicDungeonManager::FindMythicDungeonByItsKeyItemId(itemId);
+        MythicDungeon foundDungeon;
+
+        sMythicMgr->FindMythicDungeonByItsKeyItemId(itemId, foundDungeon);
+
+        if (!foundDungeon)
+        {
+            ChatHandler(player->GetSession()).SendSysMessage("We could not find your key, if you see this message, contact a gamemaster.");
+            return false;
+        }
 
 
-        if (player->GetMap()->GetId() != dungeon.mapId) {
-            Map* map = sMapMgr->FindBaseMap(dungeon.mapId);
-            std::string name = map->GetMapName();
+        Map* map = sMapMgr->FindBaseMap(foundDungeon.mapId);
+        std::string name = map->GetMapName();
+
+        if (map->GetId() != foundDungeon.mapId) {
             ChatHandler(player->GetSession()).SendSysMessage("You can only activate this Mythic Keystone in " + name);
             return false;
         }
@@ -117,7 +92,10 @@ public:
             return false;
         }
 
-        MythicDungeonManager::SendPreperationMythicDungeon(player);
+        uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player);
+
+        sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
+
         return true;
     }
 };
@@ -130,12 +108,13 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
-        MythicDungeonManager::InitializeRewardsDungeons();
-        MythicDungeonManager::InitializeMythicDungeons();
-        MythicDungeonManager::InitializeMythicDungeonBosses();
-        MythicDungeonManager::InitializeWeeklyAffixes();
-        MythicDungeonManager::InitializeMythicKeys();
-        MythicDungeonManager::InitializeConfig();
+        sMythicMgr->InitializeCreatureKillingCount();
+        sMythicMgr->InitializeMultipliers();
+        sMythicMgr->InitializeRewardsDungeons();
+        sMythicMgr->InitializePlayerMythicKeys();
+        sMythicMgr->InitializeMythicDungeons();
+        sMythicMgr->InitializeRewardsPlayersBag();
+        sMythicMgr->InitializeMythicDungeonBosses();
     }
 };
 
@@ -169,8 +148,6 @@ void AddSC_MythicDungeons()
 {
     new MythicDungeon_PlayerScripts();
     new MythicDungeon_WorldScript();
-    new MythicDungeon_AllMapScript();
-    new MythicDungeon_AllCreatureScript();
     new MythicDungeon_commandsScript();
     new Mythic_Keystone_Item();
 }

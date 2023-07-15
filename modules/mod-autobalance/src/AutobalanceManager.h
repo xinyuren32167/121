@@ -30,11 +30,6 @@ public:
     static Player* GetFirstPlayerMap(Map* map);
     static AutobalanceScalingInfo GetScalingInfo(Map* map, Creature* creature);
     static void ApplyScalingHealthAndMana(Map* map, Creature* creature);
-    static void ApplyScalingMeleeDamage(Map* map, Creature* creature);
-    static void ApplyScalingSpellDamage(Map* map, Creature* creature);
-    static void ApplyScalingPeriodicDamage(Map* map, Creature* creature);
-    static void ApplyScaleDownMoney(Player* player, Loot* loot);
-    static void ApplyScaleDownXp(Player* player, uint32& amount, Unit* victim);
     static bool SomeoneIsTooHighLevel(Map* map);
     static void SendMessageScalingInfo(Map* map);
 };

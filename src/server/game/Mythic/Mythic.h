@@ -36,12 +36,14 @@ private:
     void GiveRewards();
     void UpdatePlayerKey(Player* player);
     void SaveMythicDungeon();
-    // std::list<Group::MemberSlot> GetRandomMemberSlot();
+    void SetBossDead(uint32 creatureId);
 
     // Addon Messages;
     void SendStart(Player* player);
     void SendUpdateBossKill();
     void SendEnemyForces();
+
+    int8 CalculateUpgradeKey();
 
     void SetRespawnPosition(Position position) { LastestPosition = position; };
 
@@ -50,7 +52,7 @@ private:
 
     Position LastestPosition;
     Group* m_Group;
-    Player* Leader;
+    Player* KeyOwner;
     uint32 DungeonId;
     uint32 TimeToComplete;
     Map* Dungeon;

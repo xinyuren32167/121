@@ -30,6 +30,7 @@
 #include "Group.h"
 #include "Map.h"
 #include "Mythic.h"
+#include "Item.h"
 
 #ifndef _MYTHICMGR_H
 #define _MYTHICMGR_H
@@ -44,6 +45,10 @@ struct MythicDungeon {
     float o;
     bool enabled;
     uint32 itemId;
+    explicit operator bool() const
+    {
+        return id;
+    }
 };
 
 struct MythicMultiplier {
@@ -65,7 +70,7 @@ struct MythicKey {
 struct MythicReward {
     uint32 level;
     uint32 itemId;
-    uint32 classMask;
+    int32 classMask;
 };
 
 class MythicManager
@@ -80,7 +85,8 @@ public:
     typedef std::map<ObjectGuid, Mythic*> RunMythicDungeonContainer;
     typedef std::map<uint32, MythicMultiplier> MythicMutiplierContainer;
     typedef std::map<uint32, float> MythicKillCounterContainer;
-    typedef std::vector<MythicBoss> MythicDungeonBossContainer;
+    typedef std::map<uint64, std::vector<uint32>> MythicBagRewardPlayerContainer;
+    typedef std::map<uint32, std::vector<MythicBoss>> MythicDungeonBossContainer;
     typedef std::vector<MythicDungeon> MythicDungeonContainer;
     typedef std::map<uint32, std::vector<MythicReward>> MythicRewardsContainer;
     typedef std::map<ObjectGuid, MythicKey> MythicPlayerKeyContainer;
@@ -89,6 +95,7 @@ public:
     void InitializeMythicDungeons();
     void InitializePlayerMythicKeys();
     void InitializeRewardsDungeons();
+    void InitializeRewardsPlayersBag();
     void InitializeCreatureKillingCount();
     void InitializeMultipliers();
     void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
@@ -103,19 +110,23 @@ public:
 
     void AddMythicDungeon(ObjectGuid, Mythic* m);
     void RemoveGroup(Group* group);
-
     void OnGroupDisband(Group* group);
-
     bool IsThisMapIdAvailableForMythic(uint32 mapId);
     bool IsPlayerMeetingConditionsToStartMythic(Player* player);
     Mythic* GetMythicDungeonByGroupGuid(ObjectGuid guid);
 
     float GetKillCountByCreatureId(uint32 creatureId);
     MythicMultiplier GetMultplierByLevel(uint32 level);
-    MythicDungeon GetMythicDungeonByDungeonId(uint32 dungeonId);
+    void GetMythicDungeonByDungeonId(uint32 dungeonId, MythicDungeon& dungeon);
+    void FindMythicDungeonByItsKeyItemId(uint32 itemId, MythicDungeon& dungeon);
     MythicKey* GetCurrentPlayerMythicKey(Player* player);
-    std::vector<uint32> GetMythicBossesByDungeonId(uint32 dungeonId);
+    std::map<uint32, bool> GetMythicBossesByDungeonId(uint32 dungeonId);
+
+    // Communication
     std::vector<std::string> GetDataMythicRun(Player* player);
+    std::vector<std::string> GetDataMythicBag(Item* item);
+    uint32 GetDungeonKeyLevelPreperation(Player* player);
+    void StartMythicDungeon(Player* player);
 
 private:
     RunMythicDungeonContainer MythicStore;
@@ -125,6 +136,7 @@ private:
     MythicDungeonContainer MythicDungeonStore;
     MythicPlayerKeyContainer MythicPlayerKeyStore;
     MythicRewardsContainer MythicDungeonLootStore;
+    MythicBagRewardPlayerContainer MythicDungeonBagRewardStore;
 };
 
 #define sMythicMgr MythicManager::instance()

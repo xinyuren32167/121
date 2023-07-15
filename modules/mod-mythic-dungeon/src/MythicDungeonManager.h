@@ -115,7 +115,7 @@ private:
     static void SaveRun(MythicRun* run, Player* player, uint32 increaseAmountKey, uint32 runId = 0);
     static void UpdateOrCreateMythicKey(MythicRun* run, Player* player, uint32 increaseAmountKey);
 public:
-    static MythicDungeon FindMythicDungeonByItsKeyItemId(uint32 itemId);
+    static void FindMythicDungeonByItsKeyItemId(uint32 itemId, MythicDungeon& dungeon);
     static MythicDungeon GetMythicDungeonByDungeonId(uint32 mapId);
     static MythicKey GetCurrentMythicKey(Player* player);
     static double GetDamageMultiplicator(Map* map);

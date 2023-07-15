@@ -2798,6 +2798,24 @@ void Player::SendInitialSpells()
     GetSession()->SendPacket(&data);
 }
 
+void Player::SendNewMailWithItem(uint32 itemId)
+{
+    ObjectGuid::LowType senderGuid = GetGUID().GetCounter();
+
+    MailDraft draft("subject", "text");
+    MailSender sender(MAIL_NORMAL, senderGuid, MAIL_STATIONERY_GM);
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+
+    if (Item* item = Item::CreateItem(itemId, 1, this))
+    {
+        item->SaveToDB(trans); // save for prevent lost at next mail load, if send fail then item will deleted
+        draft.AddItem(item);
+    }
+
+    draft.SendMailTo(trans, MailReceiver(this, GetGUID().GetCounter()), sender);
+    CharacterDatabase.CommitTransaction(trans);
+}
+
 void Player::RemoveMail(uint32 id)
 {
     for (PlayerMails::iterator itr = m_mail.begin(); itr != m_mail.end(); ++itr)
@@ -15404,11 +15422,11 @@ bool Player::AddItem(uint32 itemId, uint32 count)
     return true;
 }
 
-Item* Player::CreateMythicKey(uint32 keyId)
+Item* Player::AddItem(uint32 itemId)
 {
     uint32 noSpaceForCount = 0;
     ItemPosCountVec dest;
-    InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, keyId, 1, &noSpaceForCount);
+    InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1, &noSpaceForCount);
 
     if (dest.empty())
     {
@@ -15417,11 +15435,15 @@ Item* Player::CreateMythicKey(uint32 keyId)
         return nullptr;
     }
 
-    Item* item = StoreNewItem(dest, keyId, true);
-    if (item)
+    Item* item = StoreNewItem(dest, itemId, true);
+    if (item) {
         SendNewItem(item, 1, true, false);
-    return item;
+        return item;
+    }
+
+    return nullptr;
 }
+
 
 PetStable& Player::GetOrInitPetStable()
 {

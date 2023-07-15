@@ -69,17 +69,17 @@ public:
         if (!creature)
             return damage;
 
+        if (!creature->GetMap()->IsDungeon() && !creature->GetMap()->IsBattleground())
+            return damage;
+
+        if (((creature->IsHunterPet() || creature->IsPet() || creature->IsSummon()) && creature->IsControlledByPlayer()))
+            return damage;
+
         Map* map = creature->GetMap();
              
         AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, creature);
 
-        if (!map->IsDungeon())
-            return damage;
-
-        if ((attacker->IsHunterPet() || attacker->IsPet() || attacker->IsSummon()) && attacker->IsControlledByPlayer())
-            return damage;
-
-        return AddPct(damage, MythicDungeonManager::GetDamageMultiplicator(map));
+        return damage;
     }
 };
 

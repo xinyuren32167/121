@@ -1,4 +1,9 @@
 #include "MythicManager.h"
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include "Config.h"
 
 MythicManager::~MythicManager()
 {
@@ -26,6 +31,11 @@ void MythicManager::InitializePlayerMythicKeys()
 }
 
 void MythicManager::InitializeRewardsDungeons()
+{
+
+}
+
+void MythicManager::InitializeRewardsPlayersBag()
 {
 
 }
@@ -98,6 +108,11 @@ void MythicManager::RemoveGroup(Group* group)
     MythicStore.erase(group->GetGUID());
 }
 
+void MythicManager::OnGroupDisband(Group* group)
+{
+    RemoveGroup(group);
+}
+
 bool MythicManager::IsThisMapIdAvailableForMythic(uint32 mapId)
 {
     return false;
@@ -110,7 +125,10 @@ bool MythicManager::IsPlayerMeetingConditionsToStartMythic(Player* player)
 
 uint32 MythicManager::GetRandomMythicDungeonForPlayer(Player* player)
 {
-    return uint32();
+    if (MythicDungeonStore.empty())
+        return 0;
+
+    return MythicDungeonStore[urand(0, MythicDungeonStore.size() - 1)].id;
 }
 
 uint32 MythicManager::GetRandomLoot(Player* player, uint32 dungeonId, uint32 level)
@@ -120,8 +138,12 @@ uint32 MythicManager::GetRandomLoot(Player* player, uint32 dungeonId, uint32 lev
     auto itr = MythicDungeonLootStore.find(dungeonId);
     if (itr != MythicDungeonLootStore.end())
         for (auto item : itr->second)
-            if ((item.classMask & player->getClassMask()) && item.level == level)
+            if ((item.classMask & player->getClassMask() || item.classMask == -1) && item.level == level)
                 loots.push_back(item);
+
+
+    if (loots.empty())
+        return 0;
 
     uint32 rand = urand(0, loots.size() - 1);
 
@@ -135,13 +157,13 @@ uint32 MythicManager::GetItemIdWithDungeonId(uint32 dungeonId)
 
 uint32 MythicManager::GetEnchantByMythicLevel(uint32 level)
 {
-    return uint32();
+    return level + 100000;
 }
 
 
-Mythic* MythicManager::GetMythicDungeonByGroupGuid(ObjectGuid guid)
+Mythic* MythicManager::GetMythicDungeonByGroupGuid(ObjectGuid groupGuid)
 {
-    auto itr = MythicStore.find(guid);
+    auto itr = MythicStore.find(groupGuid);
     if (itr != MythicStore.end())
         return itr->second;
 
@@ -150,7 +172,7 @@ Mythic* MythicManager::GetMythicDungeonByGroupGuid(ObjectGuid guid)
 
 float MythicManager::GetKillCountByCreatureId(uint32 creatureId)
 {
-    float count = 1;
+    float count = 1.f;
     auto itr = MythicKillCounterStore.find(creatureId);
     if (itr != MythicKillCounterStore.end())
         count = itr->second;
@@ -168,9 +190,19 @@ MythicMultiplier MythicManager::GetMultplierByLevel(uint32 level)
     return multiplier;
 }
 
-MythicDungeon MythicManager::GetMythicDungeonByDungeonId(uint32 dungeonId)
+
+void MythicManager::FindMythicDungeonByItsKeyItemId(uint32 itemId, MythicDungeon& dungeon)
 {
-    return MythicDungeon();
+    for (auto const& dg : MythicDungeonStore)
+        if (dg.itemId == itemId)
+            dungeon = dg;
+}
+
+void MythicManager::GetMythicDungeonByDungeonId(uint32 dungeonId, MythicDungeon& dungeon)
+{
+    for (auto const& dg : MythicDungeonStore)
+        if (dg.id == dungeonId)
+            dungeon = dg;
 }
 
 MythicKey* MythicManager::GetCurrentPlayerMythicKey(Player* player)
@@ -183,9 +215,14 @@ MythicKey* MythicManager::GetCurrentPlayerMythicKey(Player* player)
     return nullptr;
 }
 
-std::vector<uint32> MythicManager::GetMythicBossesByDungeonId(uint32 dungeonId)
+std::map<uint32, bool> MythicManager::GetMythicBossesByDungeonId(uint32 dungeonId)
 {
-    return std::vector<uint32>();
+    std::map<uint32, bool> map = {};
+    auto itr = MythicDungeonBossStore.find(dungeonId);
+    for (auto const& boss : itr->second)
+        map[boss.creatureId] = true;
+
+    return map;
 }
 
 std::vector<std::string> MythicManager::GetDataMythicRun(Player* player)
@@ -211,6 +248,88 @@ std::vector<std::string> MythicManager::GetDataMythicRun(Player* player)
         CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(boss.first);
         bossStatus += ";" + creatureTemplate->Name + "+" + std::to_string(boss.second);
     }
+
     elements.push_back(bossStatus);
     return elements;
+}
+
+std::vector<std::string> MythicManager::GetDataMythicBag(Item* item)
+{
+    uint64 guid = item->GetGUID().GetCounter();
+    std::vector<std::string> elements = {};
+
+    return elements;
+}
+
+uint32 MythicManager::GetDungeonKeyLevelPreperation(Player* player)
+{
+    MythicKey* mythicKey = GetCurrentPlayerMythicKey(player);
+
+    if (!mythicKey)
+        return 0;
+
+    uint32 level = mythicKey->level;
+
+    if (level <= 1)
+        return 0;
+
+    return level;
+}
+
+void MythicManager::StartMythicDungeon(Player* player)
+{
+    MythicKey* mythicKey = GetCurrentPlayerMythicKey(player);
+
+    if (!mythicKey)
+        return;
+
+    MythicDungeon dungeon;
+    GetMythicDungeonByDungeonId(mythicKey->dungeonId, dungeon);
+
+    if(!dungeon)
+        return;
+
+    Group* group = player->GetGroup();
+
+    if (group)
+        group->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS, true);
+    else
+        player->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
+
+
+
+    /* uint32 maxLevel = 2;
+
+    auto key = m_PlayerKey.find(player->GetGUID().GetCounter());
+
+    if (key != m_PlayerKey.end())
+        maxLevel = key->second.level;
+
+    if (level > maxLevel) {
+        ChatHandler(player->GetSession()).SendSysMessage("Nice try! You cannot start a dungeon of this level!");
+        return;
+    }
+
+    Group* group = player->GetGroup();
+
+    m_DelayedCreationRun[player->GetGUID()] = { key->second.dungeonId, level };
+
+    player->ClearUnitState(UNIT_STATE_ROOT);
+    player->SetControlled(true, UNIT_STATE_ROOT);
+    player->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
+
+    MythicDungeon dungeon = GetMythicDungeonByDungeonId(key->second.dungeonId);
+
+    if (!dungeon.id) {
+        ChatHandler(player->GetSession()).SendSysMessage("This dungeon does not exist!");
+        return;
+    }
+
+    player->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+
+    if (group)
+        group->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS, true);
+    else
+        player->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);*/
+
 }

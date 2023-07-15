@@ -613,7 +613,7 @@ void MythicDungeonManager::UpdateOrCreateMythicKey(MythicRun* run, Player* playe
     else
         it->second.level += increaseAmountKey;
 
-    player->CreateMythicKey(mapId);
+    // player->CreateMythicKey(mapId);
 }
 
 void MythicDungeonManager::CompleteMythicDungeon(MythicRun* run, Player* player)
@@ -669,13 +669,11 @@ MythicDungeon MythicDungeonManager::GetMythicDungeonByDungeonId(uint32 dungeonId
     return {};
 }
 
-MythicDungeon MythicDungeonManager::FindMythicDungeonByItsKeyItemId(uint32 itemId)
+void MythicDungeonManager::FindMythicDungeonByItsKeyItemId(uint32 itemId, MythicDungeon& dungeon)
 {
     for (auto const& k : m_MythicDungeon)
         if (k.second.itemId == itemId)
-            return k.second;
-
-    return {};
+            dungeon = k.second;
 }
 
 

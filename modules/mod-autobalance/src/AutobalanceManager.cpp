@@ -213,8 +213,6 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
         scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
     }
 
-    AddPct(scaledHealth, MythicDungeonManager::GetHPMultiplicator(map));
-
     creature->SetMaxHealth(scaledHealth);
     creature->SetCreateHealth(scaledHealth);
     creature->SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)scaledHealth);

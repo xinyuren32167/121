@@ -10,7 +10,9 @@ enum MYTHIC_SPELLS {
     HEALTH_AND_DAMAGE_SPELL = 0,
 };
 
-Mythic::Mythic(Map* map, Group* group, uint32 dungeonId, uint32 level, Player* leader)
+#define itemCoin = 0;
+
+Mythic::Mythic(Map* map, Group* group, uint32 dungeonId, uint32 level, Player* keyOwner)
 {
     EnemyForces = 0.f;
     DungeonId = dungeonId;
@@ -24,7 +26,8 @@ Mythic::Mythic(Map* map, Group* group, uint32 dungeonId, uint32 level, Player* l
     Deaths = 0;
     Level = level;
     m_Group = group;
-    Leader = leader;
+    KeyOwner = keyOwner;
+    StateBossMythicStore = sMythicMgr->GetMythicBossesByDungeonId(dungeonId);
 }
 
 Mythic::~Mythic()
@@ -92,7 +95,10 @@ void Mythic::Update(uint32 diff)
 
 void Mythic::PrepareCreature(Creature* creature)
 {
-    if (creature->IsPet() || creature->IsControlledByPlayer())
+    if (IsDungeonDone())
+        return;
+
+    if ((creature->IsAlive() && creature->IsPet()) || creature->IsControlledByPlayer())
         return;
 
     if (!creature->HasAura(HEALTH_AND_DAMAGE_SPELL)) {
@@ -111,22 +117,41 @@ void Mythic::SaveMythicDungeon()
     }
 }
 
+void Mythic::SetBossDead(uint32 creatureId)
+{
+    StateBossMythicStore[creatureId] = false;
+}
+
 void Mythic::OnCompleteMythicDungeon(Player* player)
 {
     // Send Addon Mythic Completion;
     GiveRewards();
     SaveMythicDungeon();
-    UpdatePlayerKey(Leader);
+    UpdatePlayerKey(KeyOwner);
     sMythicMgr->RemoveGroup(m_Group);
 }
 
 void Mythic::OnKillBoss(Player* player, Creature* killed)
 {
-    if (Done && !Started)
+    Map::PlayerList const& playerList = Dungeon->GetPlayers();
+
+    if (playerList.IsEmpty())
+        return;
+
+    if (IsDungeonDone() && IsDungeonNotStarted())
         return;
 
     if (!MeetTheConditionsToCompleteTheDungeon())
         return;
+
+    SetBossDead(killed->GetEntry());
+
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
+        if (Player* player = playerIteration->GetSource()) {
+            // Send Update Enemy Forces;
+            // Send Addon
+        }
+    }
 
     OnCompleteMythicDungeon(player);
 }
@@ -136,9 +161,12 @@ void Mythic::OnKillCreature(Player* player, Creature* killed)
     if ((EnemyForces >= 100 || Done) && !Started)
         return;
 
+    if (killed->IsDungeonBoss())
+        return;
+
     uint8 count = sMythicMgr->GetKillCountByCreatureId(killed->GetEntry());
 
-    EnemyForces += count;
+    EnemyForces += killed->isElite() ? count * 2 : count;
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
@@ -181,22 +209,6 @@ void Mythic::OnPlayerRelease()
 
 }
 
-/*/std::list<Group::MemberSlot> Mythic::GetRandomMemberSlot()
-{
-
-    std::list<Group::MemberSlot> allyList = {};
-
-    std::random_device rd;
-    std::mt19937 rng(rd());
-
-    auto temp = m_Group->GetMemberSlots();
-
-    std::shuffle(temp.begin(), temp.end(), rng);
-
-    allyList.push_back(temp.front());
-    allyList.push_back(temp.back());
-}*/
-
 bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 {
     bool allBossesAreDead = true;
@@ -210,15 +222,18 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 
 void Mythic::GiveRewards()
 {
-    // We always garantee 2 loots;
-    /*std::list<Group::MemberSlot> members = GetRandomMemberSlot();
 
-    for (auto const& target : members)
+    bool isAlone = !!m_Group;
+
+    // We always garantee 2 loots;
+    // std::list<Group::MemberSlot> members = GetRandomMemberSlot();
+
+    /*for (auto const& target : members)
     {
         Player* member = ObjectAccessor::FindPlayer(target.guid);
         if (member) {
-            uint32 itemId = sMythicMgr->GetRandomLoot(member, DungeonId, Level);
-            member->AddItem(itemId, 1);
+            Item* item = member->AddItem(100000);
+            uint8 upgrade = CalculateUpgradeKey();
         }
     }*/
 }
@@ -228,15 +243,7 @@ void Mythic::UpdatePlayerKey(Player* player)
     if (ChestDecrapeted)
         return;
 
-    uint8 upgrade = 1;
-
-    uint32 difference = TimeToComplete - ElapsedTime;
-    float pourcentage = (difference / ElapsedTime) * 100;
-
-    if (pourcentage >= 65.0f)
-        upgrade = 3;
-    if (pourcentage < 65.0f && pourcentage > 45.0f)
-        upgrade = 2;
+    uint8 upgrade = CalculateUpgradeKey();
 
     MythicKey* key = sMythicMgr->GetCurrentPlayerMythicKey(player);
 
@@ -277,4 +284,20 @@ void Mythic::SendUpdateBossKill()
 void Mythic::SendEnemyForces()
 {
 
+}
+
+int8 Mythic::CalculateUpgradeKey()
+{
+    uint8 upgrade = 1;
+
+    uint32 difference = TimeToComplete - ElapsedTime;
+    float pourcentage = (difference / ElapsedTime) * 100;
+
+    if (pourcentage >= 65.0f)
+        upgrade = 3;
+    if (pourcentage < 65.0f && pourcentage > 45.0f)
+        upgrade = 2;
+
+
+    return upgrade;
 }
