@@ -1880,7 +1880,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
             case SPELLFAMILY_ROGUE:
                 {
                     // Overkill, Master of Subtlety
-                    if (caster && GetSpellInfo()->SpellIconID == 250)
+                    if (caster && GetSpellInfo()->Id == 1784 || GetSpellInfo()->Id == 51713)
                     {
                         if (caster->GetDummyAuraEffect(SPELLFAMILY_ROGUE, 2114, 0))
                             caster->CastSpell(caster, 31666, true);
