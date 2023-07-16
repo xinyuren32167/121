@@ -66,6 +66,7 @@ enum RogueSpells
     SPELL_ROGUE_SECRET_TECHNIQUE_AURA           = 82060,
     SPELL_ROGUE_VAMPIRIC_BURST_HEAL             = 82061,
     SPELL_ROGUE_SINISTER_CALLING_PROC           = 82063,
+    SPELL_ROGUE_RIPOSTE                         = 82064,
 
     //POISONS
     //LETHAL
@@ -1294,8 +1295,7 @@ class spell_rog_flagellation : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_rog_flagellation::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
-
+ 
 class spell_rog_shadow_blade : public AuraScript
 {
     PrepareAuraScript(spell_rog_shadow_blade);
@@ -1405,7 +1405,6 @@ class spell_rog_secret_technique_AuraScript : public AuraScript
     }
 };
 
-
 class spell_rog_vampiric_burst : public SpellScript
 {
     PrepareSpellScript(spell_rog_vampiric_burst);
@@ -1488,7 +1487,6 @@ class spell_rog_sinister_strike : public SpellScript
         SetHitDamage(damage);
     }
    
-
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_sinister_strike::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
@@ -1552,6 +1550,55 @@ class spell_rog_sinister_calling : public AuraScript
     }
 };
 
+class spell_rog_riposte : public AuraScript
+{
+    PrepareAuraScript(spell_rog_riposte);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->ToPlayer()->learnSpell(SPELL_ROGUE_RIPOSTE);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_RIPOSTE, true);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->ToPlayer()->removeSpell(SPELL_ROGUE_RIPOSTE, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_riposte::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectProc += AuraEffectProcFn(spell_rog_riposte::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_riposte::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_rog_forced_counter : public AuraScript
+{
+    PrepareAuraScript(spell_rog_forced_counter);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        uint32 chance = CalculatePct(caster->GetUnitParryChance(),aurEff->GetAmount());
+
+        if (!roll_chance_i(chance))
+        {
+            return;
+        }
+        caster->RemoveSpellCooldown(SPELL_ROGUE_RIPOSTE, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_forced_counter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1599,4 +1646,6 @@ void AddSC_rogue_spell_scripts()
     new spell_rog_secret_technique();
     RegisterSpellScript(spell_rog_secret_technique_teacher);
     RegisterSpellScript(spell_rog_sinister_calling);
+    RegisterSpellScript(spell_rog_riposte);
+    RegisterSpellScript(spell_rog_forced_counter);
 }
