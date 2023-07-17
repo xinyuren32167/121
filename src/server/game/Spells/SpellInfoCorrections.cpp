@@ -898,10 +898,10 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Improved Earth Shield
-    ApplySpellFix({ 51560, 51561 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({ 51560, 51561 }, [](SpellInfo* spellInfo)
     {
         spellInfo->Effects[EFFECT_1].MiscValue = SPELLMOD_DAMAGE;
-    });
+    });*/
 
     // Tidal Force
     ApplySpellFix({ 55166, 55198 }, [](SpellInfo* spellInfo)
@@ -920,13 +920,13 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Earth Shield
-    ApplySpellFix({ 379 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({ 379 }, [](SpellInfo* spellInfo)
     {
         spellInfo->SpellLevel = 0;
         spellInfo->BaseLevel = 0;
         spellInfo->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
         spellInfo->AttributesEx3 |= SPELL_ATTR3_IGNORE_CASTER_MODIFIERS;
-    });
+    });*/
 
     // Stormstrike
     ApplySpellFix({ 17364 }, [](SpellInfo* spellInfo)

@@ -8326,18 +8326,18 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     return true;
                 }
                 // Static Shock
-                if (dummySpell->SpellIconID == 3059)
-                {
-                    // Lightning Shield
-                    if (AuraEffect const* aurEff = GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x400, 0, 0))
-                    {
-                        uint32 spell = sSpellMgr->GetSpellWithRank(26364, aurEff->GetSpellInfo()->GetRank());
-                        CastSpell(target, spell, true, castItem, triggeredByAura);
-                        return true;
-                    }
-                    return false;
-                }
-                break;
+                //if (dummySpell->SpellIconID == 3059)
+                //{
+                //    // Lightning Shield
+                //    if (AuraEffect const* aurEff = GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x400, 0, 0))
+                //    {
+                //        // uint32 spell = sSpellMgr->GetSpellWithRank(26364, aurEff->GetSpellInfo()->GetRank());
+                //        CastSpell(target, 49279, true, castItem, triggeredByAura);
+                //        return true;
+                //    }
+                //    return false;
+                //}
+                //break;
             }
         case SPELLFAMILY_DEATHKNIGHT:
             {
@@ -9594,10 +9594,10 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
             {
                 // have rank dependent proc chance, ignore too often cases
                 // PPM = 2.5 * (rank of talent),
-                uint32 rank = auraSpellInfo->GetRank();
+                //uint32 rank = auraSpellInfo->GetRank();
                 // 5 rank -> 100% 4 rank -> 80% and etc from full rate
-                if (!roll_chance_i(20 * rank))
-                    return false;
+                //if (!roll_chance_i(20 * rank))
+                //    return false;
 
                 // Item - Shaman T10 Enhancement 4P Bonus
                 if (AuraEffect const* aurEff = GetAuraEffect(70832, 0))

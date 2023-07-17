@@ -625,6 +625,17 @@ class spell_sha_earthbind_totem : public AuraScript
 {
     PrepareAuraScript(spell_sha_earthbind_totem);
 
+    Aura* GetFrozenPowerAura()
+    {
+        for (size_t i = 84049; i < 84051; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_SHAMAN_TOTEM_EARTHBIND_TOTEM, SPELL_SHAMAN_TOTEM_EARTHEN_POWER });
@@ -635,7 +646,7 @@ class spell_sha_earthbind_totem : public AuraScript
         if (!GetCaster())
             return;
         if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
-            if (AuraEffect* aur = owner->GetDummyAuraEffect(SPELLFAMILY_SHAMAN, 2289, 0))
+            if (AuraEffect* aur = GetFrozenPowerAura()->GetEffect(EFFECT_0))
                 if (roll_chance_i(aur->GetBaseAmount()))
                     GetTarget()->CastSpell((Unit*)nullptr, SPELL_SHAMAN_TOTEM_EARTHEN_POWER, true);
     }
@@ -1643,6 +1654,56 @@ class spell_sha_improved_astral_shift : public AuraScript
     }
 };
 
+// 49236 - Frost Shock / 84051 - Frozen Power Aura
+class spell_sha_frozen_power_aura : public AuraScript
+{
+    PrepareAuraScript(spell_sha_frozen_power_aura);
+
+    Aura* GetFrozenPowerAura()
+    {
+        for (size_t i = 84049; i < 84051; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
+
+        if (!caster || !target)
+            return;
+
+        if (!GetFrozenPowerAura())
+            return;
+
+        if (AuraEffect* aurEff = GetFrozenPowerAura()->GetEffect(EFFECT_1))
+        {
+            int32 procSpell = aurEff->GetAmount();
+            caster->AddAura(procSpell, target);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        for (size_t i = 84051; i < 84052; i++)
+        {
+            if (GetUnitOwner()->HasAura(i))
+                GetUnitOwner()->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_frozen_power_aura::HandleApply, EFFECT_0, SPELL_AURA_MOD_DECREASE_SPEED, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_frozen_power_aura::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DECREASE_SPEED, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -1693,6 +1754,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ascendance_water_proc);
     RegisterSpellScript(spell_sha_downpour);
     RegisterSpellScript(spell_sha_improved_astral_shift);
+    RegisterSpellScript(spell_sha_frozen_power_aura);
 
 
 
