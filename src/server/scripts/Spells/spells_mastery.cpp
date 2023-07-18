@@ -1042,11 +1042,8 @@ class spell_mastery_sha_deep_healing : public AuraScript
             pct = 100;
         else
         {
-            LOG_ERROR("error", "healthPct = {}", targetHealthPct);
             targetHealthPct -= healthCap;
-            LOG_ERROR("error", "calculated healthPct = {}", targetHealthPct);
             pct = 100 - (100 * targetHealthPct / (100 - healthCap));
-            LOG_ERROR("error", "pct = {}", pct);
         }
 
         int32 amount = CalculatePct(maxPct, pct);

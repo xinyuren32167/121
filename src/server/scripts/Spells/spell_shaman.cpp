@@ -1241,10 +1241,9 @@ class spell_sha_maelstrom_on_cast : public SpellScript
     void HandleProc()
     {
         Unit* caster = GetCaster();
-
         int32 maelstromAmount = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
 
-        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + maelstromAmount, true);
+        caster->ModifyPower(POWER_RUNIC_POWER, maelstromAmount, true);
     }
 
     void Register() override
@@ -1261,15 +1260,14 @@ class spell_sha_maelstrom_on_hit : public SpellScript
     void HandleProc(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-
         int32 maelstromAmount = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
 
-        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + maelstromAmount, true);
+        caster->ModifyPower(POWER_RUNIC_POWER, maelstromAmount, true);
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_maelstrom_on_hit::HandleProc, EFFECT_2, SPELL_EFFECT_DUMMY);
+        OnEffectHit += SpellEffectFn(spell_sha_maelstrom_on_hit::HandleProc, EFFECT_2, SPELL_EFFECT_DUMMY);
     }
 };
 
