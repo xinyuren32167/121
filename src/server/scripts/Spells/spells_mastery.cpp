@@ -976,18 +976,66 @@ class spell_mastery_sha_elemental_overload : public AuraScript
         int32 spellID = eventInfo.GetSpellInfo()->Id;
         int32 procChance = GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
 
+        // Replace Lightning Bolt by it's Overload
+        if (spellID == 49238)
+            spellID = 84057;
+
         if (!roll_chance_i(procChance))
             return;
 
         // damage + maelstrom nerf
-        caster->AddAura(1000001, caster);
+        caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
         caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+        caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
     }
 
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(spell_mastery_sha_elemental_overload::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_mastery_sha_elemental_overload::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 49271 - Chain Lightning / 84021 - Lava Beam
+class spell_mastery_sha_chain_lightning_overload : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_sha_chain_lightning_overload);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+        int32 spellID = GetSpellInfo()->Id;
+
+        if (Aura* overloadMastery = caster->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
+        {
+            int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+
+            // Mod Stormkeeper stacks
+            if (spellID == 49271 || spellID == 84021)
+            {
+                if (Aura* stormkeeper = caster->GetAura(84054))
+                    stormkeeper->ModStackAmount(-1);
+            }
+
+            // Swap Chain lighting and Lava Beam to their overload counterpart.
+            if (spellID == 49271)
+                spellID = 84056;
+            else if (spellID == 84021)
+                spellID = 84058;
+
+            if (!roll_chance_i(procChance))
+                return;
+
+            caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
+            caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+            caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mastery_sha_chain_lightning_overload::HandleProc);
     }
 };
 
@@ -1028,11 +1076,11 @@ class spell_mastery_sha_deep_healing : public AuraScript
     {
         Unit* caster = eventInfo.GetHealInfo()->GetHealer();
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
-        int32 damage = eventInfo.GetHealInfo()->GetHeal();
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
         int32 maxPct = aurEff->GetAmount() + caster->ToPlayer()->GetMastery();
         int32 healthCap = GetAura()->GetEffect(EFFECT_1)->GetAmount();
         float pct = 0;
-
+        
         if (!target || target->isDead())
             return;
 
@@ -1047,6 +1095,7 @@ class spell_mastery_sha_deep_healing : public AuraScript
         }
 
         int32 amount = CalculatePct(maxPct, pct);
+        amount = CalculatePct(heal, amount);
 
         caster->CastCustomSpell(MASTERY_SHAMAN_DEEP_HEALING_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
@@ -1097,6 +1146,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_rog_main_gauche);
     RegisterSpellScript(spell_mastery_rog_executioner);
     RegisterSpellScript(spell_mastery_sha_elemental_overload);
+    RegisterSpellScript(spell_mastery_sha_chain_lightning_overload);
     RegisterSpellScript(spell_mastery_sha_enhanced_elements);
     RegisterSpellScript(spell_mastery_sha_deep_healing);
 }

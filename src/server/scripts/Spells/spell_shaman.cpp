@@ -42,6 +42,8 @@ enum ShamanSpells
     SPELL_SHAMAN_ASCENDANCE_WATER_HEAL = 84043,
     SPELL_SHAMAN_ASTRAL_SHIFT = 84007,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
+    SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
+    SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD = 84056,
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
     SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE = 84034,
     SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT = 52025,
@@ -58,22 +60,31 @@ enum ShamanSpells
     //SPELL_SHAMAN_FIRE_NOVA_R1                 = 1535,
     //SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1       = 8349,
     SPELL_SHAMAN_FLAME_SHOCK = 49233,
+    SPELL_SHAMAN_FROST_SHOCK = 49236,
     SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD = 63279,
     SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM = 55456,
     SPELL_SHAMAN_GLYPH_OF_MANA_TIDE = 55441,
     SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM = 62132,
     SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA = 58765,
+    SPELL_SHAMAN_ICEFURY = 84016,
+    SPELL_SHAMAN_ICEFURY_BUFF = 84017,
     SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD = 23552,
     SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD_DAMAGE = 27635,
     SPELL_SHAMAN_ITEM_MANA_SURGE = 23571,
+    SPELL_SHAMAN_LAVA_BEAM = 84021,
+    SPELL_SHAMAN_LAVA_BEAM_OVERLOAD = 84058,
     SPELL_SHAMAN_LAVA_BURST = 60043,
     SPELL_SHAMAN_LAVA_FLOWS_R1 = 51480,
     SPELL_SHAMAN_LAVA_FLOWS_TRIGGERED_R1 = 64694,
+    SPELL_SHAMAN_LIGHTNING_BOLT = 49238,
+    SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD = 84057,
     SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE = 52032,
     SPELL_SHAMAN_MANA_TIDE_TOTEM = 39609,
     SPELL_SHAMAN_SATED = 57724,
     SPELL_SHAMAN_STORM_EARTH_AND_FIRE = 51483,
+    SPELL_SHAMAN_STORMKEEPER = 84018,
+    SPELL_SHAMAN_STORMKEEPER_LISTENER = 84054,
     SPELL_SHAMAN_TOTEM_EARTHBIND_EARTHGRAB = 64695,
     SPELL_SHAMAN_TOTEM_EARTHBIND_TOTEM = 6474,
     SPELL_SHAMAN_TOTEM_EARTHEN_POWER = 59566,
@@ -81,7 +92,10 @@ enum ShamanSpells
     SPELL_SHAMAN_WINDFURY_WEAPON_AURA = 33757,
     SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1 = 51554,
     SPELL_SHAMAN_STORMSTRIKE = 17364,
-    SPELL_SHAMAN_LAVA_LASH = 60103
+    SPELL_SHAMAN_LAVA_LASH = 60103,
+
+    MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
+    MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
 };
 
 enum ShamanSpellIcons
@@ -1243,6 +1257,14 @@ class spell_sha_maelstrom_on_cast : public SpellScript
         Unit* caster = GetCaster();
         int32 maelstromAmount = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
 
+        if (GetSpellInfo()->Id == SPELL_SHAMAN_FROST_SHOCK)
+            if (Aura* icefury = caster->GetAura(SPELL_SHAMAN_ICEFURY_BUFF))
+                maelstromAmount = icefury->GetEffect(EFFECT_1)->GetAmount();
+        
+        if (GetSpellInfo()->Id == SPELL_SHAMAN_LIGHTNING_BOLT)
+            if (Aura* stormkeeper = caster->GetAura(SPELL_SHAMAN_STORMKEEPER_LISTENER))
+                stormkeeper->ModStackAmount(-1);
+
         caster->ModifyPower(POWER_RUNIC_POWER, maelstromAmount, true);
     }
 
@@ -1267,7 +1289,7 @@ class spell_sha_maelstrom_on_hit : public SpellScript
 
     void Register() override
     {
-        OnEffectHit += SpellEffectFn(spell_sha_maelstrom_on_hit::HandleProc, EFFECT_2, SPELL_EFFECT_DUMMY);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_maelstrom_on_hit::HandleProc, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -1702,6 +1724,82 @@ class spell_sha_frozen_power_aura : public AuraScript
     }
 };
 
+// 84018 - Stormkeeper
+class spell_sha_stormkeeper : public AuraScript
+{
+    PrepareAuraScript(spell_sha_stormkeeper);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetUnitOwner();
+
+        if (!caster)
+            return;
+
+        caster->AddAura(SPELL_SHAMAN_STORMKEEPER_LISTENER, caster);
+        caster->GetAura(SPELL_SHAMAN_STORMKEEPER_LISTENER)->SetStackAmount(2);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (eventInfo.GetSpellInfo());
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (!caster || !target)
+            return;
+
+        // doesn't proc on overload versions
+        if (spellID == SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD || spellID == SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD || spellID == SPELL_SHAMAN_LAVA_BEAM_OVERLOAD)
+            return;
+
+        if (spellID == SPELL_SHAMAN_LIGHTNING_BOLT)
+            spellID = SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD;
+        else if (spellID == SPELL_SHAMAN_CHAIN_LIGHTNING)
+            spellID = SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD;
+        else if (spellID == SPELL_SHAMAN_LAVA_BEAM)
+            spellID = SPELL_SHAMAN_LAVA_BEAM_OVERLOAD;
+
+        if (!caster->HasAura(SPELL_SHAMAN_STORMKEEPER_LISTENER))
+            return;
+
+        // damage + maelstrom nerf
+        caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
+        caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+        caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_stormkeeper::HandleApply, EFFECT_2, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        DoCheckProc += AuraCheckProcFn(spell_sha_stormkeeper::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_stormkeeper::HandleEffectProc, EFFECT_2, SPELL_AURA_DUMMY);
+    }
+};
+
+// 84054 - Stormkeeper Listener
+class spell_sha_stormkeeper_remove : public AuraScript
+{
+    PrepareAuraScript(spell_sha_stormkeeper_remove);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(SPELL_SHAMAN_STORMKEEPER))
+            GetCaster()->RemoveAura(SPELL_SHAMAN_STORMKEEPER);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_stormkeeper_remove::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -1753,6 +1851,9 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_downpour);
     RegisterSpellScript(spell_sha_improved_astral_shift);
     RegisterSpellScript(spell_sha_frozen_power_aura);
+    RegisterSpellScript(spell_sha_stormkeeper);
+    RegisterSpellScript(spell_sha_stormkeeper_remove);
+
 
 
 
