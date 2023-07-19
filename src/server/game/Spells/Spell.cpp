@@ -6605,7 +6605,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                             return SPELL_FAILED_HIGHLEVEL;
 
                         int32 casterLevel = m_caster->getLevel() + 3;
-                        if (m_spellInfo->Id == 61191 && int32(target->getLevel()) > casterLevel)
+                        if (m_spellInfo->Id == 61191 && int32(target->getLevel()) > casterLevel && !target->ToCreature()->isWorldBoss() && !target->ToCreature()->IsDungeonBoss())
                             return SPELL_FAILED_HIGHLEVEL;
                     }
 
