@@ -2197,7 +2197,7 @@ SpellSpecificType SpellInfo::LoadSpellSpecific() const
                     return SPELL_SPECIFIC_CURSE;
 
                 // Warlock (Demon Armor | Demon Skin | Fel Armor)
-                if (SpellFamilyFlags[1] & 0x20000020 || SpellFamilyFlags[2] & 0x00000010)
+                if (Id == 47889 || Id == 47893)
                     return SPELL_SPECIFIC_WARLOCK_ARMOR;
 
                 //seed of corruption and corruption
@@ -2402,7 +2402,10 @@ int32 SpellInfo::CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask, S
         {
             // health as power used
             case POWER_HEALTH:
-                powerCost += int32(CalculatePct(caster->GetCreateHealth(), ManaCostPercentage));
+                if (Id == 47856 || Id == 83014)
+                    powerCost += int32(CalculatePct(caster->GetMaxHealth(), ManaCostPercentage));
+                else
+                    powerCost += int32(CalculatePct(caster->GetCreateHealth(), ManaCostPercentage));
                 break;
             case POWER_MANA:
                 powerCost += int32(CalculatePct(caster->GetCreateMana(), ManaCostPercentage));

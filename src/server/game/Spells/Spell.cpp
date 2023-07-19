@@ -6601,7 +6601,11 @@ SpellCastResult Spell::CheckCast(bool strict)
                             return SPELL_FAILED_CANT_BE_CHARMED;
 
                         int32 damage = CalculateSpellDamage(i, target);
-                        if (damage && int32(target->getLevel()) > damage)
+                        if (m_spellInfo->Id != 61191 && damage && int32(target->getLevel()) > damage)
+                            return SPELL_FAILED_HIGHLEVEL;
+
+                        int32 casterLevel = m_caster->getLevel() + 3;
+                        if (m_spellInfo->Id == 61191 && int32(target->getLevel()) > casterLevel)
                             return SPELL_FAILED_HIGHLEVEL;
                     }
 

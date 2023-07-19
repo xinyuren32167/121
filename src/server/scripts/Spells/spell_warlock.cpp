@@ -1510,6 +1510,60 @@ class spell_warlock_dark_pact : public SpellScript
     }
 };
 
+class spell_warl_demon_armor : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demon_armor);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        amount = GetUnitOwner()->CountPctFromMaxHealth(amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_demon_armor::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_INCREASE_HEALTH);
+    }
+};
+
+class spell_warl_fel_armor : public AuraScript
+{
+    PrepareAuraScript(spell_warl_fel_armor);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    {  
+        amount = CalculatePct(GetCaster()->ToPlayer()->GetBaseSpellPowerBonus(), amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_fel_armor::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_DONE);
+    }
+};
+
+class spell_warl_health_funnel_new : public AuraScript
+{
+    PrepareAuraScript(spell_warl_health_funnel_new);
+
+    bool Load() override
+    {
+        Unit* caster = GetCaster();
+        return caster && caster->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    {
+        if (Unit* caster = GetCaster())
+        {
+            amount = CalculatePct(GetCaster()->ToPlayer()->GetMaxHealth(), amount) * 2 / 5;
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_health_funnel_new::CalculateAmount, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -1531,15 +1585,15 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_fel_synergy);
     RegisterSpellScript(spell_warl_glyph_of_shadowflame);
     RegisterSpellAndAuraScriptPair(spell_warl_haunt, spell_warl_haunt_aura);
-    RegisterSpellScript(spell_warl_health_funnel);
-    RegisterSpellScript(spell_warl_life_tap);
+    //RegisterSpellScript(spell_warl_health_funnel);
+    //RegisterSpellScript(spell_warl_life_tap);
     RegisterSpellScript(spell_warl_ritual_of_doom_effect);
     RegisterSpellScript(spell_warl_seed_of_corruption);
     RegisterSpellScript(spell_warl_shadow_ward);
     RegisterSpellScript(spell_warl_siphon_life);
     RegisterSpellScript(spell_warl_soulshatter);
     RegisterSpellScript(spell_warl_unstable_affliction);
-    RegisterSpellScript(spell_warl_drain_soul);
+    //RegisterSpellScript(spell_warl_drain_soul);
     RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_glyph_of_felguard);
     RegisterSpellScript(spell_warlock_summon_darkhound);
@@ -1548,4 +1602,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_demonic_tyrant);
     RegisterSpellScript(spell_warl_agony);
     RegisterSpellScript(spell_warlock_dark_pact);
+    RegisterSpellScript(spell_warl_demon_armor);
+    RegisterSpellScript(spell_warl_fel_armor);
+    RegisterSpellScript(spell_warl_health_funnel_new);
 }
