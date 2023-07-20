@@ -32,6 +32,7 @@
 
 enum WarlockSpells
 {
+    //THEIRS
     SPELL_WARLOCK_DRAIN_SOUL_R1                     = 1120,
     SPELL_WARLOCK_CREATE_SOULSHARD                  = 43836,
     SPELL_WARLOCK_CURSE_OF_DOOM_EFFECT              = 18662,
@@ -63,9 +64,14 @@ enum WarlockSpells
     SPELL_WARLOCK_UNSTABLE_AFFLICTION_DISPEL        = 31117,
     SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1            = 18213,
     SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC          = 18371,
-    SPELL_FELBOAR_CHARGE                            = 83005,
-};
 
+    //OURS
+    SPELL_FELBOAR_CHARGE                            = 83005,
+    SPELL_WARLOCK_AGONY                             = 83010,
+    SPELL_WARLOCK_DARK_PACT                         = 59092,
+    SPELL_WARLOCK_DARK_PACT_DAMAGE                  = 83011,
+    SPELL_WARLOCK_DARK_PACT_SHIELD                  = 83012,
+};
 
 enum PET_WARLOCKS {
 
@@ -1371,7 +1377,6 @@ class spell_warlock_summon_felboar : public SpellScript
     }
 };
 
-
 class spell_warlock_demonic_tyrant : public SpellScript
 {
     PrepareSpellScript(spell_warlock_demonic_tyrant);
@@ -1439,6 +1444,125 @@ class spell_warlock_hand_of_guldan : public SpellScript
     }
 };
 
+class spell_warl_agony : public AuraScript
+{
+    PrepareAuraScript(spell_warl_agony);
+
+    void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_AGONY);
+        uint32 initialStack = value->GetEffect(EFFECT_2).CalcValue(GetCaster());
+
+        aurEff->GetBase()->SetStackAmount(initialStack);
+    }
+
+    void OnReApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_AGONY);
+        uint32 maxStack = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        if (aurEff->GetBase()->GetStackAmount() > maxStack)
+            aurEff->GetBase()->SetStackAmount(maxStack);
+    }
+
+    void OnPeriodic(AuraEffect const* aurEff)
+    {
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_AGONY);
+        uint32 maxStack = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        uint32 currentStack = aurEff->GetBase()->GetStackAmount();
+        if (currentStack < maxStack)
+            aurEff->GetBase()->SetStackAmount(currentStack + 1);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_agony::OnApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_warl_agony::OnReApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAPPLY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_agony::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
+class spell_warlock_dark_pact : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_dark_pact);
+
+    uint32 shieldAmount = 0;
+
+    void HandleBeforeCast()
+    {
+        Unit* caster = GetCaster();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_DARK_PACT);
+        int32 sacrificePct = CalculatePct(caster->GetHealth(), value->GetEffect(EFFECT_0).CalcValue(caster));
+        shieldAmount = CalculatePct(sacrificePct, value->GetEffect(EFFECT_1).CalcValue(caster)) + CalculatePct(caster->ToPlayer()->GetBaseSpellPowerBonus(), value->GetEffect(EFFECT_2).CalcValue(caster));
+
+        caster->CastCustomSpell(SPELL_WARLOCK_DARK_PACT_DAMAGE, SPELLVALUE_BASE_POINT0, sacrificePct, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+        caster->CastCustomSpell(SPELL_WARLOCK_DARK_PACT_SHIELD, SPELLVALUE_BASE_POINT0, shieldAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_warlock_dark_pact::HandleBeforeCast);
+        AfterCast += SpellCastFn(spell_warlock_dark_pact::HandleAfterCast);
+    }
+};
+
+class spell_warl_demon_armor : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demon_armor);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        amount = GetUnitOwner()->CountPctFromMaxHealth(amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_demon_armor::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_INCREASE_HEALTH);
+    }
+};
+
+class spell_warl_fel_armor : public AuraScript
+{
+    PrepareAuraScript(spell_warl_fel_armor);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    {  
+        amount = CalculatePct(GetCaster()->ToPlayer()->GetBaseSpellPowerBonus(), amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_fel_armor::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_DONE);
+    }
+};
+
+class spell_warl_health_funnel_new : public AuraScript
+{
+    PrepareAuraScript(spell_warl_health_funnel_new);
+
+    bool Load() override
+    {
+        Unit* caster = GetCaster();
+        return caster && caster->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    {
+        if (Unit* caster = GetCaster())
+        {
+            amount = CalculatePct(GetCaster()->ToPlayer()->GetMaxHealth(), amount) * 2 / 5;
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_health_funnel_new::CalculateAmount, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
+    }
+};
 
 void AddSC_warlock_spell_scripts()
 {
@@ -1461,19 +1585,24 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_fel_synergy);
     RegisterSpellScript(spell_warl_glyph_of_shadowflame);
     RegisterSpellAndAuraScriptPair(spell_warl_haunt, spell_warl_haunt_aura);
-    RegisterSpellScript(spell_warl_health_funnel);
-    RegisterSpellScript(spell_warl_life_tap);
+    //RegisterSpellScript(spell_warl_health_funnel);
+    //RegisterSpellScript(spell_warl_life_tap);
     RegisterSpellScript(spell_warl_ritual_of_doom_effect);
     RegisterSpellScript(spell_warl_seed_of_corruption);
     RegisterSpellScript(spell_warl_shadow_ward);
     RegisterSpellScript(spell_warl_siphon_life);
     RegisterSpellScript(spell_warl_soulshatter);
     RegisterSpellScript(spell_warl_unstable_affliction);
-    RegisterSpellScript(spell_warl_drain_soul);
+    //RegisterSpellScript(spell_warl_drain_soul);
     RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_glyph_of_felguard);
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
     RegisterSpellScript(spell_warlock_summon_felboar);
     RegisterSpellScript(spell_warlock_demonic_tyrant);
+    RegisterSpellScript(spell_warl_agony);
+    RegisterSpellScript(spell_warlock_dark_pact);
+    RegisterSpellScript(spell_warl_demon_armor);
+    RegisterSpellScript(spell_warl_fel_armor);
+    RegisterSpellScript(spell_warl_health_funnel_new);
 }

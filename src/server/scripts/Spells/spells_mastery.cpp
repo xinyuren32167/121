@@ -12,8 +12,9 @@
 
 enum Masteries
 {
+    // Deathknight
     MASTERY_DK_UNHOLY = 600005,
-    MASTER_DK_BLOOD   = 590001,
+    MASTER_DK_BLOOD = 590001,
     MASTER_DK_BLOOD_INCREASE_AP = 590002,
     SPELL_DK_BlOOD_SHIELD = 590003,
 
@@ -33,6 +34,15 @@ enum Masteries
     MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE = 1100004,
     MASTERY_ROGUE_EXECUTIONER = 1100005,
     MASTERY_ROGUE_EXECUTIONER_BUFF = 1100007,
+
+    // Shaman
+    MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
+    MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
+    MASTERY_SHAMAN_ENHANCED_ELEMENTS = 1000002,
+    MASTERY_SHAMAN_ENHANCED_ELEMENTS_APPLIER = 1000003,
+    MASTERY_SHAMAN_ENHANCED_ELEMENTS_BUFF = 1000004,
+    MASTERY_SHAMAN_DEEP_HEALING = 1000005,
+    MASTERY_SHAMAN_DEEP_HEALING_HEAL = 1000006,
 };
 
 // Mage
@@ -161,7 +171,7 @@ class spell_mastery_ignite : public AuraScript
             }
             GetCaster()->CastCustomSpellTrigger(300110, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_IGNORE_AURA_SCALING);
         }
-      
+
     }
 
     void Register() override
@@ -332,7 +342,7 @@ class spell_mastery_lightbringer : public AuraScript
         if (distance >= 40)
             effectiveness = 0;
         if (distance <= 10)
-            effectiveness = 100; 
+            effectiveness = 100;
         if (distance > 10)
             effectiveness = (40 - distance) * 3.33;
 
@@ -497,8 +507,8 @@ class spell_mastery_astral_invocation : public AuraScript
         if (schoolMask & SPELL_SCHOOL_MASK_NATURE && target->HasAura(80518))
         {
             int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
-            int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);           
-            GetCaster()->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, std::max(1,pctDamage), target, TRIGGERED_FULL_MASK);
+            int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);
+            GetCaster()->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, std::max(1, pctDamage), target, TRIGGERED_FULL_MASK);
         }
 
         if (schoolMask & SPELL_SCHOOL_MASK_ARCANE && target->HasAura(48463))
@@ -516,7 +526,7 @@ class spell_mastery_astral_invocation : public AuraScript
     }
 };
 
-class spell_mastery_razor_claws: public SpellScript
+class spell_mastery_razor_claws : public SpellScript
 {
     PrepareSpellScript(spell_mastery_razor_claws);
 
@@ -634,7 +644,7 @@ class spell_mastery_harmony : public AuraScript
         if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 50464)
             finalAmount *= 3;
 
-        GetCaster()->CastCustomSpell(700011, SPELLVALUE_BASE_POINT0, std::max(1,finalAmount), target, TRIGGERED_FULL_MASK);
+        GetCaster()->CastCustomSpell(700011, SPELLVALUE_BASE_POINT0, std::max(1, finalAmount), target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -697,7 +707,7 @@ class spell_dk_pet_scaling_damage : public AuraScript
         Player* player = GetCaster()->ToPlayer();
 
         if (mastery && player)
-           amount += mastery->GetEffect(EFFECT_0)->GetAmount() + player->GetMastery();
+            amount += mastery->GetEffect(EFFECT_0)->GetAmount() + player->GetMastery();
     }
 
     void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
@@ -739,7 +749,8 @@ class spell_mastery_bloodshield : public AuraScript
         if (Aura* shield = GetCaster()->GetAura(SPELL_DK_BlOOD_SHIELD)) {
             int32 currentAmount = shield->GetEffect(EFFECT_0)->GetAmount();
             shield->GetEffect(EFFECT_0)->ChangeAmount(shieldBonus + currentAmount);
-        } else
+        }
+        else
             GetCaster()->CastCustomSpell(SPELL_DK_BlOOD_SHIELD, SPELLVALUE_BASE_POINT0, shieldBonus, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -883,7 +894,7 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
 
 
 // Rogue
-class spell_mastery_rog_potent_assassin: public SpellScript
+class spell_mastery_rog_potent_assassin : public SpellScript
 {
     PrepareSpellScript(spell_mastery_rog_potent_assassin);
 
@@ -930,7 +941,7 @@ class spell_mastery_rog_main_gauche : public AuraScript
     }
 };
 
-class spell_mastery_rog_executioner: public SpellScript
+class spell_mastery_rog_executioner : public SpellScript
 {
     PrepareSpellScript(spell_mastery_rog_executioner);
 
@@ -947,6 +958,156 @@ class spell_mastery_rog_executioner: public SpellScript
         OnCast += SpellCastFn(spell_mastery_rog_executioner::HandleCast);
     }
 };
+
+// Shaman
+class spell_mastery_sha_elemental_overload : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_sha_elemental_overload);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActionTarget() && eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 procChance = GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+
+        // Replace Lightning Bolt by it's Overload
+        if (spellID == 49238)
+            spellID = 84057;
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        // damage + maelstrom nerf
+        caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
+        caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+        caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_sha_elemental_overload::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_sha_elemental_overload::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 49271 - Chain Lightning / 84021 - Lava Beam
+class spell_mastery_sha_chain_lightning_overload : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_sha_chain_lightning_overload);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+        int32 spellID = GetSpellInfo()->Id;
+
+        if (Aura* overloadMastery = caster->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
+        {
+            int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+
+            // Mod Stormkeeper stacks
+            if (spellID == 49271 || spellID == 84021)
+            {
+                if (Aura* stormkeeper = caster->GetAura(84054))
+                    stormkeeper->ModStackAmount(-1);
+            }
+
+            // Swap Chain lighting and Lava Beam to their overload counterpart.
+            if (spellID == 49271)
+                spellID = 84056;
+            else if (spellID == 84021)
+                spellID = 84058;
+
+            if (!roll_chance_i(procChance))
+                return;
+
+            caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
+            caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+            caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mastery_sha_chain_lightning_overload::HandleProc);
+    }
+};
+
+class spell_mastery_sha_enhanced_elements : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_sha_enhanced_elements);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        // proc chance increase
+        int32 bonus1 = GetCaster()->GetAura(MASTERY_SHAMAN_ENHANCED_ELEMENTS)->GetEffect(EFFECT_0)->GetAmount() + mastery;
+        // elemental damage increase
+        int32 bonus2 = GetCaster()->GetAura(MASTERY_SHAMAN_ENHANCED_ELEMENTS)->GetEffect(EFFECT_1)->GetAmount() + mastery;
+
+
+        caster->CastCustomSpell(caster, MASTERY_SHAMAN_ENHANCED_ELEMENTS_BUFF, &bonus1, &bonus2, 0, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_sha_enhanced_elements::HandleCast);
+    }
+};
+
+class spell_mastery_sha_deep_healing : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_sha_deep_healing);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetHealInfo()->GetHealer();
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        int32 maxPct = aurEff->GetAmount() + caster->ToPlayer()->GetMastery();
+        int32 healthCap = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        float pct = 0;
+        
+        if (!target || target->isDead())
+            return;
+
+        int32 targetHealthPct = target->GetHealthPct();
+
+        if (targetHealthPct < healthCap)
+            pct = 100;
+        else
+        {
+            targetHealthPct -= healthCap;
+            pct = 100 - (100 * targetHealthPct / (100 - healthCap));
+        }
+
+        int32 amount = CalculatePct(maxPct, pct);
+        amount = CalculatePct(heal, amount);
+
+        caster->CastCustomSpell(MASTERY_SHAMAN_DEEP_HEALING_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_sha_deep_healing::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_sha_deep_healing::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 
 void AddSC_spells_mastery_scripts()
 {
@@ -984,4 +1145,8 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_rog_potent_assassin);
     RegisterSpellScript(spell_mastery_rog_main_gauche);
     RegisterSpellScript(spell_mastery_rog_executioner);
+    RegisterSpellScript(spell_mastery_sha_elemental_overload);
+    RegisterSpellScript(spell_mastery_sha_chain_lightning_overload);
+    RegisterSpellScript(spell_mastery_sha_enhanced_elements);
+    RegisterSpellScript(spell_mastery_sha_deep_healing);
 }
