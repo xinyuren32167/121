@@ -5,6 +5,8 @@
 #include "Item.h"
 #include "Mythic.h"
 #include "MythicManager.h"
+#include "Chat.h"
+#include "LuaEngine.h"
 
 enum MYTHIC_SPELLS {
     HEALTH_AND_DAMAGE_SPELL = 0,
@@ -12,20 +14,22 @@ enum MYTHIC_SPELLS {
 
 #define itemCoin = 0;
 
-Mythic::Mythic(Map* map, Group* group, uint32 dungeonId, uint32 level, Player* keyOwner)
+Mythic::Mythic(Player* keyOwner, uint32 dungeonId, uint32 level)
 {
     EnemyForces = 0.f;
     DungeonId = dungeonId;
-    Dungeon = map;
-    TimeToComplete = 0; // Get the time to complete.
-    StartTimer = 0;
+    Dungeon = keyOwner->GetMap();
+    TimeToComplete = sMythicMgr->GetTimeToCompleteByDungeonId(dungeonId);;
+    StartTimer = 10 * IN_MILLISECONDS;
+    Countdown = 0;
+    Iteration = 10;
     Started = false;
     ChestDecrapeted = false;
     Done = false;
     ElapsedTime = 0;
     Deaths = 0;
     Level = level;
-    m_Group = group;
+    m_Group = keyOwner->GetGroup();
     KeyOwner = keyOwner;
     StateBossMythicStore = sMythicMgr->GetMythicBossesByDungeonId(dungeonId);
 }
@@ -35,23 +39,6 @@ Mythic::~Mythic()
 
 }
 
-void Mythic::Prepare()
-{
-    Dungeon->EnableMythic(this);
-
-    auto const& allyList = m_Group->GetMemberSlots();
-
-    for (auto const& target : allyList)
-    {
-        Player* member = ObjectAccessor::FindPlayer(target.guid);
-        if (member) {
-            member->ClearUnitState(UNIT_STATE_ROOT);
-            member->SetControlled(true, UNIT_STATE_ROOT);
-            member->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
-            // member->TeleportTo(mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
-        }
-    }
-}
 
 void Mythic::Update(uint32 diff)
 {
@@ -64,7 +51,20 @@ void Mythic::Update(uint32 diff)
         if (playerList.IsEmpty())
             return;
 
+
+        Countdown += diff;
         StartTimer -= diff;
+
+        if (Countdown > 1000) {
+            Iteration -= 1;
+            Countdown = 0;
+            for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
+                if (Player* player = playerIteration->GetSource()) {
+                    std::string countdownMessage = "Start in " + std::to_string(Iteration) + "...";
+                    ChatHandler(player->GetSession()).SendSysMessage(countdownMessage);
+                }
+            }
+        }
 
         if (StartTimer <= 0) {
             StartTimer = 0;
@@ -73,22 +73,22 @@ void Mythic::Update(uint32 diff)
                 if (Player* player = playerIteration->GetSource()) {
                     player->ClearUnitState(UNIT_STATE_ROOT);
                     player->SetControlled(false, UNIT_STATE_ROOT);
-                    // Send Addon Start
-                    // SendStart(player);
+                    sEluna->SendStartMythicDungeon(player);
                 }
             }
         }
     }
     else {
-        ElapsedTime += diff;
-        if (ElapsedTime >= TimeToComplete && ChestDecrapeted && !Done) {
+        if(IsAllowedTimeOver())
+            ElapsedTime += diff;
+
+        if (ElapsedTime >= TimeToComplete && !ChestDecrapeted && !Done) {
             ChestDecrapeted = true;
             Map::PlayerList const& playerList = Dungeon->GetPlayers();
             if (!playerList.IsEmpty())
                 for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
-                    if (Player* player = playerIteration->GetSource()) {
-                        // Send Addon Chest Decapreted;
-                    }
+                    if (Player* player = playerIteration->GetSource())
+                        sEluna->SendMythicUpdateChestDecrapeted(player);
         }
     }
 }
@@ -119,12 +119,30 @@ void Mythic::SaveMythicDungeon()
 
 void Mythic::SetBossDead(uint32 creatureId)
 {
-    StateBossMythicStore[creatureId] = false;
+    for (MythicBossState& boss : StateBossMythicStore)
+        if (boss.creatureId == creatureId)
+            boss.alive = false;
+}
+
+uint32 Mythic::GetBossIndex(uint32 creatureId)
+{
+    for (MythicBossState& boss : StateBossMythicStore)
+        if (boss.creatureId == creatureId)
+            return boss.index;
+
+    return 0;
 }
 
 void Mythic::OnCompleteMythicDungeon(Player* player)
 {
     // Send Addon Mythic Completion;
+    Done = true;
+
+    Map::PlayerList const& playerList = Dungeon->GetPlayers();
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+        if (Player* currentPlayer = playerIteration->GetSource())
+            sEluna->SendCompletedMythicDungeon(currentPlayer, ElapsedTime);
+
     GiveRewards();
     SaveMythicDungeon();
     UpdatePlayerKey(KeyOwner);
@@ -138,47 +156,54 @@ void Mythic::OnKillBoss(Player* player, Creature* killed)
     if (playerList.IsEmpty())
         return;
 
-    if (IsDungeonDone() && IsDungeonNotStarted())
-        return;
-
-    if (!MeetTheConditionsToCompleteTheDungeon())
+    if (IsDungeonDone() || IsDungeonNotStarted())
         return;
 
     SetBossDead(killed->GetEntry());
 
-    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
-        if (Player* player = playerIteration->GetSource()) {
-            // Send Update Enemy Forces;
-            // Send Addon
-        }
-    }
+    uint32 index = GetBossIndex(killed->GetEntry());
+
+    if (!index)
+        return;
+
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+        if (Player* player = playerIteration->GetSource())
+            sEluna->SendMythicUpdateBossKill(player, index);
+
+    if (!MeetTheConditionsToCompleteTheDungeon())
+        return;
 
     OnCompleteMythicDungeon(player);
 }
 
 void Mythic::OnKillCreature(Player* player, Creature* killed)
 {
-    if ((EnemyForces >= 100 || Done) && !Started)
+    if (IsDungeonNotStarted())
         return;
 
-    if (killed->IsDungeonBoss())
+    if (EnemyForces >= 100)
+        return;
+
+    if (Done)
         return;
 
     uint8 count = sMythicMgr->GetKillCountByCreatureId(killed->GetEntry());
 
-    EnemyForces += killed->isElite() ? count * 2 : count;
+    count = killed->isElite() ? count * 2 : count;
+
+    if ((EnemyForces + count) > 100)
+        EnemyForces = 100;
+    else
+        EnemyForces += count;
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
     if (playerList.IsEmpty())
         return;
 
-    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
-        if (Player* player = playerIteration->GetSource()) {
-            // Send Update Enemy Forces;
-            // Send Addon
-        }
-    }
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+        if (Player* player = playerIteration->GetSource())
+            sEluna->SendMythicUpdateEnemyForces(player, EnemyForces);
 
     if (!MeetTheConditionsToCompleteTheDungeon())
         return;
@@ -190,7 +215,9 @@ void Mythic::OnPlayerKilledByCreature()
 {
     Deaths += 1;
 
-    uint32 timeToReduce = 0;
+    uint32 timeToReduce = 5000;
+
+    ElapsedTime += timeToReduce;
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
@@ -214,7 +241,7 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
     bool allBossesAreDead = true;
 
     for (auto ij = StateBossMythicStore.begin(); ij != StateBossMythicStore.end(); ++ij)
-        if (ij->second == false)
+        if (ij->alive == false)
             allBossesAreDead = false;
 
     return allBossesAreDead && EnemyForces >= 100.0f;

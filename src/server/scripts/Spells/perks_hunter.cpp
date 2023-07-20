@@ -817,6 +817,8 @@ class rune_hunter_killer_instinct : public SpellScript
         int32 pct = rune->GetEffect(EFFECT_0)->GetAmount();
         int32 healthThreshold = rune->GetEffect(EFFECT_1)->GetAmount();
 
+        // GetCaster()->CastCustomSpell(victim, triggered_spell_id, &basepoints0, &basepoints1 / 2, nullptr, TRIGGERED_FULL_MASK);
+
         if (!victim->IsAlive())
             return;
 

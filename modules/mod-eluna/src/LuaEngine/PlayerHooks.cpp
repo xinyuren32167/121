@@ -324,11 +324,12 @@ void Eluna::SendMythicUpdateEnemyForces(Player* pPlayer, double enemyForces)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
-void Eluna::SendShowMythicUI(Player* pPlayer, bool show)
+void Eluna::SendShowMythicUI(Player* pPlayer, bool show, bool started)
 {
     START_HOOK(PLAYER_SEND_MYTHIC_SHOW_UI);
     Push(pPlayer);
     Push(show);
+    Push(started);
     CallAllFunctions(PlayerEventBindings, key);
 }
 

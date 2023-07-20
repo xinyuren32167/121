@@ -3,19 +3,26 @@
 #include <map>
 #include <mutex>
 #include <unordered_map>
-
 #include "Group.h"
+#include "Position.h"
+#include "Map.h"
 
 #ifndef AZEROTHCORE_MYTHIC_H
 #define AZEROTHCORE_MYTHIC_H
 
+struct MythicBossState {
+    uint32 creatureId;
+    bool alive;
+    uint32 index;
+};
+
 class Mythic {
 
 public:
-    Mythic(Map* map, Group* group, uint32 dungeonId, uint32 level, Player* leader);
+    Mythic(Player* keyOwner, uint32 dungeonId, uint32 level);
     ~Mythic();
 
-    typedef std::map<uint32, bool> StateBossMythicContainer;
+    typedef std::vector<MythicBossState> StateBossMythicContainer;
     void Prepare();
     void Update(uint32 diff);
     void PrepareCreature(Creature* creature);
@@ -24,19 +31,28 @@ public:
     uint32 GetTimeToComplete() { return TimeToComplete; };
     uint32 GetElapsedTime() { return ElapsedTime; };
     uint32 GetTotalDeaths() { return Deaths; };
-    StateBossMythicContainer GetBosses() { return StateBossMythicStore; };
-private:
-
-    void OnCompleteMythicDungeon(Player* player);
+    StateBossMythicContainer GetBosses() {
+        return StateBossMythicStore;
+    };
     void OnKillBoss(Player* player, Creature* killed);
     void OnKillCreature(Player* player, Creature* killed);
     void OnPlayerKilledByCreature();
+    bool IsDungeonDone() { return Done; };
+    bool IsDungeonStarted() { return Started; };
+    bool IsAllowedTimeOver() { return !ChestDecrapeted; };
+
+    uint32 GetDungeonMapId() { return Dungeon->GetId(); };
+
+private:
+
+    void OnCompleteMythicDungeon(Player* player);
     void OnPlayerRelease();
     bool MeetTheConditionsToCompleteTheDungeon();
     void GiveRewards();
     void UpdatePlayerKey(Player* player);
     void SaveMythicDungeon();
     void SetBossDead(uint32 creatureId);
+    uint32 GetBossIndex(uint32 creatureId);
 
     // Addon Messages;
     void SendStart(Player* player);
@@ -47,7 +63,6 @@ private:
 
     void SetRespawnPosition(Position position) { LastestPosition = position; };
 
-    bool IsDungeonDone() { return Done; };
     bool IsDungeonNotStarted() { return !Started; };
 
     Position LastestPosition;
@@ -57,6 +72,8 @@ private:
     uint32 TimeToComplete;
     Map* Dungeon;
     int StartTimer;
+    uint32 Countdown;
+    uint8 Iteration;
     bool Started;
     bool ChestDecrapeted;
     bool Done;

@@ -43,7 +43,6 @@ struct MythicDungeon {
     float y;
     float z;
     float o;
-    bool enabled;
     uint32 itemId;
     explicit operator bool() const
     {
@@ -89,7 +88,9 @@ public:
     typedef std::map<uint32, std::vector<MythicBoss>> MythicDungeonBossContainer;
     typedef std::vector<MythicDungeon> MythicDungeonContainer;
     typedef std::map<uint32, std::vector<MythicReward>> MythicRewardsContainer;
-    typedef std::map<ObjectGuid, MythicKey> MythicPlayerKeyContainer;
+    typedef std::map<uint64, MythicKey> MythicPlayerKeyContainer;
+    typedef std::map<ObjectGuid, MythicKey*> MythicAsyncCreationContainer;
+
 
     void InitializeMythicDungeonBosses();
     void InitializeMythicDungeons();
@@ -106,6 +107,9 @@ public:
     uint32 GetItemIdWithDungeonId(uint32 dungeonId);
     uint32 GetEnchantByMythicLevel(uint32 level);
 
+
+    uint8 GetBossIndex(uint32 dungeonId, uint32 creatureId);
+
     void Update(uint32 diff);
 
     void AddMythicDungeon(ObjectGuid, Mythic* m);
@@ -114,27 +118,39 @@ public:
     bool IsThisMapIdAvailableForMythic(uint32 mapId);
     bool IsPlayerMeetingConditionsToStartMythic(Player* player);
     Mythic* GetMythicDungeonByGroupGuid(ObjectGuid guid);
+    Mythic* GetMythicPlayer(Player* player);
 
     float GetKillCountByCreatureId(uint32 creatureId);
     MythicMultiplier GetMultplierByLevel(uint32 level);
     void GetMythicDungeonByDungeonId(uint32 dungeonId, MythicDungeon& dungeon);
     void FindMythicDungeonByItsKeyItemId(uint32 itemId, MythicDungeon& dungeon);
     MythicKey* GetCurrentPlayerMythicKey(Player* player);
-    std::map<uint32, bool> GetMythicBossesByDungeonId(uint32 dungeonId);
+    uint32 GetTimeToCompleteByDungeonId(uint32 dungeonId);
+    std::vector<MythicBossState> GetMythicBossesByDungeonId(uint32 dungeonId);
 
     // Communication
     std::vector<std::string> GetDataMythicRun(Player* player);
     std::vector<std::string> GetDataMythicBag(Item* item);
+
     uint32 GetDungeonKeyLevelPreperation(Player* player);
-    void StartMythicDungeon(Player* player);
+    void PreparationMythicDungeon(Player* player);
+    void ListenCreationMythicOnMapChanged(Player* player);
+    bool ShouldShowMythicUI(Player* player);
+    void OnKill(Player* player, Creature* killed);
+    void OnPlayerDie(Player* player, Creature* killed);
+
 
 private:
+
+    void PrepareAndTeleportGroupMembers(Player* player, MythicDungeon dungeon);
+
     RunMythicDungeonContainer MythicStore;
     MythicMutiplierContainer MythicMultiplierStore;
     MythicKillCounterContainer MythicKillCounterStore;
     MythicDungeonBossContainer MythicDungeonBossStore;
     MythicDungeonContainer MythicDungeonStore;
     MythicPlayerKeyContainer MythicPlayerKeyStore;
+    MythicAsyncCreationContainer AsyncCreationMythic;
     MythicRewardsContainer MythicDungeonLootStore;
     MythicBagRewardPlayerContainer MythicDungeonBagRewardStore;
 };

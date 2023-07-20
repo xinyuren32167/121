@@ -11,7 +11,6 @@
 #include "Spell.h"
 #include "PlayerSpecialization.h"
 #include "AutobalanceManager.h"
-#include "MythicDungeonManager.h"
 
  // Add player scripts
 class Autobalance_PlayerScripts : public PlayerScript

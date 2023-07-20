@@ -96,7 +96,6 @@
 #include <boost/asio/ip/address.hpp>
 #include <cmath>
 #include "Config.h"
-#include "MythicManager.h"
 
 namespace
 {
@@ -2436,12 +2435,6 @@ void World::Update(uint32 diff)
         METRIC_TIMER("world_update_time", METRIC_TAG("type", "Update battlefields"));
         sBattlefieldMgr->Update(diff);
     }
-
-    {
-        METRIC_TIMER("world_update_time", METRIC_TAG("type", "Update Mythic+"));
-        sMythicMgr->Update(diff);
-    }
-
     {
         METRIC_TIMER("world_update_time", METRIC_TAG("type", "Update LFG 2"));
         sLFGMgr->Update(diff, 2); // pussywizard: handle created proposals

@@ -9,7 +9,7 @@
 
 #include "GameTime.h"
 #include "PlayerSpecialization.h"
-#include "MythicDungeonManager.h"
+#include "MythicManager.h"
 
 /***
  * Inherits all methods from: [Object], [WorldObject], [Unit]
@@ -85,7 +85,7 @@ namespace LuaPlayer
         lua_newtable(L);
         int tbl = lua_gettop(L);
         uint32 counter = 1;
-        auto datas = MythicDungeonManager::GetDataMythicRun(player);
+        auto datas = sMythicMgr->GetDataMythicRun(player);
         for (const auto& data : datas)
         {
             Eluna::Push(L, data);
@@ -98,8 +98,7 @@ namespace LuaPlayer
 
     int StartMythicDungeon(lua_State* L, Player* player)
     {
-        uint32 level = Eluna::CHECKVAL<uint32>(L, 2);
-        MythicDungeonManager::StartMythicDungeon(player, level);
+        sMythicMgr->PreparationMythicDungeon(player);
         return 0;
     }
 

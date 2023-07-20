@@ -38,6 +38,14 @@ public:
             player->SetMaxPower(POWER_RUNIC_POWER, 250);
             player->SetPower(POWER_RUNIC_POWER, 0);
         }
+
+        if (player->getClass() == CLASS_SHAMAN) {
+            uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
+            if (currentSpecId == SHAMAN_ELEMENTAL) {
+                player->SetMaxPower(POWER_RUNIC_POWER, 1000);
+                player->SetPower(POWER_RUNIC_POWER, 0);
+            }
+        }
     }
 
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)
@@ -99,6 +107,16 @@ class spell_activate_specialization : public SpellScript
 
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
             player->learnSpell(spellId, false, false);
+
+
+        if (newSpec.powerType != POWER_ALL) {
+            player->setPowerType(newSpec.powerType);
+            if (newSpec.powerType == POWER_RUNIC_POWER)
+                player->SetMaxPower(POWER_RUNIC_POWER, 1000);
+            else
+                player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
+        }
+
 
         PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
         CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());

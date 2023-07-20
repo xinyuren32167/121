@@ -2,7 +2,6 @@
 #include "PlayerSpecialization.h"
 #include "WorldSession.h"
 #include "Chat.h"
-#include "MythicDungeonManager.h"
 
 std::map<uint8, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingPerSpecialization = {};
 std::map<uint32, AutobalanceScalingInfo> AutoBalanceManager::m_OverrideScalingPerCreatureId = {};

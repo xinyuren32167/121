@@ -109,13 +109,7 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
         return;
     }
 
-    if (newSpec.powerType != POWER_ALL) {
-        player->setPowerType(newSpec.powerType);
-        if (newSpec.powerType == POWER_RUNIC_POWER)
-            player->SetMaxPower(POWER_RUNIC_POWER, 100);
-        else
-            player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
-    }
+   
 
     player->CastCustomSpell(79852, SPELLVALUE_BASE_POINT0, newSpecId, player, TRIGGERED_NONE);
 }

@@ -450,7 +450,7 @@ public:
     void SendMythicUpdateChestDecrapeted(Player* pPlayer);
     void SendMythicUpdateBossKill(Player* pPlayer, uint32 creatureId);
     void SendMythicUpdateEnemyForces(Player* pPlayer, double enemyForces);
-    void SendShowMythicUI(Player* pPlayer, bool show);
+    void SendShowMythicUI(Player* pPlayer, bool show, bool started);
     void SendStartMythicDungeon(Player* pPlayer);
     void SendBeginMythicDungeon(Player* pPlayer);
     void SendCompletedMythicDungeon(Player* pPlayer, uint32 timer);

@@ -38,7 +38,6 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
-#include "Mythic.h"
 
 class Unit;
 class WorldPacket;
@@ -357,12 +356,6 @@ public:
     void CreatureRelocation(Creature* creature, float x, float y, float z, float o);
     void GameObjectRelocation(GameObject* go, float x, float y, float z, float o);
     void DynamicObjectRelocation(DynamicObject* go, float x, float y, float z, float o);
-
-    Mythic* m_Mythic;
-
-    void EnableMythic(Mythic* mythic) { m_Mythic = mythic; };
-    Mythic* GetMythic() { return m_Mythic; };
-
 
     template<class T, class CONTAINER> void Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER>& visitor);
 

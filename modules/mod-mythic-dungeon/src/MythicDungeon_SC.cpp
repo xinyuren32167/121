@@ -12,7 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include "InstanceScript.h"
 #include "MapMgr.h"
-#include "Mythic/MythicManager.h"
+#include "MythicManager.h"
 
  // Add player scripts
 class MythicDungeon_PlayerScripts : public PlayerScript
@@ -22,35 +22,39 @@ public:
 
     void OnLogin(Player* player) override
     {
-       
+        bool showUI = sMythicMgr->ShouldShowMythicUI(player);
+
+        if (showUI) {
+            Mythic* mythic = sMythicMgr->GetMythicPlayer(player);
+            sEluna->SendShowMythicUI(player, true, mythic->IsDungeonStarted());
+        }
+        else
+            sEluna->SendShowMythicUI(player, false, false);
     }
-
-    void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
-    {
-
-    }
-
 
     void OnCreatureKill(Player* killer, Creature* killed)
     {
-       
+        sMythicMgr->OnKill(killer, killed);
     }
 
     void OnMapChanged(Player* player)
     {
-        
+        sMythicMgr->ListenCreationMythicOnMapChanged(player);
+
+        bool showUI = sMythicMgr->ShouldShowMythicUI(player);
+
+        if (showUI) {
+            Mythic* mythic = sMythicMgr->GetMythicPlayer(player);
+            sEluna->SendShowMythicUI(player, true, mythic->IsDungeonStarted());
+        }
+        else
+            sEluna->SendShowMythicUI(player, false, false);
     }
 
 
     void OnPlayerKilledByCreature(Creature* killer, Player* killed)
     {
-       
-    }
-
-
-    void OnChat(Player* player, uint32 type, uint32 lang, std::string& msg, Player* receiver)
-    {
-
+        sMythicMgr->OnPlayerDie(killed, killer);
     }
 
     void OnPlayerReleasedGhost(Player* player)
@@ -74,10 +78,11 @@ public:
 
         if (!foundDungeon)
         {
-            ChatHandler(player->GetSession()).SendSysMessage("We could not find your key, if you see this message, contact a gamemaster.");
+
+            std::string message = "We could not find the Id " + std::to_string(itemId) + ", if you see this message, contact a gamemaster.";
+            ChatHandler(player->GetSession()).SendSysMessage(message);
             return false;
         }
-
 
         Map* map = sMapMgr->FindBaseMap(foundDungeon.mapId);
         std::string name = map->GetMapName();
@@ -92,9 +97,12 @@ public:
             return false;
         }
 
-        uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player);
-
-        sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
+        if (uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player)) {
+            sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
+        }
+        else {
+            ChatHandler(player->GetSession()).SendSysMessage("it seems you don't have any MythicKey Active.");
+        }
 
         return true;
     }
@@ -115,6 +123,11 @@ public:
         sMythicMgr->InitializeMythicDungeons();
         sMythicMgr->InitializeRewardsPlayersBag();
         sMythicMgr->InitializeMythicDungeonBosses();
+    }
+
+    void OnUpdate(uint32 diff)
+    {
+        sMythicMgr->Update(diff);
     }
 };
 
