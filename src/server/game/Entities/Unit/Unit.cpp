@@ -7063,7 +7063,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
         case SPELLFAMILY_WARLOCK:
             {
                 // Seed of Corruption
-                if (dummySpell->SpellFamilyFlags[1] & 0x00000010)
+                /*if (dummySpell->SpellFamilyFlags[1] & 0x00000010)
                 {
                     if (procSpell && procSpell->SpellFamilyFlags[1] & 0x8000)
                         return false;
@@ -7091,7 +7091,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     // Damage counting
                     triggeredByAura->SetAmount(triggeredByAura->GetAmount() - damage);
                     return true;
-                }
+                }*/
                 // Seed of Corruption (Mobs cast) - no die req
                 if (dummySpell->SpellFamilyFlags.IsEqual(0, 0, 0) && dummySpell->SpellIconID == 1932)
                 {
