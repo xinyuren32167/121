@@ -34,9 +34,10 @@ public:
             player->SetPower(POWER_ENERGY, 0);
         }
 
+
         if (player->getClass() == CLASS_WARLOCK) {
-            player->SetMaxPower(POWER_RUNIC_POWER, 250);
-            player->SetPower(POWER_RUNIC_POWER, 0);
+            player->SetMaxPower(POWER_ENERGY, 25);
+            player->SetPower(POWER_ENERGY, 0);
         }
 
         if (player->getClass() == CLASS_SHAMAN) {

@@ -179,7 +179,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (playerCount == 0)
         return;
 
-    bool shouldRecalculate = (playerCount != creature->AutobalancePlayerCount) || creature->ShouldRecalculate;
+    bool shouldRecalculate = (playerCount != creature->AutobalancePlayerCount) || creature->ShouldRecalculate == true;
 
     if (!shouldRecalculate)
         return;

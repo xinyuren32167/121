@@ -93,18 +93,6 @@ void Mythic::Update(uint32 diff)
     }
 }
 
-void Mythic::PrepareCreature(Creature* creature)
-{
-    if (IsDungeonDone())
-        return;
-
-    if ((creature->IsAlive() && creature->IsPet()) || creature->IsControlledByPlayer())
-        return;
-
-    if (!creature->HasAura(HEALTH_AND_DAMAGE_SPELL)) {
-        MythicMultiplier multiplier = sMythicMgr->GetMultplierByLevel(Level);
-    }
-}
 
 void Mythic::SaveMythicDungeon()
 {
@@ -146,7 +134,7 @@ void Mythic::OnCompleteMythicDungeon(Player* player)
     GiveRewards();
     SaveMythicDungeon();
     UpdatePlayerKey(KeyOwner);
-    sMythicMgr->RemoveGroup(m_Group);
+    sMythicMgr->RemoveMythic(player->GetInstanceId());
 }
 
 void Mythic::OnKillBoss(Player* player, Creature* killed)
@@ -224,11 +212,9 @@ void Mythic::OnPlayerKilledByCreature()
     if (playerList.IsEmpty())
         return;
 
-    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration) {
-        if (Player* player = playerIteration->GetSource()) {
-            // Send Addon;
-        }
-    }
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+        if (Player* player = playerIteration->GetSource()) 
+            sEluna->SendMythicUpdateDeath(player, Deaths);
 }
 
 void Mythic::OnPlayerRelease()

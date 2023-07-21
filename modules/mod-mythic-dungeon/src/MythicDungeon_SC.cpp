@@ -97,12 +97,11 @@ public:
             return false;
         }
 
-        if (uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player)) {
+        if (uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player))
             sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
-        }
-        else {
+        else
             ChatHandler(player->GetSession()).SendSysMessage("it seems you don't have any MythicKey Active.");
-        }
+      
 
         return true;
     }

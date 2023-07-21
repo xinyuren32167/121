@@ -81,7 +81,7 @@ public:
 
 
     static MythicManager* instance();
-    typedef std::map<ObjectGuid, Mythic*> RunMythicDungeonContainer;
+    typedef std::map<uint32, Mythic*> RunMythicDungeonContainer;
     typedef std::map<uint32, MythicMultiplier> MythicMutiplierContainer;
     typedef std::map<uint32, float> MythicKillCounterContainer;
     typedef std::map<uint64, std::vector<uint32>> MythicBagRewardPlayerContainer;
@@ -112,13 +112,12 @@ public:
 
     void Update(uint32 diff);
 
-    void AddMythicDungeon(ObjectGuid, Mythic* m);
-    void RemoveGroup(Group* group);
-    void OnGroupDisband(Group* group);
+    void AddMythicDungeon(uint32 instanceId, Mythic* m);
+    void RemoveMythic(uint32 instanceId);
     bool IsThisMapIdAvailableForMythic(uint32 mapId);
     bool IsPlayerMeetingConditionsToStartMythic(Player* player);
-    Mythic* GetMythicDungeonByGroupGuid(ObjectGuid guid);
     Mythic* GetMythicPlayer(Player* player);
+    Mythic* GetMythicInMap(Map* map);
 
     float GetKillCountByCreatureId(uint32 creatureId);
     MythicMultiplier GetMultplierByLevel(uint32 level);
@@ -139,6 +138,7 @@ public:
     void OnKill(Player* player, Creature* killed);
     void OnPlayerDie(Player* player, Creature* killed);
 
+    void Update(Creature* creature);
 
 private:
 

@@ -197,19 +197,14 @@ void MythicManager::Update(uint32 diff)
         mythic.second->Update(diff);
 }
 
-void MythicManager::AddMythicDungeon(ObjectGuid guid, Mythic* m)
+void MythicManager::AddMythicDungeon(uint32 instanceId, Mythic* m)
 {
-    MythicStore[guid] = m;
+    MythicStore[instanceId] = m;
 }
 
-void MythicManager::RemoveGroup(Group* group)
+void MythicManager::RemoveMythic(uint32 instanceId)
 {
-    MythicStore.erase(group->GetGUID());
-}
-
-void MythicManager::OnGroupDisband(Group* group)
-{
-    RemoveGroup(group);
+    MythicStore.erase(instanceId);
 }
 
 bool MythicManager::IsThisMapIdAvailableForMythic(uint32 mapId)
@@ -260,25 +255,23 @@ uint32 MythicManager::GetEnchantByMythicLevel(uint32 level)
 }
 
 
-Mythic* MythicManager::GetMythicDungeonByGroupGuid(ObjectGuid groupGuid)
-{
-    auto itr = MythicStore.find(groupGuid);
-    if (itr != MythicStore.end())
-        return itr->second;
-
-    return nullptr;
-}
-
 Mythic* MythicManager::GetMythicPlayer(Player* player)
 {
-    Group* group = player->GetGroup();
-    ObjectGuid playerGuid = player->GetGUID();
-    ObjectGuid guid = group ? group->GetGUID() : playerGuid;
-    auto itr = MythicStore.find(guid);
+    auto itr = MythicStore.find(player->GetInstanceId());
 
     if (itr != MythicStore.end())
         if(itr->second->GetDungeonMapId() == player->GetMapId())
             return itr->second;
+
+    return nullptr;
+}
+
+Mythic* MythicManager::GetMythicInMap(Map* map)
+{
+    auto itr = MythicStore.find(map->GetInstanceId());
+
+    if (itr != MythicStore.end())
+          return itr->second;
 
     return nullptr;
 }
@@ -414,9 +407,7 @@ void MythicManager::ListenCreationMythicOnMapChanged(Player* leader)
 
     Mythic* mythic = new Mythic(leader, it->second->dungeonId, it->second->level);
 
-    ObjectGuid guid = leader->GetGroup() ? leader->GetGroup()->GetGUID() : leader->GetGUID();
-
-    AddMythicDungeon(guid, mythic);
+    AddMythicDungeon(leader->GetInstanceId(), mythic);
 
     MythicDungeon dungeon;
     GetMythicDungeonByDungeonId(it->second->dungeonId, dungeon);
@@ -463,6 +454,27 @@ void MythicManager::OnPlayerDie(Player* player, Creature* killed)
         return;
 
     mythic->OnPlayerKilledByCreature();
+}
+
+void MythicManager::Update(Creature* creature)
+{
+    Map* map = creature->GetMap();
+    Mythic* mythic = GetMythicInMap(map);
+
+    if (!mythic)
+        return;
+
+    if (creature->HasAura(90000))
+        return;
+
+    MythicMultiplier multi = GetMultplierByLevel(mythic->GetLevel());
+
+    int32 damage = multi.damage;
+    int32 health = multi.hp;
+
+    creature->CastCustomSpell(creature, 90000, &damage, &health, nullptr, true);
+
+    creature->ShouldRecalculate = true;
 }
 
 void MythicManager::PrepareAndTeleportGroupMembers(Player* player, MythicDungeon dungeon)

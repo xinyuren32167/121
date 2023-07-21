@@ -11,6 +11,7 @@
 #include "Spell.h"
 #include "PlayerSpecialization.h"
 #include "AutobalanceManager.h"
+#include "MythicManager.h"
 
  // Add player scripts
 class Autobalance_PlayerScripts : public PlayerScript
@@ -107,6 +108,7 @@ public:
     void OnAllCreatureUpdate(Creature* creature, uint32 /*diff*/) override
     {
         Map* map = creature->GetMap();
+        sMythicMgr->Update(creature);
         AutoBalanceManager::ApplyScalingHealthAndMana(map, creature);
     }
 };

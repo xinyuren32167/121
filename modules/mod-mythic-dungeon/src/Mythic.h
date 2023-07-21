@@ -23,9 +23,7 @@ public:
     ~Mythic();
 
     typedef std::vector<MythicBossState> StateBossMythicContainer;
-    void Prepare();
     void Update(uint32 diff);
-    void PrepareCreature(Creature* creature);
     uint32 GetLevel() { return Level; };
     float GetEnemyForces() { return EnemyForces; };
     uint32 GetTimeToComplete() { return TimeToComplete; };
