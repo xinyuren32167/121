@@ -47,6 +47,8 @@ enum ShamanSpells
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
     SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE = 84034,
     SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT = 52025,
+    SPELL_SHAMAN_DOWNPOUR = 84046,
+    SPELL_SHAMAN_DOWNPOUR_LISTENER = 84059,
     SPELL_SHAMAN_EARTH_SHIELD_HEAL = 379,
     SPELL_SHAMAN_EARTHLIVING_WEAPON = 51994,
     SPELL_SHAMAN_ELEMENTAL_BLAST = 84022,
@@ -1043,15 +1045,14 @@ class spell_sha_lava_lash : public SpellScript
     {
         if (Player* caster = GetCaster()->ToPlayer())
         {
-            int32 damage = GetEffectValue();
             int32 hitDamage = GetHitDamage();
-            LOG_ERROR("error", "base damage = {}", hitDamage);
+
             if (caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
                 int32 flametongueIncrease = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
                 // Damage is increased by 100% if your off-hand weapon is enchanted with Flametongue.
-                if (caster->GetAuraEffect(SPELL_SHAMAN_WINDFURY_WEAPON_AURA, 0))
-                    AddPct(hitDamage, damage);
+                if (caster->GetAuraEffect(58792, 0))
+                    AddPct(hitDamage, flametongueIncrease);
 
                 SetHitDamage(hitDamage);
             }
@@ -1060,7 +1061,7 @@ class spell_sha_lava_lash : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_lash::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_lash::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -1623,12 +1624,29 @@ class spell_sha_downpour : public SpellScript
 
         int32 cooldown = cooldownPerTarget * targetQte;
 
-        caster->AddSpellCooldown(GetSpellInfo()->Id, 0, cooldown);
+        caster->AddAura(SPELL_SHAMAN_DOWNPOUR_LISTENER, caster);
+        caster->GetAura(SPELL_SHAMAN_DOWNPOUR_LISTENER)->GetEffect(EFFECT_0)->SetAmount(cooldown);
+    }
+
+    void OnAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster)
+            return;
+
+        if (Aura* buffAura = caster->GetAura(SPELL_SHAMAN_DOWNPOUR_LISTENER))
+        {
+            LOG_ERROR("error", "cooldown = {}", buffAura->GetEffect(EFFECT_0)->GetAmount());
+            caster->ToPlayer()->ModifySpellCooldown(SPELL_SHAMAN_DOWNPOUR_LISTENER, buffAura->GetEffect(EFFECT_0)->GetAmount());
+            buffAura->Remove();
+        }
     }
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_downpour::FilterTargets, EFFECT_0, TARGET_DEST_DYNOBJ_ALLY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_downpour::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        AfterHit += SpellHitFn(spell_sha_downpour::OnAfterCast);
     }
 };
 
