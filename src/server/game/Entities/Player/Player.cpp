@@ -1783,8 +1783,7 @@ void Player::RegenerateAll()
             || getClass() == CLASS_PRIEST
             || getClass() == CLASS_SHAMAN
             )
-                Regenerate(POWER_RUNIC_POWER
-           );
+                Regenerate(POWER_RUNIC_POWER);
 
         m_regenTimerCount -= 2000;
     }
@@ -1883,7 +1882,7 @@ void Player::Regenerate(Powers power)
             break;
         case POWER_RUNIC_POWER:
             {
-                if (!IsInCombat() && !HasAuraType(SPELL_AURA_INTERRUPT_REGEN) && getClass() != CLASS_WARLOCK)
+                if (!IsInCombat() && !HasAuraType(SPELL_AURA_INTERRUPT_REGEN) && getClass())
                 {
                     float RunicPowerDecreaseRate = sWorld->getRate(RATE_POWER_RUNICPOWER_LOSS);
                     addvalue += -30 * RunicPowerDecreaseRate;         // 3 RunicPower by tick

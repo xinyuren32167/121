@@ -49,7 +49,7 @@ enum WarlockSpells
     SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_PROC          = 58068,
     SPELL_WARLOCK_GLYPH_OF_SHADOWFLAME              = 63311,
     SPELL_WARLOCK_GLYPH_OF_SIPHON_LIFE              = 56216,
-    SPELL_WARLOCK_HAUNT                             = 48181,
+    //SPELL_WARLOCK_HAUNT                             = 48181,
     SPELL_WARLOCK_HAUNT_HEAL                        = 48210,
     SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R1           = 18692,
     SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R2           = 18693,
@@ -71,12 +71,16 @@ enum WarlockSpells
     SPELL_WARLOCK_DARK_PACT                         = 59092,
     SPELL_WARLOCK_DARK_PACT_DAMAGE                  = 83011,
     SPELL_WARLOCK_DARK_PACT_SHIELD                  = 83012,
+    SPELL_WARLOCK_HAUNT                             = 59164,
+    SPELL_WARLOCK_SEED_OF_CORRUPTION                = 47836,
+    SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION     = 47834,
+    SPELL_WARLOCK_SEED_OF_CORRUPTION_VISUAL         = 37826,
 };
 
 enum PET_WARLOCKS {
 
 
-    // lesser
+    // Lesser
     PET_DARKHOUND = 600600,
     PET_FELBOAR = 600602,
     PET_WILDIMP = 600601,
@@ -943,7 +947,7 @@ class spell_warl_demonic_circle_teleport : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_warl_demonic_circle_teleport::HandleTeleport, EFFECT_0, SPELL_AURA_MECHANIC_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_warl_demonic_circle_teleport::HandleTeleport, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1492,7 +1496,7 @@ class spell_warlock_dark_pact : public SpellScript
         Unit* caster = GetCaster();
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_DARK_PACT);
         int32 sacrificePct = CalculatePct(caster->GetHealth(), value->GetEffect(EFFECT_0).CalcValue(caster));
-        shieldAmount = CalculatePct(sacrificePct, value->GetEffect(EFFECT_1).CalcValue(caster)) + CalculatePct(caster->ToPlayer()->GetBaseSpellPowerBonus(), value->GetEffect(EFFECT_2).CalcValue(caster));
+        shieldAmount = CalculatePct(sacrificePct, value->GetEffect(EFFECT_1).CalcValue(caster)) + CalculatePct(caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), value->GetEffect(EFFECT_2).CalcValue(caster));
 
         caster->CastCustomSpell(SPELL_WARLOCK_DARK_PACT_DAMAGE, SPELLVALUE_BASE_POINT0, sacrificePct, caster, TRIGGERED_FULL_MASK);
     }
@@ -1531,7 +1535,7 @@ class spell_warl_fel_armor : public AuraScript
 
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
     {  
-        amount = CalculatePct(GetCaster()->ToPlayer()->GetBaseSpellPowerBonus(), amount);
+        amount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), amount);
     }
 
     void Register() override
@@ -1564,6 +1568,74 @@ class spell_warl_health_funnel_new : public AuraScript
     }
 };
 
+class spell_warl_haunt_reset : public AuraScript
+{
+    PrepareAuraScript(spell_warl_haunt_reset);
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARLOCK_HAUNT, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_haunt_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_seed_of_corruption_handler : public AuraScript
+{
+    PrepareAuraScript(spell_warl_seed_of_corruption_handler);
+
+    void HandleAfterEffect(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        int32 amount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), aurEff->GetAmount());
+        aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(amount);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = GetAura()->GetOwner()->ToUnit();
+        Unit* caster = GetCaster();
+        AuraEffect* aura = aurEff->GetBase()->GetEffect(EFFECT_1);
+        int32 threshold = aurEff->GetAmount();
+        int32 savedAmount = aura->GetAmount();
+        int32 damageTaken = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (savedAmount >= threshold || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION)
+        {
+            caster->RemoveAura(SPELL_WARLOCK_SEED_OF_CORRUPTION);
+        }
+        else
+        {
+            aura->SetAmount(savedAmount + damageTaken);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* target = GetTarget();
+        Unit* caster = GetCaster();
+
+        caster->CastSpell(target, SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION, TRIGGERED_FULL_MASK);
+        target->CastSpell(target, SPELL_WARLOCK_SEED_OF_CORRUPTION_VISUAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_warl_seed_of_corruption_handler::HandleAfterEffect, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        DoCheckProc += AuraCheckProcFn(spell_warl_seed_of_corruption_handler::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_seed_of_corruption_handler::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_seed_of_corruption_handler::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -1584,7 +1656,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_everlasting_affliction);
     RegisterSpellScript(spell_warl_fel_synergy);
     RegisterSpellScript(spell_warl_glyph_of_shadowflame);
-    RegisterSpellAndAuraScriptPair(spell_warl_haunt, spell_warl_haunt_aura);
+    //RegisterSpellAndAuraScriptPair(spell_warl_haunt, spell_warl_haunt_aura);
     //RegisterSpellScript(spell_warl_health_funnel);
     //RegisterSpellScript(spell_warl_life_tap);
     RegisterSpellScript(spell_warl_ritual_of_doom_effect);
@@ -1605,4 +1677,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_demon_armor);
     RegisterSpellScript(spell_warl_fel_armor);
     RegisterSpellScript(spell_warl_health_funnel_new);
+    RegisterSpellScript(spell_warl_haunt_reset);
+    RegisterSpellScript(spell_warl_seed_of_corruption_handler);
 }
