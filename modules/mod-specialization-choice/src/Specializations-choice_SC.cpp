@@ -38,6 +38,9 @@ public:
         if (player->getClass() == CLASS_WARLOCK) {
             player->SetMaxPower(POWER_ENERGY, 25);
             player->SetPower(POWER_ENERGY, 0);
+
+            player->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_ENERGY, -10.f);
+            player->SetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER + POWER_ENERGY, -10.f);
         }
 
         if (player->getClass() == CLASS_SHAMAN) {
