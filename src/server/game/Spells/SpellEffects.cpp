@@ -374,7 +374,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                 }
             case SPELLFAMILY_WARLOCK:
                 {
-                    // Incinerate Rank 1 & 2
+                    /*// Incinerate Rank 1 & 2
                     if ((m_spellInfo->SpellFamilyFlags[1] & 0x000040) && m_spellInfo->SpellIconID == 2128)
                     {
                         // Incinerate does more dmg (dmg*0.25) if the target have Immolate debuff.
@@ -434,9 +434,9 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
 
                             break;
                         }
-                    }
+                    }*/
                     // Shadow Bite
-                    else if (m_spellInfo->SpellFamilyFlags[1] & 0x400000)
+                    if (m_spellInfo->SpellFamilyFlags[1] & 0x400000)
                     {
                         if (m_caster->GetTypeId() == TYPEID_UNIT && m_caster->IsPet())
                         {

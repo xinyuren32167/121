@@ -4155,7 +4155,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
      // Chaos Bolt Passive
-    ApplySpellFix({ 58284 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({58284}, [](SpellInfo* spellInfo)
     {
         spellInfo->Effects[EFFECT_1].Effect = SPELL_EFFECT_APPLY_AURA;
         spellInfo->Effects[EFFECT_1].ApplyAuraName = SPELL_AURA_MOD_ABILITY_IGNORE_TARGET_RESIST;
@@ -4163,7 +4163,7 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->Effects[EFFECT_1].TargetA = SpellImplicitTargetInfo(TARGET_UNIT_CASTER);
         spellInfo->Effects[EFFECT_1].MiscValue = 127;
         spellInfo->Effects[EFFECT_1].SpellClassMask[1] = 0x00020000;
-    });
+    });*/
 
     // Nefarian: Shadowbolt, Shadow Command
     ApplySpellFix({ 22667, 22677 }, [](SpellInfo* spellInfo)

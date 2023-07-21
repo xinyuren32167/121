@@ -12065,6 +12065,15 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                                 break;
                             }
                             break;
+                        case SPELLFAMILY_WARLOCK:
+                            if (spellProto->Id == 47827)
+                            {
+                                if (HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, spellProto, caster))
+                                    if (AuraEffect const* aura = GetAuraEffect(47827, 2, GetGUID()))
+                                        crit_chance += aura->GetAmount();
+                                break;
+                            }
+                            break;
                     }
                 }
                 break;

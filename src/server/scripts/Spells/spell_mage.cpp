@@ -802,8 +802,8 @@ class spell_mage_fire_frost_ward : public spell_mage_incanters_absorbtion_base_A
                 Trigger(aurEff, dmgInfo, damage);
 
                 // Xinef: hack for chaos bolt
-                if (!dmgInfo.GetSpellInfo() || dmgInfo.GetSpellInfo()->SpellIconID != 3178)
-                    dmgInfo.AbsorbDamage(bp);
+                /*if (!dmgInfo.GetSpellInfo() || dmgInfo.GetSpellInfo()->SpellIconID != 3178)
+                    dmgInfo.AbsorbDamage(bp);*/
 
                 PreventDefaultAction();
             }

@@ -75,6 +75,9 @@ enum WarlockSpells
     SPELL_WARLOCK_SEED_OF_CORRUPTION                = 47836,
     SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION     = 47834,
     SPELL_WARLOCK_SEED_OF_CORRUPTION_VISUAL         = 37826,
+    SPELL_WARLOCK_SHADOWBURN                        = 47827,
+    SPELL_WARLOCK_CONFLAGRATE                       = 17962,
+    SPELL_WARLOCK_SOUL_FIRE                         = 47825,
 };
 
 enum PET_WARLOCKS {
@@ -1042,6 +1045,11 @@ class spell_warl_unstable_affliction : public AuraScript
         return ValidateSpellInfo({ SPELL_WARLOCK_UNSTABLE_AFFLICTION_DISPEL });
     }
 
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+    }
+
     void HandleDispel(DispelInfo* dispelInfo)
     {
         if (Unit* caster = GetCaster())
@@ -1056,6 +1064,7 @@ class spell_warl_unstable_affliction : public AuraScript
 
     void Register() override
     {
+        OnEffectProc += AuraEffectProcFn(spell_warl_unstable_affliction::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         AfterDispel += AuraDispelFn(spell_warl_unstable_affliction::HandleDispel);
     }
 };
@@ -1603,18 +1612,18 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
     {
         Unit* target = GetAura()->GetOwner()->ToUnit();
         Unit* caster = GetCaster();
-        AuraEffect* aura = aurEff->GetBase()->GetEffect(EFFECT_1);
+        AuraEffect* effect1 = aurEff->GetBase()->GetEffect(EFFECT_1);
         int32 threshold = aurEff->GetAmount();
-        int32 savedAmount = aura->GetAmount();
+        int32 savedAmount = effect1->GetAmount();
         int32 damageTaken = eventInfo.GetDamageInfo()->GetDamage();
 
-        if (savedAmount >= threshold || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION)
+        if (damageTaken >= threshold || savedAmount >= threshold || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION)
         {
-            caster->RemoveAura(SPELL_WARLOCK_SEED_OF_CORRUPTION);
+            target->RemoveAura(SPELL_WARLOCK_SEED_OF_CORRUPTION);
         }
         else
         {
-            aura->SetAmount(savedAmount + damageTaken);
+            effect1->SetAmount(savedAmount + damageTaken);
         }
     }
 
@@ -1633,6 +1642,144 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
         DoCheckProc += AuraCheckProcFn(spell_warl_seed_of_corruption_handler::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_warl_seed_of_corruption_handler::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_seed_of_corruption_handler::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warl_drain_soul_energy : public AuraScript
+{
+    PrepareAuraScript(spell_warl_drain_soul_energy);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_drain_soul_energy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_chaos_bolt : public SpellScript
+{
+    PrepareSpellScript(spell_warl_chaos_bolt);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        int32 damageRatio = GetEffectValue();
+        int32 critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+        int32 damage = CalculatePct(caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), damageRatio);
+        damage = AddPct(damage, critChance);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_chaos_bolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_warl_conflagrate_energy : public SpellScript
+{
+    PrepareSpellScript(spell_warl_conflagrate_energy);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_CONFLAGRATE);
+        uint32 energyAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
+        GetCaster()->ModifyPower(POWER_ENERGY, energyAmount);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_conflagrate_energy::HandleCast);
+    }
+};
+
+class spell_warl_immolate_energy : public AuraScript
+{
+    PrepareAuraScript(spell_warl_immolate_energy);
+
+    void OnPeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        caster->ModifyPower(POWER_ENERGY, 1);
+
+        uint32 procChance = aurEff->GetAmount();
+
+        if (roll_chance_f(procChance) && caster->GetTypeId() == TYPEID_PLAYER)
+        {
+            caster->ModifyPower(POWER_ENERGY, 1);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_immolate_energy::OnPeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DAMAGE);
+    }
+};
+
+class spell_warl_incinerate_energy : public AuraScript
+{
+    PrepareAuraScript(spell_warl_incinerate_energy);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_incinerate_energy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_shadowburn_death : public AuraScript
+{
+    PrepareAuraScript(spell_warl_shadowburn_death);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+        caster->ToPlayer()->RemoveSpellCooldown(SPELL_WARLOCK_SHADOWBURN, true);
+
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_shadowburn_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_soul_fire_energy : public SpellScript
+{
+    PrepareSpellScript(spell_warl_soul_fire_energy);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SOUL_FIRE);
+        uint32 energyAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
+        GetCaster()->ModifyPower(POWER_ENERGY, energyAmount);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_soul_fire_energy::HandleCast);
     }
 };
 
@@ -1666,7 +1813,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_soulshatter);
     RegisterSpellScript(spell_warl_unstable_affliction);
     //RegisterSpellScript(spell_warl_drain_soul);
-    RegisterSpellScript(spell_warl_shadowburn);
+    //RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_glyph_of_felguard);
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
@@ -1679,4 +1826,11 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_health_funnel_new);
     RegisterSpellScript(spell_warl_haunt_reset);
     RegisterSpellScript(spell_warl_seed_of_corruption_handler);
+    RegisterSpellScript(spell_warl_drain_soul_energy);
+    RegisterSpellScript(spell_warl_chaos_bolt);
+    RegisterSpellScript(spell_warl_conflagrate_energy);
+    RegisterSpellScript(spell_warl_immolate_energy);
+    RegisterSpellScript(spell_warl_incinerate_energy);
+    RegisterSpellScript(spell_warl_shadowburn_death);
+    RegisterSpellScript(spell_warl_soul_fire_energy);
 }
