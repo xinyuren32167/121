@@ -35,6 +35,10 @@
 enum MageSpells
 {
     // Ours
+    SPELL_MAGE_ARCANE_CHARGE = 81500,
+    SPELL_MAGE_ARCANE_CHARGE_BUFF1 = 81501,
+    SPELL_MAGE_ARCANE_CHARGE_BUFF2 = 81502,
+    SPELL_MAGE_ARCANE_CHARGE_VISUAL = 81503,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
     SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED = 12486,
     SPELL_MAGE_COMBUSTION = 11129,
@@ -294,33 +298,25 @@ class spell_mage_arcane_orb : public SpellScript
 };
 
 
-
+// 42897 - Arcane Blast
 class spell_mage_arcane_blast : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_blast);
 
-    bool Load() override { _triggerSpellId = 0; return true; }
-
-    void HandleTriggerSpell(SpellEffIndex effIndex)
-    {
-        _triggerSpellId = GetSpellInfo()->Effects[effIndex].TriggerSpell;
-        PreventHitDefaultEffect(effIndex);
-    }
-
     void HandleAfterCast()
     {
-        GetCaster()->CastSpell(GetCaster(), _triggerSpellId, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
+            return;
+
+        GetCaster()->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectLaunch += SpellEffectFn(spell_mage_arcane_blast::HandleTriggerSpell, EFFECT_1, SPELL_EFFECT_TRIGGER_SPELL);
-        OnEffectLaunchTarget += SpellEffectFn(spell_mage_arcane_blast::HandleTriggerSpell, EFFECT_1, SPELL_EFFECT_TRIGGER_SPELL);
         AfterCast += SpellCastFn(spell_mage_arcane_blast::HandleAfterCast);
     }
-
-private:
-    uint32 _triggerSpellId;
 };
 
 // 44781 - Arcane Barrage
@@ -328,30 +324,19 @@ class spell_mage_arcane_barrage : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_barrage);
 
-    void HandleBeforeCast()
-    {
-        if (!GetCaster()->HasAura(36032))
-            return;
-
-        uint32 arcaneCharge = GetCaster()->GetAura(36032)->GetStackAmount();
-        uint32 damagePct = sSpellMgr->AssertSpellInfo(44781)->GetEffect(EFFECT_1).BasePoints + 1;
-        uint32 amount = arcaneCharge * damagePct;
-
-        GetCaster()->CastCustomSpell(44782, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
-    }
-
     void HandleAfterHit()
     {
-        if (GetCaster()->HasAura(36032))
-            GetCaster()->RemoveAura(36032);
+        Unit* caster = GetCaster();
 
-        if (GetCaster()->HasAura(44782))
-            GetCaster()->RemoveAura(44782);
+        if (!caster)
+            return;
+
+        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
+            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE);
     }
 
     void Register() override
     {
-        BeforeCast += SpellCastFn(spell_mage_arcane_barrage::HandleBeforeCast);
         AfterHit += SpellHitFn(spell_mage_arcane_barrage::HandleAfterHit);
     }
 };
@@ -775,12 +760,13 @@ class spell_mage_fire_frost_ward : public spell_mage_incanters_absorbtion_base_A
         if (Unit* caster = GetCaster())
         {
             // +80.68% from sp bonus
-            float bonus = 2.0f;
+            float bonus = amount;
 
             bonus *= caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask());
+            bonus /= 100;
             //bonus *= caster->CalculateLevelPenalty(GetSpellInfo());
 
-            amount += int32(bonus);
+            amount = int32(bonus);
         }
     }
 
@@ -1040,13 +1026,14 @@ class spell_mage_mana_shield : public spell_mage_incanters_absorbtion_base_AuraS
         canBeRecalculated = false;
         if (Unit* caster = GetCaster())
         {
-            // +80.53% from sp bonus
-            float bonus = 2.0f;
+            // +80.68% from sp bonus
+            float bonus = amount;
 
             bonus *= caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask());
+            bonus /= 100;
             //bonus *= caster->CalculateLevelPenalty(GetSpellInfo());
 
-            amount += int32(bonus);
+            amount = int32(bonus);
         }
     }
 
@@ -1510,6 +1497,98 @@ class spell_mage_empowered_fire : public AuraScript
     }
 };
 
+// 81500 - Arcane Charge
+class spell_mage_arcane_charge : public AuraScript
+{
+    PrepareAuraScript(spell_mage_arcane_charge);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        uint32 stackAmount = GetAura()->GetStackAmount();
+
+        caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_BUFF1, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_BUFF2, TRIGGERED_FULL_MASK);
+
+        if (Aura* buff1 = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_BUFF1))
+            buff1->SetStackAmount(stackAmount);
+        if (Aura* buff2 = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_BUFF2))
+            buff2->SetStackAmount(stackAmount);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE_BUFF1))
+            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE_BUFF1);
+
+        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE_BUFF2))
+            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE_BUFF2);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_arcane_charge::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_arcane_charge::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 42921 - Arcane Explosion
+class spell_mage_arcane_explosion : public SpellScript
+{
+    PrepareSpellScript(spell_mage_arcane_explosion);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        int32 targetQte = targets.size();
+
+        if (!caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
+            return;
+
+        if (targetQte == 0)
+            return;
+
+        caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_arcane_explosion::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+// 42847 - Arcane Missile
+class spell_mage_arcane_missiles : public SpellScript
+{
+    PrepareSpellScript(spell_mage_arcane_missiles);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
+            return;
+
+        GetCaster()->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mage_arcane_missiles::HandleAfterCast);
+    }
+};
+
+
+
 void AddSC_mage_spell_scripts()
 {
     new npc_spell_frozen_orb();
@@ -1550,4 +1629,9 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_empowered_fire);
     RegisterSpellScript(spell_mage_mastery_combustion);
     RegisterSpellScript(spell_mage_combustion_on_remove);
+    RegisterSpellScript(spell_mage_arcane_charge);
+    RegisterSpellScript(spell_mage_arcane_explosion);
+
+
+    
 }
