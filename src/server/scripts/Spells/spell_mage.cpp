@@ -1631,6 +1631,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_combustion_on_remove);
     RegisterSpellScript(spell_mage_arcane_charge);
     RegisterSpellScript(spell_mage_arcane_explosion);
+    RegisterSpellScript(spell_mage_arcane_missiles);
 
 
     
