@@ -40,8 +40,13 @@ enum MageSpells
     SPELL_MAGE_ARCANE_CHARGE_BUFF2 = 81502,
     SPELL_MAGE_ARCANE_CHARGE_VISUAL = 81503,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
-    SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED = 12486,
     SPELL_MAGE_COMBUSTION = 11129,
+    SPELL_MAGE_CONE_OF_COLD = 42931,
+    SPELL_MAGE_FROST_NOVA = 42917,
+    SPELL_MAGE_ICE_BARRIER = 43039,
+    SPELL_MAGE_ICE_BLOCK = 45438,
+    SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED = 12486,
+
 
     // Theirs
     SPELL_MAGE_COLD_SNAP = 11958,
@@ -169,7 +174,7 @@ class spell_mage_mastery_combustion : public SpellScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-       
+
     }
 
     void Register() override
@@ -722,7 +727,7 @@ class spell_mage_cold_snap : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
         // immediately finishes the cooldown on Frost spells
 
-        PlayerSpellMap const& spellMap = caster->GetSpellMap();
+        /*PlayerSpellMap const& spellMap = caster->GetSpellMap();
         for (PlayerSpellMap::const_iterator itr = spellMap.begin(); itr != spellMap.end(); ++itr)
         {
             SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(itr->first);
@@ -734,7 +739,12 @@ class spell_mage_cold_snap : public SpellScript
                 else
                     caster->RemoveSpellCooldown(spellInfo->Id, false);
             }
-        }
+        }*/
+
+        caster->RemoveSpellCooldown(SPELL_MAGE_CONE_OF_COLD, true);
+        caster->RemoveSpellCooldown(SPELL_MAGE_FROST_NOVA, true);
+        caster->RemoveSpellCooldown(SPELL_MAGE_ICE_BARRIER, true);
+        caster->RemoveSpellCooldown(SPELL_MAGE_ICE_BLOCK, true);
     }
 
     void Register() override
@@ -851,9 +861,9 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
     static int32 CalculateSpellAmount(Unit* caster, int32 amount, SpellInfo const* spellInfo, const AuraEffect* aurEff)
     {
         // +80.68% from sp bonus
-        float bonus = 2.0f;
+        float bonus = amount;
 
-        bonus *= caster->SpellBaseDamageBonusDone(spellInfo->GetSchoolMask());
+        bonus = CalculatePct(caster->GetMaxHealth(), amount);
 
         // Glyph of Ice Barrier: its weird having a SPELLMOD_ALL_EFFECTS here but its blizzards doing :)
         // Glyph of Ice Barrier is only applied at the spell damage bonus because it was already applied to the base value in CalculateSpellDamage
@@ -861,7 +871,7 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
 
         //bonus *= caster->CalculateLevelPenalty(spellInfo);
 
-        amount += int32(bonus);
+        amount = int32(bonus);
         return amount;
     }
 
@@ -1102,7 +1112,7 @@ class spell_mage_master_of_elements : public AuraScript
             if (mana > 0)
                 GetTarget()->CastCustomSpell(SPELL_MAGE_MASTER_OF_ELEMENTS_ENERGIZE, SPELLVALUE_BASE_POINT0, mana, GetTarget(), true, nullptr, aurEff);
         }
-      
+
     }
 
     void Register() override
@@ -1432,7 +1442,7 @@ class spell_mage_arcane_meditation : public AuraScript
             return;
 
         int32 amount = CalculatePct(int32(GetCaster()->GetMaxPower(POWER_MANA)), aurEff->GetAmount());
-        
+
         GetCaster()->CastCustomSpell(18465, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -1589,6 +1599,7 @@ class spell_mage_arcane_missiles : public SpellScript
 
 
 
+
 void AddSC_mage_spell_scripts()
 {
     new npc_spell_frozen_orb();
@@ -1621,7 +1632,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_frozen_orb_damage);
     RegisterSpellScript(spell_mage_rule_of_threes);
     RegisterSpellScript(spell_mage_arcane_meditation);
-    RegisterSpellScript(spell_mage_improved_fireball); 
+    RegisterSpellScript(spell_mage_improved_fireball);
     RegisterSpellScript(spell_mage_arcane_orb);
     RegisterSpellScript(spell_mage_arcane_orb_damage);
     RegisterSpellScript(spell_mage_raging_winds);
@@ -1634,5 +1645,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcane_missiles);
 
 
-    
+
 }

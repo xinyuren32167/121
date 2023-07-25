@@ -9909,8 +9909,8 @@ void Player::RemoveSpellMods(Spell* spell)
             if( spellInfo->SpellFamilyName == SPELLFAMILY_MAGE )
             {
                 SpellInfo const* sp = mod->ownerAura->GetSpellInfo();
-                // Missile Barrage, Hot Streak, Brain Freeze (trigger spell - Fireball!)
-                if( sp->SpellIconID == 3261 || sp->SpellIconID == 2999 || sp->SpellIconID == 2938 )
+                // Missile Barrage, Brain Freeze (trigger spell - Fireball!)
+                if( sp->SpellIconID == 3261 || sp->SpellIconID == 2938 )
                     if( AuraEffect* aurEff = GetAuraEffectDummy(64869) )
                         if( roll_chance_i(aurEff->GetAmount()) )
                         {
