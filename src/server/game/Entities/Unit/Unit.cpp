@@ -6945,7 +6945,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     break;
                 }
                 // Hot Streak
-                if (dummySpell->SpellIconID == 2999)
+                if (dummySpell->Id == 44448)
                 {
                     if (effIndex != 0)
                         return false;
@@ -6953,15 +6953,18 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     if (!counter)
                         return true;
 
+                    if (target->HasSpellCooldown(48108))
+                        return false;
+
+                    target->AddSpellCooldown(48108, 0, 200);
                     // Count spell criticals in a row in second aura
                     if (procEx & PROC_EX_CRITICAL_HIT)
                     {
                         counter->SetAmount(counter->GetAmount() * 2);
                         if (counter->GetAmount() < 100) // not enough
                             return true;
-                        // Crititcal counted -> roll chance
-                        if (roll_chance_i(triggerAmount))
-                            CastSpell(this, 48108, true, castItem, triggeredByAura);
+
+                        CastSpell(this, 48108, true, castItem, triggeredByAura);
                     }
                     counter->SetAmount(25);
                     return true;

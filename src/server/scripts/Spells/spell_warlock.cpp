@@ -78,6 +78,8 @@ enum WarlockSpells
     SPELL_WARLOCK_SHADOWBURN                        = 47827,
     SPELL_WARLOCK_CONFLAGRATE                       = 17962,
     SPELL_WARLOCK_SOUL_FIRE                         = 47825,
+    SPELL_WARLOCK_BURNING_RUSH_DAMAGE               = 83019,
+    SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE            = 83021,
 };
 
 enum PET_WARLOCKS {
@@ -1783,6 +1785,58 @@ class spell_warl_soul_fire_energy : public SpellScript
     }
 };
 
+class spell_warl_burning_rush : public AuraScript
+{
+    PrepareAuraScript(spell_warl_burning_rush);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster()->ToPlayer();
+        uint32 healthPct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        uint32 damage = CalculatePct(caster->GetMaxHealth(), healthPct);
+        caster->CastCustomSpell(SPELL_WARLOCK_BURNING_RUSH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_burning_rush::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_warl_malefic_rapture : public SpellScript
+{
+    PrepareSpellScript(spell_warl_malefic_rapture);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        auto const& threatList = caster->getAttackers();
+        for (auto const& threat : threatList)
+        {
+            if (Unit* target = ObjectAccessor::GetUnit(*caster, threat->GetGUID())) {
+                auto targetAuras = target->GetAppliedAuras();
+                for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr) {
+                    if (Aura* aura = itr->second->GetBase())
+                    {
+                        if (caster->GetGUID() != aura->GetCasterGUID())
+                            continue;
+
+                        SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                        if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
+                            caster->CastSpell(target, SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE, TRIGGERED_FULL_MASK);
+                    }
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_warl_malefic_rapture::HandleCast);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -1833,4 +1887,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_incinerate_energy);
     RegisterSpellScript(spell_warl_shadowburn_death);
     RegisterSpellScript(spell_warl_soul_fire_energy);
+    RegisterSpellScript(spell_warl_burning_rush);
+    RegisterSpellScript(spell_warl_malefic_rapture);
 }
