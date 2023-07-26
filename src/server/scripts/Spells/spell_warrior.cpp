@@ -582,7 +582,6 @@ class spell_warr_bloodthirst : public SpellScript
 };
 
 
-
 // 7384, 7887, 11584, 11585 - Overpower
 class spell_warr_overpower : public SpellScript
 {

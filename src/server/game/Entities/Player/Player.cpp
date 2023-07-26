@@ -10999,6 +10999,21 @@ void Player::ModifySpellCooldown(uint32 spellId, int32 cooldown)
     GetSession()->SendPacket(&data);
 }
 
+void Player::SetSpellCooldown(uint32 spellId, int32 cooldown)
+{
+    SpellCooldowns::iterator itr = m_spellCooldowns.find(spellId);
+    if (itr == m_spellCooldowns.end())
+        return;
+
+    itr->second.end = cooldown;
+
+    WorldPacket data(SMSG_MODIFY_COOLDOWN, 4 + 8 + 4);
+    data << uint32(spellId);            // Spell ID
+    data << GetGUID();                  // Player GUID
+    data << int32(cooldown);            // Cooldown mod in milliseconds
+    GetSession()->SendPacket(&data);
+}
+
 void Player::SendCooldownEvent(SpellInfo const* spellInfo, uint32 itemId /*= 0*/, Spell* spell /*= nullptr*/, bool setCooldown /*= true*/)
 {
     // start cooldowns at server side, if any

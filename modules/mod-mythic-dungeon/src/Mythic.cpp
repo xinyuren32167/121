@@ -8,12 +8,6 @@
 #include "Chat.h"
 #include "LuaEngine.h"
 
-enum MYTHIC_SPELLS {
-    HEALTH_AND_DAMAGE_SPELL = 0,
-};
-
-#define itemCoin = 0;
-
 Mythic::Mythic(Player* keyOwner, uint32 dungeonId, uint32 level)
 {
     EnemyForces = 0.f;
@@ -96,13 +90,13 @@ void Mythic::Update(uint32 diff)
 
 void Mythic::SaveMythicDungeon()
 {
-    auto const& allyList = m_Group->GetMemberSlots();
+    Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
-    for (auto const& target : allyList)
-    {
-        uint32 guid = m_Group->GetGUID().GetCounter();
-        // Save Mythic Run (Timer, DungeonId, KeyCompletion, Affixes) for everyone in the group.
-    }
+    if (playerList.IsEmpty())
+        return;
+
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+        if (Player* player = playerIteration->GetSource()) {}
 }
 
 void Mythic::SetBossDead(uint32 creatureId)
@@ -126,14 +120,16 @@ void Mythic::OnCompleteMythicDungeon(Player* player)
     // Send Addon Mythic Completion;
     Done = true;
 
+    uint8 upgrade = CalculateUpgradeKey();
+
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
         if (Player* currentPlayer = playerIteration->GetSource())
-            sEluna->SendCompletedMythicDungeon(currentPlayer, ElapsedTime);
+            sEluna->SendCompletedMythicDungeon(currentPlayer, TimeToComplete - ElapsedTime, upgrade);
 
     GiveRewards();
     SaveMythicDungeon();
-    UpdatePlayerKey(KeyOwner);
+    sMythicMgr->UpdatePlayerKey(KeyOwner, upgrade);
     sMythicMgr->RemoveMythic(player->GetInstanceId());
 }
 
@@ -235,54 +231,23 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 
 void Mythic::GiveRewards()
 {
-
-    bool isAlone = !!m_Group;
-
-    // We always garantee 2 loots;
-    // std::list<Group::MemberSlot> members = GetRandomMemberSlot();
-
-    /*for (auto const& target : members)
-    {
-        Player* member = ObjectAccessor::FindPlayer(target.guid);
-        if (member) {
-            Item* item = member->AddItem(100000);
-            uint8 upgrade = CalculateUpgradeKey();
-        }
-    }*/
-}
-
-void Mythic::UpdatePlayerKey(Player* player)
-{
-    if (ChestDecrapeted)
-        return;
-
     uint8 upgrade = CalculateUpgradeKey();
+    uint32 totalCoins = GetLevel() * (GetLevel() + upgrade);
 
-    MythicKey* key = sMythicMgr->GetCurrentPlayerMythicKey(player);
+    Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
-    if (!key)
+    if (playerList.IsEmpty())
         return;
 
-    uint32 currentItemId = sMythicMgr->GetItemIdWithDungeonId(key->dungeonId);
-    player->DestroyItemCount(currentItemId, 1, true);
+    for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+        if (Player* player = playerIteration->GetSource())
+        {
 
-    uint32 dungeonId = sMythicMgr->GetRandomMythicDungeonForPlayer(player);
+        }
 
-    key->dungeonId = dungeonId;
-    key->level += upgrade;
-
-    uint32 newItemId = sMythicMgr->GetItemIdWithDungeonId(dungeonId);
-    player->AddItem(newItemId, 1);
-
-    Item* item = player->GetItemByEntry(newItemId);
-
-    if (item) {
-        uint32 enchantId = sMythicMgr->GetEnchantByMythicLevel(key->level);
-        item->SetEnchantment(PERM_ENCHANTMENT_SLOT, enchantId, 0, 0, player->GetGUID());
-    }
-
-    sMythicMgr->SaveMythicKey(player);
 }
+
+
 
 void Mythic::SendStart(Player* player)
 {

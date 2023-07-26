@@ -181,9 +181,9 @@ void MythicManager::HandleChangeDungeonDifficulty(Player* _player, uint8 mode)
     }
 }
 
-void MythicManager::SaveMythicKey(Player* player)
+void MythicManager::SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level)
 {
-
+    CharacterDatabase.Query("UPDATE character_mythic_key SET dungeonId = {}, level = {} WHERE guid = {}", newDungeonId, level, player->GetGUID().GetCounter());
 }
 
 uint8 MythicManager::GetBossIndex(uint32 dungeonId, uint32 creatureId)
@@ -246,12 +246,58 @@ uint32 MythicManager::GetRandomLoot(Player* player, uint32 dungeonId, uint32 lev
 
 uint32 MythicManager::GetItemIdWithDungeonId(uint32 dungeonId)
 {
-    return uint32();
+    for (auto const& dg : MythicDungeonStore)
+        if (dg.id == dungeonId)
+            return dg.itemId;
+
+    return 0;
 }
 
 uint32 MythicManager::GetEnchantByMythicLevel(uint32 level)
 {
-    return level + 100000;
+    return level + 4006;
+}
+
+void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
+{
+    MythicKey* key = sMythicMgr->GetCurrentPlayerMythicKey(player);
+
+    if (!key)
+        return;
+
+    uint32 currentItemId = sMythicMgr->GetItemIdWithDungeonId(key->dungeonId);
+    player->DestroyItemCount(currentItemId, 1, true);
+
+    uint32 dungeonId = sMythicMgr->GetRandomMythicDungeonForPlayer(player);
+
+    key->dungeonId = dungeonId;
+    key->level += upgrade;
+
+    if (uint32 newItemId = sMythicMgr->GetItemIdWithDungeonId(dungeonId)) {
+
+        player->AddItem(newItemId, 1);
+
+        Item* item = player->GetItemByEntry(newItemId);
+
+        if (item) {
+            uint32 enchantId = sMythicMgr->GetEnchantByMythicLevel(key->level);
+            item->SetEnchantment(PERM_ENCHANTMENT_SLOT, enchantId, 0, 0, player->GetGUID());
+        }
+
+       //  sMythicMgr->SaveMythicKey(player, dungeonId, key->level);
+    }
+
+}
+
+bool MythicManager::ForceCompleteMythic(Player* player)
+{
+    Mythic* mythic = GetMythicPlayer(player);
+    if (!mythic)
+        return false;
+
+    mythic->OnCompleteMythicDungeon(player);
+
+    return true;
 }
 
 

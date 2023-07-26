@@ -500,7 +500,6 @@ public:
     // Define the 'Message of the day' for the realm
     static bool HandleServerSetMotdCommand(ChatHandler* handler, std::string motd)
     {
-        Motd::SetMotd(motd);
         handler->PSendSysMessage(LANG_MOTD_NEW, motd);
         return true;
     }

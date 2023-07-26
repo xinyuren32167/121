@@ -13,7 +13,6 @@
 #include "InstanceScript.h"
 #include "MapMgr.h"
 #include "MythicManager.h"
-
  // Add player scripts
 class MythicDungeon_PlayerScripts : public PlayerScript
 {
@@ -85,6 +84,13 @@ public:
         }
 
         Map* map = sMapMgr->FindBaseMap(foundDungeon.mapId);
+
+
+        if (!map) {
+            ChatHandler(player->GetSession()).SendSysMessage("You can't use that here.");
+            return false;
+        }
+
         std::string name = map->GetMapName();
 
         if (map->GetId() != foundDungeon.mapId) {
@@ -142,14 +148,28 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "startmythic",  HandleStartMythicCommand, SEC_MODERATOR,     Console::No },
+            { "updateKey",  HandleUpdateKey, SEC_MODERATOR,     Console::No },
+            { "forceCompleteKey",  HandleForceCompleteKeystone, SEC_MODERATOR,     Console::No },
         };
         return commandTable;
     }
 
-    static bool HandleStartMythicCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    static bool HandleUpdateKey(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         Player* selectedPlayer = handler->getSelectedPlayer();
+        sMythicMgr->UpdatePlayerKey(selectedPlayer, 3);
+        return true;
+    }
+
+    static bool HandleForceCompleteKeystone(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    {
+        Player* selectedPlayer = handler->getSelectedPlayer();
+        Player* moderator = handler->GetPlayer();
+        if(sMythicMgr->ForceCompleteMythic(selectedPlayer))
+            ChatHandler(moderator->GetSession()).SendSysMessage("Success : Key completed.");
+        else
+            ChatHandler(moderator->GetSession()).SendSysMessage("Error : There is no mythic key...!");
+
         return true;
     }
 };

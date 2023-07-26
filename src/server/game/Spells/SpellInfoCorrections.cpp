@@ -910,15 +910,6 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->ProcCharges = 0;
     });
 
-    // Healing Stream Totem
-    ApplySpellFix({ 52042 }, [](SpellInfo* spellInfo)
-    {
-        spellInfo->SpellLevel = 0;
-        spellInfo->BaseLevel = 0;
-        spellInfo->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
-        spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(5); // 40yd
-    });
-
     // Earth Shield
     /*ApplySpellFix({ 379 }, [](SpellInfo* spellInfo)
     {

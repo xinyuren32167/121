@@ -100,7 +100,10 @@ public:
     void InitializeCreatureKillingCount();
     void InitializeMultipliers();
     void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
-    void SaveMythicKey(Player* player);
+    void SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level);
+
+    void UpdatePlayerKey(Player* player, uint8 upgrade);
+    bool ForceCompleteMythic(Player* player);
 
     uint32 GetRandomMythicDungeonForPlayer(Player* player);
     uint32 GetRandomLoot(Player* player, uint32 dungeonId, uint32 level);

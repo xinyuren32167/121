@@ -108,8 +108,8 @@ public:
     void OnAllCreatureUpdate(Creature* creature, uint32 /*diff*/) override
     {
         Map* map = creature->GetMap();
-        sMythicMgr->Update(creature);
         AutoBalanceManager::ApplyScalingHealthAndMana(map, creature);
+        sMythicMgr->Update(creature);
     }
 };
 

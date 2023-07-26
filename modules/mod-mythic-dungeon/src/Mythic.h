@@ -38,16 +38,14 @@ public:
     bool IsDungeonDone() { return Done; };
     bool IsDungeonStarted() { return Started; };
     bool IsAllowedTimeOver() { return !ChestDecrapeted; };
-
+    void OnCompleteMythicDungeon(Player* player);
     uint32 GetDungeonMapId() { return Dungeon->GetId(); };
 
 private:
 
-    void OnCompleteMythicDungeon(Player* player);
     void OnPlayerRelease();
     bool MeetTheConditionsToCompleteTheDungeon();
     void GiveRewards();
-    void UpdatePlayerKey(Player* player);
     void SaveMythicDungeon();
     void SetBossDead(uint32 creatureId);
     uint32 GetBossIndex(uint32 creatureId);

@@ -96,8 +96,14 @@ enum ShamanSpells
     SPELL_SHAMAN_STORMSTRIKE = 17364,
     SPELL_SHAMAN_LAVA_LASH = 60103,
 
+    SPELL_SHAMAN_ASCENDANCE_FIRE = 84019,
+
+    SPELL_SHAMAN_GUST_OF_WIND = 84009,
+
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
+
+
 };
 
 enum ShamanSpellIcons
@@ -888,7 +894,7 @@ class spell_sha_healing_stream_totem_target : public SpellScript
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
         uint32 const maxTargets = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA)->GetEffect(EFFECT_1).CalcValue(GetCaster());
-        LOG_ERROR("error", "target nbr = {}", maxTargets);
+
         if (targets.size() > maxTargets)
         {
             targets.sort(Acore::HealthPctOrderPred());
@@ -1275,6 +1281,27 @@ class spell_sha_maelstrom_on_cast : public SpellScript
     }
 };
 
+
+class spell_sha_gust_of_wind : public SpellScript
+{
+    PrepareSpellScript(spell_sha_gust_of_wind);
+
+    void HandleScript(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        float speedxy = 200 / 10.0f;
+        float speedz = 75 / 10.0f;
+
+        caster->JumpTo(speedxy, speedz, true);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_gust_of_wind::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+    }
+};
+
 // All Maelstrom Generation EFFECT_2 On Hit
 class spell_sha_maelstrom_on_hit : public SpellScript
 {
@@ -1420,19 +1447,21 @@ class spell_sha_ascendance_flame : public SpellScript
 {
     PrepareSpellScript(spell_sha_ascendance_flame);
 
-    void FilterTargets(std::list<WorldObject*>& targets)
+    void HandleProc()
     {
+        Unit* caster = GetCaster();
+        auto const& threatlist = caster->getAttackers();
 
-        for (auto const& object : targets)
+        if (threatlist.empty())
+            return;
+
+        for (auto itr = threatlist.begin(); itr != threatlist.end(); ++itr)
         {
-            Unit* target = object->ToUnit();
+            Unit* treath = (*itr);
 
-            if (target->isDead())
-                continue;
-
-            if (Aura* flameShock = target->GetAura(SPELL_SHAMAN_FLAME_SHOCK))
+            if (Aura* flameShock = treath->GetAura(SPELL_SHAMAN_FLAME_SHOCK))
             {
-                GetCaster()->CastSpell(target, SPELL_SHAMAN_LAVA_BURST, TRIGGERED_FULL_MASK);
+                GetCaster()->CastSpell(treath, SPELL_SHAMAN_LAVA_BURST, TRIGGERED_FULL_MASK);
                 flameShock->RefreshDuration();
                 flameShock->GetEffect(EFFECT_1)->ResetTicks();
             }
@@ -1441,48 +1470,10 @@ class spell_sha_ascendance_flame : public SpellScript
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_ascendance_flame::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnCast += SpellCastFn(spell_sha_ascendance_flame::HandleProc);
     }
 };
 
-// 84022 - Elemental Blast
-class spell_sha_elemental_blast : public SpellScript
-{
-    PrepareSpellScript(spell_sha_elemental_blast);
-
-    struct Ratings
-    {
-        uint32 value;
-        uint32 spellId;
-    };
-
-    void HandleProc()
-    {
-        Unit* caster = GetCaster();
-
-        Ratings arr[] = {
-           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE)),
-                    SPELL_SHAMAN_ELEMENTAL_BLAST_CRIT },
-           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE)),
-                    SPELL_SHAMAN_ELEMENTAL_BLAST_MASTERY },
-           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HASTE_MELEE)),
-                    SPELL_SHAMAN_ELEMENTAL_BLAST_HASTE },
-        };
-
-        int size = sizeof(arr) / sizeof(arr[0]);
-
-        auto highestRating = std::max_element(arr, arr + sizeof(arr) / sizeof(arr[0]), [](const Ratings& a, const Ratings& b) {
-            return a.value < b.value;
-            });
-
-        caster->AddAura(highestRating->spellId, caster);
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_sha_elemental_blast::HandleProc);
-    }
-};
 
 // 84026 - Stormbringer
 class spell_sha_stormbringer : public AuraScript
@@ -1615,39 +1606,29 @@ class spell_sha_downpour : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-        Unit* caster = GetCaster();
-        int32 targetQte = targets.size();
-        int32 cooldownPerTarget = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+        if (targets.size() > 6)
+            targets.resize(6);
 
-        if (targetQte == 0)
-            return;
-
-        int32 cooldown = cooldownPerTarget * targetQte;
-
-        caster->AddAura(SPELL_SHAMAN_DOWNPOUR_LISTENER, caster);
-        caster->GetAura(SPELL_SHAMAN_DOWNPOUR_LISTENER)->GetEffect(EFFECT_0)->SetAmount(cooldown);
+        targetsSize = targets.size();
     }
 
-    void OnAfterCast()
+    void HandleAfterCast()
     {
         Unit* caster = GetCaster();
-
-        if (!caster)
-            return;
-
-        if (Aura* buffAura = caster->GetAura(SPELL_SHAMAN_DOWNPOUR_LISTENER))
-        {
-            LOG_ERROR("error", "cooldown = {}", buffAura->GetEffect(EFFECT_0)->GetAmount());
-            caster->ToPlayer()->ModifySpellCooldown(SPELL_SHAMAN_DOWNPOUR_LISTENER, buffAura->GetEffect(EFFECT_0)->GetAmount());
-            buffAura->Remove();
-        }
+        int32 cooldownPerTarget = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+        caster->ToPlayer()->SetSpellCooldown(SPELL_SHAMAN_DOWNPOUR, -30000);
+        caster->ToPlayer()->SetSpellCooldown(SPELL_SHAMAN_DOWNPOUR, (targetsSize * cooldownPerTarget));
     }
 
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_downpour::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
-        AfterHit += SpellHitFn(spell_sha_downpour::OnAfterCast);
+        AfterCast += SpellCastFn(spell_sha_downpour::HandleAfterCast);
     }
+
+
+private:
+    uint32 targetsSize;
 };
 
 // 51474 - Improved Astral Shift
@@ -1818,7 +1799,132 @@ class spell_sha_stormkeeper_remove : public AuraScript
     }
 };
 
+class spell_sha_lava_burst : public SpellScript
+{
+    PrepareSpellScript(spell_sha_lava_burst);
 
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        int32 ratio = GetEffectValue();
+        int32 damageFire = caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+
+        ApplyPct(damageFire, ratio);
+
+        if (caster->HasAura(SPELL_SHAMAN_ASCENDANCE_FIRE))
+        {
+            float crit_chance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+            damageFire = AddPct(damageFire, crit_chance);
+        }
+
+        SetHitDamage(damageFire);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_burst::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_sha_elemental_blast : public SpellScript
+{
+    PrepareSpellScript(spell_sha_elemental_blast);
+
+    struct Ratings
+    {
+        uint32 value;
+        uint32 spellId;
+    };
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        Ratings arr[] = {
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_CRIT },
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HIT_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_MASTERY },
+           { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_HASTE_MELEE)),
+                    SPELL_SHAMAN_ELEMENTAL_BLAST_HASTE },
+        };
+
+        int size = sizeof(arr) / sizeof(arr[0]);
+
+        auto highestRating = std::max_element(arr, arr + sizeof(arr) / sizeof(arr[0]), [](const Ratings& a, const Ratings& b) {
+            return a.value < b.value;
+        });
+
+        caster->AddAura(highestRating->spellId, caster);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_elemental_blast::HandleProc);
+    }
+};
+
+class spell_sha_spirit_link : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_link);
+
+    uint8 GetMemberGroupCountAliveAndAtDistance(Group* group) {
+
+        Unit* caster = GetCaster();
+
+        auto const& allyList = group->GetMemberSlots();
+
+        uint8 count = 0;
+        for (auto const& target : allyList)
+            if (Player* member = ObjectAccessor::FindPlayer(target.guid)) {
+                float distance = member->GetDistance(caster->GetPosition());
+                if (member->IsAlive() && distance <= 10.0f)
+                    count += 1;
+            }
+
+
+        return count;
+    }
+
+    void OnPeriodic(AuraEffect const* aurEff)
+    {
+        Unit* owner = GetCaster()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Group* group = owner->ToPlayer()->GetGroup();
+
+        if (!group)
+            return;
+
+        uint32 totalHealth = 0;
+
+        auto const& allyList = group->GetMemberSlots();
+
+        for (auto const& target : allyList)
+            if (Player* member = ObjectAccessor::FindPlayer(target.guid))
+                if (member->IsAlive())
+                    totalHealth += member->GetHealthPct();
+
+        uint32 pctAmount = totalHealth / GetMemberGroupCountAliveAndAtDistance(group);
+
+        for (auto const& target : allyList)
+            if (Player* member = ObjectAccessor::FindPlayer(target.guid)) {
+                float distance = member->GetDistance(GetCaster()->GetPosition());
+                uint32 amount = member->CountPctFromMaxHealth(pctAmount);
+
+                if (member->IsAlive() && distance <= 10.0f)
+                    member->SetHealth(amount);
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_spirit_link::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+
+};
 
 void AddSC_shaman_spell_scripts()
 {
@@ -1871,9 +1977,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_frozen_power_aura);
     RegisterSpellScript(spell_sha_stormkeeper);
     RegisterSpellScript(spell_sha_stormkeeper_remove);
-
-
-
-
-
+    RegisterSpellScript(spell_sha_gust_of_wind);
+    RegisterSpellScript(spell_sha_lava_burst);
+    RegisterSpellScript(spell_sha_spirit_link);
 }
