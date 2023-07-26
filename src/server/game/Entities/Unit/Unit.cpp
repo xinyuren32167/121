@@ -6953,6 +6953,10 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     if (!counter)
                         return true;
 
+                    if (target->HasSpellCooldown(48108))
+                        return false;
+
+                    target->AddSpellCooldown(48108, 0, 200);
                     // Count spell criticals in a row in second aura
                     if (procEx & PROC_EX_CRITICAL_HIT)
                     {

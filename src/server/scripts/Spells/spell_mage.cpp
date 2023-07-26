@@ -336,8 +336,8 @@ class spell_mage_arcane_barrage : public SpellScript
         if (!caster)
             return;
 
-        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
-            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE);
+        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
+            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL);
     }
 
     void Register() override
@@ -862,13 +862,13 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
     {
         // +80.68% from sp bonus
         float bonus = amount;
-
+        LOG_ERROR("error", "ratio = {}", bonus);
         bonus = CalculatePct(caster->GetMaxHealth(), amount);
-
+        LOG_ERROR("error", "amount = {}", bonus);
         // Glyph of Ice Barrier: its weird having a SPELLMOD_ALL_EFFECTS here but its blizzards doing :)
         // Glyph of Ice Barrier is only applied at the spell damage bonus because it was already applied to the base value in CalculateSpellDamage
         bonus = caster->ApplyEffectModifiers(spellInfo, aurEff->GetEffIndex(), bonus);
-
+        LOG_ERROR("error", "amount after buffs = {}", bonus);
         //bonus *= caster->CalculateLevelPenalty(spellInfo);
 
         amount = int32(bonus);
@@ -878,8 +878,11 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
     {
         canBeRecalculated = false;
+        LOG_ERROR("error", "amount = {}", amount);
         if (Unit* caster = GetCaster())
             amount = CalculateSpellAmount(caster, amount, GetSpellInfo(), aurEff);
+
+        LOG_ERROR("error", "amount = {}", amount);
     }
 
     void Register() override
@@ -1572,7 +1575,7 @@ class spell_mage_arcane_explosion : public SpellScript
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_arcane_explosion::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_arcane_explosion::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
 
