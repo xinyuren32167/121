@@ -2466,6 +2466,9 @@ public:
 
     std::string GetDebugInfo() const override;
 
+    void SetPositionBeforeBlink(Position position) { blinkPosition = position; };
+    Position GetPositionBeforeBlink() { return blinkPosition; };
+
 protected:
     explicit Unit (bool isWorldObject);
 
@@ -2554,6 +2557,7 @@ private:
     bool HandleOverrideClassScriptAuraProc(Unit* victim, uint32 damage, AuraEffect* triggeredByAura, SpellInfo const* procSpell, uint32 cooldown);
     bool HandleAuraRaidProcFromChargeWithValue(AuraEffect* triggeredByAura);
     bool HandleAuraRaidProcFromCharge(AuraEffect* triggeredByAura);
+    Position blinkPosition;
 
     void UpdateSplineMovement(uint32 t_diff);
     void UpdateSplinePosition();

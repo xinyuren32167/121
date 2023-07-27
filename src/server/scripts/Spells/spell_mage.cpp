@@ -39,14 +39,27 @@ enum MageSpells
     SPELL_MAGE_ARCANE_CHARGE_BUFF1 = 81501,
     SPELL_MAGE_ARCANE_CHARGE_BUFF2 = 81502,
     SPELL_MAGE_ARCANE_CHARGE_VISUAL = 81503,
+    SPELL_MAGE_BLAZING_BARRIER = 000,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
     SPELL_MAGE_COMBUSTION = 11129,
     SPELL_MAGE_CONE_OF_COLD = 42931,
+    SPELL_MAGE_DISPLACEMENT_AURA = 81510,
     SPELL_MAGE_FROST_NOVA = 42917,
+    SPELL_MAGE_GREATER_INVISIBILITY = 81011,
+    SPELL_MAGE_GREATER_INVISIBILITY_AURA = 81013,
     SPELL_MAGE_ICE_BARRIER = 43039,
+    SPELL_MAGE_ICE_BARRIER_SLOW = 43040,
     SPELL_MAGE_ICE_BLOCK = 45438,
     SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED = 12486,
+    SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION = 55343,
+    SPELL_MAGE_PRISMATIC_BARRIER = 000,
+    SPELL_MAGE_PLACEHOLDER_BARRIER = 000,
 
+    // Masteries
+    MASTERY_MAGE_SAVANT = 300111,
+    MASTERY_MAGE_IGNITE = 300109,
+    MASTERY_MAGE_ICICLE = 300105,
+    MASTERY_MAGE_BATTLE_KNOWLEDGE = 000,
 
     // Theirs
     SPELL_MAGE_COLD_SNAP = 11958,
@@ -423,6 +436,7 @@ class spell_mage_mirror_image : public AuraScript
         void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         GetTarget()->CastSpell((Unit*)nullptr, GetSpellInfo()->Effects[aurEff->GetEffIndex()].TriggerSpell, true);
+        GetCaster()->AddAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION, GetCaster());
     }
 
     void CalcPeriodic(AuraEffect const* /*effect*/, bool& isPeriodic, int32&  /*amplitude*/)
@@ -430,10 +444,22 @@ class spell_mage_mirror_image : public AuraScript
         isPeriodic = false;
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION))
+            caster->RemoveAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION);
+    }
+
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_mage_mirror_image::HandleEffectApply, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
         DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_mage_mirror_image::CalcPeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_mirror_image::HandleRemove, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -862,13 +888,13 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
     {
         // +80.68% from sp bonus
         float bonus = amount;
-        LOG_ERROR("error", "ratio = {}", bonus);
+
         bonus = CalculatePct(caster->GetMaxHealth(), amount);
-        LOG_ERROR("error", "amount = {}", bonus);
+
         // Glyph of Ice Barrier: its weird having a SPELLMOD_ALL_EFFECTS here but its blizzards doing :)
         // Glyph of Ice Barrier is only applied at the spell damage bonus because it was already applied to the base value in CalculateSpellDamage
         bonus = caster->ApplyEffectModifiers(spellInfo, aurEff->GetEffIndex(), bonus);
-        LOG_ERROR("error", "amount after buffs = {}", bonus);
+
         //bonus *= caster->CalculateLevelPenalty(spellInfo);
 
         amount = int32(bonus);
@@ -878,17 +904,28 @@ class spell_mage_ice_barrier_aura : public spell_mage_incanters_absorbtion_base_
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
     {
         canBeRecalculated = false;
-        LOG_ERROR("error", "amount = {}", amount);
+
         if (Unit* caster = GetCaster())
             amount = CalculateSpellAmount(caster, amount, GetSpellInfo(), aurEff);
+    }
 
-        LOG_ERROR("error", "amount = {}", amount);
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = procInfo.GetActor();
+
+
+        if (!target || !caster)
+            return;
+        LOG_ERROR("error", "target name = {}", target->GetName());
+        caster->CastSpell(target, SPELL_MAGE_ICE_BARRIER_SLOW, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_mage_ice_barrier_aura::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
         AfterEffectAbsorb += AuraEffectAbsorbFn(spell_mage_ice_barrier_aura::Trigger, EFFECT_0);
+        OnEffectProc += AuraEffectProcFn(spell_mage_ice_barrier_aura::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
     }
 };
 
@@ -900,17 +937,17 @@ class spell_mage_ice_barrier : public SpellScript
     static int32 CalculateSpellAmount(Unit* caster, int32 amount, SpellInfo const* spellInfo, const AuraEffect* aurEff)
     {
         // +80.68% from sp bonus
-        float bonus = 0.8068f;
+        float bonus = amount;
 
-        bonus *= caster->SpellBaseDamageBonusDone(spellInfo->GetSchoolMask());
+        bonus = CalculatePct(caster->GetMaxHealth(), amount);
 
         // Glyph of Ice Barrier: its weird having a SPELLMOD_ALL_EFFECTS here but its blizzards doing :)
         // Glyph of Ice Barrier is only applied at the spell damage bonus because it was already applied to the base value in CalculateSpellDamage
         bonus = caster->ApplyEffectModifiers(spellInfo, aurEff->GetEffIndex(), bonus);
 
-        bonus *= caster->CalculateLevelPenalty(spellInfo);
+        //bonus *= caster->CalculateLevelPenalty(spellInfo);
 
-        amount += int32(bonus);
+        amount = int32(bonus);
         return amount;
     }
 
@@ -1568,7 +1605,13 @@ class spell_mage_arcane_explosion : public SpellScript
             return;
 
         if (targetQte == 0)
+        {
+            if (Aura* chargeVisual = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
+                chargeVisual->RefreshDuration();
+
             return;
+        }
+
 
         caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
     }
@@ -1600,6 +1643,195 @@ class spell_mage_arcane_missiles : public SpellScript
     }
 };
 
+// 1953 - Blink / 81509 - Displacement
+class spell_mage_blink_displacement : public SpellScript
+{
+    PrepareSpellScript(spell_mage_blink_displacement);
+
+    void HandleBeforeCast()
+    {
+        Unit* caster = GetCaster();
+
+        caster->SetPositionBeforeBlink(caster->GetPosition());
+        GetCaster()->AddAura(SPELL_MAGE_DISPLACEMENT_AURA, GetCaster());
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_mage_blink_displacement::HandleBeforeCast);
+    }
+};
+
+// 81509 - Displacement
+class spell_mage_displacement : public SpellScript
+{
+    PrepareSpellScript(spell_mage_displacement);
+
+    SpellCastResult CheckCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_MAGE_DISPLACEMENT_AURA))
+            return SPELL_FAILED_AURA_BOUNCED;
+
+        if (caster->GetDistance(caster->GetPositionBeforeBlink()) > GetSpellInfo()->GetMaxRange())
+            return SPELL_FAILED_OUT_OF_RANGE;
+
+        return SPELL_CAST_OK;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        Position targetPosition = caster->GetPositionBeforeBlink();
+
+        caster->NearTeleportTo(targetPosition);
+        caster->RemoveAura(SPELL_MAGE_DISPLACEMENT_AURA);
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_mage_displacement::CheckCast);
+        OnCast += SpellCastFn(spell_mage_displacement::HandleCast);
+    }
+};
+
+// 81012 - Greater Invisibility
+class spell_mage_greater_invisibility : public AuraScript
+{
+    PrepareAuraScript(spell_mage_greater_invisibility);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->AddAura(SPELL_MAGE_GREATER_INVISIBILITY_AURA, caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* buffAura = caster->GetAura(SPELL_MAGE_GREATER_INVISIBILITY_AURA))
+        {
+            int32 duration = sSpellMgr->AssertSpellInfo(SPELL_MAGE_GREATER_INVISIBILITY)->GetEffect(EFFECT_0).CalcValue(caster);
+            buffAura->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_greater_invisibility::HandleApply, EFFECT_1, SPELL_AURA_MOD_INVISIBILITY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_greater_invisibility::HandleRemove, EFFECT_1, SPELL_AURA_MOD_INVISIBILITY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 81514 - Mass Barrier
+class spell_mage_mass_barrier : public SpellScript
+{
+    PrepareSpellScript(spell_mage_mass_barrier);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(GetCaster());
+        int32 procSpell;
+
+        if (caster->HasAura(MASTERY_MAGE_SAVANT))
+            procSpell = SPELL_MAGE_PRISMATIC_BARRIER;
+
+        if (caster->HasAura(MASTERY_MAGE_IGNITE))
+            procSpell = SPELL_MAGE_BLAZING_BARRIER;
+
+        if (caster->HasAura(MASTERY_MAGE_ICICLE))
+            procSpell = SPELL_MAGE_ICE_BARRIER;
+
+        if (caster->HasAura(MASTERY_MAGE_BATTLE_KNOWLEDGE))
+            procSpell = SPELL_MAGE_PLACEHOLDER_BARRIER;
+
+        if (!procSpell)
+            return;
+
+        targets.remove_if(Acore::ObjectGUIDCheck(caster->GetGUID(), true));
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+         
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_mass_barrier::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+// 81517 - Alter Time
+class spell_mage_alter_time : public AuraScript
+{
+    PrepareAuraScript(spell_mage_alter_time);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        originalHealth = caster->GetHealth();
+        originalPosition = caster->GetPosition();
+        originalMap = caster->GetMap();
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  mode)
+    {
+        Unit* caster = GetCaster();
+        AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (removeMode != AURA_REMOVE_BY_EXPIRE && removeMode != AURA_REMOVE_BY_CANCEL)
+            return;
+
+        if (originalMap != caster->GetMap())
+            return;
+
+        caster->NearTeleportTo(originalPosition);
+        caster->SetHealth(originalHealth);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_alter_time::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_alter_time::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+
+private:
+    Position originalPosition;
+    int32 originalHealth;
+    Map* originalMap;
+};
 
 
 
@@ -1620,6 +1852,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_blast_wave);
     RegisterSpellScript(spell_mage_cold_snap);
     RegisterSpellScript(spell_mage_fire_frost_ward);
+    RegisterSpellScript(spell_mage_ice_barrier_aura);
     RegisterSpellScript(spell_mage_focus_magic);
     RegisterSpellScript(spell_mage_ice_barrier);
     RegisterSpellScript(spell_mage_ignite);
@@ -1646,6 +1879,10 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcane_charge);
     RegisterSpellScript(spell_mage_arcane_explosion);
     RegisterSpellScript(spell_mage_arcane_missiles);
+    RegisterSpellScript(spell_mage_blink_displacement);
+    RegisterSpellScript(spell_mage_displacement);
+    RegisterSpellScript(spell_mage_greater_invisibility);
+    RegisterSpellScript(spell_mage_alter_time);
 
 
 
