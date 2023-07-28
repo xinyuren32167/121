@@ -9669,26 +9669,26 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                 break;
             }
         // Fingers of Frost, synchronise with Frostbite
-        case 44544:
-            {
-                if (procPhase == PROC_SPELL_PHASE_HIT)
-                {
-                    // Find Frostbite
-                    if (AuraEffect* aurEff = this->GetAuraEffect(SPELL_AURA_ADD_TARGET_TRIGGER, SPELLFAMILY_MAGE, 119, EFFECT_0))
-                    {
-                        if (!victim)
-                            return false;
+        //case 44544:
+        //    {
+        //        if (procPhase == PROC_SPELL_PHASE_HIT)
+        //        {
+        //            // Find Frostbite
+        //            if (AuraEffect* aurEff = this->GetAuraEffect(SPELL_AURA_ADD_TARGET_TRIGGER, SPELLFAMILY_MAGE, 119, EFFECT_0))
+        //            {
+        //                if (!victim)
+        //                    return false;
 
-                        uint8 fofRank = sSpellMgr->GetSpellRank(triggeredByAura->GetId());
-                        uint8 fbRank  = sSpellMgr->GetSpellRank(aurEff->GetId());
-                        uint8 chance  = uint8(std::ceil(fofRank * fbRank * 16.6f));
+        //                uint8 fofRank = sSpellMgr->GetSpellRank(triggeredByAura->GetId());
+        //                uint8 fbRank  = sSpellMgr->GetSpellRank(aurEff->GetId());
+        //                uint8 chance  = uint8(std::ceil(fofRank * fbRank * 16.6f));
 
-                        if (roll_chance_i(chance))
-                            CastSpell(victim, aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, true);
-                    }
-                }
-                break;
-            }
+        //                if (roll_chance_i(chance))
+        //                    CastSpell(victim, aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, true);
+        //            }
+        //        }
+        //        break;
+        //    }
     }
 
     // try detect target manually if not set
@@ -11991,6 +11991,7 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                                 [[fallthrough]];
                             case 849:
                                 modChance += 17;
+                                modChance += CalculatePct(caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FROST), modChance);
                                 if (!HasAuraState(AURA_STATE_FROZEN, spellProto, caster))
                                     break;
                                 crit_chance += modChance;

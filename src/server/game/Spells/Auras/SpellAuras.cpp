@@ -1438,53 +1438,51 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                                 caster->CastSpell(caster, spellId, true);
                         }
                         break;
-                    case 44544: // Fingers of Frost
-                        {
-                            // See if we already have the indicator aura. If not, create one.
-                            if (Aura* aur = target->GetAura(74396))
-                            {
-                                // Aura already there. Refresh duration and set original charges
-                                if (GetCaster()->HasAura(300396) || GetCaster()->HasAura(300397) || GetCaster()->HasAura(300398) || GetCaster()->HasAura(300399) || GetCaster()->HasAura(300400) || GetCaster()->HasAura(300401))
-                                {
-                                    if (aur->GetCharges() < 8)
-                                    {
-                                        aur->SetCharges(aur->GetCharges() + 2);
-                                    }
-                                    else if (aur->GetCharges() >= 8)
-                                    {
-                                        aur->SetCharges(10);
-                                    }
-                                    aur->RefreshDuration();
-                                }
-                                else
-                                {
-                                    aur->SetCharges(2);
-                                    aur->RefreshDuration();
-                                }                          
-                            }
-                            else
-                                target->AddAura(74396, target);
-                        }
-                        break;
-                    case 12494: // Frostbite, synchronise with Fingers of Frost
-                    {
-                        // Find Fingers of Frost
-                        if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_MAGE, 2947, EFFECT_0))
-                        {
-                            if (SpellInfo const* triggeringSpellInfo = GetTriggeredByAuraSpellInfo())
-                            {
-                                uint8 fbRank = sSpellMgr->GetSpellRank(triggeringSpellInfo->Id);
-                                uint8 fofRank = sSpellMgr->GetSpellRank(aurEff->GetId());
-                                uint8 chance = uint8(std::ceil(fofRank * fbRank * 16.6f));
+                    //case 44544: // Fingers of Frost
+                    //    {
+                    //        // See if we already have the indicator aura. If not, create one.
+                    //        if (Aura* aur = target->GetAura(74396))
+                    //        {
+                    //            // Aura already there. Refresh duration and set original charges
+                    //            int32 talentRank = 0;
+                    //            if (caster->HasAura(44543))
+                    //                talentRank = 44543;
+                    //            else if (caster->HasAura(44545))
+                    //                talentRank = 44545;
+                    //            else
+                    //                return;
+                    //           
+                    //            Aura* fingersOfFrostTalent = caster->GetAura(talentRank);
+                    //            int32 maxCharges = fingersOfFrostTalent->GetEffect(EFFECT_2)->GetAmount();
 
-                                if (roll_chance_i(chance))
-                                {
-                                    caster->CastSpell(caster, aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, true);
-                                }
-                            }
-                        }
-                        break;
-                    }
+                    //            if (aur->GetCharges() < maxCharges)
+                    //                aur->ModCharges(1);
+
+                    //            aur->RefreshDuration();                       
+                    //        }
+                    //        else
+                    //            target->AddAura(74396, target);
+                    //    }
+                    //    break;
+                    //case 12494: // Frostbite, synchronise with Fingers of Frost
+                    //{
+                    //    // Find Fingers of Frost
+                    //    if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_MAGE, 2947, EFFECT_0))
+                    //    {
+                    //        if (SpellInfo const* triggeringSpellInfo = GetTriggeredByAuraSpellInfo())
+                    //        {
+                    //            uint8 fbRank = sSpellMgr->GetSpellRank(triggeringSpellInfo->Id);
+                    //            uint8 fofRank = sSpellMgr->GetSpellRank(aurEff->GetId());
+                    //            uint8 chance = uint8(std::ceil(fofRank * fbRank * 16.6f));
+
+                    //            if (roll_chance_i(chance))
+                    //            {
+                    //                caster->CastSpell(caster, aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, true);
+                    //            }
+                    //        }
+                    //    }
+                    //    break;
+                    //}
                     default:
                         break;
                 }

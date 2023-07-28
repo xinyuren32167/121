@@ -1132,15 +1132,15 @@ void SpellMgr::LoadSpellInfoCorrections()
     {
         spellInfo->Dispel = DISPEL_NONE;
         spellInfo->AttributesEx4 |= SPELL_ATTR4_CANNOT_BE_STOLEN;
-        spellInfo->Effects[EFFECT_0].SpellClassMask = flag96(685904631, 1151040, 32);
+       // spellInfo->Effects[EFFECT_0].SpellClassMask = flag96(685904631, 1151040, 32);
     });
 
     // Fingers of Frost visual buff
-    ApplySpellFix({ 74396 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({ 74396 }, [](SpellInfo* spellInfo)
     {
         spellInfo->ProcCharges = 2;
         spellInfo->StackAmount = 0;
-    });
+    });*/
 
     // Glyph of blocking
     ApplySpellFix({ 58375 }, [](SpellInfo* spellInfo)
