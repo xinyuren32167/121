@@ -1686,7 +1686,7 @@ class spell_mage_displacement : public SpellScript
         Unit* caster = GetCaster();
 
         if (!caster->HasAura(SPELL_MAGE_DISPLACEMENT_AURA))
-            return SPELL_FAILED_AURA_BOUNCED;
+            return SPELL_FAILED_NO_VALID_TARGETS;
 
         if (caster->GetDistance(caster->GetPositionBeforeBlink()) > GetSpellInfo()->GetMaxRange())
             return SPELL_FAILED_OUT_OF_RANGE;
@@ -1891,7 +1891,7 @@ class spell_mage_cauterize : public AuraScript
     {
         Unit* caster = GetTarget();
         int32 remainingHealth = caster->GetHealth() - dmgInfo.GetDamage();
-
+        
         // If damage kills us
         if (remainingHealth <= 0 && !caster->HasAura(SPELL_MAGE_CAUTERIZE_DEBUFF))
         {
