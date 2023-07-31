@@ -256,7 +256,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     // Fireball!
     ApplySpellFix({ 57761 }, [](SpellInfo* spellInfo)
     {
-        spellInfo->ProcCharges = 1;
+        //spellInfo->ProcCharges = 1;
         spellInfo->SpellPriority = 50;
     });
 
