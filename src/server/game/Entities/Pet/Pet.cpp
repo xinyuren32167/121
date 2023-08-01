@@ -1200,6 +1200,19 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_FIRE_ELEMENTAL_SCALING_04, this);
             break;
         }
+
+        case NPC_STORM_ELEMENTAL:
+        {
+            SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel * 3.5f - petlevel));
+            SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel * 3.5f + petlevel));
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_HUNTER_PET_SCALING_04, this);
+            AddAura(SPELL_FIRE_ELEMENTAL_SCALING_01, this);
+            AddAura(SPELL_FIRE_ELEMENTAL_SCALING_02, this);
+            AddAura(SPELL_FIRE_ELEMENTAL_SCALING_03, this);
+            AddAura(SPELL_FIRE_ELEMENTAL_SCALING_04, this);
+            break;
+        }
         case NPC_EARTH_ELEMENTAL:
         {
             SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel * 2.0f - petlevel));

@@ -115,6 +115,8 @@ enum NPCEntries
 
     // Shaman
     NPC_FIRE_ELEMENTAL          = 15438,
+    NPC_STORM_ELEMENTAL          = 400408,
+
     NPC_EARTH_ELEMENTAL         = 15352,
     NPC_FERAL_SPIRIT            = 29264,
 

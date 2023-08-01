@@ -29,6 +29,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ANGEREDEARTH   = 36213,
     SPELL_SHAMAN_FIREBLAST      = 57984,
     SPELL_SHAMAN_FIRENOVA       = 12470,
+    SPELL_SHAMAN_LIGHTBOLT       = 49238,
     SPELL_SHAMAN_FIRESHIELD     = 13377
 };
 
@@ -39,7 +40,9 @@ enum ShamanEvents
     // Fire Elemental
     EVENT_SHAMAN_FIRENOVA       = 1,
     EVENT_SHAMAN_FIRESHIELD     = 2,
-    EVENT_SHAMAN_FIREBLAST      = 3
+    EVENT_SHAMAN_FIREBLAST      = 3,
+
+    EVENT_LIGHT_BOLT            = 4,
 };
 
 struct npc_pet_shaman_earth_elemental : public ScriptedAI
@@ -143,8 +146,59 @@ private:
     bool _initAttack;
 };
 
+struct npc_pet_shaman_storm_elemental : public ScriptedAI
+{
+    npc_pet_shaman_storm_elemental(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
+
+    void InitializeAI() override { }
+
+    void EnterCombat(Unit*) override
+    {
+        _events.Reset();
+        _events.ScheduleEvent(EVENT_LIGHT_BOLT, 2500);
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        if (_initAttack)
+        {
+            if (!me->IsInCombat())
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = owner->GetSelectedUnit())
+                        if (me->CanCreatureAttack(target))
+                            AttackStart(target);
+            _initAttack = false;
+        }
+
+        if (!UpdateVictim())
+            return;
+
+        _events.Update(diff);
+        while (uint32 eventId = _events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case EVENT_LIGHT_BOLT:
+                me->CastSpell(me->GetVictim(), SPELL_SHAMAN_LIGHTBOLT, false);
+                _events.ScheduleEvent(EVENT_LIGHT_BOLT, 2500);
+                break;
+            default:
+                break;
+            }
+        }
+
+        DoMeleeAttackIfReady();
+    }
+
+private:
+    EventMap _events;
+    bool _initAttack;
+};
+
+
 void AddSC_shaman_pet_scripts()
 {
     RegisterCreatureAI(npc_pet_shaman_earth_elemental);
     RegisterCreatureAI(npc_pet_shaman_fire_elemental);
+    RegisterCreatureAI(npc_pet_shaman_storm_elemental);
 }

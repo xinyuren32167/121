@@ -2262,12 +2262,53 @@ class spell_mage_ray_of_frost_proc : public AuraScript
     }
 };
 
+class spell_mage_nether_tempest_aoe : public AuraScript
+{
+    PrepareAuraScript(spell_mage_nether_tempest_aoe);
+
+    void OnPeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetTarget();
+        target->CastSpell(target, 81522, TRIGGERED_FULL_MASK, nullptr, nullptr, caster->GetGUID());
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mage_nether_tempest_aoe::OnPeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_mage_nether_tempest : public SpellScript
+{
+    PrepareSpellScript(spell_mage_nether_tempest);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+
+        targets.remove_if([&](WorldObject* target) -> bool
+        {
+            Unit* unit = target->ToUnit();
+            if (unit->IsAlive() && unit->IsVisible() && !unit->IsFriendlyTo(GetCaster()))
+                return true;
+
+            return false;
+        });
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_nether_tempest::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ALLY);
+    }
+};
 
 
 void AddSC_mage_spell_scripts()
 {
     new npc_spell_frozen_orb();
     new npc_spell_arcane_orb();
+    RegisterSpellScript(spell_mage_nether_tempest);
+    RegisterSpellScript(spell_mage_nether_tempest_aoe);
     RegisterSpellScript(spell_mage_arcane_blast);
     RegisterSpellScript(spell_mage_burning_determination);
     RegisterSpellScript(spell_mage_molten_armor);

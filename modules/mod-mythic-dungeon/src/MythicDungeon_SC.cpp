@@ -106,7 +106,7 @@ public:
         if (uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player))
             sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
         else
-            ChatHandler(player->GetSession()).SendSysMessage("it seems you don't have any MythicKey Active.");
+            ChatHandler(player->GetSession()).SendSysMessage("it seems you don't have any Mythic Key Active.");
       
 
         return true;

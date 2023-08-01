@@ -102,7 +102,8 @@ enum ShamanSpells
 
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
-
+    SPELL_SHAMAN_ANCESTRAL_PROTECTION_HEAL = 84081,
+    SPELL_SHAMAN_OUTBURST_HEAL                  = 84083
 
 };
 
@@ -1923,8 +1924,109 @@ class spell_sha_spirit_link : public AuraScript
     {
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_spirit_link::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
-
 };
+
+
+class spell_shaman_totem_ancestral_protection : public AuraScript
+{
+    PrepareAuraScript(spell_shaman_totem_ancestral_protection);
+
+public:
+    spell_shaman_totem_ancestral_protection()
+    {
+        healPct = 0;
+    }
+
+private:
+    uint32 healPct;
+
+    bool Load() override
+    {
+        healPct = GetSpellInfo()->Effects[EFFECT_2].CalcValue(GetCaster());
+        return true;
+    }
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+
+        Unit* victim = GetTarget();
+        Unit* caster = GetCaster();
+
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        uint32 allowedHealth = victim->CountPctFromMaxHealth(1);
+
+        if (remainingHealth <= 0)
+        {
+            int32 healAmount = int32(victim->CountPctFromMaxHealth(healPct));
+            victim->CastCustomSpell(SPELL_SHAMAN_ANCESTRAL_PROTECTION_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_shaman_totem_ancestral_protection::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_shaman_totem_ancestral_protection::Absorb, EFFECT_1);
+    }
+};
+
+class spell_sha_summon_cloudburst_totem : public AuraScript
+{
+    PrepareAuraScript(spell_sha_summon_cloudburst_totem);
+   
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
+        int32 duration = GetSpellInfo()->GetDuration();
+        Position pos = caster->GetNearPosition(3.f, 0);
+        summon = caster->GetMap()->SummonCreature(400406, pos, properties, duration + 1000, caster, GetSpellInfo()->Id);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster)
+            return;
+
+        int32 totalHealingAmount = aurEff->GetAmount();
+
+        float pct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        totalHealingAmount = CalculatePct(totalHealingAmount, pct);
+
+        summon->CastCustomSpell(SPELL_SHAMAN_OUTBURST_HEAL, SPELLVALUE_BASE_POINT0, totalHealingAmount, caster, true, nullptr, nullptr, caster->GetGUID());
+
+        if (summon) {
+            summon->DespawnOrUnsummon();
+        }
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0) {
+            int32 healingAmount = eventInfo.GetHealInfo()->GetHeal();
+            int32 currentAmount = aurEff->GetAmount();
+            aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(healingAmount + currentAmount);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_summon_cloudburst_totem::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(spell_sha_summon_cloudburst_totem::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_summon_cloudburst_totem::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+
+private:
+    TempSummon* summon;
+};
+
 
 void AddSC_shaman_spell_scripts()
 {
@@ -1980,4 +2082,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_gust_of_wind);
     RegisterSpellScript(spell_sha_lava_burst);
     RegisterSpellScript(spell_sha_spirit_link);
+    RegisterSpellScript(spell_shaman_totem_ancestral_protection);
+    RegisterSpellScript(spell_sha_summon_cloudburst_totem);
 }
