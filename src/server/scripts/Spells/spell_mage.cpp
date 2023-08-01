@@ -67,10 +67,13 @@ enum MageSpells
     SPELL_MAGE_ICE_LANCE = 42914,
     SPELL_MAGE_IMPROVED_BLIZZARD_CHILLED = 12486,
     SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION = 55343,
+    SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID = 31216,
     SPELL_MAGE_PRISMATIC_BARRIER = 81523,
     SPELL_MAGE_PLACEHOLDER_BARRIER = 000,
     SPELL_MAGE_RAY_OF_FROST_FINGERS = 81539,
     SPELL_MAGE_RAY_OF_FROST_BUFF = 81540,
+    SPELL_MAGE_SUPERNOVA_DAMAGE = 81525,
+    SPELL_MAGE_SUPERNOVA_KNOCKUP = 81541,
     SPELL_MAGE_WINTERS_CHILL = 81535,
 
     // Masteries
@@ -447,6 +450,7 @@ class spell_mage_molten_armor : public AuraScript
     }
 };
 
+// 55342 - Mirror Image
 class spell_mage_mirror_image : public AuraScript
 {
     PrepareAuraScript(spell_mage_mirror_image)
@@ -471,6 +475,15 @@ class spell_mage_mirror_image : public AuraScript
 
         if (caster->HasAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION))
             caster->RemoveAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION);
+
+        for (auto const& target : caster->ToPlayer()->summonedUnits)
+        {
+            if (target->isDead() || target->GetEntry() != SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID)
+                continue;
+
+            target->ToTempSummon()->DespawnOrUnsummon();
+        }
+        
     }
 
     void Register() override
@@ -1877,6 +1890,57 @@ class spell_mage_arcane_surge : public SpellScript
     }
 };
 
+// 81524 - Supernova
+class spell_mage_supernova : public SpellScript
+{
+    PrepareSpellScript(spell_mage_supernova);
+
+    void HandleDummy(SpellEffIndex effIndex)
+    {
+        Unit* target = GetHitUnit();
+        Unit* caster = GetCaster();
+
+        if (!target || target->isDead())
+            return;
+
+        Position targetPosition = target->GetPosition();
+
+        caster->CastSpell(targetPosition.GetPositionX(), targetPosition.GetPositionY(), targetPosition.GetPositionZ(), SPELL_MAGE_SUPERNOVA_DAMAGE, true);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_mage_supernova::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 81525 - Supernova AOE
+class spell_mage_supernova_aoe : public SpellScript
+{
+    PrepareSpellScript(spell_mage_supernova_aoe);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            target->CastSpell(target, SPELL_MAGE_SUPERNOVA_KNOCKUP, true, 0, 0, caster->GetGUID());
+            //target->CastSpell(target, SPELL_MAGE_SUPERNOVA_KNOCKUP, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_supernova_aoe::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 // 81528 - Cauterize
 class spell_mage_cauterize : public AuraScript
 {
@@ -2250,6 +2314,8 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_mass_barrier);
     RegisterSpellScript(spell_mage_alter_time);
     RegisterSpellScript(spell_mage_arcane_surge);
+    RegisterSpellScript(spell_mage_supernova);
+    RegisterSpellScript(spell_mage_supernova_aoe);
     RegisterSpellScript(spell_mage_cauterize);
     RegisterSpellScript(spell_mage_flurry);
     RegisterSpellScript(spell_mage_flurry_proc);
