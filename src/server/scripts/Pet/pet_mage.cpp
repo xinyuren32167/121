@@ -128,8 +128,6 @@ struct npc_pet_mage_mirror_image : CasterAI
                 if (Aura* newAura = me->AddAura(visAura->GetId(), me))
                     newAura->SetDuration(visAura->GetDuration());
             }
-
-        me->m_Events.AddEvent(new DeathEvent(*me), me->m_Events.CalculateTime(29500));
     }
 
     // Do not reload Creature templates on evade mode enter - prevent visual lost

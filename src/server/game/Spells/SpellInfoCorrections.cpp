@@ -1095,11 +1095,6 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Mirror Image - Summon Spells
-    ApplySpellFix({ 58831, 58833, 58834, 65047 }, [](SpellInfo* spellInfo)
-    {
-        spellInfo->Effects[EFFECT_0].TargetA = SpellImplicitTargetInfo(TARGET_DEST_CASTER);
-        spellInfo->Effects[EFFECT_0].RadiusEntry = sSpellRadiusStore.LookupEntry(0);
-    });
 
     // Initialize Images (Mirror Image)
     ApplySpellFix({ 58836 }, [](SpellInfo* spellInfo)

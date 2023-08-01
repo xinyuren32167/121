@@ -476,13 +476,10 @@ class spell_mage_mirror_image : public AuraScript
         if (caster->HasAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION))
             caster->RemoveAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION);
 
-        for (auto const& target : caster->ToPlayer()->summonedUnits)
-        {
-            if (target->isDead() || target->GetEntry() != SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID)
-                continue;
-
-            target->ToTempSummon()->DespawnOrUnsummon();
-        }     
+        for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+            if(Unit* target = (*itr)->ToUnit())
+                if (target->GetEntry() == SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID)
+                    target->ToCreature()->DespawnOrUnsummon();
     }
 
     void Register() override
