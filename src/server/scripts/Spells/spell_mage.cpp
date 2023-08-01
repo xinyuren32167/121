@@ -482,8 +482,7 @@ class spell_mage_mirror_image : public AuraScript
                 continue;
 
             target->ToTempSummon()->DespawnOrUnsummon();
-        }
-        
+        }     
     }
 
     void Register() override
