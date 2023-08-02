@@ -103,8 +103,10 @@ enum ShamanSpells
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
     SPELL_SHAMAN_ANCESTRAL_PROTECTION_HEAL = 84081,
-    SPELL_SHAMAN_OUTBURST_HEAL                  = 84083
+    SPELL_SHAMAN_OUTBURST_HEAL                  = 84083,
 
+
+    SPELL_SHAMAN_SPIRIT_OF_STORM_PROC           = 84095,
 };
 
 enum ShamanSpellIcons
@@ -2027,6 +2029,22 @@ private:
     TempSummon* summon;
 };
 
+class spell_sha_spirit_of_storm_proc : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_of_storm_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_SPIRIT_OF_STORM_PROC)
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_spirit_of_storm_proc::CheckProc);
+    }
+};
 
 void AddSC_shaman_spell_scripts()
 {
@@ -2084,4 +2102,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_spirit_link);
     RegisterSpellScript(spell_shaman_totem_ancestral_protection);
     RegisterSpellScript(spell_sha_summon_cloudburst_totem);
+    RegisterSpellScript(spell_sha_spirit_of_storm_proc);
 }

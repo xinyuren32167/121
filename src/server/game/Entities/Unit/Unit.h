@@ -117,7 +117,11 @@ enum ShapeshiftForm
     FORM_FLIGHT             = 0x1D,
     FORM_STEALTH            = 0x1E,
     FORM_MOONKIN            = 0x1F,
-    FORM_SPIRITOFREDEMPTION = 0x20
+    FORM_SPIRITOFREDEMPTION = 0x20,
+    FORM_SPIRIT_OF_FIRE     = 0x21,
+    FORM_SPIRIT_OF_STORM    = 0x22,
+    FORM_SPIRIT_OF_EARTH    = 0x23,
+    FORM_SPIRIT_OF_WATER    = 0x24
 };
 
 // low byte (0 from 0..3) of UNIT_FIELD_BYTES_2
