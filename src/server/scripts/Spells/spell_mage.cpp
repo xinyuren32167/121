@@ -1767,7 +1767,7 @@ class spell_mage_mass_barrier : public SpellScript
         Unit* caster = GetCaster();
         uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(GetCaster());
         int32 procSpell = 0;
-        LOG_ERROR("error", "proc");
+
         if (caster->HasAura(MASTERY_MAGE_SAVANT))
             procSpell = SPELL_MAGE_PRISMATIC_BARRIER;
 
@@ -1782,7 +1782,7 @@ class spell_mage_mass_barrier : public SpellScript
 
         if (procSpell == 0)
             return;
-        LOG_ERROR("error", "max targets = {}", maxTargets);
+
         targets.remove_if(Acore::ObjectGUIDCheck(caster->GetGUID(), true));
 
         if (targets.size() > maxTargets)
@@ -1798,9 +1798,9 @@ class spell_mage_mass_barrier : public SpellScript
             if (target->isDead())
                 continue;
 
-            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+            target->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
         }
-        LOG_ERROR("error", "procSpell = {}", procSpell);
+
         caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
     }
 

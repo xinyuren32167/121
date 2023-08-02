@@ -2091,6 +2091,7 @@ AuraStateType SpellInfo::LoadAuraState() const
             if (Effects[i].IsAura() && (Effects[i].ApplyAuraName == SPELL_AURA_MOD_STUN ||
                                         Effects[i].ApplyAuraName == SPELL_AURA_MOD_ROOT ||
                                         Effects[i].ApplyAuraName == SPELL_AURA_DUMMY))
+
                 return AURA_STATE_FROZEN;
 
     switch (Id)
