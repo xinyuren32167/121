@@ -6953,10 +6953,12 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     if (!counter)
                         return true;
 
-                    if (target->HasSpellCooldown(48108))
-                        return false;
+                    // can't proc if aoe
+                    int32 procID = procSpell->Id;
+                    if (procID == 42926 || procID == 42945 || procID == 42950 || procID == 55362 ||
+                        procID == 55355 || procID == 80030 || procID == 81531)
+                        return true;
 
-                    target->AddSpellCooldown(48108, 0, 200);
                     // Count spell criticals in a row in second aura
                     if (procEx & PROC_EX_CRITICAL_HIT)
                     {
