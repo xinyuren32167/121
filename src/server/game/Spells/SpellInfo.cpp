@@ -2089,6 +2089,7 @@ AuraStateType SpellInfo::LoadAuraState() const
     if (GetSchoolMask() & SPELL_SCHOOL_MASK_FROST)
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
             if (Effects[i].IsAura() && (Effects[i].ApplyAuraName == SPELL_AURA_MOD_STUN
+                                        || Effects[i].ApplyAuraName == SPELL_AURA_DUMMY
                                         || Effects[i].ApplyAuraName == SPELL_AURA_MOD_ROOT))
                 return AURA_STATE_FROZEN;
 
