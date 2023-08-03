@@ -1259,6 +1259,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             spellId = 84093;
         case FORM_SPIRIT_OF_WATER:
             spellId = 84093;
+            spellId2 = 84100;
         default:
             break;
     }
@@ -1896,7 +1897,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_AQUA:                                     // 0x04
         case FORM_AMBIENT:                                  // 0x06
 
-        case FORM_STEVES_GHOUL:                             // 0x09
+        case FORM_SPIRIT_OF_WATER:                          // 0x09
         case FORM_THARONJA_SKELETON:                        // 0x0A
         case FORM_TEST_OF_STRENGTH:                         // 0x0B
         case FORM_BLB_PLAYER:                               // 0x0C
@@ -1905,9 +1906,11 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_CREATURECAT:                              // 0x0F
         case FORM_GHOSTWOLF:                                // 0x10
 
-        case FORM_TEST:                                     // 0x14
+        case FORM_SPIRIT_OF_FIRE:                           // 0x14
         case FORM_ZOMBIE:                                   // 0x15
         case FORM_METAMORPHOSIS:                            // 0x16
+        case FORM_SPIRIT_OF_STORM:                          // 0x17
+        case FORM_SPIRIT_OF_EARTH:                          // 0x18
         case FORM_UNDEAD:                                   // 0x19
         case FORM_MASTER_ANGLER:                            // 0x1A
         case FORM_FLIGHT_EPIC:                              // 0x1B
@@ -1915,11 +1918,6 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_FLIGHT:                                   // 0x1D
         case FORM_STEALTH:                                  // 0x1E
         case FORM_SPIRITOFREDEMPTION:                       // 0x20
-
-        case FORM_SPIRIT_OF_FIRE:                           // 0x21
-        case FORM_SPIRIT_OF_STORM:                          // 0x22
-        case FORM_SPIRIT_OF_EARTH:                          // 0x23
-        case FORM_SPIRIT_OF_WATER:                          // 0x24
             break;
         default:
             LOG_ERROR("spells.aura.effect", "Auras: Unknown Shapeshift Type: {}", GetMiscValue());

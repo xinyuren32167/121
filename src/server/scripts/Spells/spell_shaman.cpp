@@ -107,6 +107,7 @@ enum ShamanSpells
 
 
     SPELL_SHAMAN_SPIRIT_OF_STORM_PROC           = 84095,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD         = 84098,
 };
 
 enum ShamanSpellIcons
@@ -2046,6 +2047,48 @@ class spell_sha_spirit_of_storm_proc : public AuraScript
     }
 };
 
+class spell_sha_spirit_of_water : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_of_water);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    {
+        amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), amount);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            int32 heal = eventInfo.GetHealInfo()->GetHeal();
+            if (heal && GetCaster()->IsAlive())
+            {
+                Unit* caster = GetCaster();
+                uint32 healAmount = eventInfo.GetHealInfo()->GetHeal();
+                uint32 thresholdPct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+                uint32 shieldThreshold = caster->CountPctFromMaxHealth(thresholdPct);
+
+                if (Aura* aura = caster->GetAura(SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD))
+                {
+                    uint32 currentShield = aura->GetEffect(EFFECT_0)->GetAmount();
+                    if (currentShield >= shieldThreshold)
+                        return;
+                    aura->GetEffect(EFFECT_0)->ChangeAmount(currentShield + healAmount);
+                    aura->RefreshDuration();
+                }
+                else
+                    caster->CastCustomSpell(SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD, SPELLVALUE_BASE_POINT0, healAmount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_spirit_of_water::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_HEALING_DONE);
+        OnEffectProc += AuraEffectProcFn(spell_sha_spirit_of_water::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -2103,4 +2146,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_shaman_totem_ancestral_protection);
     RegisterSpellScript(spell_sha_summon_cloudburst_totem);
     RegisterSpellScript(spell_sha_spirit_of_storm_proc);
+    RegisterSpellScript(spell_sha_spirit_of_water);
 }
