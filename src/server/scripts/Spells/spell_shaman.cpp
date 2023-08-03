@@ -106,9 +106,16 @@ enum ShamanSpells
     SPELL_SHAMAN_OUTBURST_HEAL                  = 84083,
 
 
+    SPELL_SHAMAN_SPIRIT_OF_FIRE                 = 84089,
+    SPELL_SHAMAN_SPIRIT_OF_STORM                = 84090,
+    SPELL_SHAMAN_SPIRIT_OF_EARTH                = 84091,
+    SPELL_SHAMAN_SPIRIT_OF_WATER                = 84092,
     SPELL_SHAMAN_SPIRIT_OF_STORM_PROC           = 84095,
     SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD         = 84098,
     SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN          = 84100,
+    SPELL_SHAMAN_INVOKE_ESSENCE_FIRE            = 84103,
+    SPELL_SHAMAN_INVOKE_ESSENCE_EARTH           = 84104,
+    SPELL_SHAMAN_INVOKE_ESSENCE_WATER           = 84105,
 };
 
 enum ShamanSpellIcons
@@ -2037,7 +2044,7 @@ class spell_sha_spirit_of_storm_proc : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_SPIRIT_OF_STORM_PROC)
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_SPIRIT_OF_STORM_PROC)
             return false;
         return true;
     }
@@ -2102,6 +2109,61 @@ class spell_sha_spirit_of_water : public AuraScript
     }
 };
 
+class spell_sha_spirit_master_teacher : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_master_teacher);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_SHAMAN_SPIRIT_OF_FIRE);
+        target->learnSpell(SPELL_SHAMAN_SPIRIT_OF_STORM);
+        target->learnSpell(SPELL_SHAMAN_SPIRIT_OF_EARTH);
+        target->learnSpell(SPELL_SHAMAN_SPIRIT_OF_WATER);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_SHAMAN_SPIRIT_OF_FIRE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_SHAMAN_SPIRIT_OF_STORM, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_SHAMAN_SPIRIT_OF_EARTH, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_SHAMAN_SPIRIT_OF_WATER, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_master_teacher::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_master_teacher::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_sha_invoke_essence : public SpellScript
+{
+    PrepareSpellScript(spell_sha_invoke_essence);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (form == FORM_SPIRIT_OF_FIRE)
+            caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
+        else if (form == FORM_SPIRIT_OF_EARTH)
+            caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
+        else if (form == FORM_SPIRIT_OF_WATER)
+            caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_WATER, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_sha_invoke_essence::HandleProc);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -2160,4 +2222,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_summon_cloudburst_totem);
     RegisterSpellScript(spell_sha_spirit_of_storm_proc);
     RegisterSpellScript(spell_sha_spirit_of_water);
+    RegisterSpellScript(spell_sha_spirit_master_teacher);
+    RegisterSpellScript(spell_sha_invoke_essence);
 }
