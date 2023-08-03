@@ -108,6 +108,7 @@ enum ShamanSpells
 
     SPELL_SHAMAN_SPIRIT_OF_STORM_PROC           = 84095,
     SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD         = 84098,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN          = 84100,
 };
 
 enum ShamanSpellIcons
@@ -2082,10 +2083,22 @@ class spell_sha_spirit_of_water : public AuraScript
         }
     }
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN);
+    }
+
     void Register() override
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_spirit_of_water::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_HEALING_DONE);
         OnEffectProc += AuraEffectProcFn(spell_sha_spirit_of_water::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_of_water::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_of_water::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 

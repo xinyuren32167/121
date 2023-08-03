@@ -1259,7 +1259,6 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             spellId = 84093;
         case FORM_SPIRIT_OF_WATER:
             spellId = 84093;
-            spellId2 = 84100;
         default:
             break;
     }
