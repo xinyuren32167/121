@@ -812,7 +812,6 @@ class spell_pri_power_word_shield : public SpellScript
 //
 //        if (!caster || caster->isDead())
 //            return;
-//        LOG_ERROR("error", "shield amount = {}", GetAura()->GetEffect(EFFECT_0)->GetAmount());
 //        if (!caster->HasAura(SPELL_PRIEST_AUTONEMENT))
 //            return;
 //        
@@ -892,7 +891,7 @@ class spell_pri_shadow_word_death : public SpellScript
         damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
         int32 targetHealthPct = target->GetHealthPct();
-        LOG_ERROR("error", "death proc");
+
         if (target->HealthBelowPct(20))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
@@ -910,7 +909,7 @@ class spell_pri_shadow_word_death : public SpellScript
 
         if (!target)
             return;
-        LOG_ERROR("error", "damage = {}", damage);
+
         if (target->IsAlive())
             GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
     }*/
@@ -977,7 +976,7 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_pri_shadow_word_death_after_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_death_after_damage::HandleRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_death_after_damage::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1362,7 +1361,7 @@ class spell_pri_atonement : public AuraScript
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
         GetAura()->GetEffect(EFFECT_1)->SetAmount(amount);
-        LOG_ERROR("error", "damage = {}, CalculatedAmount = {}, amount = {}", damage, damage * 0.4, amount);
+
         caster->CastSpell(caster, SPELL_PRIEST_AUTONEMENT_AOE, TRIGGERED_FULL_MASK);
     }
 
