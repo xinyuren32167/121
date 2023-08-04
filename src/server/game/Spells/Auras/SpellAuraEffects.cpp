@@ -1177,7 +1177,6 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
     uint32 spellId = 0;
     uint32 spellId2 = 0;
     //uint32 spellId3 = 0;
-    uint32 spellId4 = 0;
     uint32 HotWSpellId = 0;
 
     switch (GetMiscValue())
@@ -1254,7 +1253,6 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             spellId = 84093;
         case FORM_SPIRIT_OF_STORM:
             spellId = 84093;
-            spellId2 = 84096;
         case FORM_SPIRIT_OF_EARTH:
             spellId = 84093;
         case FORM_SPIRIT_OF_WATER:
@@ -1281,13 +1279,6 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             target->CastSpell(target, spellId2, true, nullptr, this, target->GetGUID());
         }
 
-        if (spellId4)
-        {
-            if (player)
-                player->RemoveSpellCooldown(spellId4);
-            target->CastSpell(target, spellId4, true, nullptr, this, target->GetGUID());
-        }
-
         if (player)
         {
             const PlayerSpellMap& sp_list = player->GetSpellMap();
@@ -1296,7 +1287,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 if (itr->second->State == PLAYERSPELL_REMOVED || !itr->second->IsInSpec(player->GetActiveSpec()))
                     continue;
 
-                if (itr->first == spellId || itr->first == spellId2 || itr->first == spellId4)
+                if (itr->first == spellId || itr->first == spellId2)
                     continue;
 
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
@@ -1314,7 +1305,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 if (itr->second->State == PLAYERSPELL_REMOVED || !itr->second->IsInSpec(player->GetActiveSpec()))
                     continue;
 
-                if (itr->first == spellId || itr->first == spellId2 || itr->first == spellId4)
+                if (itr->first == spellId || itr->first == spellId2)
                     continue;
 
                 // Xinef: skip talents with effect learn spell
@@ -1471,8 +1462,6 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             target->RemoveOwnedAura(spellId);
         if (spellId2)
             target->RemoveOwnedAura(spellId2);
-        if (spellId4)
-            target->RemoveOwnedAura(spellId4);
 
         // Improved Barkskin/Ironbark - apply/remove armor bonus due to shapeshift
         if (player)
