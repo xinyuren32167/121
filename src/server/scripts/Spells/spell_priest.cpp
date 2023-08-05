@@ -78,7 +78,7 @@ enum PriestSpells
     SPELL_PRIEST_POWER_WORD_SHIELD = 48066,
     SPELL_PRIEST_PRAYER_OF_HEALING = 48072,
     SPELL_PRIEST_PRAYER_OF_MENDING = 48113,
-    SPELL_PRIEST_PRAYER_OF_MENDING_AURA = 48111,
+    SPELL_PRIEST_PRAYER_OF_MENDING_HEAL = 48111,
     SPELL_PRIEST_PURGE_THE_WICKED = 81017,
     SPELL_PRIEST_PURGE_THE_WICKED_AOE = 81018,
     SPELL_PRIEST_RAPTURE = 81019,
@@ -1770,7 +1770,7 @@ class spell_pri_holy_word_salvation : public SpellScript
         Unit* caster = GetCaster();
 
         caster->CastSpell(target, SPELL_PRIEST_RENEW, true);
-        caster->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_STACK, 2, target, TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, 2, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2108,6 +2108,65 @@ public:
     }
 };
 
+class spell_pri_prayer_of_mending : public AuraScript
+{
+    PrepareAuraScript(spell_pri_prayer_of_mending);
+
+    Unit* findNearestTarget()
+    {
+        Unit* caster = GetCaster();
+        std::list<Unit*> nearMembers;
+        Group* group = caster->ToPlayer()->GetGroup();
+
+        if (!group)
+            return nullptr;
+
+        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+            if (Player* Target = itr->GetSource())
+            {
+                if (!caster->IsWithinDistInMap(Target, 20.f))
+                    continue;
+
+                // IsHostileTo check duel and controlled by enemy
+                if (Target->IsAlive() && !caster->IsHostileTo(Target))
+                    nearMembers.push_back(Target);
+            }
+
+        if (!nearMembers.empty())
+            nearMembers.sort(Acore::HealthPctOrderPred());
+
+        return nearMembers.front();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint8 charges = aurEff->GetBase()->GetCharges() - 1;
+        PreventDefaultAction();
+
+        Unit* caster = GetCaster();
+        Unit* target = GetTarget();
+
+
+        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
+
+        Unit* nextTarget = findNearestTarget();
+
+        if (nextTarget && charges > 0) {
+            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
+            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
+            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget,true, nullptr, nullptr, caster->GetGUID());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_prayer_of_mending::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+
+
 void AddSC_priest_spell_scripts()
 {
     RegisterSpellScript(spell_pri_shadowfiend_scaling);
@@ -2164,5 +2223,6 @@ void AddSC_priest_spell_scripts()
     //RegisterSpellScript(spell_pri_death_tap);
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
+    RegisterSpellScript(spell_pri_prayer_of_mending);
     new npc_pri_shadowy_apparitions();
 }

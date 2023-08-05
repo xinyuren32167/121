@@ -366,9 +366,7 @@ public:
         {
             if (update >= 250) {
                 if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                    if (Creature* creature = me->FindNearestCreatureWithoutEntry(me->GetGUID(), 40.0f, true)) {
-                        me->CastSpell(creature, SPELL_DK_FROSTWHYRM, true, nullptr, nullptr, owner->GetGUID());
-                    }
+                   me->CastSpell(me, SPELL_DK_FROSTWHYRM, true, nullptr, nullptr, owner->GetGUID());
                 }
                 update = 0;
             }

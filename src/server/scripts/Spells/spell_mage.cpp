@@ -58,7 +58,6 @@ enum MageSpells
     SPELL_MAGE_FLURRY_DAMAGE = 81534,
     SPELL_MAGE_FROSTBOLT = 81504,
     SPELL_MAGE_FROST_NOVA = 42917,
-    SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_GREATER_INVISIBILITY = 81511,
     SPELL_MAGE_GREATER_INVISIBILITY_AURA = 81513,
     SPELL_MAGE_ICE_BARRIER = 43039,
@@ -102,26 +101,33 @@ enum MageSpells
     SPELL_MAGE_SUMMON_WATER_ELEMENTAL_TEMPORARY = 70907,
     SPELL_MAGE_GLYPH_OF_BLAST_WAVE = 62126,
     //SPELL_MAGE_FINGERS_OF_FROST = 44543
+
+
+    SPELL_MAGE_TALENT_IMPROVED_FINGERS_OF_FROST_R1 = 80027,
+    SPELL_MAGE_TALENT_IMPROVED_FINGERS_OF_FROST_R2 = 80028,
+
+    SPELL_VISUAL_FROZEN_ORB                        = 72067,
+    SPELL_VISUAL_ARCANE_ORB                        = 80015,
+    SPELL_MAGE_FROZEN_ORB_DAMAGE                   = 80012,
+    SPELL_MAGE_ARCANE_ORB_DAMAGE                   = 80017,
 };
 
-
-class npc_spell_frozen_orb : public CreatureScript
+class npc_mage_spell_arcane_orbs : public CreatureScript
 {
 public:
-    npc_spell_frozen_orb() : CreatureScript("npc_spell_frozen_orb") { }
+    npc_mage_spell_arcane_orbs() : CreatureScript("npc_mage_spell_arcane_orbs") { }
 
-    struct npc_spell_frozen_orbAI : public ScriptedAI
+    struct npc_mage_spell_arcane_orbsAI : public ScriptedAI
     {
-        npc_spell_frozen_orbAI(Creature* creature) : ScriptedAI(creature)
-        {
+        npc_mage_spell_arcane_orbsAI(Creature* creature) : ScriptedAI(creature) { }
 
-        }
+        uint32 update = 785;
 
         void Reset() override
         {
             Position pos = me->GetFirstCollisionPosition(40.0f, 0);
             me->GetMotionMaster()->MovePoint(0, pos);
-            me->CastSpell(me, 72067, true); // VISUAL
+            me->CastSpell(me, SPELL_VISUAL_ARCANE_ORB, true); // VISUAL
             me->CombatStop(true);
             me->AttackStop();
             me->SetReactState(REACT_PASSIVE);
@@ -129,39 +135,45 @@ public:
 
         void UpdateAI(uint32 diff) override
         {
-            if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), 11.0f));
-                me->CastCustomSpell(80012, SPELLVALUE_BASE_POINT0, amount); // DMG
+            if (update >= 785) {
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    me->CastSpell(me, SPELL_MAGE_ARCANE_ORB_DAMAGE, true, nullptr, nullptr, owner->GetGUID());
+                }
+                update = 0;
             }
+
+            update += diff;
         }
 
+        void MovementInform(uint32 /*type*/, uint32 id) override {
+            if (id == 0) {
+                me->DespawnOrUnsummon();
+            }
+        }
     };
 
     CreatureAI* GetAI(Creature* creature) const override
     {
-        return new npc_spell_frozen_orbAI(creature);
+        return new npc_mage_spell_arcane_orbsAI(creature);
     }
 };
 
-
-class npc_spell_arcane_orb : public CreatureScript
+class npc_mage_spell_frozen_orbs : public CreatureScript
 {
 public:
-    npc_spell_arcane_orb() : CreatureScript("npc_spell_arcane_orb") { }
+    npc_mage_spell_frozen_orbs() : CreatureScript("npc_mage_spell_frozen_orbs") { }
 
-    struct npc_spell_arcane_orbAI : public ScriptedAI
+    struct npc_mage_spell_frozen_orbsAI : public ScriptedAI
     {
-        npc_spell_arcane_orbAI(Creature* creature) : ScriptedAI(creature)
-        {
+        npc_mage_spell_frozen_orbsAI(Creature* creature) : ScriptedAI(creature) { }
 
-        }
+        uint32 update = 785;
 
-        uint32 time = 1000;
         void Reset() override
         {
             Position pos = me->GetFirstCollisionPosition(40.0f, 0);
             me->GetMotionMaster()->MovePoint(0, pos);
-            me->CastSpell(me, 80015, true); // VISUAL
+            me->CastSpell(me, SPELL_VISUAL_FROZEN_ORB, true); // VISUAL
             me->CombatStop(true);
             me->AttackStop();
             me->SetReactState(REACT_PASSIVE);
@@ -169,17 +181,32 @@ public:
 
         void UpdateAI(uint32 diff) override
         {
-            if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                int32 amount = int32(CalculatePct(owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), 122));
-                me->CastCustomSpell(80017, SPELLVALUE_BASE_POINT0, amount); // DMG
+            if (update >= 785) {
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    me->CastSpell(me, SPELL_MAGE_FROZEN_ORB_DAMAGE, true, nullptr, nullptr, owner->GetGUID());
+                }
+                update = 0;
             }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override {
+            if (id == 0) {
+                me->DespawnOrUnsummon();
+            }
+        }
+
+        void SpellHitTarget(Unit* /*target*/, SpellInfo const* /*spell*/)
+        {
+
         }
 
     };
 
     CreatureAI* GetAI(Creature* creature) const override
     {
-        return new npc_spell_arcane_orbAI(creature);
+        return new npc_mage_spell_frozen_orbsAI(creature);
     }
 };
 
@@ -195,25 +222,6 @@ class spell_mage_pheonix_flame : public SpellScript
     void Register() override
     {
         AfterHit += SpellHitFn(spell_mage_pheonix_flame::HandleAfterHit);
-    }
-};
-
-class spell_mage_mastery_combustion : public SpellScript
-{
-    PrepareSpellScript(spell_mage_mastery_combustion);
-
-    void HandleAfterCast()
-    {
-    }
-
-    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-
-    }
-
-    void Register() override
-    {
-        AfterCast += SpellCastFn(spell_mage_mastery_combustion::HandleAfterCast);
     }
 };
 
@@ -236,28 +244,19 @@ class spell_mage_frozen_orb_damage : public SpellScript
 {
     PrepareSpellScript(spell_mage_frozen_orb_damage);
 
-    std::vector<ObjectGuid> hits;
-
     void HandleAfterHit()
     {
-        GetCaster()->SetSpeed(MOVE_WALK, 0.10);
-        GetCaster()->SetSpeed(MOVE_RUN, 0.10);
+        Unit* frozenOrb = GetCaster();
 
-        if (Unit* unit = GetExplTargetUnit()) {
+        if (Unit* player = GetCaster()->ToTempSummon()->GetSummonerUnit()) {
 
-            if (std::find(hits.begin(), hits.end(), unit->GetGUID()) != hits.end())
-                return;
+            frozenOrb->SetSpeed(MOVE_WALK, 0.10);
+            frozenOrb->SetSpeed(MOVE_RUN, 0.10);
 
-            hits.push_back(unit->GetGUID());
-            if (Unit* owner = GetCaster()->ToTempSummon()->GetSummonerUnit())
-                owner->AddAura(74396, owner);
-        }
-
-        if (Unit* owner = GetCaster()->ToTempSummon()->GetSummonerUnit()) {
-            if (owner->HasAura(80027) && roll_chance_i(5))
-                owner->AddAura(74396, owner);
-            if (owner->HasAura(80028) && roll_chance_i(10))
-                owner->AddAura(74396, owner);
+            if (player->HasAura(SPELL_MAGE_TALENT_IMPROVED_FINGERS_OF_FROST_R1) && roll_chance_i(5))
+                player->CastSpell(player, SPELL_MAGE_FINGERS_OF_FROST_AURA);
+            if (player->HasAura(SPELL_MAGE_TALENT_IMPROVED_FINGERS_OF_FROST_R2) && roll_chance_i(10))
+                player->CastSpell(player, SPELL_MAGE_FINGERS_OF_FROST_AURA);
         }
     }
 
@@ -265,23 +264,9 @@ class spell_mage_frozen_orb_damage : public SpellScript
     {
         AfterHit += SpellHitFn(spell_mage_frozen_orb_damage::HandleAfterHit);
     }
+
 };
 
-class spell_mage_arcane_orb_damage : public SpellScript
-{
-    PrepareSpellScript(spell_mage_arcane_orb_damage);
-
-    void HandleAfterHit()
-    {
-        if (Unit* owner = GetCaster()->ToTempSummon()->GetSummonerUnit())
-            owner->AddAura(36032, owner);
-    }
-
-    void Register() override
-    {
-        AfterHit += SpellHitFn(spell_mage_arcane_orb_damage::HandleAfterHit);
-    }
-};
 
 class spell_mage_frozen_orbs : public SpellScript
 {
@@ -315,7 +300,6 @@ class spell_mage_arcane_orb : public SpellScript
 
     void HandleSummon()
     {
-        GetCaster()->AddAura(36032, GetCaster());
         Position pos = *GetCaster();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = GetCaster()->SummonCreature(500501, pos, TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
@@ -2301,8 +2285,8 @@ class spell_mage_nether_tempest : public SpellScript
 
 void AddSC_mage_spell_scripts()
 {
-    new npc_spell_frozen_orb();
-    new npc_spell_arcane_orb();
+    new npc_mage_spell_frozen_orbs();
+    new npc_mage_spell_arcane_orbs();
     RegisterSpellScript(spell_mage_nether_tempest);
     RegisterSpellScript(spell_mage_nether_tempest_aoe);
     RegisterSpellScript(spell_mage_arcane_blast);
@@ -2336,11 +2320,9 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcane_meditation);
     RegisterSpellScript(spell_mage_improved_fireball);
     RegisterSpellScript(spell_mage_arcane_orb);
-    RegisterSpellScript(spell_mage_arcane_orb_damage);
     RegisterSpellScript(spell_mage_raging_winds);
     RegisterSpellScript(spell_mage_pheonix_flame);
     RegisterSpellScript(spell_mage_empowered_fire);
-    RegisterSpellScript(spell_mage_mastery_combustion);
     RegisterSpellScript(spell_mage_combustion_on_remove);
     RegisterSpellScript(spell_mage_arcane_charge);
     RegisterSpellScript(spell_mage_arcane_explosion);

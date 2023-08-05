@@ -176,7 +176,6 @@ void SpellMgr::LoadSpellInfoCorrections()
 
     ApplySpellFix({
         31347,  // Doom
-        41635,  // Prayer of Mending
         39365,  // Thundering Storm
         52124,  // Sky Darkener Assault
         42442,  // Vengeance Landing Cannonfire

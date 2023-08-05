@@ -214,6 +214,7 @@ struct SpellValue
     uint32    MaxAffectedTargets;
     float     RadiusMod;
     uint8     AuraStackAmount;
+    uint8     AuraChargeAmount;
     int32     AuraDuration;
     bool      ForcedCritResult;
 };

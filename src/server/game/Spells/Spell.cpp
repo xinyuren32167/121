@@ -554,6 +554,7 @@ SpellValue::SpellValue(SpellInfo const* proto)
     MaxAffectedTargets = proto->MaxAffectedTargets;
     RadiusMod = 1.0f;
     AuraStackAmount = 1;
+    AuraChargeAmount = 0;
     AuraDuration = 0;
     ForcedCritResult = false;
 }
@@ -3138,6 +3139,16 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
                         m_spellAura->SetStackAmount(m_spellValue->AuraStackAmount);
                     else
                         m_spellAura->ModStackAmount(m_spellValue->AuraStackAmount);
+
+                }
+
+                // Set aura charge amount to desired value
+                if (m_spellValue->AuraChargeAmount > 0)
+                {
+                    if (!refresh)
+                        m_spellAura->SetCharges(m_spellValue->AuraChargeAmount);
+                    else
+                        m_spellAura->ModCharges(m_spellValue->AuraChargeAmount);
                 }
 
                 // Now Reduce spell duration using data received at spell hit
@@ -8384,6 +8395,9 @@ void Spell::SetSpellValue(SpellValueMod mod, int32 value)
             break;
         case SPELLVALUE_AURA_STACK:
             m_spellValue->AuraStackAmount = uint8(value);
+            break;
+        case SPELLVALUE_AURA_CHARGE:
+            m_spellValue->AuraChargeAmount = uint8(value);
             break;
         case SPELLVALUE_AURA_DURATION:
             m_spellValue->AuraDuration = value;
