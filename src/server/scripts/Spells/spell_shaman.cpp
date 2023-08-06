@@ -2403,6 +2403,7 @@ class spell_sha_fiery_stamp : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
+            return true;
         return false;
     }
 
