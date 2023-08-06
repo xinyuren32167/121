@@ -126,6 +126,14 @@ enum ShamanSpells
     SPELL_SHAMAN_FOCUS_THINE_FOE_STORM          = 84117,
     SPELL_SHAMAN_FOCUS_THINE_FOE_EARTH          = 84118,
     SPELL_SHAMAN_FOCUS_THINE_FOE_WATER          = 84119,
+    SPELL_SHAMAN_FIERY_STAMP_PROC               = 84122,
+    SPELL_SHAMAN_TECTONIC_SHIFT_DEBUFF          = 84124,
+    SPELL_SHAMAN_WATERY_GRAVE_HEAL              = 84126,
+    SPELL_SHAMAN_WATERY_GRAVE_BUBBLE            = 84127,
+    SPELL_SHAMAN_OVERCHARGE_FIRE                = 84129,
+    SPELL_SHAMAN_OVERCHARGE_STORM               = 84130,
+    SPELL_SHAMAN_OVERCHARGE_EARTH               = 84131,
+    SPELL_SHAMAN_OVERCHARGE_WATER               = 84132,
 };
 
 enum ShamanSpellIcons
@@ -2388,6 +2396,107 @@ class spell_sha_focus_thine_foe_elemental : public AuraScript
     }
 };
 
+class spell_sha_fiery_stamp : public AuraScript
+{
+    PrepareAuraScript(spell_sha_fiery_stamp);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetTarget(), SPELL_SHAMAN_FIERY_STAMP_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_fiery_stamp::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_fiery_stamp::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_tectonic_shift: public SpellScript
+{
+    PrepareSpellScript(spell_sha_tectonic_shift);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+        if (form == FORM_SPIRIT_OF_EARTH)
+            caster->CastSpell(caster, SPELL_SHAMAN_TECTONIC_SHIFT_DEBUFF, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_sha_tectonic_shift::HandleProc);
+    }
+};
+
+class spell_sha_watery_grave : public AuraScript
+{
+    PrepareAuraScript(spell_sha_watery_grave);
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        int32 healPct = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if(victim->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER)
+            healPct = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+
+        if (remainingHealth <= 0)
+        {
+            absorbAmount = dmgInfo.GetDamage();
+            int32 healAmount = int32(victim->CountPctFromMaxHealth(healPct));
+
+            victim->CastCustomSpell(SPELL_SHAMAN_WATERY_GRAVE_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
+            victim->CastSpell(victim, SPELL_SHAMAN_WATERY_GRAVE_BUBBLE, TRIGGERED_FULL_MASK);
+        }
+        else
+            absorbAmount = 0;
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_sha_watery_grave::Absorb, EFFECT_0);
+    }
+};
+
+class spell_sha_overcharge: public SpellScript
+{
+    PrepareSpellScript(spell_sha_overcharge);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (form == FORM_SPIRIT_OF_FIRE)
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_FIRE, TRIGGERED_FULL_MASK);
+        else if (form == FORM_SPIRIT_OF_STORM)
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_STORM, TRIGGERED_FULL_MASK);
+        else if (form == FORM_SPIRIT_OF_EARTH)
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_EARTH, TRIGGERED_FULL_MASK);
+        else if (form == FORM_SPIRIT_OF_WATER)
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_WATER, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_sha_overcharge::HandleProc);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -2456,4 +2565,8 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ascendance_earth);
     RegisterSpellScript(spell_sha_focus_thine_foe);
     RegisterSpellScript(spell_sha_focus_thine_foe_elemental);
+    RegisterSpellScript(spell_sha_fiery_stamp);
+    RegisterSpellScript(spell_sha_tectonic_shift);
+    RegisterSpellScript(spell_sha_watery_grave);
+    RegisterSpellScript(spell_sha_overcharge);
 }
