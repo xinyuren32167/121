@@ -15964,11 +15964,8 @@ bool Player::HasTankSpec()
         case TALENT_TREE_WARRIOR_PROTECTION:
         case TALENT_TREE_PALADIN_PROTECTION:
         case TALENT_TREE_DEATH_KNIGHT_BLOOD:
+        case TALENT_TREE_DRUID_GUARDIAN:
             return true;
-        case TALENT_TREE_DRUID_FERAL_COMBAT:
-            if (GetShapeshiftForm() == FORM_BEAR || GetShapeshiftForm() == FORM_DIREBEAR)
-                return true;
-            break;
         default:
             break;
     }
@@ -15988,10 +15985,8 @@ bool Player::HasMeleeSpec()
         case TALENT_TREE_DEATH_KNIGHT_FROST:
         case TALENT_TREE_DEATH_KNIGHT_UNHOLY:
         case TALENT_TREE_SHAMAN_ENHANCEMENT:
-            return true;
         case TALENT_TREE_DRUID_FERAL_COMBAT:
-            if (GetShapeshiftForm() == FORM_CAT)
-                return true;
+            return true;
         default:
             break;
     }
