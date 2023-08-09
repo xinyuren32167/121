@@ -107,10 +107,14 @@ enum ShamanSpells
 
 
     SPELL_SHAMAN_SPIRIT_OF_FIRE                 = 84089,
+    SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE         = 84136,
     SPELL_SHAMAN_SPIRIT_OF_STORM                = 84090,
     SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE          = 84096,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_PASSIVE        = 84137,
     SPELL_SHAMAN_SPIRIT_OF_EARTH                = 84091,
+    SPELL_SHAMAN_SPIRIT_OF_EARTH_PASSIVE        = 84138,
     SPELL_SHAMAN_SPIRIT_OF_WATER                = 84092,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_PASSIVE        = 84139,
     SPELL_SHAMAN_SPIRIT_OF_STORM_PROC           = 84095,
     SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD         = 84098,
     SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN          = 84100,
@@ -134,6 +138,17 @@ enum ShamanSpells
     SPELL_SHAMAN_OVERCHARGE_STORM               = 84130,
     SPELL_SHAMAN_OVERCHARGE_EARTH               = 84131,
     SPELL_SHAMAN_OVERCHARGE_WATER               = 84132,
+    SPELL_SHAMAN_SEAMLESS_WATER_PROC            = 84152,
+    SPELL_SHAMAN_SEAMLESS_WATER_STACKS          = 84153,
+    SPELL_SHAMAN_WATER_BENDING_PROC             = 84166,
+    SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS        = 84170,
+    SPELL_SHAMAN_FIRE_PROFICIENCY_PROC          = 84171,
+    SPELL_SHAMAN_REGENERATIVE_AURA_HEAL         = 84208,
+    SPELL_SHAMAN_ACCUMULATION_HEAL              = 84224,
+    SPELL_SHAMAN_SEEPING_LIFE_FORCE_HEAL        = 84231,
+    SPELL_SHAMAN_PATH_OF_THE_ASCENDANT          = 84242,
+    SPELL_SHAMAN_ASCENDANT_EARTH                = 84113,
+    SPELL_SHAMAN_STORMRAND_TOTEM_PROC           = 84245,
 };
 
 enum ShamanSpellIcons
@@ -1955,7 +1970,6 @@ class spell_sha_spirit_link : public AuraScript
     }
 };
 
-
 class spell_shaman_totem_ancestral_protection : public AuraScript
 {
     PrepareAuraScript(spell_shaman_totem_ancestral_protection);
@@ -2056,24 +2070,70 @@ private:
     TempSummon* summon;
 };
 
+class spell_sha_spirit_of_fire : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_of_fire);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_of_fire::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_of_fire::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 class spell_sha_spirit_of_storm : public AuraScript
 {
     PrepareAuraScript(spell_sha_spirit_of_storm);
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->CastSpell(GetCaster(), SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_SHAMAN_SPIRIT_OF_STORM_PASSIVE, TRIGGERED_FULL_MASK);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE);
+        Unit* caster = GetCaster();
+        caster->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE);
+        caster->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_STORM_PASSIVE);
     }
 
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_of_storm::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_of_storm::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_sha_spirit_of_earth : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_of_earth);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_SHAMAN_SPIRIT_OF_EARTH_PASSIVE, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_EARTH_PASSIVE);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_of_earth::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_of_earth::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2131,12 +2191,16 @@ class spell_sha_spirit_of_water : public AuraScript
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->CastSpell(GetCaster(), SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_SHAMAN_SPIRIT_OF_WATER_PASSIVE, TRIGGERED_FULL_MASK);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN);
+        Unit* caster = GetCaster();
+        caster->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN);
+        caster->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_WATER_PASSIVE);
     }
 
     void Register() override
@@ -2189,7 +2253,13 @@ class spell_sha_invoke_essence : public SpellScript
         Unit* target = GetExplTargetUnit();
         ShapeshiftForm form = caster->GetShapeshiftForm();
 
-        if (form == FORM_SPIRIT_OF_FIRE)
+        if (caster->HasAura(SPELL_SHAMAN_PATH_OF_THE_ASCENDANT) && caster->HasAura(SPELL_SHAMAN_ASCENDANT_EARTH))
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_WATER, TRIGGERED_FULL_MASK);
+        }
+        else if (form == FORM_SPIRIT_OF_FIRE)
             caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_EARTH)
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
@@ -2213,7 +2283,14 @@ class spell_sha_fury_of_the_elements : public SpellScript
         Unit* target = GetExplTargetUnit();
         ShapeshiftForm form = caster->GetShapeshiftForm();
 
-        if (form == FORM_SPIRIT_OF_FIRE)
+        if (caster->HasAura(SPELL_SHAMAN_PATH_OF_THE_ASCENDANT) && caster->HasAura(SPELL_SHAMAN_ASCENDANT_EARTH))
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER, TRIGGERED_FULL_MASK);
+        }
+        else if (form == FORM_SPIRIT_OF_FIRE)
             caster->CastSpell(target, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_STORM)
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM, TRIGGERED_FULL_MASK);
@@ -2338,7 +2415,13 @@ class spell_sha_focus_thine_foe : public AuraScript
         Unit* target = GetTarget();
         ShapeshiftForm form = caster->GetShapeshiftForm();
 
-        if (form == FORM_SPIRIT_OF_STORM)
+        if (caster->HasAura(SPELL_SHAMAN_PATH_OF_THE_ASCENDANT) && caster->HasAura(SPELL_SHAMAN_ASCENDANT_EARTH))
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_FOCUS_THINE_FOE_STORM, TRIGGERED_FULL_MASK);
+            caster->CastSpell(target, SPELL_SHAMAN_FOCUS_THINE_FOE_EARTH, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_FOCUS_THINE_FOE_WATER, TRIGGERED_FULL_MASK);
+        }
+        else if (form == FORM_SPIRIT_OF_STORM)
             caster->CastSpell(target, SPELL_SHAMAN_FOCUS_THINE_FOE_STORM, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_EARTH)
             caster->CastSpell(target, SPELL_SHAMAN_FOCUS_THINE_FOE_EARTH, TRIGGERED_FULL_MASK);
@@ -2482,7 +2565,14 @@ class spell_sha_overcharge: public SpellScript
         Unit* target = GetExplTargetUnit();
         ShapeshiftForm form = caster->GetShapeshiftForm();
 
-        if (form == FORM_SPIRIT_OF_FIRE)
+        if (caster->HasAura(SPELL_SHAMAN_PATH_OF_THE_ASCENDANT) && caster->HasAura(SPELL_SHAMAN_ASCENDANT_EARTH))
+        {
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_FIRE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_STORM, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_EARTH, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_WATER, TRIGGERED_FULL_MASK);
+        }
+        else if (form == FORM_SPIRIT_OF_FIRE)
             caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_FIRE, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_STORM)
             caster->CastSpell(caster, SPELL_SHAMAN_OVERCHARGE_STORM, TRIGGERED_FULL_MASK);
@@ -2496,6 +2586,286 @@ class spell_sha_overcharge: public SpellScript
     {
         OnCast += SpellCastFn(spell_sha_overcharge::HandleProc);
     }
+};
+
+class spell_sha_unshakable_earth : public AuraScript
+{
+    PrepareAuraScript(spell_sha_unshakable_earth);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_EARTH)
+            return true;
+        return false;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_unshakable_earth::CheckProc);
+    }
+};
+
+class spell_sha_seamless_water : public AuraScript
+{
+    PrepareAuraScript(spell_sha_seamless_water);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER && !GetCaster()->HasAura(SPELL_SHAMAN_SEAMLESS_WATER_PROC))
+            return true;
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        uint32 requiredStacks = aurEff->GetAmount();
+
+        if (Aura* stackAura = caster->GetAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS))
+        {
+            uint32 currentStacks = stackAura->GetStackAmount();
+
+            if (currentStacks < requiredStacks)
+                caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS, caster);
+            else if (currentStacks == requiredStacks)
+            {
+                caster->RemoveAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS);
+                caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_PROC, caster);
+            }
+        }
+        else
+            caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS,caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_seamless_water::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_seamless_water::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_water_bending : public AuraScript
+{
+    PrepareAuraScript(spell_sha_water_bending);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER && eventInfo.GetActionTarget() == GetCaster())
+            return true;
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        uint32 healPct = aurEff->GetAmount();
+        uint32 healAmount = CalculatePct(heal, healPct);
+        if (heal && caster->IsAlive())
+            caster->CastCustomSpell(SPELL_SHAMAN_WATER_BENDING_PROC, SPELLVALUE_BASE_POINT0, healAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_water_bending::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_water_bending::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_fire_proficiency : public AuraScript
+{
+    PrepareAuraScript(spell_sha_fire_proficiency);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
+            return true;
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        uint32 requiredStacks = aurEff->GetAmount();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 10) + CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 10);
+        if (Aura* stackAura = caster->GetAura(SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS))
+        {
+            uint32 currentStacks = stackAura->GetStackAmount();
+
+            if (currentStacks < requiredStacks)
+                caster->AddAura(SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS, caster);
+            else if (currentStacks == requiredStacks)
+            {
+                caster->RemoveAura(SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS);
+                caster->CastCustomSpell(eventInfo.GetActionTarget(), SPELL_SHAMAN_FIRE_PROFICIENCY_PROC, &damage, &damage, nullptr, TRIGGERED_FULL_MASK);
+            }
+        }
+        else
+            caster->AddAura(SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS, caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_fire_proficiency::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_fire_proficiency::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_earth_proficiency : public AuraScript
+{
+    PrepareAuraScript(spell_sha_earth_proficiency);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_EARTH)
+            return true;
+        return false;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_earth_proficiency::CheckProc);
+    }
+};
+
+class spell_sha_outwitted_defense : public AuraScript
+{
+    PrepareAuraScript(spell_sha_outwitted_defense);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    {
+        amount = CalculatePct(GetCaster()->GetStat(STAT_INTELLECT), amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_outwitted_defense::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_SHIELD_BLOCKVALUE);
+    }
+};
+
+class spell_sha_regenerative_aura : public AuraScript
+{
+    PrepareAuraScript(spell_sha_regenerative_aura);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_NONE)
+            return true;
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_SHAMAN_REGENERATIVE_AURA_HEAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_regenerative_aura::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_regenerative_aura::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_accumulation : public AuraScript
+{
+    PrepareAuraScript(spell_sha_accumulation);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage && caster->IsAlive())
+            {
+                int32 damagePct = aurEff->GetAmount();
+                int32 damageAmount = CalculatePct(damage, damagePct);;
+                int32 accumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+                uint32 threshold = caster->CountPctFromMaxHealth(50);
+                if (accumulated < threshold)
+                    GetAura()->GetEffect(EFFECT_1)->ChangeAmount(accumulated + damageAmount);
+            }
+        }
+
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            int32 heal = eventInfo.GetHealInfo()->GetHeal();
+            if (heal && caster->IsAlive())
+            {
+                int32 accumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+                caster->CastCustomSpell(SPELL_SHAMAN_ACCUMULATION_HEAL, SPELLVALUE_BASE_POINT0, accumulated, caster, TRIGGERED_FULL_MASK);
+                GetAura()->GetEffect(EFFECT_1)->SetAmount(0);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_accumulation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_seeping_life_force : public AuraScript
+{
+    PrepareAuraScript(spell_sha_seeping_life_force);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage)
+            {
+                int32 healPct = aurEff->GetAmount();
+                int32 healAmount = CalculatePct(damage, healPct);
+                GetCaster()->CastCustomSpell(SPELL_SHAMAN_SEEPING_LIFE_FORCE_HEAL, SPELLVALUE_BASE_POINT0, healAmount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_seeping_life_force::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_sha_stormbrand_totem : public AuraScript
+{
+    PrepareAuraScript(spell_sha_stormbrand_totem);
+
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
+        int32 duration = GetSpellInfo()->GetDuration();
+        Position pos = caster->GetNearPosition(3.f, 0);
+        summon = caster->GetMap()->SummonCreature(400407, pos, properties, duration + 1000, caster, GetSpellInfo()->Id);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            int32 damagePct = aurEff->GetAmount();
+            if (caster->GetShapeshiftForm() == FORM_SPIRIT_OF_STORM)
+                damagePct = 100;
+            int32 damageAmount = CalculatePct(damage, damagePct);
+            summon->CastCustomSpell(SPELL_SHAMAN_STORMRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, summon, true, nullptr, nullptr, caster->GetGUID());
+        }
+    }   
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_stormbrand_totem::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(spell_sha_stormbrand_totem::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+
+private:
+    TempSummon* summon;
 };
 
 void AddSC_shaman_spell_scripts()
@@ -2570,4 +2940,16 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_tectonic_shift);
     RegisterSpellScript(spell_sha_watery_grave);
     RegisterSpellScript(spell_sha_overcharge);
+    RegisterSpellScript(spell_sha_spirit_of_fire);
+    RegisterSpellScript(spell_sha_spirit_of_earth);
+    RegisterSpellScript(spell_sha_unshakable_earth);
+    RegisterSpellScript(spell_sha_seamless_water);
+    RegisterSpellScript(spell_sha_water_bending);
+    RegisterSpellScript(spell_sha_fire_proficiency);
+    RegisterSpellScript(spell_sha_earth_proficiency);
+    RegisterSpellScript(spell_sha_outwitted_defense);
+    RegisterSpellScript(spell_sha_regenerative_aura);
+    RegisterSpellScript(spell_sha_accumulation);
+    RegisterSpellScript(spell_sha_seeping_life_force);
+    RegisterSpellScript(spell_sha_stormbrand_totem);
 }

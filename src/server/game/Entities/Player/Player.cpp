@@ -15964,6 +15964,7 @@ bool Player::HasTankSpec()
         case TALENT_TREE_WARRIOR_PROTECTION:
         case TALENT_TREE_PALADIN_PROTECTION:
         case TALENT_TREE_DEATH_KNIGHT_BLOOD:
+        case TALENT_TREE_SHAMAN_SPIRIT_MASTER:
         case TALENT_TREE_DRUID_GUARDIAN:
             return true;
         default:
