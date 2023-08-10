@@ -2143,7 +2143,7 @@ class spell_sha_spirit_of_storm_proc : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_SPIRIT_OF_STORM_PROC || eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_FOCUS_THINE_FOE_STORM)
+        if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_SPIRIT_OF_STORM_PROC || eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_FOCUS_THINE_FOE_STORM))
             return false;
         return true;
     }
@@ -2747,23 +2747,17 @@ class spell_sha_regenerative_aura : public AuraScript
 {
     PrepareAuraScript(spell_sha_regenerative_aura);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        if (GetCaster()->GetShapeshiftForm() == FORM_NONE)
-            return true;
-        return false;
-    }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-        caster->CastSpell(caster, SPELL_SHAMAN_REGENERATIVE_AURA_HEAL, TRIGGERED_FULL_MASK);
+        if (caster->GetShapeshiftForm() == FORM_NONE)
+            caster->CastSpell(caster, SPELL_SHAMAN_REGENERATIVE_AURA_HEAL, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(spell_sha_regenerative_aura::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_sha_regenerative_aura::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_sha_regenerative_aura::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
