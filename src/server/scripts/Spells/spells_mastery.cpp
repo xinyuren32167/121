@@ -43,6 +43,9 @@ enum Masteries
     MASTERY_SHAMAN_ENHANCED_ELEMENTS_BUFF = 1000004,
     MASTERY_SHAMAN_DEEP_HEALING = 1000005,
     MASTERY_SHAMAN_DEEP_HEALING_HEAL = 1000006,
+    MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE = 1000007,
+    MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_BUFF = 1000010,
+    MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_DAMAGE_REDUCTION = 1000008,
 };
 
 // Mage
@@ -1107,7 +1110,46 @@ class spell_mastery_sha_deep_healing : public AuraScript
     }
 };
 
+class spell_mastery_jack_of_all_master_of_none : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_jack_of_all_master_of_none);
 
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        float mastery = caster->ToPlayer()->GetMastery();
+        int32 attackPower = (caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        int32 parryRating = (caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE)->GetEffect(EFFECT_2)->GetAmount()) + mastery;
+
+        caster->CastCustomSpell(caster, MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_BUFF, &parryRating, &attackPower, nullptr, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_jack_of_all_master_of_none::HandleCast);
+    }
+};
+
+class spell_mastery_jack_of_all_master_of_none_proc : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_jack_of_all_master_of_none_proc);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (!caster->HasAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE))
+            return;
+        float mastery = caster->ToPlayer()->GetMastery();
+        int32 buffAmount = (caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+
+        caster->CastCustomSpell(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_DAMAGE_REDUCTION, SPELLVALUE_BASE_POINT0, buffAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_jack_of_all_master_of_none_proc::HandleCast);
+    }
+};
 
 void AddSC_spells_mastery_scripts()
 {
@@ -1149,4 +1191,6 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_sha_chain_lightning_overload);
     RegisterSpellScript(spell_mastery_sha_enhanced_elements);
     RegisterSpellScript(spell_mastery_sha_deep_healing);
+    RegisterSpellScript(spell_mastery_jack_of_all_master_of_none);
+    RegisterSpellScript(spell_mastery_jack_of_all_master_of_none_proc);
 }

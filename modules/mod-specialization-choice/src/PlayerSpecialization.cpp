@@ -80,7 +80,8 @@ void PlayerSpecialization::InitializeSpecializations()
 
     m_Specializations[SHAMAN_ELEMENTAL] = { 23, 33922, "Elemental", 7, 1000000, 18.75, false, 0, POWER_RUNIC_POWER };
     m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 33898, "Enchancement", 7, 1000002, 17.5, true, 1000003, POWER_MANA };
-    m_Specializations[SHAMAN_RESTAURATION] = { 25, 33910 , "Restauration", 7, 1000005, 11.66, false, 0, POWER_MANA };
+    m_Specializations[SHAMAN_RESTORATION] = { 25, 33910, "Restoration", 7, 1000005, 11.66, false, 0, POWER_MANA };
+    m_Specializations[SHAMAN_SPIRIT_MASTER] = { 32, 84101, "Spirit Master", 7, 1000007, 35.00, true, 1000009, POWER_MANA };
 
     m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 4, 1100000, 20.59, true, 1100001, POWER_ALL };
     m_Specializations[ROGUE_COMBAT] = { 21, 51690, "Combat", 4, 1100003, 24.14, false, 0, POWER_ALL };
