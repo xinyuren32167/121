@@ -37,6 +37,7 @@ enum WarriorSpells
     SPELL_WARRIOR_BLOODTHIRST_HEAL = 23880,
     SPELL_WARRIOR_BLOODTHIRST = 23881,
     SPELL_WARRIOR_BLADESTORM = 46924,
+    SPELL_WARRIOR_BLADESTORM_ENERGISE = 50623,
     SPELL_WARRIOR_BLADESTORM_WHIRLWIND = 50622,
     SPELL_WARRIOR_CHARGE_ENERGIZE = 34846,
     SPELL_WARRIOR_CHARGE_DAMAGE = 7921,
@@ -51,7 +52,8 @@ enum WarriorSpells
     SPELL_WARRIOR_GLYPH_OF_VIGILANCE = 63326,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_BUFF = 65156,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_TALENT = 64976,
-    SPELL_WARRIOR_LAST_STAND_TRIGGERED = 12976,
+    SPELL_WARRIOR_LAST_STAND_BUFF = 12976,
+    SPELL_WARRIOR_LAST_STAND_HEAL = 12977,
     SPELL_WARRIOR_COMMANDING_SHOUT_TRIGGERED = 47461,
     SPELL_WARRIOR_REND = 47465,
     SPELL_WARRIOR_RETALIATION_DAMAGE = 22858,
@@ -67,6 +69,7 @@ enum WarriorSpells
     SPELL_WARRIOR_VIGILANCE_PROC = 50725,
     SPELL_WARRIOR_VIGILANCE_REDIRECT_THREAT = 59665,
     SPELL_WARRIOR_WHIRLWIND_OFF = 44949,
+    SPELL_WARRIOR_WHIRLWIND_ENERGIZE = 1684,
 
     //Talents
     TALENT_WARRIOR_POWERFUL_BLOODTHIRST = 80035,
@@ -245,16 +248,13 @@ class spell_warr_last_stand : public SpellScript
 {
     PrepareSpellScript(spell_warr_last_stand);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ SPELL_WARRIOR_LAST_STAND_TRIGGERED });
-    }
-
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
         int32 healthModSpellBasePoints0 = int32(caster->CountPctFromMaxHealth(GetEffectValue()));
-        caster->CastCustomSpell(caster, SPELL_WARRIOR_LAST_STAND_TRIGGERED, &healthModSpellBasePoints0, nullptr, nullptr, true, nullptr);
+
+        caster->CastCustomSpell(caster, SPELL_WARRIOR_LAST_STAND_BUFF, &healthModSpellBasePoints0, nullptr, nullptr, true, nullptr);
+        caster->CastCustomSpell(caster, SPELL_WARRIOR_LAST_STAND_HEAL, &healthModSpellBasePoints0, nullptr, nullptr, true, nullptr);
     }
 
     void Register() override
@@ -343,7 +343,7 @@ class spell_warr_charge : public SpellScript
         if (caster->HasAura(SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_TALENT))
             caster->CastSpell(caster, SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_BUFF, true);
 
-        //GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_WARRIOR_CHARGE_DAMAGE);
+        GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_WARRIOR_CHARGE_DAMAGE);
     }
 
     void Register() override
@@ -352,7 +352,7 @@ class spell_warr_charge : public SpellScript
     }
 };
 
-//// 7921 Charge Damages
+// 7921 - Charge Damage
 //class spell_warr_charge_damage : public SpellScript
 //{
 //    PrepareSpellScript(spell_warr_charge_damage);
@@ -480,12 +480,12 @@ class spell_warr_execute : public SpellScript
             int32 maxRage = spellInfo->GetEffect(EFFECT_1).CalcValue(caster) - spellCost;
             int32 rageAmount = caster->GetPower(POWER_RAGE) - spellCost;
             int32 rage = spellCost;
-            LOG_ERROR("error", "spellCost = {} , maxRage = {} , rageAmount = {}", spellCost, maxRage, rageAmount);
+
             rage += std::min<int32>(maxRage, rageAmount);
 
             float amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue());
             int32 minimumRageKept = 0;
-            LOG_ERROR("error", "amount = {}", amount);
+
             // Sudden Death rage save
             if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_GENERIC, WARRIOR_ICON_ID_SUDDEN_DEATH, EFFECT_0))
                 minimumRageKept = aurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue(caster);
@@ -497,8 +497,8 @@ class spell_warr_execute : public SpellScript
             if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
                 rage += aurEff->GetAmount() * 10;
 
-            amount *= rage;
-            LOG_ERROR("error", "amount = {}", amount);
+            amount *= rage / 10;
+
             caster->CastCustomSpell(SPELL_WARRIOR_EXECUTE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
     }
@@ -534,24 +534,24 @@ class spell_warr_concussion_blow : public SpellScript
     }
 };
 
-// 50622 - 46924 - Bladestorm Damages
-//class spell_warr_bladestorm : public AuraScript
-//{
-//    PrepareAuraScript(spell_warr_bladestorm);
-//
-//    void HandlePeriodic(AuraEffect const* aurEff)
-//    {
-//        const SpellInfo* bladestorm = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_BLADESTORM);
-//        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), bladestorm->GetEffect(EFFECT_0).CalcValue());
-//
-//        GetCaster()->CastCustomSpell(SPELL_WARRIOR_BLADESTORM_WHIRLWIND, SPELLVALUE_BASE_POINT0, damage, GetCaster(), true);
-//    }
-//
-//    void Register() override
-//    {
-//        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warr_bladestorm::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
-//    }
-//};
+//50622 - 46924 - Bladestorm Damages
+class spell_warr_bladestorm : public AuraScript
+{
+    PrepareAuraScript(spell_warr_bladestorm);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        caster->CastSpell(caster, SPELL_WARRIOR_BLADESTORM_WHIRLWIND, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_WARRIOR_BLADESTORM_ENERGISE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warr_bladestorm::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
 
 // 23881 - Bloodthirst
 class spell_warr_bloodthirst : public SpellScript
@@ -576,15 +576,9 @@ class spell_warr_bloodthirst : public SpellScript
         SetHitDamage(damage);
     }
 
-    void HandleDummy(SpellEffIndex effIndex)
-    {
-        //GetCaster()->CastCustomSpell(SPELL_WARRIOR_BLOODTHIRST_HEAL, SPELLVALUE_BASE_POINT0, GetEffectValue(), GetCaster(), true);
-    }
-
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warr_bloodthirst::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-        //OnEffectHit += SpellEffectFn(spell_warr_bloodthirst::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -1109,52 +1103,52 @@ class spell_ap_to_hit_damage : public SpellScript
 //};
 
 // 57823 - Revenge
-class spell_warr_revenge : public SpellScript
-{
-    PrepareSpellScript(spell_warr_revenge);
-
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        int32 damage = GetEffectValue();
-        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
-
-        if (Unit* target = GetHitUnit())
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-        SetHitDamage(damage);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_warr_revenge::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
+//class spell_warr_revenge : public SpellScript
+//{
+//    PrepareSpellScript(spell_warr_revenge);
+//
+//    void HandleHit(SpellEffIndex effIndex)
+//    {
+//        int32 damage = GetEffectValue();
+//        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+//
+//        if (Unit* target = GetHitUnit())
+//        {
+//            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+//            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+//        }
+//        SetHitDamage(damage);
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectHitTarget += SpellEffectFn(spell_warr_revenge::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+//    }
+//};
 
 // 47502 - Thunder Clap
-class spell_warr_thunder_clap : public SpellScript
-{
-    PrepareSpellScript(spell_warr_thunder_clap);
-
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        int32 damage = GetEffectValue();
-        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
-
-        if (Unit* target = GetHitUnit())
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-        SetHitDamage(damage);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_warr_thunder_clap::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
+//class spell_warr_thunder_clap : public SpellScript
+//{
+//    PrepareSpellScript(spell_warr_thunder_clap);
+//
+//    void HandleHit(SpellEffIndex effIndex)
+//    {
+//        int32 damage = GetEffectValue();
+//        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+//
+//        if (Unit* target = GetHitUnit())
+//        {
+//            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+//            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+//        }
+//        SetHitDamage(damage);
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectHitTarget += SpellEffectFn(spell_warr_thunder_clap::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+//    }
+//};
 
 // 1680 - Whirlwind
 class spell_warr_whirlwind : public SpellScript
@@ -1173,7 +1167,7 @@ class spell_warr_whirlwind : public SpellScript
 
         int32 rageIncrease = (ragePerTarget * targetQte) + baseRage;
 
-        caster->ModifyPower(POWER_RAGE, rageIncrease);
+        caster->CastCustomSpell(SPELL_WARRIOR_WHIRLWIND_ENERGIZE, SPELLVALUE_BASE_POINT0, rageIncrease, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1368,6 +1362,28 @@ class spell_recklessness_enrage : public SpellScript
     }
 };
 
+// 12292 - Death Wish	
+class spell_death_wish_enrage : public SpellScript
+{
+    PrepareSpellScript(spell_death_wish_enrage);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
+        {
+            int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_death_wish_enrage::HandleProc);
+    }
+};
+
 class spell_healing_deep_wound : public AuraScript
 {
     PrepareAuraScript(spell_healing_deep_wound);
@@ -1540,7 +1556,7 @@ void AddSC_warrior_spell_scripts()
     //RegisterSpellScript(spell_warr_charge_damage);
     RegisterSpellScript(spell_warr_intercept);
     RegisterSpellScript(spell_warr_concussion_blow);
-    //RegisterSpellScript(spell_warr_bladestorm);
+    RegisterSpellScript(spell_warr_bladestorm);
     RegisterSpellScript(spell_warr_damage_shield);
     RegisterSpellScript(spell_warr_deep_wounds);
     RegisterSpellScript(spell_warr_execute);
@@ -1560,11 +1576,13 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_heroic_throw);
     RegisterSpellScript(spell_warr_mortal_strike);
     RegisterSpellScript(spell_ap_to_hit_damage);
+    RegisterSpellScript(spell_warr_whirlwind);
     RegisterSpellScript(spell_healing_deep_wound);
     RegisterSpellScript(spell_berserker_rage);
     RegisterSpellScript(spell_rampage_proc_rage);
     RegisterSpellScript(spell_bloodrage);
     RegisterSpellScript(spell_recklessness_enrage);
+    RegisterSpellScript(spell_death_wish_enrage);
     RegisterSpellScript(spell_reset_overpower);
     RegisterSpellScript(spell_thunderlord);
     RegisterSpellScript(spell_ignore_pain);
