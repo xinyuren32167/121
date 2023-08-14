@@ -91,7 +91,6 @@ enum RogueSpells
     SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
     SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
     SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, //shiv
-
 };
 
 class spell_rog_savage_combat : public AuraScript
