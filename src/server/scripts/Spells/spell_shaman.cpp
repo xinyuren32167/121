@@ -2262,8 +2262,12 @@ class spell_sha_invoke_essence : public SpellScript
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_WATER, TRIGGERED_FULL_MASK);
         }
+
         else if (form == FORM_SPIRIT_OF_FIRE)
-            caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
+        {
+            int32 dmg = CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 5) + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 5);
+            caster->CastCustomSpell(SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, SPELLVALUE_BASE_POINT0, dmg, target, TRIGGERED_FULL_MASK);
+        }
         else if (form == FORM_SPIRIT_OF_EARTH)
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_WATER)
