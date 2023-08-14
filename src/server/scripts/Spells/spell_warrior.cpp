@@ -66,7 +66,16 @@ enum WarriorSpells
     SPELL_WARRIOR_UNRELENTING_ASSAULT_TRIGGER_2 = 64850,
     SPELL_WARRIOR_VIGILANCE_PROC = 50725,
     SPELL_WARRIOR_VIGILANCE_REDIRECT_THREAT = 59665,
-    SPELL_WARRIOR_WHIRLWIND_OFF = 44949
+    SPELL_WARRIOR_WHIRLWIND_OFF = 44949,
+
+    //Talents
+    TALENT_WARRIOR_POWERFUL_BLOODTHIRST = 80035,
+    TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R1 = 20500,
+    TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R2 = 20501,
+
+    //Masteries
+    MASTERY_WARRIOR_UNSHACKLED_FURY = 200003,
+    MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF = 200004,
 };
 
 enum WarriorSpellIcons
@@ -560,7 +569,7 @@ class spell_warr_bloodthirst : public SpellScript
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        if (Aura* aura = GetCaster()->GetAura(80035))
+        if (Aura* aura = GetCaster()->GetAura(TALENT_WARRIOR_POWERFUL_BLOODTHIRST))
             if (GetExplTargetUnit()->HealthBelowPct(35))
                 ApplyPct(damage, aura->GetEffect(EFFECT_0)->GetAmount());
 
@@ -569,13 +578,13 @@ class spell_warr_bloodthirst : public SpellScript
 
     void HandleDummy(SpellEffIndex effIndex)
     {
-        GetCaster()->CastCustomSpell(SPELL_WARRIOR_BLOODTHIRST_HEAL, SPELLVALUE_BASE_POINT0, GetEffectValue(), GetCaster(), true);
+        //GetCaster()->CastCustomSpell(SPELL_WARRIOR_BLOODTHIRST_HEAL, SPELLVALUE_BASE_POINT0, GetEffectValue(), GetCaster(), true);
     }
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warr_bloodthirst::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-        OnEffectHit += SpellEffectFn(spell_warr_bloodthirst::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
+        //OnEffectHit += SpellEffectFn(spell_warr_bloodthirst::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -1268,15 +1277,22 @@ class spell_warr_shockwave : public SpellScript
     }
 };
 
+// 18499 - Berserker Rage
 class spell_berserker_rage : public SpellScript
 {
     PrepareSpellScript(spell_berserker_rage);
 
     void HandleProc()
     {
-        if (GetCaster()->HasAura(20500) || GetCaster()->HasAura(20501)) {
-            int32 amount = 11.0f + GetCaster()->ToPlayer()->GetMastery();
-            GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R1) && !caster->HasAura(TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R2))
+            return;
+
+        if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
+        {
+            int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1286,14 +1302,20 @@ class spell_berserker_rage : public SpellScript
     }
 };
 
+// 80000 - Rampage
 class spell_rampage_proc_rage : public SpellScript
 {
     PrepareSpellScript(spell_rampage_proc_rage);
 
     void HandleProc()
     {
-        int32 amount = 11.0f + GetCaster()->ToPlayer()->GetMastery();
-        GetCaster()->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+
+        if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
+        {
+            int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -1302,6 +1324,49 @@ class spell_rampage_proc_rage : public SpellScript
     }
 };
 
+// 2687 - Bloodrage
+class spell_bloodrage : public SpellScript
+{
+    PrepareSpellScript(spell_bloodrage);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
+        {
+            int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_bloodrage::HandleProc);
+    }
+};
+
+// 1719 - Recklessness	
+class spell_recklessness_enrage : public SpellScript
+{
+    PrepareSpellScript(spell_recklessness_enrage);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
+        {
+            int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_recklessness_enrage::HandleProc);
+    }
+};
 
 class spell_healing_deep_wound : public AuraScript
 {
@@ -1497,12 +1562,17 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_ap_to_hit_damage);
     RegisterSpellScript(spell_healing_deep_wound);
     RegisterSpellScript(spell_berserker_rage);
+    RegisterSpellScript(spell_rampage_proc_rage);
+    RegisterSpellScript(spell_bloodrage);
+    RegisterSpellScript(spell_recklessness_enrage);
     RegisterSpellScript(spell_reset_overpower);
     RegisterSpellScript(spell_thunderlord);
     RegisterSpellScript(spell_ignore_pain);
     RegisterSpellScript(spell_ignore_pain_absorbe);
-    RegisterSpellScript(spell_rampage_proc_rage);
     RegisterSpellScript(spell_warr_devastate);
     RegisterSpellScript(spell_war_damage_heroic_leap);
     RegisterSpellScript(spell_warr_unbridled_fury);
+
+
 }
+
