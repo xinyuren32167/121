@@ -55,6 +55,7 @@ enum WarriorSpells
     SPELL_WARRIOR_LAST_STAND_BUFF = 12976,
     SPELL_WARRIOR_LAST_STAND_HEAL = 12977,
     SPELL_WARRIOR_COMMANDING_SHOUT_TRIGGERED = 47461,
+    SPELL_WARRIOR_RECKLESSNESS = 1719,
     SPELL_WARRIOR_REND = 47465,
     SPELL_WARRIOR_RETALIATION_DAMAGE = 22858,
     SPELL_WARRIOR_SLAM = 50783,
@@ -1532,18 +1533,21 @@ class spell_warr_unbridled_fury : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
             return;
 
-        if (Aura* recklessness = GetCaster()->GetAura(1719))
+        if (Aura* recklessness = caster->GetAura(SPELL_WARRIOR_RECKLESSNESS))
         {
-            uint32 duration = recklessness->GetDuration();
-            recklessness->SetDuration(duration + 2000);
+            int32 duration = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            duration += recklessness->GetDuration();
+            recklessness->SetDuration(duration);
         }
         else
         {
-            GetCaster()->CastSpell(GetCaster(), 1719, TRIGGERED_FULL_MASK);
-            GetCaster()->GetAura(1719)->SetDuration(4000);
+            int32 duration = aurEff->GetAmount();
+            caster->CastCustomSpell(SPELL_WARRIOR_RECKLESSNESS, SPELLVALUE_AURA_DURATION, duration, caster, TRIGGERED_FULL_MASK);
         }
     }
 
