@@ -72,6 +72,7 @@ enum WarriorSpells
     SPELL_WARRIOR_WHIRLWIND_ENERGIZE = 1684,
 
     //Talents
+    TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
     TALENT_WARRIOR_POWERFUL_BLOODTHIRST = 80035,
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R1 = 20500,
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R2 = 20501,
@@ -1388,17 +1389,26 @@ class spell_healing_deep_wound : public AuraScript
 {
     PrepareAuraScript(spell_healing_deep_wound);
 
+    bool HandleCheck(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        Unit* caster = eventInfo.GetDamageInfo()->GetAttacker();
+
+        if (!caster || !caster->IsAlive())
             return;
 
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-        GetCaster()->CastCustomSpell(80003, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_healing_deep_wound::HandleCheck);
         OnEffectProc += AuraEffectProcFn(spell_healing_deep_wound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
