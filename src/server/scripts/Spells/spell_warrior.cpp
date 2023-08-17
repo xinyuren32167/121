@@ -50,6 +50,7 @@ enum WarriorSpells
     SPELL_WARRIOR_EXECUTE_DAMAGE = 20647,
     SPELL_WARRIOR_GLYPH_OF_EXECUTION = 58367,
     SPELL_WARRIOR_GLYPH_OF_VIGILANCE = 63326,
+    SPELL_WARRIOR_IGNORE_PAIN = 80004,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_BUFF = 65156,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_TALENT = 64976,
     SPELL_WARRIOR_LAST_STAND_BUFF = 12976,
@@ -1482,50 +1483,93 @@ class spell_thunderlord : public AuraScript
     }
 };
 
-class spell_ignore_pain : public SpellScript
+// 80004 - Ignore Pain
+class spell_warr_ignore_pain : public AuraScript
 {
-    PrepareSpellScript(spell_ignore_pain);
+    PrepareAuraScript(spell_warr_ignore_pain);
 
-    void OnCastSpell()
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
-        int32 ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 value = round(ap * 3.5);
-        GetCaster()->CastCustomSpell(80005, SPELLVALUE_BASE_POINT0, value, GetCaster(), true);
+        // Set absorbtion amount to unlimited
+        amount = -1;
     }
 
-    void Register() override
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
-        OnCast += SpellCastFn(spell_ignore_pain::OnCastSpell);
-    }
-};
+        Unit* caster = GetTarget();
 
-class spell_ignore_pain_absorbe : public AuraScript
-{
-    PrepareAuraScript(spell_ignore_pain_absorbe);
+        int32 maxShieldAmount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetAura()->GetEffect(EFFECT_1)->GetAmount());
+        int32 absorbedAmount = GetAura()->GetEffect(EFFECT_2)->GetAmount();
 
-    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        if (absorbedAmount == maxShieldAmount)
             return;
 
-        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        uint32 maxDamageAbsorbe = aurEff->GetAmount();
-        AuraEffect* protEff1 = GetCaster()->GetAuraEffect(80005, EFFECT_1);
-        if ((damage + protEff1->GetAmount()) >= maxDamageAbsorbe) {
-            GetCaster()->RemoveAura(80005);
-            GetCaster()->RemoveAura(80004);
-        }
-        else {
-            if (AuraEffect* protEff = GetCaster()->GetAuraEffect(80005, EFFECT_1))
-                protEff->SetAmount(protEff->GetAmount() + damage);
-        }
+        int32 damage = CalculatePct(dmgInfo.GetDamage(), aurEff->GetAmount());
+        int32 amount = std::min<int32>(damage, maxShieldAmount - absorbedAmount);
+
+        absorbAmount = amount;
+
+        GetAura()->GetEffect(EFFECT_2)->SetAmount(amount);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_ignore_pain_absorbe::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_ignore_pain::CalculateAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_warr_ignore_pain::Absorb, EFFECT_2);
     }
 };
+
+//class spell_ignore_pain : public SpellScript
+//{
+//    PrepareSpellScript(spell_ignore_pain);
+//
+//    void OnCastSpell()
+//    {
+//        Unit* caster = GetCaster();
+//
+//        int32 ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+//        int32 ratio = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+//        int32 value = CalculatePct(ap, ratio);
+//
+//        GetCaster()->CastCustomSpell(SPELL_WARRIOR_IGNORE_PAIN_LISTENER, SPELLVALUE_BASE_POINT0, value, GetCaster(), true);
+//    }
+//
+//    void Register() override
+//    {
+//        OnCast += SpellCastFn(spell_ignore_pain::OnCastSpell);
+//    }
+//};
+//
+//class spell_ignore_pain_absorbe : public AuraScript
+//{
+//    PrepareAuraScript(spell_ignore_pain_absorbe);
+//
+//    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+//    {
+//        Unit* caster = GetCaster();
+//
+//        if (!caster || !caster->IsAlive())
+//            return;
+//
+//        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+//        uint32 maxDamageAbsorbe = aurEff->GetAmount();
+//        AuraEffect* protEff1 = caster->GetAuraEffect(SPELL_WARRIOR_IGNORE_PAIN_LISTENER, EFFECT_1);
+//
+//        if ((damage + protEff1->GetAmount()) >= maxDamageAbsorbe)
+//        {
+//            caster->RemoveAura(SPELL_WARRIOR_IGNORE_PAIN_LISTENER);
+//            caster->RemoveAura(SPELL_WARRIOR_IGNORE_PAIN);
+//        }
+//        else if (AuraEffect* protEff = caster->GetAuraEffect(SPELL_WARRIOR_IGNORE_PAIN_LISTENER, EFFECT_1))
+//            protEff->SetAmount(protEff->GetAmount() + damage);
+//
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectProc += AuraEffectProcFn(spell_ignore_pain_absorbe::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+//    }
+//};
 
 class spell_warr_unbridled_fury : public AuraScript
 {
@@ -1599,8 +1643,8 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_death_wish_enrage);
     RegisterSpellScript(spell_reset_overpower);
     RegisterSpellScript(spell_thunderlord);
-    RegisterSpellScript(spell_ignore_pain);
-    RegisterSpellScript(spell_ignore_pain_absorbe);
+    RegisterSpellScript(spell_warr_ignore_pain);
+    //RegisterSpellScript(spell_ignore_pain_absorbe);
     RegisterSpellScript(spell_warr_devastate);
     RegisterSpellScript(spell_war_damage_heroic_leap);
     RegisterSpellScript(spell_warr_unbridled_fury);
