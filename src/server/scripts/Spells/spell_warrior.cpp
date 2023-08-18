@@ -34,6 +34,7 @@ enum WarriorSpells
     SPELL_WARRIOR_INTERVENE_TRIGGER = 59667,
     SPELL_WARRIOR_SPELL_REFLECTION = 23920,
     SPELL_WARRIOR_IMPROVED_SPELL_REFLECTION_TRIGGER = 59725,
+    SPELL_WARRIOR_BERSERKER_STANCE = 2458,
     SPELL_WARRIOR_BLOODTHIRST_HEAL = 23880,
     SPELL_WARRIOR_BLOODTHIRST = 23881,
     SPELL_WARRIOR_BLADESTORM = 46924,
@@ -51,19 +52,23 @@ enum WarriorSpells
     SPELL_WARRIOR_GLYPH_OF_EXECUTION = 58367,
     SPELL_WARRIOR_GLYPH_OF_VIGILANCE = 63326,
     SPELL_WARRIOR_IGNORE_PAIN = 80004,
+    SPELL_WARRIOR_IMPENDING_VICTORY = 84515,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_BUFF = 65156,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_TALENT = 64976,
     SPELL_WARRIOR_LAST_STAND_BUFF = 12976,
     SPELL_WARRIOR_LAST_STAND_HEAL = 12977,
     SPELL_WARRIOR_COMMANDING_SHOUT_TRIGGERED = 47461,
+    SPELL_WARRIOR_RAGING_BLOW = 80008,
     SPELL_WARRIOR_RECKLESSNESS = 1719,
     SPELL_WARRIOR_REND = 47465,
     SPELL_WARRIOR_RETALIATION_DAMAGE = 22858,
+    SPELL_WARRIOR_SKULLSPLITTER_EXTRA_DAMAGE = 84505,
     SPELL_WARRIOR_SLAM = 50783,
     SPELL_WARRIOR_SUNDER_ARMOR = 58567,
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1 = 12723,
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2 = 26654,
     SPELL_WARRIOR_TAUNT = 355,
+    SPELL_WARRIOR_TITANS_GRIP = 46917,
     SPELL_WARRIOR_UNRELENTING_ASSAULT_RANK_1 = 46859,
     SPELL_WARRIOR_UNRELENTING_ASSAULT_RANK_2 = 46860,
     SPELL_WARRIOR_UNRELENTING_ASSAULT_TRIGGER_1 = 64849,
@@ -80,6 +85,7 @@ enum WarriorSpells
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R2 = 20501,
 
     //Masteries
+    MASTERY_WARRIOR_DEEP_WOUNDS_DOT = 200001,
     MASTERY_WARRIOR_UNSHACKLED_FURY = 200003,
     MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF = 200004,
 };
@@ -1601,6 +1607,109 @@ class spell_warr_unbridled_fury : public AuraScript
     }
 };
 
+// 84504 - Skullsplitter
+class spell_warr_skullsplitter : public SpellScript
+{
+    PrepareSpellScript(spell_warr_skullsplitter);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_WARRIOR_INTERVENE_TRIGGER });
+    }
+
+    void HandleApplyAura(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+        int32 amount = 0;
+
+        if (!caster || !target)
+            return;
+
+        if (AuraEffect* rend = target->GetAura(SPELL_WARRIOR_REND)->GetEffect(0))
+        {
+            if (rend->GetCaster() == caster)
+            {
+                int32 remainingTicks = rend->GetRemaningTicks();
+                int32 effectAmount = rend->GetAmount();
+                amount += remainingTicks * effectAmount;
+            }
+        }
+
+        if (AuraEffect* deepWounds = target->GetAura(MASTERY_WARRIOR_DEEP_WOUNDS_DOT)->GetEffect(0))
+        {
+            if (deepWounds->GetCaster() == caster)
+            {
+                int32 remainingTicks = deepWounds->GetRemaningTicks();
+                int32 effectAmount = deepWounds->GetAmount();
+                amount += remainingTicks * effectAmount;
+            }
+        }
+
+        if (amount == 0)
+            return;
+
+        caster->CastCustomSpell(SPELL_WARRIOR_SKULLSPLITTER_EXTRA_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_skullsplitter::HandleApplyAura, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
+    }
+};
+
+// 84506 - Berserker's Way
+class spell_warr_berserkers_way : public AuraScript
+{
+    PrepareAuraScript(spell_warr_berserkers_way);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->learnSpell(SPELL_WARRIOR_BERSERKER_STANCE);
+        caster->learnSpell(SPELL_WARRIOR_RAGING_BLOW);
+        caster->learnSpell(SPELL_WARRIOR_TITANS_GRIP);
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->removeSpell(SPELL_WARRIOR_BERSERKER_STANCE, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_WARRIOR_RAGING_BLOW, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_WARRIOR_TITANS_GRIP, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warr_berserkers_way::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warr_berserkers_way::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 32216 - Victorious
+class spell_warr_victorious : public AuraScript
+{
+    PrepareAuraScript(spell_warr_victorious);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        if (!caster->HasSpell(SPELL_WARRIOR_IMPENDING_VICTORY))
+            return;
+
+        caster->RemoveSpellCooldown(SPELL_WARRIOR_IMPENDING_VICTORY, true);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warr_victorious::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 
 void AddSC_warrior_spell_scripts()
 {
@@ -1648,6 +1757,11 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_devastate);
     RegisterSpellScript(spell_war_damage_heroic_leap);
     RegisterSpellScript(spell_warr_unbridled_fury);
+    RegisterSpellScript(spell_warr_skullsplitter);
+    RegisterSpellScript(spell_warr_berserkers_way);
+    RegisterSpellScript(spell_warr_victorious);
+
+
 
 
 }
