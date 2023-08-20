@@ -36,6 +36,8 @@ public:
 
 
         if (player->getClass() == CLASS_WARLOCK) {
+
+            player->setPowerType(POWER_ENERGY);
             player->SetMaxPower(POWER_ENERGY, 25);
             player->SetPower(POWER_ENERGY, 0);
 

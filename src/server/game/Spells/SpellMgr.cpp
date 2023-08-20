@@ -2368,6 +2368,7 @@ void SpellMgr::LoadPetLevelupSpellMap()
                     continue;
 
                 SpellInfo const* spell = GetSpellInfo(skillLine->Spell);
+
                 if (!spell) // not exist or triggered or talent
                     continue;
 

@@ -98,6 +98,8 @@ enum NPCEntries
     NPC_SUCCUBUS                = 1863,
     NPC_DOOMGUARD               = 11859,
     NPC_FELGUARD                = 17252,
+    NPC_FELGUARD_SUMMONED       = 600605,
+
     NPC_EYE_OF_KILROGG          = 4277,
 
     // Mage
@@ -199,6 +201,13 @@ enum PetScalingSpells
 
 #define PET_FOLLOW_DIST  1.0f
 #define SECOND_PET_FOLLOW_DIST  -3.0f
+
+#define WARLOCK_PET_WILD_IMP_DIST -4.0f
+#define WARLOCK_PET_DARK_HOUND_DIST  -4.5f
+#define WARLOCK_PET_TYRANT 2.5f
+#define WARLOCK_PET_FELBOAR 1.5f
+
+
 #define PET_FOLLOW_ANGLE (M_PI/2)
 
 class PetStable

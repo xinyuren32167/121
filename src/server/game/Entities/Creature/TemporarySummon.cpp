@@ -304,6 +304,11 @@ void TempSummon::UnSummon(uint32 msTime)
         return;
     }
 
+
+    // Just despawned itself
+    if (GetTypeId() == TYPEID_UNIT && ToCreature()->IsAIEnabled)
+        ToCreature()->AI()->JustDespawned();
+
     Unit* owner = GetSummonerUnit();
     if (owner && owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature()->IsAIEnabled)
         owner->ToCreature()->AI()->SummonedCreatureDespawn(this);

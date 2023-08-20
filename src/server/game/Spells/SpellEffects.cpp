@@ -2312,6 +2312,9 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
     // determine how many units should be summoned
     uint32 numSummons;
 
+    if (m_originalCaster->HasAura(83054))
+        m_originalCaster->RemoveAura(83054);
+
     // some spells need to summon many units, for those spells number of summons is stored in effect value
     // however so far noone found a generic check to find all of those (there's no related data in summonproperties.dbc
     // and in spell attributes, possibly we need to add a table for those)
@@ -4477,6 +4480,7 @@ void Spell::EffectFeedPet(SpellEffIndex effIndex)
         return;
 
     Pet* pet = player->GetPet();
+
     if (!pet)
         return;
 

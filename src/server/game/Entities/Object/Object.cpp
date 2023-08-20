@@ -2316,15 +2316,12 @@ TempSummon* WorldObject::SummonCreature(uint32 entry, const Position& pos, TempS
     return nullptr;
 }
 
-TempSummon* WorldObject::SummonCreatureGuardian(uint32 entry, Unit* target, Player* player, uint32 duration) const
+TempSummon* WorldObject::SummonCreatureGuardian(uint32 entry, Unit* target, Player* player, uint32 duration, float dist, float angle) const
 {
     if (Map* map = FindMap())
     {
 
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-
-        uint32 dist = urand(1, 3);
-        uint32 angle = urand(1, 3);
 
         Position pos = target->GetNearPosition(dist, angle);
 
@@ -2334,7 +2331,7 @@ TempSummon* WorldObject::SummonCreatureGuardian(uint32 entry, Unit* target, Play
 
             summon->GetMotionMaster()->Clear(false);
             summon->GetMotionMaster()->MoveFollow(player, dist, angle, MOTION_SLOT_ACTIVE);
-            ((Guardian*)summon)->InitStatsForLevel(ToPlayer()->getLevel());
+            ((Guardian*)summon)->InitStatsForLevel(player->getLevel());
 
             return summon;
         }

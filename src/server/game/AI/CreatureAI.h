@@ -126,6 +126,9 @@ public:
 
     // Called when the creature summon successfully other creature
     virtual void JustSummoned(Creature* /*summon*/) {}
+
+    virtual void JustDespawned() {}
+
     virtual void IsSummonedBy(Unit* /*summoner*/) {}
 
     virtual void SummonedCreatureDespawn(Creature* /*summon*/) {}

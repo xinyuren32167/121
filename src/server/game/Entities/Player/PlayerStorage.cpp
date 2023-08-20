@@ -2246,7 +2246,7 @@ InventoryResult Player::CanUseItem(Item* pItem, bool not_loading) const
 {
     if (pItem)
     {
-        LOG_DEBUG("entities.player.items", "STORAGE: CanUseItem item = {}", pItem->GetEntry());
+        LOG_ERROR("entities.player.items", "STORAGE: CanUseItem item = {}", pItem->GetEntry());
 
         if (!IsAlive() && not_loading)
             return EQUIP_ERR_YOU_ARE_DEAD;

@@ -1321,6 +1321,7 @@ void Guardian::UpdateMaxHealth()
         case NPC_FELHUNTER:
             multiplicator = 9.5f;
             break;
+        case NPC_FELGUARD_SUMMONED:
         case NPC_FELGUARD:
             multiplicator = 11.0f;
             break;
@@ -1358,6 +1359,7 @@ void Guardian::UpdateMaxPower(Powers power)
             break;   
         case NPC_VOIDWALKER:
         case NPC_SUCCUBUS:
+        case NPC_FELGUARD_SUMMONED:
         case NPC_FELHUNTER:
         case NPC_FELGUARD:
             multiplicator = 11.5f;

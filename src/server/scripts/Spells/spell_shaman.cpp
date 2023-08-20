@@ -198,6 +198,33 @@ class spell_sha_spirit_walk : public SpellScript
     }
 };
 
+
+class spell_sha_maelstrom_on_cast : public SpellScript
+{
+    PrepareSpellScript(spell_sha_maelstrom_on_cast);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        int32 maelstromAmount = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+
+        if (GetSpellInfo()->Id == SPELL_SHAMAN_FROST_SHOCK)
+            if (Aura* icefury = caster->GetAura(SPELL_SHAMAN_ICEFURY_BUFF))
+                maelstromAmount = icefury->GetEffect(EFFECT_1)->GetAmount();
+
+        if (GetSpellInfo()->Id == SPELL_SHAMAN_LIGHTNING_BOLT)
+            if (Aura* stormkeeper = caster->GetAura(SPELL_SHAMAN_STORMKEEPER_LISTENER))
+                stormkeeper->ModStackAmount(-1);
+
+        caster->ModifyPower(POWER_RUNIC_POWER, maelstromAmount, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_maelstrom_on_cast::HandleProc);
+    }
+};
+
 class spell_sha_t10_restoration_4p_bonus : public AuraScript
 {
     PrepareAuraScript(spell_sha_t10_restoration_4p_bonus);
@@ -1300,32 +1327,6 @@ class spell_sha_frostbrand_weapon : public SpellScript
 };
 
 // All Maelstrom Generation EFFECT_2 On Cast
-class spell_sha_maelstrom_on_cast : public SpellScript
-{
-    PrepareSpellScript(spell_sha_maelstrom_on_cast);
-
-    void HandleProc()
-    {
-        Unit* caster = GetCaster();
-        int32 maelstromAmount = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
-
-        if (GetSpellInfo()->Id == SPELL_SHAMAN_FROST_SHOCK)
-            if (Aura* icefury = caster->GetAura(SPELL_SHAMAN_ICEFURY_BUFF))
-                maelstromAmount = icefury->GetEffect(EFFECT_1)->GetAmount();
-        
-        if (GetSpellInfo()->Id == SPELL_SHAMAN_LIGHTNING_BOLT)
-            if (Aura* stormkeeper = caster->GetAura(SPELL_SHAMAN_STORMKEEPER_LISTENER))
-                stormkeeper->ModStackAmount(-1);
-
-        caster->ModifyPower(POWER_RUNIC_POWER, maelstromAmount, true);
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_sha_maelstrom_on_cast::HandleProc);
-    }
-};
-
 
 class spell_sha_gust_of_wind : public SpellScript
 {
@@ -1884,6 +1885,10 @@ class spell_sha_elemental_blast : public SpellScript
     void HandleProc()
     {
         Unit* caster = GetCaster();
+
+        caster->CastSpell(caster->GetVictim(), 116, true);
+        caster->CastSpell(caster->GetVictim(), 701, true);
+        caster->CastSpell(caster->GetVictim(), 403, true);
 
         Ratings arr[] = {
            { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE)),
@@ -2697,7 +2702,7 @@ class spell_sha_fire_proficiency : public AuraScript
             else if (currentStacks == requiredStacks)
             {
                 caster->RemoveAura(SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS);
-                caster->CastCustomSpell(eventInfo.GetActionTarget(), SPELL_SHAMAN_FIRE_PROFICIENCY_PROC, &damage, &damage, nullptr, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(eventInfo.GetActionTarget(), SPELL_SHAMAN_FIRE_PROFICIENCY_PROC, &damage, &damage, nullptr, true);
             }
         }
         else

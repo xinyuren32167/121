@@ -1625,7 +1625,9 @@ void Player::ProcessDelayedOperations()
             SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
 
         SetPower(POWER_RAGE, 0);
-        SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
+
+        if (getClass() == CLASS_ROGUE || getClass() == CLASS_DRUID)
+            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
 
         SpawnCorpseBones();
     }
@@ -2489,7 +2491,8 @@ void Player::GiveLevel(uint8 level)
     // set current level health and mana/energy to maximum after applying all mods.
     SetFullHealth();
     SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
-    SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
+    if (getClass() == CLASS_ROGUE || getClass() == CLASS_DRUID)
+        SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
         SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
     SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
@@ -4430,7 +4433,8 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
         SetHealth(uint32(GetMaxHealth()*restore_percent));
         SetPower(POWER_MANA, uint32(GetMaxPower(POWER_MANA)*restore_percent));
         SetPower(POWER_RAGE, 0);
-        SetPower(POWER_ENERGY, uint32(GetMaxPower(POWER_ENERGY)*restore_percent));
+        if(getClass() == CLASS_ROGUE || getClass() == CLASS_DRUID)
+            SetPower(POWER_ENERGY, uint32(GetMaxPower(POWER_ENERGY)*restore_percent));
     }
 
     // trigger update zone for alive state zone updates
@@ -12729,7 +12733,8 @@ void Player::ResurectUsingRequestData()
 
     SetPower(POWER_RAGE, 0);
 
-    SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
+    if (getClass() == CLASS_ROGUE || getClass() == CLASS_DRUID)
+        SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
 
     SpawnCorpseBones();
 }

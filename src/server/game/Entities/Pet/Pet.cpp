@@ -1150,6 +1150,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
 
         switch (GetEntry())
         {
+        case NPC_FELGUARD_SUMMONED:
         case NPC_FELGUARD:
         {
             // xinef: Glyph of Felguard, so ugly im crying... no appropriate spell

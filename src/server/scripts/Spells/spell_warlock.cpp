@@ -80,18 +80,37 @@ enum WarlockSpells
     SPELL_WARLOCK_SOUL_FIRE                         = 47825,
     SPELL_WARLOCK_BURNING_RUSH_DAMAGE               = 83019,
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE            = 83021,
+
+    SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
+    SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
+    SPELL_WARLOCK_CHARGE_FELGUARD                   = 25821,
+
+    SPELL_WARLOCK_IMPLOSSION                        = 83038,
+    SPELL_WARLOCK_DEMONBOLT_EMPOREWED               = 83041,
+
+    SPELL_WARLOCK_HAVOC_AURA                        = 83062,
+    SPELL_WARLOCK_HAVOC_DAMAGE                      = 83061,
+
+    SPELL_WARLOCK_IMMOLATE                          = 47811,
 };
 
-enum PET_WARLOCKS {
+enum WarlockPets {
 
+    PET_DARKGLARE = 600604,
 
     // Lesser
     PET_DARKHOUND = 600600,
     PET_FELBOAR = 600602,
     PET_WILDIMP = 600601,
 
+    PET_FELGUARD_SUMMON = 600605,
+    PET_GARGOYLE = 600607,
+
+    PET_FELGUARD = 17252,
+
     // Greater
     PET_DEMONIC_TYRAN = 600603,
+    NPC_PORTAL_SUMMON = 600606,
 };
 
 enum WarlockSpellIcons
@@ -781,6 +800,54 @@ class spell_warl_siphon_life : public AuraScript
     }
 };
 
+class spell_warl_havoc : public AuraScript
+{
+    PrepareAuraScript(spell_warl_havoc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+
+        if (!spellInfo || !damageInfo || !damageInfo->GetDamage() || spellInfo->Id == SPELL_WARLOCK_HAVOC_DAMAGE)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    Unit* FindTargetHavoc()
+    {
+        Unit* havocTarget = nullptr;
+        auto const& threatList = GetCaster()->getAttackers();
+        for (auto const& threat : threatList)
+        {
+            if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), threat->GetGUID())) {
+                if (target->HasAura(SPELL_WARLOCK_HAVOC_AURA))
+                    havocTarget = target;
+            }
+        }
+
+        return havocTarget;
+    }
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        int32 damagePourcentage = aurEff->GetAmount();
+        int32 totalDamage = CalculatePct(damageInfo->GetDamage(), damagePourcentage);
+        Unit* havocTarget = FindTargetHavoc();
+        GetCaster()->CastCustomSpell(SPELL_WARLOCK_HAVOC_DAMAGE, SPELLVALUE_BASE_POINT0, totalDamage, havocTarget, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_havoc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_havoc::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 class spell_vampirism : public AuraScript
 {
     PrepareAuraScript(spell_vampirism);
@@ -927,6 +994,33 @@ class spell_warl_demonic_circle_summon : public AuraScript
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_demonic_circle_summon::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
+
+
+class spell_warl_soul_power : public AuraScript
+{
+    PrepareAuraScript(spell_warl_soul_power);
+
+    void HandleDummyTick(AuraEffect const* aurEff)
+    {
+        int32 maxRegenerate = aurEff->GetAmount();
+        int32 amountRegenerate = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+        if(GetCaster()->GetPower(POWER_ENERGY) < maxRegenerate)
+           GetCaster()->ModifyPower(POWER_ENERGY, amountRegenerate);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster() && !GetCaster()->IsInCombat() && GetCaster()->IsAlive();
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_soul_power::CheckProc);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_soul_power::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 
 // 48020 - Demonic Circle: Teleport
 class spell_warl_demonic_circle_teleport : public AuraScript
@@ -1359,13 +1453,93 @@ class spell_warlock_summon_darkhound : public SpellScript
         for (size_t i = 0; i < totalSummons; i++)
         {
             int32 duration = GetSpellInfo()->GetDuration();
-            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration);
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration, WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
         }
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_warlock_summon_darkhound::HandleCast);
+    }
+};
+
+class spell_warlock_summon_gargoyle : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_gargoyle);
+
+    SpellCastResult CheckCast()
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player->GetSelectedUnit())
+                return SPELL_CAST_OK;
+
+        return SPELL_FAILED_NO_VALID_TARGETS;
+    }
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        int32 duration = GetSpellInfo()->GetDuration();
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_GARGOYLE, player->GetSelectedUnit(), player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        if (summon)
+            summon->AI()->AttackStart(player->GetSelectedUnit());
+
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_warlock_summon_gargoyle::CheckCast);
+        OnCast += SpellCastFn(spell_warlock_summon_gargoyle::HandleCast);
+    }
+};
+
+class spell_warlock_soul_strike : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_soul_strike);
+
+    Creature* GetPet()
+    {
+        Creature* controlledUnit = nullptr;
+        if (Player* player = GetCaster()->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Creature* pet = (*itr)->ToCreature())
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == PET_FELGUARD &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    SpellCastResult CheckCast()
+    {
+        Creature* pet = GetPet();
+
+        if (pet)
+            return SPELL_CAST_OK;
+
+        return SPELL_FAILED_NO_PET;
+    }
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        Creature* pet = GetPet();
+
+        if (pet) {
+            pet->AI()->AttackStart(target);
+            pet->CastSpell(target, 83039, true, nullptr, nullptr, player->GetGUID());
+            player->ModifyPower(POWER_ENERGY, 5);
+        }
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_warlock_soul_strike::CheckCast);
+        OnCast += SpellCastFn(spell_warlock_soul_strike::HandleCast);
     }
 };
 
@@ -1382,7 +1556,7 @@ class spell_warlock_summon_felboar : public SpellScript
         for (size_t i = 0; i < totalSummons; i++)
         {
             int32 duration = GetSpellInfo()->GetDuration();
-            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELBOAR, player, player, duration);
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELBOAR, player, player, duration, WARLOCK_PET_FELBOAR + i, PET_FOLLOW_ANGLE);
         }
     }
 
@@ -1392,9 +1566,119 @@ class spell_warlock_summon_felboar : public SpellScript
     }
 };
 
-class spell_warlock_demonic_tyrant : public SpellScript
+class spell_warlock_summon_felguard : public SpellScript
 {
-    PrepareSpellScript(spell_warlock_demonic_tyrant);
+    PrepareSpellScript(spell_warlock_summon_felguard);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        int32 duration = GetSpellInfo()->GetDuration();
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELGUARD_SUMMON, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_summon_felguard::HandleCast);
+    }
+};
+
+
+class spell_warlock_implosion : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_implosion);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+        {
+            if (Unit* pet = *itr)
+            {
+                if (pet->GetEntry() == PET_WILDIMP)
+                {
+                    pet->JumpTo(GetExplTargetUnit(), 0.5f);
+                    pet->CastSpell(GetExplTargetUnit(), SPELL_WARLOCK_IMPLOSSION, true, nullptr, nullptr, player->GetGUID());
+                    pet->ToTempSummon()->DespawnOrUnsummon();
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_implosion::HandleCast);
+    }
+};
+
+
+class spell_warlock_summon_darkglare : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_darkglare);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+
+        int32 duration = GetSpellInfo()->GetDuration();
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKGLARE, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        for (auto const& target : targets)
+        {
+            if (Unit const* unitTarget = target->ToUnit())
+            {
+                auto const& auras = unitTarget->GetAuraEffectsByType(SPELL_AURA_PERIODIC_DAMAGE);
+                for (Unit::AuraEffectList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                {
+                    if ((*itr)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        (*itr)->GetBase()->RefreshDuration();
+                        (*itr)->ResetTicks();
+                    }
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_warlock_summon_darkglare::HandleCast);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_summon_darkglare::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+
+class spell_warlock_cataclysm : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_cataclysm);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        for (auto const& target : targets)
+        {
+            if (Unit* unitTarget = target->ToUnit())
+            {
+                if (!unitTarget->HasAura(SPELL_WARLOCK_IMMOLATE))
+                    GetCaster()->CastSpell(unitTarget, SPELL_WARLOCK_IMMOLATE, true);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_cataclysm::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+
+class spell_warlock_summon_demonic_tyrant : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_demonic_tyrant);
 
     void HandleCast()
     {
@@ -1403,7 +1687,7 @@ class spell_warlock_demonic_tyrant : public SpellScript
         int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
 
         int32 duration = GetSpellInfo()->GetDuration();
-        GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration);
+        GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration, WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
 
         for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
             if (Unit* pet = *itr)
@@ -1411,7 +1695,6 @@ class spell_warlock_demonic_tyrant : public SpellScript
                 {
                     if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
                         summon->SetTimer(summon->GetTimer() + timerIncrease);
-
                 }
                     
 
@@ -1419,7 +1702,7 @@ class spell_warlock_demonic_tyrant : public SpellScript
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warlock_demonic_tyrant::HandleCast);
+        OnCast += SpellCastFn(spell_warlock_summon_demonic_tyrant::HandleCast);
     }
 };
 
@@ -1430,18 +1713,16 @@ class spell_warlock_hand_of_guldan : public SpellScript
 
     void HandleHitTarget(SpellEffIndex /*effIndex*/)
     {
-        int32 runicPower = GetCaster()->GetPower(POWER_RUNIC_POWER);
+        int32 runicPower = GetCaster()->GetPower(POWER_ENERGY);
         uint8 maxSummon = std::min(runicPower, 3);
         Player* player = GetCaster()->ToPlayer();
 
-        player->ModifyPower(POWER_RUNIC_POWER, -maxSummon);
+        player->ModifyPower(POWER_ENERGY, -maxSummon);
 
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
             {
-                TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 9999999);
-                if (target)
-                   summon->AI()->AttackStart(target);
+                TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
         }
     }
@@ -1456,6 +1737,68 @@ class spell_warlock_hand_of_guldan : public SpellScript
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_hand_of_guldan::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
         OnEffectHitTarget += SpellEffectFn(spell_warlock_hand_of_guldan::HandleHitTarget, EFFECT_0, SPELL_EFFECT_TRIGGER_MISSILE);
+    }
+};
+
+
+class spell_warlock_summon_nether_portal : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_summon_nether_portal);
+
+    void HandleCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+
+        int32 duration = GetSpellInfo()->GetDuration();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
+        Position pos = GetCaster()->GetNearPosition(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        TempSummon* summon = GetCaster()->GetMap()->SummonCreature(NPC_PORTAL_SUMMON, pos, properties, duration, GetCaster(), GetSpellInfo()->Id);
+        summon->AddAura(40280, summon);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warlock_summon_nether_portal::HandleCast);
+    }
+};
+
+class spell_warl_nether_portal_proc: public AuraScript
+{
+    PrepareAuraScript(spell_warl_nether_portal_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost > 0;
+    }
+
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 soulPowerSpent = eventInfo.GetSpellInfo()->ManaCost;
+
+        int32 currentSoulPowerSpent = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        int32 soulPowerThreshold = aurEff->GetAmount();
+
+        if ((soulPowerSpent + currentSoulPowerSpent) >= soulPowerThreshold)
+        {
+            Player* player = GetCaster()->ToPlayer();
+            Unit* portal = player->FindNearestCreature(NPC_PORTAL_SUMMON, 40.f, true);
+            if (portal) {
+               player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+            }
+            aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(0);
+        }
+        else
+            aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(currentSoulPowerSpent + soulPowerSpent);
+
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_nether_portal_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_nether_portal_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1785,6 +2128,72 @@ class spell_warl_soul_fire_energy : public SpellScript
     }
 };
 
+class spell_warl_power_siphon : public SpellScript
+{
+    PrepareSpellScript(spell_warl_power_siphon);
+
+
+    Creature* GetPet()
+    {
+        Creature* controlledUnit = nullptr;
+        if (Player* player = GetCaster()->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Creature* pet = (*itr)->ToCreature())
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == PET_WILDIMP &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    SpellCastResult CheckCast()
+    {
+        Creature* pet = GetPet();
+
+        if (pet)
+            return SPELL_CAST_OK;
+
+        return SPELL_FAILED_NO_PET;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        uint32 maxSacrifice = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
+        uint8 totalSacrifice = 0;
+        if (Player* player = GetCaster()->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+            {
+                if (Creature* pet = (*itr)->ToCreature())
+                {
+                    if (pet->IsAlive() && pet->GetOwnerGUID() == player->GetGUID() && pet->GetEntry() == PET_WILDIMP && pet->IsWithinDist(player, 100.0f, false))
+                    {
+                        if (totalSacrifice >= maxSacrifice)
+                            return;
+                        else {
+                            if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONBOLT_EMPOREWED))
+                                aura->SetCharges(aura->GetCharges() + 1);
+                            else
+                            {
+                                pet->ToTempSummon()->UnSummon();
+                                caster->CastCustomSpell(SPELL_WARLOCK_DEMONBOLT_EMPOREWED, SPELLVALUE_AURA_CHARGE, 1, caster, true);
+                                totalSacrifice++;
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_warl_power_siphon::CheckCast);
+        OnCast += SpellCastFn(spell_warl_power_siphon::HandleCast);
+    }
+};
+
 class spell_warl_burning_rush : public AuraScript
 {
     PrepareAuraScript(spell_warl_burning_rush);
@@ -1837,6 +2246,47 @@ class spell_warl_malefic_rapture : public SpellScript
     }
 };
 
+class spell_warl_grimoire_of_sacrifice : public AuraScript
+{
+    PrepareAuraScript(spell_warl_grimoire_of_sacrifice);
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        int32 amount = GetCaster()->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.375f);
+        int32 chance = aurEff->GetAmount();
+
+        if (roll_chance_i(chance)) {
+            GetCaster()->CastCustomSpell(SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, GetCaster()->GetVictim(), true, nullptr, aurEff);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_grimoire_of_sacrifice::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_channel_demonfire : public SpellScript
+{
+    PrepareSpellScript(spell_warl_channel_demonfire);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        if (GetCaster() && GetHitUnit())
+            if(!GetHitUnit()->HasAura(47811))
+                GetCaster()->CastSpell(GetHitUnit(), 47811, false);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_channel_demonfire::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -1869,10 +2319,12 @@ void AddSC_warlock_spell_scripts()
     //RegisterSpellScript(spell_warl_drain_soul);
     //RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_glyph_of_felguard);
+    RegisterSpellScript(spell_warlock_summon_darkglare);
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
     RegisterSpellScript(spell_warlock_summon_felboar);
-    RegisterSpellScript(spell_warlock_demonic_tyrant);
+    RegisterSpellScript(spell_warlock_summon_felguard);
+    RegisterSpellScript(spell_warlock_summon_demonic_tyrant);
     RegisterSpellScript(spell_warl_agony);
     RegisterSpellScript(spell_warlock_dark_pact);
     RegisterSpellScript(spell_warl_demon_armor);
@@ -1889,4 +2341,15 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_soul_fire_energy);
     RegisterSpellScript(spell_warl_burning_rush);
     RegisterSpellScript(spell_warl_malefic_rapture);
+    RegisterSpellScript(spell_warl_grimoire_of_sacrifice);
+    RegisterSpellScript(spell_warl_channel_demonfire);
+    RegisterSpellScript(spell_warlock_soul_strike);
+    RegisterSpellScript(spell_warl_nether_portal_proc);
+    RegisterSpellScript(spell_warlock_summon_nether_portal);
+    RegisterSpellScript(spell_warlock_implosion);
+    RegisterSpellScript(spell_warl_power_siphon);
+    RegisterSpellScript(spell_warlock_summon_gargoyle);
+    RegisterSpellScript(spell_warl_havoc);
+    RegisterSpellScript(spell_warl_soul_power);
+    RegisterSpellScript(spell_warlock_cataclysm);
 }

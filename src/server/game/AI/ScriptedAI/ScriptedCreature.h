@@ -202,6 +202,9 @@ struct ScriptedAI : public CreatureAI
     // Called when a summoned creature is despawned
     void SummonedCreatureDespawn(Creature* /*summon*/) override {}
 
+    // Called when despawned
+    void JustDespawned() override {}
+
     // Called when hit by a spell
     void SpellHit(Unit* /*caster*/, SpellInfo const* /*spell*/) override {}
 
