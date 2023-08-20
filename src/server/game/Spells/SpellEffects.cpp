@@ -2312,8 +2312,6 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
     // determine how many units should be summoned
     uint32 numSummons;
 
-    if (m_originalCaster->HasAura(83054))
-        m_originalCaster->RemoveAura(83054);
 
     // some spells need to summon many units, for those spells number of summons is stored in effect value
     // however so far noone found a generic check to find all of those (there's no related data in summonproperties.dbc
@@ -3119,6 +3117,9 @@ void Spell::EffectSummonPet(SpellEffIndex effIndex)
     Player* owner = m_originalCaster->ToPlayer();
     if (!owner && m_originalCaster->ToCreature()->IsTotem())
         owner = m_originalCaster->GetCharmerOrOwnerPlayerOrPlayerItself();
+
+    if (owner->HasAura(83054))
+        owner->RemoveAura(83054);
 
     if (!owner)
     {
