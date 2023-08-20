@@ -148,7 +148,11 @@ enum ShamanSpells
     SPELL_SHAMAN_SEEPING_LIFE_FORCE_HEAL        = 84231,
     SPELL_SHAMAN_PATH_OF_THE_ASCENDANT          = 84242,
     SPELL_SHAMAN_ASCENDANT_EARTH                = 84113,
-    SPELL_SHAMAN_STORMRAND_TOTEM_PROC           = 84245,
+    SPELL_SHAMAN_STORMBRAND_TOTEM_PROC          = 84245,
+    SPELL_SHAMAN_SPIRIT_WEAPON_NATURE           = 84247,
+    SPELL_SHAMAN_SPIRIT_WEAPON_FIRE             = 84248,
+    SPELL_SHAMAN_SPIRIT_WEAPON_FROST            = 84249,
+
 };
 
 enum ShamanSpellIcons
@@ -1707,8 +1711,7 @@ class spell_sha_improved_astral_shift : public AuraScript
         }
         else
         {
-            caster->AddAura(SPELL_SHAMAN_ASTRAL_SHIFT, caster);
-            caster->GetAura(SPELL_SHAMAN_ASTRAL_SHIFT)->SetDuration(duration);
+            caster->CastCustomSpell(SPELL_SHAMAN_ASTRAL_SHIFT, SPELLVALUE_AURA_DURATION, duration, caster, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2264,8 +2267,12 @@ class spell_sha_invoke_essence : public SpellScript
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_WATER, TRIGGERED_FULL_MASK);
         }
+
         else if (form == FORM_SPIRIT_OF_FIRE)
-            caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
+        {
+            int32 dmg = CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 5) + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 5);
+            caster->CastCustomSpell(SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, SPELLVALUE_BASE_POINT0, dmg, target, TRIGGERED_FULL_MASK);
+        }
         else if (form == FORM_SPIRIT_OF_EARTH)
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_WATER)
@@ -2853,7 +2860,7 @@ class spell_sha_stormbrand_totem : public AuraScript
             if (caster->GetShapeshiftForm() == FORM_SPIRIT_OF_STORM)
                 damagePct = 100;
             int32 damageAmount = CalculatePct(damage, damagePct);
-            summon->CastCustomSpell(SPELL_SHAMAN_STORMRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, summon, true, nullptr, nullptr, caster->GetGUID());
+            summon->CastCustomSpell(SPELL_SHAMAN_STORMBRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, summon, true, nullptr, nullptr, caster->GetGUID());
         }
     }   
 
@@ -2865,6 +2872,30 @@ class spell_sha_stormbrand_totem : public AuraScript
 
 private:
     TempSummon* summon;
+};
+
+class spell_sha_spirit_weapons : public AuraScript
+{
+    PrepareAuraScript(spell_sha_spirit_weapons);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            int32 damagePct = aurEff->GetAmount();
+            int32 damageAmount = CalculatePct(damage, damagePct);
+            caster->CastCustomSpell(SPELL_SHAMAN_SPIRIT_WEAPON_NATURE, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(SPELL_SHAMAN_SPIRIT_WEAPON_FIRE, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(SPELL_SHAMAN_SPIRIT_WEAPON_FROST, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_spirit_weapons::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
 };
 
 void AddSC_shaman_spell_scripts()
@@ -2951,4 +2982,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_accumulation);
     RegisterSpellScript(spell_sha_seeping_life_force);
     RegisterSpellScript(spell_sha_stormbrand_totem);
+    RegisterSpellScript(spell_sha_spirit_weapons);
 }

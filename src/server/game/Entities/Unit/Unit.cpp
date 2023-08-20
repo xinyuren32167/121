@@ -8298,7 +8298,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     return false;
                 }
                 // Lightning Overload
-                if (dummySpell->SpellIconID == 2018)            // only this spell have SpellFamily Shaman SpellIconID == 2018 and dummy aura
+                /*if (dummySpell->SpellIconID == 2018)            // only this spell have SpellFamily Shaman SpellIconID == 2018 and dummy aura
                 {
                     if(!procSpell || GetTypeId() != TYPEID_PLAYER || !victim)
                         return false;
@@ -8329,7 +8329,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                         CastCustomSpell(victim, spell, &dmg, 0, 0, true, castItem, triggeredByAura);
                     } while (roll_chance_i(33));
                     return true;
-                }
+                }*/
                 // Static Shock
                 //if (dummySpell->SpellIconID == 3059)
                 //{
@@ -12333,9 +12333,9 @@ float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, D
                 if (AuraEffect* dummy = owner->GetAuraEffect(55456, EFFECT_0))
                     AddPct(DoneTotalMod, dummy->GetAmount());
 
-                // Healing Stream totem - Restorative Totems
+                /*// Healing Stream totem - Restorative Totems
                 if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_SHAMAN, 338, 1))
-                    AddPct(DoneTotalMod, aurEff->GetAmount());
+                    AddPct(DoneTotalMod, aurEff->GetAmount());*/
             }
             break;
         case SPELLFAMILY_PRIEST:
