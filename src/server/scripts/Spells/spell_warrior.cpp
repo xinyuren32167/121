@@ -51,6 +51,7 @@ enum WarriorSpells
     SPELL_WARRIOR_EXECUTE_DAMAGE = 20647,
     SPELL_WARRIOR_GLYPH_OF_EXECUTION = 58367,
     SPELL_WARRIOR_GLYPH_OF_VIGILANCE = 63326,
+    SPELL_WARRIOR_HEROIC_LEAP_DAMAGE = 57794,
     SPELL_WARRIOR_IGNORE_PAIN = 80004,
     SPELL_WARRIOR_IMPENDING_VICTORY = 84515,
     SPELL_WARRIOR_JUGGERNAUT_CRIT_BONUS_BUFF = 65156,
@@ -62,6 +63,8 @@ enum WarriorSpells
     SPELL_WARRIOR_RECKLESSNESS = 1719,
     SPELL_WARRIOR_REND = 47465,
     SPELL_WARRIOR_RETALIATION_DAMAGE = 22858,
+    SPELL_WARRIOR_SHIELD_CHARGE_DAMAGE = 84517,
+    SPELL_WARRIOR_SHIELD_CHARGE_AOE = 84518,
     SPELL_WARRIOR_SKULLSPLITTER_EXTRA_DAMAGE = 84505,
     SPELL_WARRIOR_SLAM = 50783,
     SPELL_WARRIOR_SUNDER_ARMOR = 58567,
@@ -69,6 +72,8 @@ enum WarriorSpells
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2 = 26654,
     SPELL_WARRIOR_TAUNT = 355,
     SPELL_WARRIOR_TITANS_GRIP = 46917,
+    SPELL_WARRIOR_TITANS_GRIP_BUFF = 49152,
+    SPELL_WARRIOR_TITANS_GRIP_SHIELD = 50483,
     SPELL_WARRIOR_UNRELENTING_ASSAULT_RANK_1 = 46859,
     SPELL_WARRIOR_UNRELENTING_ASSAULT_RANK_2 = 46860,
     SPELL_WARRIOR_UNRELENTING_ASSAULT_TRIGGER_1 = 64849,
@@ -998,28 +1003,45 @@ class spell_warr_heroic_strike : public SpellScript
     }
 };
 
-class spell_war_damage_heroic_leap : public SpellScript
-{
-    PrepareSpellScript(spell_war_damage_heroic_leap);
+//class spell_warr_heroic_leap : public SpellScript
+//{
+//    PrepareSpellScript(spell_warr_heroic_leap);
+//
+//    void HandleHit()
+//    {
+//        Unit* caster = GetCaster();
+//
+//        caster->CastSpell(caster, SPELL_WARRIOR_HEROIC_LEAP_DAMAGE, TRIGGERED_FULL_MASK);
+//    }
+//
+//    void Register() override
+//    {
+//        AfterHit += SpellHitFn(spell_warr_heroic_leap::HandleHit);
+//    }
+//};
 
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        int32 damage = GetEffectValue();
-        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
-
-        if (Unit* target = GetHitUnit())
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-        SetHitDamage(damage);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_war_damage_heroic_leap::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
+//class spell_war_damage_heroic_leap : public SpellScript
+//{
+//    PrepareSpellScript(spell_war_damage_heroic_leap);
+//
+//    void HandleHit(SpellEffIndex effIndex)
+//    {
+//        int32 damage = GetEffectValue();
+//        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
+//
+//        if (Unit* target = GetHitUnit())
+//        {
+//            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+//            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+//        }
+//        SetHitDamage(damage);
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectHitTarget += SpellEffectFn(spell_war_damage_heroic_leap::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+//    }
+//};
 
 // 47450 - Heroic Throw
 class spell_warr_heroic_throw : public SpellScript
@@ -1072,11 +1094,11 @@ class spell_ap_to_hit_damage : public SpellScript
         int32 damage = GetEffectValue();
         ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
 
-        if (Unit* target = GetHitUnit())
+        /*if (Unit* target = GetHitUnit())
         {
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
+        }*/
         SetHitDamage(damage);
     }
 
@@ -1494,6 +1516,11 @@ class spell_warr_ignore_pain : public AuraScript
 {
     PrepareAuraScript(spell_warr_ignore_pain);
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        absorbedAmount = 0;
+    }
+
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         // Set absorbtion amount to unlimited
@@ -1505,24 +1532,29 @@ class spell_warr_ignore_pain : public AuraScript
         Unit* caster = GetTarget();
 
         int32 maxShieldAmount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), GetAura()->GetEffect(EFFECT_1)->GetAmount());
-        int32 absorbedAmount = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+        int32 shieldPct = GetAura()->GetEffect(EFFECT_2)->GetAmount();
 
         if (absorbedAmount == maxShieldAmount)
+        {
+            GetAura()->Remove();
             return;
+        }
 
-        int32 damage = CalculatePct(dmgInfo.GetDamage(), aurEff->GetAmount());
+        int32 damage = CalculatePct(dmgInfo.GetDamage(), shieldPct);
         int32 amount = std::min<int32>(damage, maxShieldAmount - absorbedAmount);
 
         absorbAmount = amount;
-
-        GetAura()->GetEffect(EFFECT_2)->SetAmount(amount);
+        absorbedAmount += amount;
     }
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_ignore_pain::CalculateAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
-        OnEffectAbsorb += AuraEffectAbsorbFn(spell_warr_ignore_pain::Absorb, EFFECT_2);
+        OnEffectApply += AuraEffectApplyFn(spell_warr_ignore_pain::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_ignore_pain::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_warr_ignore_pain::Absorb, EFFECT_0);
     }
+private:
+    int32 absorbedAmount = 0;
 };
 
 //class spell_ignore_pain : public SpellScript
@@ -1612,11 +1644,6 @@ class spell_warr_skullsplitter : public SpellScript
 {
     PrepareSpellScript(spell_warr_skullsplitter);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ SPELL_WARRIOR_INTERVENE_TRIGGER });
-    }
-
     void HandleApplyAura(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
@@ -1626,23 +1653,25 @@ class spell_warr_skullsplitter : public SpellScript
         if (!caster || !target)
             return;
 
-        if (AuraEffect* rend = target->GetAura(SPELL_WARRIOR_REND)->GetEffect(0))
+        if (Aura* rend = target->GetAura(SPELL_WARRIOR_REND))
         {
             if (rend->GetCaster() == caster)
             {
-                int32 remainingTicks = rend->GetRemaningTicks();
-                int32 effectAmount = rend->GetAmount();
+                int32 remainingTicks = rend->GetEffect(EFFECT_0)->GetRemaningTicks();
+                int32 effectAmount = rend->GetEffect(EFFECT_0)->GetAmount();
                 amount += remainingTicks * effectAmount;
+                rend->Remove();
             }
         }
 
-        if (AuraEffect* deepWounds = target->GetAura(MASTERY_WARRIOR_DEEP_WOUNDS_DOT)->GetEffect(0))
+        if (Aura* deepWounds = target->GetAura(MASTERY_WARRIOR_DEEP_WOUNDS_DOT))
         {
             if (deepWounds->GetCaster() == caster)
             {
-                int32 remainingTicks = deepWounds->GetRemaningTicks();
-                int32 effectAmount = deepWounds->GetAmount();
+                int32 remainingTicks = deepWounds->GetEffect(0)->GetRemaningTicks();
+                int32 effectAmount = deepWounds->GetEffect(0)->GetAmount();
                 amount += remainingTicks * effectAmount;
+                deepWounds->Remove();
             }
         }
 
@@ -1654,7 +1683,7 @@ class spell_warr_skullsplitter : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_warr_skullsplitter::HandleApplyAura, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
+        OnEffectHitTarget += SpellEffectFn(spell_warr_skullsplitter::HandleApplyAura, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -1679,6 +1708,10 @@ class spell_warr_berserkers_way : public AuraScript
         caster->removeSpell(SPELL_WARRIOR_BERSERKER_STANCE, SPEC_MASK_ALL, false);
         caster->removeSpell(SPELL_WARRIOR_RAGING_BLOW, SPEC_MASK_ALL, false);
         caster->removeSpell(SPELL_WARRIOR_TITANS_GRIP, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_WARRIOR_TITANS_GRIP_BUFF, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_WARRIOR_TITANS_GRIP_SHIELD, SPEC_MASK_ALL, false);
+        caster->SetCanTitanGrip(false);
+        caster->AutoUnequipOffhandIfNeed();
     }
 
     void Register() override
@@ -1706,6 +1739,26 @@ class spell_warr_victorious : public AuraScript
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_warr_victorious::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 84516 - Shield Charge
+class spell_warr_shield_charge : public SpellScript
+{
+    PrepareSpellScript(spell_warr_shield_charge);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+
+        caster->CastSpell(target, SPELL_WARRIOR_SHIELD_CHARGE_DAMAGE);
+        caster->CastSpell(target, SPELL_WARRIOR_SHIELD_CHARGE_AOE);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_shield_charge::HandleDummy, EFFECT_0, SPELL_EFFECT_CHARGE);
     }
 };
 
@@ -1755,11 +1808,13 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_ignore_pain);
     //RegisterSpellScript(spell_ignore_pain_absorbe);
     RegisterSpellScript(spell_warr_devastate);
-    RegisterSpellScript(spell_war_damage_heroic_leap);
+    //RegisterSpellScript(spell_war_damage_heroic_leap);
+    //RegisterSpellScript(spell_warr_heroic_leap);
     RegisterSpellScript(spell_warr_unbridled_fury);
     RegisterSpellScript(spell_warr_skullsplitter);
     RegisterSpellScript(spell_warr_berserkers_way);
     RegisterSpellScript(spell_warr_victorious);
+    RegisterSpellScript(spell_warr_shield_charge);
 
 
 
