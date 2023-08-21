@@ -3118,7 +3118,7 @@ void Spell::EffectSummonPet(SpellEffIndex effIndex)
     if (!owner && m_originalCaster->ToCreature()->IsTotem())
         owner = m_originalCaster->GetCharmerOrOwnerPlayerOrPlayerItself();
 
-    if (owner->HasAura(83054))
+    if (owner && owner->HasAura(83054))
         owner->RemoveAura(83054);
 
     if (!owner)
