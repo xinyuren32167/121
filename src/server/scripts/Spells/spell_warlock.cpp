@@ -2246,6 +2246,64 @@ class spell_warl_malefic_rapture : public SpellScript
     }
 };
 
+
+class spell_mage_soul_swap : public AuraScript
+{
+    PrepareAuraScript(spell_mage_soul_swap);
+
+    struct CopyAura {
+        uint32 spellId;
+        uint32 duration;
+    };
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player || player->isDead())
+            return;
+
+        Unit* target = player->GetSelectedUnit();
+
+        if (target) {
+            auto effects = target->GetAuraEffectsByType(SPELL_AURA_PERIODIC_DAMAGE);
+
+            for (auto effect : effects) {
+                uint32 spellId = effect->GetSpellInfo()->Id;
+                int32 duration = effect->GetBase()->GetDuration();
+                int32 amount = effect->GetAmount();
+                CopyAura aura = { spellId, duration };
+                aurasCopied.push_back(aura);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  mode)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+        Unit* target = player->GetSelectedUnit();
+
+        if (target) {
+            for (auto aura : aurasCopied) {
+                CustomSpellValues values;
+                values.AddSpellMod(SPELLVALUE_AURA_DURATION, aura.duration);
+                GetCaster()->CastCustomSpell(aura.spellId, values, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_soul_swap::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_soul_swap::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+
+private:
+    std::list<CopyAura> aurasCopied;
+};
+
+
 class spell_warl_grimoire_of_sacrifice : public AuraScript
 {
     PrepareAuraScript(spell_warl_grimoire_of_sacrifice);
@@ -2351,5 +2409,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_summon_gargoyle);
     RegisterSpellScript(spell_warl_havoc);
     RegisterSpellScript(spell_warl_soul_power);
+    RegisterSpellScript(spell_mage_soul_swap);
     RegisterSpellScript(spell_warlock_cataclysm);
 }
