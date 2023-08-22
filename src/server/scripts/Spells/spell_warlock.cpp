@@ -80,6 +80,7 @@ enum WarlockSpells
     SPELL_WARLOCK_SOUL_FIRE                         = 47825,
     SPELL_WARLOCK_BURNING_RUSH_DAMAGE               = 83019,
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE            = 83021,
+    SPELL_WARLOCK_SOUL_STRIKE                       = 83039,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -887,7 +888,6 @@ class spell_vampirism : public AuraScript
     }
 };
 
-
 // -1454 - Life Tap
 #define LIFE_TAP_COEFFICIENT 0.9F
 class spell_warl_life_tap : public SpellScript
@@ -995,7 +995,6 @@ class spell_warl_demonic_circle_summon : public AuraScript
     }
 };
 
-
 class spell_warl_soul_power : public AuraScript
 {
     PrepareAuraScript(spell_warl_soul_power);
@@ -1020,7 +1019,6 @@ class spell_warl_soul_power : public AuraScript
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_soul_power::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
-
 
 // 48020 - Demonic Circle: Teleport
 class spell_warl_demonic_circle_teleport : public AuraScript
@@ -1531,7 +1529,7 @@ class spell_warlock_soul_strike : public SpellScript
 
         if (pet && target) {
             pet->AI()->AttackStart(target);
-            pet->CastSpell(target, 83039, true, nullptr, nullptr, player->GetGUID());
+            pet->CastSpell(target, SPELL_WARLOCK_SOUL_STRIKE, true, nullptr, nullptr, player->GetGUID());
             player->ModifyPower(POWER_ENERGY, 5);
         }
     }
@@ -1584,7 +1582,6 @@ class spell_warlock_summon_felguard : public SpellScript
     }
 };
 
-
 class spell_warlock_implosion : public SpellScript
 {
     PrepareSpellScript(spell_warlock_implosion);
@@ -1611,7 +1608,6 @@ class spell_warlock_implosion : public SpellScript
         OnCast += SpellCastFn(spell_warlock_implosion::HandleCast);
     }
 };
-
 
 class spell_warlock_summon_darkglare : public SpellScript
 {
@@ -1652,7 +1648,6 @@ class spell_warlock_summon_darkglare : public SpellScript
     }
 };
 
-
 class spell_warlock_cataclysm : public SpellScript
 {
     PrepareSpellScript(spell_warlock_cataclysm);
@@ -1674,7 +1669,6 @@ class spell_warlock_cataclysm : public SpellScript
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_cataclysm::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
-
 
 class spell_warlock_summon_demonic_tyrant : public SpellScript
 {
@@ -1739,7 +1733,6 @@ class spell_warlock_hand_of_guldan : public SpellScript
         OnEffectHitTarget += SpellEffectFn(spell_warlock_hand_of_guldan::HandleHitTarget, EFFECT_0, SPELL_EFFECT_TRIGGER_MISSILE);
     }
 };
-
 
 class spell_warlock_summon_nether_portal : public SpellScript
 {
@@ -2342,8 +2335,6 @@ class spell_warl_channel_demonfire : public SpellScript
         OnEffectHitTarget += SpellEffectFn(spell_warl_channel_demonfire::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
-
-
 
 void AddSC_warlock_spell_scripts()
 {
