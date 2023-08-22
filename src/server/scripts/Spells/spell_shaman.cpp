@@ -202,7 +202,6 @@ class spell_sha_spirit_walk : public SpellScript
     }
 };
 
-
 class spell_sha_maelstrom_on_cast : public SpellScript
 {
     PrepareSpellScript(spell_sha_maelstrom_on_cast);
@@ -474,7 +473,6 @@ class spell_sha_fire_elemental_scaling : public AuraScript
         OnEffectApply += AuraEffectApplyFn(spell_sha_fire_elemental_scaling::HandleEffectApply, EFFECT_ALL, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
 
 class spell_sha_earth_elemental_scaling : public AuraScript
 {
@@ -1331,7 +1329,6 @@ class spell_sha_frostbrand_weapon : public SpellScript
 };
 
 // All Maelstrom Generation EFFECT_2 On Cast
-
 class spell_sha_gust_of_wind : public SpellScript
 {
     PrepareSpellScript(spell_sha_gust_of_wind);
@@ -1523,7 +1520,6 @@ class spell_sha_ascendance_flame : public SpellScript
         OnCast += SpellCastFn(spell_sha_ascendance_flame::HandleProc);
     }
 };
-
 
 // 84026 - Stormbringer
 class spell_sha_stormbringer : public AuraScript
