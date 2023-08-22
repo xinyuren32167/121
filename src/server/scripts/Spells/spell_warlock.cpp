@@ -1526,10 +1526,10 @@ class spell_warlock_soul_strike : public SpellScript
     void HandleCast()
     {
         Player* player = GetCaster()->ToPlayer();
-        Unit* target = GetExplTargetUnit();
+        Unit* target = player->GetSelectedUnit();
         Creature* pet = GetPet();
 
-        if (pet) {
+        if (pet && target) {
             pet->AI()->AttackStart(target);
             pet->CastSpell(target, 83039, true, nullptr, nullptr, player->GetGUID());
             player->ModifyPower(POWER_ENERGY, 5);
