@@ -7124,7 +7124,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                 switch (dummySpell->Id)
                 {
                     // Nightfall
-                    case 18094:
+                    /*case 18094:
                     case 18095:
                     // Glyph of corruption
                     case 56218:
@@ -7132,7 +7132,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             target = this;
                             triggered_spell_id = 17941;
                             break;
-                        }
+                        }*/
                     // Soul Leech
                     case 30293:
                     case 30295:
@@ -11259,7 +11259,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     break;
                 }
             // Soul Siphon
-            case 4992:
+            /*case 4992:
             case 4993:
                 {
                     // effect 1 m_amount
@@ -11284,7 +11284,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     }
                     AddPct(DoneTotalMod, modPercent);
                     break;
-                }
+                }*/
             case 6916: // Death's Embrace
             case 6925:
             case 6927:
