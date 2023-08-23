@@ -2176,8 +2176,6 @@ class spell_sha_spirit_of_water : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 heal = eventInfo.GetHealInfo()->GetHeal();
-
         Unit* caster = GetCaster();
         uint32 healAmount = eventInfo.GetHealInfo()->GetHeal();
         uint32 thresholdPct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
