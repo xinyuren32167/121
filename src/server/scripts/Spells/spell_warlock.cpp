@@ -2336,6 +2336,46 @@ class spell_warl_channel_demonfire : public SpellScript
     }
 };
 
+class spell_warl_xavians_teachings : public AuraScript
+{
+    PrepareAuraScript(spell_warl_xavians_teachings);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 spell = aurEff->GetAmount();
+
+        GetCaster()->CastSpell(GetCaster()->ToPlayer()->GetSelectedUnit(), spell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_xavians_teachings::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_agonizing_corruption : public SpellScript
+{
+    PrepareSpellScript(spell_warl_agonizing_corruption);
+
+    void FindTargets(std::list<WorldObject*>& targets)
+    {
+        if (targets.size() > 0)
+        {
+            for (auto const& target : targets)
+                if (Aura* agony = target->ToUnit()->GetAura(SPELL_WARLOCK_AGONY))
+                {
+                    uint32 increase = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION)->GetEffect(EFFECT_1).CalcValue(GetCaster());
+                    agony->ModStackAmount(increase);
+                }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warl_agonizing_corruption::FindTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2402,4 +2442,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_soul_power);
     RegisterSpellScript(spell_mage_soul_swap);
     RegisterSpellScript(spell_warlock_cataclysm);
+    RegisterSpellScript(spell_warl_xavians_teachings);
+    RegisterSpellScript(spell_warl_agonizing_corruption);
 }
