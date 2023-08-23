@@ -972,7 +972,7 @@ void Player::UpdateVersatility()
 {
     uint32 amount = totalVersatility;
 
-    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_MASTERY_PCT);
+    AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_VERSATILITY_PCT);
 
     for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
         if (HasAura((*itr)->GetBase()->GetId()))
@@ -986,8 +986,9 @@ void Player::UpdateVersatility()
     RemoveAura(VERSATILITY_SPELL);
     int32 damageIncreasesPct = round(amount / 40);
     int32 healingAndAbsbordIncreasePct = round(amount / 40);
-    int32 damageReductionPct = round((amount / 40) * 0.5);
-    CastCustomSpell(ToUnit(), VERSATILITY_SPELL, &damageIncreasesPct, &healingAndAbsbordIncreasePct, &damageReductionPct, true, nullptr, nullptr, GetGUID());
+    int32 damageReductionPct = -(round((amount / 40) * 0.5));
+
+    CastCustomSpell(ToUnit(), VERSATILITY_SPELL, &damageReductionPct, &damageIncreasesPct, &healingAndAbsbordIncreasePct, true, nullptr, nullptr, GetGUID());
 }
 
 void Player::ApplyManaRegenBonus(int32 amount, bool apply)

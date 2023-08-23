@@ -127,7 +127,7 @@ enum Classes
 // max+1 for player class
 #define MAX_CLASSES       12
 
-const uint32 VERSATILITY_SPELL = 1000001;
+const uint32 VERSATILITY_SPELL = 79999;
 
 
 #define CLASSMASK_ALL_PLAYABLE \
