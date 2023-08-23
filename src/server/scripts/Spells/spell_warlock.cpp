@@ -81,6 +81,8 @@ enum WarlockSpells
     SPELL_WARLOCK_BURNING_RUSH_DAMAGE               = 83019,
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE            = 83021,
     SPELL_WARLOCK_SOUL_STRIKE                       = 83039,
+    SPELL_WARLOCK_IMMOLATE                          = 47811,
+    TALENT_WARLOCK_SOUL_FLAME = 30054,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -91,8 +93,6 @@ enum WarlockSpells
 
     SPELL_WARLOCK_HAVOC_AURA                        = 83062,
     SPELL_WARLOCK_HAVOC_DAMAGE                      = 83061,
-
-    SPELL_WARLOCK_IMMOLATE                          = 47811,
 };
 
 enum WarlockPets {
@@ -1943,7 +1943,7 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->IsAlive();
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2376,6 +2376,25 @@ class spell_warl_agonizing_corruption : public SpellScript
     }
 };
 
+class spell_warl_soul_flame : public AuraScript
+{
+    PrepareAuraScript(spell_warl_soul_flame);
+
+    void HandleProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_SOUL_FLAME, EFFECT_0);
+        uint32 spell = aurEff->GetAmount();
+
+        caster->CastSpell(eventInfo.GetProcTarget(), spell, TRIGGERED_FULL_MASK); 
+    }
+
+    void Register() override
+    {
+        DoPrepareProc += AuraProcFn(spell_warl_soul_flame::HandleProc);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2444,4 +2463,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_cataclysm);
     RegisterSpellScript(spell_warl_xavians_teachings);
     RegisterSpellScript(spell_warl_agonizing_corruption);
+    RegisterSpellScript(spell_warl_soul_flame);
 }
