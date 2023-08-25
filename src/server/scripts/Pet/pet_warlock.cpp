@@ -39,6 +39,8 @@ enum WarlockSpells
     SPELL_DARKGLARE_DAMAGE = 83050,
 
     EVENT_TRY_ATTACK_NEW_TARGET = 1,
+
+    TALENT_WARLOCK_IMPROVED_IMPS = 18694,
 };
 
 enum PET_WARLOCKS {
@@ -99,6 +101,8 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
                 if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
                 {
                     int32 damage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_FIRE, 0.63f);
+                    if (AuraEffect const* aurEff = owner->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_IMPROVED_IMPS, EFFECT_0))
+                        damage += CalculatePct(damage, aurEff->GetAmount());
                     me->CastCustomSpell(SPELL_WILDIMP_FIREBOLT, SPELLVALUE_BASE_POINT0, damage, me->GetVictim());
                 }
                 _events.ScheduleEvent(1, 2000);
