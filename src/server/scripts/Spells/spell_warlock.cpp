@@ -82,7 +82,17 @@ enum WarlockSpells
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE            = 83021,
     SPELL_WARLOCK_SOUL_STRIKE                       = 83039,
     SPELL_WARLOCK_IMMOLATE                          = 47811,
-    TALENT_WARLOCK_SOUL_FLAME = 30054,
+    TALENT_WARLOCK_SOUL_FLAME                       = 30054,
+    TALENT_WARLOCK_MOLTEN_HAND                      = 47245,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1          = 83073,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2          = 83074,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3          = 83075,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1              = 47383,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2              = 71162,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3              = 71165,
+    TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R1        = 83076,
+    TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R2        = 83077,
+    TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R3        = 83078,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -94,14 +104,12 @@ enum WarlockSpells
     SPELL_WARLOCK_HAVOC_AURA                        = 83062,
     SPELL_WARLOCK_HAVOC_DAMAGE                      = 83061,
 
-
     SPELL_MINION_STAT_DREAD_STALKER                 = 75001,
     SPELL_MINION_STAT_WILD_IMP                      = 75002,
     SPELL_MINION_STAT_DARKGLARE                     = 75003,
     SPELL_MINION_STAT_VILEFIEND                     = 75004,
     SPELL_MINION_STAT_DEMONIC_TYRANT                = 75005,
     SPELL_MINION_STAT_BOMBER                        = 74999,
-
 
     SPELL_MINION_INCREASE_DREAD_STALKER             = 1100009,
     SPELL_MINION_INCREASE_WILD_IMP                  = 1100010,
@@ -1603,11 +1611,13 @@ class spell_warlock_soul_strike : public SpellScript
         Player* player = GetCaster()->ToPlayer();
         Unit* target = player->GetSelectedUnit();
         Creature* pet = GetPet();
+        uint32 energy = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SOUL_STRIKE)->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
-        if (pet && target) {
+        if (pet && target)
+        {
             pet->AI()->AttackStart(target);
             pet->CastSpell(target, SPELL_WARLOCK_SOUL_STRIKE, true, nullptr, nullptr, player->GetGUID());
-            player->ModifyPower(POWER_ENERGY, 5);
+            player->ModifyPower(POWER_ENERGY, energy);
         }
     }
 
@@ -1794,6 +1804,17 @@ class spell_warlock_hand_of_guldan : public SpellScript
             for (size_t i = 0; i < maxSummon; i++)
             {
                 TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
+                if (AuraEffect const* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0))
+                {
+                    uint32 rank = aurEff->GetAmount();
+
+                    if (rank == 1)
+                        player->AddAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1, summon);
+                    if (rank == 2)
+                        player->AddAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2, summon);
+                    if (rank == 3)
+                        player->AddAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3, summon);
+                }
             }
         }
     }
@@ -2316,7 +2337,6 @@ class spell_warl_malefic_rapture : public SpellScript
     }
 };
 
-
 class spell_mage_soul_swap : public AuraScript
 {
     PrepareAuraScript(spell_mage_soul_swap);
@@ -2372,7 +2392,6 @@ class spell_mage_soul_swap : public AuraScript
 private:
     std::list<CopyAura> aurasCopied;
 };
-
 
 class spell_warl_grimoire_of_sacrifice : public AuraScript
 {
@@ -2472,6 +2491,91 @@ class spell_warl_soul_flame : public AuraScript
     }
 };
 
+class spell_warl_molten_hand_listener : public AuraScript
+{
+    PrepareAuraScript(spell_warl_molten_hand_listener);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 rank = aurEff->GetAmount();
+        Unit* owner = GetAura()->GetOwner()->ToUnit();
+        if (rank == 1)
+            owner->CastSpell(owner, TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1, TRIGGERED_FULL_MASK);
+        if (rank == 2)
+            owner->CastSpell(owner, TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2, TRIGGERED_FULL_MASK);
+        if (rank == 3)
+            owner->CastSpell(owner, TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_molten_hand_listener::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_felstorm_molten_hand : public SpellScript
+{
+    PrepareSpellScript(spell_warl_felstorm_molten_hand);
+
+    void HandleCast()
+    {
+        if (Aura* aura = GetCaster()->GetAura(TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1))
+            aura->ModStackAmount(-1);
+        else if (Aura* aura = GetCaster()->GetAura(TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2))
+            aura->ModStackAmount(-1);
+        else if (Aura* aura = GetCaster()->GetAura(TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3))
+            aura->ModStackAmount(-1);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_felstorm_molten_hand::HandleCast);
+    }
+};
+
+class spell_warl_molten_hand_aura : public AuraScript
+{
+    PrepareAuraScript(spell_warl_molten_hand_aura);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0))
+        {
+            uint32 rank = aurEff->GetAmount();
+
+            if (rank == 1)
+                caster->CastSpell(caster, TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R1, TRIGGERED_FULL_MASK);
+            if (rank == 2)
+                caster->CastSpell(caster, TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R2, TRIGGERED_FULL_MASK);
+            if (rank == 3)
+                caster->CastSpell(caster, TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R3, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0))
+        {
+            uint32 rank = aurEff->GetAmount();
+
+            if (rank == 1)
+                caster->RemoveAura(TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R1);
+            if (rank == 2)
+                caster->RemoveAura(TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R2);
+            if (rank == 3)
+                caster->RemoveAura(TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R3);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_molten_hand_aura::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_molten_hand_aura::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2541,4 +2645,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_xavians_teachings);
     RegisterSpellScript(spell_warl_agonizing_corruption);
     RegisterSpellScript(spell_warl_soul_flame);
+    RegisterSpellScript(spell_warl_molten_hand_listener);
+    RegisterSpellScript(spell_warl_felstorm_molten_hand);
+    RegisterSpellScript(spell_warl_molten_hand_aura);
 }

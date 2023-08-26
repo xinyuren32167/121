@@ -38,6 +38,7 @@ enum WarlockSpells
     SPELL_MINION_SCALING_VILEFIEND       = 75004,
     SPELL_MINION_SCALING_DEMONIC_TYRANT  = 75005,
     SPELL_MINION_SCALING_BOMBER          = 74999,
+    SPELL_MINION_SCALING_FELGUARD        = 75007,
 
 
     SPELL_WILDIMP_FIREBOLT  = 83003,
@@ -63,7 +64,7 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->CastSpell(me, SPELL_MINION_SCALING_WILD_IMP);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_WILD_IMP);
     }
 
     void EnterCombat(Unit*) override
@@ -154,7 +155,7 @@ struct npc_pet_warlock_bomber : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->CastSpell(me, SPELL_MINION_SCALING_BOMBER);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_BOMBER);
 
     }
 
@@ -217,7 +218,7 @@ struct npc_pet_warlock_darkglare: public ScriptedAI
 
     void InitializeAI() override
     {
-        me->CastSpell(me, SPELL_MINION_SCALING_DARKGLARE);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_DARKGLARE);
     }
 
 
@@ -327,7 +328,7 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
-        me->CastSpell(me, SPELL_MINION_SCALING_VILEFIEND);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_VILEFIEND);
     }
 
     void AttackTarget(Unit* target)
@@ -398,7 +399,8 @@ struct npc_pet_warlock_felguard : public ScriptedAI
     void InitializeAI() override
     {
         _events.Reset();
-        me->AddAura(83031, me);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me ,83031);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_FELGUARD);
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
     }
 
@@ -477,7 +479,7 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
         _events.Reset();
         _events.ScheduleEvent(1, 2000);
         owner = me->GetCharmerOrOwnerPlayerOrPlayerItself();
-        me->CastSpell(me, SPELL_MINION_SCALING_DEMONIC_TYRANT);
+        owner->CastSpell(me, SPELL_MINION_SCALING_DEMONIC_TYRANT);
     }
 
     void UpdateAI(uint32 diff) override
@@ -520,7 +522,7 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
-        me->CastSpell(me, SPELL_MINION_SCALING_DREAD_STALKER);
+        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_DREAD_STALKER);
     }
 
     void AttackTarget(Unit* target)
