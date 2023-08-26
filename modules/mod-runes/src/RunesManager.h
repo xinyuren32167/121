@@ -49,6 +49,7 @@ struct KnownRune {
     uint64 accountId;
     uint64 id;
     Rune rune;
+    uint32 count;
 };
 
 struct SlotRune {

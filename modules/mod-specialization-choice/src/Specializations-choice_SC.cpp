@@ -16,6 +16,16 @@
 #include "UnitAI.h"
 #include "Log.h"
 
+enum WarlockSpells
+{
+    SPELL_MINION_INCREASE_DREAD_STALKER = 1100009,
+    SPELL_MINION_INCREASE_WILD_IMP = 1100010,
+    SPELL_MINION_INCREASE_DARKGLARE = 1100011,
+    SPELL_MINION_INCREASE_VILEFIEND = 1100012,
+    SPELL_MINION_INCREASE_DEMONIC_TYRANT = 1100013,
+    SPELL_MINION_INCREASE_BOMBER = 1100014,
+};
+
  // Add player scripts
 class SpecChoice_PlayerScripts : public PlayerScript
 {
@@ -40,6 +50,13 @@ public:
             player->setPowerType(POWER_ENERGY);
             player->SetMaxPower(POWER_ENERGY, 25);
             player->SetPower(POWER_ENERGY, 0);
+
+            player->AddAura(SPELL_MINION_INCREASE_DREAD_STALKER, player);
+            player->AddAura(SPELL_MINION_INCREASE_WILD_IMP, player);
+            player->AddAura(SPELL_MINION_INCREASE_DARKGLARE, player);
+            player->AddAura(SPELL_MINION_INCREASE_VILEFIEND, player);
+            player->AddAura(SPELL_MINION_INCREASE_DEMONIC_TYRANT, player);
+            player->AddAura(SPELL_MINION_INCREASE_BOMBER, player);
 
             player->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_ENERGY, -10.f);
             player->SetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER + POWER_ENERGY, -10.f);

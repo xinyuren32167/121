@@ -93,6 +93,22 @@ enum WarlockSpells
 
     SPELL_WARLOCK_HAVOC_AURA                        = 83062,
     SPELL_WARLOCK_HAVOC_DAMAGE                      = 83061,
+
+
+    SPELL_MINION_STAT_DREAD_STALKER                 = 75001,
+    SPELL_MINION_STAT_WILD_IMP                      = 75002,
+    SPELL_MINION_STAT_DARKGLARE                     = 75003,
+    SPELL_MINION_STAT_VILEFIEND                     = 75004,
+    SPELL_MINION_STAT_DEMONIC_TYRANT                = 75005,
+    SPELL_MINION_STAT_BOMBER                        = 74999,
+
+
+    SPELL_MINION_INCREASE_DREAD_STALKER             = 1100009,
+    SPELL_MINION_INCREASE_WILD_IMP                  = 1100010,
+    SPELL_MINION_INCREASE_DARKGLARE                 = 1100011,
+    SPELL_MINION_INCREASE_VILEFIEND                 = 1100012,
+    SPELL_MINION_INCREASE_DEMONIC_TYRANT            = 1100013,
+    SPELL_MINION_INCREASE_BOMBER                    = 1100014,
 };
 
 enum WarlockPets {
@@ -318,6 +334,67 @@ class spell_warl_demonic_knowledge : public AuraScript
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_demonic_knowledge::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_DAMAGE_DONE);
         DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_warl_demonic_knowledge::CalcPeriodic, EFFECT_0, SPELL_AURA_MOD_DAMAGE_DONE);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_demonic_knowledge::HandlePeriodic, EFFECT_0, SPELL_AURA_MOD_DAMAGE_DONE);
+    }
+};
+
+
+class spell_warl_all_minion_scaling : public AuraScript
+{
+    PrepareAuraScript(spell_warl_all_minion_scaling);
+
+    void CalculateAPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
+        {
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+            int32 maximum = (fire > shadow) ? fire : shadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), 57);
+        }
+    }
+
+    void CalculateSPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
+        {
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+            int32 maximum = (fire > shadow) ? fire : shadow;
+            amount = maximum;
+        }
+    }
+
+    void CalculateDamageAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
+        {
+            int32 newAmount = 0;
+
+            if(m_scriptSpellId == SPELL_MINION_STAT_DREAD_STALKER)
+                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DREAD_STALKER)->GetEffect(EFFECT_0)->GetAmount();
+            if (m_scriptSpellId == SPELL_MINION_STAT_WILD_IMP)
+                newAmount = owner->GetAura(SPELL_MINION_INCREASE_WILD_IMP)->GetEffect(EFFECT_0)->GetAmount();
+            if (m_scriptSpellId == SPELL_MINION_STAT_DARKGLARE)
+                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DARKGLARE)->GetEffect(EFFECT_0)->GetAmount();
+            if (m_scriptSpellId == SPELL_MINION_STAT_VILEFIEND)
+                newAmount = owner->GetAura(SPELL_MINION_INCREASE_VILEFIEND)->GetEffect(EFFECT_0)->GetAmount();
+            if (m_scriptSpellId == SPELL_MINION_STAT_DEMONIC_TYRANT)
+                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DEMONIC_TYRANT)->GetEffect(EFFECT_0)->GetAmount();
+            if (m_scriptSpellId == SPELL_MINION_STAT_BOMBER)
+                newAmount = owner->GetAura(SPELL_MINION_INCREASE_BOMBER)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (newAmount > 0) {
+                amount = newAmount;
+            }
+        }
+    }
+
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateDamageAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateAPAmount, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateSPAmount, EFFECT_0, SPELL_AURA_MOD_DAMAGE_DONE);
     }
 };
 
@@ -2246,7 +2323,7 @@ class spell_mage_soul_swap : public AuraScript
 
     struct CopyAura {
         uint32 spellId;
-        uint32 duration;
+        int32 duration;
     };
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
