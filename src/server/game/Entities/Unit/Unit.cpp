@@ -12116,15 +12116,6 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                         break;
                     }
                     break;
-                case SPELLFAMILY_WARLOCK:
-                    if (spellProto->Id == 83056)
-                    {
-                        if (caster->GetOwner()->HasAura(47383) || caster->GetOwner()->HasAura(71162) || caster->GetOwner()->HasAura(71165))
-                            if (AuraEffect const* aura = caster->GetOwner()->GetAuraEffectOfRankedSpell(47245, EFFECT_1))
-                                crit_chance += aura->GetAmount();
-                        break;
-                    }
-                    break;
                 }
             }
 

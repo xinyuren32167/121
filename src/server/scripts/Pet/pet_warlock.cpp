@@ -32,13 +32,13 @@
 
 enum WarlockSpells
 {
-    SPELL_MINION_SCALING_DREAD_STALKER   = 75001,
-    SPELL_MINION_SCALING_WILD_IMP        = 75002,
-    SPELL_MINION_SCALING_DARKGLARE       = 75003,
-    SPELL_MINION_SCALING_VILEFIEND       = 75004,
-    SPELL_MINION_SCALING_DEMONIC_TYRANT  = 75005,
-    SPELL_MINION_SCALING_BOMBER          = 74999,
-    SPELL_MINION_SCALING_FELGUARD        = 75007,
+    SPELL_MINION_SCALING_DREAD_STALKER                   = 75001,
+    SPELL_MINION_SCALING_WILD_IMP                        = 75002,
+    SPELL_MINION_SCALING_DARKGLARE                       = 75003,
+    SPELL_MINION_SCALING_VILEFIEND                       = 75004,
+    SPELL_MINION_SCALING_DEMONIC_TYRANT                  = 75005,
+    SPELL_MINION_SCALING_BOMBER                          = 74999,
+    SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE              = 83031,
 
 
     SPELL_WILDIMP_FIREBOLT  = 83003,
@@ -400,7 +400,6 @@ struct npc_pet_warlock_felguard : public ScriptedAI
     {
         _events.Reset();
         me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me ,83031);
-        me->GetCharmerOrOwnerPlayerOrPlayerItself()->CastSpell(me, SPELL_MINION_SCALING_FELGUARD);
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
     }
 
