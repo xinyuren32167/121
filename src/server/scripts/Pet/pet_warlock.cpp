@@ -69,15 +69,6 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
     void InitializeAI() override
     {
         me->CastSpell(me, SPELL_MINION_SCALING_WILD_IMP);
-        if (uint32 rank = me->GetCharmerOrOwnerPlayerOrPlayerItself()->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0)->GetAmount())
-        {
-            if (rank == 1)
-                me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1);
-            else if (rank == 2)
-                me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2);
-            else
-                me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3);
-        }
     }
 
     void EnterCombat(Unit*) override
@@ -86,7 +77,6 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
         _events.Reset();
         _events.ScheduleEvent(1, 500);
     }
-
 
     bool IsDemonicTyrantSummoned(Unit* owner)
     {

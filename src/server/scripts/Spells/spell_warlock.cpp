@@ -2617,4 +2617,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_soul_flame);
     RegisterSpellScript(spell_warl_ritual_of_ruin);
     RegisterSpellScript(spell_warl_molten_hand);
+    RegisterSpellScript(spell_warl_all_minion_scaling);
 }
