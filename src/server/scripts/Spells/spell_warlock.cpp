@@ -83,16 +83,12 @@ enum WarlockSpells
     SPELL_WARLOCK_SOUL_STRIKE                       = 83039,
     SPELL_WARLOCK_IMMOLATE                          = 47811,
     TALENT_WARLOCK_SOUL_FLAME                       = 30054,
-    TALENT_WARLOCK_MOLTEN_HAND                      = 47245,
-    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1          = 83073,
-    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2          = 83074,
-    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3          = 83075,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1              = 47383,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2              = 71162,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3              = 71165,
-    TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R1        = 83076,
-    TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R2        = 83077,
-    TALENT_WARLOCK_MOLTEN_HAND_ADDITIONAL_R3        = 83078,
+    TALENT_WARLOCK_RITUAL_OF_RUIN                   = 83074,
+    TALENT_WARLOCK_RITUAL_OF_RUIN_STACK             = 83075,
+    TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF              = 83076,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1              = 83077,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2              = 83078,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3              = 83079,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -2481,6 +2477,75 @@ class spell_warl_soul_flame : public AuraScript
     }
 };
 
+class spell_warl_ritual_of_ruin : public AuraScript
+{
+    PrepareAuraScript(spell_warl_ritual_of_ruin);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost <= 0)
+            return false;
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 powerCost = eventInfo.GetSpellInfo()->ManaCost;
+        Unit* caster = GetCaster();
+
+        uint32 maxStacks = aurEff->GetAmount();
+
+        if (Aura* stackAura = caster->GetAura(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK))
+        {
+            uint32 stackAmount = stackAura->GetStackAmount();
+            stackAura->ModStackAmount(powerCost);
+
+            if (stackAmount >= maxStacks)
+            {
+                caster->CastSpell(caster, TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF, TRIGGERED_FULL_MASK);
+                stackAura->ModStackAmount(-stackAmount);
+            }
+        }
+        else
+            caster->CastCustomSpell(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK, SPELLVALUE_AURA_STACK, powerCost, caster, true, nullptr, aurEff);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_ritual_of_ruin::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_ritual_of_ruin::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_molten_hand : public AuraScript
+{
+    PrepareAuraScript(spell_warl_molten_hand);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->IsAlive() && GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 rank = aurEff->GetAmount();
+        Unit* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself();
+
+        if (rank == 1)
+            owner->CastSpell(owner, TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1, TRIGGERED_FULL_MASK);
+        else if (rank == 2)
+            owner->CastSpell(owner, TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2, TRIGGERED_FULL_MASK);
+        else
+            owner->CastSpell(owner, TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_molten_hand::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_molten_hand::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2550,4 +2615,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_xavians_teachings);
     RegisterSpellScript(spell_warl_agonizing_corruption);
     RegisterSpellScript(spell_warl_soul_flame);
+    RegisterSpellScript(spell_warl_ritual_of_ruin);
+    RegisterSpellScript(spell_warl_molten_hand);
 }

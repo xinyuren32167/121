@@ -40,6 +40,10 @@ enum WarlockSpells
     SPELL_MINION_SCALING_BOMBER                          = 74999,
     SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE              = 83031,
 
+    TALENT_WARLOCK_MOLTEN_HAND                           = 47245,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1               = 83077,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2               = 83078,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3               = 83079,
 
     SPELL_WILDIMP_FIREBOLT  = 83003,
     SPELL_DEMONIC_CORE      = 83029,
@@ -65,6 +69,15 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
     void InitializeAI() override
     {
         me->CastSpell(me, SPELL_MINION_SCALING_WILD_IMP);
+        if (uint32 rank = me->GetCharmerOrOwnerPlayerOrPlayerItself()->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0)->GetAmount())
+        {
+            if (rank == 1)
+                me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1);
+            else if (rank == 2)
+                me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2);
+            else
+                me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3);
+        }
     }
 
     void EnterCombat(Unit*) override

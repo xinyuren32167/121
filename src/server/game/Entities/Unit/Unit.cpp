@@ -7139,7 +7139,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     case 30296:
                         {
                             // Improved Soul Leech
-                            AuraEffectList const& SoulLeechAuras = GetAuraEffectsByType(SPELL_AURA_DUMMY);
+                            /*AuraEffectList const& SoulLeechAuras = GetAuraEffectsByType(SPELL_AURA_DUMMY);
                             for (Unit::AuraEffectList::const_iterator i = SoulLeechAuras.begin(); i != SoulLeechAuras.end(); ++i)
                             {
                                 if ((*i)->GetId() == 54117 || (*i)->GetId() == 54118)
@@ -7166,13 +7166,22 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                                     }
                                     break;
                                 }
-                            }
+                            }*/
                             // health
                             basepoints0 = CalculatePct(int32(damage), triggerAmount);
                             target = this;
                             triggered_spell_id = 30294;
                             break;
                         }
+                    case 54117:
+                    case 54118:
+                    {
+                        // health
+                        basepoints0 = CalculatePct(int32(damage), triggerAmount);
+                        target = this;
+                        triggered_spell_id = 83073;
+                        break;
+                    }
                     // Shadowflame (Voidheart Raiment set bonus)
                     case 37377:
                         {
@@ -9551,7 +9560,7 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                                 spellPower -= demonicAuraEffect->GetAmount();
 
                             basepoints0 = int32((aurEff->GetAmount() * spellPower + 100.0f) / 100.0f);
-                            CastCustomSpell(this, trigger_spell_id, &basepoints0, &basepoints0, nullptr, true, castItem, triggeredByAura);
+                            CastCustomSpell(owner, trigger_spell_id, &basepoints0, &basepoints0, nullptr, true, castItem, triggeredByAura);
                             return true;
                         }
                     }
