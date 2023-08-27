@@ -71,6 +71,24 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
         me->CastSpell(me, SPELL_MINION_SCALING_WILD_IMP);
     }
 
+    void SpellHitTarget(Unit* target, SpellInfo const* spell)
+    {
+        if (uint32 rank = me->GetCharmerOrOwnerPlayerOrPlayerItself()->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0)->GetAmount())
+        {
+            if (me->HasAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1) || me->HasAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2) || me->HasAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3))
+                return;
+            else
+            {
+                if (rank == 1)
+                    me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1);
+                else if (rank == 2)
+                    me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2);
+                else
+                    me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3);
+            }
+        }
+    }
+
     void EnterCombat(Unit*) override
     {
         attackCount = 0;
