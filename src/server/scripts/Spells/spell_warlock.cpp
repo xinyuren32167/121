@@ -1795,7 +1795,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
     void HandleHitTarget(SpellEffIndex /*effIndex*/)
     {
         int32 runicPower = GetCaster()->GetPower(POWER_ENERGY);
-        uint8 maxSummon = std::min(runicPower, 3);
+        uint8 maxSummon = runicPower > 3 ? 3 : runicPower;
         Player* player = GetCaster()->ToPlayer();
 
         player->ModifyPower(POWER_ENERGY, -maxSummon);
