@@ -82,6 +82,7 @@ enum WarriorSpells
     SPELL_WARRIOR_VIGILANCE_REDIRECT_THREAT = 59665,
     SPELL_WARRIOR_WHIRLWIND_OFF = 44949,
     SPELL_WARRIOR_WHIRLWIND_ENERGIZE = 1684,
+    SPELL_WARRIOR_VICTORY_RUSH = 34428,
 
     //Talents
     TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
@@ -1762,7 +1763,32 @@ class spell_warr_shield_charge : public SpellScript
     }
 };
 
+class spell_warr_impending_victory_replacer : public AuraScript
+{
+    PrepareAuraScript(spell_warr_impending_victory_replacer);
 
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARRIOR_VICTORY_RUSH, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_WARRIOR_IMPENDING_VICTORY);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARRIOR_IMPENDING_VICTORY, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_WARRIOR_VICTORY_RUSH);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warr_impending_victory_replacer::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warr_impending_victory_replacer::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
 
 void AddSC_warrior_spell_scripts()
 {
@@ -1815,9 +1841,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_berserkers_way);
     RegisterSpellScript(spell_warr_victorious);
     RegisterSpellScript(spell_warr_shield_charge);
-
-
-
-
+    RegisterSpellScript(spell_warr_impending_victory_replacer);
 }
 
