@@ -57,6 +57,10 @@ public:
     uint32 GetTimer() { return m_timer; }
     void SetTimer(uint32 t) { m_timer = t; }
 
+    void SetPositionReset(float dist, float angle) { m_dist = dist, m_angle = angle; };
+    float GetDist() { return m_dist; };
+    float GetAngle() { return m_angle; };
+
     const SummonPropertiesEntry* const m_Properties;
 
     std::string GetDebugInfo() const override;
@@ -65,6 +69,9 @@ private:
     uint32 m_timer;
     uint32 m_lifetime;
     ObjectGuid m_summonerGUID;
+    float m_dist;
+    float m_angle;
+
 };
 
 class Minion : public TempSummon

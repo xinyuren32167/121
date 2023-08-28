@@ -1478,44 +1478,6 @@ class spell_warl_shadowburn : public AuraScript
     }
 };
 
-class spell_warl_glyph_of_felguard : public AuraScript
-{
-    PrepareAuraScript(spell_warl_glyph_of_felguard);
-
-    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        if (Player* player = GetCaster()->ToPlayer())
-        {
-            if (Pet* pet = player->GetPet())
-            {
-                if (pet->GetEntry() == NPC_FELGUARD)
-                {
-                    pet->HandleStatModifier(UNIT_MOD_ATTACK_POWER, TOTAL_PCT, aurEff->GetAmount(), true);
-                }
-            }
-        }
-    }
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        if (Player* player = GetCaster()->ToPlayer())
-        {
-            if (Pet* pet = player->GetPet())
-            {
-                if (pet->GetEntry() == NPC_FELGUARD)
-                {
-                    pet->HandleStatModifier(UNIT_MOD_ATTACK_POWER, TOTAL_PCT, aurEff->GetAmount(), false);
-                }
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectApply += AuraEffectApplyFn(spell_warl_glyph_of_felguard::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_warl_glyph_of_felguard::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-    }
-};
 
 // 83000
 class spell_warlock_summon_darkhound : public SpellScript
@@ -1533,6 +1495,10 @@ class spell_warlock_summon_darkhound : public SpellScript
         {
             int32 duration = GetSpellInfo()->GetDuration();
             TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration, WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
+
+            if (summon)
+                summon->SetPositionReset(WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
+
         }
     }
 
@@ -1638,6 +1604,10 @@ class spell_warlock_summon_felboar : public SpellScript
         {
             int32 duration = GetSpellInfo()->GetDuration();
             TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELBOAR, player, player, duration, WARLOCK_PET_FELBOAR + i, PET_FOLLOW_ANGLE);
+
+            if (summon)
+                summon->SetPositionReset(WARLOCK_PET_FELBOAR + i, PET_FOLLOW_ANGLE);
+
         }
     }
 
@@ -1657,6 +1627,10 @@ class spell_warlock_summon_felguard : public SpellScript
 
         int32 duration = GetSpellInfo()->GetDuration();
         TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELGUARD_SUMMON, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+
+        if (summon)
+            summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+
     }
 
     void Register() override
@@ -1703,6 +1677,9 @@ class spell_warlock_summon_darkglare : public SpellScript
 
         int32 duration = GetSpellInfo()->GetDuration();
         TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKGLARE, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+
+        if (summon)
+            summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
     }
 
     void FilterTargets(std::list<WorldObject*>& targets)
@@ -1764,14 +1741,19 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
         int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
 
         int32 duration = GetSpellInfo()->GetDuration();
-        GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration, WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration, WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
+
+        if (summon)
+            summon->SetPositionReset(WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
 
         for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
             if (Unit* pet = *itr)
                 if (TempSummon* summon = pet->ToTempSummon())
                 {
                     if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
+                    {
                         summon->SetTimer(summon->GetTimer() + timerIncrease);
+                    }
                 }
                     
 
@@ -1800,7 +1782,8 @@ class spell_warlock_hand_of_guldan : public SpellScript
             for (size_t i = 0; i < maxSummon; i++)
             {
                 TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
-                
+                if (summon)
+                    summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
         }
     }
@@ -2577,7 +2560,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_unstable_affliction);
     //RegisterSpellScript(spell_warl_drain_soul);
     //RegisterSpellScript(spell_warl_shadowburn);
-    RegisterSpellScript(spell_warl_glyph_of_felguard);
     RegisterSpellScript(spell_warlock_summon_darkglare);
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_hand_of_guldan);

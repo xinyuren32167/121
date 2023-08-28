@@ -73,21 +73,15 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
 
     void SpellHitTarget(Unit* target, SpellInfo const* spell)
     {
-        if (uint32 rank = me->GetCharmerOrOwnerPlayerOrPlayerItself()->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0)->GetAmount())
-        {
-            if (me->HasAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1) || me->HasAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2) || me->HasAura(TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3))
-                return;
-            else
-            {
-                if (rank == 1)
-                    me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1);
-                else if (rank == 2)
-                    me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2);
-                else
-                    me->CastSpell(me, TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3);
-            }
-        }
+        if (IsDemonicTyrantSummoned())
+            return;
+
+        if (attackCount >= 10)
+            me->DespawnOrUnsummon();
+        else
+            attackCount++;
     }
+
 
     void EnterCombat(Unit*) override
     {
@@ -96,16 +90,18 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
         _events.ScheduleEvent(1, 500);
     }
 
-    bool IsDemonicTyrantSummoned(Unit* owner)
+    bool IsDemonicTyrantSummoned()
     {
         bool isSummoned = false;
-
-        for (Unit::ControlSet::const_iterator itr = owner->m_Controlled.begin(); itr != owner->m_Controlled.end(); ++itr)
-            if ((*itr)->IsAlive() && (*itr)->GetEntry() == PET_DEMONIC_TYRAN)
-            {
-                isSummoned = true;
-                break;
-            }
+        if (Unit* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+            for (Unit::ControlSet::const_iterator itr = owner->m_Controlled.begin(); itr != owner->m_Controlled.end(); ++itr)
+                if ((*itr)->IsAlive() && (*itr)->GetEntry() == PET_DEMONIC_TYRAN)
+                {
+                    isSummoned = true;
+                    break;
+                }
+        }
+       
         return isSummoned;
     }
 
@@ -113,7 +109,13 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
     {
         if (me->IsAlive())
         {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
 
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
         }
     }
 
@@ -186,6 +188,20 @@ struct npc_pet_warlock_bomber : public ScriptedAI
         _events.ScheduleEvent(1, 1000);
     }
 
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
+    }
+
 
     void AttackBomb()
     {
@@ -246,6 +262,20 @@ struct npc_pet_warlock_darkglare: public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(1, 0);
+    }
+
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
     }
 
 
@@ -357,6 +387,20 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
         AttackStart(target);
     }
 
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
+    }
+
     void UpdateAI(uint32 diff) override
     {
         if (_initAttack)
@@ -433,6 +477,20 @@ struct npc_pet_warlock_felguard : public ScriptedAI
         AttackStart(target);
     }
 
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
+    }
+
     void UpdateAI(uint32 diff) override
     {
         if (_initAttack)
@@ -501,6 +559,20 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
         owner->CastSpell(me, SPELL_MINION_SCALING_DEMONIC_TYRANT);
     }
 
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
+    }
+
     void UpdateAI(uint32 diff) override
     {
         if (!UpdateVictim())
@@ -542,6 +614,20 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
         me->CastSpell(me, SPELL_MINION_SCALING_DREAD_STALKER);
+    }
+
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
     }
 
     void AttackTarget(Unit* target)
