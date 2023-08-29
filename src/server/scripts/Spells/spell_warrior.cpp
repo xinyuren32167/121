@@ -1763,6 +1763,23 @@ class spell_warr_shield_charge : public SpellScript
 };
 
 
+class spell_warr_ravager : public SpellScript
+{
+    PrepareSpellScript(spell_warr_ravager);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_ravager::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
 
 void AddSC_warrior_spell_scripts()
 {
@@ -1815,9 +1832,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_berserkers_way);
     RegisterSpellScript(spell_warr_victorious);
     RegisterSpellScript(spell_warr_shield_charge);
-
-
-
-
+    RegisterSpellScript(spell_warr_ravager);
 }
 

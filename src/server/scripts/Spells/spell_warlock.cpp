@@ -113,6 +113,9 @@ enum WarlockSpells
     SPELL_MINION_INCREASE_VILEFIEND                 = 1100012,
     SPELL_MINION_INCREASE_DEMONIC_TYRANT            = 1100013,
     SPELL_MINION_INCREASE_BOMBER                    = 1100014,
+
+
+    SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE    = 83032,
 };
 
 enum WarlockPets {
@@ -1753,6 +1756,13 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
                     if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
                     {
                         summon->SetTimer(summon->GetTimer() + timerIncrease);
+                    }
+
+                    if (summon->GetEntry() == PET_FELGUARD_SUMMON || summon->GetEntry() == NPC_IMP
+                        || summon->GetEntry() == NPC_FELHUNTER || summon->GetEntry() == NPC_FELGUARD
+                        || summon->GetEntry() == NPC_VOIDWALKER || summon->GetEntry() == NPC_SUCCUBUS)
+                    {
+                        player->CastSpell(summon, SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE);
                     }
                 }
                     

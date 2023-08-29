@@ -3066,6 +3066,23 @@ class spell_hun_hunting_party : public AuraScript
     }
 };
 
+
+
+class spell_hunter_stampeded : public AuraScript
+{
+    PrepareAuraScript(spell_hunter_stampeded);
+
+    void HandleDummyTick(AuraEffect const* /*aurEff*/)
+    {
+
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_hunter_stampeded::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);

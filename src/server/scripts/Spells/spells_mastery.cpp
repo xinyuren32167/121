@@ -46,6 +46,18 @@ enum Masteries
     MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE = 1000007,
     MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_BUFF = 1000010,
     MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_DAMAGE_REDUCTION = 1000008,
+
+
+    // Warlock
+
+    MASTERY_WARLOCK_POTENT_AFFLICTIONS = 1100018,
+    MASTERY_WARLOCK_CHAOTIC_ENERGIES = 1100019,
+    MASTERY_WARLOCK_MASTER_DEMONOLOGY = 1100019,
+
+    MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF = 1100017,
+    MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF = 1100016,
+    MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF = 1100015,
+
 };
 
 // Mage
@@ -1151,8 +1163,68 @@ class spell_mastery_jack_of_all_master_of_none_proc : public SpellScript
     }
 };
 
+
+class spell_mastery_warlock_potent_afflictions : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_warlock_potent_afflictions);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTERY_WARLOCK_POTENT_AFFLICTIONS)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_warlock_potent_afflictions::HandleCast);
+    }
+
+};
+
+class spell_mastery_warlock_chaotic_energies : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_warlock_chaotic_energies);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTERY_WARLOCK_CHAOTIC_ENERGIES)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_warlock_chaotic_energies::HandleCast);
+    }
+};
+
+class spell_mastery_warlock_master_demonology : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_warlock_master_demonology);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 bonus = (GetCaster()->GetAura(MASTERY_WARLOCK_MASTER_DEMONOLOGY)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_warlock_master_demonology::HandleCast);
+    }
+};
+
+
 void AddSC_spells_mastery_scripts()
 {
+    RegisterSpellScript(spell_mastery_warlock_master_demonology);
+    RegisterSpellScript(spell_mastery_warlock_chaotic_energies);
+    RegisterSpellScript(spell_mastery_warlock_potent_afflictions);
     RegisterSpellScript(spell_icicle_ice_lance);
     RegisterSpellScript(spell_icicle_frostbolt);
     RegisterSpellScript(spell_icicle_ice_lance_aura);
