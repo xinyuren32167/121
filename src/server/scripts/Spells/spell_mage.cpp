@@ -58,6 +58,7 @@ enum MageSpells
     SPELL_MAGE_FLURRY_DAMAGE = 81534,
     SPELL_MAGE_FROSTBOLT = 81504,
     SPELL_MAGE_FROST_NOVA = 42917,
+    SPELL_MAGE_INVISIBILITY = 66,
     SPELL_MAGE_GREATER_INVISIBILITY = 81511,
     SPELL_MAGE_GREATER_INVISIBILITY_AURA = 81513,
     SPELL_MAGE_ICE_BARRIER = 43039,
@@ -2282,6 +2283,32 @@ class spell_mage_nether_tempest : public SpellScript
     }
 };
 
+class spell_mage_greater_invisibility_replacer : public AuraScript
+{
+    PrepareAuraScript(spell_mage_greater_invisibility_replacer);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_MAGE_INVISIBILITY, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_MAGE_GREATER_INVISIBILITY);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_MAGE_GREATER_INVISIBILITY, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_MAGE_INVISIBILITY);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_greater_invisibility_replacer::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_greater_invisibility_replacer::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
 
 void AddSC_mage_spell_scripts()
 {
@@ -2345,7 +2372,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_comet_storm);
     RegisterSpellScript(spell_mage_ray_of_frost_fingers);
     RegisterSpellScript(spell_mage_ray_of_frost_proc);
-
-
-
+    RegisterSpellScript(spell_mage_greater_invisibility_replacer);
 }
