@@ -2267,7 +2267,7 @@ class spell_sha_invoke_essence : public SpellScript
 
         else if (form == FORM_SPIRIT_OF_FIRE)
         {
-            int32 dmg = CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 3) + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 3);
+            float dmg = CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 2.25) + CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 3);
             caster->CastCustomSpell(SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, SPELLVALUE_BASE_POINT0, dmg, target, TRIGGERED_FULL_MASK);
         }
         else if (form == FORM_SPIRIT_OF_EARTH)
@@ -2328,7 +2328,7 @@ class spell_sha_fury_of_the_elements_fire : public SpellScript
             if (auto* aurEff = target->GetAura(SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, caster->GetGUID()))
             {
                 int32 damageRatio = GetEffectValue();
-                int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio) + CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), damageRatio);
+                float damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 37.5) + CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 27);
                 int32 stackAmount = aurEff->GetStackAmount();
 
                 uint32 damagePct = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE)->GetEffect(EFFECT_1).CalcValue(caster);
