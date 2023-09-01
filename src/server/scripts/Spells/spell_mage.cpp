@@ -103,14 +103,21 @@ enum MageSpells
     SPELL_MAGE_GLYPH_OF_BLAST_WAVE = 62126,
     //SPELL_MAGE_FINGERS_OF_FROST = 44543
 
-
+    // Talents
     SPELL_MAGE_TALENT_IMPROVED_FINGERS_OF_FROST_R1 = 80027,
     SPELL_MAGE_TALENT_IMPROVED_FINGERS_OF_FROST_R2 = 80028,
+    SPELL_MAGE_TALENT_RULE_OF_THREES_R1 = 11237,
+    SPELL_MAGE_TALENT_RULE_OF_THREES_R2 = 12463,
+    SPELL_MAGE_TALENT_RULE_OF_THREES_R3 = 12464,
+    SPELL_MAGE_TALENT_RULE_OF_THREES_R4 = 16769,
+    SPELL_MAGE_TALENT_RULE_OF_THREES_R5 = 16770,
+    SPELL_MAGE_TALENT_RULE_OF_THREES_BUFF = 16771,
 
-    SPELL_VISUAL_FROZEN_ORB                        = 72067,
-    SPELL_VISUAL_ARCANE_ORB                        = 80015,
-    SPELL_MAGE_FROZEN_ORB_DAMAGE                   = 80012,
-    SPELL_MAGE_ARCANE_ORB_DAMAGE                   = 80017,
+
+    SPELL_VISUAL_FROZEN_ORB = 72067,
+    SPELL_VISUAL_ARCANE_ORB = 80015,
+    SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
+    SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
 };
 
 class npc_mage_spell_arcane_orbs : public CreatureScript
@@ -462,7 +469,7 @@ class spell_mage_mirror_image : public AuraScript
             caster->RemoveAura(SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION);
 
         for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
-            if(Unit* target = (*itr)->ToUnit())
+            if (Unit* target = (*itr)->ToUnit())
                 if (target->GetEntry() == SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID)
                     target->ToCreature()->DespawnOrUnsummon();
     }
@@ -1561,6 +1568,26 @@ class spell_mage_arcane_charge : public AuraScript
 {
     PrepareAuraScript(spell_mage_arcane_charge);
 
+    Aura* GetRuleOfThreesTalent()
+    {
+        if (GetCaster()->HasAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R1))
+            return GetCaster()->GetAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R1);
+
+        if (GetCaster()->HasAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R2))
+            return GetCaster()->GetAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R2);
+
+        if (GetCaster()->HasAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R3))
+            return GetCaster()->GetAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R3);
+
+        if (GetCaster()->HasAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R4))
+            return GetCaster()->GetAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R4);
+
+        if (GetCaster()->HasAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R5))
+            return GetCaster()->GetAura(SPELL_MAGE_TALENT_RULE_OF_THREES_R5);
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -1577,6 +1604,15 @@ class spell_mage_arcane_charge : public AuraScript
             buff1->SetStackAmount(stackAmount);
         if (Aura* buff2 = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_BUFF2))
             buff2->SetStackAmount(stackAmount);
+        LOG_ERROR("error", "proc");
+        if (GetRuleOfThreesTalent())
+        {
+            int32 amount = GetRuleOfThreesTalent()->GetEffect(EFFECT_0)->GetAmount();
+            LOG_ERROR("error", "stackAmount = {}", stackAmount);
+            LOG_ERROR("error", "amount = {}", amount);
+            if (stackAmount == 3)
+                caster->CastCustomSpell(SPELL_MAGE_TALENT_RULE_OF_THREES_BUFF, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
@@ -2080,44 +2116,21 @@ class spell_mage_fingers_of_frost : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-        int32 _procChance = procChance;
+        int32 procChance = _procChance;
 
         if (eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FROSTBOLT)
-            _procChance += aurEff->GetAmount();
+            procChance += aurEff->GetAmount();
         else if (eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FROZEN_ORB_DAMAGE)
-            _procChance += GetAura()->GetEffect(EFFECT_1)->GetAmount();
+            procChance += GetAura()->GetEffect(EFFECT_1)->GetAmount();
 
-        if (!roll_chance_i(_procChance))
+        if (!roll_chance_i(procChance))
         {
-            procChance += 2;
+            _procChance += 2;
             return;
         }
-        procChance = 0;
+        _procChance = 0;
 
         caster->CastSpell(caster, SPELL_MAGE_FINGERS_OF_FROST_AURA, TRIGGERED_FULL_MASK);
-
-        /*if (Aura* fingers = caster->GetAura(SPELL_MAGE_FINGERS_OF_FROST_AURA))
-        {
-            if (Aura* fingersVisual = caster->GetAura(SPELL_MAGE_FINGERS_OF_FROST_VISUAL))
-            {
-                int32 maxCharges = GetAura()->GetEffect(EFFECT_2)->GetAmount();
-
-                if (fingersVisual->GetCharges() < maxCharges)
-                    fingersVisual->ModCharges(1);
-
-                fingersVisual->RefreshDuration();
-            }
-            else
-                caster->AddAura(SPELL_MAGE_FINGERS_OF_FROST_VISUAL, caster);
-
-            fingers->RefreshDuration();
-        }
-        else
-        {
-            caster->AddAura(SPELL_MAGE_FINGERS_OF_FROST_AURA, caster);
-            caster->AddAura(SPELL_MAGE_FINGERS_OF_FROST_VISUAL, caster);
-        }*/
-
     }
 
     void Register() override
@@ -2126,7 +2139,7 @@ class spell_mage_fingers_of_frost : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_mage_fingers_of_frost::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 private:
-    int32 procChance = 0;
+    int32 _procChance = 0;
 };
 
 // 44544 - Fingers of Frost
@@ -2268,13 +2281,13 @@ class spell_mage_nether_tempest : public SpellScript
     {
 
         targets.remove_if([&](WorldObject* target) -> bool
-        {
-            Unit* unit = target->ToUnit();
-            if (unit->IsAlive() && unit->IsVisible() && !unit->IsFriendlyTo(GetCaster()))
-                return true;
+            {
+                Unit* unit = target->ToUnit();
+        if (unit->IsAlive() && unit->IsVisible() && !unit->IsFriendlyTo(GetCaster()))
+            return true;
 
-            return false;
-        });
+        return false;
+            });
     }
 
     void Register() override
