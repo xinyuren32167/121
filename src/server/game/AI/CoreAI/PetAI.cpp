@@ -592,7 +592,6 @@ void PetAI::DoAttack(Unit* target, bool chase)
     // Handles attack with or without chase and also resets flags
     // for next update / creature kill
 
-    DoAttackSummonedUnits(target, chase);
 
     if (me->Attack(target, true))
     {
@@ -618,6 +617,7 @@ void PetAI::DoAttack(Unit* target, bool chase)
                 float angle = combatRange == 0.f && target->GetTypeId() != TYPEID_PLAYER && !target->IsPet() ? float(M_PI) : 0.f;
                 float tolerance = combatRange == 0.f ? float(M_PI_4) : float(M_PI * 2);
                 me->GetMotionMaster()->MoveChase(target, ChaseRange(0.f, combatRange), ChaseAngle(angle, tolerance));
+                DoAttackSummonedUnits(target, chase);
             }
         }
         else // (Stay && ((Aggressive || Defensive) && In Melee Range)))
@@ -643,22 +643,12 @@ void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
     if (!player)
         return;
 
-
-    auto summonedUnits = player->GetSummonedUnits();
+    auto summonedUnits = player->m_Controlled;
 
     for (const auto& unit : summonedUnits) {
 
-        if (!unit->IsInWorld())
-            continue;
-
-        if (unit->GetGUID() == GetGUID())
-            continue;
-
-        if (unit->isDead())
-            continue;
-
-        if (unit->GetTarget() != target->GetGUID()) {
-            // unit->GetAI()->AttackStart(target);
+        if (unit->Attack(target, true)) {
+            unit->GetMotionMaster()->MoveChase(target);
         }
     }
     

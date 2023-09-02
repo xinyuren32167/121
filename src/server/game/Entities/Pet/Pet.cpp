@@ -1398,6 +1398,9 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     // Can be summon and guardian
     if (GetEntry() == NPC_RISEN_GHOUL)
     {
+        SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)));
+        SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)));
+
         // 100% energy after summon
         SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
 

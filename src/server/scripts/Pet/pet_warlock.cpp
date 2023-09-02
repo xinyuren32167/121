@@ -328,6 +328,10 @@ private:
     bool _initAttack;
 };
 
+
+
+
+
 class spell_warl_darkglare_spell : public SpellScriptLoader
 {
 public:

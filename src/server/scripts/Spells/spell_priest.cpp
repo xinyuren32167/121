@@ -1479,8 +1479,7 @@ class spell_pri_purge_the_wicked : public SpellScript
             if (target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
                 continue;
 
-            caster->AddAura(SPELL_PRIEST_PURGE_THE_WICKED, target);
-            return;
+            caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, true);
         }
 
         caster->AddAura(SPELL_PRIEST_PURGE_THE_WICKED, GetExplTargetUnit());
@@ -1857,6 +1856,7 @@ class spell_pri_void_eruption : public SpellScript
             caster->AddAura(SPELL_PRIEST_VOIDFORM, caster);
             caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
             caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
+            caster->ToPlayer()->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, -120000);
         }
     }
 

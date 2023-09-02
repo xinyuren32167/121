@@ -1386,7 +1386,7 @@ class spell_rog_secret_technique_AuraScript : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetSpellInfo()->Id != SPELL_ROGUE_SECRET_TECHNIQUE)
+        if (eventInfo.GetSpellInfo()->Id == SPELL_ROGUE_SECRET_TECHNIQUE)
             return;
 
         uint32 duration = aurEff->GetAmount();

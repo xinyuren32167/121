@@ -81,6 +81,7 @@ enum HunterSpells
     SPELL_HUNTER_ANIMAL_COMPANION_TALENT = 80223,
     SPELL_HUNTER_ANIMAL_COMPANION = 80224,
     SPELL_HUNTER_KILL_COMMAND = 80141,
+    SPELL_HUNTER_STAMPEDED_DAMAGE = 80166,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -1522,7 +1523,7 @@ class spell_hun_bestial_apply : public SpellScript
 
         pet->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
         for (auto const& unit : summonedUnits)
         {
             if (!unit || !unit->IsAlive())
@@ -1660,7 +1661,8 @@ class spell_hun_kill_command : public SpellScript
 
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
-        std::vector<Unit*> summonedUnits = caster->GetSummonedUnits();
+        auto summonedUnits = caster->m_Controlled;
+
         for (auto const& unit : summonedUnits)
         {
             if (!unit || !unit->IsAlive())
@@ -2221,20 +2223,16 @@ class spell_hun_call_of_wild : public SpellScript
         if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
-        SpellValue const* value = GetSpellValue();
-        uint32 summonAmount = value->EffectBasePoints[EFFECT_2];
+        int32 totalSummon = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
 
-        for (size_t i = 0; i < summonAmount; i++)
+        for (size_t i = 0; i < totalSummon; i++)
         {
             if (!petStable->StabledPets.at(i))
                 continue;
 
             auto petId = petStable->StabledPets.at(i)->CreatureId;
             Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-
-            CreatureTemplate const* petCinfo = sObjectMgr->GetCreatureTemplate(petId);
-            CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(petCinfo->family);
-
+            ((Guardian*)pet)->InitStatsForLevel(caster->getLevel());
             if (pet && pet->IsAlive())
                 pet->AI()->AttackStart(GetExplTargetUnit());
         }
@@ -2282,6 +2280,7 @@ class spell_hun_call_of_wild_periodic : public SpellScript
         auto pet = petStable->StabledPets.at(random)->CreatureId;
 
         Creature* summon = GetCaster()->SummonCreature(pet, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+        ((Guardian*)summon)->InitStatsForLevel(GetCaster()->getLevel());
 
         summon->AddAura(34902, GetCaster());
         summon->AddAura(34903, GetCaster());
@@ -2728,9 +2727,11 @@ static void ApplySecondaryPet(Creature* summon, auto firstPet, Unit* caster)
 {
     summon->GetMotionMaster()->MoveFollow(summon->GetCharmerOrOwner(), SECOND_PET_FOLLOW_DIST, summon->GetFollowAngle());
     summon->InitCharmInfo();
+    ((Guardian*)summon)->InitStatsForLevel(caster->getLevel());
 
     summon->GetCharmInfo()->SetPetNumber(firstPet->PetNumber, false);
     summon->SetDisplayId(firstPet->DisplayId);
+    summon->setPowerType(POWER_FOCUS);
     summon->SetNativeDisplayId(firstPet->DisplayId);
     summon->SetName(firstPet->Name);
 
@@ -2811,13 +2812,10 @@ class spell_hun_animal_companion : public SpellScript
         if (!firstPet)
             return;
 
-        if (IsSecondaryPetAlreadySummoned(caster, firstPet->PetNumber))
-            return;
 
-        Position const& pos = GetCaster()->GetPosition();
+        Position const& pos = caster->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-        int32 duration = GetSpellInfo()->GetDuration();
-        Creature* summon = GetCaster()->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, duration, 60 * IN_MILLISECONDS, properties);
+        Creature* summon = caster->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
         ApplySecondaryPet(summon, firstPet, caster);
     }
 
@@ -3066,20 +3064,75 @@ class spell_hun_hunting_party : public AuraScript
     }
 };
 
-
-
 class spell_hunter_stampeded : public AuraScript
 {
     PrepareAuraScript(spell_hunter_stampeded);
 
     void HandleDummyTick(AuraEffect const* /*aurEff*/)
     {
-
-    }
+        Unit* target = GetTarget();
+        Position position = target->GetPosition();
+        if (GetAura()->GetDuration() % 2 == 0)
+            position.m_positionX += 2.5f;
+        else
+            position.m_positionX -= 2.5f;
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        TempSummon* summon = target->GetOwner()->SummonCreature(600609, position, TEMPSUMMON_TIMED_DESPAWN, 10000, 0, properties);
+        summon->SetSummonerGUID(target->GetOwnerGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetTarget();
+    } 
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_hunter_stampeded::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_hunter_stampeded::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class npc_hunter_spell_stampeded : public CreatureScript
+{
+public:
+    npc_hunter_spell_stampeded() : CreatureScript("npc_hunter_spell_stampeded") { }
+
+    struct npc_hunter_spell_stampededAI : public ScriptedAI
+    {
+        npc_hunter_spell_stampededAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 750;
+
+        void Reset() override
+        {
+            Position pos = me->GetFirstCollisionPosition(40.f, 0);
+            me->GetMotionMaster()->MovePoint(0, pos);
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 750) {
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    me->CastSpell(me, SPELL_HUNTER_STAMPEDED_DAMAGE, true, nullptr, nullptr, owner->GetGUID());
+                    me->CastSpell(me, 80242, true, nullptr, nullptr, owner->GetGUID());
+                }
+                update = 0;
+            }
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override {
+            if (id == 0) {
+                me->DespawnOrUnsummon();
+            }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_hunter_spell_stampededAI(creature);
     }
 };
 
@@ -3166,5 +3219,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_thrill_of_hunt);
     RegisterSpellScript(spell_hun_noxious_stings);
     RegisterSpellScript(spell_hun_hunting_party);
+    RegisterSpellScript(spell_hunter_stampeded);
     new Hunter_AllMapScript();
+    new npc_hunter_spell_stampeded();
 }

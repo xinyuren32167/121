@@ -49,7 +49,6 @@ enum Masteries
 
 
     // Warlock
-
     MASTERY_WARLOCK_POTENT_AFFLICTIONS = 1100018,
     MASTERY_WARLOCK_CHAOTIC_ENERGIES = 1100019,
     MASTERY_WARLOCK_MASTER_DEMONOLOGY = 1100019,
@@ -497,6 +496,24 @@ class spell_mastery_sniper_training : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_mastery_sniper_training::HandleCast);
+    }
+};
+
+class spell_mastery_spirit_bound : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_spirit_bound);
+
+    void HandleCast()
+    {
+        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        int32 amount = (GetCaster()->GetAura(500005)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+
+        GetCaster()->CastCustomSpell(500008, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_spirit_bound::HandleCast);
     }
 };
 
@@ -1242,6 +1259,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_hand_of_light);
     RegisterSpellScript(spell_mastery_master_of_beasts);
     RegisterSpellScript(spell_mastery_sniper_training);
+    RegisterSpellScript(spell_mastery_spirit_bound);
     RegisterSpellScript(spell_mastery_astral_invocation);
     RegisterSpellScript(spell_mastery_razor_claws);
     RegisterSpellScript(spell_mastery_natures_guardian);

@@ -52,6 +52,7 @@ public:
     [[nodiscard]] Unit* GetSummonerUnit() const;
     [[nodiscard]] Creature* GetSummonerCreatureBase() const;
     [[nodiscard]] GameObject* GetSummonerGameObject() const;
+    void SetSummonerGUID(ObjectGuid guid) { m_summonerGUID = guid; }
     ObjectGuid GetSummonerGUID() const { return m_summonerGUID; }
     TempSummonType GetSummonType() const { return m_type; }
     uint32 GetTimer() { return m_timer; }

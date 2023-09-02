@@ -1763,6 +1763,86 @@ class spell_warr_shield_charge : public SpellScript
     }
 };
 
+class spell_warr_ravager : public SpellScript
+{
+    PrepareSpellScript(spell_warr_ravager);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+
+        Position pos = target->GetPosition();
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = GetCaster()->SummonCreature(600611, pos, TEMPSUMMON_TIMED_DESPAWN, 12000, 0, properties);
+
+        if (!summon)
+            return;
+
+        summon->SetOwnerGUID(GetCaster()->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetTarget();
+
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_ravager::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+struct npc_pet_ravager : public ScriptedAI
+{
+    npc_pet_ravager(Creature* creature) : ScriptedAI(creature) { }
+
+    void InitializeAI() override
+    {
+        _events.Reset();
+        _events.ScheduleEvent(1, 0);
+        _events.ScheduleEvent(2, 0);
+        me->CombatStop(true);
+        me->AttackStop();
+        me->SetReactState(REACT_PASSIVE);
+    }
+
+
+    void EnterCombat(Unit*) override
+    {
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        _events.Update(diff);
+
+        while (uint32 eventId = _events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case 1:
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    me->CastSpell(me, 84540, true, nullptr, nullptr, owner->GetGUID());
+                }
+                break;
+            case 2:
+                if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
+                    owner->CastSpell(owner, 84541);
+                    _events.ScheduleEvent(2, 2000);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        DoMeleeAttackIfReady();
+    }
+
+private:
+    EventMap _events;
+};
+
 class spell_warr_impending_victory_replacer : public AuraScript
 {
     PrepareAuraScript(spell_warr_impending_victory_replacer);
@@ -1842,5 +1922,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_victorious);
     RegisterSpellScript(spell_warr_shield_charge);
     RegisterSpellScript(spell_warr_impending_victory_replacer);
+    RegisterSpellScript(spell_warr_ravager);
+    RegisterCreatureAI(npc_pet_ravager);
 }
 

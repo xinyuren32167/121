@@ -2558,13 +2558,10 @@ class spell_dru_efflorescence : public SpellScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_EFFLORESCENCE);
         uint32 duration = value->GetDuration();
 
-        std::vector<Unit*> summonedUnits = GetCaster()->ToPlayer()->GetSummonedUnits();
+        auto summonedUnits = GetCaster()->ToPlayer()->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
-            if (unit->isDead())
-                continue;
-
             if (unit->HasAura(SPELL_DRUID_EFFLORESCENCE_AURA))
                 unit->ToCreature()->DespawnOrUnsummon();
         }

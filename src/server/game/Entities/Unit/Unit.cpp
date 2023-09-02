@@ -10307,12 +10307,9 @@ void Unit::AttackStopSummonedUnits()
     if (!player)
         return;
 
-    auto summonedUnits = player->GetSummonedUnits();
+    auto summonedUnits = player->m_Controlled;
 
     for (const auto& unit : summonedUnits) {
-
-        if (unit->isDead())
-            continue;
 
         if (!unit->IsInCombat())
             continue;

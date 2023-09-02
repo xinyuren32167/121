@@ -404,13 +404,10 @@ class rune_hunter_might_of_the_beast : public AuraScript
         if (pet && pet->IsAlive())
             GetCaster()->AddAura(procSpell, pet);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
-            if (unit->isDead())
-                continue;
-
             GetCaster()->AddAura(procSpell, unit);
         }
     }
@@ -2439,16 +2436,13 @@ class rune_hunter_enduring_call_aura : public AuraScript
         if (pet && pet->IsAlive() && !pet->HasAura(procSpell))
             player->AddAura(procSpell, pet);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         if (summonedUnits.empty())
             return;
 
         for (auto const& unit : summonedUnits)
         {
-            if (unit->isDead())
-                continue;
-
             if (!unit->HasAura(procSpell))
                 player->AddAura(procSpell, unit);
         }
@@ -2467,16 +2461,13 @@ class rune_hunter_enduring_call_aura : public AuraScript
         if (pet && pet->HasAura(procSpell))
             pet->RemoveAura(procSpell);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         if (summonedUnits.empty())
             return;
 
         for (auto const& unit : summonedUnits)
         {
-            if (unit->isDead())
-                continue;
-
             if (unit->HasAura(procSpell))
                 unit->RemoveAura(procSpell);
         }
