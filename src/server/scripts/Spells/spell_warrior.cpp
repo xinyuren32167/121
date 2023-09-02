@@ -83,6 +83,8 @@ enum WarriorSpells
     SPELL_WARRIOR_WHIRLWIND_OFF = 44949,
     SPELL_WARRIOR_WHIRLWIND_ENERGIZE = 1684,
     SPELL_WARRIOR_VICTORY_RUSH = 34428,
+    SPELL_WARRIOR_RAVAGER_AURA = 84540,
+    SPELL_WARRIOR_RAVAGER_RAGE = 84541,
 
     //Talents
     TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
@@ -1822,12 +1824,12 @@ struct npc_pet_ravager : public ScriptedAI
             {
             case 1:
                 if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                    me->CastSpell(me, 84540, true, nullptr, nullptr, owner->GetGUID());
+                    me->CastSpell(me, SPELL_WARRIOR_RAVAGER_AURA, true, nullptr, nullptr, owner->GetGUID());
                 }
                 break;
             case 2:
                 if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                    owner->CastSpell(owner, 84541);
+                    owner->CastSpell(owner, SPELL_WARRIOR_RAVAGER_RAGE);
                     _events.ScheduleEvent(2, 2000);
                 }
                 break;
