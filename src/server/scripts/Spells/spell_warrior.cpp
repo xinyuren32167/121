@@ -85,6 +85,8 @@ enum WarriorSpells
     SPELL_WARRIOR_VICTORY_RUSH = 34428,
     SPELL_WARRIOR_RAVAGER_AURA = 84540,
     SPELL_WARRIOR_RAVAGER_RAGE = 84541,
+    SPELL_WARRIOR_COLOSSUS_SMASH = 80002,
+    SPELL_WARRIOR_WARBREAKER = 84519,
 
     //Talents
     TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
@@ -1872,6 +1874,33 @@ class spell_warr_impending_victory_replacer : public AuraScript
     }
 };
 
+class spell_warr_warbreaker_replacer : public AuraScript
+{
+    PrepareAuraScript(spell_warr_warbreaker_replacer);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARRIOR_COLOSSUS_SMASH, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_WARRIOR_WARBREAKER);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARRIOR_WARBREAKER, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_WARRIOR_COLOSSUS_SMASH);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warr_warbreaker_replacer::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warr_warbreaker_replacer::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -1925,6 +1954,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_shield_charge);
     RegisterSpellScript(spell_warr_impending_victory_replacer);
     RegisterSpellScript(spell_warr_ravager);
+    RegisterSpellScript(spell_warr_warbreaker_replacer);
     RegisterCreatureAI(npc_pet_ravager);
 }
 
