@@ -79,9 +79,9 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[PRIEST_SHADOW] = { 31, 81048, "Shadow", 5, 900008, 70.00, false, 0, POWER_ALL };
 
     m_Specializations[SHAMAN_ELEMENTAL] = { 23, 403, "Elemental", 7, 1000000, 18.75, false, 0, POWER_RUNIC_POWER };
-    m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 324, "Enchancement", 7, 1000002, 17.5, true, 1000003, POWER_ALL };
-    m_Specializations[SHAMAN_RESTORATION] = { 25, 331, "Restoration", 7, 1000005, 11.66, false, 0, POWER_ALL };
-    m_Specializations[SHAMAN_SPIRIT_MASTER] = { 32, 84101, "Spirit Master", 7, 1000007, 35.00, true, 1000009, POWER_ALL };
+    m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 324, "Enchancement", 7, 1000002, 17.5, true, 1000003, POWER_MANA };
+    m_Specializations[SHAMAN_RESTORATION] = { 25, 331, "Restoration", 7, 1000005, 11.66, false, 0, POWER_MANA };
+    m_Specializations[SHAMAN_SPIRIT_MASTER] = { 32, 84101, "Spirit Master", 7, 1000007, 35.00, true, 1000009, POWER_MANA };
 
     m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 4, 1100000, 20.59, true, 1100001, POWER_ALL };
     m_Specializations[ROGUE_COMBAT] = { 21, 51690, "Combat", 4, 1100003, 24.14, false, 0, POWER_ALL };
@@ -112,14 +112,6 @@ void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpec
     if (newSpec.classInfo != player->getClass()) {
         sEluna->OnActivateSpec(player, "You can't do that", false, 0);
         return;
-    }
-
-    if (newSpec.powerType != POWER_ALL) {
-        player->setPowerType(newSpec.powerType);
-        if (newSpec.powerType == POWER_RUNIC_POWER)
-            player->SetMaxPower(POWER_RUNIC_POWER, 1000);
-        else
-            player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
     }
 
     player->CastCustomSpell(79852, SPELLVALUE_BASE_POINT0, newSpecId, player, TRIGGERED_NONE);

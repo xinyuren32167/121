@@ -272,7 +272,6 @@ class spell_mage_frozen_orb_damage : public SpellScript
     {
         AfterHit += SpellHitFn(spell_mage_frozen_orb_damage::HandleAfterHit);
     }
-
 };
 
 
@@ -1604,12 +1603,10 @@ class spell_mage_arcane_charge : public AuraScript
             buff1->SetStackAmount(stackAmount);
         if (Aura* buff2 = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_BUFF2))
             buff2->SetStackAmount(stackAmount);
-        LOG_ERROR("error", "proc");
+
         if (GetRuleOfThreesTalent())
         {
             int32 amount = GetRuleOfThreesTalent()->GetEffect(EFFECT_0)->GetAmount();
-            LOG_ERROR("error", "stackAmount = {}", stackAmount);
-            LOG_ERROR("error", "amount = {}", amount);
             if (stackAmount == 3)
                 caster->CastCustomSpell(SPELL_MAGE_TALENT_RULE_OF_THREES_BUFF, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
         }

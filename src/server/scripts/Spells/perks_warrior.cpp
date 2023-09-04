@@ -1400,7 +1400,6 @@ class spell_recuperation : public AuraScript
             return;
 
         uint32 amount = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
-        LOG_ERROR("error", "{}", amount);
         GetCaster()->CastCustomSpell(200637, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -1423,7 +1422,6 @@ class spell_rageful_stand : public AuraScript
 
         int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
         int32 rageThreshold = aurEff->GetAmount();
-        LOG_ERROR("error", "{} , {} , {}", spellRage, rageAccumulated, rageThreshold);
         if (rageAccumulated >= rageThreshold)
         {
             GetCaster()->ToPlayer()->ModifySpellCooldown(12975, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
@@ -1431,7 +1429,6 @@ class spell_rageful_stand : public AuraScript
         }
         else
             aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated);
-        LOG_ERROR("error", "{}", aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
     }
 
     void Register() override

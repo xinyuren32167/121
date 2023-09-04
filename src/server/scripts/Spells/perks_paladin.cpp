@@ -739,22 +739,17 @@ class rune_pal_holy_reflection : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "reflection proc");
         if (!eventInfo.GetDamageInfo() || eventInfo.GetDamageInfo()->GetUnmitigatedDamage() <= 0)
             return false;
-        LOG_ERROR("error", "reflection damage = {}", eventInfo.GetDamageInfo()->GetUnmitigatedDamage());
         if (!GetCaster()->HasAura(642))
             return false;
-        LOG_ERROR("error", "reflection has damage + divine");
         return true;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         float damage = eventInfo.GetDamageInfo()->GetUnmitigatedDamage();
-        LOG_ERROR("error", "damage = {}", damage);
         int32 amount = int32(CalculatePct(damage, aurEff->GetAmount()));
-        LOG_ERROR("error", "amount = {}", amount);
         GetCaster()->CastCustomSpell(RUNE_PALADIN_HOLY_REFLECTION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -807,7 +802,6 @@ class rune_pal_punishment : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        LOG_ERROR("error", "punishment  proc");
         return true;
     }
 

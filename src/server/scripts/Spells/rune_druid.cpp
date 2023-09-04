@@ -3774,7 +3774,6 @@ class rune_druid_bloodtalons : public AuraScript
         int32 stacks = listener->GetStackAmount();
         int32 effect1 = listener->GetEffect(EFFECT_1)->GetAmount();
         int32 effect2 = listener->GetEffect(EFFECT_2)->GetAmount();
-        LOG_ERROR("error", "id 1 = {} ; id 2 = {}", effect1, effect2);
         if (spellId == effect1 || spellId == effect2)
         {
             listener->Remove();
