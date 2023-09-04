@@ -2507,22 +2507,17 @@ class spell_dk_dark_transformation : public SpellScript
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
-        auto summonedUnits = caster->m_Controlled;
+        auto pet = caster->GetPet();
 
-        for (auto const& unit : summonedUnits)
+        if (pet->GetEntry() == NPC_DK_GHOUL)
         {
-            if (unit->GetEntry() == NPC_DK_GHOUL)
-            {
-                caster->CastSpell(unit, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK);
-                caster->AddAura(SPELL_DK_DARK_TRANSFORMATION_POWERUP, unit);
-                unit->ToPet()->unlearnSpell(47468, false, true, false);
-                unit->ToPet()->learnSpell(80403, false);
-                unit->SetDisplayId(1693);
-                break;
-            }
+            caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK);
+            caster->AddAura(SPELL_DK_DARK_TRANSFORMATION_POWERUP, pet);
+            pet->unlearnSpell(47468, false, true, false);
+            pet->learnSpell(80403, false);
+            pet->SetDisplayId(1693);
         }
     }
-
 
     void Register() override
     {
