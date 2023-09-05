@@ -2437,6 +2437,7 @@ class spell_hun_coordinated_assault : public SpellScript
         if (!target || !target->IsAlive())
             return;
 
+        pet->Attack(target, true);
         pet->CastCustomSpellTrigger(80203, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
         GetCaster()->AddAura(80202, GetCaster());
         GetCaster()->AddAura(80204, GetCaster());
