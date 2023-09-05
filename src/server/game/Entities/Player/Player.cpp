@@ -1357,7 +1357,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     }
 
     // client without expansion support
-    if (GetSession()->Expansion() < mEntry->Expansion())
+    if (mEntry->Expansion() >= 1)
     {
         LOG_DEBUG("maps", "Player {} using client without required expansion tried teleport to non accessible map {}", GetName(), mapid);
 

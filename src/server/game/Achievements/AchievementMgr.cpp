@@ -563,11 +563,11 @@ void AchievementMgr::SaveToDB(CharacterDatabaseTransaction trans)
 
             CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT_BY_ACHIEVEMENT);
             stmt->SetData(0, iter->first);
-            stmt->SetData(1, GetPlayer()->GetGUID().GetCounter());
+            stmt->SetData(1, GetPlayer()->GetSession()->GetAccountId());
             trans->Append(stmt);
 
             stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_ACHIEVEMENT);
-            stmt->SetData(0, GetPlayer()->GetGUID().GetCounter());
+            stmt->SetData(0, GetPlayer()->GetSession()->GetAccountId());
             stmt->SetData(1, iter->first);
             stmt->SetData(2, uint32(iter->second.date));
             trans->Append(stmt);
