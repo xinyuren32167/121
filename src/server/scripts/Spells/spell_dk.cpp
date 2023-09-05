@@ -2492,14 +2492,10 @@ class spell_dk_dark_transformation : public SpellScript
     SpellCastResult CheckCast()
     {
         // Check if we have valid targets, otherwise skip spell casting here
-        if (Player* player = GetCaster()->ToPlayer())
-            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-                if (Creature* undeadPet = (*itr)->ToCreature())
-                    if (undeadPet->IsAlive() &&
-                        undeadPet->GetOwnerGUID() == player->GetGUID() &&
-                        undeadPet->GetEntry() == NPC_DK_GHOUL &&
-                        undeadPet->IsWithinDist(player, 100.0f, false))
-                        return SPELL_CAST_OK;
+        Player* caster = GetCaster()->ToPlayer();
+        Pet* pet = caster->GetPet();
+        if (pet && pet->GetEntry() == NPC_DK_GHOUL)
+            return SPELL_CAST_OK;
 
         return SPELL_FAILED_NO_PET;
     }
@@ -2507,7 +2503,7 @@ class spell_dk_dark_transformation : public SpellScript
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
-        auto pet = caster->GetPet();
+        Pet* pet = caster->GetPet();
 
         if (pet->GetEntry() == NPC_DK_GHOUL)
         {
@@ -2937,7 +2933,11 @@ class spell_dk_festering_strike : public SpellScript
 
         uint32 randomAmount = urand(1,2);
 
-        target->GetAura(SPELL_DK_FESTERING_WOUND, GetCaster()->GetGUID())->ModStackAmount(randomAmount);
+        Aura* aura = target->GetAura(SPELL_DK_FESTERING_WOUND);
+
+        if (aura) {
+            aura->ModStackAmount(randomAmount);
+        }
     }
 
     void Register() override
