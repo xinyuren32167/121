@@ -1593,8 +1593,8 @@ class spell_dru_eclipse : public AuraScript
 
         if (spellId == SPELL_DRUID_WRATH && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK) && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
             handleBuff(caster, SPELL_DRUID_ECLIPSE_LUNAR_BUFF, SPELL_DRUID_ECLIPSE_LUNAR_STACK, maxSolarStack);
-        if (spellId == SPELL_DRUID_STARFIRE && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_STACK) && !caster->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_BUFF))
-            handleBuff(caster, SPELL_DRUID_ECLIPSE_LUNAR_BUFF, SPELL_DRUID_ECLIPSE_LUNAR_STACK, maxLunarStack);
+        if (spellId == SPELL_DRUID_STARFIRE && !caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_STACK) && !caster->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_BUFF))
+            handleBuff(caster, SPELL_DRUID_ECLIPSE_SOLAR_BUFF, SPELL_DRUID_ECLIPSE_SOLAR_STACK, maxLunarStack);
     }
 
     void Register() override
