@@ -3151,6 +3151,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
 
     // Roll miss
     uint32 tmp = missChance;
+
     if (CheckIfIsSpellMiss(victim))
         return SPELL_MISS_MISS;
 
