@@ -1188,7 +1188,7 @@ class spell_mastery_warlock_potent_afflictions : public SpellScript
     void HandleCast()
     {
         float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_WARLOCK_POTENT_AFFLICTIONS)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_WARLOCK_POTENT_AFFLICTIONS)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
 
         GetCaster()->CastCustomSpell(MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
     }
@@ -1207,8 +1207,7 @@ class spell_mastery_warlock_chaotic_energies : public SpellScript
     void HandleCast()
     {
         float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_WARLOCK_CHAOTIC_ENERGIES)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
-
+        int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_WARLOCK_CHAOTIC_ENERGIES)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
         GetCaster()->CastCustomSpell(MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
@@ -1225,7 +1224,7 @@ class spell_mastery_warlock_master_demonology : public SpellScript
     void HandleCast()
     {
         float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_WARLOCK_MASTER_DEMONOLOGY)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_WARLOCK_MASTER_DEMONOLOGY)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
 
         GetCaster()->CastCustomSpell(MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
     }
