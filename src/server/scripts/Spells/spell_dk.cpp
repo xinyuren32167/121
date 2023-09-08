@@ -2421,17 +2421,17 @@ class spell_dk_summon_gargoyle_power : public AuraScript
 
 class spell_dk_virulent_plague : public AuraScript
 {
+
     PrepareAuraScript(spell_dk_virulent_plague);
 
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_VIRULENT_PLAGUE_PROC, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_dk_virulent_plague::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_virulent_plague::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
