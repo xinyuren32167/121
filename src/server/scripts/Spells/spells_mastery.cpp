@@ -77,8 +77,12 @@ class spell_icicle_ice_lance : public SpellScript
         if (GetBuffAura())
         {
             GetCaster()->CastSpell(GetExplTargetUnit(), 300108, TRIGGERED_FULL_MASK);
-            GetExplTargetUnit()->GetAura(300108)->SetDuration(GetBuffAura()->GetStackAmount() * 200);
-            GetCaster()->RemoveAura(GetBuffAura());
+            if (Aura* aura = GetExplTargetUnit()->GetAura(300108)) {
+                if (Aura* buffAura = GetBuffAura()) {
+                    aura->SetDuration(buffAura->GetStackAmount() * 200);
+                    GetCaster()->RemoveAura(GetBuffAura());
+                }
+            }
         }
     }
 
