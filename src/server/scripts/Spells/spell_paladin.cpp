@@ -1926,7 +1926,7 @@ class spell_pal_grand_crusader : public AuraScript
         if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(53595, true);
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(48827, true);
 
         if (GetCaster()->HasAura(80105))
             GetCaster()->CastSpell(GetCaster(), 80104, true);
