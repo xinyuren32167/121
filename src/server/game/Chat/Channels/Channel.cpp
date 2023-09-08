@@ -293,7 +293,7 @@ void Channel::LeaveChannel(Player* player, bool send)
         UpdateChannelUseageInDB();
 
         // If the channel owner left and there are still playersStore inside, pick a new owner
-        if (changeowner && _ownership)
+        /*if (changeowner && _ownership)
         {
             if (!playersStore.empty())
             {
@@ -313,7 +313,7 @@ void Channel::LeaveChannel(Player* player, bool send)
             }
             else
                 SetOwner(ObjectGuid::Empty);
-        }
+        }*/
     }
 }
 
