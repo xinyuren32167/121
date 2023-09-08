@@ -7884,8 +7884,9 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
             return;
         }
 
-        if (!GetGroup()) {
+        loot = &creature->loot;
 
+        if (!GetGroup()) {
             std::list<Creature*> creatures;
             GetDeadCreatureListInGrid(creatures, 30.f);
 
@@ -7962,6 +7963,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                 }
             }
         }
+       
 
         if (loot_type == LOOT_PICKPOCKETING)
         {
