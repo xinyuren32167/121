@@ -2289,9 +2289,16 @@ class spell_warl_malefic_rapture : public SpellScript
     void HandleCast()
     {
         Unit* caster = GetCaster();
+
+        if (!caster)
+            return;
+
         auto const& threatList = caster->getAttackers();
         for (auto const& threat : threatList)
         {
+            if (!threat->GetGUID())
+                continue;
+
             if (Unit* target = ObjectAccessor::GetUnit(*caster, threat->GetGUID())) {
                 auto targetAuras = target->GetAppliedAuras();
                 for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr) {
