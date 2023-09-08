@@ -7886,6 +7886,9 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
         loot = &creature->loot;
 
+        if (GetGroup())
+            return;
+
         std::list<Creature*> creatures;
         GetDeadCreatureListInGrid(creatures, 30.f);
 
@@ -7955,45 +7958,6 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                 creatureLoot->items.end()
             );
           
-
-            for (auto item = creatureLoot->quest_items.begin(); item != creatureLoot->quest_items.end(); ++item) {
-
-                if (!item->AllowedForPlayer(this) || item->freeforall)
-                    continue;
-
-                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->itemid);
-
-                if (!itemTemplate)
-                    continue;
-
-                if (itemTemplate->GetMaxStackSize() == 1)
-                    loot->quest_items.push_back(*item);
-                else {
-                    auto it = std::find_if(loot->quest_items.begin(),
-                        loot->quest_items.end(),
-                        [&]
-                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item->itemid)
-                        && (lootItem.count < itemTemplate->GetMaxStackSize()); });
-
-                    if (it != loot->quest_items.end())
-                        it->count += item->count;
-                    else
-                        loot->quest_items.push_back(*item);
-
-                }
-                item->beingRemoved = true;
-            }
-
-            creatureLoot->quest_items.erase(
-                std::remove_if(
-                    creatureLoot->quest_items.begin(),
-                    creatureLoot->quest_items.end(),
-                    [](const LootItem& item) { return item.beingRemoved; }
-                ),
-                creatureLoot->quest_items.end()
-            );
-         
-
             if (creatureLoot->empty()) {
                 otherCreature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
                 otherCreature->AllLootRemovedFromCorpse();
