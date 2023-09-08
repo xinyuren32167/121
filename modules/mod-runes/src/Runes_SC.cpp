@@ -69,7 +69,6 @@ public:
         static ChatCommandTable commandTable =
         {
             { "reload runes",  HandleReloadCommand, SEC_MODERATOR,     Console::No },
-            { "powerleveling",  HandleLevelupCustom, SEC_PLAYER,     Console::No },
 
         };
         return commandTable;
@@ -86,14 +85,6 @@ public:
         RunesManager::LoadAllSlotRune();
         RunesManager::LoadAllProgression();
         Eluna::ReloadEluna();
-
-        return true;
-    }
-
-    static bool HandleLevelupCustom(ChatHandler* handler, Optional<PlayerIdentifier> player)
-    {
-        if (handler->GetPlayer()->getLevel() < 60)
-            handler->GetPlayer()->GiveLevel(handler->GetPlayer()->getLevel() + 1);
 
         return true;
     }
