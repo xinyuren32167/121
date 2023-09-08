@@ -2320,14 +2320,19 @@ class spell_dk_festering_wound : public AuraScript
 {
     PrepareAuraScript(spell_dk_festering_wound);
 
+<<<<<<< Updated upstream
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+=======
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+>>>>>>> Stashed changes
     {
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_dk_festering_wound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_festering_wound::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
