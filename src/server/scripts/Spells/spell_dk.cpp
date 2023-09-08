@@ -2320,12 +2320,7 @@ class spell_dk_festering_wound : public AuraScript
 {
     PrepareAuraScript(spell_dk_festering_wound);
 
-<<<<<<< Updated upstream
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-=======
-
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
->>>>>>> Stashed changes
     {
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
     }
