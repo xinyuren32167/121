@@ -741,6 +741,7 @@ class spell_sha_earthbind_totem : public AuraScript
     {
         if (!GetCaster())
             return;
+
         if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
             if (Aura* aura = GetFrozenPowerAura())
                 if (AuraEffect* effect = aura->GetEffect(EFFECT_0)) {

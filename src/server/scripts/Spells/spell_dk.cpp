@@ -2320,7 +2320,6 @@ class spell_dk_festering_wound : public AuraScript
 {
     PrepareAuraScript(spell_dk_festering_wound);
 
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
