@@ -142,7 +142,8 @@ class rune_pal_inner_grace : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
+        if (caster->GetPower(POWER_ENERGY) < 5)
+            caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
     }
 
     void Register()

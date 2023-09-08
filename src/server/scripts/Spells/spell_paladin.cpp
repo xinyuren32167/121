@@ -1259,7 +1259,10 @@ class spell_pal_holy_power : public SpellScript
 
     void HandleEnergy()
     {
-        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        Unit* caster = GetCaster();
+        if (caster->GetPower(POWER_ENERGY) < 5) {
+            caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
+        }
     }
 
     void Register()
