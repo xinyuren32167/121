@@ -742,9 +742,11 @@ class spell_sha_earthbind_totem : public AuraScript
         if (!GetCaster())
             return;
         if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
-            if (AuraEffect* aur = GetFrozenPowerAura()->GetEffect(EFFECT_0))
-                if (roll_chance_i(aur->GetBaseAmount()))
-                    GetTarget()->CastSpell((Unit*)nullptr, SPELL_SHAMAN_TOTEM_EARTHEN_POWER, true);
+            if (Aura* aura = GetFrozenPowerAura())
+                if (AuraEffect* effect = aura->GetEffect(EFFECT_0)) {
+                    if (roll_chance_i(effect->GetBaseAmount()))
+                        GetTarget()->CastSpell((Unit*)nullptr, SPELL_SHAMAN_TOTEM_EARTHEN_POWER, true);
+                }
     }
 
     void Apply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
