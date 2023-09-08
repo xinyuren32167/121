@@ -56,10 +56,6 @@ public:
         sMythicMgr->OnPlayerDie(killed, killer);
     }
 
-    void OnPlayerReleasedGhost(Player* player)
-    {
-       
-    }
 };
 
 

@@ -83,11 +83,6 @@ void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
 
     sScriptMgr->OnPlayerReleasedGhost(GetPlayer());
 
-    bool condition = GetPlayer()->GetMap()->IsDungeon() || GetPlayer()->GetMap()->IsRaid();
-
-    if (condition)
-        return;
-
     GetPlayer()->BuildPlayerRepop();
     GetPlayer()->RepopAtGraveyard();
 }
