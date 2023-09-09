@@ -2294,24 +2294,23 @@ class spell_warl_malefic_rapture : public SpellScript
             return;
 
         auto const& threatList = caster->getAttackers();
-        for (auto const& threat : threatList)
+
+        for (auto itr = threatList.begin(); itr != threatList.end(); ++itr)
         {
-            if (!threat->GetGUID())
-                continue;
+            Unit* target = (*itr);
 
-            if (Unit* target = ObjectAccessor::GetUnit(*caster, threat->GetGUID())) {
-                auto targetAuras = target->GetAppliedAuras();
-                for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr) {
-                    if (Aura* aura = itr->second->GetBase())
-                    {
-                        if (caster->GetGUID() != aura->GetCasterGUID())
-                            continue;
+            auto targetAuras = target->GetAppliedAuras();
 
-                        SpellInfo const* auraInfo = aura->GetSpellInfo();
+            for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr) {
+                if (Aura* aura = itr->second->GetBase())
+                {
+                    if (caster->GetGUID() != aura->GetCasterGUID())
+                        continue;
 
-                        if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
-                           caster->CastSpell(target, SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE, TRIGGERED_FULL_MASK);
-                    }
+                    SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                    if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
+                        caster->CastSpell(target, SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE, TRIGGERED_FULL_MASK);
                 }
             }
         }
