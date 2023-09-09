@@ -2471,10 +2471,9 @@ class spell_warl_soul_flame : public AuraScript
 {
     PrepareAuraScript(spell_warl_soul_flame);
 
-    void HandleProc(ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-        AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_SOUL_FLAME, EFFECT_0);
         uint32 spell = aurEff->GetAmount();
 
         caster->CastSpell(eventInfo.GetProcTarget(), spell, TRIGGERED_FULL_MASK); 
@@ -2482,7 +2481,7 @@ class spell_warl_soul_flame : public AuraScript
 
     void Register() override
     {
-        DoPrepareProc += AuraProcFn(spell_warl_soul_flame::HandleProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_soul_flame::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
