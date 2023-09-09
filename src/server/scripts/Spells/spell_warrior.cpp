@@ -1634,7 +1634,9 @@ class spell_warr_unbridled_fury : public AuraScript
         else
         {
             int32 duration = aurEff->GetAmount();
-            caster->CastCustomSpell(SPELL_WARRIOR_RECKLESSNESS, SPELLVALUE_AURA_DURATION, duration, caster, TRIGGERED_FULL_MASK);
+            caster->AddAura(SPELL_WARRIOR_RECKLESSNESS, caster);
+            if (Aura* recklessness = caster->GetAura(SPELL_WARRIOR_RECKLESSNESS))
+                recklessness->SetDuration(duration);
         }
     }
 
