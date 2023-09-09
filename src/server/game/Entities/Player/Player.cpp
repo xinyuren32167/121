@@ -7887,6 +7887,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
         loot = &creature->loot;
 
         if (!GetGroup()) {
+
             std::list<Creature*> creatures;
             GetDeadCreatureListInGrid(creatures, 30.f);
 

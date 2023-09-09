@@ -1783,10 +1783,20 @@ class spell_warlock_hand_of_guldan : public SpellScript
     void HandleHitTarget(SpellEffIndex /*effIndex*/)
     {
         int32 runicPower = GetCaster()->GetPower(POWER_ENERGY);
-        uint8 maxSummon = runicPower > 15 ? 15 : runicPower;
+        uint8 cost = runicPower > 15 ? 15 : runicPower;
+
+        uint8 maxSummon = 0;
+
+        if (cost == 15)
+            maxSummon = 3;
+        else if (cost < 15 && cost >= 10)
+            maxSummon = 2;
+        else
+            maxSummon = 1;
+
         Player* player = GetCaster()->ToPlayer();
 
-        player->ModifyPower(POWER_ENERGY, -maxSummon);
+        player->ModifyPower(POWER_ENERGY, -cost);
 
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
