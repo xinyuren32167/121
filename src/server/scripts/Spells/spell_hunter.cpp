@@ -2307,7 +2307,7 @@ class spell_hun_harpoon : public SpellScript
         Unit* caster = GetCaster();
         Unit* target = GetExplTargetUnit();
 
-        if (target->GetTypeId() == TYPEID_PLAYER && caster->GetExactDist(target) < 8.0f)
+        if (target && target->GetTypeId() == TYPEID_PLAYER && caster->GetExactDist(target) < 8.0f)
             return SPELL_FAILED_TOO_CLOSE;
 
         return SPELL_CAST_OK;
@@ -2318,18 +2318,19 @@ class spell_hun_harpoon : public SpellScript
         if (AuraEffect const* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(19295, EFFECT_0))
         {
             Unit* caster = GetCaster();
-            Unit* target = GetExplTargetUnit();
-            float ap = caster->GetTotalAttackPowerValue(BASE_ATTACK);
-            int32 damageRatio = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
-            int32 damage = CalculatePct(ap, damageRatio);
-            int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
-            int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
-            int32 newFocusAmount = focusAmount / maxTicks;
+            if (Unit* target = GetExplTargetUnit()) {
 
-            if (!caster || !caster->IsAlive() || !target || !target->IsAlive())
-                return;
+                float ap = caster->GetTotalAttackPowerValue(BASE_ATTACK);
 
-            caster->CastCustomSpell(target, 80235, &damage, &newFocusAmount, nullptr, true, nullptr, nullptr);
+                int32 damageRatio = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+                int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+                int32 damage = CalculatePct(ap, damageRatio);
+                int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
+
+                int32 newFocusAmount = focusAmount / maxTicks;
+                caster->CastCustomSpell(target, 80235, &damage, &newFocusAmount, nullptr, true, nullptr, nullptr);
+            }
         }
     }
 
