@@ -2014,6 +2014,11 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->Effects[EFFECT_0].ApplyAuraName = SPELL_AURA_PERIODIC_TRIGGER_SPELL;
     });
 
+    ApplySpellFix({ 697 }, [](SpellInfo* spellInfo)
+        {
+            spellInfo->ManaCost = 0;
+        });
+
     // Brightleaf Essence trigger
     ApplySpellFix({ 62968 }, [](SpellInfo* spellInfo)
     {

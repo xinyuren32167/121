@@ -2313,39 +2313,24 @@ class spell_hun_harpoon : public SpellScript
         return SPELL_CAST_OK;
     }
 
-    Aura* GetTalentAura()
-    {
-        if (GetCaster()->HasAura(19295))
-            return GetCaster()->GetAura(19295);
-
-        if (GetCaster()->HasAura(19297))
-            return GetCaster()->GetAura(19297);
-
-        if (GetCaster()->HasAura(19298))
-            return GetCaster()->GetAura(19298);
-
-        return nullptr;
-    }
-
     void HandleCast()
     {
-        if (!GetTalentAura())
-            return;
+        if (AuraEffect const* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(19295, EFFECT_0))
+        {
+            Unit* caster = GetCaster();
+            Unit* target = GetExplTargetUnit();
+            float ap = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+            int32 damageRatio = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+            int32 damage = CalculatePct(ap, damageRatio);
+            int32 focusAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+            int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
+            int32 newFocusAmount = focusAmount / maxTicks;
 
-        Unit* target = GetExplTargetUnit();
-        float ap = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 damageRatio = GetTalentAura()->GetEffect(EFFECT_0)->GetAmount();
-        int32 focusAmount = GetTalentAura()->GetEffect(EFFECT_1)->GetAmount();
-        int32 maxTicks = sSpellMgr->AssertSpellInfo(80235)->GetMaxTicks();
-        int32 newFocusAmount = focusAmount / maxTicks;
+            if (!caster || !caster->IsAlive() || !target || !target->IsAlive())
+                return;
 
-        if (!GetCaster() || !GetCaster()->IsAlive())
-            return;
-
-        if (!target || !target->IsAlive())
-            return;
-
-        GetCaster()->CastCustomSpell(target, 80235, &damageRatio, &newFocusAmount, nullptr, true, nullptr, nullptr);
+            caster->CastCustomSpell(target, 80235, &damage, &newFocusAmount, nullptr, true, nullptr, nullptr);
+        }
     }
 
     void Register() override
@@ -2961,17 +2946,18 @@ class spell_hun_harpoon_reset : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(19295) || GetCaster()->HasAura(19297) || GetCaster()->HasAura(19298))
+        if (AuraEffect const* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(19295, EFFECT_0))
             return true;
         return false;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster || !caster->IsAlive())
             return;
 
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(80190, true);
+        caster->RemoveSpellCooldown(80190, true);
     }
 
     void Register()
