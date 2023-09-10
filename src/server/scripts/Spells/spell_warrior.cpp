@@ -1778,6 +1778,9 @@ class spell_warr_ravager : public SpellScript
         Unit* caster = GetCaster();
         Unit* target = GetHitUnit();
 
+        if (!caster || !caster->IsAlive())
+            return;
+
         Position pos = target->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = GetCaster()->SummonCreature(600611, pos, TEMPSUMMON_TIMED_DESPAWN, 12000, 0, properties);
