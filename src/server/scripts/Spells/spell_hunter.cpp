@@ -1549,9 +1549,9 @@ class spell_hun_black_arrow_reset : public SpellScript
 
     void HandleProc()
     {
-        if (!GetCaster()->HasSpell(63672))
-            return;
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(63672, true);
+        if (Player* caster = GetCaster()->ToPlayer())
+            if (caster->IsAlive() && caster->HasSpell(63672))
+                caster->RemoveSpellCooldown(63672, true);
     }
 
     void Register() override
@@ -2080,19 +2080,10 @@ class spell_hun_murder_crows_check : public AuraScript
 
     bool HandleProc(ProcEventInfo& eventInfo)
     {
-        Player* caster = GetCaster()->ToPlayer();
-        Unit* target = eventInfo.GetActionTarget();
-
-        if (!target)
-            return false;
-
-        if (!caster || !caster->IsAlive())
-            return false;
-
-        if (target->HasAura(80176))
-            if (target->GetAura(80176)->GetCasterGUID() == GetCaster()->GetGUID())
-                return true;
-
+        if (Unit* target = eventInfo.GetActionTarget())
+            if (Aura* aura = GetCaster()->GetAura(80176))
+                if (aura->GetCasterGUID() == GetCaster()->GetGUID())
+                    return true;
         return false;
     }
 
@@ -2954,11 +2945,9 @@ class spell_hun_harpoon_reset : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        Player* caster = GetCaster()->ToPlayer();
-        if (!caster || !caster->IsAlive())
-            return;
-
-        caster->RemoveSpellCooldown(80190, true);
+        if (Player* caster = GetCaster()->ToPlayer())
+            if (caster->IsAlive())
+                caster->RemoveSpellCooldown(80190, true);
     }
 
     void Register()
