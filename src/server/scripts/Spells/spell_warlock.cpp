@@ -89,6 +89,8 @@ enum WarlockSpells
     TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1              = 47383,
     TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2              = 71162,
     TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3              = 71165,
+    SPELL_WARLOCK_SHADOW_BOLT                       = 47809,
+    MASTERY_WARLOCK_MASTER_DEMONOLOGIST             = 1100020,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -2332,9 +2334,9 @@ class spell_warl_malefic_rapture : public SpellScript
     }
 };
 
-class spell_mage_soul_swap : public AuraScript
+class spell_warl_soul_swap : public AuraScript
 {
-    PrepareAuraScript(spell_mage_soul_swap);
+    PrepareAuraScript(spell_warl_soul_swap);
 
     struct CopyAura {
         uint32 spellId;
@@ -2380,8 +2382,8 @@ class spell_mage_soul_swap : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_mage_soul_swap::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_soul_swap::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_warl_soul_swap::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_warl_soul_swap::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 
 private:
@@ -2554,6 +2556,27 @@ class spell_warl_molten_hand : public AuraScript
     }
 };
 
+class spell_warl_shadow_bolt_energy : public SpellScript
+{
+    PrepareSpellScript(spell_warl_shadow_bolt_energy);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        if (caster->HasAura(MASTERY_WARLOCK_MASTER_DEMONOLOGIST))
+        {
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SHADOW_BOLT);
+            uint32 energyAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
+            GetCaster()->ModifyPower(POWER_ENERGY, energyAmount);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_shadow_bolt_energy::HandleCast);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2617,7 +2640,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_summon_gargoyle);
     RegisterSpellScript(spell_warl_havoc);
     RegisterSpellScript(spell_warl_soul_power);
-    RegisterSpellScript(spell_mage_soul_swap);
+    RegisterSpellScript(spell_warl_soul_swap);
     RegisterSpellScript(spell_warlock_cataclysm);
     RegisterSpellScript(spell_warl_xavians_teachings);
     RegisterSpellScript(spell_warl_agonizing_corruption);
@@ -2625,4 +2648,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_ritual_of_ruin);
     RegisterSpellScript(spell_warl_molten_hand);
     RegisterSpellScript(spell_warl_all_minion_scaling);
+    RegisterSpellScript(spell_warl_shadow_bolt_energy);
 }
