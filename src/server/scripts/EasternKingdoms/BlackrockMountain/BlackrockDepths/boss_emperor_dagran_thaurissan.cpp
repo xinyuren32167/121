@@ -63,7 +63,7 @@ public:
             }
 
             me->CallForHelp(VISIBLE_RANGE);
-            events.ScheduleEvent(SPELL_HANDOFTHAURISSAN, urand(4000, 7000));
+            events.ScheduleEvent(SPELL_HANDOFTHAURISSAN, urand(8500, 15000));
             events.ScheduleEvent(SPELL_AVATAROFFLAME, urand(10000, 12000));
         }
 
@@ -118,7 +118,7 @@ public:
                 case SPELL_HANDOFTHAURISSAN:
                     DoCast(SelectTarget(SelectTargetMethod::Random), SPELL_HANDOFTHAURISSAN);
                     //DoCastVictim(SPELL_HANDOFTHAURISSAN);
-                    events.ScheduleEvent(SPELL_HANDOFTHAURISSAN, urand(4000, 7000));
+                    events.ScheduleEvent(SPELL_HANDOFTHAURISSAN, urand(8500, 15000));
                     break;
                 case SPELL_AVATAROFFLAME:
                     DoCastSelf(SPELL_AVATAROFFLAME);
