@@ -2309,20 +2309,24 @@ class spell_warl_malefic_rapture : public SpellScript
 
         for (auto itr = threatList.begin(); itr != threatList.end(); ++itr)
         {
-            Unit* target = (*itr);
-
-            auto targetAuras = target->GetAppliedAuras();
-
-            for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
-                if (Aura* aura = itj->second->GetBase())
+            if (Unit* target = (*itr))
+            {
+                if (target->IsAlive())
                 {
-                    if (caster->GetGUID() != aura->GetCasterGUID())
-                        continue;
+                    auto targetAuras = target->GetAppliedAuras();
 
-                    SpellInfo const* auraInfo = aura->GetSpellInfo();
+                    for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
+                        if (Aura* aura = itj->second->GetBase())
+                        {
+                            if (caster->GetGUID() != aura->GetCasterGUID())
+                                continue;
 
-                    if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
-                        caster->CastSpell(target, SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE, TRIGGERED_FULL_MASK);
+                            SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                            if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
+                                caster->CastSpell(target, SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE, TRIGGERED_FULL_MASK);
+                        }
+                    }
                 }
             }
         }
