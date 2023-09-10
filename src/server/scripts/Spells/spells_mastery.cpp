@@ -1041,10 +1041,13 @@ class spell_mastery_sha_chain_lightning_overload : public SpellScript
     {
         Unit* caster = GetCaster();
         Unit* target = GetExplTargetUnit();
-        int32 spellID = GetSpellInfo()->Id;
+        SpellInfo const* spellInfo = GetSpellInfo();
 
-        if (!spellID || !target || !caster)
+        if (!spellInfo)
             return;
+
+        uint32 spellID = spellInfo->Id;
+
         if (caster->isDead() || target->isDead())
             return;
 
