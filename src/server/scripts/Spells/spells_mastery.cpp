@@ -9,7 +9,6 @@
 #include "UnitAI.h"
 #include "Log.h"
 #include "Object.h"
-
 enum Masteries
 {
     // Deathknight
