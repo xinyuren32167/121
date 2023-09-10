@@ -1660,6 +1660,7 @@ class spell_hun_kill_command : public SpellScript
         if (!caster || !caster->IsAlive())
             return;
 
+        pet->Attack(target, true);
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         auto summonedUnits = caster->m_Controlled;
