@@ -2932,9 +2932,8 @@ class spell_dk_festering_strike : public SpellScript
 
         uint32 randomAmount = urand(1,2);
 
-        Aura* aura = target->GetAura(SPELL_DK_FESTERING_WOUND);
-
-        if (aura) {
+        if (Aura* aura = target->GetAura(SPELL_DK_FESTERING_WOUND))
+        {
             aura->ModStackAmount(randomAmount);
         }
     }
@@ -3019,7 +3018,8 @@ class spell_dk_unholy_assault : public SpellScript
 
         uint32 amount = GetSpellInfo()->Effects[EFFECT_1].CalcValue(GetCaster());
 
-        target->GetAura(SPELL_DK_FESTERING_WOUND, GetCaster()->GetGUID())->ModStackAmount(amount);
+        if (Aura* aura = target->GetAura(SPELL_DK_FESTERING_WOUND, GetCaster()->GetGUID()))
+            aura->ModStackAmount(amount);
     }
 
     void Register() override

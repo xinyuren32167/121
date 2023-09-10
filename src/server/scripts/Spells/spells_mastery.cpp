@@ -1043,6 +1043,11 @@ class spell_mastery_sha_chain_lightning_overload : public SpellScript
         Unit* target = GetExplTargetUnit();
         int32 spellID = GetSpellInfo()->Id;
 
+        if (!spellID || !target || !caster)
+            return;
+        if (caster->isDead() || target->isDead())
+            return;
+
         if (Aura* overloadMastery = caster->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
         {
             int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
