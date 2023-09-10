@@ -51,8 +51,10 @@ void AutoBalanceManager::SendMessageScalingInfo(Map* map)
 
     std::string mapName = map->GetMapName();
 
+    uint32 maxPlayers = map->IsRaid() && players.size() < 10 ? 10 : players.size();
+
     for (const auto& player : players)
-        ChatHandler(player->GetSession()).SendSysMessage("Scaling " + mapName + " for " + std::to_string(players.size()) + " player(s).");
+        ChatHandler(player->GetSession()).SendSysMessage("Scaling " + mapName + " for " + std::to_string(maxPlayers) + " player(s).");
 }
 
 Player* AutoBalanceManager::GetFirstPlayerMap(Map* map)

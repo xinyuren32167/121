@@ -1953,17 +1953,18 @@ class spell_hun_camouflage : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* player = GetCaster()->ToPlayer();
+        Unit* player = GetCaster();
 
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        if (!player)
             return;
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
-        for (auto const& unit : summonedUnits)
-        {
-            if (unit->isDead())
+        for (auto const& unit : summonedUnits) {
+
+            if (!unit || unit->isDead())
                 continue;
+
             player->AddAura(80175, unit);
         }
     }

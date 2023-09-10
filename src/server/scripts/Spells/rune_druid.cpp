@@ -6138,7 +6138,7 @@ class rune_druid_deep_rooted : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* caster = GetAura()->GetCaster()->ToPlayer();
+        Unit* caster = GetAura()->GetCaster();
         Unit* target = GetAura()->GetOwner()->ToUnit();
 
         if (!caster || caster->isDead())

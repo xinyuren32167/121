@@ -2311,8 +2311,8 @@ class spell_warl_malefic_rapture : public SpellScript
 
             auto targetAuras = target->GetAppliedAuras();
 
-            for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr) {
-                if (Aura* aura = itr->second->GetBase())
+            for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
+                if (Aura* aura = itj->second->GetBase())
                 {
                     if (caster->GetGUID() != aura->GetCasterGUID())
                         continue;
