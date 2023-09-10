@@ -992,7 +992,11 @@ class spell_rog_shadowstrike : public SpellScript
     {
         Unit* caster = GetCaster();
         if (caster->HasAura(SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR))
-            caster->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_SHADOWSTRIKE_TELEPORT, TRIGGERED_FULL_MASK);
+        {
+            Position pos = GetExplTargetUnit()->GetPosition();
+            caster->NearTeleportTo(pos);
+        }
+            //caster->CastSpell(GetExplTargetUnit(), SPELL_ROGUE_SHADOWSTRIKE_TELEPORT, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
