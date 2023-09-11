@@ -1871,13 +1871,14 @@ class spell_dru_prowl_check : public SpellScript
 
     void HandleCast()
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
             return;
 
-        if (GetCaster()->HasAura(SPELL_DRUID_CAT_FORM))
+        if (caster->HasAura(SPELL_DRUID_CAT_FORM))
             return;
 
-        GetCaster()->CastSpell(GetCaster(), SPELL_DRUID_CAT_FORM);
+        caster->CastSpell(caster, SPELL_DRUID_CAT_FORM, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
