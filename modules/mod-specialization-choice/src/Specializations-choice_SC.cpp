@@ -26,6 +26,11 @@ enum WarlockSpells
     SPELL_MINION_INCREASE_BOMBER = 1100014,
 };
 
+
+enum HunterSpells {
+    SPELL_HUNTER_LONE_WOLF = 80182,
+};
+
  // Add player scripts
 class SpecChoice_PlayerScripts : public PlayerScript
 {
@@ -140,6 +145,14 @@ class spell_activate_specialization : public SpellScript
                 player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
         }
 
+        auto summonedUnits = player->ToPlayer()->m_Controlled;
+
+        for (const auto& pet : summonedUnits)
+            if (pet->GetCharmInfo())
+                pet->ToTempSummon()->DespawnOrUnsummon();
+
+        if(player->HasAura(SPELL_HUNTER_LONE_WOLF))
+            player->RemoveAura(80182);
 
         PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
         CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());

@@ -93,6 +93,7 @@ enum WarriorSpells
     TALENT_WARRIOR_POWERFUL_BLOODTHIRST = 80035,
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R1 = 20500,
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R2 = 20501,
+    TALENT_WARRIOR_FORTHING_BERSERKER = 46916,
 
     //Masteries
     MASTERY_WARRIOR_DEEP_WOUNDS_DOT = 200001,
@@ -1346,6 +1347,9 @@ class spell_rampage_proc_rage : public SpellScript
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
             GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
         }
+
+        if (Aura* forthingBerserkerAura = caster->GetAura(TALENT_WARRIOR_FORTHING_BERSERKER))
+            forthingBerserkerAura->Remove();
     }
 
     void Register() override
