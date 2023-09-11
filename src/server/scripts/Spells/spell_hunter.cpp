@@ -1654,21 +1654,12 @@ class spell_hun_kill_command : public SpellScript
         int32 ratio = sSpellMgr->AssertSpellInfo(80142)->GetEffect(EFFECT_1).CalcValue(caster);
         int32 damage = CalculatePct(ap, ratio);
 
-        if (!target || !target->IsAlive())
-            return;
-
-        if (!caster || !caster->IsAlive())
-            return;
-
         pet->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
         auto summonedUnits = caster->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
-            if (!unit || !unit->IsAlive())
-                continue;
-
             if (unit->GetCharmInfo())
             {
                 unit->CastCustomSpellTrigger(80142, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
@@ -2047,19 +2038,13 @@ class spell_hun_barbed_shot : public SpellScript
         if (!pet)
             return;
 
-        if (!player || !player->IsAlive())
-            return;
-
         player->AddAura(80174, pet);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
-        {
-            if (unit->isDead())
-                continue;
-            player->AddAura(80174, unit);
-        }
+            if(unit->IsAlive())
+                player->AddAura(80174, unit);
     }
 
     void HandleEnergy(SpellEffIndex effIndex)

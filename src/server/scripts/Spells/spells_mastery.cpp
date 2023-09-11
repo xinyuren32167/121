@@ -56,6 +56,12 @@ enum Masteries
     MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF = 1100016,
     MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF = 1100015,
 
+
+    // Mage
+
+    MASTERY_MAGE_IGNITE = 300109,
+    MASTERY_MAGE_IGNITE_DOTS = 300110
+
 };
 
 // Mage
@@ -170,29 +176,37 @@ class spell_mastery_ignite : public AuraScript
 {
     PrepareAuraScript(spell_mastery_ignite);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
     int GetDamagePct()
     {
-        return GetCaster()->GetAura(300109)->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        Unit* caster = GetCaster();
+        return caster->GetAura(MASTERY_MAGE_IGNITE)->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
-            float pct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
-            int32 totalTicks = sSpellMgr->AssertSpellInfo(300110)->GetMaxTicks();
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), pct) / totalTicks);
-            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0)) {
-                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
-                int32 remainingAmount = protEff->GetAmount() * remainingTicks / totalTicks;
-                amount += remainingAmount;
-            }
-            GetCaster()->CastCustomSpellTrigger(300110, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_IGNORE_AURA_SCALING);
-        }
+        float pct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
+        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
 
+        int32 totalTicks = sSpellMgr->AssertSpellInfo(MASTERY_MAGE_IGNITE_DOTS)->GetMaxTicks();
+        int32 amount = int32(CalculatePct(damage, pct) / totalTicks);
+
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0)) {
+            int32 remainingTicks = protEff->GetRemaningTicks();
+            int32 remainingAmount = (protEff->GetAmount() * remainingTicks) / totalTicks;
+
+            amount += remainingAmount;
+        }
+        GetCaster()->CastCustomSpellTrigger(MASTERY_MAGE_IGNITE_DOTS, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_ignite::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_mastery_ignite::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };

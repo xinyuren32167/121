@@ -1888,10 +1888,6 @@ class spell_sha_elemental_blast : public SpellScript
     {
         Unit* caster = GetCaster();
 
-        caster->CastSpell(caster->GetVictim(), 116, true);
-        caster->CastSpell(caster->GetVictim(), 701, true);
-        caster->CastSpell(caster->GetVictim(), 403, true);
-
         Ratings arr[] = {
            { caster->GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + static_cast<uint16>(CR_CRIT_MELEE)),
                     SPELL_SHAMAN_ELEMENTAL_BLAST_CRIT },

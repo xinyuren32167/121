@@ -1045,8 +1045,7 @@ class spell_rog_marked_for_death : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Player* caster = GetCaster()->ToPlayer())
-            if (caster->IsAlive())
-                caster->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
+           caster->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
     }
 
     void Register() override
