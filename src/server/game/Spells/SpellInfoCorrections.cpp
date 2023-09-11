@@ -2014,10 +2014,17 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->Effects[EFFECT_0].ApplyAuraName = SPELL_AURA_PERIODIC_TRIGGER_SPELL;
     });
 
+    // Voidwalker
     ApplySpellFix({ 697 }, [](SpellInfo* spellInfo)
-        {
-            spellInfo->ManaCost = 0;
-        });
+    {
+        spellInfo->ManaCost = 0;
+    });
+
+    // Ritual of Doom
+    ApplySpellFix({ 18540 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->ManaCost = 0;
+    });
 
     // Brightleaf Essence trigger
     ApplySpellFix({ 62968 }, [](SpellInfo* spellInfo)
