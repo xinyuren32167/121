@@ -2079,7 +2079,8 @@ class spell_sha_spirit_of_fire : public AuraScript
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->CastSpell(GetCaster(), SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE, TRIGGERED_FULL_MASK);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
