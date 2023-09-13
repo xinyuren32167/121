@@ -114,7 +114,7 @@ enum ShapeshiftForm
     FORM_SPIRIT_OF_EARTH    = 0x18,
     FORM_UNDEAD             = 0x19,
     FORM_MASTER_ANGLER      = 0x1A,
-    FORM_FLIGHT_EPIC        = 0x1B,
+    FORM_GLADIATORSTANCE    = 0x1B,
     FORM_SHADOW             = 0x1C,
     FORM_FLIGHT             = 0x1D,
     FORM_STEALTH            = 0x1E,

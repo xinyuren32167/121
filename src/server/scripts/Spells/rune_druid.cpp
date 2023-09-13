@@ -17,7 +17,6 @@ enum DruidSpells
     FORM_DIRE_BEAR_FORM = 9634,
     FORM_CAT_FORM = 768,
     FORM_FLIGHT_FORM = 33943,
-    FORM_SWIFT_FLIGHT_FORM = 40120,
     FORM_TRAVEL_FORM = 783,
     FORM_SWIFT_TRAVEL_FORM = 000,
     FORM_MOONKIN_FORM = 24858,
@@ -191,7 +190,7 @@ class rune_druid_lycara_fleeting_glimpse : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        if (GetCaster()->HasAura(FORM_AQUATIC_FORM) || GetCaster()->HasAura(FORM_FLIGHT_FORM) || GetCaster()->HasAura(FORM_SWIFT_FLIGHT_FORM) || GetCaster()->HasAura(FORM_TRAVEL_FORM) || GetCaster()->HasAura(FORM_SWIFT_TRAVEL_FORM))
+        if (GetCaster()->HasAura(FORM_AQUATIC_FORM) || GetCaster()->HasAura(FORM_FLIGHT_FORM) || GetCaster()->HasAura(FORM_TRAVEL_FORM) || GetCaster()->HasAura(FORM_SWIFT_TRAVEL_FORM))
             return;
 
         if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))

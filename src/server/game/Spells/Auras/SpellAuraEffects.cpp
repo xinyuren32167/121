@@ -1221,12 +1221,18 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             spellId2 = 69366;
             break;
         case FORM_FLIGHT:
-            spellId = 33948;
-            spellId2 = 34764;
+            if (GetCaster()->getLevel() <= 40)
+            {
+                spellId = 33948;
+                spellId2 = 34764;
+            }   
+            else
+            {
+                spellId = 40122;
+                spellId2 = 40121;
+            }
             break;
-        case FORM_FLIGHT_EPIC:
-            spellId  = 40122;
-            spellId2 = 40121;
+        case FORM_GLADIATORSTANCE:         
             break;
         case FORM_METAMORPHOSIS:
             spellId  = 54817;
@@ -1344,7 +1350,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             if (player->HasTalent(63410, player->GetActiveSpec()) || player->HasTalent(63411, player->GetActiveSpec()))
             {
                 target->RemoveAurasDueToSpell(66530);
-                if (GetMiscValue() == FORM_TRAVEL || GetMiscValue() == FORM_AQUA || GetMiscValue() == FORM_FLIGHT || GetMiscValue() == FORM_FLIGHT_EPIC) // "while in Travel Form or while not shapeshifted"
+                if (GetMiscValue() == FORM_TRAVEL || GetMiscValue() == FORM_AQUA || GetMiscValue() == FORM_FLIGHT) // "while in Travel Form or while not shapeshifted"
                     target->CastSpell(target, 66530, true);
             }
             // Heart of the Wild
@@ -1874,6 +1880,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_DIREBEAR:                                 // 0x08
 
         case FORM_BATTLESTANCE:                             // 0x11
+        case FORM_GLADIATORSTANCE:                          // 0x1B
         case FORM_DEFENSIVESTANCE:                          // 0x12
         case FORM_BERSERKERSTANCE:                          // 0x13
         case FORM_MOONKIN:                                  // 0x1F
@@ -1901,7 +1908,6 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         case FORM_SPIRIT_OF_EARTH:                          // 0x18
         case FORM_UNDEAD:                                   // 0x19
         case FORM_MASTER_ANGLER:                            // 0x1A
-        case FORM_FLIGHT_EPIC:                              // 0x1B
         case FORM_SHADOW:                                   // 0x1C
         case FORM_FLIGHT:                                   // 0x1D
         case FORM_STEALTH:                                  // 0x1E
@@ -1924,7 +1930,6 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
             case FORM_AQUA:
             case FORM_BEAR:
             case FORM_DIREBEAR:
-            case FORM_FLIGHT_EPIC:
             case FORM_FLIGHT:
             case FORM_MOONKIN:
                 {
@@ -2048,6 +2053,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
                     target->CastSpell(target, 37325, true, nullptr, dummy);
                 break;
             case FORM_BATTLESTANCE:
+            case FORM_GLADIATORSTANCE:
             case FORM_DEFENSIVESTANCE:
             case FORM_BERSERKERSTANCE:
                 {

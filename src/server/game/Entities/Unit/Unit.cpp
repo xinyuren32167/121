@@ -19413,10 +19413,6 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                     return 2289;
             case FORM_FLIGHT:
                 if (Player::TeamIdForRace(getRace()) == TEAM_ALLIANCE)
-                    return 20857;
-                return 20872;
-            case FORM_FLIGHT_EPIC:
-                if (Player::TeamIdForRace(getRace()) == TEAM_ALLIANCE)
                     return 21243;
                 return 21244;
             default:
