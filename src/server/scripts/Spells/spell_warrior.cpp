@@ -87,6 +87,12 @@ enum WarriorSpells
     SPELL_WARRIOR_RAVAGER_RAGE = 84541,
     SPELL_WARRIOR_COLOSSUS_SMASH = 80002,
     SPELL_WARRIOR_WARBREAKER = 84519,
+    SPELL_WARRIOR_DESTABILIZING_SLAM = 84554,
+    SPELL_WARRIOR_DESTABILIZING_SLAM_PROC = 84555,
+    SPELL_WARRIOR_SPARTAN_TRAINING = 84551,
+    SPELL_WARRIOR_GLADIATOR_STANCE = 84552,
+    SPELL_WARRIOR_COLOSSAL_THRUST = 84557,
+    SPELL_WARRIOR_MIGHTY_THROW = 84558,
 
     //Talents
     TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
@@ -1910,6 +1916,152 @@ class spell_warr_warbreaker_replacer : public AuraScript
     }
 };
 
+class spell_warr_spartan_training : public AuraScript
+{
+    PrepareAuraScript(spell_warr_spartan_training);
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->removeSpell(SPELL_WARRIOR_TITANS_GRIP_SHIELD, SPEC_MASK_ALL, false);
+        caster->SetCanTitanGrip(false);
+        caster->AutoUnequipOffhandIfNeed();
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_warr_spartan_training::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warr_destabilizing_slam : public AuraScript
+{
+    PrepareAuraScript(spell_warr_destabilizing_slam);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        caster->CastSpell(eventInfo.GetProcTarget(), SPELL_WARRIOR_DESTABILIZING_SLAM_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warr_destabilizing_slam::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warr_gladiators_way : public AuraScript
+{
+    PrepareAuraScript(spell_warr_gladiators_way);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_WARRIOR_SPARTAN_TRAINING);
+        target->learnSpell(SPELL_WARRIOR_DESTABILIZING_SLAM);
+        target->learnSpell(SPELL_WARRIOR_GLADIATOR_STANCE);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARRIOR_SPARTAN_TRAINING, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARRIOR_DESTABILIZING_SLAM, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARRIOR_GLADIATOR_STANCE, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warr_gladiators_way::HandleLearn, EFFECT_0, SPELL_AURA_MOD_ATTACK_POWER_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warr_gladiators_way::HandleUnlearn, EFFECT_0, SPELL_AURA_MOD_ATTACK_POWER_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warr_colossal_thrust : public SpellScript
+{
+    PrepareSpellScript(spell_warr_colossal_thrust);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetExplTargetUnit();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 184);
+
+        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_COLOSSAL_THRUST);
+        uint32 slowBonus = value->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (Unit* hitUnit = GetHitUnit())
+        {
+            damage = caster->SpellDamageBonusDone(hitUnit, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = hitUnit->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        if (target->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
+            damage += CalculatePct(damage, slowBonus);
+
+        if (Aura* stabilizing = target->GetAura(SPELL_WARRIOR_DESTABILIZING_SLAM_PROC))
+            damage += CalculatePct(damage, stabilizing->GetEffect(EFFECT_0)->GetAmount());
+
+        if (Aura* mighty = target->GetAura(SPELL_WARRIOR_MIGHTY_THROW))
+            damage += CalculatePct(damage, mighty->GetEffect(EFFECT_1)->GetAmount());
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warr_colossal_thrust::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_warr_shield_vault : public SpellScript
+{
+    PrepareSpellScript(spell_warr_shield_vault);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        Position targetPos = GetExplTargetUnit()->GetPosition();
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        if (!target || !target->IsAlive())
+            return;
+
+        caster->GetMotionMaster()->MoveJump(targetPos, 20.0f, 12.0f);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warr_shield_vault::HandleCast);
+    }
+};
+
+class spell_warr_leonidas_fury : public SpellScript
+{
+    PrepareSpellScript(spell_warr_leonidas_fury);
+
+    void HandleCast()
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->RemoveSpellCooldown(SPELL_WARRIOR_COLOSSAL_THRUST, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warr_leonidas_fury::HandleCast);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -1964,6 +2116,11 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_impending_victory_replacer);
     RegisterSpellScript(spell_warr_ravager);
     RegisterSpellScript(spell_warr_warbreaker_replacer);
+    RegisterSpellScript(spell_warr_spartan_training);
+    RegisterSpellScript(spell_warr_destabilizing_slam);
+    RegisterSpellScript(spell_warr_gladiators_way);
+    RegisterSpellScript(spell_warr_colossal_thrust);
+    RegisterSpellScript(spell_warr_shield_vault);
+    RegisterSpellScript(spell_warr_leonidas_fury);
     RegisterCreatureAI(npc_pet_ravager);
 }
-

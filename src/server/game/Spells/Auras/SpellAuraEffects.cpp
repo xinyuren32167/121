@@ -1249,20 +1249,24 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
         case FORM_GHOSTWOLF:
             spellId = 67116;
             break;
+        case FORM_SPIRIT_OF_FIRE:
+            spellId = 84093;
+            break;
+        case FORM_SPIRIT_OF_STORM:
+            spellId = 84093;
+            break;
+        case FORM_SPIRIT_OF_EARTH:
+            spellId = 84093;
+            break;
+        case FORM_SPIRIT_OF_WATER:
+            spellId = 84093;
+            break;
         case FORM_GHOUL:
         case FORM_AMBIENT:
         case FORM_STEALTH:
         case FORM_CREATURECAT:
         case FORM_CREATUREBEAR:
             break;
-        case FORM_SPIRIT_OF_FIRE:
-            spellId = 84093;
-        case FORM_SPIRIT_OF_STORM:
-            spellId = 84093;
-        case FORM_SPIRIT_OF_EARTH:
-            spellId = 84093;
-        case FORM_SPIRIT_OF_WATER:
-            spellId = 84093;
         default:
             break;
     }
