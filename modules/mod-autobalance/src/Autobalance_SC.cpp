@@ -95,8 +95,6 @@ public:
 
         if (playerCount == 1)
         {
-            LOG_ERROR("Damage Calculation", "Damage before calculation {}", damage);
-            LOG_ERROR("Damage Calculation", "Damage after calculation {}", damage *= scaling.meleeDamageModifier);
             return damage *= scaling.meleeDamageModifier;
         }
 
@@ -105,9 +103,6 @@ public:
         int8 missingPlayers = (maxPlayers - playerCount);
         int8 minPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
         double totalReduction = scaling.meleeDamageModifier * minPlayersCount;
-
-        LOG_ERROR("Damage Calculation", "Damage before calculation totalReduction {}", totalReduction);
-        LOG_ERROR("Damage Calculation", "Damage after calculation {}", damage *= totalReduction);
 
         return damage *= totalReduction;
     }

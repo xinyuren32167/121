@@ -92,7 +92,6 @@ void AutoBalanceManager::InitializeScalingRaid()
         
         AutobalanceScalingInfo info = { damageModifier, healthModifier, 0, 0 };
 
-        LOG_ERROR("info", "info damage {}, healthModifier {}", info.meleeDamageModifier, info.healthModifier);
         m_ScalingDungeonDifficulty[mapId].insert(std::make_pair(Difficulty(difficulty), info));
     } while (result->NextRow());
 }

@@ -350,7 +350,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
             case SPELLFAMILY_WARRIOR:
                 {
                     // Shield Slam
-                    if (m_spellInfo->SpellFamilyFlags[1] & 0x200 && m_spellInfo->GetCategory() == 1209)
+                    /*if (m_spellInfo->SpellFamilyFlags[1] & 0x200 && m_spellInfo->GetCategory() == 1209)
                     {
                         uint8 level = m_caster->getLevel();
                         // xinef: shield block should increase the limit
@@ -358,12 +358,12 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                         uint32 block_value = m_caster->GetShieldBlockValue(uint32(float(level) * 24.5f * limit), uint32(float(level) * 34.5f * limit));
 
                         damage += int32(m_caster->ApplyEffectModifiers(m_spellInfo, effIndex, float(block_value)));
-                    }
+                    }*/
                     // Victory Rush
                     //else if (m_spellInfo->SpellFamilyFlags[1] & 0x100)
                     //    ApplyPct(damage, m_caster->GetTotalAttackPowerValue(BASE_ATTACK));
                     // Shockwave
-                    else if (m_spellInfo->Id == 46968)
+                    if (m_spellInfo->Id == 46968)
                     {
                         int32 pct = m_caster->CalculateSpellDamage(unitTarget, m_spellInfo, 2);
                         if (pct > 0)
