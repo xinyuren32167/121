@@ -86,7 +86,7 @@ uint32 Acore::XP::Gain(Player* player, Unit* unit, bool isBattleGround /*= false
             {
                 // Elites in instances have a 2.75x XP bonus instead of the regular 2x world bonus.
                 if (unit->GetMap() && unit->GetMap()->IsDungeon())
-                    xpMod *= 2.75f;
+                    xpMod *= 1.0f;
                 else
                     xpMod *= 2.0f;
             }

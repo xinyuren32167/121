@@ -1548,12 +1548,12 @@ class spell_warlock_soul_strike : public SpellScript
 {
     PrepareSpellScript(spell_warlock_soul_strike);
 
-    Creature* GetPet()
+    Unit* GetPet()
     {
-        Creature* controlledUnit = nullptr;
+        Unit* controlledUnit = nullptr;
         if (Player* player = GetCaster()->ToPlayer())
             for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-                if (Creature* pet = (*itr)->ToCreature())
+                if (Unit* pet = (*itr))
                     if (pet->IsAlive() &&
                         pet->GetOwnerGUID() == player->GetGUID() &&
                         pet->GetEntry() == PET_FELGUARD &&
@@ -1565,7 +1565,7 @@ class spell_warlock_soul_strike : public SpellScript
 
     SpellCastResult CheckCast()
     {
-        Creature* pet = GetPet();
+        Unit* pet = GetPet();
 
         if (pet)
             return SPELL_CAST_OK;
@@ -1577,13 +1577,13 @@ class spell_warlock_soul_strike : public SpellScript
     {
         Player* player = GetCaster()->ToPlayer();
         Unit* target = player->GetSelectedUnit();
-        Creature* pet = GetPet();
+        Unit* pet = GetPet();
         uint32 energy = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SOUL_STRIKE)->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
         if (pet && target)
         {
-            pet->AI()->AttackStart(target);
-            pet->CastSpell(target, SPELL_WARLOCK_SOUL_STRIKE, true, nullptr, nullptr, player->GetGUID());
+            pet->ToCreature()->AI()->AttackStart(target);
+            pet->CastSpell(target, SPELL_WARLOCK_SOUL_STRIKE, TRIGGERED_IGNORE_GCD, nullptr, nullptr, player->GetGUID());
             player->ModifyPower(POWER_ENERGY, energy);
         }
     }
@@ -1756,9 +1756,7 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
                 if (TempSummon* summon = pet->ToTempSummon())
                 {
                     if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
-                    {
                         summon->SetTimer(summon->GetTimer() + timerIncrease);
-                    }
 
                     if (summon->GetEntry() == PET_FELGUARD_SUMMON || summon->GetEntry() == NPC_IMP
                         || summon->GetEntry() == NPC_FELHUNTER || summon->GetEntry() == NPC_FELGUARD
@@ -2215,12 +2213,12 @@ class spell_warl_power_siphon : public SpellScript
     PrepareSpellScript(spell_warl_power_siphon);
 
 
-    Creature* GetPet()
+    Unit* GetPet()
     {
-        Creature* controlledUnit = nullptr;
+        Unit* controlledUnit = nullptr;
         if (Player* player = GetCaster()->ToPlayer())
             for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-                if (Creature* pet = (*itr)->ToCreature())
+                if (Unit* pet = (*itr))
                     if (pet->IsAlive() &&
                         pet->GetOwnerGUID() == player->GetGUID() &&
                         pet->GetEntry() == PET_WILDIMP &&
@@ -2232,7 +2230,7 @@ class spell_warl_power_siphon : public SpellScript
 
     SpellCastResult CheckCast()
     {
-        Creature* pet = GetPet();
+        Unit* pet = GetPet();
 
         if (pet)
             return SPELL_CAST_OK;
@@ -2248,7 +2246,7 @@ class spell_warl_power_siphon : public SpellScript
         if (Player* player = GetCaster()->ToPlayer())
             for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
             {
-                if (Creature* pet = (*itr)->ToCreature())
+                if (Unit* pet = (*itr))
                 {
                     if (pet->IsAlive() && pet->GetOwnerGUID() == player->GetGUID() && pet->GetEntry() == PET_WILDIMP && pet->IsWithinDist(player, 100.0f, false))
                     {
@@ -2423,13 +2421,13 @@ class spell_warl_channel_demonfire : public SpellScript
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         if (GetCaster() && GetHitUnit())
-            if(!GetHitUnit()->HasAura(47811))
+            if(!GetHitUnit()->HasAura(SPELL_WARLOCK_IMMOLATE))
                 GetCaster()->CastSpell(GetHitUnit(), 47811, false);
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_warl_channel_demonfire::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_warl_channel_demonfire::HandleDummy, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
     }
 };
 

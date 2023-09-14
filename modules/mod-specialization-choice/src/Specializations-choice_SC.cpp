@@ -37,9 +37,17 @@ class SpecChoice_PlayerScripts : public PlayerScript
 public:
     SpecChoice_PlayerScripts() : PlayerScript("SpecChoice_PlayerScripts") { }
 
-    void OnUpdateMastery(Player* player, uint32 value)
+
+    void OnLevelChanged(Player* player, uint8 oldlevel)
     {
-        PlayerSpecialization::UpdateMastery(player, value);
+        if (player->getLevel() == 10)
+            sEluna->ShowWarningSpecialization(player);
+
+        if (player->getClass() == CLASS_WARLOCK) {
+            player->setPowerType(POWER_ENERGY);
+            player->SetMaxPower(POWER_ENERGY, 25);
+            player->SetPower(POWER_ENERGY, 0);
+        }
     }
 
     void OnLogin(Player* player)
@@ -48,7 +56,6 @@ public:
             player->SetMaxPower(POWER_ENERGY, 5);
             player->SetPower(POWER_ENERGY, 0);
         }
-
 
         if (player->getClass() == CLASS_WARLOCK) {
 
@@ -113,6 +120,12 @@ public:
 class spell_activate_specialization : public SpellScript
 {
     PrepareSpellScript(spell_activate_specialization);
+
+
+    void UnlearnSpells()
+    {
+
+    }
 
     void HandleProc()
     {

@@ -123,9 +123,6 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
 
     void UpdateAI(uint32 diff) override
     {
-        if (!UpdateVictim())
-            return;
-
         _events.Update(diff);
 
         while (uint32 eventId = _events.ExecuteEvent())
@@ -149,8 +146,6 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
                 break;
             }
         }
-
-        DoMeleeAttackIfReady();
     }
 
 
@@ -326,8 +321,6 @@ private:
     EventMap _events;
     bool _initAttack;
 };
-
-
 
 
 
@@ -562,7 +555,7 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
         _events.Reset();
         _events.ScheduleEvent(1, 2000);
         owner = me->GetCharmerOrOwnerPlayerOrPlayerItself();
-        owner->CastSpell(me, SPELL_MINION_SCALING_DEMONIC_TYRANT);
+        me->CastSpell(me, SPELL_MINION_SCALING_DEMONIC_TYRANT);
     }
 
     void Reset() override
@@ -581,9 +574,6 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
 
     void UpdateAI(uint32 diff) override
     {
-        if (!UpdateVictim())
-            return;
-
         _events.Update(diff);
 
         while (uint32 eventId = _events.ExecuteEvent())

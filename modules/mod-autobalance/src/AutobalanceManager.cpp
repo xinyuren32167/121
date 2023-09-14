@@ -20,24 +20,6 @@ std::list<Player*> AutoBalanceManager::GetPlayersMap(Map* map)
     return players;
 }
 
-bool AutoBalanceManager::SomeoneIsTooHighLevel(Map* map)
-{
-    uint32 minLevel;
-
-    DungeonProgressionRequirements const* ar = sObjectMgr->GetAccessRequirement(map->GetId(), Difficulty(map->GetDifficulty()));
-
-    if (ar)
-        minLevel = ar->levelMin;
-
-    Map::PlayerList const& playerList = map->GetPlayers();
-    if (!playerList.IsEmpty())
-        for (Map::PlayerList::const_iterator playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
-            if (Player* playerHandle = playerIteration->GetSource())
-                return (playerHandle->getLevel() - 3) > minLevel;
-
-    return false;
-}
-
 void AutoBalanceManager::SendMessageScalingInfo(Map* map)
 {
 
@@ -54,7 +36,9 @@ void AutoBalanceManager::SendMessageScalingInfo(Map* map)
     uint32 maxPlayers = map->IsRaid() && players.size() < 10 ? 10 : players.size();
 
     for (const auto& player : players)
-        ChatHandler(player->GetSession()).SendSysMessage("Scaling " + mapName + " for " + std::to_string(maxPlayers) + " player(s).");
+    {
+        ChatHandler(player->GetSession()).SendSysMessage(mapName + " is now scaling for " + std::to_string(maxPlayers) + " player(s).");
+    }
 }
 
 Player* AutoBalanceManager::GetFirstPlayerMap(Map* map)
@@ -104,7 +88,8 @@ void AutoBalanceManager::InitializeScalingRaid()
         uint32 mapId = fields[0].Get<uint32>();
         uint32 difficulty = fields[1].Get<uint32>();
         double healthModifier = fields[2].Get<double>();
-        AutobalanceScalingInfo info = { 0, healthModifier, 0, 0 };
+        double damageModifier = fields[3].Get<double>();
+        AutobalanceScalingInfo info = { damageModifier, healthModifier, 0, 0 };
         m_ScalingDungeonDifficulty[mapId].insert(std::make_pair(Difficulty(difficulty), info));
     } while (result->NextRow());
 }
@@ -219,5 +204,4 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     creature->SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)scaledHealth);
     creature->ResetPlayerDamageReq();
     creature->SetHealth(scaledHealth);
-    
 }

@@ -2193,11 +2193,21 @@ class spell_hun_call_of_wild : public SpellScript
             if (!petStable->StabledPets.at(i))
                 continue;
 
-            auto petId = petStable->StabledPets.at(i)->CreatureId;
-            Creature* pet = GetCaster()->SummonCreature(petId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-            ((Guardian*)pet)->InitStatsForLevel(caster->getLevel());
+            uint32 displayId = petStable->StabledPets.at(i)->DisplayId;
+
+            Creature* pet = GetCaster()->SummonCreature(600613, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+
             if (pet && pet->IsAlive())
+            {
+                pet->SetDisplayId(displayId);
+
+                if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId))
+                    if (displayInfo->scale > 1.f)
+                        pet->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
+
+                ((Guardian*)pet)->InitStatsForLevel(caster->getLevel());
                 pet->AI()->AttackStart(GetExplTargetUnit());
+            }
         }
     }
 
@@ -2240,17 +2250,27 @@ class spell_hun_call_of_wild_periodic : public SpellScript
 
         uint32 random = urand(0, petQuantity);
 
-        auto pet = petStable->StabledPets.at(random)->CreatureId;
+        uint32 displayId = petStable->StabledPets.at(random)->DisplayId;
 
-        Creature* summon = GetCaster()->SummonCreature(pet, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
-        ((Guardian*)summon)->InitStatsForLevel(GetCaster()->getLevel());
+        Creature* pet = GetCaster()->SummonCreature(600613, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-        summon->AddAura(34902, GetCaster());
-        summon->AddAura(34903, GetCaster());
-        summon->AddAura(34904, GetCaster());
+        if (pet && pet->IsAlive())
+        {
+            pet->SetDisplayId(displayId);
 
-        if (summon && summon->IsAlive())
-            summon->AI()->AttackStart(GetExplTargetUnit());
+            if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId))
+                if (displayInfo->scale > 1.f)
+                    pet->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
+
+            ((Guardian*)pet)->InitStatsForLevel(GetCaster()->getLevel());
+            pet->AI()->AttackStart(GetExplTargetUnit());
+
+            pet->AddAura(34902, GetCaster());
+            pet->AddAura(34903, GetCaster());
+            pet->AddAura(34904, GetCaster());
+        }
+
+
     }
 
     void Register() override
@@ -2670,7 +2690,7 @@ static bool IsSecondaryPetAlreadySummoned(Unit* caster, uint32 petId) {
         return false;
 
     for (const auto& unit : summonedUnits)
-        if (unit->GetCharmInfo() && unit->GetCharmInfo()->GetPetNumber() == petId)
+        if (unit->GetCharmInfo() && unit->GetEntry() == 600612)
             return true;
 
     return false;
@@ -2707,6 +2727,10 @@ static void ApplySecondaryPet(Creature* summon, auto firstPet, Unit* caster)
     caster->AddAura(34902, summon);
     caster->AddAura(34903, summon);
     caster->AddAura(34904, summon);
+
+    if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(summon->GetNativeDisplayId()))
+        if (displayInfo->scale > 1.f)
+            summon->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
 }
 
 class Hunter_AllMapScript : public AllMapScript
@@ -2735,7 +2759,9 @@ public:
 
             Position const& pos = player->GetPosition();
             SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-            Creature* summon = player->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
+            uint32 displayId = firstPet->DisplayId;
+            Creature* summon = player->SummonCreature(600612, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
+            summon->SetDisplayId(displayId);
             ApplySecondaryPet(summon, firstPet, player);
         }
     }
@@ -2769,7 +2795,9 @@ class spell_hun_animal_companion : public SpellScript
 
         Position const& pos = caster->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-        Creature* summon = caster->SummonCreature(firstPet->CreatureId, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
+        Creature* summon = caster->SummonCreature(600612, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
+        uint32 displayId = firstPet->DisplayId;
+        summon->SetDisplayId(displayId);
         ApplySecondaryPet(summon, firstPet, caster);
     }
 

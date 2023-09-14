@@ -2023,7 +2023,12 @@ private:
 class spell_sha_summon_cloudburst_totem : public AuraScript
 {
     PrepareAuraScript(spell_sha_summon_cloudburst_totem);
-   
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
 
     void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
@@ -2046,24 +2051,22 @@ class spell_sha_summon_cloudburst_totem : public AuraScript
         float pct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         totalHealingAmount = CalculatePct(totalHealingAmount, pct);
 
-        summon->CastCustomSpell(SPELL_SHAMAN_OUTBURST_HEAL, SPELLVALUE_BASE_POINT0, totalHealingAmount, caster, true, nullptr, nullptr, caster->GetGUID());
-
-        if (summon) {
+        if (summon && caster) {
+            summon->CastCustomSpell(SPELL_SHAMAN_OUTBURST_HEAL, SPELLVALUE_BASE_POINT0, totalHealingAmount, caster, true, nullptr, nullptr, caster->GetGUID());
             summon->DespawnOrUnsummon();
         }
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0) {
-            int32 healingAmount = eventInfo.GetHealInfo()->GetHeal();
-            int32 currentAmount = aurEff->GetAmount();
-            aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(healingAmount + currentAmount);
-        }
+        int32 healingAmount = eventInfo.GetHealInfo()->GetHeal();
+        int32 currentAmount = aurEff->GetAmount();
+        aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(healingAmount + currentAmount);
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_sha_summon_cloudburst_totem::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_summon_cloudburst_totem::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         OnEffectApply += AuraEffectApplyFn(spell_sha_summon_cloudburst_totem::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_sha_summon_cloudburst_totem::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
@@ -2834,6 +2837,10 @@ class spell_sha_stormbrand_totem : public AuraScript
 {
     PrepareAuraScript(spell_sha_stormbrand_totem);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
 
     void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
@@ -2846,20 +2853,23 @@ class spell_sha_stormbrand_totem : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
-        {
-            Unit* caster = GetCaster();
-            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-            int32 damagePct = aurEff->GetAmount();
-            if (caster->GetShapeshiftForm() == FORM_SPIRIT_OF_STORM)
-                damagePct = 100;
-            int32 damageAmount = CalculatePct(damage, damagePct);
-            summon->CastCustomSpell(SPELL_SHAMAN_STORMBRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, summon, true, nullptr, nullptr, caster->GetGUID());
+        Unit* caster = GetCaster();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        float damagePct = aurEff->GetAmount();
+
+        if (caster->GetShapeshiftForm() == FORM_SPIRIT_OF_STORM)
+            damagePct = 100.f;
+
+        int32 damageAmount = CalculatePct(damage, damagePct);
+
+        if (summon && caster) {
+            summon->CastCustomSpell(SPELL_SHAMAN_STORMBRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, true, nullptr, nullptr, caster->GetGUID());
         }
     }   
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_sha_stormbrand_totem::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_stormbrand_totem::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         OnEffectApply += AuraEffectApplyFn(spell_sha_stormbrand_totem::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }

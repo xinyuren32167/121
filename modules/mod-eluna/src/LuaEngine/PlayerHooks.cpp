@@ -205,6 +205,14 @@ void Eluna::OnActivateSpec(Player* pPlayer, std::string message, bool activated,
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::ShowWarningSpecialization(Player* pPlayer)
+{
+    START_HOOK(PLAYER_SEND_UI_WARNING_SPEC);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
 
 void Eluna::OnActivateRune(Player* pPlayer, std::string message, uint32 index)
 {

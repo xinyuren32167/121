@@ -21,14 +21,17 @@ public:
 
     void OnLogin(Player* player) override
     {
+
     }
 
     void OnCreate(Player* player)
     {
+
     }
 
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
     {
+
     }
 };
 
@@ -76,10 +79,22 @@ public:
             return damage;
 
         Map* map = creature->GetMap();
+
+        uint8 playerCount = map->GetPlayers().getSize();
              
         AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, creature);
 
-        return damage;
+        if (scaling.meleeDamageModifier <= 0)
+            return damage;
+
+        if (playerCount == 1)
+            return damage *= scaling.meleeDamageModifier;
+
+        int8 maxPlayers = map->IsRaid() ? 25 : 5;
+        int8 missingPlayers = (maxPlayers - playerCount);
+        int8 minPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
+        double totalReduction = scaling.meleeDamageModifier * minPlayersCount;
+        return damage *= totalReduction;
     }
 };
 
