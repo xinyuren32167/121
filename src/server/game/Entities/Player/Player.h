@@ -2162,7 +2162,9 @@ public:
     [[nodiscard]] bool CanBlock() const { return m_canBlock; }
     void SetCanBlock(bool value);
     [[nodiscard]] bool CanTitanGrip() const { return m_canTitanGrip; }
+    [[nodiscard]] bool IsSpartan() const { return m_isSpartan; }
     void SetCanTitanGrip(bool value);
+    void SetSpartan(bool value);
     [[nodiscard]] bool CanTameExoticPets() const { return IsGameMaster() || HasAuraType(SPELL_AURA_ALLOW_TAME_PET_TYPE); }
 
     void SetRegularAttackTime();
@@ -2840,6 +2842,7 @@ public:
     bool m_canParry;
     bool m_canBlock;
     bool m_canTitanGrip;
+    bool m_isSpartan;
     uint8 m_swingErrorMsg;
     float m_ammoDPS;
 

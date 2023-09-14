@@ -268,6 +268,7 @@ Player::Player(WorldSession* session): Unit(true), m_mover(this)
     m_canParry = false;
     m_canBlock = false;
     m_canTitanGrip = false;
+    m_isSpartan = false;
     m_ammoDPS = 0.0f;
 
     m_temporaryUnsummonedPetNumber = 0;
@@ -12995,6 +12996,11 @@ void Player::SetCanBlock(bool value)
 void Player::SetCanTitanGrip(bool value)
 {
     m_canTitanGrip = value;
+}
+
+void Player::SetSpartan(bool value)
+{
+    m_isSpartan = value;
 }
 
 bool ItemPosCount::isContainedIn(ItemPosCountVec const& vec) const

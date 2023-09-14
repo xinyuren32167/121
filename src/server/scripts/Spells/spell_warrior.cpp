@@ -1920,17 +1920,24 @@ class spell_warr_spartan_training : public AuraScript
 {
     PrepareAuraScript(spell_warr_spartan_training);
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->SetSpartan(true);
+    }
+
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Player* caster = GetUnitOwner()->ToPlayer();
 
-        caster->removeSpell(SPELL_WARRIOR_TITANS_GRIP_SHIELD, SPEC_MASK_ALL, false);
-        caster->SetCanTitanGrip(false);
+        caster->SetSpartan(false);
         caster->AutoUnequipOffhandIfNeed();
     }
 
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_warr_spartan_training::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_warr_spartan_training::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
