@@ -94,9 +94,8 @@ void PlayerSpecialization::InitializeSpecializations()
     
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
 {
-
     if (player->GetMap()->IsDungeon()) {
-        sEluna->OnActivateSpec(player, "You can't do that while in a dungeon!", false, 0);
+        player->GetSession()->SendAreaTriggerMessage("You can't change your specialization while in a dungeon.");
         return;
     }
 

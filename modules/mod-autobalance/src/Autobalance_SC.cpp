@@ -58,6 +58,11 @@ public:
         damage = _Modifer_DealDamage(target, attacker, damage);
     }
 
+    void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage)
+    {
+        damage = _Modifer_DealDamage(target, attacker, damage);
+    }
+
     void ModifyHealRecieved(Unit* target, Unit* attacker, uint32& damage) override {
         damage = _Modifer_DealDamage(target, attacker, damage);
     }
@@ -67,33 +72,43 @@ public:
         if (!attacker || attacker->GetTypeId() == TYPEID_PLAYER || !attacker->IsInWorld())
             return damage;
 
-        Creature* creature = target->ToCreature();
-
-        if (!creature)
+        if (
+            !(
+                (target->GetMap()->IsDungeon() && attacker->GetMap()->IsDungeon()) ||
+                (target->GetMap()->IsBattleground() && attacker->GetMap()->IsBattleground())
+                )
+            )
             return damage;
 
-        if (!creature->GetMap()->IsDungeon() && !creature->GetMap()->IsBattleground())
+        if ((attacker->IsHunterPet() || attacker->IsPet() || attacker->IsSummon()) && attacker->IsControlledByPlayer())
             return damage;
 
-        if (((creature->IsHunterPet() || creature->IsPet() || creature->IsSummon()) && creature->IsControlledByPlayer()))
-            return damage;
 
-        Map* map = creature->GetMap();
+        Map* map = target->GetMap();
 
         uint8 playerCount = map->GetPlayers().getSize();
              
-        AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, creature);
+        AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, target);
 
         if (scaling.meleeDamageModifier <= 0)
             return damage;
 
         if (playerCount == 1)
+        {
+            LOG_ERROR("Damage Calculation", "Damage before calculation {}", damage);
+            LOG_ERROR("Damage Calculation", "Damage after calculation {}", damage *= scaling.meleeDamageModifier);
             return damage *= scaling.meleeDamageModifier;
+        }
+
 
         int8 maxPlayers = map->IsRaid() ? 25 : 5;
         int8 missingPlayers = (maxPlayers - playerCount);
         int8 minPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
         double totalReduction = scaling.meleeDamageModifier * minPlayersCount;
+
+        LOG_ERROR("Damage Calculation", "Damage before calculation totalReduction {}", totalReduction);
+        LOG_ERROR("Damage Calculation", "Damage after calculation {}", damage *= totalReduction);
+
         return damage *= totalReduction;
     }
 };

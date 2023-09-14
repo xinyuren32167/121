@@ -89,12 +89,15 @@ void AutoBalanceManager::InitializeScalingRaid()
         uint32 difficulty = fields[1].Get<uint32>();
         double healthModifier = fields[2].Get<double>();
         double damageModifier = fields[3].Get<double>();
+        
         AutobalanceScalingInfo info = { damageModifier, healthModifier, 0, 0 };
+
+        LOG_ERROR("info", "info damage {}, healthModifier {}", info.meleeDamageModifier, info.healthModifier);
         m_ScalingDungeonDifficulty[mapId].insert(std::make_pair(Difficulty(difficulty), info));
     } while (result->NextRow());
 }
 
-AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Creature* creature)
+AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Unit* creature)
 {
     if (!map->IsRaid() && !map->IsDungeon())
         return {};

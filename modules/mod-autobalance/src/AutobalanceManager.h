@@ -28,7 +28,7 @@ public:
     static void InitializeScalingRaid();
     static std::list<Player*> GetPlayersMap(Map* map);
     static Player* GetFirstPlayerMap(Map* map);
-    static AutobalanceScalingInfo GetScalingInfo(Map* map, Creature* creature);
+    static AutobalanceScalingInfo GetScalingInfo(Map* map, Unit* creature);
     static void ApplyScalingHealthAndMana(Map* map, Creature* creature);
     static bool SomeoneIsTooHighLevel(Map* map);
     static void SendMessageScalingInfo(Map* map);
