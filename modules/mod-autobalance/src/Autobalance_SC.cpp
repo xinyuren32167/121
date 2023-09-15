@@ -67,6 +67,29 @@ public:
         damage = _Modifer_DealDamage(target, attacker, damage);
     }
 
+    float DamageReductionForRaid(uint8 playerCount, double damageScaling) {
+
+        if (playerCount <= 10)
+            return damageScaling / 3; // We have 2 healers
+        if (playerCount > 10 && playerCount <= 15)
+            return damageScaling / 2; // We have 3 healers
+        if (playerCount > 15 && playerCount <= 20)
+            return damageScaling; // We have 4 healers
+
+        return 1.0f; // We have 5 healers no scaling.
+    }
+
+    float DamageReductionForDungeon(uint8 playerCount, double damageScaling) {
+
+        // Full slot, we have a healer
+        if (playerCount >= 5)
+            return 1.0f;
+
+        // We dont have a healer probably.
+        if (playerCount <= 4)
+            return damageScaling;
+    }
+
     uint32 _Modifer_DealDamage(Unit* target, Unit* attacker, uint32 damage)
     {
         if (!attacker || attacker->GetTypeId() == TYPEID_PLAYER || !attacker->IsInWorld())
@@ -93,18 +116,15 @@ public:
         if (scaling.meleeDamageModifier <= 0)
             return damage;
 
-        if (playerCount == 1)
-        {
+        if (playerCount == 1 && !map->IsRaid())
             return damage *= scaling.meleeDamageModifier;
-        }
 
+        if (map->IsRaid())
+            return damage *= DamageReductionForRaid(playerCount, scaling.meleeDamageModifier);
+        else
+            return damage *= DamageReductionForDungeon(playerCount, scaling.meleeDamageModifier);
 
-        int8 maxPlayers = map->IsRaid() ? 25 : 5;
-        int8 missingPlayers = (maxPlayers - playerCount);
-        int8 minPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
-        double totalReduction = scaling.meleeDamageModifier * minPlayersCount;
-
-        return damage *= totalReduction;
+        return damage;
     }
 };
 
@@ -115,6 +135,11 @@ public:
     AutoBalance_AllMapScript() : AllMapScript("AutoBalance_AllMapScript") { }
 
     void OnPlayerEnterAll(Map* map, Player* player)
+    {
+        AutoBalanceManager::SendMessageScalingInfo(map);
+    }
+
+    void OnPlayerLeaveAll(Map* map, Player* player)
     {
         AutoBalanceManager::SendMessageScalingInfo(map);
     }

@@ -119,7 +119,7 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Unit* creatu
         uint8 CurrentSpecialization = PlayerSpecialization::GetCurrentSpecId(player);
 
         if (CurrentSpecialization <= 0)
-            return {};
+            return { 0.5, 0.3, 0, 0 };
 
         auto match = m_ScalingPerSpecialization.find(CurrentSpecialization);
 
@@ -194,11 +194,16 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (playerCount == 1)
         scaledHealth = creature->prevMaxHealth * scaling.healthModifier;
     else {
-        int8 maxPlayers = map->IsRaid() ? 25 : 5;
-        int8 missingPlayers = (maxPlayers - playerCount);
-        int8 minPlayersCount = map->IsRaid() && missingPlayers < 10 ? 10 : missingPlayers;
-        double totalReduction = scaling.healthModifier * minPlayersCount;
-        scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
+        if (map->IsRaid())
+        {
+            double totalReduction = CalculateHealthRaidScaling(playerCount, scaling.healthModifier);
+            scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
+        }
+        else
+        {
+            double totalReduction = CalculateHealthDungeonScaling(playerCount, scaling.healthModifier);
+            scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
+        }
     }
 
     creature->SetMaxHealth(scaledHealth);
@@ -206,4 +211,28 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     creature->SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)scaledHealth);
     creature->ResetPlayerDamageReq();
     creature->SetHealth(scaledHealth);
+}
+
+float AutoBalanceManager::CalculateHealthRaidScaling(uint8 playerCount, double healthScaling)
+{
+    if (playerCount <= 10)
+        return healthScaling / 3;
+    if (playerCount > 10 && playerCount <= 15)
+        return healthScaling / 2;
+    if (playerCount > 15 && playerCount <= 20)
+        return healthScaling;
+
+    return 1.0f;
+}
+
+float AutoBalanceManager::CalculateHealthDungeonScaling(uint8 playerCount, double healthScaling)
+{
+    if (playerCount == 4)
+        return healthScaling;
+    if (playerCount == 3)
+        return healthScaling / 1.5;
+    if (playerCount == 2)
+        return healthScaling / 1.8;
+
+    return 1.0f;
 }
