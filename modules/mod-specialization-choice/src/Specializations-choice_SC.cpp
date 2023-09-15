@@ -48,14 +48,25 @@ public:
             player->SetMaxPower(POWER_ENERGY, 25);
             player->SetPower(POWER_ENERGY, 0);
         }
+
+        uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
+
+        if (currentSpecId == 0 && player->getLevel() >= 10)
+            sEluna->ShowWarningSpecialization(player);
     }
 
     void OnLogin(Player* player)
     {
+
         if (player->getClass() == CLASS_PALADIN) {
             player->SetMaxPower(POWER_ENERGY, 5);
             player->SetPower(POWER_ENERGY, 0);
         }
+
+        uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
+
+        if (currentSpecId == 0 && player->getLevel() >= 10)
+            sEluna->ShowWarningSpecialization(player);
 
         if (player->getClass() == CLASS_WARLOCK) {
 

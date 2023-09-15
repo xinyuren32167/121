@@ -213,26 +213,28 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     creature->SetHealth(scaledHealth);
 }
 
-float AutoBalanceManager::CalculateHealthRaidScaling(uint8 playerCount, double healthScaling)
+float AutoBalanceManager::CalculateHealthRaidScaling(uint8 totalPlayerInRaid, double healthScaling)
 {
-    if (playerCount <= 10)
+    if (totalPlayerInRaid <= 10)
         return healthScaling / 3;
-    if (playerCount > 10 && playerCount <= 15)
+    if (totalPlayerInRaid > 10 && totalPlayerInRaid <= 15)
         return healthScaling / 2;
-    if (playerCount > 15 && playerCount <= 20)
+    if (totalPlayerInRaid > 15 && totalPlayerInRaid <= 20)
         return healthScaling;
+
 
     return 1.0f;
 }
 
-float AutoBalanceManager::CalculateHealthDungeonScaling(uint8 playerCount, double healthScaling)
+float AutoBalanceManager::CalculateHealthDungeonScaling(uint8 totalPlayerInDungeon, double healthScaling)
 {
-    if (playerCount == 4)
+    if (totalPlayerInDungeon == 4)
         return healthScaling;
-    if (playerCount == 3)
+    if (totalPlayerInDungeon == 3)
         return healthScaling / 1.5;
-    if (playerCount == 2)
+    if (totalPlayerInDungeon == 2)
         return healthScaling / 1.8;
 
+    // If we are more than 5 just return the normal amount;
     return 1.0f;
 }

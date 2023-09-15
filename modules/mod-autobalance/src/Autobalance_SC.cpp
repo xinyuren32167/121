@@ -67,26 +67,26 @@ public:
         damage = _Modifer_DealDamage(target, attacker, damage);
     }
 
-    float DamageReductionForRaid(uint8 playerCount, double damageScaling) {
+    float GetDamageReductionForRaid(uint8 playerCountInRaid, double damageScaling) {
 
-        if (playerCount <= 10)
+        if (playerCountInRaid <= 10)
             return damageScaling / 3; // We have 2 healers
-        if (playerCount > 10 && playerCount <= 15)
+        if (playerCountInRaid > 10 && playerCountInRaid <= 15)
             return damageScaling / 2; // We have 3 healers
-        if (playerCount > 15 && playerCount <= 20)
+        if (playerCountInRaid > 15 && playerCountInRaid <= 20)
             return damageScaling; // We have 4 healers
 
         return 1.0f; // We have 5 healers no scaling.
     }
 
-    float DamageReductionForDungeon(uint8 playerCount, double damageScaling) {
+    float GetDamageReductionForDungeon(uint8 playerCountDungeon, double damageScaling) {
 
         // Full slot, we have a healer
-        if (playerCount >= 5)
+        if (playerCountDungeon >= 5)
             return 1.0f;
 
         // We dont have a healer probably.
-        if (playerCount <= 4)
+        if (playerCountDungeon <= 4)
             return damageScaling;
     }
 
@@ -120,9 +120,9 @@ public:
             return damage *= scaling.meleeDamageModifier;
 
         if (map->IsRaid())
-            return damage *= DamageReductionForRaid(playerCount, scaling.meleeDamageModifier);
+            return damage *= GetDamageReductionForRaid(playerCount, scaling.meleeDamageModifier);
         else
-            return damage *= DamageReductionForDungeon(playerCount, scaling.meleeDamageModifier);
+            return damage *= GetDamageReductionForDungeon(playerCount, scaling.meleeDamageModifier);
 
         return damage;
     }
