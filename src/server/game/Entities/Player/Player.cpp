@@ -12998,11 +12998,6 @@ void Player::SetCanTitanGrip(bool value)
     m_canTitanGrip = value;
 }
 
-void Player::SetSpartan(bool value)
-{
-    m_isSpartan = value;
-}
-
 bool ItemPosCount::isContainedIn(ItemPosCountVec const& vec) const
 {
     for (ItemPosCountVec::const_iterator itr = vec.begin(); itr != vec.end(); ++itr)

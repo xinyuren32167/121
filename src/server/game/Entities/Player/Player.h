@@ -2164,7 +2164,7 @@ public:
     [[nodiscard]] bool CanTitanGrip() const { return m_canTitanGrip; }
     [[nodiscard]] bool IsSpartan() const { return m_isSpartan; }
     void SetCanTitanGrip(bool value);
-    void SetSpartan(bool value);
+    void SetSpartan(bool value) { m_isSpartan = value; };
     [[nodiscard]] bool CanTameExoticPets() const { return IsGameMaster() || HasAuraType(SPELL_AURA_ALLOW_TAME_PET_TYPE); }
 
     void SetRegularAttackTime();

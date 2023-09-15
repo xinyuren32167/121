@@ -1923,7 +1923,6 @@ class spell_warr_spartan_training : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* caster = GetUnitOwner()->ToPlayer();
-
         caster->SetSpartan(true);
     }
 
@@ -1937,8 +1936,8 @@ class spell_warr_spartan_training : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_warr_spartan_training::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_warr_spartan_training::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_warr_spartan_training::HandleApply, EFFECT_2, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warr_spartan_training::HandleRemove, EFFECT_2, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 

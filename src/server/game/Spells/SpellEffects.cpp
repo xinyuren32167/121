@@ -5832,7 +5832,10 @@ void Spell::EffectTitanGrip(SpellEffIndex /*effIndex*/)
         else
             m_caster->CastSpell(unitTarget, 49152, true); // damage reduction
 
-        m_caster->ToPlayer()->SetCanTitanGrip(true);
+        if(GetSpellInfo()->Id == 84551)
+            m_caster->ToPlayer()->SetSpartan(true);
+        else
+            m_caster->ToPlayer()->SetCanTitanGrip(true);
     }
 }
 
