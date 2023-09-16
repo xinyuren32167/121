@@ -11,10 +11,13 @@
 #include "Object.h"
 enum Masteries
 {
+    // Warrior
+    MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF = 1200001,
+    
     // Deathknight
     MASTERY_DK_UNHOLY = 600005,
-    MASTER_DK_BLOOD = 590001,
-    MASTER_DK_BLOOD_INCREASE_AP = 590002,
+    MASTERY_DK_BLOOD = 590001,
+    MASTERY_DK_BLOOD_INCREASE_AP = 590002,
     SPELL_DK_BlOOD_SHIELD = 590003,
 
     // Priest
@@ -46,19 +49,15 @@ enum Masteries
     MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_BUFF = 1000010,
     MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_DAMAGE_REDUCTION = 1000008,
 
-
     // Warlock
     MASTERY_WARLOCK_POTENT_AFFLICTIONS = 1100018,
     MASTERY_WARLOCK_CHAOTIC_ENERGIES = 1100019,
     MASTERY_WARLOCK_MASTER_DEMONOLOGY = 1100019,
-
     MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF = 1100017,
     MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF = 1100016,
     MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF = 1100015,
 
-
     // Mage
-
     MASTERY_MAGE_IGNITE = 300109,
     MASTERY_MAGE_IGNITE_DOTS = 300110
 
@@ -116,12 +115,13 @@ class spell_icicle_ice_lance_aura : public AuraScript
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-        if (GetCaster()->ToPlayer())
+        Player* player = GetCaster()->ToPlayer();
+        if (player->IsAlive())
         {
-            float pct = GetCaster()->ToPlayer()->GetMastery() + GetProcPct();
+            float pct = player->GetMastery() + GetProcPct();
             int32 amount = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct));
 
-            GetCaster()->CastCustomSpell(300107, SPELLVALUE_BASE_POINT0, amount, GetTarget(), true);
+            player->CastCustomSpell(300107, SPELLVALUE_BASE_POINT0, amount, GetTarget(), true);
         }
     }
 
@@ -153,10 +153,6 @@ class spell_icicle_frostbolt : public SpellScript
     void HandleProc()
     {
         Player* player = GetCaster()->ToPlayer();
-
-        if (!player)
-            return;
-
         if (player->HasAura(300106)) {
             if (GetStackIcicle() == 5) {
                 float pct = player->GetMastery() + GetProcPct();
@@ -189,19 +185,25 @@ class spell_mastery_ignite : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        float pct = GetDamagePct() + GetCaster()->ToPlayer()->GetMastery();
-        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            if (player->IsAlive())
+            {
+                float pct = GetDamagePct() + player->GetMastery();
+                uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
 
-        int32 totalTicks = sSpellMgr->AssertSpellInfo(MASTERY_MAGE_IGNITE_DOTS)->GetMaxTicks();
-        int32 amount = int32(CalculatePct(damage, pct) / totalTicks);
+                int32 totalTicks = sSpellMgr->AssertSpellInfo(MASTERY_MAGE_IGNITE_DOTS)->GetMaxTicks();
+                int32 amount = int32(CalculatePct(damage, pct) / totalTicks);
 
-        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0)) {
-            int32 remainingTicks = protEff->GetRemaningTicks();
-            int32 remainingAmount = (protEff->GetAmount() * remainingTicks) / totalTicks;
+                if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(300110, 0)) {
+                    int32 remainingTicks = protEff->GetRemaningTicks();
+                    int32 remainingAmount = (protEff->GetAmount() * remainingTicks) / totalTicks;
 
-            amount += remainingAmount;
+                    amount += remainingAmount;
+                }
+                player->CastCustomSpellTrigger(MASTERY_MAGE_IGNITE_DOTS, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_IGNORE_AURA_SCALING);
+            }
         }
-        GetCaster()->CastCustomSpellTrigger(MASTERY_MAGE_IGNITE_DOTS, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
@@ -227,13 +229,9 @@ class spell_mastery_savant : public SpellScript
 
     void HandleCast()
     {
-        Unit* caster = GetCaster();
-
-        if (!caster)
-            return;
-
-        int32 manaPct = GetManaPct() + caster->ToPlayer()->GetMastery();
-        int32 dmgPct = GetDamagePct() + caster->ToPlayer()->GetMastery();
+        Player* caster = GetCaster()->ToPlayer();
+        int32 manaPct = GetManaPct() + caster->GetMastery();
+        int32 dmgPct = GetDamagePct() + caster->GetMastery();
         caster->CastCustomSpell(caster, 300112, &manaPct, &manaPct, &dmgPct, TRIGGERED_FULL_MASK);
     }
 
@@ -272,8 +270,14 @@ class spell_mastery_deep_wounds : public AuraScript
 
     void HandleBuff(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        float amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-        GetCaster()->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                float amount = aurEff->GetAmount() + caster->GetMastery();
+                caster->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register() override
@@ -289,13 +293,14 @@ class spell_mastery_unshackled_fury : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Player* caster = GetCaster()->ToPlayer();
-
-        if (!caster)
-            return;
-
-        int32 amount = aurEff->GetAmount() + caster->GetMastery();
-        caster->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                int32 amount = aurEff->GetAmount() + caster->GetMastery();
+                caster->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register() override
@@ -315,11 +320,12 @@ class spell_mastery_critical_block : public SpellScript
 
     void HandleCast()
     {
-        int32 blockAmount = GetEffectAmount(EFFECT_0) + GetCaster()->ToPlayer()->GetMastery();
-        int32 critBlockChance = GetEffectAmount(EFFECT_1) + GetCaster()->ToPlayer()->GetMastery() + GetCaster()->GetFloatValue(PLAYER_CRIT_PERCENTAGE);
-        int32 powerAmount = GetEffectAmount(EFFECT_2) + GetCaster()->ToPlayer()->GetMastery();
-        GetCaster()->RemoveAura(200006);
-        GetCaster()->CastCustomSpell(GetCaster(), 200006, &blockAmount, &critBlockChance, &powerAmount, TRIGGERED_FULL_MASK);
+        Player* caster = GetCaster()->ToPlayer();
+        int32 blockAmount = GetEffectAmount(EFFECT_0) + caster->GetMastery();
+        int32 critBlockChance = GetEffectAmount(EFFECT_1) + caster->GetMastery() + GetCaster()->GetFloatValue(PLAYER_CRIT_PERCENTAGE);
+        int32 powerAmount = GetEffectAmount(EFFECT_2) + caster->GetMastery();
+        caster->RemoveAura(200006);
+        caster->CastCustomSpell(caster, 200006, &blockAmount, &critBlockChance, &powerAmount, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -343,6 +349,31 @@ class spell_mastery_critical_block_on_remove : public AuraScript
     }
 };
 
+class spell_mastery_phalanx_dominance : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_phalanx_dominance);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                float mastery = caster->GetMastery();
+                int32 damageReduction = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount() + mastery;
+                int32 critBonus = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + mastery;
+
+                caster->CastCustomSpell(caster, MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF, &damageReduction, &critBonus, nullptr, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mastery_phalanx_dominance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 //Paladin
 class spell_mastery_lightbringer : public AuraScript
@@ -351,36 +382,42 @@ class spell_mastery_lightbringer : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        int32 defaultValue = aurEff->GetAmount();
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                int32 defaultValue = aurEff->GetAmount();
+                float mastery = caster->GetMastery();
 
-        if (!procInfo.GetHealInfo())
-            return;
-        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 400001)
-            return;
+                if (!procInfo.GetHealInfo())
+                    return;
+                if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 400001)
+                    return;
 
-        int32 healAmount = procInfo.GetHealInfo()->GetHeal();
+                int32 healAmount = procInfo.GetHealInfo()->GetHeal();
 
-        int32 effectiveness = 0;
-        int32 effectiveValue = defaultValue + mastery;
+                int32 effectiveness = 0;
+                int32 effectiveValue = defaultValue + mastery;
 
-        Unit* target = procInfo.GetActionTarget();
-        if (!target)
-            return;
-        Position targetPos = target->GetPosition();
-        float distance = GetCaster()->GetDistance(targetPos);
+                Unit* target = procInfo.GetActionTarget();
+                if (!target)
+                    return;
+                Position targetPos = target->GetPosition();
+                float distance = GetCaster()->GetDistance(targetPos);
 
-        if (distance >= 40)
-            effectiveness = 0;
-        if (distance <= 10)
-            effectiveness = 100;
-        if (distance > 10)
-            effectiveness = (40 - distance) * 3.33;
+                if (distance >= 40)
+                    effectiveness = 0;
+                if (distance <= 10)
+                    effectiveness = 100;
+                if (distance > 10)
+                    effectiveness = (40 - distance) * 3.33;
 
-        int32 finalAmount = CalculatePct(effectiveValue, effectiveness);
-        int32 finalHeal = ApplyPct(healAmount, finalAmount);
+                int32 finalAmount = CalculatePct(effectiveValue, effectiveness);
+                int32 finalHeal = ApplyPct(healAmount, finalAmount);
 
-        GetCaster()->CastCustomSpell(400001, SPELLVALUE_BASE_POINT0, finalHeal, target, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(400001, SPELLVALUE_BASE_POINT0, finalHeal, target, TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register() override
@@ -395,11 +432,15 @@ class spell_mastery_divine_bulwark : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 attackPower = (GetCaster()->GetAura(400002)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
-        int32 blockRating = (GetCaster()->GetAura(400002)->GetEffect(EFFECT_2)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        if (Aura* aura = caster->GetAura(400002))
+        {
+            int32 attackPower = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+            int32 blockRating = aura->GetEffect(EFFECT_2)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(GetCaster(), 400005, &attackPower, &blockRating, nullptr, TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(GetCaster(), 400005, &attackPower, &blockRating, nullptr, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -414,13 +455,14 @@ class spell_mastery_divine_bulwark_consec : public SpellScript
 
     void HandleCast()
     {
-        if (!GetCaster()->HasAura(400002))
-            return;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(400002))
+        {
+            float mastery = caster->GetMastery();
+            int32 damageReduction = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
 
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 damageReduction = (GetCaster()->GetAura(400002)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
-
-        GetCaster()->CastCustomSpell(400003, SPELLVALUE_BASE_POINT0, damageReduction, GetCaster(), true);
+            caster->CastCustomSpell(400003, SPELLVALUE_BASE_POINT0, damageReduction, GetCaster(), true);
+        }
     }
 
     void Register() override
@@ -435,21 +477,20 @@ class spell_mastery_divine_bulwark_selection : public AuraScript
 
     void HandleScriptEffect(AuraEffect* aurEff)
     {
-        Creature* creature = GetCaster()->FindNearestCreature(500502, 30);
-        if (!creature)
-            return;
-
-        Position player = GetCaster()->GetPosition();
-        float distance = creature->GetDistance(player);
-
-        if (const SpellInfo* info = sSpellMgr->GetSpellInfo(48819))
+        if (Creature* creature = GetCaster()->FindNearestCreature(500502, 30))
         {
-            float radius = info->Effects[EFFECT_0].CalcRadius(GetCaster());
+            Position player = GetCaster()->GetPosition();
+            float distance = creature->GetDistance(player);
 
-            if (distance > radius)
-                GetCaster()->RemoveAura(400003);
-            else
-                GetCaster()->AddAura(400003, GetCaster());
+            if (const SpellInfo* info = sSpellMgr->GetSpellInfo(48819))
+            {
+                float radius = info->Effects[EFFECT_0].CalcRadius(GetCaster());
+
+                if (distance > radius)
+                    GetCaster()->RemoveAura(400003);
+                else
+                    GetCaster()->AddAura(400003, GetCaster());
+            }
         }
     }
 
@@ -465,10 +506,14 @@ class spell_mastery_hand_of_light : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 holyPower = (GetCaster()->GetAura(400006)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        if (Aura* aura = caster->GetAura(400006))
+        {
+            int32 holyPower = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(400007, SPELLVALUE_BASE_POINT0, holyPower, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(400007, SPELLVALUE_BASE_POINT0, holyPower, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -485,10 +530,14 @@ class spell_mastery_master_of_beasts : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 damageBonus = (GetCaster()->GetAura(500003)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        if (Aura* aura = caster->GetAura(500003))
+        {
+            int32 damageBonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(500000, SPELLVALUE_BASE_POINT0, damageBonus, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(500000, SPELLVALUE_BASE_POINT0, damageBonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -503,11 +552,15 @@ class spell_mastery_sniper_training : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 rangeBonus = (GetCaster()->GetAura(500004)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
-        int32 damageBonus = (GetCaster()->GetAura(500004)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        if (Aura* aura = caster->GetAura(500004))
+        {
+            int32 rangeBonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+            int32 damageBonus = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(GetCaster(), 500001, &rangeBonus, &damageBonus, nullptr, true, nullptr, nullptr);
+            caster->CastCustomSpell(caster, 500001, &rangeBonus, &damageBonus, nullptr, true, nullptr, nullptr);
+        }
     }
 
     void Register() override
@@ -522,10 +575,14 @@ class spell_mastery_spirit_bound : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 amount = (GetCaster()->GetAura(500005)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        if (Aura* aura = caster->GetAura(500005))
+        {
+            int32 amount = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(500008, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(500008, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -547,24 +604,33 @@ class spell_mastery_astral_invocation : public AuraScript
 
     void HandleCast(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 natureDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
-        int32 arcaneDamageBonus = (GetCaster()->GetAura(700000)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
-        Unit* target = procInfo.GetActionTarget();
-        int32 schoolMask = procInfo.GetSpellInfo()->GetSchoolMask();
-
-        if (schoolMask & SPELL_SCHOOL_MASK_NATURE && target->HasAura(80518))
+        if (Player* caster = GetCaster()->ToPlayer())
         {
-            int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
-            int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);
-            GetCaster()->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, std::max(1, pctDamage), target, TRIGGERED_FULL_MASK);
-        }
+            if (caster->IsAlive())
+            {
+                if (Aura* aura = caster->GetAura(700000))
+                {
+                    float mastery = caster->GetMastery();
+                    int32 natureDamageBonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+                    int32 arcaneDamageBonus = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                    Unit* target = procInfo.GetActionTarget();
+                    int32 schoolMask = procInfo.GetSpellInfo()->GetSchoolMask();
 
-        if (schoolMask & SPELL_SCHOOL_MASK_ARCANE && target->HasAura(48463))
-        {
-            int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
-            int32 pctDamage = CalculatePct(rawDamage, arcaneDamageBonus);
-            GetCaster()->CastCustomSpell(700003, SPELLVALUE_BASE_POINT0, std::max(1, pctDamage), target, TRIGGERED_FULL_MASK);
+                    if (schoolMask & SPELL_SCHOOL_MASK_NATURE && target->HasAura(80518))
+                    {
+                        int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
+                        int32 pctDamage = CalculatePct(rawDamage, natureDamageBonus);
+                        caster->CastCustomSpell(700002, SPELLVALUE_BASE_POINT0, std::max(1, pctDamage), target, TRIGGERED_FULL_MASK);
+                    }
+
+                    if (schoolMask & SPELL_SCHOOL_MASK_ARCANE && target->HasAura(48463))
+                    {
+                        int32 rawDamage = procInfo.GetDamageInfo()->GetDamage();
+                        int32 pctDamage = CalculatePct(rawDamage, arcaneDamageBonus);
+                        caster->CastCustomSpell(700003, SPELLVALUE_BASE_POINT0, std::max(1, pctDamage), target, TRIGGERED_FULL_MASK);
+                    }
+                }
+            }
         }
     }
 
@@ -581,8 +647,8 @@ class spell_mastery_razor_claws : public SpellScript
 
     void HandleCast()
     {
-        Unit* caster = GetCaster();
-        float mastery = caster->ToPlayer()->GetMastery();
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
         SpellInfo const* spell = sSpellMgr->AssertSpellInfo(700004);
         int32 damageBonus = spell->GetEffect(EFFECT_0).CalcValue(caster) + mastery;
 
@@ -616,8 +682,8 @@ class spell_mastery_natures_guardian : public SpellScript
 
     void HandleCast()
     {
-        Unit* caster = GetCaster();
-        float mastery = caster->ToPlayer()->GetMastery();
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
         SpellInfo const* spell = sSpellMgr->AssertSpellInfo(700007);
         int32 healthPct = spell->GetEffect(EFFECT_0).CalcValue(caster) + mastery;
         int32 healthBonus = CalculatePct(caster->GetMaxHealth(), healthPct);
@@ -654,46 +720,52 @@ class spell_mastery_harmony : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        int32 defaultValue = aurEff->GetAmount();
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 healPct = defaultValue + mastery;
-
-        if (!procInfo.GetHealInfo())
-            return;
-        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 700011)
-            return;
-
-        int32 healAmount = procInfo.GetHealInfo()->GetHeal();
-
-        Unit* target = procInfo.GetActionTarget();
-        if (!target)
-            return;
-
-        auto targetAuras = target->GetAppliedAuras();
-        std::list <Aura*> totalHots;
-        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        if (Player* caster = GetCaster()->ToPlayer())
         {
-            if (Aura* aura = itr->second->GetBase())
+            if (caster->IsAlive())
             {
-                if (GetCaster()->GetGUID() != aura->GetCasterGUID())
-                    continue;
+                int32 defaultValue = aurEff->GetAmount();
+                float mastery = caster->GetMastery();
+                int32 healPct = defaultValue + mastery;
 
-                SpellInfo const* auraInfo = aura->GetSpellInfo();
+                if (!procInfo.GetHealInfo())
+                    return;
+                if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 700011)
+                    return;
 
-                if (auraInfo->SpellFamilyFlags[1] & 0x00400000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                int32 healAmount = procInfo.GetHealInfo()->GetHeal();
+
+                Unit* target = procInfo.GetActionTarget();
+                if (!target)
+                    return;
+
+                auto targetAuras = target->GetAppliedAuras();
+                std::list <Aura*> totalHots;
+                for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
                 {
-                    totalHots.push_back(aura);
+                    if (Aura* aura = itr->second->GetBase())
+                    {
+                        if (GetCaster()->GetGUID() != aura->GetCasterGUID())
+                            continue;
+
+                        SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                        if (auraInfo->SpellFamilyFlags[1] & 0x00400000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
+                        {
+                            totalHots.push_back(aura);
+                        }
+                    }
                 }
+
+                int32 healMulti = healPct * totalHots.size();
+
+                int32 finalAmount = CalculatePct(healAmount, healMulti);
+                if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 50464)
+                    finalAmount *= 3;
+
+                caster->CastCustomSpell(700011, SPELLVALUE_BASE_POINT0, std::max(1, finalAmount), target, TRIGGERED_FULL_MASK);
             }
         }
-
-        int32 healMulti = healPct * totalHots.size();
-
-        int32 finalAmount = CalculatePct(healAmount, healMulti);
-        if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 50464)
-            finalAmount *= 3;
-
-        GetCaster()->CastCustomSpell(700011, SPELLVALUE_BASE_POINT0, std::max(1, finalAmount), target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -710,10 +782,14 @@ class spell_mastery_frozen_hearth : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(600000)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(600000))
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(600001, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(600001, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -728,10 +804,14 @@ class spell_mastery_dreadblade : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_DK_UNHOLY)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_DK_UNHOLY))
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(600004, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(600004, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -746,17 +826,20 @@ class spell_dk_pet_scaling_damage : public AuraScript
 
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
-        if (!GetCaster())
-            return;
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                if (Aura* mastery = caster->GetAura(MASTERY_DK_UNHOLY))
+                {
+                    if (AuraEffect const* aureff = GetCaster()->GetAuraEffectOfRankedSpell(49220, EFFECT_0))
+                        amount += aureff->GetAmount();
 
-        if (AuraEffect const* aureff = GetCaster()->GetAuraEffectOfRankedSpell(49220, EFFECT_0))
-            amount += aureff->GetAmount();
-
-        Aura* mastery = GetCaster()->GetAura(MASTERY_DK_UNHOLY);
-        Player* player = GetCaster()->ToPlayer();
-
-        if (mastery && player)
-            amount += mastery->GetEffect(EFFECT_0)->GetAmount() + player->GetMastery();
+                    if (mastery && caster)
+                        amount += mastery->GetEffect(EFFECT_0)->GetAmount() + caster->GetMastery();
+                }
+            }
+        }
     }
 
     void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
@@ -790,17 +873,23 @@ class spell_mastery_bloodshield : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = aurEff->GetAmount() + mastery;
-        int32 damage = procInfo.GetHealInfo()->GetHeal();
-        int32 shieldBonus = ApplyPct(damage, bonus);
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                float mastery = caster->GetMastery();
+                int32 bonus = aurEff->GetAmount() + mastery;
+                int32 damage = procInfo.GetHealInfo()->GetHeal();
+                int32 shieldBonus = ApplyPct(damage, bonus);
 
-        if (Aura* shield = GetCaster()->GetAura(SPELL_DK_BlOOD_SHIELD)) {
-            int32 currentAmount = shield->GetEffect(EFFECT_0)->GetAmount();
-            shield->GetEffect(EFFECT_0)->ChangeAmount(shieldBonus + currentAmount);
+                if (Aura* shield = caster->GetAura(SPELL_DK_BlOOD_SHIELD)) {
+                    int32 currentAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(shieldBonus + currentAmount);
+                }
+                else
+                    caster->CastCustomSpell(SPELL_DK_BlOOD_SHIELD, SPELLVALUE_BASE_POINT0, shieldBonus, caster, TRIGGERED_FULL_MASK);
+            }
         }
-        else
-            GetCaster()->CastCustomSpell(SPELL_DK_BlOOD_SHIELD, SPELLVALUE_BASE_POINT0, shieldBonus, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -816,9 +905,13 @@ class spell_mastery_bloodshield_attack_power : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTER_DK_BLOOD)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
-        GetCaster()->CastCustomSpell(MASTER_DK_BLOOD_INCREASE_AP, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_DK_BLOOD))
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+            caster->CastCustomSpell(MASTERY_DK_BLOOD_INCREASE_AP, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -835,10 +928,14 @@ class spell_mastery_pri_grace : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_PRIEST_GRACE)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_PRIEST_GRACE))
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(MASTERY_PRIEST_GRACE_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(MASTERY_PRIEST_GRACE_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -858,28 +955,33 @@ class spell_mastery_pri_echo_of_light : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetHealInfo()->GetTarget();
-
-        if (Aura* hot = target->GetAura(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT))
+        if (Player* caster = GetCaster()->ToPlayer())
         {
-            AuraEffect* hotEff = hot->GetEffect(EFFECT_0);
+            if (caster->IsAlive())
+            {
+                Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
-            int32 remainingTicks = hot->GetDuration() / hotEff->GetAmplitude();
-            int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
+                if (Aura* hot = target->GetAura(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT))
+                {
+                    AuraEffect* hotEff = hot->GetEffect(EFFECT_0);
 
-            caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
+                    int32 remainingTicks = hot->GetDuration() / hotEff->GetAmplitude();
+                    int32 remainingHeal = hotEff->GetAmount() * remainingTicks;
+
+                    caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, remainingHeal, target, TRIGGERED_FULL_MASK);
+                }
+
+                int32 heal = eventInfo.GetHealInfo()->GetHeal();
+                int32 basePct = aurEff->GetAmount();
+                int32 pct = basePct + caster->GetMastery();
+                int32 maxTicks = sSpellMgr->AssertSpellInfo(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT)->GetMaxTicks();
+
+                ApplyPct(heal, pct);
+                int32 amount = heal / maxTicks;
+
+                caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
         }
-
-        int32 heal = eventInfo.GetHealInfo()->GetHeal();
-        int32 basePct = aurEff->GetAmount();
-        int32 pct = basePct + caster->ToPlayer()->GetMastery();
-        int32 maxTicks = sSpellMgr->AssertSpellInfo(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT)->GetMaxTicks();
-
-        ApplyPct(heal, pct);
-        int32 amount = heal / maxTicks;
-
-        caster->CastCustomSpell(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -900,38 +1002,43 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
-        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        int32 basePct = aurEff->GetAmount();
-
-        int32 pct = basePct + caster->ToPlayer()->GetMastery();
-        int32 amountPct = 0;
-
-        // Voidform Check
-        if (caster->HasAura(81044))
-            amountPct = (pct * 3);
-        else
+        if (Player* caster = GetCaster()->ToPlayer())
         {
-            // Vampiric Touch Check
-            if (target->HasAura(48160))
-                amountPct += pct;
+            if (caster->IsAlive())
+            {
+                Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+                int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+                int32 basePct = aurEff->GetAmount();
 
-            // Shadow Word: Pain Check
-            if (target->HasAura(48125))
-                amountPct += pct;
+                int32 pct = basePct + caster->GetMastery();
+                int32 amountPct = 0;
 
-            // Devouring Plague Check
-            if (target->HasAura(48300))
-                amountPct += pct;
+                // Voidform Check
+                if (caster->HasAura(81044))
+                    amountPct = (pct * 3);
+                else
+                {
+                    // Vampiric Touch Check
+                    if (target->HasAura(48160))
+                        amountPct += pct;
+
+                    // Shadow Word: Pain Check
+                    if (target->HasAura(48125))
+                        amountPct += pct;
+
+                    // Devouring Plague Check
+                    if (target->HasAura(48300))
+                        amountPct += pct;
+                }
+
+                if (amountPct == 0)
+                    return;
+
+                int32 amount = CalculatePct(damage, amountPct);
+
+                caster->CastCustomSpell(MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
         }
-
-        if (amountPct == 0)
-            return;
-
-        int32 amount = CalculatePct(damage, amountPct);
-
-        caster->CastCustomSpell(MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -949,10 +1056,14 @@ class spell_mastery_rog_potent_assassin : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_ROGUE_POTENT_ASSASSIN)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_ROGUE_POTENT_ASSASSIN))
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(MASTERY_ROGUE_POTENT_ASSASSIN_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(MASTERY_ROGUE_POTENT_ASSASSIN_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -972,15 +1083,20 @@ class spell_mastery_rog_main_gauche : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
-        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        int32 basePct = aurEff->GetAmount();
-        int32 pct = basePct + caster->ToPlayer()->GetMastery();
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+                int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+                int32 basePct = aurEff->GetAmount();
+                int32 pct = basePct + caster->GetMastery();
 
-        int32 amount = CalculatePct(damage, pct);
+                int32 amount = CalculatePct(damage, pct);
 
-        caster->CastCustomSpell(MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register()
@@ -996,10 +1112,14 @@ class spell_mastery_rog_executioner : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        int32 bonus = (GetCaster()->GetAura(MASTERY_ROGUE_EXECUTIONER)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_ROGUE_EXECUTIONER))
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
-        GetCaster()->CastCustomSpell(MASTERY_ROGUE_EXECUTIONER_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(MASTERY_ROGUE_EXECUTIONER_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -1020,22 +1140,27 @@ class spell_mastery_sha_elemental_overload : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
-        Unit* target = eventInfo.GetActionTarget();
-        int32 spellID = eventInfo.GetSpellInfo()->Id;
-        int32 procChance = GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                Unit* target = eventInfo.GetActionTarget();
+                int32 spellID = eventInfo.GetSpellInfo()->Id;
+                int32 procChance = aurEff->GetAmount() + caster->GetMastery();
 
-        // Replace Lightning Bolt by it's Overload
-        if (spellID == 49238)
-            spellID = 84057;
+                // Replace Lightning Bolt by it's Overload
+                if (spellID == 49238)
+                    spellID = 84057;
 
-        if (!roll_chance_i(procChance))
-            return;
+                if (!roll_chance_i(procChance))
+                    return;
 
-        // damage + maelstrom nerf
-        caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
-        caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
-        caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+                // damage + maelstrom nerf
+                caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
+                caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+                caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+            }
+        }
     }
 
     void Register()
@@ -1052,41 +1177,46 @@ class spell_mastery_sha_chain_lightning_overload : public SpellScript
 
     void HandleProc()
     {
-        Unit* caster = GetCaster();
-        Unit* target = GetExplTargetUnit();
-        SpellInfo const* spellInfo = GetSpellInfo();
-
-        if (!spellInfo)
-            return;
-
-        uint32 spellID = spellInfo->Id;
-
-        if (caster->isDead() || target->isDead())
-            return;
-
-        if (Aura* overloadMastery = caster->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
+        if (Player* caster = GetCaster()->ToPlayer())
         {
-            int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
-
-            // Mod Stormkeeper stacks
-            if (spellID == 49271 || spellID == 84021)
+            if (caster->IsAlive())
             {
-                if (Aura* stormkeeper = caster->GetAura(84054))
-                    stormkeeper->ModStackAmount(-1);
+                if (Unit* target = GetExplTargetUnit())
+                {
+                    if (target->IsAlive())
+                    {
+                        if (SpellInfo const* spellInfo = GetSpellInfo())
+                        {
+                            uint32 spellID = spellInfo->Id;
+
+                            if (Aura* overloadMastery = caster->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
+                            {
+                                int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+
+                                // Mod Stormkeeper stacks
+                                if (spellID == 49271 || spellID == 84021)
+                                {
+                                    if (Aura* stormkeeper = caster->GetAura(84054))
+                                        stormkeeper->ModStackAmount(-1);
+                                }
+
+                                // Swap Chain lighting and Lava Beam to their overload counterpart.
+                                if (spellID == 49271)
+                                    spellID = 84056;
+                                else if (spellID == 84021)
+                                    spellID = 84058;
+
+                                if (!roll_chance_i(procChance))
+                                    return;
+
+                                caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
+                                caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+                                caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+                            }
+                        }
+                    }
+                }
             }
-
-            // Swap Chain lighting and Lava Beam to their overload counterpart.
-            if (spellID == 49271)
-                spellID = 84056;
-            else if (spellID == 84021)
-                spellID = 84058;
-
-            if (!roll_chance_i(procChance))
-                return;
-
-            caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
-            caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
-            caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
         }
     }
 
@@ -1102,16 +1232,17 @@ class spell_mastery_sha_enhanced_elements : public SpellScript
 
     void HandleCast()
     {
-        Unit* caster = GetCaster();
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_SHAMAN_ENHANCED_ELEMENTS))
+        {
+            float mastery = caster->GetMastery();
+            // proc chance increase
+            int32 bonus1 = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+            // elemental damage increase
+            int32 bonus2 = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
 
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
-        // proc chance increase
-        int32 bonus1 = GetCaster()->GetAura(MASTERY_SHAMAN_ENHANCED_ELEMENTS)->GetEffect(EFFECT_0)->GetAmount() + mastery;
-        // elemental damage increase
-        int32 bonus2 = GetCaster()->GetAura(MASTERY_SHAMAN_ENHANCED_ELEMENTS)->GetEffect(EFFECT_1)->GetAmount() + mastery;
-
-
-        caster->CastCustomSpell(caster, MASTERY_SHAMAN_ENHANCED_ELEMENTS_BUFF, &bonus1, &bonus2, 0, TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(caster, MASTERY_SHAMAN_ENHANCED_ELEMENTS_BUFF, &bonus1, &bonus2, 0, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -1170,12 +1301,15 @@ class spell_mastery_jack_of_all_master_of_none : public SpellScript
 
     void HandleCast()
     {
-        Unit* caster = GetCaster();
-        float mastery = caster->ToPlayer()->GetMastery();
-        int32 attackPower = (caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE)->GetEffect(EFFECT_0)->GetAmount()) + mastery;
-        int32 parryRating = (caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE)->GetEffect(EFFECT_2)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE))
+        {
+            float mastery = caster->GetMastery();
+            int32 attackPower = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+            int32 parryRating = aura->GetEffect(EFFECT_2)->GetAmount() + mastery;
 
-        caster->CastCustomSpell(caster, MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_BUFF, &parryRating, &attackPower, nullptr, TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(caster, MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_BUFF, &parryRating, &attackPower, nullptr, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -1190,13 +1324,14 @@ class spell_mastery_jack_of_all_master_of_none_proc : public SpellScript
 
     void HandleCast()
     {
-        Unit* caster = GetCaster();
-        if (!caster->HasAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE))
-            return;
-        float mastery = caster->ToPlayer()->GetMastery();
-        int32 buffAmount = (caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE)->GetEffect(EFFECT_1)->GetAmount()) + mastery;
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE))
+        {
+            float mastery = caster->GetMastery();
+            int32 buffAmount = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
 
-        caster->CastCustomSpell(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_DAMAGE_REDUCTION, SPELLVALUE_BASE_POINT0, buffAmount, caster, TRIGGERED_FULL_MASK);
+            caster->CastCustomSpell(MASTERY_SHAMAN_JACK_OF_ALL_MASTER_OF_NONE_DAMAGE_REDUCTION, SPELLVALUE_BASE_POINT0, buffAmount, caster, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -1212,10 +1347,11 @@ class spell_mastery_warlock_potent_afflictions : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
         int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_WARLOCK_POTENT_AFFLICTIONS)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
 
-        GetCaster()->CastCustomSpell(MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1231,9 +1367,10 @@ class spell_mastery_warlock_chaotic_energies : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
         int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_WARLOCK_CHAOTIC_ENERGIES)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
-        GetCaster()->CastCustomSpell(MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1248,10 +1385,11 @@ class spell_mastery_warlock_master_demonology : public SpellScript
 
     void HandleCast()
     {
-        float mastery = GetCaster()->ToPlayer()->GetMastery();
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
         int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_WARLOCK_MASTER_DEMONOLOGY)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
 
-        GetCaster()->CastCustomSpell(MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF, SPELLVALUE_BASE_POINT0, bonus, GetCaster(), TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1307,4 +1445,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_sha_deep_healing);
     RegisterSpellScript(spell_mastery_jack_of_all_master_of_none);
     RegisterSpellScript(spell_mastery_jack_of_all_master_of_none_proc);
+    RegisterSpellScript(spell_mastery_phalanx_dominance);
 }

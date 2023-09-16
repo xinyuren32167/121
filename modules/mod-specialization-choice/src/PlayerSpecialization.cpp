@@ -52,6 +52,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[WARRIOR_ARMS] = { 1, 12294, "Arms", 1, 200000, 31.82,	false,	0, POWER_ALL };
     m_Specializations[WARRIOR_FURY] = { 2, 20375, "Fury", 1, 200003, 24.00, false,	0, POWER_ALL };
     m_Specializations[WARRIOR_PROTECTION] = { 3, 71, "Protection", 1, 200005, 70.00,	true,	100750, POWER_ALL };
+    m_Specializations[WARRIOR_HOPLITE] = { 33, 84551, "Hoplite", 1, 1200000, 64.00,	true,	1200002, POWER_ALL };
 
     m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 8, 300111, 29.16, true, 300113, POWER_ALL };
     m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 8, 300109,	46.66,	false,	0, POWER_ALL };
