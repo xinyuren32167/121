@@ -355,15 +355,18 @@ class spell_mastery_phalanx_dominance : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Player* caster = GetCaster()->ToPlayer())
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
-            if (caster->IsAlive())
+            if (Player* caster = GetCaster()->ToPlayer())
             {
-                float mastery = caster->GetMastery();
-                int32 damageReduction = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount() + mastery;
-                int32 critBonus = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                if (caster->IsAlive())
+                {
+                    float mastery = caster->GetMastery();
+                    int32 damageReduction = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount() + mastery;
+                    int32 critBonus = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + mastery;
 
-                caster->CastCustomSpell(caster, MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF, &damageReduction, &critBonus, nullptr, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(caster, MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF, &damageReduction, &critBonus, nullptr, TRIGGERED_FULL_MASK);
+                }
             }
         }
     }
