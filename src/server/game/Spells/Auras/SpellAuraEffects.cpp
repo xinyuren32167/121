@@ -1232,7 +1232,8 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 spellId2 = 40121;
             }
             break;
-        case FORM_GLADIATORSTANCE:         
+        case FORM_GLADIATORSTANCE:
+            spellId = 84629;
             break;
         case FORM_METAMORPHOSIS:
             spellId  = 54817;
