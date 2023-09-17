@@ -7887,82 +7887,111 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
         loot = &creature->loot;
 
-        if (!GetGroup()) {
 
-            std::list<Creature*> creatures;
-            GetDeadCreatureListInGrid(creatures, 30.f);
+        std::list<Creature*> creatures;
+        GetDeadCreatureListInGrid(creatures, 30.f);
 
-            creatures.erase(
-                std::remove_if(creatures.begin(), creatures.end(), [&](Creature const* c) {
-                return c->GetGUID() == creature->GetGUID();
-            }),
-                creatures.end());
+        creatures.erase(
+            std::remove_if(creatures.begin(), creatures.end(), [&](Creature const* c) {
+            return c->GetGUID() == creature->GetGUID();
+        }),
+            creatures.end());
 
-            for (std::list<Creature*>::iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
-            {
-                Creature* otherCreature = *itr;
+        for (std::list<Creature*>::iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
+        {
+            Creature* otherCreature = *itr;
 
-                if (!otherCreature)
+            if (!otherCreature)
+                continue;
+
+            Loot* creatureLoot = &otherCreature->loot;
+
+            if (!creatureLoot)
+                continue;
+
+            loot->gold += creatureLoot->gold;
+
+            creatureLoot->gold = 0;
+
+            for (auto item = creatureLoot->items.begin(); item != creatureLoot->items.end(); ++item) {
+
+                if (!item->AllowedForPlayer(this))
                     continue;
 
-                Loot* creatureLoot = &otherCreature->loot;
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->itemid);
 
-                if (otherCreature->GetLootRecipient() != this)
+                if (!itemTemplate)
                     continue;
 
-                if (!creatureLoot)
-                    continue;
+                if (itemTemplate->GetMaxStackSize() == 1)
+                    loot->items.push_back(*item);
+                else {
+                    auto it = std::find_if(loot->items.begin(),
+                        loot->items.end(),
+                        [&]
+                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item->itemid)
+                        && (lootItem.count < itemTemplate->GetMaxStackSize()); });
 
-                loot->gold += creatureLoot->gold;
-
-                creatureLoot->gold = 0;
-
-                for (auto item = creatureLoot->items.begin(); item != creatureLoot->items.end(); ++item) {
-
-                    if (item->allowedGUIDs.size() > 1) // we skip the items who can be looted with multiple players.
-                        continue;
-
-                    if (!item->AllowedForPlayer(this) || item->freeforall)
-                        continue;
-
-                    ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->itemid);
-
-                    if (!itemTemplate)
-                        continue;
-
-                    if (itemTemplate->GetMaxStackSize() == 1)
+                    if (it != loot->items.end())
+                        it->count += item->count;
+                    else
                         loot->items.push_back(*item);
-                    else {
-                        auto it = std::find_if(loot->items.begin(),
-                            loot->items.end(),
-                            [&]
-                        (const LootItem& lootItem) -> bool { return (lootItem.itemid == item->itemid)
-                            && (lootItem.count < itemTemplate->GetMaxStackSize()); });
 
-                        if (it != loot->items.end())
-                            it->count += item->count;
-                        else
-                            loot->items.push_back(*item);
+                }
+                item->beingRemoved = true;
+            }
 
-                    }
-                    item->beingRemoved = true;
+            for (auto item = creatureLoot->quest_items.begin(); item != creatureLoot->quest_items.end(); ++item) {
+
+                if (!item->AllowedForPlayer(this))
+                    continue;
+
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->itemid);
+
+                if (!itemTemplate)
+                    continue;
+
+                if (itemTemplate->GetMaxStackSize() == 1)
+                    loot->quest_items.push_back(*item);
+                else {
+                    auto it = std::find_if(loot->quest_items.begin(),
+                        loot->quest_items.end(),
+                        [&]
+                    (const LootItem& lootItem) -> bool { return (lootItem.itemid == item->itemid)
+                        && (lootItem.count < itemTemplate->GetMaxStackSize()); });
+
+                    if (it != loot->quest_items.end())
+                        it->count += item->count;
+                    else
+                        loot->quest_items.push_back(*item);
                 }
 
+                item->beingRemoved = true;
+            }
 
-                creatureLoot->items.erase(
-                    std::remove_if(
-                        creatureLoot->items.begin(),
-                        creatureLoot->items.end(),
-                        [](const LootItem& item) { return item.beingRemoved; }
-                    ),
-                    creatureLoot->items.end()
-                );
 
-                if (creatureLoot->empty()) {
-                    otherCreature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
-                    otherCreature->AllLootRemovedFromCorpse();
-                    creatureLoot->clear();
-                }
+            creatureLoot->quest_items.erase(
+                std::remove_if(
+                    creatureLoot->quest_items.begin(),
+                    creatureLoot->quest_items.end(),
+                    [](const LootItem& item) { return item.beingRemoved; }
+                ),
+                creatureLoot->quest_items.end()
+            );
+
+            creatureLoot->items.erase(
+                std::remove_if(
+                    creatureLoot->items.begin(),
+                    creatureLoot->items.end(),
+                    [](const LootItem& item) { return item.beingRemoved; }
+                ),
+                creatureLoot->items.end()
+            );
+
+            if (creatureLoot->empty() && creatureLoot->quest_items.size() <= 0) {
+                otherCreature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                otherCreature->AllLootRemovedFromCorpse();
+                creatureLoot->clear();
             }
         }
        

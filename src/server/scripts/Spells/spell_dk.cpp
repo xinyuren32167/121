@@ -2443,7 +2443,7 @@ class spell_dk_sacrifical_pact : public SpellScript
         // Check if we have valid targets, otherwise skip spell casting here
         if (Player* player = GetCaster()->ToPlayer())
             for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-                if (Creature* undeadPet = (*itr)->ToCreature())
+                if (Unit* undeadPet = (*itr))
                     if (undeadPet->IsAlive() &&
                         undeadPet->GetOwnerGUID() == player->GetGUID() &&
                         undeadPet->GetEntry() == NPC_DK_GHOUL &&
@@ -2456,18 +2456,10 @@ class spell_dk_sacrifical_pact : public SpellScript
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
-        std::vector<Unit*> summonedUnits = caster->GetSummonedUnits();
-
-
+        auto summonedUnits = caster->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
-            if (!unit->IsInWorld())
-                continue;
-
-            if (unit->isDead())
-                continue;
-
             if (unit->GetEntry() == NPC_DK_GHOUL)
             {
                 caster->CastSpell(unit, SPELL_DK_SACRIFICAL_PACT_EXPLOSION, TRIGGERED_FULL_MASK);
