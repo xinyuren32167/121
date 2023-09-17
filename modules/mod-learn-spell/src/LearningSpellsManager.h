@@ -20,4 +20,5 @@ private:
 public:
     static void PreloadAllSpells();
     static void GiveSpellsForLevelup(Player* player);
+    static bool Exception(Player* player, uint32 spellId);
 };
