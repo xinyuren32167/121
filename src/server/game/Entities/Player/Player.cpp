@@ -3755,8 +3755,8 @@ bool Player::resetTalents(bool noResetCost)
     }
 
     // xinef: remove titan grip if player had it set
-    if (m_canTitanGrip)
-        SetCanTitanGrip(false);
+    /*if (m_canTitanGrip)
+        SetCanTitanGrip(false);*/
     // xinef: remove dual wield if player does not have dual wield spell (shamans)
     if (!HasSpell(674) && m_canDualWield)
         SetCanDualWield(false);

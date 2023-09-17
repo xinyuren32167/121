@@ -2295,7 +2295,7 @@ class spell_dru_rip_new : public SpellScript
 {
     PrepareSpellScript(spell_dru_rip_new);
 
-    void HandleCast()
+    void HandleCast(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
         if (!caster || !caster->IsAlive())
@@ -2312,7 +2312,7 @@ class spell_dru_rip_new : public SpellScript
 
     void Register()
     {
-        OnCast += SpellCastFn(spell_dru_rip_new::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_dru_rip_new::HandleCast, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 

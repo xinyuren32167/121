@@ -100,6 +100,10 @@ enum WarriorSpells
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R1 = 20500,
     TALENT_WARRIOR_IMPROVED_BERSERKER_RAGE_R2 = 20501,
     TALENT_WARRIOR_FORTHING_BERSERKER = 46916,
+    TALENT_WARRIOR_FIGHT_MANAGEMENT_RAGE = 84588,
+    TALENT_WARRIOR_FIGHT_MANAGEMENT_HEALTH = 84589,
+    TALENT_WARRIOR_INTOXICATING_SWIPE = 84638,
+    TALENT_WARRIOR_EXECUTING_THRUST = 84650,
 
     //Masteries
     MASTERY_WARRIOR_DEEP_WOUNDS_DOT = 200001,
@@ -2018,6 +2022,10 @@ class spell_warr_colossal_thrust : public SpellScript
         if (Aura* mighty = target->GetAura(SPELL_WARRIOR_MIGHTY_THROW))
             damage += CalculatePct(damage, mighty->GetEffect(EFFECT_1)->GetAmount());
 
+        if (AuraEffect* executing = caster->GetAuraEffectOfRankedSpell(TALENT_WARRIOR_EXECUTING_THRUST, EFFECT_0))
+            if (target->GetHealthPct() <= 30)
+                damage += CalculatePct(damage, executing->GetAmount());
+
         SetHitDamage(damage);
     }
 
@@ -2065,6 +2073,126 @@ class spell_warr_leonidas_fury : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_warr_leonidas_fury::HandleCast);
+    }
+};
+
+class spell_warr_fight_management : public AuraScript
+{
+    PrepareAuraScript(spell_warr_fight_management);
+
+    void OnPeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || !caster->IsAlive())
+            return;
+
+        if(caster->GetHealthPct() < 50)
+            caster->CastSpell(caster, TALENT_WARRIOR_FIGHT_MANAGEMENT_HEALTH, TRIGGERED_FULL_MASK);
+        if (caster->GetPower(POWER_RAGE) < 30)
+            caster->CastSpell(caster, TALENT_WARRIOR_FIGHT_MANAGEMENT_RAGE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warr_fight_management::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_warr_improved_mighty_throw : public AuraScript
+{
+    PrepareAuraScript(spell_warr_improved_mighty_throw);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 reduction = aurEff->GetAmount();
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->ModifySpellCooldown(SPELL_WARRIOR_COLOSSAL_THRUST, reduction);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warr_improved_mighty_throw::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warr_intoxicating_swipe : public SpellScript
+{
+    PrepareSpellScript(spell_warr_intoxicating_swipe);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARRIOR_INTOXICATING_SWIPE, EFFECT_2))
+        {
+            int32 reductionPerTarget = aurEff->GetAmount();
+            int32 targetQte = targets.size();
+
+            if (targetQte == 0)
+                return;
+
+            int32 totalReduction = reductionPerTarget * targetQte;
+            caster->ModifySpellCooldown(SPELL_WARRIOR_COLOSSAL_THRUST, totalReduction);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warr_intoxicating_swipe::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_24);
+    }
+};
+
+class spell_warr_furious_stabs : public AuraScript
+{
+    PrepareAuraScript(spell_warr_furious_stabs);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 spell = aurEff->GetAmount();
+
+        GetCaster()->CastSpell(eventInfo.GetProcTarget(), spell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warr_furious_stabs::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warr_phalanx_agility : public AuraScript
+{
+    PrepareAuraScript(spell_warr_phalanx_agility);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    {
+        amount = CalculatePct(GetCaster()->GetStat(STAT_AGILITY), amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_phalanx_agility::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
+    }
+};
+
+class spell_warr_slam_and_thrust : public AuraScript
+{
+    PrepareAuraScript(spell_warr_slam_and_thrust);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            if (Player* caster = GetCaster()->ToPlayer())
+            {
+                uint32 reduction = aurEff->GetAmount();
+                caster->ModifySpellCooldown(SPELL_WARRIOR_COLOSSAL_THRUST, reduction);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warr_slam_and_thrust::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2128,5 +2256,11 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_colossal_thrust);
     RegisterSpellScript(spell_warr_shield_vault);
     RegisterSpellScript(spell_warr_leonidas_fury);
+    RegisterSpellScript(spell_warr_fight_management);
+    RegisterSpellScript(spell_warr_improved_mighty_throw);
+    RegisterSpellScript(spell_warr_intoxicating_swipe);
+    RegisterSpellScript(spell_warr_furious_stabs);
+    RegisterSpellScript(spell_warr_phalanx_agility);
+    RegisterSpellScript(spell_warr_slam_and_thrust);
     RegisterCreatureAI(npc_pet_ravager);
 }
