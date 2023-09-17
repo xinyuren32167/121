@@ -9598,13 +9598,13 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                 break;
             }
         // Sword and Board
-        case 50227:
+        /*case 50227:
             {
                 // Remove cooldown on Shield Slam
                 if (GetTypeId() == TYPEID_PLAYER)
                     ToPlayer()->RemoveCategoryCooldown(1209);
                 break;
-            }
+            }*/
         // Maelstrom Weapon
         case 53817:
             {

@@ -152,7 +152,7 @@ enum ShamanSpells
     SPELL_SHAMAN_SPIRIT_WEAPON_NATURE           = 84247,
     SPELL_SHAMAN_SPIRIT_WEAPON_FIRE             = 84248,
     SPELL_SHAMAN_SPIRIT_WEAPON_FROST            = 84249,
-
+    TALENT_SHAMAN_SEAMLESS_WATER                = 84149,
 };
 
 enum ShamanSpellIcons
@@ -2139,8 +2139,8 @@ class spell_sha_spirit_of_earth : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_of_earth::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_of_earth::HandleApply, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_sha_spirit_of_earth::HandleApply, EFFECT_1, SPELL_AURA_MOD_DAMAGE_TAKEN, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_spirit_of_earth::HandleApply, EFFECT_1, SPELL_AURA_MOD_DAMAGE_TAKEN, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2629,21 +2629,26 @@ class spell_sha_seamless_water : public AuraScript
     {
         Unit* caster = GetCaster();
         uint32 requiredStacks = aurEff->GetAmount();
-
-        if (Aura* stackAura = caster->GetAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS))
+        if (caster->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER || caster->GetAuraEffectOfRankedSpell(TALENT_SHAMAN_SEAMLESS_WATER, EFFECT_0))
         {
-            uint32 currentStacks = stackAura->GetStackAmount();
-
-            if (currentStacks < requiredStacks)
-                caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS, caster);
-            else if (currentStacks == requiredStacks)
+            if (Aura* stackAura = caster->GetAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS))
             {
-                caster->RemoveAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS);
-                caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_PROC, caster);
+                uint32 currentStacks = stackAura->GetStackAmount();
+
+                if (currentStacks < requiredStacks)
+                    caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS, caster);
+                else if (currentStacks == requiredStacks)
+                {
+                    caster->RemoveAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS);
+                    caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_PROC, caster);
+                }
             }
+            else
+                caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS, caster);
         }
         else
-            caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS,caster);
+            if (caster->HasAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS))
+                caster->RemoveAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS);
     }
 
     void Register() override
