@@ -1073,6 +1073,21 @@ class spell_mana_filled_wounds : public AuraScript
     }
 };
 
+class rune_general_multi_element_boost : public AuraScript
+{
+    PrepareAuraScript(rune_general_multi_element_boost);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_general_multi_element_boost::CheckProc);
+    }
+};
+
 void AddSC_generals_perks_scripts()
 {
     RegisterSpellScript(spell_vampirism);
@@ -1097,4 +1112,5 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_last_defender);
     RegisterSpellScript(spell_juggling_balance);
     RegisterSpellScript(spell_mana_filled_wounds);
+    RegisterSpellScript(rune_general_multi_element_boost);
 }
