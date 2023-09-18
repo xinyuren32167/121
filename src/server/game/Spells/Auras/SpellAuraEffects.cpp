@@ -1258,6 +1258,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             break;
         case FORM_SPIRIT_OF_EARTH:
             spellId = 84093;
+            spellId2 = 84138;
             break;
         case FORM_SPIRIT_OF_WATER:
             spellId = 84093;
