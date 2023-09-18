@@ -187,7 +187,7 @@ class rune_druid_lycara_fleeting_glimpse : public AuraScript
     {
         Player* caster = GetCaster()->ToPlayer();
 
-        if (!caster || caster->isDead())
+        if (!caster || caster->isDead() || caster->IsInCombat())
             return;
 
         if (GetCaster()->HasAura(FORM_AQUATIC_FORM) || GetCaster()->HasAura(FORM_FLIGHT_FORM) || GetCaster()->HasAura(FORM_TRAVEL_FORM) || GetCaster()->HasAura(FORM_SWIFT_TRAVEL_FORM))
@@ -216,7 +216,6 @@ class rune_druid_lycara_fleeting_glimpse : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_druid_lycara_fleeting_glimpse::CheckProc);
         OnEffectPeriodic += AuraEffectPeriodicFn(rune_druid_lycara_fleeting_glimpse::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
