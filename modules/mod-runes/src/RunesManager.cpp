@@ -738,7 +738,7 @@ uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p
     for (auto& slot : slots)
         usedOrders.push_back(slot.order);
 
-    for (uint32 order = 1; order < config.maxSlots; order++)
+    for (uint32 order = 1; order <= config.maxSlots; order++)
         if (std::find(usedOrders.begin(), usedOrders.end(), order) == usedOrders.end())
             return order;
 
