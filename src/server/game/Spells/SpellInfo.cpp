@@ -2179,8 +2179,8 @@ SpellSpecificType SpellInfo::LoadSpellSpecific() const
             }
         case SPELLFAMILY_MAGE:
             {
-                // family flags 18(Molten), 25(Frost/Ice), 28(Mage)
-                if (SpellFamilyFlags[0] & 0x12040000)
+                // family flags 18(Molten), 25(Frost/Ice), 28(Mage) (SpellFamilyFlags[0] & 0x12040000)
+                if (Id == 43008 || Id == 43024 || Id == 43046 || Id == 81545)
                     return SPELL_SPECIFIC_MAGE_ARMOR;
 
                 // Arcane brillance and Arcane intelect (normal check fails because of flags difference)
