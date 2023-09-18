@@ -3505,7 +3505,7 @@ enum SpellFamilyNames
 {
     SPELLFAMILY_GENERIC     = 0,
     SPELLFAMILY_UNK1        = 1,                            // events, holidays
-    // 2 - unused
+    SPELLFAMILY_GENERAL     = 2,
     SPELLFAMILY_MAGE        = 3,
     SPELLFAMILY_WARRIOR     = 4,
     SPELLFAMILY_WARLOCK     = 5,
