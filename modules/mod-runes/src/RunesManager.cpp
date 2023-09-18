@@ -502,10 +502,11 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) || player->getLevel() >= 10) {
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) && player->getLevel() > 10) {
         SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
         return;
     }
+
 
     Rune rune = GetRuneById(player, runeId);
 
@@ -737,7 +738,7 @@ uint32 RunesManager::GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p
     for (auto& slot : slots)
         usedOrders.push_back(slot.order);
 
-    for (uint32 order = 1; order < config.maxSlots; order++)
+    for (uint32 order = 1; order <= config.maxSlots; order++)
         if (std::find(usedOrders.begin(), usedOrders.end(), order) == usedOrders.end())
             return order;
 

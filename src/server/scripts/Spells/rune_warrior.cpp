@@ -9,6 +9,15 @@
 #include "UnitAI.h"
 #include "Log.h"
 
+
+enum SpellsWarrior {
+    SPELL_WARR_THUNDERCLAP = 47502,
+    SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER = 84663,
+    SPELL_WARR_IGNORE_PAIN = 80004,
+    SPELL_WARR_SHIELD_SLAM = 47488,
+    SPELL_WARR_REND = 47465,
+};
+
 class spell_cut_the_veins : public AuraScript
 {
     PrepareAuraScript(spell_cut_the_veins);
@@ -992,7 +1001,7 @@ class spell_son_of_thunder : public AuraScript
         if (GetCaster()->GetShapeshiftForm() != FORM_DEFENSIVESTANCE)
             return;
 
-        GetCaster()->CastSpell(GetCaster(), 47502, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1821,9 +1830,325 @@ class spell_hurricane : public AuraScript
     }
 };
 
+class rune_improved_execute : public SpellScript
+{
+    PrepareSpellScript(rune_improved_execute);
+
+    void OnAfterCast()
+    {
+        Unit* caster = GetCaster();
+        uint32 rageSpent = rageBeforeCast - caster->GetPower(POWER_RAGE);
+
+        // Get the amount to refund to the rune.
+    }
+
+    void OnBeforeCast()
+    {
+        Unit* caster = GetCaster();
+        rageBeforeCast = caster->GetPower(POWER_RAGE);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(rune_improved_execute::OnAfterCast);
+        BeforeCast += SpellCastFn(rune_improved_execute::OnBeforeCast);
+    }
+
+private:
+    uint32 rageBeforeCast;
+
+};
+
+class rune_thunder_weapon : public SpellScript
+{
+    PrepareSpellScript(rune_thunder_weapon);
+
+    void OnHitTarget(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            target->CastSpell(target, SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, true, nullptr, nullptr, GetCaster()->GetGUID());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_thunder_weapon::OnHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class rune_improved_heroic_throw : public SpellScript
+{
+    PrepareSpellScript(rune_improved_heroic_throw);
+
+    void OnHitTarget(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Player* player = GetCaster()->ToPlayer();
+            float amount = 8.0f + player->GetMastery();
+            player->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_improved_heroic_throw::OnHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class rune_brutal_vitality : public AuraScript
+{
+    PrepareAuraScript(rune_brutal_vitality);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return GetTarget()->IsAlive();
+    }
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        float pct = 0.0f; // Get the amount through the rune effect 1
+        int32 calculatedAmount = CalculatePct(static_cast<int32>(eventInfo.GetDamageInfo()->GetDamage()), pct);
+
+        if (Aura* aura = GetCaster()->GetAura(SPELL_WARR_IGNORE_PAIN))
+        {
+            int32 amount = aura->GetEffect(EFFECT_0)->GetAmount();
+            int32 newAmount = amount += calculatedAmount;
+            aura->GetEffect(EFFECT_0)->SetAmount(newAmount);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_brutal_vitality::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_brutal_vitality::OnProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+    }
+};
+
+class rune_brutal_devastator : public AuraScript
+{
+    PrepareAuraScript(rune_brutal_devastator);
+
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        float attackPower = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 amountPourcentage = 0; // Get the amount through effect 1 on the rune.
+        float chanceToResetShieldSlam = 0; // Get the amount on the effect 2 on the rune
+        int32 calculatedAmount = int32(CalculatePct(attackPower, amountPourcentage));
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (roll_chance_f(chanceToResetShieldSlam))
+            GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_SHIELD_SLAM, true);
+       
+
+        // Cast spell that inflict damage of portion of attack power.
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_brutal_devastator::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_battle_scarred_veteran : public AuraScript
+{
+    PrepareAuraScript(rune_battle_scarred_veteran);
+
+public:
+    rune_battle_scarred_veteran()
+    {
+        healPct = 0;
+    }
+
+private:
+    uint32 healPct;
+
+    bool Load() override
+    {
+        healPct = GetSpellInfo()->Effects[EFFECT_2].CalcValue(GetCaster());
+        return true;
+    }
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(rune_battle_scarred_veteran::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(rune_battle_scarred_veteran::Absorb, EFFECT_1);
+    }
+};
+
+class rune_test_of_might : public AuraScript
+{
+    PrepareAuraScript(rune_test_of_might);
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+       
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_test_of_might::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_in_for_the_kill : public SpellScript
+{
+    PrepareSpellScript(rune_in_for_the_kill);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        // check if has the rune, if yes take the amount effect_1;
+
+        if (Unit* target = GetHitUnit())
+        {
+            if (target->GetHealthPct() < 35.f) {
+                // Take the spell trigger on the effect_1
+            }
+            else {
+                // Take the spell trigger on the effect_2
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_in_for_the_kill::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class rune_strength_of_arms : public SpellScript
+{
+    PrepareSpellScript(rune_strength_of_arms);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        // Hit with Overpower check if we have the rune first
+        if (Unit* target = GetHitUnit())
+        {
+            if (target->GetHealthPct() < 35.f) {
+                // Give X rage depending on the rune rank.
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_strength_of_arms::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class rune_bonegrinder : public AuraScript
+{
+    PrepareAuraScript(rune_bonegrinder);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        // Get rune and spell trigger depending on the rune rank and cast it on the player.
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_bonegrinder::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+class rune_bloodletting : public SpellScript
+{
+    PrepareSpellScript(rune_bloodletting);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        // We hit with Mortal strike, we check if we have the rune first.
+        if (Unit* target = GetHitUnit())
+        {
+            if (target->GetHealthPct() < 35.f) {
+                GetCaster()->CastSpell(target, SPELL_WARR_REND);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_bloodletting::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
+
+class rune_cold_steel_hot_blood : public AuraScript
+{
+    PrepareAuraScript(rune_cold_steel_hot_blood);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return GetTarget()->IsAlive();
+    }
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        // if it's critical strike it proc and give X rage depending on the rank rune, addionanaly I take X % from attack power and
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_cold_steel_hot_blood::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_cold_steel_hot_blood::OnProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+    }
+};
+
+
 
 void AddSC_warrior_perks_scripts()
 {
+
+    RegisterSpellScript(rune_improved_execute);
+    RegisterSpellScript(rune_thunder_weapon);
+    RegisterSpellScript(rune_improved_heroic_throw);
+    RegisterSpellScript(rune_brutal_vitality);
+    RegisterSpellScript(rune_brutal_devastator);
+    RegisterSpellScript(rune_battle_scarred_veteran);
+    RegisterSpellScript(rune_test_of_might);
+    RegisterSpellScript(rune_strength_of_arms);
+    RegisterSpellScript(rune_in_for_the_kill);
+    RegisterSpellScript(rune_bonegrinder);
+    RegisterSpellScript(rune_bloodletting);
+
     RegisterSpellScript(spell_cut_the_veins);
     RegisterSpellScript(spell_the_art_of_war);
     RegisterSpellScript(spell_tide_of_blood);
