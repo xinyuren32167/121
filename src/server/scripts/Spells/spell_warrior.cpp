@@ -93,6 +93,7 @@ enum WarriorSpells
     SPELL_WARRIOR_GLADIATOR_STANCE = 84552,
     SPELL_WARRIOR_COLOSSAL_THRUST = 84557,
     SPELL_WARRIOR_MIGHTY_THROW = 84558,
+    SPELL_WARRIOR_SHIELD_SLAM = 47488,
 
     //Talents
     TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
@@ -2196,6 +2197,46 @@ class spell_warr_slam_and_thrust : public AuraScript
     }
 };
 
+class spell_sword_and_spear_board_reset : public AuraScript
+{
+    PrepareAuraScript(spell_sword_and_spear_board_reset);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            caster->RemoveSpellCooldown(SPELL_WARRIOR_SHIELD_SLAM);
+            caster->RemoveCategoryCooldown(1209);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sword_and_spear_board_reset::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class spell_warr_heroic_leap : public SpellScript
+{
+    PrepareSpellScript(spell_warr_heroic_leap);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Position pos = GetExplTargetDest()->GetPosition();
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        caster->GetMotionMaster()->MoveJump(pos, 23.0f, 15.0f);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warr_heroic_leap::HandleCast);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -2262,5 +2303,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_furious_stabs);
     RegisterSpellScript(spell_warr_phalanx_agility);
     RegisterSpellScript(spell_warr_slam_and_thrust);
+    RegisterSpellScript(spell_sword_and_spear_board_reset);
+    RegisterSpellScript(spell_warr_heroic_leap);
     RegisterCreatureAI(npc_pet_ravager);
 }
