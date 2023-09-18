@@ -1821,6 +1821,7 @@ class spell_hurricane : public AuraScript
     }
 };
 
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(spell_cut_the_veins);

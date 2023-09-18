@@ -17,8 +17,8 @@ RuneConfig RunesManager::config = {};
 void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
-    config.debug = false;
-    config.maxSlots  = 18;
+    config.debug = true;
+    config.maxSlots = 8;
     config.defaultSlot = sConfigMgr->GetOption<uint32>("RuneManager.defaultSlot", 8);
     config.chanceDropRuneQualityWhite = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityWhite", 90.0f);
     config.chanceDropRuneQualityGreen = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityGreen", 10.0f);
