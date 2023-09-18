@@ -9,6 +9,14 @@
 #include "UnitAI.h"
 #include "Log.h"
 
+
+enum SpellsWarrior {
+    SPELL_WARR_THUNDERCLAP = 47502,
+    SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER = 84663,
+    SPELL_WARR_IGNORE_PAIN = 80004,
+    SPELL_WARR_SHIELD_SLAM = 47488,
+};
+
 class spell_cut_the_veins : public AuraScript
 {
     PrepareAuraScript(spell_cut_the_veins);
@@ -992,7 +1000,7 @@ class spell_son_of_thunder : public AuraScript
         if (GetCaster()->GetShapeshiftForm() != FORM_DEFENSIVESTANCE)
             return;
 
-        GetCaster()->CastSpell(GetCaster(), 47502, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1818,6 +1826,137 @@ class spell_hurricane : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_hurricane::HandleProc, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_hurricane::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_improved_execute : public SpellScript
+{
+    PrepareSpellScript(spell_improved_execute);
+
+    void OnAfterCast()
+    {
+        Unit* caster = GetCaster();
+        uint32 rageSpent = rageBeforeCast - caster->GetPower(POWER_RAGE);
+
+        // Get the amount to refund to the rune.
+    }
+
+    void OnBeforeCast()
+    {
+        Unit* caster = GetCaster();
+        rageBeforeCast = caster->GetPower(POWER_RAGE);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_improved_execute::OnAfterCast);
+        BeforeCast += SpellCastFn(spell_improved_execute::OnBeforeCast);
+    }
+
+private:
+    uint32 rageBeforeCast;
+
+};
+
+class spell_thunder_weapon : public SpellScript
+{
+    PrepareSpellScript(spell_thunder_weapon);
+
+    void OnHitTarget(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            target->CastSpell(target, SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, true, nullptr, nullptr, GetCaster()->GetGUID());
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_thunder_weapon::OnHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_improved_heroic_throw : public SpellScript
+{
+    PrepareSpellScript(spell_improved_heroic_throw);
+
+    void OnHitTarget(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Player* player = GetCaster()->ToPlayer();
+            float amount = 8.0f + player->GetMastery();
+            player->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_improved_heroic_throw::OnHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_brutal_vitality : public AuraScript
+{
+    PrepareAuraScript(spell_brutal_vitality);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return GetTarget()->IsAlive();
+    }
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        float pct = 0.0f; // Get the amount through the rune effect 1
+        int32 calculatedAmount = CalculatePct(static_cast<int32>(eventInfo.GetDamageInfo()->GetDamage()), pct);
+
+        if (Aura* aura = GetCaster()->GetAura(SPELL_WARR_IGNORE_PAIN))
+        {
+            int32 amount = aura->GetEffect(EFFECT_0)->GetAmount();
+            int32 newAmount = amount += calculatedAmount;
+            aura->GetEffect(EFFECT_0)->SetAmount(newAmount);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_brutal_vitality::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_brutal_vitality::OnProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+    }
+};
+
+class spell_brutal_devastator : public AuraScript
+{
+    PrepareAuraScript(spell_brutal_devastator);
+
+
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        float attackPower = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 amountPourcentage = 0; // Get the amount through effect 1 on the rune.
+        float chanceToResetShieldSlam = 0; // Get the amount on the effect 2 on the rune
+        int32 calculatedAmount = int32(CalculatePct(attackPower, amountPourcentage));
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (roll_chance_f(chanceToResetShieldSlam))
+            GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_SHIELD_SLAM, true);
+       
+
+        // Cast spell that inflict damage of portion of attack power.
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_brutal_devastator::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
