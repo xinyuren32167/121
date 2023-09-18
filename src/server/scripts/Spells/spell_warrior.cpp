@@ -2007,6 +2007,7 @@ class spell_warr_colossal_thrust : public SpellScript
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_COLOSSAL_THRUST);
         uint32 slowBonus = value->GetEffect(EFFECT_1).CalcValue(caster);
+        uint32 bonusAmount = value->GetEffect(EFFECT_2).CalcValue(caster);
 
         if (Unit* hitUnit = GetHitUnit())
         {
@@ -2018,10 +2019,16 @@ class spell_warr_colossal_thrust : public SpellScript
             damage += CalculatePct(damage, slowBonus);
 
         if (Aura* stabilizing = target->GetAura(SPELL_WARRIOR_DESTABILIZING_SLAM_PROC))
-            damage += CalculatePct(damage, stabilizing->GetEffect(EFFECT_0)->GetAmount());
+        {
+            uint32 stabilizingAmount = (stabilizing->GetEffect(EFFECT_0)->GetAmount()) * bonusAmount;
+            damage += CalculatePct(damage, stabilizingAmount);
+        }
 
         if (Aura* mighty = target->GetAura(SPELL_WARRIOR_MIGHTY_THROW))
+        {
+            uint32 stabilizingAmount = (mighty->GetEffect(EFFECT_1)->GetAmount()) * bonusAmount;
             damage += CalculatePct(damage, mighty->GetEffect(EFFECT_1)->GetAmount());
+        }
 
         if (AuraEffect* executing = caster->GetAuraEffectOfRankedSpell(TALENT_WARRIOR_EXECUTING_THRUST, EFFECT_0))
             if (target->GetHealthPct() <= 30)
