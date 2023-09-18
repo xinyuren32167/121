@@ -2624,16 +2624,20 @@ class spell_sha_seamless_water : public AuraScript
             }
             else
                 caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS, caster);
-        }
-        else
-            if (caster->HasAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS))
-                caster->RemoveAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS);
+        } 
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster()->HasAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS))
+            GetCaster()->RemoveAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS);
     }
 
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_sha_seamless_water::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_seamless_water::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_seamless_water::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
