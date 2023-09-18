@@ -18,7 +18,7 @@ void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
     config.debug = true;
-    config.maxSlots = 10;
+    config.maxSlots  = 8;
     config.defaultSlot = sConfigMgr->GetOption<uint32>("RuneManager.defaultSlot", 8);
     config.chanceDropRuneQualityWhite = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityWhite", 90.0f);
     config.chanceDropRuneQualityGreen = sConfigMgr->GetOption<float>("RuneManager.chanceDropRuneQualityGreen", 10.0f);
@@ -502,7 +502,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) || player->getLevel() <= 10) {
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) || player->getLevel() >= 10) {
         SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
         return;
     }
