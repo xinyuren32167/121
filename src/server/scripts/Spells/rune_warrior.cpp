@@ -1846,7 +1846,12 @@ class rune_improved_execute : public SpellScript
         Unit* caster = GetCaster();
         uint32 rageSpent = rageBeforeCast - caster->GetPower(POWER_RAGE);
 
-        // Get the amount to refund to the rune.
+        if (Unit* target = GetExplTargetUnit()) {
+            if (target->IsAlive())
+            {
+                // Get the amount to refund to the rune.
+            }
+        }
     }
 
     void OnBeforeCast()
@@ -1866,13 +1871,13 @@ private:
 
 };
 
-class rune_thunder_weapon : public SpellScript
+class rune_thunder_weapon : public AuraScript
 {
-    PrepareSpellScript(rune_thunder_weapon);
+    PrepareAuraScript(rune_thunder_weapon);
 
-    void OnHitTarget(SpellEffIndex effIndex)
+    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Unit* target = GetHitUnit())
+        if (Unit* target = eventInfo.GetActionTarget())
         {
             target->CastSpell(target, SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, true, nullptr, nullptr, GetCaster()->GetGUID());
         }
@@ -1880,7 +1885,7 @@ class rune_thunder_weapon : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(rune_thunder_weapon::OnHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectProc += AuraEffectProcFn(rune_thunder_weapon::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
