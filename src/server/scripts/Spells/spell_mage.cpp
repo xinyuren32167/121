@@ -75,6 +75,7 @@ enum MageSpells
     SPELL_MAGE_SUPERNOVA_DAMAGE = 81525,
     SPELL_MAGE_SUPERNOVA_KNOCKUP = 81541,
     SPELL_MAGE_WINTERS_CHILL = 81535,
+    SPELL_MAGE_FLURRY_OF_SLASHES = 81547,
 
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
@@ -2320,6 +2321,23 @@ class spell_mage_greater_invisibility_replacer : public AuraScript
     }
 };
 
+class spell_mage_flurry_of_slashes : public AuraScript
+{
+    PrepareAuraScript(spell_mage_flurry_of_slashes);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 reduction = aurEff->GetAmount();
+        if (Player* caster = GetCaster()->ToPlayer())
+            caster->ModifySpellCooldown(SPELL_MAGE_FLURRY_OF_SLASHES, reduction);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_flurry_of_slashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new npc_mage_spell_frozen_orbs();
@@ -2383,4 +2401,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_ray_of_frost_fingers);
     RegisterSpellScript(spell_mage_ray_of_frost_proc);
     RegisterSpellScript(spell_mage_greater_invisibility_replacer);
+    RegisterSpellScript(spell_mage_flurry_of_slashes);
 }
