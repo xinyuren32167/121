@@ -2195,6 +2195,17 @@ class spell_dru_primal_wrath : public SpellScript
 {
     PrepareSpellScript(spell_dru_primal_wrath);
 
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 701022; i < 701027; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
@@ -2208,6 +2219,12 @@ class spell_dru_primal_wrath : public SpellScript
 
         uint8 comboPoint = caster->ToPlayer()->GetComboPoints();
         int32 duration = durationAmount + (durationAmount * comboPoint);
+
+        if (GetRuneAura)
+        {
+            uint32 increase = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue();
+            AddPct(duration, increase);
+        }
 
         for (auto const& object : targets)
         {
