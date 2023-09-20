@@ -2220,9 +2220,24 @@ class spell_dru_primal_wrath : public SpellScript
         }
     }
 
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_primal_wrath::FilterTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnEffectHitTarget += SpellEffectFn(spell_dru_primal_wrath::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
