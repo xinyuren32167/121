@@ -1899,14 +1899,18 @@ class rune_druid_burning_attacks : public AuraScript
 
                 SpellInfo const* auraInfo = aura->GetSpellInfo();
 
+                if (!auraInfo)
+                    continue;
+
                 if (auraInfo->SpellFamilyFlags[2] & 0x01000000 || auraInfo->SpellFamilyFlags[2] & 0x02000000 && auraInfo->SpellFamilyName == SPELLFAMILY_DRUID)
                 {
-                    AuraEffect* auraEff = aura->GetEffect(EFFECT_0);
-                    int32 totalTicks = sSpellMgr->AssertSpellInfo(aura->GetId())->GetMaxTicks();
-                    int32 remainingTicks = totalTicks - auraEff->GetTickNumber();
-                    int32 remainingAmount = auraEff->GetAmount() * remainingTicks;
+                    if (AuraEffect* auraEff = aura->GetEffect(EFFECT_0)) {
+                        int32 totalTicks = sSpellMgr->AssertSpellInfo(aura->GetId())->GetMaxTicks();
+                        int32 remainingTicks = totalTicks - auraEff->GetTickNumber();
+                        int32 remainingAmount = auraEff->GetAmount() * remainingTicks;
 
-                    amount += remainingAmount;
+                        amount += remainingAmount;
+                    }
                 }
             }
         }
