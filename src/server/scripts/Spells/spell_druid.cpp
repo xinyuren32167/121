@@ -144,8 +144,6 @@ enum DruidSpells
     SPELL_DRUID_LEADER_OF_THE_PACK          = 17007,
     SPELL_DRUID_TASTE_FOR_BLOOD             = 80609,
     SPELL_DRUID_TASTE_FOR_BLOOD_PROC        = 80612,
-    SPELL_DRUID_FAMILY_BEAR_HEAL            = 80665,
-    SPELL_DRUID_FAMILY_BEAR_MANA            = 80664,
     SPELL_DRUID_FAMILY_BEAR_CD              = 80666,
     SPELL_DRUID_PACK_LEADER_HEAL            = 80613,
     SPELL_DRUID_PACK_LEADER_MANA            = 68285,
@@ -2891,28 +2889,16 @@ class spell_dru_family_bear : public AuraScript
 {
     PrepareAuraScript(spell_dru_family_bear);
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
-        if (!caster || !caster->IsAlive())
-            return;
-
-        int32 maxHealth = caster->GetMaxHealth();
-        int32 healAmount = aurEff->GetAmount();
-        int32 heal = CalculatePct(maxHealth, healAmount);
-        int32 mana = CalculatePct(caster->GetMaxPower(Powers(POWER_MANA)), healAmount * 2);
-
-        if (!caster->HasAura(SPELL_DRUID_FAMILY_BEAR_CD))
-        {
-            caster->CastSpell(caster, SPELL_DRUID_FAMILY_BEAR_HEAL, TRIGGERED_FULL_MASK);
-            caster->CastCustomSpell(SPELL_DRUID_FAMILY_BEAR_MANA, SPELLVALUE_BASE_POINT0, mana, caster, TRIGGERED_IGNORE_GCD);
-            caster->CastSpell(caster, SPELL_DRUID_FAMILY_BEAR_CD, TRIGGERED_FULL_MASK);
-        }          
+        if (Aura* auraEff = GetCaster()->GetAura(SPELL_DRUID_FAMILY_BEAR_CD))
+            return false;
+        return true;
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_dru_family_bear::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_dru_family_bear::CheckProc);
     }
 };
 
