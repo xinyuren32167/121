@@ -3412,12 +3412,18 @@ class rune_druid_raging_fury : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-
+        
         if (Aura* tigersFury = caster->GetAura(SPELL_TIGERS_FURY))
         {
             int32 duration = tigersFury->GetDuration();
             int32 increase = caster->GetComboPoints() * aurEff->GetAmount();
             tigersFury->SetDuration(duration + increase);
+        }
+        else if (Aura* lycara_TigersFury = caster->GetAura(RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY))
+        {
+            int32 duration = lycara_TigersFury->GetDuration();
+            int32 increase = caster->GetComboPoints() * aurEff->GetAmount();
+            lycara_TigersFury->SetDuration(duration + increase);
         }
     }
 
