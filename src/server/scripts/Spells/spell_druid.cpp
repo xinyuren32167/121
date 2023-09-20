@@ -2220,7 +2220,7 @@ class spell_dru_primal_wrath : public SpellScript
         uint8 comboPoint = caster->ToPlayer()->GetComboPoints();
         int32 duration = durationAmount + (durationAmount * comboPoint);
 
-        if (GetRuneAura)
+        if (GetRuneAura())
         {
             uint32 increase = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue();
             AddPct(duration, increase);
