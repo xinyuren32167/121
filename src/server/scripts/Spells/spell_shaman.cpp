@@ -83,6 +83,7 @@ enum ShamanSpells
     SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE = 52032,
     SPELL_SHAMAN_MANA_TIDE_TOTEM = 39609,
+    SPELL_SHAMAN_RIPTIDE = 61301,
     SPELL_SHAMAN_SATED = 57724,
     SPELL_SHAMAN_STORM_EARTH_AND_FIRE = 51483,
     SPELL_SHAMAN_STORMKEEPER = 84018,
@@ -599,44 +600,68 @@ class spell_sha_bloodlust : public SpellScript
     }
 };
 
-// -1064 - Chain Heal
-//class spell_sha_chain_heal : public SpellScript
-//{
-//    PrepareSpellScript(spell_sha_chain_heal);
-//
-//    bool Load() override
-//    {
-//        firstHeal = true;
-//        riptide = false;
-//        return true;
-//    }
-//
-//    void HandleHeal(SpellEffIndex /*effIndex*/)
-//    {
-//        if (firstHeal)
-//        {
-//            // Check if the target has Riptide
-//            if (AuraEffect* aurEff = GetHitUnit()->GetAuraEffect(SPELL_AURA_PERIODIC_HEAL, SPELLFAMILY_SHAMAN, 0, 0, 0x10, GetCaster()->GetGUID()))
-//            {
-//                riptide = true;
-//                // Consume it
-//                GetHitUnit()->RemoveAura(aurEff->GetBase());
-//            }
-//            firstHeal = false;
-//        }
-//        // Riptide increases the Chain Heal effect by 25%
-//        if (riptide)
-//            SetHitHeal(GetHitHeal() * 1.25f);
-//    }
-//
-//    void Register() override
-//    {
-//        OnEffectHitTarget += SpellEffectFn(spell_sha_chain_heal::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
-//    }
-//
-//    bool firstHeal;
-//    bool riptide;
-//};
+ //55459 - Chain Heal
+class spell_sha_chain_heal : public SpellScript
+{
+    PrepareSpellScript(spell_sha_chain_heal);
+
+    bool Load() override
+    {
+        firstHeal = true;
+        riptide = false;
+        return true;
+    }
+
+    Aura* GetFlowOfTheTidesAura(Unit* caster)
+    {
+        for (size_t i = 1000018; i < 1000024; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHeal(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+        
+        if (GetFlowOfTheTidesAura(caster))
+        {             
+            if (firstHeal)
+            {
+                // Check if the target has Riptide
+                if (Aura* aurEff = GetHitUnit()->GetAura(SPELL_SHAMAN_RIPTIDE))
+                {
+                    riptide = true;
+                    // Consume it
+                    GetHitUnit()->RemoveAura(aurEff);
+                }
+                firstHeal = false;
+            }
+
+            // Riptide increases the Chain Heal effect by Rune%
+            if (riptide)
+            {
+                float healIncreasePct = GetFlowOfTheTidesAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+                int32 healing = GetHitHeal();
+                SetHitHeal(AddPct(healing, healIncreasePct));
+            }               
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_chain_heal::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+
+    bool firstHeal;
+    bool riptide;
+};
 
 // 8171 - Cleansing Totem (Pulse)
 class spell_sha_cleansing_totem_pulse : public SpellScript
@@ -2901,7 +2926,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ancestral_awakening_proc);
     //RegisterSpellScript(spell_sha_astral_shift);
     RegisterSpellScript(spell_sha_bloodlust);
-    //RegisterSpellScript(spell_sha_chain_heal);
+    RegisterSpellScript(spell_sha_chain_heal);
     RegisterSpellScript(spell_sha_cleansing_totem_pulse);
     RegisterSpellScript(spell_sha_earth_shield);
     RegisterSpellScript(spell_sha_earthbind_totem);
