@@ -190,28 +190,32 @@ class rune_druid_lycara_fleeting_glimpse : public AuraScript
         if (!caster || caster->isDead() || !caster->IsInCombat())
             return;
 
-        if (GetCaster()->HasAura(FORM_AQUATIC_FORM) || GetCaster()->HasAura(FORM_FLIGHT_FORM) || GetCaster()->HasAura(FORM_TRAVEL_FORM) || GetCaster()->HasAura(FORM_SWIFT_TRAVEL_FORM))
+        if (caster->HasAura(FORM_AQUATIC_FORM) || caster->HasAura(FORM_FLIGHT_FORM) || caster->HasAura(FORM_TRAVEL_FORM) || caster->HasAura(FORM_SWIFT_TRAVEL_FORM))
             return;
 
-        if (GetCaster()->HasAura(FORM_BEAR_FORM) || GetCaster()->HasAura(FORM_DIRE_BEAR_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
+        if (caster->HasAura(FORM_BEAR_FORM) || caster->HasAura(FORM_DIRE_BEAR_FORM) || caster->HasAura(SPELL_INCARNATION_GUARDIAN_OF_URSOC))
         {
-            caster->CastSpell(GetCaster(), RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_BARKSKIN, TRIGGERED_FULL_MASK);
+            if (Aura* aura = caster->GetAura(SPELL_BARKSKIN))
+                aura->Remove();
+            caster->CastSpell(caster, RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_BARKSKIN, TRIGGERED_FULL_MASK);
             return;
         }
 
-        if (GetCaster()->HasAura(FORM_CAT_FORM) || GetCaster()->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+        if (caster->HasAura(FORM_CAT_FORM) || caster->HasAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
         {
-            caster->CastSpell(GetCaster(), RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY, TRIGGERED_FULL_MASK);
+            if (Aura* aura = caster->GetAura(SPELL_TIGERS_FURY))
+                aura->Remove();
+            caster->CastSpell(caster, RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY, TRIGGERED_FULL_MASK);
             return;
         }
 
-        if (GetCaster()->HasAura(FORM_MOONKIN_FORM))
+        if (caster->HasAura(FORM_MOONKIN_FORM))
         {
-            caster->CastSpell(GetCaster(), SPELL_STARFALL, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_STARFALL, TRIGGERED_FULL_MASK);
             return;
         }
 
-        caster->CastSpell(GetCaster(), RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_WILD_GROWTH, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_WILD_GROWTH, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -3047,7 +3051,14 @@ class rune_druid_lasting_anger : public AuraScript
         if (random > procChance)
             return;
 
-        if (Aura* berserk = caster->GetAura(SPELL_BERSERK))
+        if (Aura* berserk = caster->GetAura(SPELL_INCARNATION_AVATAR_OF_ASHAMANE))
+        {
+            int32 duration = berserk->GetDuration();
+            int32 increase = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+            berserk->SetDuration(duration + increase);
+        }
+        else if (Aura* berserk = caster->GetAura(SPELL_BERSERK))
         {
             int32 duration = berserk->GetDuration();
             int32 increase = GetAura()->GetEffect(EFFECT_1)->GetAmount();
@@ -3405,12 +3416,18 @@ class rune_druid_raging_fury : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-
+        
         if (Aura* tigersFury = caster->GetAura(SPELL_TIGERS_FURY))
         {
             int32 duration = tigersFury->GetDuration();
             int32 increase = caster->GetComboPoints() * aurEff->GetAmount();
             tigersFury->SetDuration(duration + increase);
+        }
+        else if (Aura* lycara_TigersFury = caster->GetAura(RUNE_DRUID_LYCARAS_FLEETING_GLIMPSE_TIGERS_FURY))
+        {
+            int32 duration = lycara_TigersFury->GetDuration();
+            int32 increase = caster->GetComboPoints() * aurEff->GetAmount();
+            lycara_TigersFury->SetDuration(duration + increase);
         }
     }
 
