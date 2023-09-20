@@ -340,7 +340,7 @@ class spell_mastery_critical_block_on_remove : public AuraScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetCaster()->RemoveAura(100750);
+        GetCaster()->RemoveAura(190750);
     }
 
     void Register() override
