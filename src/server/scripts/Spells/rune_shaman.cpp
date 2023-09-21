@@ -20,7 +20,7 @@ enum ShamanSpells
     TALENT_SHAMAN_BLABLA = 00000,
 
     //Runes
-    RUNE_SHAMAN_BLABLABLA = 0000000,
+    RUNE_SHAMAN_VOLCANIC_INFERNO_DOT = 1000178,
 };
 
 class rune_sha_tidebringer : public AuraScript
@@ -102,6 +102,46 @@ class rune_sha_fiery_demise : public AuraScript
     }
 };
 
+class rune_sha_volcanic_inferno : public AuraScript
+{
+    PrepareAuraScript(rune_sha_volcanic_inferno);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damage == 0)
+            return;
+
+        float amount = CalculatePct(damage, aurEff->GetAmount());
+        int32 totalTick = sSpellMgr->AssertSpellInfo(RUNE_SHAMAN_VOLCANIC_INFERNO_DOT)->GetMaxTicks();
+        amount /= totalTick;
+
+        caster->CastCustomSpell(RUNE_SHAMAN_VOLCANIC_INFERNO_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_volcanic_inferno::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_volcanic_inferno::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -109,6 +149,7 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_tidebringer);
     RegisterSpellScript(rune_sha_lava_surge);
     RegisterSpellScript(rune_sha_fiery_demise);
+    RegisterSpellScript(rune_sha_volcanic_inferno);
 
 
 
