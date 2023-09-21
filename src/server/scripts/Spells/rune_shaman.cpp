@@ -12,7 +12,9 @@
 enum ShamanSpells
 {
     //Spells
+    SPELL_SHAMAN_FIRE_ELEMENTAL = 2894,
     SPELL_SHAMAN_LAVA_BURST = 60043,
+    SPELL_SHAMAN_STORM_ELEMENTAL = 84084,
 
     //Talents
     TALENT_SHAMAN_BLABLA = 00000,
@@ -75,12 +77,38 @@ class rune_sha_lava_surge : public AuraScript
     }
 };
 
+class rune_sha_fiery_demise : public AuraScript
+{
+    PrepareAuraScript(rune_sha_fiery_demise);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            player->ModifySpellCooldown(SPELL_SHAMAN_FIRE_ELEMENTAL, -aurEff->GetAmount());
+            player->ModifySpellCooldown(SPELL_SHAMAN_STORM_ELEMENTAL, -aurEff->GetAmount());
+        }
+
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_sha_fiery_demise::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_perks_scripts()
 {
     RegisterSpellScript(rune_sha_tidebringer);
     RegisterSpellScript(rune_sha_lava_surge);
+    RegisterSpellScript(rune_sha_fiery_demise);
 
 
 

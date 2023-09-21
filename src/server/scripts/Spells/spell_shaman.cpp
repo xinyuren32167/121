@@ -1879,18 +1879,15 @@ class spell_sha_lava_burst : public SpellScript
     void HandleDamage(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-        int32 ratio = GetEffectValue();
-        int32 damageFire = caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
-
-        ApplyPct(damageFire, ratio);
+        int32 damage = GetHitDamage();
 
         if (caster->HasAura(SPELL_SHAMAN_ASCENDANCE_FIRE))
         {
             float crit_chance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
-            damageFire = AddPct(damageFire, crit_chance);
+            ApplyPct(damage, crit_chance);
         }
 
-        SetHitDamage(damageFire);
+        SetHitDamage(damage);
     }
 
     void Register() override
