@@ -37,17 +37,19 @@ class SpecChoice_PlayerScripts : public PlayerScript
 public:
     SpecChoice_PlayerScripts() : PlayerScript("SpecChoice_PlayerScripts") { }
 
+    void SetWarlockPowerOnlevelup(Player* player) {
+        player->setPowerType(POWER_ENERGY);
+        player->SetMaxPower(POWER_ENERGY, 25);
+        player->SetPower(POWER_ENERGY, 0);
+    }
 
     void OnLevelChanged(Player* player, uint8 oldlevel)
     {
         if (player->getLevel() == 10)
             sEluna->ShowWarningSpecialization(player);
 
-        if (player->getClass() == CLASS_WARLOCK) {
-            player->setPowerType(POWER_ENERGY);
-            player->SetMaxPower(POWER_ENERGY, 25);
-            player->SetPower(POWER_ENERGY, 0);
-        }
+        if (player->getClass() == CLASS_WARLOCK)
+            SetWarlockPowerOnlevelup(player);
 
         uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
 
@@ -55,9 +57,35 @@ public:
             sEluna->ShowWarningSpecialization(player);
     }
 
+    void IniatializeWarlockOnLogin(Player* player) {
+
+        player->setPowerType(POWER_ENERGY);
+        player->SetMaxPower(POWER_ENERGY, 25);
+        player->SetPower(POWER_ENERGY, 0);
+
+        player->AddAura(SPELL_MINION_INCREASE_DREAD_STALKER, player);
+        player->AddAura(SPELL_MINION_INCREASE_WILD_IMP, player);
+        player->AddAura(SPELL_MINION_INCREASE_DARKGLARE, player);
+        player->AddAura(SPELL_MINION_INCREASE_VILEFIEND, player);
+        player->AddAura(SPELL_MINION_INCREASE_DEMONIC_TYRANT, player);
+        player->AddAura(SPELL_MINION_INCREASE_BOMBER, player);
+
+        player->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_ENERGY, -10.f);
+        player->SetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER + POWER_ENERGY, -10.f);
+
+    }
+
+    void InitializeElementalSpecialization(Player* player) {
+        uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
+        if (currentSpecId == SHAMAN_ELEMENTAL) {
+            player->setPowerType(POWER_RUNIC_POWER);
+            player->SetMaxPower(POWER_RUNIC_POWER, 1000);
+            player->SetPower(POWER_RUNIC_POWER, 0);
+        }
+    }
+
     void OnLogin(Player* player)
     {
-
         if (player->getClass() == CLASS_PALADIN) {
             player->SetMaxPower(POWER_ENERGY, 5);
             player->SetPower(POWER_ENERGY, 0);
@@ -68,31 +96,11 @@ public:
         if (currentSpecId == 0 && player->getLevel() >= 10)
             sEluna->ShowWarningSpecialization(player);
 
-        if (player->getClass() == CLASS_WARLOCK) {
+        if (player->getClass() == CLASS_WARLOCK)
+            IniatializeWarlockOnLogin(player);
 
-            player->setPowerType(POWER_ENERGY);
-            player->SetMaxPower(POWER_ENERGY, 25);
-            player->SetPower(POWER_ENERGY, 0);
-
-            player->AddAura(SPELL_MINION_INCREASE_DREAD_STALKER, player);
-            player->AddAura(SPELL_MINION_INCREASE_WILD_IMP, player);
-            player->AddAura(SPELL_MINION_INCREASE_DARKGLARE, player);
-            player->AddAura(SPELL_MINION_INCREASE_VILEFIEND, player);
-            player->AddAura(SPELL_MINION_INCREASE_DEMONIC_TYRANT, player);
-            player->AddAura(SPELL_MINION_INCREASE_BOMBER, player);
-
-            player->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_ENERGY, -10.f);
-            player->SetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER + POWER_ENERGY, -10.f);
-        }
-
-        if (player->getClass() == CLASS_SHAMAN) {
-            uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
-            if (currentSpecId == SHAMAN_ELEMENTAL) {
-                player->setPowerType(POWER_RUNIC_POWER);
-                player->SetMaxPower(POWER_RUNIC_POWER, 1000);
-                player->SetPower(POWER_RUNIC_POWER, 0);
-            }
-        }
+        if (player->getClass() == CLASS_SHAMAN)
+            InitializeElementalSpecialization(player);
     }
 
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)
@@ -160,7 +168,6 @@ class spell_activate_specialization : public SpellScript
 
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
             player->learnSpell(spellId, false, false);
-
 
         if (newSpec.powerType != POWER_ALL) {
             player->setPowerType(newSpec.powerType);
