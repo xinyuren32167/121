@@ -491,34 +491,42 @@ class rune_hunter_natural_mending : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Aura* runeAura = GetAura();
-        Player* target = GetTarget()->ToPlayer();
-
-        if (!runeAura || !target || target->isDead())
-            return;
-
-        int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
-
-        if (spellFocus <= 0)
-            return;
-
-        int32 cooldownReduction = runeAura->GetEffect(EFFECT_1)->GetAmount();
-        int32 focusAccumulated = runeAura->GetEffect(EFFECT_2)->GetAmount() + spellFocus;
-        int32 focusThreshold = aurEff->GetAmount();
-
-        if (focusAccumulated >= focusThreshold)
+        if (Player* target = GetTarget()->ToPlayer())
         {
-            target->ModifySpellCooldown(SPELL_HUNTER_TRUESHOT, -cooldownReduction);
-            focusAccumulated -= focusThreshold;
+
+            if (!target || target->isDead())
+                return;
+
+            Aura* runeAura = GetAura();
+
+            if (!runeAura)
+                return;
+
+            int32 spellFocus = eventInfo.GetSpellInfo()->CalcPowerCost(target, eventInfo.GetSchoolMask());
+
+            if (spellFocus <= 0)
+                return;
+
+            int32 cooldownReduction = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 focusAccumulated = runeAura->GetEffect(EFFECT_2)->GetAmount() + spellFocus;
+            int32 focusThreshold = aurEff->GetAmount();
 
             if (focusAccumulated >= focusThreshold)
             {
                 target->ModifySpellCooldown(SPELL_HUNTER_TRUESHOT, -cooldownReduction);
                 focusAccumulated -= focusThreshold;
+
+                if (focusAccumulated >= focusThreshold)
+                {
+                    target->ModifySpellCooldown(SPELL_HUNTER_TRUESHOT, -cooldownReduction);
+                    focusAccumulated -= focusThreshold;
+                }
             }
+
+            runeAura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
         }
 
-        runeAura->GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
+
     }
 
     void Register() override
@@ -2400,7 +2408,10 @@ class rune_hunter_wild_instincts : public AuraScript
         if (!GetCaster()->HasAura(SPELL_HUNTER_CALL_OF_THE_WILD))
             return false;
 
-        if (eventInfo.GetSpellInfo()->ManaCost <= 0)
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        if (eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), eventInfo.GetSchoolMask()) <= 0)
             return false;
 
         return true;
@@ -3329,10 +3340,15 @@ class rune_hunter_focalised_trueshot : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetCaster()->HasAura(SPELL_HUNTER_TRUESHOT))
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
             return;
 
-        int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
+        if (!caster->HasAura(SPELL_HUNTER_TRUESHOT))
+            return;
+
+        int32 spellFocus = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
 
         if (spellFocus <= 0)
             return;
@@ -3343,7 +3359,7 @@ class rune_hunter_focalised_trueshot : public AuraScript
 
         for (focusAccumulated; focusAccumulated > focusThreshold; focusAccumulated -= focusThreshold)
         {
-            GetCaster()->CastSpell(GetCaster(), RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER, TRIGGERED_FULL_MASK);
         }
 
         GetAura()->GetEffect(EFFECT_1)->SetAmount(focusAccumulated);
@@ -3437,7 +3453,7 @@ class rune_hunter_calling_the_shots : public AuraScript
         if (!runeAura || !target)
             return;
 
-        int32 spellFocus = eventInfo.GetSpellInfo()->ManaCost;
+        int32 spellFocus = eventInfo.GetSpellInfo()->CalcPowerCost(target, eventInfo.GetSchoolMask());
 
         if (spellFocus <= 0)
             return;

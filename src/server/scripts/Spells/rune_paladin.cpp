@@ -408,12 +408,20 @@ class rune_pal_crusade : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
         return GetCaster()->HasAura(SPELL_PALADIN_AVENGING_WRATH);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 holyPowerCost = eventInfo.GetSpellInfo()->ManaCost;
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 holyPowerCost = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
         Aura* crusadeAura = GetCaster()->GetAura(RUNE_PALADIN_CRUSADE_HASTE);
 
         if (holyPowerCost <= 0 || holyPowerCost > 5 || !crusadeAura)

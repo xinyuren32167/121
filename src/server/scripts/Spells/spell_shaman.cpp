@@ -42,6 +42,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ASCENDANCE_WATER_HEAL = 84043,
     SPELL_SHAMAN_ASTRAL_SHIFT = 84007,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
+    SPELL_SHAMAN_CAPACITOR_TOTEM = 84069,
     SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD = 84056,
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
@@ -104,56 +105,56 @@ enum ShamanSpells
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
     SPELL_SHAMAN_ANCESTRAL_PROTECTION_HEAL = 84081,
-    SPELL_SHAMAN_OUTBURST_HEAL                  = 84083,
+    SPELL_SHAMAN_OUTBURST_HEAL = 84083,
 
 
-    SPELL_SHAMAN_SPIRIT_OF_FIRE                 = 84089,
-    SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE         = 84136,
-    SPELL_SHAMAN_SPIRIT_OF_STORM                = 84090,
-    SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE          = 84096,
-    SPELL_SHAMAN_SPIRIT_OF_STORM_PASSIVE        = 84137,
-    SPELL_SHAMAN_SPIRIT_OF_EARTH                = 84091,
-    SPELL_SHAMAN_SPIRIT_OF_EARTH_PASSIVE        = 84138,
-    SPELL_SHAMAN_SPIRIT_OF_WATER                = 84092,
-    SPELL_SHAMAN_SPIRIT_OF_WATER_PASSIVE        = 84139,
-    SPELL_SHAMAN_SPIRIT_OF_STORM_PROC           = 84095,
-    SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD         = 84098,
-    SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN          = 84100,
-    SPELL_SHAMAN_INVOKE_ESSENCE_FIRE            = 84103,
-    SPELL_SHAMAN_INVOKE_ESSENCE_EARTH           = 84104,
-    SPELL_SHAMAN_INVOKE_ESSENCE_WATER           = 84105,
-    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE      = 84107,
-    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM     = 84108,
+    SPELL_SHAMAN_SPIRIT_OF_FIRE = 84089,
+    SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE = 84136,
+    SPELL_SHAMAN_SPIRIT_OF_STORM = 84090,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE = 84096,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_PASSIVE = 84137,
+    SPELL_SHAMAN_SPIRIT_OF_EARTH = 84091,
+    SPELL_SHAMAN_SPIRIT_OF_EARTH_PASSIVE = 84138,
+    SPELL_SHAMAN_SPIRIT_OF_WATER = 84092,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_PASSIVE = 84139,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_PROC = 84095,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD = 84098,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN = 84100,
+    SPELL_SHAMAN_INVOKE_ESSENCE_FIRE = 84103,
+    SPELL_SHAMAN_INVOKE_ESSENCE_EARTH = 84104,
+    SPELL_SHAMAN_INVOKE_ESSENCE_WATER = 84105,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE = 84107,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM = 84108,
     SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM_ECHO = 84109,
-    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH     = 84110,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH = 84110,
     SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH_GRIP = 84111,
-    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER     = 84112,
-    SPELL_SHAMAN_FOCUS_THINE_FOE_STORM          = 84117,
-    SPELL_SHAMAN_FOCUS_THINE_FOE_EARTH          = 84118,
-    SPELL_SHAMAN_FOCUS_THINE_FOE_WATER          = 84119,
-    SPELL_SHAMAN_FIERY_STAMP_PROC               = 84122,
-    SPELL_SHAMAN_TECTONIC_SHIFT_DEBUFF          = 84124,
-    SPELL_SHAMAN_WATERY_GRAVE_HEAL              = 84126,
-    SPELL_SHAMAN_WATERY_GRAVE_BUBBLE            = 84127,
-    SPELL_SHAMAN_OVERCHARGE_FIRE                = 84129,
-    SPELL_SHAMAN_OVERCHARGE_STORM               = 84130,
-    SPELL_SHAMAN_OVERCHARGE_EARTH               = 84131,
-    SPELL_SHAMAN_OVERCHARGE_WATER               = 84132,
-    SPELL_SHAMAN_SEAMLESS_WATER_PROC            = 84152,
-    SPELL_SHAMAN_SEAMLESS_WATER_STACKS          = 84153,
-    SPELL_SHAMAN_WATER_BENDING_PROC             = 84166,
-    SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS        = 84170,
-    SPELL_SHAMAN_FIRE_PROFICIENCY_PROC          = 84171,
-    SPELL_SHAMAN_REGENERATIVE_AURA_HEAL         = 84208,
-    SPELL_SHAMAN_ACCUMULATION_HEAL              = 84224,
-    SPELL_SHAMAN_SEEPING_LIFE_FORCE_HEAL        = 84231,
-    SPELL_SHAMAN_PATH_OF_THE_ASCENDANT          = 84242,
-    SPELL_SHAMAN_ASCENDANT_EARTH                = 84113,
-    SPELL_SHAMAN_STORMBRAND_TOTEM_PROC          = 84245,
-    SPELL_SHAMAN_SPIRIT_WEAPON_NATURE           = 84247,
-    SPELL_SHAMAN_SPIRIT_WEAPON_FIRE             = 84248,
-    SPELL_SHAMAN_SPIRIT_WEAPON_FROST            = 84249,
-    TALENT_SHAMAN_SEAMLESS_WATER                = 84149,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER = 84112,
+    SPELL_SHAMAN_FOCUS_THINE_FOE_STORM = 84117,
+    SPELL_SHAMAN_FOCUS_THINE_FOE_EARTH = 84118,
+    SPELL_SHAMAN_FOCUS_THINE_FOE_WATER = 84119,
+    SPELL_SHAMAN_FIERY_STAMP_PROC = 84122,
+    SPELL_SHAMAN_TECTONIC_SHIFT_DEBUFF = 84124,
+    SPELL_SHAMAN_WATERY_GRAVE_HEAL = 84126,
+    SPELL_SHAMAN_WATERY_GRAVE_BUBBLE = 84127,
+    SPELL_SHAMAN_OVERCHARGE_FIRE = 84129,
+    SPELL_SHAMAN_OVERCHARGE_STORM = 84130,
+    SPELL_SHAMAN_OVERCHARGE_EARTH = 84131,
+    SPELL_SHAMAN_OVERCHARGE_WATER = 84132,
+    SPELL_SHAMAN_SEAMLESS_WATER_PROC = 84152,
+    SPELL_SHAMAN_SEAMLESS_WATER_STACKS = 84153,
+    SPELL_SHAMAN_WATER_BENDING_PROC = 84166,
+    SPELL_SHAMAN_FIRE_PROFICIENCY_STACKS = 84170,
+    SPELL_SHAMAN_FIRE_PROFICIENCY_PROC = 84171,
+    SPELL_SHAMAN_REGENERATIVE_AURA_HEAL = 84208,
+    SPELL_SHAMAN_ACCUMULATION_HEAL = 84224,
+    SPELL_SHAMAN_SEEPING_LIFE_FORCE_HEAL = 84231,
+    SPELL_SHAMAN_PATH_OF_THE_ASCENDANT = 84242,
+    SPELL_SHAMAN_ASCENDANT_EARTH = 84113,
+    SPELL_SHAMAN_STORMBRAND_TOTEM_PROC = 84245,
+    SPELL_SHAMAN_SPIRIT_WEAPON_NATURE = 84247,
+    SPELL_SHAMAN_SPIRIT_WEAPON_FIRE = 84248,
+    SPELL_SHAMAN_SPIRIT_WEAPON_FROST = 84249,
+    TALENT_SHAMAN_SEAMLESS_WATER = 84149,
 };
 
 enum ShamanSpellIcons
@@ -600,7 +601,7 @@ class spell_sha_bloodlust : public SpellScript
     }
 };
 
- //55459 - Chain Heal
+//55459 - Chain Heal
 class spell_sha_chain_heal : public SpellScript
 {
     PrepareSpellScript(spell_sha_chain_heal);
@@ -629,9 +630,9 @@ class spell_sha_chain_heal : public SpellScript
 
         if (!caster || caster->isDead())
             return;
-        
+
         if (GetFlowOfTheTidesAura(caster))
-        {             
+        {
             if (firstHeal)
             {
                 // Check if the target has Riptide
@@ -650,7 +651,7 @@ class spell_sha_chain_heal : public SpellScript
                 float healIncreasePct = GetFlowOfTheTidesAura(caster)->GetEffect(EFFECT_1)->GetAmount();
                 int32 healing = GetHitHeal();
                 SetHitHeal(AddPct(healing, healIncreasePct));
-            }               
+            }
         }
     }
 
@@ -1879,18 +1880,15 @@ class spell_sha_lava_burst : public SpellScript
     void HandleDamage(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-        int32 ratio = GetEffectValue();
-        int32 damageFire = caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
-
-        ApplyPct(damageFire, ratio);
+        int32 damage = GetHitDamage();
 
         if (caster->HasAura(SPELL_SHAMAN_ASCENDANCE_FIRE))
         {
             float crit_chance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
-            damageFire = AddPct(damageFire, crit_chance);
+            ApplyPct(damage, crit_chance);
         }
 
-        SetHitDamage(damageFire);
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -1926,7 +1924,7 @@ class spell_sha_elemental_blast : public SpellScript
 
         auto highestRating = std::max_element(arr, arr + sizeof(arr) / sizeof(arr[0]), [](const Ratings& a, const Ratings& b) {
             return a.value < b.value;
-        });
+            });
 
         caster->AddAura(highestRating->spellId, caster);
     }
@@ -2515,7 +2513,7 @@ class spell_sha_fiery_stamp : public AuraScript
     }
 };
 
-class spell_sha_tectonic_shift: public SpellScript
+class spell_sha_tectonic_shift : public SpellScript
 {
     PrepareSpellScript(spell_sha_tectonic_shift);
 
@@ -2547,7 +2545,7 @@ class spell_sha_watery_grave : public AuraScript
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         int32 healPct = GetAura()->GetEffect(EFFECT_1)->GetAmount();
 
-        if(victim->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER)
+        if (victim->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER)
             healPct = GetAura()->GetEffect(EFFECT_2)->GetAmount();
 
         if (remainingHealth <= 0)
@@ -2568,7 +2566,7 @@ class spell_sha_watery_grave : public AuraScript
     }
 };
 
-class spell_sha_overcharge: public SpellScript
+class spell_sha_overcharge : public SpellScript
 {
     PrepareSpellScript(spell_sha_overcharge);
 
@@ -2649,7 +2647,7 @@ class spell_sha_seamless_water : public AuraScript
             }
             else
                 caster->AddAura(SPELL_SHAMAN_SEAMLESS_WATER_STACKS, caster);
-        } 
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -2878,7 +2876,7 @@ class spell_sha_stormbrand_totem : public AuraScript
         if (summon && caster) {
             summon->CastCustomSpell(SPELL_SHAMAN_STORMBRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, true, nullptr, nullptr, caster->GetGUID());
         }
-    }   
+    }
 
     void Register() override
     {
@@ -2912,6 +2910,146 @@ class spell_sha_spirit_weapons : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_sha_spirit_weapons::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+//84004 - Healing Surge
+class spell_sha_healing_surge : public SpellScript
+{
+    PrepareSpellScript(spell_sha_healing_surge);
+
+    Aura* GetRefreshingWatersAura(Unit* caster)
+    {
+        for (size_t i = 1000294; i < 1000300; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHeal(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        if (heal == 0)
+            return;
+
+        // Refreshing Waters Rune effects
+        if (GetRefreshingWatersAura(caster) && target == caster)
+        {
+            int32 healPct = GetRefreshingWatersAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            AddPct(heal, healPct);
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_healing_surge::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
+// 2645 - Ghost Wolf
+class spell_sha_ghost_wolf : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ghost_wolf);
+
+    Aura* GetThunderousPawsAura(Unit* caster)
+    {
+        for (size_t i = 1000368; i < 1000374; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Thunderous Paws Rune effects
+        if (GetThunderousPawsAura(caster))
+        {
+            int32 buffSpell = GetThunderousPawsAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 preventSpell = GetThunderousPawsAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (!caster->HasAura(preventSpell))
+            {
+                caster->AddAura(buffSpell, caster);
+                caster->AddAura(preventSpell, caster);
+            }     
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_ghost_wolf::HandleCast);
+    }
+};
+
+// 84064 - Capacitor Totem Stun
+class spell_sha_capacitor_totem_stun : public SpellScript
+{
+    PrepareSpellScript(spell_sha_capacitor_totem_stun);
+
+    Aura* GetStaticChargeAura(Unit* caster)
+    {
+        for (size_t i = 1000416; i < 1000422; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* totem = GetCaster();
+
+        if (!totem)
+            return;
+
+        Unit* caster = totem->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Static Charge Rune effects
+            if (GetStaticChargeAura(caster))
+            {
+                int32 targetNbr = std::min<uint32>(targets.size(), GetStaticChargeAura(caster)->GetEffect(EFFECT_1)->GetAmount());
+                LOG_ERROR("error", "targetNbr = {}", targetNbr);
+                int32 cooldown = GetStaticChargeAura(caster)->GetEffect(EFFECT_0)->GetAmount() * targetNbr;
+                LOG_ERROR("error", "cooldown = {}", cooldown);
+                player->ModifySpellCooldown(SPELL_SHAMAN_CAPACITOR_TOTEM, -cooldown);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_capacitor_totem_stun::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
 
@@ -2999,4 +3137,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_seeping_life_force);
     RegisterSpellScript(spell_sha_stormbrand_totem);
     RegisterSpellScript(spell_sha_spirit_weapons);
+    RegisterSpellScript(spell_sha_healing_surge);
+    RegisterSpellScript(spell_sha_ghost_wolf);
+    RegisterSpellScript(spell_sha_capacitor_totem_stun);
 }
