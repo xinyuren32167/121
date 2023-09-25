@@ -42,6 +42,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ASCENDANCE_WATER_HEAL = 84043,
     SPELL_SHAMAN_ASTRAL_SHIFT = 84007,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
+    SPELL_SHAMAN_CAPACITOR_TOTEM = 84069,
     SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD = 84056,
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
@@ -2945,6 +2946,7 @@ class spell_sha_healing_surge : public SpellScript
         if (heal == 0)
             return;
 
+        // Refreshing Waters Rune effects
         if (GetRefreshingWatersAura(caster) && target == caster)
         {
             int32 healPct = GetRefreshingWatersAura(caster)->GetEffect(EFFECT_0)->GetAmount();
@@ -2957,6 +2959,97 @@ class spell_sha_healing_surge : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_sha_healing_surge::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
+// 2645 - Ghost Wolf
+class spell_sha_ghost_wolf : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ghost_wolf);
+
+    Aura* GetThunderousPawsAura(Unit* caster)
+    {
+        for (size_t i = 1000368; i < 1000374; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Thunderous Paws Rune effects
+        if (GetThunderousPawsAura(caster))
+        {
+            int32 buffSpell = GetThunderousPawsAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 preventSpell = GetThunderousPawsAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (!caster->HasAura(preventSpell))
+            {
+                caster->AddAura(buffSpell, caster);
+                caster->AddAura(preventSpell, caster);
+            }     
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_ghost_wolf::HandleCast);
+    }
+};
+
+// 84064 - Capacitor Totem Stun
+class spell_sha_capacitor_totem_stun : public SpellScript
+{
+    PrepareSpellScript(spell_sha_capacitor_totem_stun);
+
+    Aura* GetStaticChargeAura(Unit* caster)
+    {
+        for (size_t i = 1000416; i < 1000422; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* totem = GetCaster();
+
+        if (!totem)
+            return;
+
+        Unit* caster = totem->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Static Charge Rune effects
+            if (GetStaticChargeAura(caster))
+            {
+                int32 targetNbr = std::min<uint32>(targets.size(), GetStaticChargeAura(caster)->GetEffect(EFFECT_1)->GetAmount());
+                LOG_ERROR("error", "targetNbr = {}", targetNbr);
+                int32 cooldown = GetStaticChargeAura(caster)->GetEffect(EFFECT_0)->GetAmount() * targetNbr;
+                LOG_ERROR("error", "cooldown = {}", cooldown);
+                player->ModifySpellCooldown(SPELL_SHAMAN_CAPACITOR_TOTEM, -cooldown);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_capacitor_totem_stun::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
 
@@ -3045,4 +3138,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_stormbrand_totem);
     RegisterSpellScript(spell_sha_spirit_weapons);
     RegisterSpellScript(spell_sha_healing_surge);
+    RegisterSpellScript(spell_sha_ghost_wolf);
+    RegisterSpellScript(spell_sha_capacitor_totem_stun);
 }

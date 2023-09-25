@@ -409,7 +409,7 @@ class rune_pal_crusade : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         if (!eventInfo.GetSpellInfo())
-            return;
+            return false;
 
         return GetCaster()->HasAura(SPELL_PALADIN_AVENGING_WRATH);
     }

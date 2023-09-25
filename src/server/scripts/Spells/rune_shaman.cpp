@@ -34,6 +34,7 @@ enum ShamanSpells
     SPELL_SHAMAN_FLAME_SHOCK = 49233,
     SPELL_SHAMAN_FOCUS_FOE = 84116,
     SPELL_SHAMAN_FURY_OF_THE_ELEMENTS = 84106,
+    SPELL_SHAMAN_GHOST_WOLF = 2645,
     SPELL_SHAMAN_GROUNDING_TOTEM = 8177,
     SPELL_SHAMAN_GUST_OF_WIND = 84061,
     SPELL_SHAMAN_HEALING_RAIN = 84037,
@@ -394,19 +395,21 @@ class rune_sha_resurgence : public AuraScript
         if (procSpell == SPELL_SHAMAN_HEALING_WAVE)
             manaPct = aurEff->GetAmount();
 
-        if (procSpell == SPELL_SHAMAN_HEALING_WAVE || procSpell == SPELL_SHAMAN_RIPTIDE)
+        if (procSpell == SPELL_SHAMAN_HEALING_SURGE || procSpell == SPELL_SHAMAN_RIPTIDE)
             manaPct = GetEffect(EFFECT_1)->GetAmount();
 
         if (procSpell == SPELL_SHAMAN_CHAIN_HEAL)
             manaPct = GetEffect(EFFECT_2)->GetAmount();
-
+        LOG_ERROR("error", "manaPct = {}", manaPct);
         if (manaPct == 0)
             return;
 
+        LOG_ERROR("error", "procSpell = {}", procSpell);
         int32 maxMana = caster->GetMaxPower(POWER_MANA);
         float amount = CalculatePct(maxMana, manaPct);
+        LOG_ERROR("error", "maxMana = {}, amount = {}", maxMana, amount);
         amount /= 100;
-
+        LOG_ERROR("error", "amount = {}", amount);
         caster->CastCustomSpell(RUNE_SHAMAN_RESURGENCE_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
 
@@ -433,9 +436,18 @@ class rune_sha_high_tide : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_MANA)
+            return;
+
         int32 manaThreshold = aurEff->GetAmount();
         int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
-        int32 manaConsumed = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+        manaSpent += eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (manaSpent < manaThreshold)
+            return;
+
+        manaSpent -= manaThreshold;
+        caster->AddAura(procSpell, caster);
     }
 
     void Register()
@@ -445,6 +457,104 @@ class rune_sha_high_tide : public AuraScript
     }
 private:
     int32 manaSpent = 0;
+};
+
+class rune_sha_spirit_wolf : public AuraScript
+{
+    PrepareAuraScript(rune_sha_spirit_wolf);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_SHAMAN_GHOST_WOLF))
+            return;
+
+        caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_sha_spirit_wolf::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_sha_rejuvenating_wolf : public AuraScript
+{
+    PrepareAuraScript(rune_sha_rejuvenating_wolf);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_SHAMAN_GHOST_WOLF))
+            return;
+
+        caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_sha_rejuvenating_wolf::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_sha_regenerating_wolf : public AuraScript
+{
+    PrepareAuraScript(rune_sha_regenerating_wolf);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_SHAMAN_GHOST_WOLF))
+            return;
+
+        caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_sha_regenerating_wolf::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_sha_brimming_with_life : public AuraScript
+{
+    PrepareAuraScript(rune_sha_brimming_with_life);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->GetHealthPct() < 100)
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (!player->HasSpellCooldown(SPELL_SHAMAN_REINCARNATION))
+                return;
+
+            player->ModifySpellCooldown(SPELL_SHAMAN_REINCARNATION, -aurEff->GetAmount());
+        }
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_sha_brimming_with_life::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
 };
 
 
@@ -461,6 +571,10 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_flowing_streams);
     RegisterSpellScript(rune_sha_undulation);
     RegisterSpellScript(rune_sha_resurgence);
+    RegisterSpellScript(rune_sha_high_tide);
+    RegisterSpellScript(rune_sha_spirit_wolf);
+    RegisterSpellScript(rune_sha_rejuvenating_wolf);
+    RegisterSpellScript(rune_sha_regenerating_wolf);
 
 
 
