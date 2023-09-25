@@ -22,7 +22,9 @@ enum SpellsWarrior {
     SPELL_WARR_COLOSSAL_THRUST = 84557,
     SPELL_WARR_SECOND_CRUSHING_STRIKE = 84664,
     SPELL_WARR_HULN_FURY = 84653,
-    SPELL_WARR_BATTLE_TRANCE = 84560
+    SPELL_WARR_BATTLE_TRANCE = 84560,
+    SPELL_WARR_DEVASTATOR = 200868,
+    SPELL_WARR_TEST_OF_MIGHT = 200887,
 };
 
 class spell_cut_the_veins : public AuraScript
@@ -110,7 +112,7 @@ class spell_the_art_of_war : public AuraScript
         if (!aura)
             return;
 
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
         int32 rageAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
 
         if (spellRage <= 0)
@@ -268,7 +270,7 @@ class spell_tactician : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
         float procPctPerRagePoint = aurEff->GetSpellInfo()->Effects[EFFECT_0].DamageMultiplier;
 
         if (spellRage <= 0)
@@ -363,7 +365,7 @@ class spell_anger_management : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
         int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount() + spellRage;
         int32 rageThreshold = aurEff->GetAmount();
 
@@ -439,7 +441,7 @@ class spell_sweeping_rage : public AuraScript
         if (!GetCaster()->HasAura(12328))
             return;
 
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
 
         if (spellRage <= 0)
             return;
@@ -749,7 +751,7 @@ class spell_depths_of_insanity : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage =  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
 
         if (spellRage <= 0)
             return;
@@ -850,7 +852,7 @@ class spell_reckless_abandon : public AuraScript
         if (!GetCaster()->HasAura(1719))
             return;
 
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
 
         if (spellRage <= 0)
             return;
@@ -977,7 +979,7 @@ class spell_raging_death : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
 
         if (spellRage <= 0)
             return;
@@ -1340,7 +1342,7 @@ class spell_defenders_aegis : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
 
         if (spellRage <= 0)
             return;
@@ -1431,7 +1433,7 @@ class spell_rageful_stand : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
 
         if (spellRage <= 0)
             return;
@@ -1841,15 +1843,43 @@ class rune_improved_execute : public SpellScript
 {
     PrepareSpellScript(rune_improved_execute);
 
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200838))
+            return GetCaster()->GetAura(200838);
+
+        if (GetCaster()->HasAura(200839))
+            return GetCaster()->GetAura(200839);
+
+        if (GetCaster()->HasAura(200840))
+            return GetCaster()->GetAura(200840);
+
+        if (GetCaster()->HasAura(200841))
+            return GetCaster()->GetAura(200841);
+
+        if (GetCaster()->HasAura(200842))
+            return GetCaster()->GetAura(200842);
+
+        if (GetCaster()->HasAura(200843))
+            return GetCaster()->GetAura(200843);
+
+        return nullptr;
+    }
+
     void OnAfterCast()
     {
         Unit* caster = GetCaster();
-        uint32 rageSpent = rageBeforeCast - caster->GetPower(POWER_RAGE);
+        uint32 currentRage = caster->GetPower(POWER_RAGE);
+        uint32 leftRage = rageBeforeCast - currentRage;
 
         if (Unit* target = GetExplTargetUnit()) {
             if (target->IsAlive())
             {
-                // Get the amount to refund to the rune.
+                if (Aura* aura = GetRuneAura()) {
+                    int32 pct = aura->GetEffect(EFFECT_0)->GetAmount();
+                    uint32 newRage = CalculatePct(leftRage, pct);
+                    caster->ModifyPower(POWER_RAGE, newRage);
+                }
             }
         }
     }
@@ -1875,11 +1905,13 @@ class rune_thunder_weapon : public AuraScript
 {
     PrepareAuraScript(rune_thunder_weapon);
 
+   
+
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Unit* target = eventInfo.GetActionTarget())
         {
-            target->CastSpell(target, SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, true, nullptr, nullptr, GetCaster()->GetGUID());
+           target->CastSpell(target, SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER, true, nullptr, nullptr, GetCaster()->GetGUID());
         }
     }
 
@@ -1893,13 +1925,38 @@ class rune_improved_heroic_throw : public SpellScript
 {
     PrepareSpellScript(rune_improved_heroic_throw);
 
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200850))
+            return GetCaster()->GetAura(200850);
+
+        if (GetCaster()->HasAura(200851))
+            return GetCaster()->GetAura(200851);
+
+        if (GetCaster()->HasAura(200852))
+            return GetCaster()->GetAura(200852);
+
+        if (GetCaster()->HasAura(200853))
+            return GetCaster()->GetAura(200853);
+
+        if (GetCaster()->HasAura(200854))
+            return GetCaster()->GetAura(200854);
+
+        if (GetCaster()->HasAura(200855))
+            return GetCaster()->GetAura(200855);
+
+        return nullptr;
+    }
+
     void OnHitTarget(SpellEffIndex effIndex)
     {
         if (Unit* target = GetHitUnit())
         {
-            Player* player = GetCaster()->ToPlayer();
-            float amount = 8.0f + player->GetMastery();
-            player->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            if (Aura* improvedHeroicThrow = GetRuneAura()) {
+                Player* player = GetCaster()->ToPlayer();
+                float amount = 8.0f + player->GetMastery();
+                player->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
         }
     }
 
@@ -1928,13 +1985,14 @@ class rune_brutal_vitality : public AuraScript
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
-        float pct = 0.0f; // Get the amount through the rune effect 1
+        float pct = aurEff->GetAmount();
         int32 calculatedAmount = CalculatePct(static_cast<int32>(eventInfo.GetDamageInfo()->GetDamage()), pct);
 
         if (Aura* aura = GetCaster()->GetAura(SPELL_WARR_IGNORE_PAIN))
         {
             int32 amount = aura->GetEffect(EFFECT_0)->GetAmount();
             int32 newAmount = amount += calculatedAmount;
+            LOG_ERROR("", "current Amount {}", amount);
             aura->GetEffect(EFFECT_0)->SetAmount(newAmount);
         }
     }
@@ -1954,17 +2012,18 @@ class rune_brutal_devastator : public AuraScript
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
-        float attackPower = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-        int32 amountPourcentage = 0; // Get the amount through effect 1 on the rune.
-        float chanceToResetShieldSlam = 0; // Get the amount on the effect 2 on the rune
-        int32 calculatedAmount = int32(CalculatePct(attackPower, amountPourcentage));
+        Unit* caster = GetCaster();
+        float totalAttackPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+
+        int32 amountPourcentage = aurEff->GetAmount();
+        int32 attackPower = int32(CalculatePct(totalAttackPower, amountPourcentage));
+
         Unit* target = eventInfo.GetActionTarget();
 
-        if (roll_chance_f(chanceToResetShieldSlam))
-            GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_SHIELD_SLAM, true);
-       
+        caster->CastCustomSpell(SPELL_WARR_DEVASTATOR, SPELLVALUE_BASE_POINT0, attackPower, target, TRIGGERED_FULL_MASK);
 
-        // Cast spell that inflict damage of portion of attack power.
+        if (roll_chance_f(20.f))
+            caster->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_SHIELD_SLAM, true);
     }
 
     void Register() override
@@ -1978,19 +2037,8 @@ class rune_battle_scarred_veteran : public AuraScript
     PrepareAuraScript(rune_battle_scarred_veteran);
 
 public:
-    rune_battle_scarred_veteran()
-    {
-        healPct = 0;
-    }
-
+    rune_battle_scarred_veteran() { }
 private:
-    uint32 healPct;
-
-    bool Load() override
-    {
-        healPct = GetSpellInfo()->Effects[EFFECT_2].CalcValue(GetCaster());
-        return true;
-    }
 
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
@@ -1999,13 +2047,23 @@ private:
 
     void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
+        Unit* victim = GetTarget();
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        uint32 allowedHealth = victim->CountPctFromMaxHealth(30.f);
 
+        uint32 battleScaredProcTriggerSpell = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+
+        if ((remainingHealth < int32(allowedHealth)) && !victim->ToPlayer()->HasSpellCooldown(battleScaredProcTriggerSpell))
+        {
+            victim->CastSpell(victim, battleScaredProcTriggerSpell);
+            victim->ToPlayer()->AddSpellCooldown(battleScaredProcTriggerSpell, 0, 180000);
+        }
     }
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(rune_battle_scarred_veteran::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
-        OnEffectAbsorb += AuraEffectAbsorbFn(rune_battle_scarred_veteran::Absorb, EFFECT_1);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(rune_battle_scarred_veteran::CalculateAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(rune_battle_scarred_veteran::Absorb, EFFECT_2);
     }
 };
 
@@ -2013,14 +2071,68 @@ class rune_test_of_might : public AuraScript
 {
     PrepareAuraScript(rune_test_of_might);
 
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        
+        Unit* caster = GetCaster();
+
+        int32 rage = eventInfo.GetSpellInfo()->ManaCost / 10;
+
+        if (rage <= 0)
+            return;
+
+        int32 rageAccumulated = aurEff->GetAmount() + rage;
+
+        aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(rageAccumulated);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectProc += AuraEffectProcFn(rune_test_of_might::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+class rune_test_of_might_effect_remove : public AuraScript
+{
+    PrepareAuraScript(rune_test_of_might_effect_remove);
+
+    Aura* GetRuneAura()
+    {
+        if (GetCaster()->HasAura(200881))
+            return GetCaster()->GetAura(200881);
+
+        if (GetCaster()->HasAura(200882))
+            return GetCaster()->GetAura(200882);
+
+        if (GetCaster()->HasAura(200883))
+            return GetCaster()->GetAura(200883);
+
+        if (GetCaster()->HasAura(200884))
+            return GetCaster()->GetAura(200884);
+
+        if (GetCaster()->HasAura(200885))
+            return GetCaster()->GetAura(200885);
+
+        if (GetCaster()->HasAura(200886))
+            return GetCaster()->GetAura(200886);
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        int32 rageAccumulated = aurEff->GetAmount();
+        if (Aura* rune = GetRuneAura()) {
+            int32 threadshold = rune->GetEffect(EFFECT_0)->GetAmount();
+            int32 calculatedStack = static_cast<int32>(rageAccumulated / threadshold);
+            caster->CastCustomSpell(SPELL_WARR_TEST_OF_MIGHT, SPELLVALUE_AURA_STACK, calculatedStack, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might_effect_remove::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2030,15 +2142,13 @@ class rune_in_for_the_kill : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
-        // check if has the rune, if yes take the amount effect_1;
-
         if (Unit* target = GetHitUnit())
         {
             if (target->GetHealthPct() < 35.f) {
-                // Take the spell trigger on the effect_1
+                
             }
             else {
-                // Take the spell trigger on the effect_2
+               
             }
         }
     }
@@ -2355,7 +2465,7 @@ class rune_raging_fury : public AuraScript
         Player* caster = GetCaster()->ToPlayer();
 
 
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
         int32 rageAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
 
         if (spellRage <= 0)
@@ -2473,7 +2583,7 @@ class rune_the_depth_of_rage : public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
         int32 rageAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
 
         if (spellRage <= 0)
@@ -2542,6 +2652,7 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(rune_brutal_devastator);
     RegisterSpellScript(rune_battle_scarred_veteran);
     RegisterSpellScript(rune_test_of_might);
+    RegisterSpellScript(rune_test_of_might_effect_remove);
     RegisterSpellScript(rune_strength_of_arms);
     RegisterSpellScript(rune_in_for_the_kill);
     RegisterSpellScript(rune_bonegrinder);

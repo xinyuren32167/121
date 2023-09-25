@@ -80,7 +80,6 @@ public:
         if (currentSpecId == SHAMAN_ELEMENTAL) {
             player->setPowerType(POWER_RUNIC_POWER);
             player->SetMaxPower(POWER_RUNIC_POWER, 1000);
-            player->SetPower(POWER_RUNIC_POWER, 0);
         }
     }
 

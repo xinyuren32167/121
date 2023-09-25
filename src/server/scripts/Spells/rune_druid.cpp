@@ -344,7 +344,6 @@ class rune_druid_lycara_teachings_bear : public AuraScript
         int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
 
         GetCaster()->AddAura(buffAura, GetCaster());
-        GetCaster()->ToPlayer()->UpdateVersatility();
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -361,7 +360,6 @@ class rune_druid_lycara_teachings_bear : public AuraScript
         int32 buffAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
 
         GetCaster()->AddAura(buffAura, GetCaster());
-        GetCaster()->ToPlayer()->UpdateVersatility();
     }
 
     void Register() override
@@ -6412,10 +6410,15 @@ class rune_druid_ironwood_thorns : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         for (size_t i = 701870; i < 701876; i++)
         {
-            if (GetCaster()->HasAura(i))
-                GetCaster()->RemoveAura(i);
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
         }
     }
 
