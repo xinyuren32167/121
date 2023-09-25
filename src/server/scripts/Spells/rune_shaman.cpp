@@ -19,6 +19,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ASTRAL_SHIFT = 84007,
     SPELL_SHAMAN_BLOODLUST = 2825,
     SPELL_SHAMAN_CAPACITOR_TOTEM = 84069,
+    SPELL_SHAMAN_CHAIN_HEAL = 55459,
     SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
     SPELL_SHAMAN_CLOUDBURST_TOTEM = 84082,
     SPELL_SHAMAN_CRASH_LIGHTNING = 84032,
@@ -47,6 +48,7 @@ enum ShamanSpells
     SPELL_SHAMAN_NATURES_SWIFTNESS = 16188,
     SPELL_SHAMAN_OVERCHARGE = 84128,
     SPELL_SHAMAN_REINCARNATION = 20608,
+    SPELL_SHAMAN_RIPTIDE = 61301,
     SPELL_SHAMAN_SPIRIT_LINK_TOTEM = 84073,
     SPELL_SHAMAN_SPIRIT_WALK = 84008,
     SPELL_SHAMAN_STONECLAW_TOTEM = 58582,
@@ -64,6 +66,7 @@ enum ShamanSpells
 
     //Runes
     RUNE_SHAMAN_VOLCANIC_INFERNO_DOT = 1000178,
+    RUNE_SHAMAN_RESURGENCE_ENERGIZE = 1000342,
 };
 
 class rune_sha_tidebringer : public AuraScript
@@ -369,6 +372,81 @@ private:
     int32 healingSurgeQte = 0;
 };
 
+class rune_sha_resurgence : public AuraScript
+{
+    PrepareAuraScript(rune_sha_resurgence);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetProcSpell();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 manaPct = 0;
+        int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        if (procSpell == SPELL_SHAMAN_HEALING_WAVE)
+            manaPct = aurEff->GetAmount();
+
+        if (procSpell == SPELL_SHAMAN_HEALING_WAVE || procSpell == SPELL_SHAMAN_RIPTIDE)
+            manaPct = GetEffect(EFFECT_1)->GetAmount();
+
+        if (procSpell == SPELL_SHAMAN_CHAIN_HEAL)
+            manaPct = GetEffect(EFFECT_2)->GetAmount();
+
+        if (manaPct == 0)
+            return;
+
+        int32 maxMana = caster->GetMaxPower(POWER_MANA);
+        float amount = CalculatePct(maxMana, manaPct);
+        amount /= 100;
+
+        caster->CastCustomSpell(RUNE_SHAMAN_RESURGENCE_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_resurgence::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_resurgence::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_high_tide : public AuraScript
+{
+    PrepareAuraScript(rune_sha_high_tide);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 manaThreshold = aurEff->GetAmount();
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+        int32 manaConsumed = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_high_tide::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_high_tide::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+private:
+    int32 manaSpent = 0;
+};
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -382,6 +460,7 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_pulsating_lightning);
     RegisterSpellScript(rune_sha_flowing_streams);
     RegisterSpellScript(rune_sha_undulation);
+    RegisterSpellScript(rune_sha_resurgence);
 
 
 

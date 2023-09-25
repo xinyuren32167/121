@@ -2716,7 +2716,7 @@ class rune_druid_knowledge_agreement : public AuraScript
         if (!GetCaster()->HasAura(FORM_MOONKIN_FORM) || !caster->HasAura(SPELL_CELESTIAL_ALIGNMENT))
             return;
 
-        int32 spellAstralPower = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellAstralPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
 
         if (spellAstralPower <= 0)
             return;
@@ -2815,7 +2815,7 @@ class rune_druid_primordial_arcanic_pulsar : public AuraScript
         if (eventInfo.GetSpellInfo()->PowerType != POWER_RUNIC_POWER)
             return;
 
-        int32 spellAstralPower = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellAstralPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
 
         if (spellAstralPower <= 0)
             return;
@@ -4819,7 +4819,7 @@ class rune_druid_ursocs_guidance : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
 
         if (spellRage <= 0 || eventInfo.GetSpellInfo()->PowerType != POWER_RAGE)
             return;
@@ -5059,7 +5059,7 @@ class rune_druid_after_the_wildfire : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        int32 spellRage = eventInfo.GetSpellInfo()->ManaCost / 10;
+        int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
 
         if (spellRage <= 0 || eventInfo.GetSpellInfo()->PowerType != POWER_RAGE)
             return;
