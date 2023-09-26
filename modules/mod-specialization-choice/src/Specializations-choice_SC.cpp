@@ -77,10 +77,10 @@ public:
 
     void InitializeElementalSpecialization(Player* player) {
         uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
-        if (currentSpecId == SHAMAN_ELEMENTAL) {
+        /* if (currentSpecId == SHAMAN_ELEMENTAL) {
             player->setPowerType(POWER_RUNIC_POWER);
             player->SetMaxPower(POWER_RUNIC_POWER, 1000);
-        }
+        } */
     }
 
     void OnLogin(Player* player)
