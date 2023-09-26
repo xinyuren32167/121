@@ -77,10 +77,11 @@ public:
 
     void InitializeElementalSpecialization(Player* player) {
         uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
-        /* if (currentSpecId == SHAMAN_ELEMENTAL) {
+        if (currentSpecId == SHAMAN_ELEMENTAL) {
             player->setPowerType(POWER_RUNIC_POWER);
             player->SetMaxPower(POWER_RUNIC_POWER, 1000);
-        } */
+            player->SetPower(POWER_RUNIC_POWER, 0);
+        } 
     }
 
     void OnLogin(Player* player)
@@ -170,10 +171,9 @@ class spell_activate_specialization : public SpellScript
 
         if (newSpec.powerType != POWER_ALL) {
             player->setPowerType(newSpec.powerType);
+            player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
             if (newSpec.powerType == POWER_RUNIC_POWER)
                 player->SetMaxPower(POWER_RUNIC_POWER, 1000);
-            else
-                player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
         }
 
         auto summonedUnits = player->ToPlayer()->m_Controlled;
