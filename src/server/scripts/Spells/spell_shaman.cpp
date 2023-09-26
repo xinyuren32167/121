@@ -154,7 +154,12 @@ enum ShamanSpells
     SPELL_SHAMAN_SPIRIT_WEAPON_NATURE = 84247,
     SPELL_SHAMAN_SPIRIT_WEAPON_FIRE = 84248,
     SPELL_SHAMAN_SPIRIT_WEAPON_FROST = 84249,
+
+    // Talents
     TALENT_SHAMAN_SEAMLESS_WATER = 84149,
+
+    // Runes
+    RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
 };
 
 enum ShamanSpellIcons
@@ -1518,6 +1523,54 @@ class spell_sha_ancestral_guidance_healing : public SpellScript
     }
 };
 
+// 84036 - Ascendance (Air) Buff
+class spell_sha_ascendance_air_aura : public AuraScript
+{
+    PrepareAuraScript(spell_sha_ascendance_air_aura);
+
+    Aura* GetOathOfTheFarSeerAura(Unit* caster)
+    {
+        for (size_t i = 1000436; i < 1000442; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetOathOfTheFarSeerAura(caster))
+            caster->AddAura(GetOathOfTheFarSeerAura(caster)->GetEffect(EFFECT_1)->GetAmount(), caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000442; i < 1000448; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_ascendance_air_aura::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_ascendance_air_aura::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 // 84019 - Ascendance (Flame)
 class spell_sha_ascendance_flame : public SpellScript
 {
@@ -1547,6 +1600,54 @@ class spell_sha_ascendance_flame : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_sha_ascendance_flame::HandleProc);
+    }
+};
+
+// 84019 - Ascendance (Flame)
+class spell_sha_ascendance_flame_aura : public AuraScript
+{
+    PrepareAuraScript(spell_sha_ascendance_flame_aura);
+
+    Aura* GetOathOfTheFarSeerAura(Unit* caster)
+    {
+        for (size_t i = 1000436; i < 1000442; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetOathOfTheFarSeerAura(caster))
+            caster->AddAura(GetOathOfTheFarSeerAura(caster)->GetEffect(EFFECT_1)->GetAmount(), caster);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000442; i < 1000448; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_ascendance_flame_aura::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_ascendance_flame_aura::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1648,6 +1749,28 @@ class spell_sha_ascendance_water_proc : public AuraScript
 {
     PrepareAuraScript(spell_sha_ascendance_water_proc);
 
+    Aura* GetOathOfTheFarSeerAura(Unit* caster)
+    {
+        for (size_t i = 1000436; i < 1000442; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetOathOfTheFarSeerAura(caster))
+            caster->AddAura(GetOathOfTheFarSeerAura(caster)->GetEffect(EFFECT_1)->GetAmount(), caster);
+    }
+
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
@@ -1667,10 +1790,26 @@ class spell_sha_ascendance_water_proc : public AuraScript
         GetCaster()->CastCustomSpell(SPELL_SHAMAN_ASCENDANCE_WATER_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000442; i < 1000448; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_ascendance_water_proc::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         DoCheckProc += AuraCheckProcFn(spell_sha_ascendance_water_proc::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_ascendance_water_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_ascendance_water_proc::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2405,14 +2544,52 @@ class spell_sha_ascendance_earth : public AuraScript
 {
     PrepareAuraScript(spell_sha_ascendance_earth);
 
+    Aura* GetOathOfTheFarSeerAura(Unit* caster)
+    {
+        for (size_t i = 1000436; i < 1000442; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetOathOfTheFarSeerAura(caster))
+            caster->AddAura(GetOathOfTheFarSeerAura(caster)->GetEffect(EFFECT_1)->GetAmount(), caster);
+    }
+
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
         amount = GetUnitOwner()->CountPctFromMaxHealth(amount);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000442; i < 1000448; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_ascendance_earth::HandleApply, EFFECT_2, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_ascendance_earth::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_INCREASE_HEALTH);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_ascendance_earth::HandleRemove, EFFECT_2, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3053,6 +3230,58 @@ class spell_sha_capacitor_totem_stun : public SpellScript
     }
 };
 
+// 84072 - Capacitor Totem Aura
+class spell_sha_capacitor_totem_aura : public AuraScript
+{
+    PrepareAuraScript(spell_sha_capacitor_totem_aura);
+
+    Aura* GetGuardiansCudgelAura(Unit* caster)
+    {
+        for (size_t i = 1000422; i < 1000428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* totem = GetCaster();
+
+        if (!totem)
+            return;
+
+        Position totemPos = totem->GetPosition();
+        Unit* caster = totem->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetGuardiansCudgelAura(caster))
+        {
+            if (caster->HasAura(RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF))
+                return;
+
+            int32 procChance = GetGuardiansCudgelAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (!roll_chance_i(procChance))
+                return;
+
+            caster->CastSpell(totemPos.m_positionX, totemPos.m_positionY, totemPos.m_positionZ, SPELL_SHAMAN_CAPACITOR_TOTEM, TRIGGERED_FULL_MASK);
+            caster->AddAura(RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_capacitor_totem_aura::OnRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -3092,7 +3321,9 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ancestral_vision);
     RegisterSpellScript(spell_sha_ancestral_guidance);
     RegisterSpellScript(spell_sha_ancestral_guidance_healing);
+    RegisterSpellScript(spell_sha_ascendance_air_aura);
     RegisterSpellScript(spell_sha_ascendance_flame);
+    RegisterSpellScript(spell_sha_ascendance_flame_aura);
     RegisterSpellScript(spell_sha_elemental_blast);
     RegisterSpellScript(spell_sha_stormbringer);
     RegisterSpellScript(spell_sha_crash_lightning);
@@ -3140,4 +3371,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_healing_surge);
     RegisterSpellScript(spell_sha_ghost_wolf);
     RegisterSpellScript(spell_sha_capacitor_totem_stun);
+    RegisterSpellScript(spell_sha_capacitor_totem_aura);
 }

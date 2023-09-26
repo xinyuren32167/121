@@ -11,7 +11,7 @@
 
 enum ShamanSpells
 {
-    //Spells
+    // Spells
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE = 84010,
     SPELL_SHAMAN_ANCESTRAL_PROTECTION_TOTEM = 84079,
     SPELL_SHAMAN_ASCENDANCE_WATER = 84040,
@@ -58,16 +58,30 @@ enum ShamanSpells
     SPELL_SHAMAN_STORMKEEPER = 84018,
     SPELL_SHAMAN_THUNDERSTORM = 59159,
     SPELL_SHAMAN_TIDAL_FORCE = 55198,
+    SPELL_SHAMAN_WATER_SHIELD = 57960,
     SPELL_SHAMAN_WATERY_GRAVE = 84125,
     SPELL_SHAMAN_WELLSPRING = 84044,
     SPELL_SHAMAN_WIND_SHEAR = 57994,
+    SPELL_SHAMAN_WINDFURY_WEAPON_MAINHAND = 25504,
+    SPELL_SHAMAN_WINDFURY_WEAPON_OFFHAND = 33750,
 
-    //Talents
+    // Talents
     TALENT_SHAMAN_BLABLA = 00000,
 
-    //Runes
+    // Runes
     RUNE_SHAMAN_VOLCANIC_INFERNO_DOT = 1000178,
     RUNE_SHAMAN_RESURGENCE_ENERGIZE = 1000342,
+    RUNE_SHAMAN_IMPROVED_EARTHLIVING_WEAPON_HEAL = 1000454,
+    RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FIRE = 1000462,
+    RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FROST = 1000463,
+    RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_NATURE = 1000464,
+    RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_DEBUFF = 1000465,
+    RUNE_SHAMAN_FORCEFUL_WINDS_BUFF = 1000484,
+
+    // Summons
+    SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
+    SUMMON_SHAMAN_FIRE_ELEMENTAL = 15438,
+    SUMMON_SHAMAN_STORM_ELEMENTAL = 400408,
 };
 
 class rune_sha_tidebringer : public AuraScript
@@ -280,6 +294,9 @@ class rune_sha_pulsating_lightning : public AuraScript
             return;
 
         if (!caster->HasAura(SPELL_SHAMAN_LIGHTNING_SHIELD))
+            return;
+
+        if (!caster->IsInCombat())
             return;
 
         caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
@@ -557,6 +574,226 @@ class rune_sha_brimming_with_life : public AuraScript
     }
 };
 
+class rune_sha_improved_earthliving_weapon : public AuraScript
+{
+    PrepareAuraScript(rune_sha_improved_earthliving_weapon);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        int32 healPct = aurEff->GetAmount();
+        int32 healthThreshold = GetEffect(EFFECT_2)->GetAmount();
+
+        if (target->GetHealthPct() > healthThreshold)
+            return;
+
+        int32 amount = CalculatePct(heal, healPct);
+
+        caster->CastCustomSpell(RUNE_SHAMAN_IMPROVED_EARTHLIVING_WEAPON_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_improved_earthliving_weapon::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_improved_earthliving_weapon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_elemental_equilibrium : public AuraScript
+{
+    PrepareAuraScript(rune_sha_elemental_equilibrium);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+        LOG_ERROR("error", "GetSchoolMask = {}", eventInfo.GetDamageInfo()->GetSchoolMask());
+        if (eventInfo.GetDamageInfo()->GetSchoolMask() == SPELL_SCHOOL_MASK_FIRE)
+            caster->AddAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FIRE, caster);
+
+        if (eventInfo.GetDamageInfo()->GetSchoolMask() == SPELL_SCHOOL_MASK_FROST)
+            caster->AddAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FROST, caster);
+
+        if (eventInfo.GetDamageInfo()->GetSchoolMask() == SPELL_SCHOOL_MASK_NATURE)
+            caster->AddAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_NATURE, caster);
+
+        if (!caster->HasAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FIRE) ||
+            !caster->HasAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FROST) ||
+            !caster->HasAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_NATURE))
+            return;
+
+        if (caster->HasAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_DEBUFF))
+            return;
+
+        caster->AddAura(aurEff->GetAmount(), caster);
+        caster->AddAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_DEBUFF, caster);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_elemental_equilibrium::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_elemental_equilibrium::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_forceful_winds : public AuraScript
+{
+    PrepareAuraScript(rune_sha_forceful_winds);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(RUNE_SHAMAN_FORCEFUL_WINDS_BUFF))
+            caster->AddAura(RUNE_SHAMAN_FORCEFUL_WINDS_BUFF, caster);
+
+        caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_forceful_winds::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_forceful_winds::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_forceful_winds_remove : public AuraScript
+{
+    PrepareAuraScript(rune_sha_forceful_winds_remove);
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000478; i < 1000484; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_sha_forceful_winds_remove::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_sha_primordial_bond : public AuraScript
+{
+    PrepareAuraScript(rune_sha_primordial_bond);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        hasElemental = false;
+
+        for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+        {
+            if ((*itr)->GetEntry() == SUMMON_SHAMAN_FIRE_ELEMENTAL ||
+                (*itr)->GetEntry() == SUMMON_SHAMAN_EARTH_ELEMENTAL ||
+                (*itr)->GetEntry() == SUMMON_SHAMAN_STORM_ELEMENTAL &&
+                (*itr)->IsAlive())
+                hasElemental = true;
+        }
+
+        int32 buffAura = aurEff->GetAmount();
+
+        if (hasElemental == false)
+        {
+            if (caster->HasAura(buffAura))
+                caster->RemoveAura(buffAura);
+        }
+        else
+        {
+            if (!caster->HasAura(buffAura))
+                caster->AddAura(buffAura, caster);
+        }
+
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000498; i < 1000504; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_sha_primordial_bond::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_sha_primordial_bond::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+private:
+    bool hasElemental = false;
+};
+
+class rune_sha_pulsating_water : public AuraScript
+{
+    PrepareAuraScript(rune_sha_pulsating_water);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_SHAMAN_WATER_SHIELD))
+            return;
+
+        caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_sha_pulsating_water::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -575,7 +812,13 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_spirit_wolf);
     RegisterSpellScript(rune_sha_rejuvenating_wolf);
     RegisterSpellScript(rune_sha_regenerating_wolf);
+    RegisterSpellScript(rune_sha_improved_earthliving_weapon);
+    RegisterSpellScript(rune_sha_elemental_equilibrium);
+    RegisterSpellScript(rune_sha_forceful_winds);
+    RegisterSpellScript(rune_sha_forceful_winds_remove);
+    RegisterSpellScript(rune_sha_primordial_bond);
+    RegisterSpellScript(rune_sha_pulsating_water);
 
 
-
+    
 }

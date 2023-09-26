@@ -8093,9 +8093,23 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
 
                             // apply cooldown before cast to prevent processing itself
                             // player->AddSpellCooldown(dummySpell->Id, 0, 3 * IN_MILLISECONDS);
+                            int32 attacks = 2;
+                            int32 unrulyWindsRune = 0;
 
-                            // Attack Twice
-                            for (uint32 i = 0; i < 2; ++i)
+                            // Unruly Winds Find Ranks
+                            for (size_t i = 1000486; i < 1000492; i++)
+                            {
+                                if (player->HasAura(i))
+                                    unrulyWindsRune = i;
+                            }
+
+                            // Unruly Winds Proc chance to check if we add a 3rd attack
+                            if (unrulyWindsRune != 0)
+                                if (roll_chance_i(player->GetAura(unrulyWindsRune)->GetEffect(EFFECT_0)->GetAmount()))
+                                    attacks ++;
+
+                            // Attack Multiple Times
+                            for (uint32 i = 0; i < attacks; ++i)
                                 CastCustomSpell(victim, triggered_spell_id, &basepoints0, nullptr, nullptr, true, castItem, triggeredByAura);
 
                             return true;

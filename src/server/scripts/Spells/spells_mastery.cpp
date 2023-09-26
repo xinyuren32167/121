@@ -1402,6 +1402,7 @@ class spell_mastery_warlock_master_demonology : public SpellScript
 };
 
 
+
 void AddSC_spells_mastery_scripts()
 {
     RegisterSpellScript(spell_mastery_warlock_master_demonology);
