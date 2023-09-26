@@ -76,6 +76,9 @@ enum MageSpells
     SPELL_MAGE_SUPERNOVA_KNOCKUP = 81541,
     SPELL_MAGE_WINTERS_CHILL = 81535,
     SPELL_MAGE_FLURRY_OF_SLASHES = 81547,
+    SPELL_MAGE_ARCHON_DAMAGE = 81552,
+    SPELL_MAGE_BLACKHOLE_AURA = 81554,
+    SPELL_MAGE_BLACKHOLE_TARGET_SELECT = 81559,
 
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
@@ -2321,6 +2324,21 @@ class spell_mage_greater_invisibility_replacer : public AuraScript
     }
 };
 
+class spell_mage_masterful_combustion : public AuraScript
+{
+    PrepareAuraScript(spell_mage_masterful_combustion);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        amount = CalculatePct(GetCaster()->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE), amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_mage_masterful_combustion::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_RATING);
+    }
+};
+
 class spell_mage_flurry_of_slashes : public AuraScript
 {
     PrepareAuraScript(spell_mage_flurry_of_slashes);
@@ -2335,6 +2353,172 @@ class spell_mage_flurry_of_slashes : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_mage_flurry_of_slashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_arcanic_slash : public SpellScript
+{
+    PrepareSpellScript(spell_mage_arcanic_slash);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            uint32 reduction = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+            uint32 targetQte = targets.size();
+
+            if (targetQte == 0)
+                return;
+
+            reduction = reduction * targetQte;
+
+            caster->ModifySpellCooldown(SPELL_MAGE_FLURRY_OF_SLASHES, reduction);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_arcanic_slash::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_24);
+    }
+};
+
+class spell_mage_archon : public AuraScript
+{
+    PrepareAuraScript(spell_mage_archon);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->SetDisplayId(19778);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage && GetCaster()->IsAlive())
+            {
+                int32 damagePct = aurEff->GetAmount();
+                int32 damageAmount = CalculatePct(damage, damagePct);
+                GetCaster()->CastCustomSpell(SPELL_MAGE_ARCHON_DAMAGE, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        GetCaster()->DeMorph();
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_archon::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectProc += AuraEffectProcFn(spell_mage_archon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_archon::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_mage_blackhole : public SpellScript
+{
+    PrepareSpellScript(spell_mage_blackhole);
+
+    std::list <Unit*> FindCreatures(Creature* creature)
+    {
+        auto const& threatlist = GetCaster()->getAttackers();
+        Position creaturepos = creature->GetPosition();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatlist)
+        {
+            Position targetpos = target->GetPosition();
+            float distance = creature->GetDistance(targetpos);
+
+            if (distance <= 8)
+            {
+                targetAvailable.push_back(target);
+            }
+        } return targetAvailable;
+    }
+
+    void HandleCast()
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            Position pos = GetExplTargetDest()->GetPosition();
+
+            summon = caster->SummonCreature(600614, pos, TEMPSUMMON_TIMED_DESPAWN, 2200);
+            summon->SetOwnerGUID(caster->GetGUID());
+            summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            summon->SetReactState(REACT_PASSIVE);
+
+            caster->CastSpell(summon, SPELL_MAGE_BLACKHOLE_AURA, TRIGGERED_FULL_MASK);
+            caster->CastSpell(summon, SPELL_MAGE_BLACKHOLE_TARGET_SELECT, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mage_blackhole::HandleCast);
+    }
+
+private:
+    Creature* summon;
+};
+
+class spell_mage_black_hole_target_select: public SpellScript
+{
+    PrepareSpellScript(spell_mage_black_hole_target_select);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Creature* creature = GetCaster()->FindNearestCreature(600614, 30);
+        if (!creature || creature->GetCharmerOrOwnerGUID() != GetCaster()->GetGUID())
+            return;
+
+        for (auto const& enemy : targets)
+        {
+            if(Unit* target = enemy->ToUnit())
+            {
+                if (target->isDead())
+                    continue;
+
+                Position targetpos = target->GetPosition();
+                Position pos = creature->GetPosition();
+                float distance = creature->GetDistance(targetpos);
+
+                if (distance <= 15)
+                {
+                    if (Creature* creatureTarget = target->ToCreature())
+                        if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
+                            target->GetMotionMaster()->MoveJump(pos, 12.0f, 12.0f);
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_black_hole_target_select::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class spell_mage_death_blossom : public SpellScript
+{
+    PrepareSpellScript(spell_mage_death_blossom);
+
+    void HandleCast()
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            uint32 reduction = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+            caster->ModifySpellCooldown(SPELL_MAGE_FLURRY_OF_SLASHES, reduction);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mage_death_blossom::HandleCast);
     }
 };
 
@@ -2401,5 +2585,11 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_ray_of_frost_fingers);
     RegisterSpellScript(spell_mage_ray_of_frost_proc);
     RegisterSpellScript(spell_mage_greater_invisibility_replacer);
+    RegisterSpellScript(spell_mage_masterful_combustion);
     RegisterSpellScript(spell_mage_flurry_of_slashes);
+    RegisterSpellScript(spell_mage_arcanic_slash);
+    RegisterSpellScript(spell_mage_archon);
+    RegisterSpellScript(spell_mage_blackhole);
+    RegisterSpellScript(spell_mage_black_hole_target_select);
+    RegisterSpellScript(spell_mage_death_blossom);
 }

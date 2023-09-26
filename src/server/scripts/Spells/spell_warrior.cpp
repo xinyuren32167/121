@@ -2049,17 +2049,22 @@ class spell_warr_shield_vault : public SpellScript
 
     void HandleCast()
     {
-        Player* caster = GetCaster()->ToPlayer();
-        Unit* target = GetExplTargetUnit();
-        Position targetPos = GetExplTargetUnit()->GetPosition();
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                Unit* target = GetExplTargetUnit();
+                Position targetPos = GetExplTargetUnit()->GetPosition();
 
-        if (!GetCaster() || !GetCaster()->IsAlive())
-            return;
+                if (!GetCaster() || !GetCaster()->IsAlive())
+                    return;
 
-        if (!target || !target->IsAlive())
-            return;
+                if (!target || !target->IsAlive())
+                    return;
 
-        caster->GetMotionMaster()->MoveJump(targetPos, 20.0f, 12.0f);
+                caster->GetMotionMaster()->MoveJump(targetPos, 20.0f, 12.0f);
+            }
+        }
     }
 
     void Register() override
@@ -2229,13 +2234,14 @@ class spell_warr_heroic_leap : public SpellScript
 
     void HandleCast()
     {
-        Player* caster = GetCaster()->ToPlayer();
-        Position pos = GetExplTargetDest()->GetPosition();
-
-        if (!GetCaster() || !GetCaster()->IsAlive())
-            return;
-
-        caster->GetMotionMaster()->MoveJump(pos, 23.0f, 15.0f);
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                Position pos = GetExplTargetDest()->GetPosition();
+                caster->GetMotionMaster()->MoveJump(pos, 23.0f, 15.0f);
+            }
+        }
     }
 
     void Register() override

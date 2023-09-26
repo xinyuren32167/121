@@ -3216,9 +3216,7 @@ class spell_sha_capacitor_totem_stun : public SpellScript
             if (GetStaticChargeAura(caster))
             {
                 int32 targetNbr = std::min<uint32>(targets.size(), GetStaticChargeAura(caster)->GetEffect(EFFECT_1)->GetAmount());
-                LOG_ERROR("error", "targetNbr = {}", targetNbr);
                 int32 cooldown = GetStaticChargeAura(caster)->GetEffect(EFFECT_0)->GetAmount() * targetNbr;
-                LOG_ERROR("error", "cooldown = {}", cooldown);
                 player->ModifySpellCooldown(SPELL_SHAMAN_CAPACITOR_TOTEM, -cooldown);
             }
         }

@@ -1101,7 +1101,7 @@ class spell_pal_exorcism : public SpellScript
     void HandleScriptEffect()
     {
         Creature* creature = GetCaster()->FindNearestCreature(500502, 30);
-        if (!creature)
+        if (!creature || creature->GetCharmerOrOwnerGUID() != GetCaster()->GetGUID())
             return;
 
         for (auto const& targetburn : FindCreatures(creature))
