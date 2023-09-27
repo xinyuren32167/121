@@ -13,7 +13,7 @@ enum Masteries
 {
     // Warrior
     MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF = 199999,
-    
+
     // Deathknight
     MASTERY_DK_UNHOLY = 600005,
     MASTERY_DK_BLOOD = 590001,
@@ -1136,6 +1136,28 @@ class spell_mastery_sha_elemental_overload : public AuraScript
 {
     PrepareAuraScript(spell_mastery_sha_elemental_overload);
 
+    Aura* GetMountainsWillFallAura(Unit* caster)
+    {
+        for (size_t i = 1000638; i < 1000644; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetExtendedRageAura(Unit* caster)
+    {
+        for (size_t i = 1000644; i < 1000650; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         return eventInfo.GetActionTarget() && eventInfo.GetSpellInfo();
@@ -1143,26 +1165,50 @@ class spell_mastery_sha_elemental_overload : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Player* caster = GetCaster()->ToPlayer())
+        if (Player* player = GetCaster()->ToPlayer())
         {
-            if (caster->IsAlive())
+            if (!player || player->isDead())
+                return;
+
+            Unit* target = eventInfo.GetActionTarget();
+            int32 spellID = eventInfo.GetSpellInfo()->Id;
+            int32 procChance = aurEff->GetAmount() + player->GetMastery();
+
+            // Replace Lightning Bolt by it's Overload
+            if (spellID == 49238)
+                spellID = 84057;
+
+            // Check if spell is Earth Shock
+            if (spellID == 49231)
             {
-                Unit* target = eventInfo.GetActionTarget();
-                int32 spellID = eventInfo.GetSpellInfo()->Id;
-                int32 procChance = aurEff->GetAmount() + caster->GetMastery();
-
-                // Replace Lightning Bolt by it's Overload
-                if (spellID == 49238)
-                    spellID = 84057;
-
-                if (!roll_chance_i(procChance))
-                    return;
-
-                // damage + maelstrom nerf
-                caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
-                caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
-                caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+                // if you don't have Mountains Will Fall it can't proc.
+                if (!GetMountainsWillFallAura(player))
+                    procChance = 0;
             }
+
+            if (!roll_chance_i(procChance))
+            {
+                // Check for Power of The Maelstrom Buff
+                if (!player->HasAura(1000636) || spellID != 84057)
+                    return;
+                else 
+                    player->GetAura(1000636)->ModCharges(-1);
+            }
+
+            // damage + maelstrom nerf
+            player->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, player);
+            player->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+            player->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+
+            // Extended Rage Rune
+            if (GetExtendedRageAura(player))
+            {
+                int32 amount = GetExtendedRageAura(player)->GetEffect(EFFECT_0)->GetAmount();
+
+                // check if Elemental Mastery is known and on cooldown
+                if (player->HasSpell(16166) && player->HasSpellCooldown(16166))
+                    player->ModifySpellCooldown(16166, -amount);
+            }                
         }
     }
 
@@ -1178,45 +1224,65 @@ class spell_mastery_sha_chain_lightning_overload : public SpellScript
 {
     PrepareSpellScript(spell_mastery_sha_chain_lightning_overload);
 
+    Aura* GetExtendedRageAura(Unit* caster)
+    {
+        for (size_t i = 1000644; i < 1000650; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
-        if (Player* caster = GetCaster()->ToPlayer())
+        if (Player* player = GetCaster()->ToPlayer())
         {
-            if (caster->IsAlive())
+            if (!player || player->isDead())
+                return;
+
+            Unit* target = GetExplTargetUnit();
+
+            if (!target || target->isDead())
+                return;
+
+            if (SpellInfo const* spellInfo = GetSpellInfo())
             {
-                if (Unit* target = GetExplTargetUnit())
+                uint32 spellID = spellInfo->Id;
+
+                if (Aura* overloadMastery = player->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
                 {
-                    if (target->IsAlive())
+                    int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + player->GetMastery();
+
+                    // Mod Stormkeeper stacks
+                    if (spellID == 49271 || spellID == 84021)
                     {
-                        if (SpellInfo const* spellInfo = GetSpellInfo())
-                        {
-                            uint32 spellID = spellInfo->Id;
+                        if (Aura* stormkeeper = player->GetAura(84054))
+                            stormkeeper->ModStackAmount(-1);
+                    }
 
-                            if (Aura* overloadMastery = caster->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
-                            {
-                                int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+                    // Swap Chain lighting and Lava Beam to their overload counterpart.
+                    if (spellID == 49271)
+                        spellID = 84056;
+                    else if (spellID == 84021)
+                        spellID = 84058;
 
-                                // Mod Stormkeeper stacks
-                                if (spellID == 49271 || spellID == 84021)
-                                {
-                                    if (Aura* stormkeeper = caster->GetAura(84054))
-                                        stormkeeper->ModStackAmount(-1);
-                                }
+                    if (!roll_chance_i(procChance))
+                        return;
 
-                                // Swap Chain lighting and Lava Beam to their overload counterpart.
-                                if (spellID == 49271)
-                                    spellID = 84056;
-                                else if (spellID == 84021)
-                                    spellID = 84058;
+                    player->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, player);
+                    player->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+                    player->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
 
-                                if (!roll_chance_i(procChance))
-                                    return;
+                    // Extended Rage Rune
+                    if (GetExtendedRageAura(player))
+                    {
+                        int32 amount = GetExtendedRageAura(player)->GetEffect(EFFECT_0)->GetAmount();
 
-                                caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
-                                caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
-                                caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
-                            }
-                        }
+                        // check if Elemental Mastery is known and on cooldown
+                        if (player->HasSpell(16166) && player->HasSpellCooldown(16166))
+                            player->ModifySpellCooldown(16166, -amount);
                     }
                 }
             }
@@ -1226,6 +1292,80 @@ class spell_mastery_sha_chain_lightning_overload : public SpellScript
     void Register() override
     {
         AfterCast += SpellCastFn(spell_mastery_sha_chain_lightning_overload::HandleProc);
+    }
+};
+
+// 84014 - Earthquake
+class spell_mastery_sha_earthquake_overload : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_sha_earthquake_overload);
+
+    Aura* GetMountainsWillFallAura(Unit* caster)
+    {
+        for (size_t i = 1000638; i < 1000644; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetExtendedRageAura(Unit* caster)
+    {
+        for (size_t i = 1000644; i < 1000650; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc()
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            if (!player || player->isDead())
+                return;
+
+            if (!GetMountainsWillFallAura(player))
+                return;
+
+            Position pos = GetExplTargetDest()->GetPosition();
+
+            if (SpellInfo const* spellInfo = GetSpellInfo())
+            {
+                uint32 spellID = spellInfo->Id;
+
+                if (Aura* overloadMastery = player->GetAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD))
+                {
+                    int32 procChance = overloadMastery->GetEffect(EFFECT_0)->GetAmount() + player->GetMastery();
+
+                    if (!roll_chance_i(procChance))
+                        return;
+
+                    player->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, player);
+                    player->CastSpell(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), spellID, TRIGGERED_FULL_MASK);
+                    player->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
+
+                    // Extended Rage Rune
+                    if (GetExtendedRageAura(player))
+                    {
+                        int32 amount = GetExtendedRageAura(player)->GetEffect(EFFECT_0)->GetAmount();
+
+                        // check if Elemental Mastery is known and on cooldown
+                        if (player->HasSpell(16166) && player->HasSpellCooldown(16166))
+                            player->ModifySpellCooldown(16166, -amount);
+                    }
+                }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mastery_sha_earthquake_overload::HandleProc);
     }
 };
 
@@ -1271,7 +1411,7 @@ class spell_mastery_sha_deep_healing : public AuraScript
         int32 maxPct = aurEff->GetAmount() + caster->ToPlayer()->GetMastery();
         int32 healthCap = GetAura()->GetEffect(EFFECT_1)->GetAmount();
         float pct = 0;
-        
+
         if (!target || target->isDead())
             return;
 
@@ -1445,6 +1585,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_rog_executioner);
     RegisterSpellScript(spell_mastery_sha_elemental_overload);
     RegisterSpellScript(spell_mastery_sha_chain_lightning_overload);
+    RegisterSpellScript(spell_mastery_sha_earthquake_overload);
     RegisterSpellScript(spell_mastery_sha_enhanced_elements);
     RegisterSpellScript(spell_mastery_sha_deep_healing);
     RegisterSpellScript(spell_mastery_jack_of_all_master_of_none);

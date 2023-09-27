@@ -26,7 +26,10 @@ enum ShamanSpells
     SPELL_SHAMAN_DOOM_WINDS = 84029,
     SPELL_SHAMAN_DOWNPOUR = 84046,
     SPELL_SHAMAN_EARTH_ELEMENTAL = 2062,
+    SPELL_SHAMAN_EARTH_SHOCK = 49231,
     SPELL_SHAMAN_EARTHBIND_TOTEM = 2484,
+    SPELL_SHAMAN_EARTHQUAKE = 84014,
+    SPELL_SHAMAN_EARTHQUAKE_DAMAGE = 84015,
     SPELL_SHAMAN_ELEMENTAL_BLAST = 84022,
     SPELL_SHAMAN_ELEMENTAL_MASTERY = 16166,
     SPELL_SHAMAN_FERAL_SPIRIT = 51533,
@@ -43,6 +46,7 @@ enum ShamanSpells
     SPELL_SHAMAN_HEALING_WAVE = 49273,
     SPELL_SHAMAN_HEX = 51514,
     SPELL_SHAMAN_LAVA_BURST = 60043,
+    SPELL_SHAMAN_LIGHTNING_BOLT = 49238,
     SPELL_SHAMAN_LIGHTNING_LASSO = 84013,
     SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_TIDE_TOTEM = 16190,
@@ -77,6 +81,9 @@ enum ShamanSpells
     RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_NATURE = 1000464,
     RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_DEBUFF = 1000465,
     RUNE_SHAMAN_FORCEFUL_WINDS_BUFF = 1000484,
+    RUNE_SHAMAN_LIGHTNING_ROD_AOE = 1000528,
+    RUNE_SHAMAN_LIGHTNING_ROD_DAMAGE = 1000529,
+    RUNE_SHAMAN_AFTERSHOCK_ENERGIZE = 1000622,
 
     // Summons
     SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
@@ -417,16 +424,14 @@ class rune_sha_resurgence : public AuraScript
 
         if (procSpell == SPELL_SHAMAN_CHAIN_HEAL)
             manaPct = GetEffect(EFFECT_2)->GetAmount();
-        LOG_ERROR("error", "manaPct = {}", manaPct);
+
         if (manaPct == 0)
             return;
 
-        LOG_ERROR("error", "procSpell = {}", procSpell);
         int32 maxMana = caster->GetMaxPower(POWER_MANA);
         float amount = CalculatePct(maxMana, manaPct);
-        LOG_ERROR("error", "maxMana = {}, amount = {}", maxMana, amount);
         amount /= 100;
-        LOG_ERROR("error", "amount = {}", amount);
+
         caster->CastCustomSpell(RUNE_SHAMAN_RESURGENCE_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
 
@@ -629,7 +634,7 @@ class rune_sha_elemental_equilibrium : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-        LOG_ERROR("error", "GetSchoolMask = {}", eventInfo.GetDamageInfo()->GetSchoolMask());
+
         if (eventInfo.GetDamageInfo()->GetSchoolMask() == SPELL_SCHOOL_MASK_FIRE)
             caster->AddAura(RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_FIRE, caster);
 
@@ -794,6 +799,185 @@ class rune_sha_pulsating_water : public AuraScript
     }
 };
 
+class rune_sha_lightning_rod : public AuraScript
+{
+    PrepareAuraScript(rune_sha_lightning_rod);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damage == 0)
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 LightningRod = aurEff->GetAmount();
+
+        if (spellID == SPELL_SHAMAN_EARTH_SHOCK || spellID == SPELL_SHAMAN_EARTHQUAKE_DAMAGE || spellID == SPELL_SHAMAN_ELEMENTAL_BLAST)
+            caster->CastSpell(target, LightningRod, TRIGGERED_FULL_MASK);
+        else if (spellID == SPELL_SHAMAN_LIGHTNING_BOLT || spellID == SPELL_SHAMAN_CHAIN_LIGHTNING)
+        {
+            GetEffect(EFFECT_1)->SetAmount(eventInfo.GetDamageInfo()->GetDamage());
+            caster->CastSpell(caster, RUNE_SHAMAN_LIGHTNING_ROD_AOE,TRIGGERED_FULL_MASK);
+        }
+
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_lightning_rod::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_lightning_rod::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_lightning_rod_aoe : public SpellScript
+{
+    PrepareSpellScript(rune_sha_lightning_rod_aoe);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 1000516; i < 1000522; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 lightningRod = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        int32 damage = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(lightningRod))
+                continue;
+
+            int32 damagePct = target->GetAura(lightningRod)->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = CalculatePct(damage, damagePct);
+            LOG_ERROR("error", "damagePct = {}, amount = {}", damagePct, amount);
+            caster->CastCustomSpell(RUNE_SHAMAN_LIGHTNING_ROD_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_sha_lightning_rod_aoe::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_sha_echoes_of_the_great_sundering : public AuraScript
+{
+    PrepareAuraScript(rune_sha_echoes_of_the_great_sundering);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 earthShockBuff = aurEff->GetAmount();
+        int32 elementalBlastBuff = GetEffect(EFFECT_1)->GetAmount();
+
+        if (spellID == SPELL_SHAMAN_EARTH_SHOCK)
+            caster->AddAura(earthShockBuff, caster);
+        else if (spellID == SPELL_SHAMAN_ELEMENTAL_BLAST)
+            caster->AddAura(elementalBlastBuff, caster);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_echoes_of_the_great_sundering::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_echoes_of_the_great_sundering::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_electrified_shocks_remove : public AuraScript
+{
+    PrepareAuraScript(rune_sha_electrified_shocks_remove);
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000586; i < 1000592; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_sha_electrified_shocks_remove::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_sha_aftershock : public AuraScript
+{
+    PrepareAuraScript(rune_sha_aftershock);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 amount = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSpellInfo()->GetSchoolMask());
+
+        caster->CastCustomSpell(RUNE_SHAMAN_AFTERSHOCK_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_aftershock::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_aftershock::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -818,7 +1002,12 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_forceful_winds_remove);
     RegisterSpellScript(rune_sha_primordial_bond);
     RegisterSpellScript(rune_sha_pulsating_water);
+    RegisterSpellScript(rune_sha_lightning_rod);
+    RegisterSpellScript(rune_sha_lightning_rod_aoe);
+    RegisterSpellScript(rune_sha_echoes_of_the_great_sundering);
+    RegisterSpellScript(rune_sha_electrified_shocks_remove);
+    RegisterSpellScript(rune_sha_aftershock);
 
-
+    
     
 }

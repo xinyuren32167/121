@@ -8103,7 +8103,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                                     unrulyWindsRune = i;
                             }
 
-                            // Unruly Winds Proc chance to check if we add a 3rd attack
+                            // Unruly Winds Proc chance to check if we add an attack
                             if (unrulyWindsRune != 0)
                                 if (roll_chance_i(player->GetAura(unrulyWindsRune)->GetEffect(EFFECT_0)->GetAmount()))
                                     attacks ++;
