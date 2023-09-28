@@ -63,6 +63,7 @@ enum ShamanSpells
     //SPELL_SHAMAN_FIRE_NOVA_R1                 = 1535,
     //SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1       = 8349,
     SPELL_SHAMAN_FLAME_SHOCK = 49233,
+    SPELL_SHAMAN_FLAMETONGUE_WEAPON_AURA = 58792,
     SPELL_SHAMAN_FROST_SHOCK = 49236,
     SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD = 63279,
     SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM = 55456,
@@ -928,11 +929,6 @@ class spell_sha_flame_shock : public AuraScript
 {
     PrepareAuraScript(spell_sha_flame_shock);
 
-    bool Validate(SpellInfo const* /*spell*/) override
-    {
-        return ValidateSpellInfo({ SPELL_SHAMAN_LAVA_FLOWS_R1, SPELL_SHAMAN_LAVA_FLOWS_TRIGGERED_R1 });
-    }
-
     void HandleDispel(DispelInfo* /*dispelInfo*/)
     {
         if (Unit* caster = GetCaster())
@@ -950,7 +946,7 @@ class spell_sha_flame_shock : public AuraScript
 
     void Register() override
     {
-        AfterDispel += AuraDispelFn(spell_sha_flame_shock::HandleDispel);
+        AfterDispel += AuraDispelFn(spell_sha_flame_shock::HandleDispel);       
     }
 };
 
@@ -999,7 +995,7 @@ class spell_sha_healing_stream_totem_target : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+        //targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
         uint32 const maxTargets = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA)->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
@@ -1161,15 +1157,20 @@ class spell_sha_lava_lash : public SpellScript
         {
             int32 hitDamage = GetHitDamage();
 
-            if (caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+            if (Item* castItem = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
-                int32 flametongueIncrease = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
-                // Damage is increased by 100% if your off-hand weapon is enchanted with Flametongue.
-                if (caster->GetAuraEffect(58792, 0))
-                    AddPct(hitDamage, flametongueIncrease);
-
-                SetHitDamage(hitDamage);
+                LOG_ERROR("error", "item name = {}", castItem->GetGUID());
+                LOG_ERROR("error", "GetEnchantmentId = {}", castItem->GetEnchantmentId(EnchantmentSlot(TEMP_ENCHANTMENT_SLOT)));
+                if (castItem->GetEnchantmentId(EnchantmentSlot(TEMP_ENCHANTMENT_SLOT)) == SPELL_SHAMAN_FLAMETONGUE_WEAPON_AURA)
+                {
+                    int32 flametongueIncrease = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+                    // Damage is increased by 100% if your off-hand weapon is enchanted with Flametongue.
+                    if (caster->GetAuraEffect(58792, 0))
+                        AddPct(hitDamage, flametongueIncrease);
+                }
             }
+
+            SetHitDamage(hitDamage);
         }
     }
 

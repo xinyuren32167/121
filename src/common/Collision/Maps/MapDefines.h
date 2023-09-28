@@ -34,7 +34,7 @@ static_assert(sizeof(MmapTileHeader) == (sizeof(MmapTileHeader::mmapMagic) +
     sizeof(MmapTileHeader::mmapVersion) +
     sizeof(MmapTileHeader::size) +
     sizeof(MmapTileHeader::usesLiquids) +
-    sizeof(MmapTileHeader::padding)), "MmapTileHeader has uninitialized padding fields");
+    sizeof(MmapTileHeader::padding)) , "MmapTileHeader has uninitialized padding fields");
 
 enum NavTerrain
 {
