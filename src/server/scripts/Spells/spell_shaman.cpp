@@ -32,16 +32,19 @@
 enum ShamanSpells
 {
     SPELL_SHAMAN_GLYPH_OF_FERAL_SPIRIT = 63271,
-
+    // Spells
     SPELL_SHAMAN_ANCESTRAL_AWAKENING_PROC = 52752,
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE = 84010,
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE_AOE = 84011,
     SPELL_SHAMAN_ANCESTRAL_GUIDANCE_HEAL = 84012,
+    SPELL_SHAMAN_ANCESTRAL_PROTECTION_HEAL = 84081,
     SPELL_SHAMAN_ANCESTRAL_VISION = 84006,
+    SPELL_SHAMAN_ASCENDANCE_FIRE = 84019,
     SPELL_SHAMAN_ASCENDANCE_WATER_AOE_HEAL = 84042,
     SPELL_SHAMAN_ASCENDANCE_WATER_HEAL = 84043,
     SPELL_SHAMAN_ASTRAL_SHIFT = 84007,
     SPELL_SHAMAN_BIND_SIGHT = 6277,
+    SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1 = 51554,
     SPELL_SHAMAN_CAPACITOR_TOTEM = 84069,
     SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD = 84056,
@@ -58,10 +61,9 @@ enum ShamanSpells
     SPELL_SHAMAN_ELEMENTAL_BLAST_MASTERY = 84025,
     SPELL_SHAMAN_ELEMENTAL_MASTERY = 16166,
     SPELL_SHAMAN_EXHAUSTION = 57723,
+    SPELL_SHAMAN_FERAL_SPIRIT = 51533,
     SPELL_SHAMAN_FIRE_NOVA = 84000,
     SPELL_SHAMAN_FIRE_NOVA_DAMAGE = 84001,
-    //SPELL_SHAMAN_FIRE_NOVA_R1                 = 1535,
-    //SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1       = 8349,
     SPELL_SHAMAN_FLAME_SHOCK = 49233,
     SPELL_SHAMAN_FLAMETONGUE_WEAPON_AURA = 58792,
     SPELL_SHAMAN_FROST_SHOCK = 49236,
@@ -69,6 +71,7 @@ enum ShamanSpells
     SPELL_SHAMAN_GLYPH_OF_HEALING_STREAM_TOTEM = 55456,
     SPELL_SHAMAN_GLYPH_OF_MANA_TIDE = 55441,
     SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM = 62132,
+    SPELL_SHAMAN_GUST_OF_WIND = 84009,
     SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA = 58765,
     SPELL_SHAMAN_ICEFURY = 84016,
     SPELL_SHAMAN_ICEFURY_BUFF = 84017,
@@ -80,14 +83,17 @@ enum ShamanSpells
     SPELL_SHAMAN_LAVA_BURST = 60043,
     SPELL_SHAMAN_LAVA_FLOWS_R1 = 51480,
     SPELL_SHAMAN_LAVA_FLOWS_TRIGGERED_R1 = 64694,
+    SPELL_SHAMAN_LAVA_LASH = 60103,
     SPELL_SHAMAN_LIGHTNING_BOLT = 49238,
     SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD = 84057,
     SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE = 52032,
     SPELL_SHAMAN_MANA_TIDE_TOTEM = 39609,
+    SPELL_SHAMAN_OUTBURST_HEAL = 84083,
     SPELL_SHAMAN_RIPTIDE = 61301,
     SPELL_SHAMAN_SATED = 57724,
     SPELL_SHAMAN_STORM_EARTH_AND_FIRE = 51483,
+    SPELL_SHAMAN_STORMSTRIKE = 17364,
     SPELL_SHAMAN_STORMKEEPER = 84018,
     SPELL_SHAMAN_STORMKEEPER_LISTENER = 84054,
     SPELL_SHAMAN_TOTEM_EARTHBIND_EARTHGRAB = 64695,
@@ -95,20 +101,12 @@ enum ShamanSpells
     SPELL_SHAMAN_TOTEM_EARTHEN_POWER = 59566,
     SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL = 52042,
     SPELL_SHAMAN_WINDFURY_WEAPON_AURA = 33757,
-    SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1 = 51554,
-    SPELL_SHAMAN_STORMSTRIKE = 17364,
-    SPELL_SHAMAN_LAVA_LASH = 60103,
 
-    SPELL_SHAMAN_ASCENDANCE_FIRE = 84019,
-
-    SPELL_SHAMAN_GUST_OF_WIND = 84009,
-
+    // Mastery
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
-    SPELL_SHAMAN_ANCESTRAL_PROTECTION_HEAL = 84081,
-    SPELL_SHAMAN_OUTBURST_HEAL = 84083,
 
-
+    // Shit Spec
     SPELL_SHAMAN_SPIRIT_OF_FIRE = 84089,
     SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE = 84136,
     SPELL_SHAMAN_SPIRIT_OF_STORM = 84090,
@@ -156,11 +154,15 @@ enum ShamanSpells
     SPELL_SHAMAN_SPIRIT_WEAPON_FIRE = 84248,
     SPELL_SHAMAN_SPIRIT_WEAPON_FROST = 84249,
 
+    // Passive
+    SPELL_SHAMAN_MAELSTROM_WEAPON = 84053,
+
     // Talents
     TALENT_SHAMAN_SEAMLESS_WATER = 84149,
 
     // Runes
     RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
+    RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER = 1000816,
 };
 
 enum ShamanSpellIcons
@@ -1658,6 +1660,17 @@ class spell_sha_stormbringer : public AuraScript
 {
     PrepareAuraScript(spell_sha_stormbringer);
 
+    Aura* GetStormblastAura(Unit* caster)
+    {
+        for (size_t i = 1000830; i < 1000836; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         return eventInfo.GetActor();
@@ -1665,9 +1678,20 @@ class spell_sha_stormbringer : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Player* caster = eventInfo.GetActor()->ToPlayer();
+        Unit* caster = GetCaster();
 
-        caster->RemoveSpellCooldown(SPELL_SHAMAN_STORMSTRIKE, true);
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = eventInfo.GetActor()->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_SHAMAN_STORMSTRIKE, true);
+
+        // Stormblast Rune proc
+        if (GetStormblastAura(caster))
+        {
+            int32 procSpell = GetStormblastAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
     }
 
     void Register() override
@@ -3280,6 +3304,108 @@ class spell_sha_capacitor_totem_aura : public AuraScript
     }
 };
 
+// 53817 - Maelstrom Weapon (Buff)
+class spell_sha_maelstrom_weapon_buff : public AuraScript
+{
+    PrepareAuraScript(spell_sha_maelstrom_weapon_buff);
+
+    Aura* GetLegacyOfTheFrostWitchAura(Unit* caster)
+    {
+        for (size_t i = 1000804; i < 1000810; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetWitchDoctorsAncestryAura(Unit* caster)
+    {
+        for (size_t i = 1000818; i < 1000824; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* maelstromWeaponAura = caster->GetAura(SPELL_SHAMAN_MAELSTROM_WEAPON))
+        {
+            int32 maxStacks = maelstromWeaponAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (GetStackAmount() > maxStacks)
+                SetStackAmount(maxStacks);
+        }
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (GetWitchDoctorsAncestryAura(player))
+            {
+                int32 cooldown = GetWitchDoctorsAncestryAura(player)->GetEffect(EFFECT_1)->GetAmount();
+                player->ModifySpellCooldown(SPELL_SHAMAN_FERAL_SPIRIT, -cooldown);
+            }
+        }     
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Legacy of the Frost Witch rune
+            if (GetLegacyOfTheFrostWitchAura(player))
+            {
+                int32 stackThreshold = GetLegacyOfTheFrostWitchAura(player)->GetEffect(EFFECT_0)->GetAmount();
+                int32 stackAmount = GetStackAmount();
+                int32 procSpell = GetLegacyOfTheFrostWitchAura(player)->GetEffect(EFFECT_1)->GetAmount();
+
+                if (Aura* LegacyFrostWitchBuff = player->GetAura(RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER))
+                {
+                    stackAmount += LegacyFrostWitchBuff->GetStackAmount();
+
+                    if (stackAmount < stackThreshold)
+                        LegacyFrostWitchBuff->SetStackAmount(stackAmount);
+                    else
+                    {
+                        player->AddAura(procSpell, player);
+                        player->RemoveSpellCooldown(SPELL_SHAMAN_STORMSTRIKE, true);
+                        stackAmount -= stackThreshold;
+
+                        if (stackAmount == 0)
+                            LegacyFrostWitchBuff->Remove();
+                        else
+                            LegacyFrostWitchBuff->SetStackAmount(stackAmount);
+                    }
+                }
+                else
+                {
+                    caster->AddAura(RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER, caster);
+                    caster->GetAura(RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER)->SetStackAmount(stackAmount);
+                }
+            }
+        }       
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_maelstrom_weapon_buff::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_maelstrom_weapon_buff::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -3372,4 +3498,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ghost_wolf);
     RegisterSpellScript(spell_sha_capacitor_totem_stun);
     RegisterSpellScript(spell_sha_capacitor_totem_aura);
+    RegisterSpellScript(spell_sha_maelstrom_weapon_buff);
 }

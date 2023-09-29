@@ -1373,6 +1373,17 @@ class spell_mastery_sha_enhanced_elements : public SpellScript
 {
     PrepareSpellScript(spell_mastery_sha_enhanced_elements);
 
+    Aura* GetStormsWrathAura(Unit* caster)
+    {
+        for (size_t i = 1000824; i < 1000830; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
@@ -1381,6 +1392,11 @@ class spell_mastery_sha_enhanced_elements : public SpellScript
             float mastery = caster->GetMastery();
             // proc chance increase
             int32 bonus1 = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+
+            // Storm's Wrath Rune proc chance increase
+            if (GetStormsWrathAura(caster))
+                AddPct(bonus1, GetStormsWrathAura(caster)->GetEffect(EFFECT_0)->GetAmount());
+
             // elemental damage increase
             int32 bonus2 = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
 
