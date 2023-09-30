@@ -79,6 +79,16 @@ enum MageSpells
     SPELL_MAGE_ARCHON_DAMAGE = 81552,
     SPELL_MAGE_BLACKHOLE_AURA = 81554,
     SPELL_MAGE_BLACKHOLE_TARGET_SELECT = 81559,
+    SPELL_MAGE_DEATH_BLOSSOM = 81556,
+    SPELL_MAGE_UNSTABLE_ANOMALY = 81564,
+    SPELL_MAGE_UNSTABLE_ANOMALY_SHIELD = 81565,
+    SPELL_MAGE_UNSTABLE_ANOMALY_KNOCKBACK = 81566,
+    SPELL_MAGE_UNSTABLE_ANOMALY_COOLDOWN = 81567,
+    SPELL_MAGE_ENCHANT_ARCANIZE_PROC = 81571,
+    SPELL_MAGE_ENCHANT_CONDUIT_PROC = 81574,
+    SPELL_MAGE_ENCHANT_DEFLECTION_PROC = 81577,
+    SPELL_MAGE_ENCHANT_IGNIS_PROC = 81582,
+    SPELL_MAGE_ENCHANT_SNOWBOUND_PROC = 81585,
 
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
@@ -2491,7 +2501,7 @@ class spell_mage_black_hole_target_select: public SpellScript
                 {
                     if (Creature* creatureTarget = target->ToCreature())
                         if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
-                            target->GetMotionMaster()->MoveJump(pos, 12.0f, 12.0f);
+                            target->GetMotionMaster()->MoveJump(pos, 8.0f, 8.0f);
                 }
             }
         }
@@ -2519,6 +2529,190 @@ class spell_mage_death_blossom : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_mage_death_blossom::HandleCast);
+    }
+};
+
+class spell_mage_galvanizing_barrier : public AuraScript
+{
+    PrepareAuraScript(spell_mage_galvanizing_barrier);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    {
+        amount = GetCaster()->CountPctFromMaxHealth(amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_mage_galvanizing_barrier::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+    }
+};
+
+class spell_mage_magic_blossom : public SpellScript
+{
+    PrepareSpellScript(spell_mage_magic_blossom);
+
+    void HandleCast()
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_MAGE_DEATH_BLOSSOM, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mage_magic_blossom::HandleCast);
+    }
+};
+
+class spell_mage_unstable_anomaly : public AuraScript
+{
+    PrepareAuraScript(spell_mage_unstable_anomaly);
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        int32 healPct = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+
+        if (remainingHealth <= 0 && !victim->HasAura(SPELL_MAGE_UNSTABLE_ANOMALY_COOLDOWN))
+        {
+            absorbAmount = dmgInfo.GetDamage();
+            int32 shieldAmount = int32(victim->CountPctFromMaxHealth(healPct));
+            victim->CastCustomSpell(SPELL_MAGE_UNSTABLE_ANOMALY_SHIELD, SPELLVALUE_BASE_POINT0, shieldAmount, victim, true, nullptr, aurEff);
+            victim->CastSpell(victim, SPELL_MAGE_UNSTABLE_ANOMALY_KNOCKBACK, TRIGGERED_FULL_MASK);
+            victim->CastSpell(victim, SPELL_MAGE_UNSTABLE_ANOMALY_COOLDOWN, TRIGGERED_FULL_MASK);
+        }
+        else
+            absorbAmount = 0;
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_mage_unstable_anomaly::Absorb, EFFECT_0);
+    }
+};
+
+class spell_mage_wave_of_force : public SpellScript
+{
+    PrepareSpellScript(spell_mage_wave_of_force);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (targets.size() == 0)
+                return;
+            uint32 reduction = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+            caster->ModifySpellCooldown(SPELL_MAGE_FLURRY_OF_SLASHES, reduction);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_wave_of_force::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+    }
+};
+
+class spell_mage_enchant_arcanize : public AuraScript
+{
+    PrepareAuraScript(spell_mage_enchant_arcanize);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetProcTarget())
+        {
+            GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_ARCANIZE_PROC, true, nullptr, aurEff);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_enchant_arcanize::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_enchant_conduit : public AuraScript
+{
+    PrepareAuraScript(spell_mage_enchant_conduit);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            int32 amount = CalculatePct(caster->GetMaxPower(POWER_MANA), 0.5);
+            caster->CastCustomSpell(SPELL_MAGE_ENCHANT_CONDUIT_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_enchant_conduit::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_enchant_deflection : public AuraScript
+{
+    PrepareAuraScript(spell_mage_enchant_deflection);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
+            if (Aura* shield = caster->GetAura(SPELL_MAGE_ENCHANT_DEFLECTION_PROC))
+            {
+                shield->GetEffect(EFFECT_0)->SetAmount(amount);
+                shield->RefreshDuration();
+            }
+            else
+                caster->CastCustomSpell(SPELL_MAGE_ENCHANT_DEFLECTION_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_enchant_deflection::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_enchant_ignis : public AuraScript
+{
+    PrepareAuraScript(spell_mage_enchant_ignis);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetProcTarget())
+        {
+            GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC, true, nullptr, aurEff);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_enchant_ignis::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_enchant_snowbound : public AuraScript
+{
+    PrepareAuraScript(spell_mage_enchant_snowbound);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetProcTarget())
+        {
+            GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_SNOWBOUND_PROC, true, nullptr, aurEff);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_enchant_snowbound::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2592,4 +2786,13 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_blackhole);
     RegisterSpellScript(spell_mage_black_hole_target_select);
     RegisterSpellScript(spell_mage_death_blossom);
+    RegisterSpellScript(spell_mage_galvanizing_barrier);
+    RegisterSpellScript(spell_mage_magic_blossom);
+    RegisterSpellScript(spell_mage_unstable_anomaly);
+    RegisterSpellScript(spell_mage_wave_of_force);
+    RegisterSpellScript(spell_mage_enchant_arcanize);
+    RegisterSpellScript(spell_mage_enchant_conduit);
+    RegisterSpellScript(spell_mage_enchant_deflection);
+    RegisterSpellScript(spell_mage_enchant_ignis);
+    RegisterSpellScript(spell_mage_enchant_snowbound);
 }

@@ -55,6 +55,7 @@ enum Specializations {
     PRIEST_SHADOW = 31,
     SHAMAN_SPIRIT_MASTER = 32,
     WARRIOR_HOPLITE = 33,
+    MAGE_SPELLBLADE = 34,
 };
 
 

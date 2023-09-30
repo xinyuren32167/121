@@ -3025,7 +3025,7 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
         duration = 300;                                     // 5 mins
     // default case
     else
-        duration = 3600;                                    // 1 hour
+        duration = 7200;                                    // 1 hour
 
     // item can be in trade slot and have owner diff. from caster
     Player* item_owner = itemTarget->GetOwner();

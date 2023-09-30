@@ -57,6 +57,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[MAGE_ARCANE] = { 4, 42995, "Arcane", 8, 300111, 29.16, true, 300113, POWER_ALL };
     m_Specializations[MAGE_FIRE] = { 5, 42833, "Fire", 8, 300109,	46.66,	false,	0, POWER_ALL };
     m_Specializations[MAGE_FROST] = { 6, 42842, "Frost", 8, 300105,	35.00,	false,	0, POWER_ALL };
+    m_Specializations[MAGE_SPELLBLADE] = { 34, 300114 , "Spellblade", 8, 300114, 15.75, true, 300115, POWER_ALL };
 
     m_Specializations[PALADIN_HOLY] = { 17, 48782, "Holy", 2, 400000, 23.33, false,	0, POWER_ALL };
     m_Specializations[PALADIN_PROTECTION] = { 18, 48952, "Protection", 2, 400002, 35.00, true, 400004, POWER_ALL };

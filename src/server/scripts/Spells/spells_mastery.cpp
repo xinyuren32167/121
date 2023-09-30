@@ -59,8 +59,9 @@ enum Masteries
 
     // Mage
     MASTERY_MAGE_IGNITE = 300109,
-    MASTERY_MAGE_IGNITE_DOTS = 300110
-
+    MASTERY_MAGE_IGNITE_DOTS = 300110,
+    MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
+    MASTERY_MAGE_BATTLE_KNOWLEDGE_BUFF = 300116,
 };
 
 // Mage
@@ -253,6 +254,25 @@ class spell_mastery_savant_on_remove : public AuraScript
     void Register() override
     {
         OnEffectRemove += AuraEffectRemoveFn(spell_mastery_savant_on_remove::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_mastery_battle_knowledge : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_battle_knowledge);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_MAGE_BATTLE_KNOWLEDGE)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
+
+        caster->CastCustomSpell(MASTERY_MAGE_BATTLE_KNOWLEDGE_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_battle_knowledge::HandleCast);
     }
 };
 
@@ -1517,7 +1537,6 @@ class spell_mastery_warlock_potent_afflictions : public SpellScript
     {
         OnCast += SpellCastFn(spell_mastery_warlock_potent_afflictions::HandleCast);
     }
-
 };
 
 class spell_mastery_warlock_chaotic_energies : public SpellScript
@@ -1556,8 +1575,6 @@ class spell_mastery_warlock_master_demonology : public SpellScript
         OnCast += SpellCastFn(spell_mastery_warlock_master_demonology::HandleCast);
     }
 };
-
-
 
 void AddSC_spells_mastery_scripts()
 {
@@ -1607,4 +1624,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_jack_of_all_master_of_none);
     RegisterSpellScript(spell_mastery_jack_of_all_master_of_none_proc);
     RegisterSpellScript(spell_mastery_phalanx_dominance);
+    RegisterSpellScript(spell_mastery_battle_knowledge);
 }
