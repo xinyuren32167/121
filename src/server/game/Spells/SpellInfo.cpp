@@ -2187,7 +2187,7 @@ SpellSpecificType SpellInfo::LoadSpellSpecific() const
                 if (SpellFamilyFlags[0] & 0x400)
                     return SPELL_SPECIFIC_MAGE_ARCANE_BRILLANCE;
 
-                if ((SpellFamilyFlags[0] & 0x1000000) && Effects[0].ApplyAuraName == SPELL_AURA_MOD_CONFUSE)
+                if ((SpellFamilyFlags[0] & 0x1000000) && Effects[0].ApplyAuraName == SPELL_AURA_MOD_CONFUSE && Id != 81506)
                     return SPELL_SPECIFIC_MAGE_POLYMORPH;
 
                 break;

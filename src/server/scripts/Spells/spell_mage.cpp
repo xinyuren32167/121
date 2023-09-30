@@ -2716,6 +2716,21 @@ class spell_mage_enchant_snowbound : public AuraScript
     }
 };
 
+class spell_mage_physical_fortitude : public AuraScript
+{
+    PrepareAuraScript(spell_mage_physical_fortitude);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    {
+        amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK),amount);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_mage_physical_fortitude::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new npc_mage_spell_frozen_orbs();
@@ -2795,4 +2810,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_enchant_deflection);
     RegisterSpellScript(spell_mage_enchant_ignis);
     RegisterSpellScript(spell_mage_enchant_snowbound);
+    RegisterSpellScript(spell_mage_physical_fortitude);
 }
