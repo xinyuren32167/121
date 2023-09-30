@@ -84,6 +84,12 @@ public:
         } 
     }
 
+    void OnUpdateMastery(Player* player, uint32 value)
+    {
+        PlayerSpecialization::UpdateMastery(player, value);
+    }
+
+
     void OnLogin(Player* player)
     {
         if (player->getClass() == CLASS_PALADIN) {
