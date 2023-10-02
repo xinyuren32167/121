@@ -267,8 +267,8 @@ void Player::UpdateArmor()
             value += CalculatePct(GetStat(Stats((*i)->GetMiscValueB())), (*i)->GetAmount());
     }
 
-    AuraEffectList const& mResbyIntellect = GetAuraEffectsByType(SPELL_AURA_MOD_ARMOR_FROM_ATTACK_POWER);
-    for (AuraEffectList::const_iterator i = mResbyIntellect.begin(); i != mResbyIntellect.end(); ++i)
+    AuraEffectList const& mResByAttackPower = GetAuraEffectsByType(SPELL_AURA_MOD_ARMOR_FROM_ATTACK_POWER);
+    for (AuraEffectList::const_iterator i = mResByAttackPower.begin(); i != mResByAttackPower.end(); ++i)
     {
         if ((*i)->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
             value += CalculatePct(GetTotalAttackPowerValue(BASE_ATTACK), (*i)->GetAmount());
