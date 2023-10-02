@@ -144,6 +144,9 @@ bool Player::UpdateStats(Stats stat)
             UpdateAttackPowerAndDamage(false);
         if (HasAuraTypeWithMiscvalue(SPELL_AURA_MOD_RANGED_ATTACK_POWER_OF_STAT_PERCENT, stat))
             UpdateAttackPowerAndDamage(true);
+        if (HasAuraTypeWithMiscvalue(SPELL_AURA_MOD_RANGED_ATTACK_POWER_OF_ATTACK_POWER, stat))
+            UpdateAttackPowerAndDamage(true);
+
     }
 
     UpdateSpellDamageAndHealingBonus();
@@ -262,6 +265,13 @@ void Player::UpdateArmor()
     {
         if ((*i)->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
             value += CalculatePct(GetStat(Stats((*i)->GetMiscValueB())), (*i)->GetAmount());
+    }
+
+    AuraEffectList const& mResbyIntellect = GetAuraEffectsByType(SPELL_AURA_MOD_ARMOR_FROM_ATTACK_POWER);
+    for (AuraEffectList::const_iterator i = mResbyIntellect.begin(); i != mResbyIntellect.end(); ++i)
+    {
+        if ((*i)->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
+            value += CalculatePct(GetTotalAttackPowerValue(BASE_ATTACK), (*i)->GetAmount());
     }
 
     value *= GetModifierValue(unitMod, TOTAL_PCT);
@@ -545,6 +555,10 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
             AuraEffectList const& mRAPbyStat = GetAuraEffectsByType(SPELL_AURA_MOD_RANGED_ATTACK_POWER_OF_STAT_PERCENT);
             for (AuraEffectList::const_iterator i = mRAPbyStat.begin(); i != mRAPbyStat.end(); ++i)
                 attPowerMod += CalculatePct(GetStat(Stats((*i)->GetMiscValue())), (*i)->GetAmount());
+
+            AuraEffectList const& mRAPbyAP = GetAuraEffectsByType(SPELL_AURA_MOD_RANGED_ATTACK_POWER_OF_ATTACK_POWER);
+            for (AuraEffectList::const_iterator i = mRAPbyAP.begin(); i != mRAPbyAP.end(); ++i)
+                attPowerMod += CalculatePct(GetTotalAttackPowerValue(BASE_ATTACK), (*i)->GetAmount());
         }
     }
     else
@@ -557,6 +571,12 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
         for (AuraEffectList::const_iterator iter = mAPbyArmor.begin(); iter != mAPbyArmor.end(); ++iter)
             // always: ((*i)->GetModifier()->m_miscvalue == 1 == SPELL_SCHOOL_MASK_NORMAL)
             attPowerMod += int32(GetArmor() / (*iter)->GetAmount());
+
+        AuraEffectList const& mAPFromSP = GetAuraEffectsByType(SPELL_AURA_MOD_ATTAC_POWER_FROM_SPELL_POWER_PERCENT);
+        for (AuraEffectList::const_iterator iter = mAPFromSP.begin(); iter != mAPFromSP.end(); ++iter) {
+            int32 spellPowerAmount = SpellBaseDamageBonusDone(SpellSchoolMask((*iter)->GetMiscValue()));
+            attPowerMod += CalculatePct(spellPowerAmount, (*iter)->GetAmount());
+        }
     }
 
     float attPowerMultiplier = GetModifierValue(unitMod, TOTAL_PCT) - 1.0f;
