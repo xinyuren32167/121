@@ -251,6 +251,7 @@ public:
     void HandleModHealingDone(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleModTotalPercentStat(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModResistenceOfStatPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+    void HandleAuraModResistenceOfAttackPower(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModExpertise(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     //   heal and energize
     void HandleModPowerRegen(AuraApplication const* aurApp, uint8 mode, bool apply) const;
@@ -264,6 +265,7 @@ public:
     void HandleAuraIncreaseBaseHealthPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     //   fight
     void HandleAuraModParryPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+    void HandleAuraModParryPercentFromMeleeCriticalChance(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModDodgePercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModBlockPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModRegenInterrupt(AuraApplication const* aurApp, uint8 mode, bool apply) const;
@@ -290,13 +292,18 @@ public:
     void HandleAuraModAttackPowerPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModRangedAttackPowerPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModRangedAttackPowerOfStatPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+    void HandleAuraModRangedAttackPowerOfAttackPower(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModAttackPowerOfStatPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModAttackPowerOfArmor(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+    void HandleAuraModAttackPowerFromSpellPowerPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+
     //   damage bonus
     void HandleModDamageDone(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleModDamagePercentDone(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleModOffhandDamagePercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleShieldBlockValue(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+    void HandleShieldBlockValueFromStats(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+
     //  power cost
     void HandleModPowerCostPCT(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleModPowerCost(AuraApplication const* aurApp, uint8 mode, bool apply) const;
