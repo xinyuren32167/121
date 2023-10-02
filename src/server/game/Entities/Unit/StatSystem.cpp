@@ -746,9 +746,12 @@ void Player::UpdateCritPercentage(WeaponAttackType attType)
             break;
     }
 
-    float value = GetTotalPercentageModValue(modGroup) + GetRatingBonusValue(cr);
+    float value = GetTotalPercentageModValue(modGroup) + GetRatingBonusValue(cr) + GetSpellCritFromIntellect();
     // Modify crit from weapon skill and maximized defense skill of same level victim difference
     value += (int32(GetWeaponSkillValue(attType)) - int32(GetMaxSkillValueForLevel())) * 0.04f;
+
+    if(getClass() == CLASS_MAGE)
+        value += GetSpellCritFromIntellect();
 
     if (sConfigMgr->GetOption<bool>("Stats.Limits.Enable", false))
     {
@@ -825,7 +828,7 @@ void Player::UpdateParryPercentage()
         0.0f,           // Priest
         147.003525f,     // DK
         145.560408f,    // Shaman
-        0.0f,           // Mage
+        145.560408f,    // Mage
         0.0f,           // Warlock
         0.0f,           // ??
         0.0f            // Druid
@@ -845,6 +848,13 @@ void Player::UpdateParryPercentage()
         diminishing += (int32(GetRatingBonusValue(CR_DEFENSE_SKILL))) * 0.04f;
         // Parry from SPELL_AURA_MOD_PARRY_PERCENT aura
         nondiminishing += GetTotalAuraModifier(SPELL_AURA_MOD_PARRY_PERCENT);
+
+        AuraEffectList const& mParryByCrit = GetAuraEffectsByType(SPELL_AURA_MOD_PARRY_PERCENT_FROM_CRITICAL_STRIKE);
+        for (AuraEffectList::const_iterator i = mParryByCrit.begin(); i != mParryByCrit.end(); ++i) {
+            float critChance = GetTotalPercentageModValue(CRIT_PERCENTAGE);
+            nondiminishing += CalculatePct(critChance, (*i)->GetAmount());
+        }
+
         // apply diminishing formula to diminishing parry chance
         m_realParry = nondiminishing + diminishing * parry_cap[pclass] / (diminishing + parry_cap[pclass] * m_diminishing_k[pclass]);
         m_realParry = m_realParry < 0.0f ? 0.0f : m_realParry;

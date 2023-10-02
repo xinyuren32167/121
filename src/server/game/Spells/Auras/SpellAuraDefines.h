@@ -372,7 +372,7 @@ enum AuraType
     SPELL_AURA_MOD_RANGED_ATTACK_POWER_OF_ATTACK_POWER      = 309,
     SPELL_AURA_MOD_CREATURE_AOE_DAMAGE_AVOIDANCE            = 310,
     SPELL_AURA_311                                          = 311,
-    SPELL_AURA_312                                          = 312,
+    SPELL_AURA_MOD_PARRY_PERCENT_FROM_CRITICAL_STRIKE       = 312,
     SPELL_AURA_DAMAGE_INCREASE_BY_PLAYER                    = 313,
     SPELL_AURA_PREVENT_RESURRECTION                         = 314,
     SPELL_AURA_UNDERWATER_WALKING                           = 315,

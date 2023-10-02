@@ -373,7 +373,7 @@ pAuraEffectHandler AuraEffectHandler[TOTAL_AURAS] =
     &AuraEffect::HandleAuraModRangedAttackPowerOfAttackPower,    //309 0 spells in 3.3.5
     &AuraEffect::HandleNoImmediateEffect,                         //310 SPELL_AURA_MOD_CREATURE_AOE_DAMAGE_AVOIDANCE implemented in Spell::CalculateDamageDone
     &AuraEffect::HandleNULL,                                      //311 0 spells in 3.3.5
-    &AuraEffect::HandleNULL,                                      //312 0 spells in 3.3.5
+    &AuraEffect::HandleAuraModParryPercentFromMeleeCriticalChance,//312 0 spells in 3.3.5
     &AuraEffect::HandleNULL,                                      //313 0 spells in 3.3.5
     &AuraEffect::HandlePreventResurrection,                       //314 SPELL_AURA_PREVENT_RESURRECTION todo
     &AuraEffect::HandleNoImmediateEffect,                         //315 SPELL_AURA_UNDERWATER_WALKING todo
@@ -4464,6 +4464,22 @@ void AuraEffect::HandleAuraModParryPercent(AuraApplication const* aurApp, uint8 
         target->ToPlayer()->SetCanParry(true);
     else
         target->ToPlayer()->UpdateParryPercentage();
+}
+
+void AuraEffect::HandleAuraModParryPercentFromMeleeCriticalChance(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
+{
+    if (!(mode & (AURA_EFFECT_HANDLE_CHANGE_AMOUNT_MASK | AURA_EFFECT_HANDLE_STAT)))
+        return;
+
+    Unit* target = aurApp->GetTarget();
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    if (!target->ToPlayer()->CanParry())
+        target->ToPlayer()->SetCanParry(true);
+
+    target->ToPlayer()->UpdateParryPercentage();
 }
 
 void AuraEffect::HandleAuraModDodgePercent(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const

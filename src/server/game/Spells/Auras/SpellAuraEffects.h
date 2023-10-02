@@ -265,6 +265,7 @@ public:
     void HandleAuraIncreaseBaseHealthPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     //   fight
     void HandleAuraModParryPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
+    void HandleAuraModParryPercentFromMeleeCriticalChance(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModDodgePercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModBlockPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const;
     void HandleAuraModRegenInterrupt(AuraApplication const* aurApp, uint8 mode, bool apply) const;
