@@ -163,6 +163,12 @@ enum ShamanSpells
     // Runes
     RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
     RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER = 1000816,
+
+    // Summons
+    SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
+    SUMMON_SHAMAN_FIRE_ELEMENTAL = 15438,
+    SUMMON_SHAMAN_STORM_ELEMENTAL = 400408,
+    SUMMON_SHAMAN_FERAL_SPIRITS = 29264,
 };
 
 enum ShamanSpellIcons
@@ -290,6 +296,66 @@ class spell_sha_totemic_mastery : public AuraScript
     void Register() override
     {
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_totemic_mastery::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+    }
+};
+
+// 51533 - Feral Spirit
+class spell_sha_feral_spirit : public SpellScript
+{
+    PrepareSpellScript(spell_sha_feral_spirit);
+
+    Aura* GetElementalSpiritsAura(Unit* caster)
+    {
+        for (size_t i = 1000862; i < 1000868; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 duration = caster->CalcSpellDuration(GetSpellInfo());
+
+        for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+        {
+            if ((*itr)->GetEntry() == SUMMON_SHAMAN_FERAL_SPIRITS && (*itr)->IsAlive())
+            {
+                int32 rand = urand(1, 3);
+                SpellEffIndex spellEffect;
+
+                // Rand for element type, 1 = Fire, 2 = Frost and 3 = Lightning
+                if (rand == 1)
+                    spellEffect = EFFECT_0;
+                else if (rand == 2)
+                    spellEffect = EFFECT_1;
+                else if (rand == 3)
+                    spellEffect = EFFECT_2;
+
+                if (!spellEffect)
+                    continue;
+
+                int32 buff1 = GetElementalSpiritsAura(caster)->GetEffect(spellEffect)->GetAmount();
+                int32 buff2 = GetElementalSpiritsAura(caster)->GetSpellInfo()->GetEffect(spellEffect).TriggerSpell;
+
+                caster->CastCustomSpell(buff1, SPELLVALUE_AURA_DURATION, duration, (*itr), TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(buff2, SPELLVALUE_AURA_DURATION, duration, (*itr), TRIGGERED_FULL_MASK);
+
+                // need to add the morphs
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_sha_feral_spirit::HandleProc);
     }
 };
 
@@ -695,40 +761,52 @@ class spell_sha_cleansing_totem_pulse : public SpellScript
     }
 };
 
-// -974 - Earth Shield
+// 49284 - Earth Shield
 class spell_sha_earth_shield : public AuraScript
 {
     PrepareAuraScript(spell_sha_earth_shield);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
+    Aura* GetPulsatingEarthAura(Unit* caster)
     {
-        return ValidateSpellInfo({ SPELL_SHAMAN_EARTH_SHIELD_HEAL, SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD });
+        for (size_t i = 1000936; i < 1000942; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
     }
 
-    //void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
-    //{
-    //    if (Unit* caster = GetCaster())
-    //    {
-    //        int32 baseAmount = amount;
-    //        amount = caster->SpellHealingBonusDone(GetUnitOwner(), GetSpellInfo(), amount, HEAL, aurEff->GetEffIndex());
-    //        // xinef: taken should be calculated at every heal
-    //        //amount = GetUnitOwner()->SpellHealingBonusTaken(caster, GetSpellInfo(), amount, HEAL);
+    Aura* GetEarthenHarmonyAura(Unit* caster)
+    {
+        for (size_t i = 1000948; i < 1000954; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
 
-    //        // Glyph of Earth Shield
-    //        //! WORKAROUND
-    //        //! this glyphe is a proc
-    //        if (AuraEffect* glyphe = caster->GetAuraEffect(SPELL_SHAMAN_GLYPH_OF_EARTH_SHIELD, EFFECT_0))
-    //            AddPct(amount, glyphe->GetAmount());
+        return nullptr;
+    }
 
-    //        // xinef: Improved Shields
-    //        if ((baseAmount = amount - baseAmount))
-    //            if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_SHAMAN, 19, EFFECT_1))
-    //            {
-    //                ApplyPct(baseAmount, aurEff->GetAmount());
-    //                amount += baseAmount;
-    //            }
-    //    }
-    //}
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Cast Earthen Harmony's damage reduction
+        if (GetEarthenHarmonyAura(caster))
+        {
+            int32 procSpell = GetEarthenHarmonyAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+            caster->AddAura(procSpell, target);
+        }
+    }
 
     bool CheckProc(ProcEventInfo&  /*eventInfo*/)
     {
@@ -742,11 +820,111 @@ class spell_sha_earth_shield : public AuraScript
         GetTarget()->AddSpellCooldown(SPELL_SHAMAN_EARTH_SHIELD_HEAL, 0, 3000);
     }
 
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetPulsatingEarthAura(caster))
+        {
+            int32 procSpell = GetPulsatingEarthAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        // Check to remove Earthen Harmony's damage reduction
+        if (!GetEarthenHarmonyAura(caster))
+        {
+            for (size_t i = 1000954; i < 1000960; i++)
+            {
+                if (target->HasAura(i))
+                    target->RemoveAura(i);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // remove Earthen Harmony's damage reduction from target
+        for (size_t i = 1000954; i < 1000960; i++)
+        {
+            if (target->HasAura(i))
+                target->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
-        //DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_earth_shield::CalculateAmount, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectApply += AuraEffectApplyFn(spell_sha_earth_shield::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         DoCheckProc += AuraCheckProcFn(spell_sha_earth_shield::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_earth_shield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_earth_shield::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_earth_shield::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 379 - Earth Shield Heal
+class spell_sha_earth_shield_heal : public SpellScript
+{
+    PrepareSpellScript(spell_sha_earth_shield_heal);
+
+    Aura* GetEarthenHarmonyAura(Unit* caster)
+    {
+        for (size_t i = 1000948; i < 1000954; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        // apply heal increase from Earthen Harmony Rune
+        if (GetEarthenHarmonyAura(caster))
+        {
+            int32 healIncrease = GetEarthenHarmonyAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 healthThreshold = GetEarthenHarmonyAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                AddPct(heal, healIncrease);
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_earth_shield_heal::HandleDummy, EFFECT_0, SPELL_EFFECT_HEAL);
     }
 };
 
@@ -948,7 +1126,7 @@ class spell_sha_flame_shock : public AuraScript
 
     void Register() override
     {
-        AfterDispel += AuraDispelFn(spell_sha_flame_shock::HandleDispel);       
+        AfterDispel += AuraDispelFn(spell_sha_flame_shock::HandleDispel);
     }
 };
 
@@ -3198,7 +3376,7 @@ class spell_sha_ghost_wolf : public SpellScript
             {
                 caster->AddAura(buffSpell, caster);
                 caster->AddAura(preventSpell, caster);
-            }     
+            }
         }
     }
 
@@ -3353,7 +3531,7 @@ class spell_sha_maelstrom_weapon_buff : public AuraScript
                 int32 cooldown = GetWitchDoctorsAncestryAura(player)->GetEffect(EFFECT_1)->GetAmount();
                 player->ModifySpellCooldown(SPELL_SHAMAN_FERAL_SPIRIT, -cooldown);
             }
-        }     
+        }
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -3396,7 +3574,7 @@ class spell_sha_maelstrom_weapon_buff : public AuraScript
                     caster->GetAura(RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER)->SetStackAmount(stackAmount);
                 }
             }
-        }       
+        }
     }
 
     void Register() override
@@ -3406,6 +3584,90 @@ class spell_sha_maelstrom_weapon_buff : public AuraScript
     }
 };
 
+class spell_sha_riptide : public AuraScript
+{
+    PrepareAuraScript(spell_sha_riptide);
+
+    Aura* GetUndercurrentAura(Unit* caster)
+    {
+        for (size_t i = 1000998; i < 1001004; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetUndercurrentAura(caster))
+        {
+            int32 procSpell = GetUndercurrentAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            for (size_t i = 1001004; i < 1001010; i++)
+            {
+                if (i == procSpell)
+                    continue;
+
+                if (caster->HasAura(i))
+                    caster->RemoveAura(i);
+            }
+
+            if (Aura* buffAura = caster->GetAura(procSpell))
+                buffAura->ModStackAmount(1);
+            else
+                caster->AddAura(procSpell, caster);            
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetAura()->GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetUndercurrentAura(caster))
+        {
+            int32 procSpell = GetUndercurrentAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            for (size_t i = 1001004; i < 1001010; i++)
+            {
+                if (i == procSpell)
+                    continue;
+
+                if (caster->HasAura(i))
+                    caster->RemoveAura(i);
+            }
+
+            if (Aura* buffAura = caster->GetAura(procSpell))
+                buffAura->ModStackAmount(-1);
+        }
+
+        if (!GetUndercurrentAura(caster))
+        {
+            for (size_t i = 1001004; i < 1001010; i++)
+            {
+                if (caster->HasAura(i))
+                    caster->RemoveAura(i);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_riptide::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_riptide::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 
 
 void AddSC_shaman_spell_scripts()
@@ -3414,6 +3676,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_spirit_walk);
     RegisterSpellScript(spell_sha_t10_restoration_4p_bonus);
     RegisterSpellScript(spell_sha_totemic_mastery);
+    RegisterSpellScript(spell_sha_feral_spirit);
     RegisterSpellScript(spell_sha_feral_spirit_scaling);
     RegisterSpellScript(spell_sha_fire_elemental_scaling);
     RegisterSpellScript(spell_sha_ancestral_awakening_proc);
@@ -3422,7 +3685,8 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_chain_heal);
     RegisterSpellScript(spell_sha_cleansing_totem_pulse);
     RegisterSpellScript(spell_sha_earth_shield);
-    RegisterSpellScript(spell_sha_earthbind_totem);
+    RegisterSpellScript(spell_sha_earth_shield_heal);
+    RegisterSpellScript(spell_sha_earthbind_totem); 
     RegisterSpellScript(spell_sha_earthen_power);
     RegisterSpellScript(spell_sha_earthliving_weapon);
     RegisterSpellScript(spell_sha_fire_nova);
@@ -3499,4 +3763,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_capacitor_totem_stun);
     RegisterSpellScript(spell_sha_capacitor_totem_aura);
     RegisterSpellScript(spell_sha_maelstrom_weapon_buff);
+    RegisterSpellScript(spell_sha_riptide);
 }
