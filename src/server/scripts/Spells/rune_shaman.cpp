@@ -32,6 +32,8 @@ enum ShamanSpells
     SPELL_SHAMAN_DOWNPOUR = 84046,
     SPELL_SHAMAN_EARTH_ELEMENTAL = 2062,
     SPELL_SHAMAN_EARTH_SHOCK = 49231,
+    SPELL_SHAMAN_EARTHEN_SHIELD = 49284,
+    SPELL_SHAMAN_EARTHEN_SHIELD_HEAL = 379,
     SPELL_SHAMAN_EARTHBIND_TOTEM = 2484,
     SPELL_SHAMAN_EARTHQUAKE = 84014,
     SPELL_SHAMAN_EARTHQUAKE_DAMAGE = 84015,
@@ -101,11 +103,14 @@ enum ShamanSpells
     RUNE_SHAMAN_LASHING_FLAMES_DAMAGE = 1000706,
     RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER = 1000816,
     RUNE_SHAMAN_STORMBLAST_DAMAGE = 1000842,
+    RUNE_SHAMAN_ELEMENTAL_SPIRITS_MOLTEN_WEAPON_DOT = 1000910,
+    RUNE_SHAMAN_EARTHEN_WALL_SHIELD = 1000966,
 
     // Summons
     SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
     SUMMON_SHAMAN_FIRE_ELEMENTAL = 15438,
     SUMMON_SHAMAN_STORM_ELEMENTAL = 400408,
+    SUMMON_SHAMAN_FERAL_SPIRITS = 29264,
 };
 
 class rune_sha_tidebringer : public AuraScript
@@ -1112,7 +1117,7 @@ class rune_sha_molten_assault : public AuraScript
             flameShock->GetEffect(EFFECT_1)->ResetPeriodic();
             caster->CastSpell(target, RUNE_SHAMAN_MOLTEN_ASSAULT_AOE, TRIGGERED_FULL_MASK);
         }
-            
+
     }
 
     void Register()
@@ -1306,8 +1311,6 @@ class rune_sha_stormflurry : public AuraScript
         if (spellID != SPELL_SHAMAN_STORMSTRIKE)
             return;
 
-        Sleep(350);
-
         player->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
     }
 
@@ -1391,7 +1394,7 @@ class rune_sha_static_accumulation_proc : public SpellScript
             caster->CastSpell(caster, SPELL_SHAMAN_MAELSTROM_WEAPON_PROC, TRIGGERED_FULL_MASK);
             caster->GetAura(SPELL_SHAMAN_MAELSTROM_WEAPON_PROC)->SetStackAmount(maelstromWeaponspStacks);
         }
-            
+
         maelstromWeaponspStacks = 0;
     }
 
@@ -1584,6 +1587,233 @@ private:
     int32 lastSpellID = SPELL_SHAMAN_LIGHTNING_BOLT;
 };
 
+class rune_sha_elemental_spirits : public AuraScript
+{
+    PrepareAuraScript(rune_sha_elemental_spirits);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1000868; i < 1000910; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_sha_elemental_spirits::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_sha_elemental_spirits_molten_weapon : public AuraScript
+{
+    PrepareAuraScript(rune_sha_elemental_spirits_molten_weapon);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damagePct = aurEff->GetAmount();
+
+        int32 amount = CalculatePct(damage, damagePct);
+
+        caster->CastCustomSpell(RUNE_SHAMAN_ELEMENTAL_SPIRITS_MOLTEN_WEAPON_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_elemental_spirits_molten_weapon::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_elemental_spirits_molten_weapon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_elemental_spirits_icy_edge : public AuraScript
+{
+    PrepareAuraScript(rune_sha_elemental_spirits_icy_edge);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damagePct = aurEff->GetAmount();
+
+        int32 amount = CalculatePct(damage, damagePct);
+
+        caster->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_elemental_spirits_icy_edge::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_elemental_spirits_icy_edge::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_wind_wolfs : public AuraScript
+{
+    PrepareAuraScript(rune_sha_wind_wolfs);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 duration = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_SHAMAN_FERAL_SPIRIT, -duration);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_wind_wolfs::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_wind_wolfs::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_alpha_wolf : public AuraScript
+{
+    PrepareAuraScript(rune_sha_alpha_wolf);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+            if ((*itr)->GetEntry() == SUMMON_SHAMAN_FERAL_SPIRITS && (*itr)->IsAlive())
+                caster->AddAura(procSpell, (*itr));
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_alpha_wolf::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_alpha_wolf::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_earthen_wall : public AuraScript
+{
+    PrepareAuraScript(rune_sha_earthen_wall);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        int32 healPct = aurEff->GetAmount();
+
+        int32 amount = CalculatePct(heal, healPct);
+
+        caster->CastCustomSpell(RUNE_SHAMAN_EARTHEN_WALL_SHIELD, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_earthen_wall::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_earthen_wall::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_earthen_wave : public AuraScript
+{
+    PrepareAuraScript(rune_sha_earthen_wave);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 chargeIncrease = aurEff->GetAmount();
+
+        if (Aura* earthenShield = target->GetAura(SPELL_SHAMAN_EARTHEN_SHIELD))
+            earthenShield->ModCharges(chargeIncrease);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_earthen_wave::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_earthen_wave::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -1627,6 +1857,13 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_stormblast);
     RegisterSpellScript(rune_sha_deeply_rooted_air);
     RegisterSpellScript(rune_sha_thorims_invocation);
+    RegisterSpellScript(rune_sha_elemental_spirits);
+    RegisterSpellScript(rune_sha_elemental_spirits_molten_weapon);
+    RegisterSpellScript(rune_sha_elemental_spirits_icy_edge);
+    RegisterSpellScript(rune_sha_wind_wolfs);
+    RegisterSpellScript(rune_sha_alpha_wolf);
+    RegisterSpellScript(rune_sha_earthen_wall);
+    RegisterSpellScript(rune_sha_earthen_wave);
 
 
 

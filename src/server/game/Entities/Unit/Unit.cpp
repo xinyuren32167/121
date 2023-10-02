@@ -8096,7 +8096,17 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                             int32 attacks = 2;
                             int32 unrulyWindsRune = 0;
 
-                            // Unruly Winds Find Ranks
+                            // Wind Wolfs - Apply cooldown reduction to Feral Spirit
+                            for (size_t i = 1000912; i < 1000918; i++)
+                            {
+                                if (player->HasAura(i))
+                                {
+                                    int32 duration = player->GetAura(i)->GetEffect(EFFECT_0)->GetAmount();
+                                    player->ModifySpellCooldown(51533, -duration);
+                                }
+                            }
+
+                            // Unruly Winds - Find Ranks
                             for (size_t i = 1000486; i < 1000492; i++)
                             {
                                 if (player->HasAura(i))
