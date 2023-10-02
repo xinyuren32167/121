@@ -120,6 +120,7 @@ bool Player::UpdateStats(Stats stat)
         case STAT_INTELLECT:
             UpdateMaxPower(POWER_MANA);
             UpdateAllSpellCritChances();
+            UpdateCritPercentage(BASE_ATTACK);
             UpdateArmor();                                  //SPELL_AURA_MOD_RESISTANCE_OF_INTELLECT_PERCENT, only armor currently
             break;
         default:
@@ -746,7 +747,7 @@ void Player::UpdateCritPercentage(WeaponAttackType attType)
             break;
     }
 
-    float value = GetTotalPercentageModValue(modGroup) + GetRatingBonusValue(cr) + GetSpellCritFromIntellect();
+    float value = GetTotalPercentageModValue(modGroup) + GetRatingBonusValue(cr);
     // Modify crit from weapon skill and maximized defense skill of same level victim difference
     value += (int32(GetWeaponSkillValue(attType)) - int32(GetMaxSkillValueForLevel())) * 0.04f;
 
