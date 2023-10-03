@@ -11403,8 +11403,15 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
     switch (spellProto->SpellFamilyName)
     {
         case SPELLFAMILY_MAGE:
+            //Flurry of Strikes
+            if (spellProto->Id == 81548)
+            {
+                if (AuraEffect* aurEff = owner->GetAuraEffectOfRankedSpell(81654, EFFECT_0))
+                    if (victim->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
+                        AddPct(DoneTotalMod, aurEff->GetAmount());
+            }
             // Ice Lance
-            if (spellProto->SpellIconID == 186)
+            else if (spellProto->SpellIconID == 186)
             {
                 if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
                 {

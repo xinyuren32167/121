@@ -126,6 +126,8 @@ enum MageSpells
     SPELL_MAGE_TALENT_RULE_OF_THREES_R4 = 16769,
     SPELL_MAGE_TALENT_RULE_OF_THREES_R5 = 16770,
     SPELL_MAGE_TALENT_RULE_OF_THREES_BUFF = 16771,
+    SPELL_MAGE_TALENT_PARRY_WARD_PROC = 81647,
+    SPELL_MAGE_TALENT_ARCANIC_BARRIER_PROC = 81659,
 
 
     SPELL_VISUAL_FROZEN_ORB = 72067,
@@ -2716,18 +2718,69 @@ class spell_mage_enchant_snowbound : public AuraScript
     }
 };
 
-class spell_mage_physical_fortitude : public AuraScript
+class spell_mage_prismatic_guard : public AuraScript
 {
-    PrepareAuraScript(spell_mage_physical_fortitude);
+    PrepareAuraScript(spell_mage_prismatic_guard);
 
-    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK),amount);
+        Player* target = GetCaster()->ToPlayer();
+        target->SetCanParry(true);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->SetCanParry(false);
     }
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_mage_physical_fortitude::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
+        OnEffectApply += AuraEffectApplyFn(spell_mage_prismatic_guard::HandleLearn, EFFECT_0, SPELL_AURA_MOD_PARRY_PERCENT_FROM_CRITICAL_STRIKE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_prismatic_guard::HandleUnlearn, EFFECT_0, SPELL_AURA_MOD_PARRY_PERCENT_FROM_CRITICAL_STRIKE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_mage_parry_ward : public AuraScript
+{
+    PrepareAuraScript(spell_mage_parry_ward);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
+        caster->CastCustomSpell(SPELL_MAGE_TALENT_PARRY_WARD_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_parry_ward::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_arcanic_barrier : public AuraScript
+{
+    PrepareAuraScript(spell_mage_arcanic_barrier);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            Unit* caster = GetCaster();
+            int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
+            if (Aura* shield = caster->GetAura(SPELL_MAGE_TALENT_ARCANIC_BARRIER_PROC))
+            {
+                shield->GetEffect(EFFECT_0)->SetAmount(amount);
+                shield->RefreshDuration();
+            }
+            else
+                caster->CastCustomSpell(SPELL_MAGE_TALENT_ARCANIC_BARRIER_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_arcanic_barrier::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2810,5 +2863,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_enchant_deflection);
     RegisterSpellScript(spell_mage_enchant_ignis);
     RegisterSpellScript(spell_mage_enchant_snowbound);
-    RegisterSpellScript(spell_mage_physical_fortitude);
+    RegisterSpellScript(spell_mage_prismatic_guard);
+    RegisterSpellScript(spell_mage_parry_ward);
+    RegisterSpellScript(spell_mage_arcanic_barrier);
 }

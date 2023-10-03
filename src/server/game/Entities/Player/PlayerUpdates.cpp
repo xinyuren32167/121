@@ -660,6 +660,7 @@ void Player::UpdateAllRatings()
 {
     for (int cr = 0; cr < MAX_COMBAT_RATING; ++cr)
         UpdateRating(CombatRating(cr));
+    UpdateParryPercentage();
 }
 
 // skill+step, checking for max value

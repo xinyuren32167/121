@@ -165,6 +165,7 @@ bool Player::UpdateStats(Stats stat)
             if (mask & (1 << rating))
                 ApplyRatingMod(CombatRating(rating), 0, true);
     }
+    UpdateParryPercentage();
     return true;
 }
 
@@ -214,6 +215,7 @@ bool Player::UpdateAllStats()
     UpdateManaRegen();
     RecalculateRating(CR_ARMOR_PENETRATION);
     UpdateAllResistances();
+    UpdateParryPercentage();
 
     return true;
 }
@@ -761,6 +763,8 @@ void Player::UpdateCritPercentage(WeaponAttackType attType)
 
     value = value < 0.0f ? 0.0f : value;
     SetStatFloatValue(index, value);
+
+    UpdateParryPercentage();
 }
 
 void Player::UpdateAllCritPercentages()
@@ -774,6 +778,7 @@ void Player::UpdateAllCritPercentages()
     UpdateCritPercentage(BASE_ATTACK);
     UpdateCritPercentage(OFF_ATTACK);
     UpdateCritPercentage(RANGED_ATTACK);
+    UpdateParryPercentage();
 }
 
 const float m_diminishing_k[MAX_CLASSES] =

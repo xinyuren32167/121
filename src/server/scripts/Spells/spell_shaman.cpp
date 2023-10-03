@@ -3129,21 +3129,6 @@ class spell_sha_earth_proficiency : public AuraScript
     }
 };
 
-class spell_sha_outwitted_defense : public AuraScript
-{
-    PrepareAuraScript(spell_sha_outwitted_defense);
-
-    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
-    {
-        amount = CalculatePct(GetCaster()->GetStat(STAT_INTELLECT), amount);
-    }
-
-    void Register() override
-    {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_outwitted_defense::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_SHIELD_BLOCKVALUE);
-    }
-};
-
 class spell_sha_regenerative_aura : public AuraScript
 {
     PrepareAuraScript(spell_sha_regenerative_aura);
@@ -3752,7 +3737,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_water_bending);
     RegisterSpellScript(spell_sha_fire_proficiency);
     RegisterSpellScript(spell_sha_earth_proficiency);
-    RegisterSpellScript(spell_sha_outwitted_defense);
     RegisterSpellScript(spell_sha_regenerative_aura);
     RegisterSpellScript(spell_sha_accumulation);
     RegisterSpellScript(spell_sha_seeping_life_force);

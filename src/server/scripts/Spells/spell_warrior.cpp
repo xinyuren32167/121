@@ -2172,21 +2172,6 @@ class spell_warr_furious_stabs : public AuraScript
     }
 };
 
-class spell_warr_phalanx_agility : public AuraScript
-{
-    PrepareAuraScript(spell_warr_phalanx_agility);
-
-    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
-    {
-        amount = CalculatePct(GetCaster()->GetStat(STAT_AGILITY), amount);
-    }
-
-    void Register() override
-    {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_phalanx_agility::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
-    }
-};
-
 class spell_warr_slam_and_thrust : public AuraScript
 {
     PrepareAuraScript(spell_warr_slam_and_thrust);
@@ -2314,7 +2299,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_improved_mighty_throw);
     RegisterSpellScript(spell_warr_intoxicating_swipe);
     RegisterSpellScript(spell_warr_furious_stabs);
-    RegisterSpellScript(spell_warr_phalanx_agility);
     RegisterSpellScript(spell_warr_slam_and_thrust);
     RegisterSpellScript(spell_sword_and_spear_board_reset);
     RegisterSpellScript(spell_warr_heroic_leap);
