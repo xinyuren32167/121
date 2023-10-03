@@ -5201,6 +5201,7 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
         ApplyCastTimePercentMod(newVal, true);
     }
     UpdateRating(cr);
+    UpdateParryPercentage();
 }
 
 void Player::SetRegularAttackTime()

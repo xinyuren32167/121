@@ -614,15 +614,19 @@ void Player::UpdateRating(CombatRating cr)
         {
             UpdateCritPercentage(BASE_ATTACK);
             UpdateCritPercentage(OFF_ATTACK);
+            UpdateParryPercentage();
         }
         break;
     case CR_CRIT_RANGED:
         if (affectStats)
             UpdateCritPercentage(RANGED_ATTACK);
+        UpdateParryPercentage();
         break;
     case CR_CRIT_SPELL:
         if (affectStats)
             UpdateAllSpellCritChances();
+        UpdateParryPercentage();
+
         break;
     case CR_HIT_TAKEN_MELEE: // Implemented in Unit::MeleeMissChanceCalc
     case CR_HIT_TAKEN_RANGED:

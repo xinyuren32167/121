@@ -4468,6 +4468,7 @@ void AuraEffect::HandleAuraModParryPercent(AuraApplication const* aurApp, uint8 
 
 void AuraEffect::HandleAuraModParryPercentFromMeleeCriticalChance(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
 {
+
     if (!(mode & (AURA_EFFECT_HANDLE_CHANGE_AMOUNT_MASK | AURA_EFFECT_HANDLE_STAT)))
         return;
 
@@ -4541,6 +4542,8 @@ void AuraEffect::HandleAuraModWeaponCritPercent(AuraApplication const* aurApp, u
     {
         // done in Player::_ApplyWeaponDependentAuraMods
     }
+
+    target->ToPlayer()->UpdateParryPercentage();
 }
 
 void AuraEffect::HandleModHitChance(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -4585,10 +4588,13 @@ void AuraEffect::HandleModSpellCritChance(AuraApplication const* aurApp, uint8 m
 
     Unit* target = aurApp->GetTarget();
 
-    if (target->GetTypeId() == TYPEID_PLAYER)
+    if (target->GetTypeId() == TYPEID_PLAYER) {
         target->ToPlayer()->UpdateAllSpellCritChances();
+        target->ToPlayer()->UpdateParryPercentage();
+    }
     else
         target->m_baseSpellCritChance += (apply) ? GetAmount() : -GetAmount();
+
 }
 
 void AuraEffect::HandleModSpellCritChanceShool(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
@@ -5011,7 +5017,7 @@ void AuraEffect::HandleShieldBlockValueFromStats(AuraApplication const* aurApp, 
         return;
 
     Unit* target = aurApp->GetTarget();
-    int32 amount = CalculatePct(Stats(GetMiscValue()), GetAmount());
+    int32 amount = CalculatePct(Stats(GetMiscValue()), float(GetAmount()));
 
     if (target->GetTypeId() == TYPEID_PLAYER)
         target->ToPlayer()->HandleBaseModValue(SHIELD_BLOCK_VALUE, FLAT_MOD, float(amount), apply);
