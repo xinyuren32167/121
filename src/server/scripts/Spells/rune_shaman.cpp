@@ -85,7 +85,7 @@ enum ShamanSpells
     SPELL_SHAMAN_MAELSTROM_WEAPON_PROC = 53817,
 
     // Talents
-    TALENT_SHAMAN_BLABLA = 00000,
+    TALENT_SHAMAN_TIDAL_WAVES_BUFF = 53390,
 
     // Runes
     RUNE_SHAMAN_VOLCANIC_INFERNO_DOT = 1000178,
@@ -105,6 +105,9 @@ enum ShamanSpells
     RUNE_SHAMAN_STORMBLAST_DAMAGE = 1000842,
     RUNE_SHAMAN_ELEMENTAL_SPIRITS_MOLTEN_WEAPON_DOT = 1000910,
     RUNE_SHAMAN_EARTHEN_WALL_SHIELD = 1000966,
+    RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER = 1001016,
+    RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE = 1001017,
+    RUNE_SHAMAN_DELUGE_HEAL = 1001050,
 
     // Summons
     SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
@@ -1814,6 +1817,174 @@ class rune_sha_earthen_wave : public AuraScript
     }
 };
 
+class rune_sha_primal_tide_core : public AuraScript
+{
+    PrepareAuraScript(rune_sha_primal_tide_core);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        caster->CastSpell(caster, RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER, TRIGGERED_FULL_MASK);
+
+        if (caster->GetAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER)->GetStackAmount() < aurEff->GetAmount())
+            return;
+
+        caster->CastSpell(target, RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, TRIGGERED_FULL_MASK);
+
+        caster->RemoveAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER))
+            caster->RemoveAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_sha_primal_tide_core::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_sha_primal_tide_core::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_sha_primal_tide_core_proc : public SpellScript
+{
+    PrepareSpellScript(rune_sha_primal_tide_core_proc);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        uint32 const maxTargets = 1;
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_sha_primal_tide_core_proc::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class rune_sha_nazjatar_molting : public AuraScript
+{
+    PrepareAuraScript(rune_sha_nazjatar_molting);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetHealInfo())
+            return false;
+
+        if (Unit* target = eventInfo.GetHealInfo()->GetTarget())
+            return target->GetHealthPct() < GetEffect(EFFECT_0)->GetAmount();
+        else
+            return false;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_nazjatar_molting::CheckProc);
+    }
+};
+
+class rune_sha_deluge : public AuraScript
+{
+    PrepareAuraScript(rune_sha_deluge);
+
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+
+        if (!target->HasAura(SPELL_SHAMAN_RIPTIDE) && !target->HasAura(SPELL_SHAMAN_HEALING_RAIN))
+            return;
+
+        int32 amount = CalculatePct(heal, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_SHAMAN_DELUGE_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_deluge::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_deluge::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_deeply_rooted_water : public AuraScript
+{
+    PrepareAuraScript(rune_sha_deeply_rooted_water);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 baseDuration = GetEffect(EFFECT_1)->GetAmount();
+            int32 increasedDuration = GetEffect(EFFECT_2)->GetAmount();
+
+            if (Aura* ascendance = caster->GetAura(SPELL_SHAMAN_ASCENDANCE_WATER_AURA))
+            {
+                int32 newDuration = std::min<int32>(ascendance->GetMaxDuration(), ascendance->GetDuration() + increasedDuration);
+                ascendance->SetDuration(newDuration);
+            }
+            else
+            {
+                caster->AddAura(SPELL_SHAMAN_ASCENDANCE_WATER_AURA, caster);
+                caster->GetAura(SPELL_SHAMAN_ASCENDANCE_WATER_AURA)->SetDuration(baseDuration);
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_deeply_rooted_water::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_deeply_rooted_water::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -1864,7 +2035,12 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_alpha_wolf);
     RegisterSpellScript(rune_sha_earthen_wall);
     RegisterSpellScript(rune_sha_earthen_wave);
+    RegisterSpellScript(rune_sha_primal_tide_core);
+    RegisterSpellScript(rune_sha_primal_tide_core_proc);
+    RegisterSpellScript(rune_sha_nazjatar_molting);
+    RegisterSpellScript(rune_sha_deluge);
+    RegisterSpellScript(rune_sha_deeply_rooted_water);
 
 
-
+    
 }

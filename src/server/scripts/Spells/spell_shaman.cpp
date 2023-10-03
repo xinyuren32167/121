@@ -48,6 +48,7 @@ enum ShamanSpells
     SPELL_SHAMAN_CAPACITOR_TOTEM = 84069,
     SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD = 84056,
+    SPELL_SHAMAN_CLOUDBURST_TOTEM = 84082,
     SPELL_SHAMAN_CRASH_LIGHTNING_AURA = 84033,
     SPELL_SHAMAN_CRASH_LIGHTNING_DAMAGE = 84034,
     SPELL_SHAMAN_CLEANSING_TOTEM_EFFECT = 52025,
@@ -73,6 +74,7 @@ enum ShamanSpells
     SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM = 62132,
     SPELL_SHAMAN_GUST_OF_WIND = 84009,
     SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA = 58765,
+    SPELL_SHAMAN_HEALING_TIDE_TOTEM = 84076,
     SPELL_SHAMAN_ICEFURY = 84016,
     SPELL_SHAMAN_ICEFURY_BUFF = 84017,
     SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD = 23552,
@@ -88,7 +90,7 @@ enum ShamanSpells
     SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD = 84057,
     SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_SPRING_TOTEM_ENERGIZE = 52032,
-    SPELL_SHAMAN_MANA_TIDE_TOTEM = 39609,
+    SPELL_SHAMAN_MANA_TIDE_TOTEM = 16190,
     SPELL_SHAMAN_OUTBURST_HEAL = 84083,
     SPELL_SHAMAN_RIPTIDE = 61301,
     SPELL_SHAMAN_SATED = 57724,
@@ -159,6 +161,7 @@ enum ShamanSpells
 
     // Talents
     TALENT_SHAMAN_SEAMLESS_WATER = 84149,
+    TALENT_SHAMAN_TIDAL_WAVES_BUFF = 53390,
 
     // Runes
     RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
@@ -324,33 +327,36 @@ class spell_sha_feral_spirit : public SpellScript
 
         int32 duration = caster->CalcSpellDuration(GetSpellInfo());
 
-        for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+        if (GetElementalSpiritsAura(caster))
         {
-            if ((*itr)->GetEntry() == SUMMON_SHAMAN_FERAL_SPIRITS && (*itr)->IsAlive())
+            for (Unit::ControlSet::iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
             {
-                int32 rand = urand(1, 3);
-                SpellEffIndex spellEffect;
+                if ((*itr)->GetEntry() == SUMMON_SHAMAN_FERAL_SPIRITS && (*itr)->IsAlive())
+                {
+                    int32 rand = urand(1, 3);
+                    SpellEffIndex spellEffect;
 
-                // Rand for element type, 1 = Fire, 2 = Frost and 3 = Lightning
-                if (rand == 1)
-                    spellEffect = EFFECT_0;
-                else if (rand == 2)
-                    spellEffect = EFFECT_1;
-                else if (rand == 3)
-                    spellEffect = EFFECT_2;
+                    // Rand for element type, 1 = Fire, 2 = Frost and 3 = Lightning
+                    if (rand == 1)
+                        spellEffect = EFFECT_0;
+                    else if (rand == 2)
+                        spellEffect = EFFECT_1;
+                    else if (rand == 3)
+                        spellEffect = EFFECT_2;
 
-                if (!spellEffect)
-                    continue;
+                    if (!spellEffect)
+                        continue;
 
-                int32 buff1 = GetElementalSpiritsAura(caster)->GetEffect(spellEffect)->GetAmount();
-                int32 buff2 = GetElementalSpiritsAura(caster)->GetSpellInfo()->GetEffect(spellEffect).TriggerSpell;
+                    int32 buff1 = GetElementalSpiritsAura(caster)->GetEffect(spellEffect)->GetAmount();
+                    int32 buff2 = GetElementalSpiritsAura(caster)->GetSpellInfo()->GetEffect(spellEffect).TriggerSpell;
 
-                caster->CastCustomSpell(buff1, SPELLVALUE_AURA_DURATION, duration, (*itr), TRIGGERED_FULL_MASK);
-                caster->CastCustomSpell(buff2, SPELLVALUE_AURA_DURATION, duration, (*itr), TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(buff1, SPELLVALUE_AURA_DURATION, duration, (*itr), TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(buff2, SPELLVALUE_AURA_DURATION, duration, (*itr), TRIGGERED_FULL_MASK);
 
-                // need to add the morphs
+                    // need to add the morphs
+                }
             }
-        }
+        }       
     }
 
     void Register() override
@@ -3652,6 +3658,228 @@ class spell_sha_riptide : public AuraScript
     }
 };
 
+// 84037 - Healing Rain
+class spell_sha_healing_rain : public SpellScript
+{
+    PrepareSpellScript(spell_sha_healing_rain);
+
+    Aura* GetOverflowingShoresAura(Unit* caster)
+    {
+        for (size_t i = 1001052; i < 1001058; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Overflowing Shores Rune effects
+        if (GetOverflowingShoresAura(caster))
+        {
+            int32 procSpell = GetOverflowingShoresAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            Position pos = GetExplTargetDest()->GetPosition();
+
+            caster->CastSpell(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_healing_rain::HandleCast);
+    }
+};
+
+// 84037 - Healing Rain Periodic
+class spell_sha_healing_rain_periodic : public AuraScript
+{
+    PrepareAuraScript(spell_sha_healing_rain_periodic);
+
+    Aura* GetAcidRainAura(Unit* caster)
+    {
+        for (size_t i = 1001064; i < 1001070; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandlePeriodic(AuraEffect const*  aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        // Acid Rain Rune effects
+        if (GetAcidRainAura(caster))
+        {
+            int32 procSpell = GetAcidRainAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_healing_rain_periodic::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+// 84078 - Healing Tide Totem Heal
+class spell_sha_healing_tide_totem_heal : public SpellScript
+{
+    PrepareSpellScript(spell_sha_healing_tide_totem_heal);
+
+    Aura* GetTideTurnerAura(Unit* caster)
+    {
+        for (size_t i = 1001088; i < 1001094; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* totem = GetCaster();
+
+        if (!totem || totem->isDead())
+            return;
+
+        Unit* caster = totem->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetTideTurnerAura(caster))
+        {
+            std::list<WorldObject*> tideTurnerList = targets;
+            tideTurnerList.sort(Acore::HealthPctOrderPred());
+            tideTurnerList.resize(1);
+
+            for (auto const& object : targets)
+            {
+                Unit* target = object->ToUnit();
+
+                lowestHealthTarget = target;
+            }
+        }
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        if (GetTideTurnerAura(caster) && target == lowestHealthTarget)
+        {
+            int32 procSpell = GetTideTurnerAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+            int32 healPct = GetTideTurnerAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, target);
+            ApplyPct(heal, healPct);
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_healing_tide_totem_heal::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_healing_tide_totem_heal::HandleDummy, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+private:
+    Unit* lowestHealthTarget;
+};
+
+// Tidal Waves Buff : 53390, script on Healing Wave : 49273 and Healing Surge : 84004
+class spell_sha_tidal_wave_consumed : public SpellScript
+{
+    PrepareSpellScript(spell_sha_tidal_wave_consumed);
+
+    Aura* GetFlashFloodAura(Unit* caster)
+    {
+        for (size_t i = 1001124; i < 1001130; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetWaterTotemMasteryAura(Unit* caster)
+    {
+        for (size_t i = 1001118; i < 1001124; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleBeforeCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(TALENT_SHAMAN_TIDAL_WAVES_BUFF))
+            return;
+
+        if (GetFlashFloodAura(caster))
+        {
+            int32 procSpell = GetFlashFloodAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (GetWaterTotemMasteryAura(caster))
+            {
+                int32 cooldown = GetWaterTotemMasteryAura(player)->GetEffect(EFFECT_0)->GetAmount();
+                player->ModifySpellCooldown(SPELL_SHAMAN_CLOUDBURST_TOTEM, -cooldown);
+                player->ModifySpellCooldown(SPELL_SHAMAN_HEALING_TIDE_TOTEM, -cooldown);
+                player->ModifySpellCooldown(SPELL_SHAMAN_MANA_TIDE_TOTEM, -cooldown);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_sha_tidal_wave_consumed::HandleBeforeCast);
+    }
+};
+
 
 
 
@@ -3748,4 +3976,8 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_capacitor_totem_aura);
     RegisterSpellScript(spell_sha_maelstrom_weapon_buff);
     RegisterSpellScript(spell_sha_riptide);
+    RegisterSpellScript(spell_sha_healing_rain);
+    RegisterSpellScript(spell_sha_healing_rain_periodic);
+    RegisterSpellScript(spell_sha_healing_tide_totem_heal);
+    RegisterSpellScript(spell_sha_tidal_wave_consumed);
 }
