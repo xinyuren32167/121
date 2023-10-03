@@ -88,7 +88,15 @@ enum MageSpells
     SPELL_MAGE_ENCHANT_CONDUIT_PROC = 81574,
     SPELL_MAGE_ENCHANT_DEFLECTION_PROC = 81577,
     SPELL_MAGE_ENCHANT_IGNIS_PROC = 81582,
+    SPELL_MAGE_ENCHANT_IGNIS_PROC_STACKED = 81670,
     SPELL_MAGE_ENCHANT_SNOWBOUND_PROC = 81585,
+    SPELL_MAGE_ENCHANT_ARCANIZE = 81570,
+    SPELL_MAGE_ENCHANT_FORCE = 81579,
+    SPELL_MAGE_ENCHANT_CONDUIT = 81573,
+    SPELL_MAGE_ENCHANT_IGNIS = 81581,
+    SPELL_MAGE_ENCHANT_DEFLECTION = 81576,
+    SPELL_MAGE_ENCHANT_SNOWBOUND = 81584,
+    SPELL_MAGE_MAGIC_BLOSSOM = 81561,
 
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
@@ -128,6 +136,7 @@ enum MageSpells
     SPELL_MAGE_TALENT_RULE_OF_THREES_BUFF = 16771,
     SPELL_MAGE_TALENT_PARRY_WARD_PROC = 81647,
     SPELL_MAGE_TALENT_ARCANIC_BARRIER_PROC = 81659,
+    SPELL_MAGE_TALENT_INFUSED_BLADES_PROC = 81668,
 
 
     SPELL_VISUAL_FROZEN_ORB = 72067,
@@ -2690,7 +2699,9 @@ class spell_mage_enchant_ignis : public AuraScript
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetProcTarget())
         {
-            GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC, true, nullptr, aurEff);
+            GetCaster()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC, true, nullptr, aurEff);
+            if (uint8 ignis = eventInfo.GetProcTarget()->GetAura(SPELL_MAGE_ENCHANT_IGNIS_PROC)->GetStackAmount() == 5)
+                GetCaster()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC_STACKED, true, nullptr, aurEff);
         }
     }
 
@@ -2784,6 +2795,67 @@ class spell_mage_arcanic_barrier : public AuraScript
     }
 };
 
+class spell_mage_infused_blades : public AuraScript
+{
+    PrepareAuraScript(spell_mage_infused_blades);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage && GetCaster()->IsAlive())
+            {
+                int32 damagePct = aurEff->GetAmount();
+                int32 damageAmount = CalculatePct(damage, damagePct);
+                GetCaster()->CastCustomSpell(SPELL_MAGE_TALENT_INFUSED_BLADES_PROC, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_infused_blades::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_mage_blade_master : public AuraScript
+{
+    PrepareAuraScript(spell_mage_blade_master);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_MAGE_MAGIC_BLOSSOM);
+        target->learnSpell(SPELL_MAGE_ENCHANT_ARCANIZE);
+        target->learnSpell(SPELL_MAGE_ENCHANT_FORCE);
+        target->learnSpell(SPELL_MAGE_ENCHANT_CONDUIT);
+        target->learnSpell(SPELL_MAGE_ENCHANT_IGNIS);
+        target->learnSpell(SPELL_MAGE_ENCHANT_DEFLECTION);
+        target->learnSpell(SPELL_MAGE_ENCHANT_SNOWBOUND);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        
+        target->removeSpell(SPELL_MAGE_MAGIC_BLOSSOM, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_ENCHANT_ARCANIZE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_ENCHANT_FORCE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_ENCHANT_CONDUIT, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_ENCHANT_IGNIS, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_ENCHANT_DEFLECTION, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_ENCHANT_SNOWBOUND, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_blade_master::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_blade_master::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new npc_mage_spell_frozen_orbs();
@@ -2866,4 +2938,6 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_prismatic_guard);
     RegisterSpellScript(spell_mage_parry_ward);
     RegisterSpellScript(spell_mage_arcanic_barrier);
+    RegisterSpellScript(spell_mage_infused_blades);
+    RegisterSpellScript(spell_mage_blade_master);
 }
