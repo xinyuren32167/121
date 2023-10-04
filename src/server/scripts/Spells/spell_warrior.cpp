@@ -2089,15 +2089,15 @@ class spell_warr_leonidas_fury : public SpellScript
     }
 };
 
-class spell_warr_fight_management : public AuraScript
+class spell_warr_true_grit : public AuraScript
 {
-    PrepareAuraScript(spell_warr_fight_management);
+    PrepareAuraScript(spell_warr_true_grit);
 
     void OnPeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
 
-        if (!caster || !caster->IsAlive())
+        if (!caster || !caster->IsAlive() || !caster->IsInCombat())
             return;
 
         if(caster->GetHealthPct() < 50)
@@ -2108,7 +2108,7 @@ class spell_warr_fight_management : public AuraScript
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warr_fight_management::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warr_true_grit::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -2295,7 +2295,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_colossal_thrust);
     RegisterSpellScript(spell_warr_shield_vault);
     RegisterSpellScript(spell_warr_leonidas_fury);
-    RegisterSpellScript(spell_warr_fight_management);
+    RegisterSpellScript(spell_warr_true_grit);
     RegisterSpellScript(spell_warr_improved_mighty_throw);
     RegisterSpellScript(spell_warr_intoxicating_swipe);
     RegisterSpellScript(spell_warr_furious_stabs);
