@@ -40,10 +40,18 @@ enum ShamanSpells
     SPELL_SHAMAN_ELEMENTAL_BLAST = 84022,
     SPELL_SHAMAN_ELEMENTAL_MASTERY = 16166,
     SPELL_SHAMAN_FERAL_SPIRIT = 51533,
+    SPELL_SHAMAN_FIERY_STAMP = 84121,
     SPELL_SHAMAN_FIRE_ELEMENTAL = 2894,
     SPELL_SHAMAN_FLAME_SHOCK = 49233,
     SPELL_SHAMAN_FOCUS_FOE = 84116,
+    SPELL_SHAMAN_FOCUS_FOE_STORM = 84117,
     SPELL_SHAMAN_FURY_OF_THE_ELEMENTS = 84106,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH = 84110,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH_GRIP = 84111,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE = 84107,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM = 84108,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM_ECHO = 84109,
+    SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER = 84112,
     SPELL_SHAMAN_GHOST_WOLF = 2645,
     SPELL_SHAMAN_GROUNDING_TOTEM = 8177,
     SPELL_SHAMAN_GUST_OF_WIND = 84061,
@@ -52,6 +60,10 @@ enum ShamanSpells
     SPELL_SHAMAN_HEALING_TIDE_TOTEM = 84076,
     SPELL_SHAMAN_HEALING_WAVE = 49273,
     SPELL_SHAMAN_HEX = 51514,
+    SPELL_SHAMAN_INVOKE_ESSENCE = 84102,
+    SPELL_SHAMAN_INVOKE_ESSENCE_EARTH = 84104,
+    SPELL_SHAMAN_INVOKE_ESSENCE_FIRE = 84103,
+    SPELL_SHAMAN_INVOKE_ESSENCE_WATER = 84105,
     SPELL_SHAMAN_LAVA_BURST = 60043,
     SPELL_SHAMAN_LAVA_LASH = 60103,
     SPELL_SHAMAN_LIGHTNING_BOLT = 49238,
@@ -79,6 +91,20 @@ enum ShamanSpells
     SPELL_SHAMAN_WIND_SHEAR = 57994,
     SPELL_SHAMAN_WINDFURY_WEAPON_MAINHAND = 25504,
     SPELL_SHAMAN_WINDFURY_WEAPON_OFFHAND = 33750,
+
+    // Forms
+    SPELL_SHAMAN_SPIRIT_OF_FIRE = 84089,
+    SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE = 84136,
+    SPELL_SHAMAN_SPIRIT_OF_STORM = 84090,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_HASTE = 84096,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_PASSIVE = 84137,
+    SPELL_SHAMAN_SPIRIT_OF_EARTH = 84091,
+    SPELL_SHAMAN_SPIRIT_OF_EARTH_PASSIVE = 84138,
+    SPELL_SHAMAN_SPIRIT_OF_WATER = 84092,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_PASSIVE = 84139,
+    SPELL_SHAMAN_SPIRIT_OF_STORM_PROC = 84095,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD = 84098,
+    SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN = 84100,
 
     // Passive
     SPELL_SHAMAN_MAELSTROM_WEAPON = 84053,
@@ -108,6 +134,9 @@ enum ShamanSpells
     RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER = 1001016,
     RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE = 1001017,
     RUNE_SHAMAN_DELUGE_HEAL = 1001050,
+    RUNE_SHAMAN_THUNDER_ROD_AOE = 1001206,
+    RUNE_SHAMAN_THUNDER_ROD_DAMAGE = 1001207,
+    RUNE_SHAMAN_ELEMENTAL_CLEANSING_DOT = 1001352,
 
     // Summons
     SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
@@ -1983,7 +2012,296 @@ class rune_sha_deeply_rooted_water : public AuraScript
     }
 };
 
+class rune_sha_everlasting_stamp : public AuraScript
+{
+    PrepareAuraScript(rune_sha_everlasting_stamp);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* fieryStamp = target->GetAura(SPELL_SHAMAN_FIERY_STAMP))
+        {
+            int32 newDuration = std::min<int32>(fieryStamp->GetMaxDuration(), fieryStamp->GetDuration() + aurEff->GetAmount());
+            fieryStamp->SetDuration(newDuration);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_everlasting_stamp::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_everlasting_stamp::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_deadly_stamp : public AuraScript
+{
+    PrepareAuraScript(rune_sha_deadly_stamp);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 1001160; i < 1001166; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_SHAMAN_FIERY_STAMP, -GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_sha_deadly_stamp::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_fiery_furor : public AuraScript
+{
+    PrepareAuraScript(rune_sha_fiery_furor);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (form != FORM_SPIRIT_OF_FIRE)
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_fiery_furor::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_fiery_furor::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_thunder_rod : public AuraScript
+{
+    PrepareAuraScript(rune_sha_thunder_rod);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (form != FORM_SPIRIT_OF_STORM)
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+        if (damage == 0)
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 thunderRod = aurEff->GetAmount();
+
+        if (spellID == SPELL_SHAMAN_FOCUS_FOE || spellID == SPELL_SHAMAN_FOCUS_FOE_STORM)
+            caster->CastSpell(target, thunderRod, TRIGGERED_FULL_MASK);
+        else if (spellID == SPELL_SHAMAN_INVOKE_ESSENCE || spellID == SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM || spellID == SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM_ECHO)
+        {
+            GetEffect(EFFECT_1)->SetAmount(eventInfo.GetDamageInfo()->GetDamage());
+            caster->CastSpell(caster, RUNE_SHAMAN_THUNDER_ROD_AOE, TRIGGERED_FULL_MASK);
+        }
+
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_thunder_rod::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_thunder_rod::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_thunder_rod_aoe : public SpellScript
+{
+    PrepareSpellScript(rune_sha_thunder_rod_aoe);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 1001194; i < 1001200; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (form != FORM_SPIRIT_OF_STORM)
+            return;
+
+        int32 thunderRod = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+        int32 damage = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(thunderRod))
+                continue;
+
+            int32 damagePct = target->GetAura(thunderRod)->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = CalculatePct(damage, damagePct);
+
+            caster->CastCustomSpell(RUNE_SHAMAN_THUNDER_ROD_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_sha_thunder_rod_aoe::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_sha_focus_wave : public AuraScript
+{
+    PrepareAuraScript(rune_sha_focus_wave);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (form != FORM_SPIRIT_OF_WATER)
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_focus_wave::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_focus_wave::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_lasting_water : public AuraScript
+{
+    PrepareAuraScript(rune_sha_lasting_water);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_lasting_water::CheckProc);
+    }
+};
+
+class rune_sha_elemental_cleansing : public AuraScript
+{
+    PrepareAuraScript(rune_sha_elemental_cleansing);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        float damage = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        int32 amount = damage / 6;
+
+        caster->CastCustomSpell(RUNE_SHAMAN_ELEMENTAL_CLEANSING_DOT, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_elemental_cleansing::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_elemental_cleansing::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 
 
@@ -2040,7 +2358,16 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_nazjatar_molting);
     RegisterSpellScript(rune_sha_deluge);
     RegisterSpellScript(rune_sha_deeply_rooted_water);
+    RegisterSpellScript(rune_sha_everlasting_stamp);
+    RegisterSpellScript(rune_sha_deadly_stamp);
+    RegisterSpellScript(rune_sha_fiery_furor);
+    RegisterSpellScript(rune_sha_thunder_rod);
+    RegisterSpellScript(rune_sha_thunder_rod_aoe);
+    RegisterSpellScript(rune_sha_focus_wave);
+    RegisterSpellScript(rune_sha_lasting_water);
+    RegisterSpellScript(rune_sha_elemental_cleansing);
 
 
     
 }
+

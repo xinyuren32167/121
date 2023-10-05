@@ -166,6 +166,11 @@ enum ShamanSpells
     // Runes
     RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
     RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER = 1000816,
+    RUNE_SHAMAN_DEADLY_STAMP_LISTENER = 1001166,
+    RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER = 1001192,
+    RUNE_SHAMAN_PROPAGATING_FIRE_DAMAGE = 1001193,
+    RUNE_SHAMAN_LINGERING_STORM_BUFF = 1001310,
+    RUNE_SHAMAN_EARTHS_GRASP_SLOW = 1001328,
 
     // Summons
     SUMMON_SHAMAN_EARTH_ELEMENTAL = 15352,
@@ -356,7 +361,7 @@ class spell_sha_feral_spirit : public SpellScript
                     // need to add the morphs
                 }
             }
-        }       
+        }
     }
 
     void Register() override
@@ -1392,40 +1397,76 @@ class spell_sha_mana_spring_totem : public SpellScript
     }
 };
 
-// 39610 - Mana Tide Totem
+// 16190 - Mana Tide Totem
 class spell_sha_mana_tide_totem : public SpellScript
 {
     PrepareSpellScript(spell_sha_mana_tide_totem);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
+    Aura* GetSpiritwalkersTidalTotemAura(Unit* caster)
     {
-        return ValidateSpellInfo({ SPELL_SHAMAN_GLYPH_OF_MANA_TIDE, SPELL_SHAMAN_MANA_TIDE_TOTEM });
+        for (size_t i = 1001142; i < 1001148; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
     }
 
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleCast()
     {
-        if (Unit* caster = GetCaster())
-            if (Unit* unitTarget = GetHitUnit())
-            {
-                if (unitTarget->getPowerType() == POWER_MANA)
-                {
-                    int32 effValue = GetEffectValue();
-                    // Glyph of Mana Tide
-                    if (Unit* owner = caster->GetOwner())
-                        if (AuraEffect* dummy = owner->GetAuraEffect(SPELL_SHAMAN_GLYPH_OF_MANA_TIDE, 0))
-                            effValue += dummy->GetAmount();
-                    // Regenerate 6% of Total Mana Every 3 secs
-                    int32 effBasePoints0 = int32(CalculatePct(unitTarget->GetMaxPower(POWER_MANA), effValue));
-                    caster->CastCustomSpell(unitTarget, SPELL_SHAMAN_MANA_TIDE_TOTEM, &effBasePoints0, nullptr, nullptr, true, nullptr, nullptr, GetOriginalCaster()->GetGUID());
-                }
-            }
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetSpiritwalkersTidalTotemAura(caster))
+        {
+            int32 procSpell = GetSpiritwalkersTidalTotemAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_mana_tide_totem::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        OnCast += SpellCastFn(spell_sha_mana_tide_totem::HandleCast);
     }
 };
+
+//// 39610 - Mana Tide Totem Energize
+//class spell_sha_mana_tide_totem_energize : public SpellScript
+//{
+//    PrepareSpellScript(spell_sha_mana_tide_totem_energize);
+//
+//    bool Validate(SpellInfo const* /*spellInfo*/) override
+//    {
+//        return ValidateSpellInfo({ SPELL_SHAMAN_GLYPH_OF_MANA_TIDE, SPELL_SHAMAN_MANA_TIDE_TOTEM });
+//    }
+//
+//    void HandleDummy(SpellEffIndex /*effIndex*/)
+//    {
+//        if (Unit* caster = GetCaster())
+//            if (Unit* unitTarget = GetHitUnit())
+//            {
+//                if (unitTarget->getPowerType() == POWER_MANA)
+//                {
+//                    int32 effValue = GetEffectValue();
+//                    // Glyph of Mana Tide
+//                    if (Unit* owner = caster->GetOwner())
+//                        if (AuraEffect* dummy = owner->GetAuraEffect(SPELL_SHAMAN_GLYPH_OF_MANA_TIDE, 0))
+//                            effValue += dummy->GetAmount();
+//                    // Regenerate 6% of Total Mana Every 3 secs
+//                    int32 effBasePoints0 = int32(CalculatePct(unitTarget->GetMaxPower(POWER_MANA), effValue));
+//                    caster->CastCustomSpell(unitTarget, SPELL_SHAMAN_MANA_TIDE_TOTEM, &effBasePoints0, nullptr, nullptr, true, nullptr, nullptr, GetOriginalCaster()->GetGUID());
+//                }
+//            }
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectHitTarget += SpellEffectFn(spell_sha_mana_tide_totem_energize::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+//    }
+//};
 
 // 6495 - Sentry Totem
 class spell_sha_sentry_totem : public AuraScript
@@ -2670,29 +2711,44 @@ class spell_sha_fury_of_the_elements_fire : public SpellScript
 {
     PrepareSpellScript(spell_sha_fury_of_the_elements_fire);
 
+    Aura* GetFireExpertAura(Unit* caster)
+    {
+        for (size_t i = 1001298; i < 1001304; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleHit(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
+        int32 damage = GetHitDamage();
+
         if (Unit* target = GetHitUnit())
         {
-            SetHitDamage(0);
             if (auto* aurEff = target->GetAura(SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, caster->GetGUID()))
             {
-                int32 damageRatio = GetEffectValue();
-                float damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 37.5) + CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), 27);
                 int32 stackAmount = aurEff->GetStackAmount();
+                uint32 damagePct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
 
-                uint32 damagePct = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE)->GetEffect(EFFECT_1).CalcValue(caster);
+                if (!GetFireExpertAura(caster))
+                    aurEff->Remove();
 
-                target->RemoveAura(SPELL_SHAMAN_INVOKE_ESSENCE_FIRE);
-                damage += CalculatePct(damage, damagePct) * stackAmount;
-
-                damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-                damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-
-                SetHitDamage(damage);
+                damagePct *= stackAmount;
+                AddPct(damage, damagePct);
             }
         }
+
+        if (GetFireExpertAura(caster))
+        {
+            int32 damagePct = 100 - GetFireExpertAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            ApplyPct(damage, damagePct);
+        }
+
+        SetHitDamage(damage);
     }
 
     void Register() override
@@ -2705,19 +2761,57 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
 {
     PrepareSpellScript(spell_sha_fury_of_the_elements_storm);
 
+    Aura* GetLingeringStormAura(Unit* caster)
+    {
+        for (size_t i = 1001304; i < 1001310; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (GetLingeringStormAura(caster))
+        {
+            int32 buffSpell = GetLingeringStormAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (caster->HasAura(buffSpell))
+                caster->RemoveAura(buffSpell);
+        }       
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
         SpellInfo const* spell = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM);
         uint32 targetSize = spell->GetEffect(EFFECT_1).CalcValue(caster);
+
         if (targets.size() >= targetSize)
         {
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM_ECHO, TRIGGERED_FULL_MASK);
+        }
+
+        LOG_ERROR("error", "proc");
+        // Grants Fire Expert Rune damage buff, x% per target hit.
+        if (GetLingeringStormAura(caster))
+        {
+            int32 buffSpell = GetLingeringStormAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            LOG_ERROR("error", "buffSpell = {}", buffSpell);
+            caster->AddAura(buffSpell, caster);
+            caster->GetAura(buffSpell)->SetStackAmount(targets.size());
+            LOG_ERROR("error", "targets.size = {}", targets.size());
         }
     }
 
     void Register() override
     {
+        OnCast += SpellCastFn(spell_sha_fury_of_the_elements_storm::HandleCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_fury_of_the_elements_storm::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
@@ -2725,6 +2819,17 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
 class spell_sha_fury_of_the_elements_earth : public SpellScript
 {
     PrepareSpellScript(spell_sha_fury_of_the_elements_earth);
+
+    Aura* GetEarthsGraspAura(Unit* caster)
+    {
+        for (size_t i = 1001316; i < 1001322; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void FindTargets(std::list<WorldObject*>& targets)
     {
@@ -2741,6 +2846,22 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
                             if (Unit* unit = target->ToUnit())
                                 unit->CastSpell(initialTarget, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH_GRIP, TRIGGERED_FULL_MASK);
                     }
+
+            if (GetEarthsGraspAura(initialTarget))
+            {
+                int32 buffSpell = GetEarthsGraspAura(initialTarget)->GetEffect(EFFECT_0)->GetAmount();
+
+                for (auto const& object : targets)
+                {
+                    Unit* target = object->ToUnit();
+
+                    if (target->isDead())
+                        continue;
+
+                    initialTarget->CastSpell(target, buffSpell, TRIGGERED_FULL_MASK);
+                    initialTarget->CastSpell(target, RUNE_SHAMAN_EARTHS_GRASP_SLOW, TRIGGERED_FULL_MASK);                   
+                }
+            }
         }
     }
 
@@ -2807,6 +2928,213 @@ class spell_sha_focus_thine_foe : public AuraScript
 {
     PrepareAuraScript(spell_sha_focus_thine_foe);
 
+    Aura* GetPropagatingFireAura(Unit* caster)
+    {
+        for (size_t i = 1001186; i < 1001192; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetRockSkinAura(Unit* caster)
+    {
+        for (size_t i = 1001208; i < 1001214; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetProtectiveFocusAura(Unit* caster)
+    {
+        for (size_t i = 1001232; i < 1001238; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetFocusOfTheElementsAura(Unit* caster)
+    {
+        for (size_t i = 1001262; i < 1001268; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (form == FORM_SPIRIT_OF_FIRE)
+        {
+            if (GetPropagatingFireAura(caster))
+            {
+
+                int32 damage = 0;
+                int32 damagePct = GetPropagatingFireAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                auto targetAuras = target->GetAppliedAuras();
+
+                for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
+                    if (Aura* aura = itj->second->GetBase())
+                    {
+                        if (caster->GetGUID() != aura->GetCasterGUID())
+                            continue;
+
+                        // Check for periodic damage
+                        if (aura->GetSpellInfo()->GetEffect(EFFECT_0).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
+                        {
+                            int32 remainingTicks = aura->GetEffect(EFFECT_0)->GetRemaningTicks();
+                            int32 amount = remainingTicks * aura->GetEffect(EFFECT_0)->GetAmount();
+                            damage += amount;
+                            aura->Remove();
+                            continue;
+                        }
+                        if (aura->GetSpellInfo()->GetEffect(EFFECT_1).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
+                        {
+                            int32 remainingTicks = aura->GetEffect(EFFECT_1)->GetRemaningTicks();
+                            int32 amount = remainingTicks * aura->GetEffect(EFFECT_1)->GetAmount();
+                            damage += amount;
+                            aura->Remove();
+                            continue;
+                        }
+                        if (aura->GetSpellInfo()->GetEffect(EFFECT_2).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
+                        {
+                            int32 remainingTicks = aura->GetEffect(EFFECT_2)->GetRemaningTicks();
+                            int32 amount = remainingTicks * aura->GetEffect(EFFECT_2)->GetAmount();
+                            damage += amount;
+                            aura->Remove();
+                            continue;
+                        }
+
+                        // Check for periodic trigger damage
+                        if (aura->GetSpellInfo()->GetEffect(EFFECT_0).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
+                        {
+                            int32 triggeredSpell = aura->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+                            const SpellInfo* procSpell = sSpellMgr->AssertSpellInfo(triggeredSpell);
+
+                            if (!procSpell)
+                                continue;
+
+                            int32 remainingTicks = aura->GetEffect(EFFECT_0)->GetRemaningTicks();
+
+                            if (procSpell->GetEffect(EFFECT_0).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_0).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                            if (procSpell->GetEffect(EFFECT_1).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_1).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                            if (procSpell->GetEffect(EFFECT_2).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_2).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+
+                            continue;
+                        }
+                        if (aura->GetSpellInfo()->GetEffect(EFFECT_1).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
+                        {
+                            int32 triggeredSpell = aura->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
+                            const SpellInfo* procSpell = sSpellMgr->AssertSpellInfo(triggeredSpell);
+
+                            if (!procSpell)
+                                continue;
+
+                            int32 remainingTicks = aura->GetEffect(EFFECT_1)->GetRemaningTicks();
+
+                            if (procSpell->GetEffect(EFFECT_0).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_0).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                            if (procSpell->GetEffect(EFFECT_1).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_1).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                            if (procSpell->GetEffect(EFFECT_2).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_2).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                        }
+                        if (aura->GetSpellInfo()->GetEffect(EFFECT_2).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
+                        {
+                            int32 triggeredSpell = aura->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
+                            const SpellInfo* procSpell = sSpellMgr->AssertSpellInfo(triggeredSpell);
+
+                            if (!procSpell)
+                                continue;
+
+                            int32 remainingTicks = aura->GetEffect(EFFECT_2)->GetRemaningTicks();
+
+                            if (procSpell->GetEffect(EFFECT_0).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_0).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                            if (procSpell->GetEffect(EFFECT_1).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_1).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                            if (procSpell->GetEffect(EFFECT_2).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
+                            {
+                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_2).CalcValue(caster);
+                                damage += amount;
+                                aura->Remove();
+                            }
+                        }
+                    }
+                    int32 amount = CalculatePct(damage, damagePct);
+                    caster->CastCustomSpell(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                    target->GetAura(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER)->SetDuration(GetDuration());
+                }
+            }
+        }
+
+        if (form == FORM_SPIRIT_OF_EARTH)
+        {
+            if (GetRockSkinAura(caster))
+            {
+                int32 procSpell = GetRockSkinAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                target->AddAura(procSpell, caster);
+            }
+        }
+
+    }
+
     void OnPeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
@@ -2825,11 +3153,76 @@ class spell_sha_focus_thine_foe : public AuraScript
             caster->CastSpell(target, SPELL_SHAMAN_FOCUS_THINE_FOE_EARTH, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_WATER)
             caster->CastSpell(caster, SPELL_SHAMAN_FOCUS_THINE_FOE_WATER, TRIGGERED_FULL_MASK);
+        else if (form == FORM_SPIRIT_OF_FIRE)
+        {
+            if (Aura* propagatingFireListener = target->GetAura(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER))
+            {
+                int32 amount = propagatingFireListener->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastCustomSpell(RUNE_SHAMAN_PROPAGATING_FIRE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        // remove Rock Skin Rune Buffs
+        for (size_t i = 1001214; i < 1001220; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Manual remove of Lingering Storm Rune buff
+        if (caster->HasAura(RUNE_SHAMAN_LINGERING_STORM_BUFF))
+            caster->RemoveAura(RUNE_SHAMAN_LINGERING_STORM_BUFF);
+
+        if (GetProtectiveFocusAura(caster))
+        {
+            int32 procSpell = 0;
+
+            if (form == FORM_SPIRIT_OF_FIRE)
+                procSpell = GetProtectiveFocusAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            else if (form == FORM_SPIRIT_OF_STORM)
+                procSpell = GetProtectiveFocusAura(caster)->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+            else if (form == FORM_SPIRIT_OF_EARTH)
+                procSpell = GetProtectiveFocusAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+            else if (form == FORM_SPIRIT_OF_WATER)
+                procSpell = GetProtectiveFocusAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+
+            if (procSpell != 0)
+                caster->AddAura(procSpell, caster);
+        }
+
+        if (GetFocusOfTheElementsAura(caster))
+        {
+            int32 procSpell = 0;
+
+            if (form == FORM_SPIRIT_OF_FIRE)
+                procSpell = GetFocusOfTheElementsAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            else if (form == FORM_SPIRIT_OF_STORM)
+                procSpell = GetFocusOfTheElementsAura(caster)->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+            else if (form == FORM_SPIRIT_OF_EARTH)
+                procSpell = GetFocusOfTheElementsAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+            else if (form == FORM_SPIRIT_OF_WATER)
+                procSpell = GetFocusOfTheElementsAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+
+            if (procSpell != 0)
+                caster->AddAura(procSpell, caster);
+        }
     }
 
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_focus_thine_foe::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_focus_thine_foe::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_focus_thine_foe::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2881,6 +3274,34 @@ class spell_sha_fiery_stamp : public AuraScript
 {
     PrepareAuraScript(spell_sha_fiery_stamp);
 
+    Aura* GetDeadlyStampAura(Unit* caster)
+    {
+        for (size_t i = 1001160; i < 1001166; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // cast Deadly Stamp Rune Listener
+        if (GetDeadlyStampAura(caster))
+            caster->AddAura(RUNE_SHAMAN_DEADLY_STAMP_LISTENER, target);
+    }
+
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
@@ -2893,10 +3314,24 @@ class spell_sha_fiery_stamp : public AuraScript
         GetCaster()->CastSpell(GetTarget(), SPELL_SHAMAN_FIERY_STAMP_PROC, TRIGGERED_FULL_MASK);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Deadly Stamp Rune listener
+        if (caster->HasAura(RUNE_SHAMAN_DEADLY_STAMP_LISTENER))
+            caster->RemoveAura(RUNE_SHAMAN_DEADLY_STAMP_LISTENER);
+    }
+
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_fiery_stamp::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         DoCheckProc += AuraCheckProcFn(spell_sha_fiery_stamp::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_sha_fiery_stamp::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_fiery_stamp::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3613,7 +4048,7 @@ class spell_sha_riptide : public AuraScript
             if (Aura* buffAura = caster->GetAura(procSpell))
                 buffAura->ModStackAmount(1);
             else
-                caster->AddAura(procSpell, caster);            
+                caster->AddAura(procSpell, caster);
         }
     }
 
@@ -3713,7 +4148,7 @@ class spell_sha_healing_rain_periodic : public AuraScript
         return nullptr;
     }
 
-    void HandlePeriodic(AuraEffect const*  aurEff)
+    void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
 
@@ -3774,7 +4209,7 @@ class spell_sha_healing_tide_totem_heal : public SpellScript
             tideTurnerList.sort(Acore::HealthPctOrderPred());
             tideTurnerList.resize(1);
 
-            for (auto const& object : targets)
+            for (auto const& object : tideTurnerList)
             {
                 Unit* target = object->ToUnit();
 
@@ -3796,7 +4231,7 @@ class spell_sha_healing_tide_totem_heal : public SpellScript
             return;
 
         int32 heal = GetHitHeal();
-
+        LOG_ERROR("error", "target = {} lowestHealthTarget = {}", target->GetName(), lowestHealthTarget->GetName());
         if (GetTideTurnerAura(caster) && target == lowestHealthTarget)
         {
             int32 procSpell = GetTideTurnerAura(caster)->GetEffect(EFFECT_1)->GetAmount();
@@ -3883,6 +4318,7 @@ class spell_sha_tidal_wave_consumed : public SpellScript
 
 
 
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -3899,7 +4335,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_cleansing_totem_pulse);
     RegisterSpellScript(spell_sha_earth_shield);
     RegisterSpellScript(spell_sha_earth_shield_heal);
-    RegisterSpellScript(spell_sha_earthbind_totem); 
+    RegisterSpellScript(spell_sha_earthbind_totem);
     RegisterSpellScript(spell_sha_earthen_power);
     RegisterSpellScript(spell_sha_earthliving_weapon);
     RegisterSpellScript(spell_sha_fire_nova);
@@ -3914,6 +4350,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_lava_lash);
     RegisterSpellScript(spell_sha_mana_spring_totem);
     RegisterSpellScript(spell_sha_mana_tide_totem);
+    //RegisterSpellScript(spell_sha_mana_tide_totem_energize);
     RegisterSpellScript(spell_sha_sentry_totem);
     RegisterSpellScript(spell_sha_thunderstorm);
     RegisterSpellScript(spell_sha_flurry_proc);
