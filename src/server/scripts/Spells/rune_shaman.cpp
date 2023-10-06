@@ -2303,6 +2303,159 @@ class rune_sha_elemental_cleansing : public AuraScript
     }
 };
 
+class rune_sha_impactful_storm : public AuraScript
+{
+    PrepareAuraScript(rune_sha_impactful_storm);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        ShapeshiftForm form = caster->GetShapeshiftForm();
+
+        return form == FORM_SPIRIT_OF_STORM;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_impactful_storm::CheckProc);
+    }
+};
+
+class rune_sha_elemental_essence : public AuraScript
+{
+    PrepareAuraScript(rune_sha_elemental_essence);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_SHAMAN_OVERCHARGE, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_elemental_essence::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_elemental_essence::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_invoke_elements : public AuraScript
+{
+    PrepareAuraScript(rune_sha_invoke_elements);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_SHAMAN_FURY_OF_THE_ELEMENTS, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_invoke_elements::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_invoke_elements::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_deeply_rooted_earth : public AuraScript
+{
+    PrepareAuraScript(rune_sha_deeply_rooted_earth);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 baseDuration = GetEffect(EFFECT_1)->GetAmount();
+            int32 increasedDuration = GetEffect(EFFECT_2)->GetAmount();
+
+            if (Aura* ascendance = caster->GetAura(SPELL_SHAMAN_ASCENDANCE_EARTH))
+            {
+                int32 newDuration = std::min<int32>(ascendance->GetMaxDuration(), ascendance->GetDuration() + increasedDuration);
+                ascendance->SetDuration(newDuration);
+            }
+            else
+            {
+                caster->AddAura(SPELL_SHAMAN_ASCENDANCE_EARTH, caster);
+                caster->GetAura(SPELL_SHAMAN_ASCENDANCE_EARTH)->SetDuration(baseDuration);
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_deeply_rooted_earth::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_deeply_rooted_earth::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_sha_charging_attacks : public AuraScript
+{
+    PrepareAuraScript(rune_sha_charging_attacks);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_SHAMAN_OVERCHARGE, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_charging_attacks::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_sha_charging_attacks::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_shaman_perks_scripts()
@@ -2366,6 +2519,11 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_focus_wave);
     RegisterSpellScript(rune_sha_lasting_water);
     RegisterSpellScript(rune_sha_elemental_cleansing);
+    RegisterSpellScript(rune_sha_impactful_storm);
+    RegisterSpellScript(rune_sha_elemental_essence);
+    RegisterSpellScript(rune_sha_invoke_elements);
+    RegisterSpellScript(rune_sha_deeply_rooted_earth);
+    RegisterSpellScript(rune_sha_charging_attacks);
 
 
     

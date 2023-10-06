@@ -121,6 +121,7 @@ enum ShamanSpells
     SPELL_SHAMAN_SPIRIT_OF_STORM_PROC = 84095,
     SPELL_SHAMAN_SPIRIT_OF_WATER_SHIELD = 84098,
     SPELL_SHAMAN_SPIRIT_OF_WATER_REGEN = 84100,
+    SPELL_SHAMAN_INVOKE_ESSENCE = 84102,
     SPELL_SHAMAN_INVOKE_ESSENCE_FIRE = 84103,
     SPELL_SHAMAN_INVOKE_ESSENCE_EARTH = 84104,
     SPELL_SHAMAN_INVOKE_ESSENCE_WATER = 84105,
@@ -2647,6 +2648,28 @@ class spell_sha_invoke_essence : public SpellScript
 {
     PrepareSpellScript(spell_sha_invoke_essence);
 
+    Aura* GetSpellWardingEarthAura(Unit* caster)
+    {
+        for (size_t i = 1001378; i < 1001384; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetSolidBarrierAura(Unit* caster)
+    {
+        for (size_t i = 1001390; i < 1001396; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
@@ -2658,19 +2681,118 @@ class spell_sha_invoke_essence : public SpellScript
             caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_WATER, TRIGGERED_FULL_MASK);
+            // Spell Warding Earth Rune Magic damage reduction cast.
+            if (GetSpellWardingEarthAura(caster))
+            {
+                int32 procSpell = GetSpellWardingEarthAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+            // Solid Barrier Rune Armor increase cast.
+            if (GetSolidBarrierAura(caster))
+            {
+                int32 procSpell = GetSolidBarrierAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
         }
-
         else if (form == FORM_SPIRIT_OF_FIRE)
             caster->CastSpell(target, SPELL_SHAMAN_INVOKE_ESSENCE_FIRE, TRIGGERED_FULL_MASK);
         else if (form == FORM_SPIRIT_OF_EARTH)
+        {
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_EARTH, TRIGGERED_FULL_MASK);
+            // Spell Warding Earth Rune Magic damage reduction cast.
+            if (GetSpellWardingEarthAura(caster))
+            {
+                int32 procSpell = GetSpellWardingEarthAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }              
+        }
         else if (form == FORM_SPIRIT_OF_WATER)
+        {
             caster->CastSpell(caster, SPELL_SHAMAN_INVOKE_ESSENCE_WATER, TRIGGERED_FULL_MASK);
+            // Solid Barrier Rune Armor increase cast.
+            if (GetSolidBarrierAura(caster))
+            {
+                int32 procSpell = GetSolidBarrierAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+        }
+
     }
 
     void Register()
     {
         OnCast += SpellCastFn(spell_sha_invoke_essence::HandleProc);
+    }
+};
+
+class spell_sha_invoke_essence_fire : public AuraScript
+{
+    PrepareAuraScript(spell_sha_invoke_essence_fire);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 maxStacks = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_INVOKE_ESSENCE)->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (GetStackAmount() > maxStacks)
+            SetStackAmount(maxStacks);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_invoke_essence_fire::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+class spell_sha_invoke_essence_earth : public AuraScript
+{
+    PrepareAuraScript(spell_sha_invoke_essence_earth);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1001384; i < 1001390; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_invoke_essence_earth::HandleRemove, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_PCT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_sha_invoke_essence_water : public AuraScript
+{
+    PrepareAuraScript(spell_sha_invoke_essence_water);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1001396; i < 1001402; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_invoke_essence_water::HandleRemove, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2783,7 +2905,7 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
 
             if (caster->HasAura(buffSpell))
                 caster->RemoveAura(buffSpell);
-        }       
+        }
     }
 
     void FilterTargets(std::list<WorldObject*>& targets)
@@ -2859,7 +2981,7 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
                         continue;
 
                     initialTarget->CastSpell(target, buffSpell, TRIGGERED_FULL_MASK);
-                    initialTarget->CastSpell(target, RUNE_SHAMAN_EARTHS_GRASP_SLOW, TRIGGERED_FULL_MASK);                   
+                    initialTarget->CastSpell(target, RUNE_SHAMAN_EARTHS_GRASP_SLOW, TRIGGERED_FULL_MASK);
                 }
             }
         }
@@ -4385,7 +4507,10 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_spirit_of_water);
     RegisterSpellScript(spell_sha_spirit_master_teacher);
     RegisterSpellScript(spell_sha_invoke_essence);
-    RegisterSpellScript(spell_sha_fury_of_the_elements);
+    RegisterSpellScript(spell_sha_invoke_essence_fire);
+    RegisterSpellScript(spell_sha_invoke_essence_earth);
+    RegisterSpellScript(spell_sha_invoke_essence_water);
+    RegisterSpellScript(spell_sha_fury_of_the_elements); 
     RegisterSpellScript(spell_sha_fury_of_the_elements_fire);
     RegisterSpellScript(spell_sha_fury_of_the_elements_storm);
     RegisterSpellScript(spell_sha_fury_of_the_elements_earth);
