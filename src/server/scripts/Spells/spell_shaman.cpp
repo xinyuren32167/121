@@ -3234,19 +3234,21 @@ class spell_sha_focus_thine_foe : public AuraScript
 
                 targetAuras.remove_if([&](AuraEffect const* effect) -> bool
                 {
-                    return effect->GetCasterGUID() == GetCaster()->GetGUID();
+                    return effect->GetCasterGUID() != GetCaster()->GetGUID();
                 });
 
                 for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
                     if (AuraEffect const* effect = (*itj))
                     {
+                        if (effect->GetBase()->GetId() == GetId())
+                            continue;
+                        
                         int32 remainingTicks = effect->GetRemaningTicks();
                         int32 amount = remainingTicks * effect->GetAmount();
                         damage += amount;
                         effect->GetBase()->Remove();
                     }
                 }
-
                 int32 amount = CalculatePct(damage, damagePct);
                 caster->CastCustomSpell(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
                 target->GetAura(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER)->SetDuration(GetDuration());
