@@ -137,7 +137,7 @@ enum MageSpells
     SPELL_MAGE_TALENT_PARRY_WARD_PROC = 81647,
     SPELL_MAGE_TALENT_ARCANIC_BARRIER_PROC = 81659,
     SPELL_MAGE_TALENT_INFUSED_BLADES_PROC = 81668,
-
+    SPELL_MAGE_TALENT_IMPROVED_DEATH_BLOSSOM = 81622,
 
     SPELL_VISUAL_FROZEN_ORB = 72067,
     SPELL_VISUAL_ARCANE_ORB = 80015,
@@ -2700,8 +2700,9 @@ class spell_mage_enchant_ignis : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetProcTarget())
         {
             GetCaster()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC, true, nullptr, aurEff);
-            if (uint8 ignis = eventInfo.GetProcTarget()->GetAura(SPELL_MAGE_ENCHANT_IGNIS_PROC)->GetStackAmount() == 5)
-                GetCaster()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC_STACKED, true, nullptr, aurEff);
+            if (Aura* ignis = eventInfo.GetProcTarget()->GetAura(SPELL_MAGE_ENCHANT_IGNIS_PROC))
+                if (ignis->GetStackAmount() == 5)
+                    GetCaster()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_ENCHANT_IGNIS_PROC_STACKED, true, nullptr, aurEff);
         }
     }
 
@@ -2856,6 +2857,30 @@ class spell_mage_blade_master : public AuraScript
     }
 };
 
+class spell_mage_improved_death_blossom : public AuraScript
+{
+    PrepareAuraScript(spell_mage_improved_death_blossom);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage && GetCaster()->IsAlive())
+            {
+                int32 damagePct = aurEff->GetAmount();
+                int32 damageAmount = CalculatePct(damage, damagePct);
+                GetCaster()->CastSpell(eventInfo.GetProcTarget(), SPELL_MAGE_TALENT_IMPROVED_DEATH_BLOSSOM, true, nullptr, aurEff);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_mage_improved_death_blossom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new npc_mage_spell_frozen_orbs();
@@ -2940,4 +2965,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcanic_barrier);
     RegisterSpellScript(spell_mage_infused_blades);
     RegisterSpellScript(spell_mage_blade_master);
+    RegisterSpellScript(spell_mage_improved_death_blossom);
 }

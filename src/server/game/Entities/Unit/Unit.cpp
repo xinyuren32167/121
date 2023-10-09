@@ -10183,11 +10183,11 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
         return false;
     }
 
-    // creatures should not try to attack the player during polymorph (molly: removed because it was putting targets out of combat)
-    /*if (creature && creature->IsPolymorphed())
+    // creatures should not try to attack the player during polymorph
+    if (creature && creature->IsPolymorphed())
     {
         return false;
-    }*/
+    }
 
     //if (HasUnitFlag(UNIT_FLAG_PACIFIED)) // pussywizard: why having this flag prevents from entering combat? it should just prevent melee attack
     //    return false;

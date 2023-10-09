@@ -85,7 +85,12 @@ enum HunterSpells
     SPELL_HUNTER_FURY_OF_THE_EAGLE = 80194,
     SPELL_HUNTER_TALENT_TIP_OF_SPEAR = 80232,
     SPELL_HUNTER_TALENT_TIP_OF_SPEAR_BUFF = 80233,
-
+    SPELL_HUNTER_BACKSHOT = 85001,
+    SPELL_HUNTER_WITHERING_FIRE = 85002,
+    SPELL_HUNTER_BLACK_CURSE = 85004,
+    SPELL_HUNTER_BLACK_CURSE_HEAL = 85005,
+    SPELL_HUNTER_TWILIGHT_PIERCER_STUN = 85007,
+    SPELL_HUNTER_INVIS_ACTIVATOR = 85008,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -3138,6 +3143,98 @@ public:
     }
 };
 
+class spell_hun_backshot : public SpellScript
+{
+    PrepareSpellScript(spell_hun_backshot);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (Unit* target = GetHitUnit())
+        {
+            if (!target->HasInArc(M_PI, caster))
+            {
+                int32 damage = GetEffectValue();
+                SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_BACKSHOT);
+                uint32 damageBonus = value->GetEffect(EFFECT_1).CalcValue(caster);
+
+                damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+                damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+                AddPct(damage, damageBonus);
+
+                SetHitDamage(damage);
+
+                uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
+                caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_hun_backshot::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_hun_black_curse_reset : public AuraScript
+{
+    PrepareAuraScript(spell_hun_black_curse_reset);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        caster->RemoveSpellCooldown(SPELL_HUNTER_BLACK_CURSE, true);
+
+        if (caster->IsAlive())
+            caster->CastSpell(caster, SPELL_HUNTER_BLACK_CURSE_HEAL, true);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_black_curse_reset::HandleProc, EFFECT_2, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_twilight_piercer : public SpellScript
+{
+    PrepareSpellScript(spell_hun_twilight_piercer);
+
+    void HandleProc()
+    {
+        Unit* caster = GetCaster();
+        if (caster->HasAura(SPELL_HUNTER_INVIS_ACTIVATOR))
+            caster->CastSpell(GetExplTargetUnit(), SPELL_HUNTER_TWILIGHT_PIERCER_STUN, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_hun_twilight_piercer::HandleProc);
+    }
+};
+
+class spell_hun_invis_activator : public AuraScript
+{
+    PrepareAuraScript(spell_hun_invis_activator);
+
+    void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_HUNTER_INVIS_ACTIVATOR, TRIGGERED_FULL_MASK);
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Aura* aura = GetCaster()->GetAura(SPELL_HUNTER_INVIS_ACTIVATOR))
+            aura->SetDuration(500);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_invis_activator::OnApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_invis_activator::OnRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -3223,6 +3320,10 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_hunting_party);
     RegisterSpellScript(spell_hunter_stampeded);
     RegisterSpellScript(spell_hun_animal_companion_dismiss_pet);
+    RegisterSpellScript(spell_hun_backshot);
+    RegisterSpellScript(spell_hun_black_curse_reset);
+    RegisterSpellScript(spell_hun_twilight_piercer);
+    RegisterSpellScript(spell_hun_invis_activator);
     new Hunter_AllMapScript();
     new npc_hunter_spell_stampeded();
 }
