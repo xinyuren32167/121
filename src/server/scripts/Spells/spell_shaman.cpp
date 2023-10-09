@@ -73,7 +73,8 @@ enum ShamanSpells
     SPELL_SHAMAN_GLYPH_OF_MANA_TIDE = 55441,
     SPELL_SHAMAN_GLYPH_OF_THUNDERSTORM = 62132,
     SPELL_SHAMAN_GUST_OF_WIND = 84009,
-    SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA = 58765,
+    SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA = 58764,
+    SPELL_SHAMAN_HEALING_SURGE = 84004,
     SPELL_SHAMAN_HEALING_TIDE_TOTEM = 84076,
     SPELL_SHAMAN_ICEFURY = 84016,
     SPELL_SHAMAN_ICEFURY_BUFF = 84017,
@@ -166,6 +167,7 @@ enum ShamanSpells
 
     // Runes
     RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
+    RUNE_SHAMAN_IMPROVED_EARTHLIVING_WEAPON_HEAL = 1000454,
     RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER = 1000816,
     RUNE_SHAMAN_DEADLY_STAMP_LISTENER = 1001166,
     RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER = 1001192,
@@ -1064,6 +1066,55 @@ class spell_sha_earthliving_weapon : public AuraScript
     }
 };
 
+// 52000 - Earthliving Weapon Heal
+class spell_sha_earthliving_weapon_hot : public AuraScript
+{
+    PrepareAuraScript(spell_sha_earthliving_weapon_hot);
+
+    Aura* GetImprovedEarthlibingWeaponAura(Unit* caster)
+    {
+        for (size_t i = 1000448; i < 1000454; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandlePeriodic(AuraEffect const*  aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetImprovedEarthlibingWeaponAura(caster))
+        {
+            int32 heal = aurEff->GetAmount();
+            int32 healPct = GetImprovedEarthlibingWeaponAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 healthThreshold = GetImprovedEarthlibingWeaponAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+            {
+                int32 amount = CalculatePct(heal, healPct);
+
+                caster->CastCustomSpell(RUNE_SHAMAN_IMPROVED_EARTHLIVING_WEAPON_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_earthliving_weapon_hot::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
+    }
+};
+
 //// -1535 - Fire Nova
 //class spell_sha_fire_nova : public SpellScript
 //{
@@ -1180,14 +1231,56 @@ class spell_sha_flame_shock : public AuraScript
 //    }
 //};
 
-// 58765 - Healing Stream Totem
+// 58760 - Healing Stream Totem Heal
 class spell_sha_healing_stream_totem_target : public SpellScript
 {
     PrepareSpellScript(spell_sha_healing_stream_totem_target);
 
+    Aura* GetLivingStreamAura(Unit* caster)
+    {
+        for (size_t i = 1000246; i < 1000252; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetFlowingStreamsAura(Unit* caster)
+    {
+        for (size_t i = 1000264; i < 1000270; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleBeforeCast()
+    {
+        Unit* totem = GetCaster();
+
+        if (!totem || totem->isDead())
+            return;
+
+        Unit* caster = totem->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetLivingStreamAura(caster))
+        {
+            int32 procSpell = GetLivingStreamAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-        //targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
         uint32 const maxTargets = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_HEALING_STREAM_TOTEM_AURA)->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
@@ -1198,9 +1291,32 @@ class spell_sha_healing_stream_totem_target : public SpellScript
         }
     }
 
+    void HandleHit()
+    {
+        Unit* totem = GetCaster();
+
+        if (!totem || totem->isDead())
+            return;
+
+        Unit* caster = totem->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetFlowingStreamsAura(caster))
+        {
+            int32 procChance = GetFlowingStreamsAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->CastSpell(caster, SPELL_SHAMAN_HEALING_SURGE, TRIGGERED_FULL_MASK);
+        }
+    }
+
     void Register() override
     {
+        BeforeCast += SpellCastFn(spell_sha_healing_stream_totem_target::HandleBeforeCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_healing_stream_totem_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        OnHit += SpellHitFn(spell_sha_healing_stream_totem_target::HandleHit);
     }
 };
 
@@ -2704,7 +2820,7 @@ class spell_sha_invoke_essence : public SpellScript
             {
                 int32 procSpell = GetSpellWardingEarthAura(caster)->GetEffect(EFFECT_0)->GetAmount();
                 caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
-            }              
+            }
         }
         else if (form == FORM_SPIRIT_OF_WATER)
         {
@@ -2894,7 +3010,7 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
         return nullptr;
     }
 
-    void HandleCast()
+    void HandleBeforeCast()
     {
         Unit* caster = GetCaster();
         ShapeshiftForm form = caster->GetShapeshiftForm();
@@ -2925,7 +3041,7 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
         {
             int32 buffSpell = GetLingeringStormAura(caster)->GetEffect(EFFECT_0)->GetAmount();
             LOG_ERROR("error", "buffSpell = {}", buffSpell);
-            caster->AddAura(buffSpell, caster);
+            caster->CastSpell(caster, buffSpell, TRIGGERED_FULL_MASK);
             caster->GetAura(buffSpell)->SetStackAmount(targets.size());
             LOG_ERROR("error", "targets.size = {}", targets.size());
         }
@@ -2933,7 +3049,7 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_sha_fury_of_the_elements_storm::HandleCast);
+        BeforeCast += SpellCastFn(spell_sha_fury_of_the_elements_storm::HandleBeforeCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_fury_of_the_elements_storm::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
@@ -3111,11 +3227,11 @@ class spell_sha_focus_thine_foe : public AuraScript
         {
             if (GetPropagatingFireAura(caster))
             {
-
                 int32 damage = 0;
                 int32 damagePct = GetPropagatingFireAura(caster)->GetEffect(EFFECT_0)->GetAmount();
                 auto targetAuras = target->GetAppliedAuras();
 
+                // Find all dots
                 for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
                     if (Aura* aura = itj->second->GetBase())
                     {
@@ -3177,8 +3293,6 @@ class spell_sha_focus_thine_foe : public AuraScript
                                 damage += amount;
                                 aura->Remove();
                             }
-
-                            continue;
                         }
                         if (aura->GetSpellInfo()->GetEffect(EFFECT_1).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
                         {
@@ -3239,10 +3353,11 @@ class spell_sha_focus_thine_foe : public AuraScript
                             }
                         }
                     }
-                    int32 amount = CalculatePct(damage, damagePct);
-                    caster->CastCustomSpell(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
-                    target->GetAura(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER)->SetDuration(GetDuration());
                 }
+
+                int32 amount = CalculatePct(damage, damagePct);
+                caster->CastCustomSpell(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                target->GetAura(RUNE_SHAMAN_PROPAGATING_FIRE_LISTENER)->SetDuration(GetDuration());
             }
         }
 
@@ -4330,19 +4445,25 @@ class spell_sha_healing_tide_totem_heal : public SpellScript
             std::list<WorldObject*> tideTurnerList = targets;
             tideTurnerList.sort(Acore::HealthPctOrderPred());
             tideTurnerList.resize(1);
+            int32 buffAura = GetTideTurnerAura(caster)->GetEffect(EFFECT_1)->GetAmount();
 
             for (auto const& object : tideTurnerList)
             {
                 Unit* target = object->ToUnit();
 
-                lowestHealthTarget = target;
+                caster->AddAura(buffAura, target);
             }
         }
     }
 
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
-        Unit* caster = GetCaster();
+        Unit* totem = GetCaster();
+
+        if (!totem || totem->isDead())
+            return;
+
+        Unit* caster = totem->GetOwner();
 
         if (!caster || caster->isDead())
             return;
@@ -4353,14 +4474,14 @@ class spell_sha_healing_tide_totem_heal : public SpellScript
             return;
 
         int32 heal = GetHitHeal();
-        LOG_ERROR("error", "target = {} lowestHealthTarget = {}", target->GetName(), lowestHealthTarget->GetName());
-        if (GetTideTurnerAura(caster) && target == lowestHealthTarget)
+
+        if (GetTideTurnerAura(caster))
         {
             int32 procSpell = GetTideTurnerAura(caster)->GetEffect(EFFECT_1)->GetAmount();
             int32 healPct = GetTideTurnerAura(caster)->GetEffect(EFFECT_0)->GetAmount();
 
-            caster->AddAura(procSpell, target);
-            ApplyPct(heal, healPct);
+            if (target->HasAura(procSpell))
+                AddPct(heal, healPct);            
         }
 
         SetHitHeal(heal);
@@ -4460,6 +4581,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_earthbind_totem);
     RegisterSpellScript(spell_sha_earthen_power);
     RegisterSpellScript(spell_sha_earthliving_weapon);
+    RegisterSpellScript(spell_sha_earthliving_weapon_hot);
     RegisterSpellScript(spell_sha_fire_nova);
     RegisterSpellScript(spell_sha_flame_shock);
     //RegisterSpellScript(spell_sha_healing_stream_totem);
@@ -4510,7 +4632,7 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_invoke_essence_fire);
     RegisterSpellScript(spell_sha_invoke_essence_earth);
     RegisterSpellScript(spell_sha_invoke_essence_water);
-    RegisterSpellScript(spell_sha_fury_of_the_elements); 
+    RegisterSpellScript(spell_sha_fury_of_the_elements);
     RegisterSpellScript(spell_sha_fury_of_the_elements_fire);
     RegisterSpellScript(spell_sha_fury_of_the_elements_storm);
     RegisterSpellScript(spell_sha_fury_of_the_elements_earth);

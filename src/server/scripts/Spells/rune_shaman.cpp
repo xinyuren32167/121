@@ -122,6 +122,7 @@ enum ShamanSpells
     RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_NATURE = 1000464,
     RUNE_SHAMAN_ELEMENTAL_EQUILIBRIUM_DEBUFF = 1000465,
     RUNE_SHAMAN_FORCEFUL_WINDS_BUFF = 1000484,
+    RUNE_SHAMAN_FORCEFUL_WINDS_DEBUFF = 1000485,
     RUNE_SHAMAN_LIGHTNING_ROD_AOE = 1000528,
     RUNE_SHAMAN_LIGHTNING_ROD_DAMAGE = 1000529,
     RUNE_SHAMAN_AFTERSHOCK_ENERGIZE = 1000622,
@@ -633,46 +634,6 @@ class rune_sha_brimming_with_life : public AuraScript
     }
 };
 
-class rune_sha_improved_earthliving_weapon : public AuraScript
-{
-    PrepareAuraScript(rune_sha_improved_earthliving_weapon);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        Unit* target = eventInfo.GetHealInfo()->GetTarget();
-
-        if (!target || target->isDead())
-            return;
-
-        int32 heal = eventInfo.GetHealInfo()->GetHeal();
-        int32 healPct = aurEff->GetAmount();
-        int32 healthThreshold = GetEffect(EFFECT_2)->GetAmount();
-
-        if (target->GetHealthPct() > healthThreshold)
-            return;
-
-        int32 amount = CalculatePct(heal, healPct);
-
-        caster->CastCustomSpell(RUNE_SHAMAN_IMPROVED_EARTHLIVING_WEAPON_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
-    }
-
-    void Register()
-    {
-        DoCheckProc += AuraCheckProcFn(rune_sha_improved_earthliving_weapon::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_sha_improved_earthliving_weapon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
 class rune_sha_elemental_equilibrium : public AuraScript
 {
     PrepareAuraScript(rune_sha_elemental_equilibrium);
@@ -733,9 +694,14 @@ class rune_sha_forceful_winds : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        if (!caster->HasAura(RUNE_SHAMAN_FORCEFUL_WINDS_BUFF))
-            caster->AddAura(RUNE_SHAMAN_FORCEFUL_WINDS_BUFF, caster);
+        if (caster->HasAura(RUNE_SHAMAN_FORCEFUL_WINDS_DEBUFF))
+            return;
 
+        if (!caster->HasAura(RUNE_SHAMAN_FORCEFUL_WINDS_BUFF))
+            caster->CastSpell(caster, RUNE_SHAMAN_FORCEFUL_WINDS_BUFF, TRIGGERED_FULL_MASK);
+
+        
+        
         caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
     }
 
@@ -756,6 +722,8 @@ class rune_sha_forceful_winds_remove : public AuraScript
 
         if (!caster || caster->isDead())
             return;
+
+        caster->AddAura(RUNE_SHAMAN_FORCEFUL_WINDS_DEBUFF, caster);
 
         for (size_t i = 1000478; i < 1000484; i++)
         {
@@ -2474,7 +2442,6 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_spirit_wolf);
     RegisterSpellScript(rune_sha_rejuvenating_wolf);
     RegisterSpellScript(rune_sha_regenerating_wolf);
-    RegisterSpellScript(rune_sha_improved_earthliving_weapon);
     RegisterSpellScript(rune_sha_elemental_equilibrium);
     RegisterSpellScript(rune_sha_forceful_winds);
     RegisterSpellScript(rune_sha_forceful_winds_remove);
