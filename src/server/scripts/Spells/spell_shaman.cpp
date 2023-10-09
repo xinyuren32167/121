@@ -3229,129 +3229,21 @@ class spell_sha_focus_thine_foe : public AuraScript
             {
                 int32 damage = 0;
                 int32 damagePct = GetPropagatingFireAura(caster)->GetEffect(EFFECT_0)->GetAmount();
-                auto targetAuras = target->GetAppliedAuras();
 
-                // Find all dots
+                auto targetAuras = target->GetAuraEffectsByType(SPELL_AURA_PERIODIC_DAMAGE);
+
+                targetAuras.remove_if([&](AuraEffect const* effect) -> bool
+                {
+                    return effect->GetCasterGUID() == GetCaster()->GetGUID();
+                });
+
                 for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
-                    if (Aura* aura = itj->second->GetBase())
+                    if (AuraEffect const* effect = (*itj))
                     {
-                        if (caster->GetGUID() != aura->GetCasterGUID())
-                            continue;
-
-                        // Check for periodic damage
-                        if (aura->GetSpellInfo()->GetEffect(EFFECT_0).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
-                        {
-                            int32 remainingTicks = aura->GetEffect(EFFECT_0)->GetRemaningTicks();
-                            int32 amount = remainingTicks * aura->GetEffect(EFFECT_0)->GetAmount();
-                            damage += amount;
-                            aura->Remove();
-                            continue;
-                        }
-                        if (aura->GetSpellInfo()->GetEffect(EFFECT_1).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
-                        {
-                            int32 remainingTicks = aura->GetEffect(EFFECT_1)->GetRemaningTicks();
-                            int32 amount = remainingTicks * aura->GetEffect(EFFECT_1)->GetAmount();
-                            damage += amount;
-                            aura->Remove();
-                            continue;
-                        }
-                        if (aura->GetSpellInfo()->GetEffect(EFFECT_2).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE)
-                        {
-                            int32 remainingTicks = aura->GetEffect(EFFECT_2)->GetRemaningTicks();
-                            int32 amount = remainingTicks * aura->GetEffect(EFFECT_2)->GetAmount();
-                            damage += amount;
-                            aura->Remove();
-                            continue;
-                        }
-
-                        // Check for periodic trigger damage
-                        if (aura->GetSpellInfo()->GetEffect(EFFECT_0).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
-                        {
-                            int32 triggeredSpell = aura->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-                            const SpellInfo* procSpell = sSpellMgr->AssertSpellInfo(triggeredSpell);
-
-                            if (!procSpell)
-                                continue;
-
-                            int32 remainingTicks = aura->GetEffect(EFFECT_0)->GetRemaningTicks();
-
-                            if (procSpell->GetEffect(EFFECT_0).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_0).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                            if (procSpell->GetEffect(EFFECT_1).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_1).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                            if (procSpell->GetEffect(EFFECT_2).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_2).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                        }
-                        if (aura->GetSpellInfo()->GetEffect(EFFECT_1).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
-                        {
-                            int32 triggeredSpell = aura->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-                            const SpellInfo* procSpell = sSpellMgr->AssertSpellInfo(triggeredSpell);
-
-                            if (!procSpell)
-                                continue;
-
-                            int32 remainingTicks = aura->GetEffect(EFFECT_1)->GetRemaningTicks();
-
-                            if (procSpell->GetEffect(EFFECT_0).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_0).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                            if (procSpell->GetEffect(EFFECT_1).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_1).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                            if (procSpell->GetEffect(EFFECT_2).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_2).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                        }
-                        if (aura->GetSpellInfo()->GetEffect(EFFECT_2).ApplyAuraName == SPELL_AURA_PERIODIC_TRIGGER_SPELL)
-                        {
-                            int32 triggeredSpell = aura->GetSpellInfo()->GetEffect(EFFECT_2).TriggerSpell;
-                            const SpellInfo* procSpell = sSpellMgr->AssertSpellInfo(triggeredSpell);
-
-                            if (!procSpell)
-                                continue;
-
-                            int32 remainingTicks = aura->GetEffect(EFFECT_2)->GetRemaningTicks();
-
-                            if (procSpell->GetEffect(EFFECT_0).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_0).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                            if (procSpell->GetEffect(EFFECT_1).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_1).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                            if (procSpell->GetEffect(EFFECT_2).Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                            {
-                                int32 amount = remainingTicks * procSpell->GetEffect(EFFECT_2).CalcValue(caster);
-                                damage += amount;
-                                aura->Remove();
-                            }
-                        }
+                        int32 remainingTicks = effect->GetRemaningTicks();
+                        int32 amount = remainingTicks * effect->GetAmount();
+                        damage += amount;
+                        effect->GetBase()->Remove();
                     }
                 }
 
