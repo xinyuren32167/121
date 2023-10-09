@@ -4019,7 +4019,9 @@ class spell_sha_capacitor_totem_aura : public AuraScript
             if (!roll_chance_i(procChance))
                 return;
 
-            caster->CastSpell(totemPos.m_positionX, totemPos.m_positionY, totemPos.m_positionZ, SPELL_SHAMAN_CAPACITOR_TOTEM, TRIGGERED_FULL_MASK);
+
+            SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(81);
+            caster->GetMap()->SummonCreature(400402, totemPos, properties, 3000, caster, GetSpellInfo()->Id);
             caster->AddAura(RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF, caster);
         }
     }

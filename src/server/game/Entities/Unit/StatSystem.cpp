@@ -763,8 +763,6 @@ void Player::UpdateCritPercentage(WeaponAttackType attType)
 
     value = value < 0.0f ? 0.0f : value;
     SetStatFloatValue(index, value);
-
-    UpdateParryPercentage();
 }
 
 void Player::UpdateAllCritPercentages()

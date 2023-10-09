@@ -618,7 +618,7 @@ void RunesManager::DisableRune(Player* player, uint64 runeId)
     if (player->isDead())
         return;
 
-    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) || player->getLevel() <= 10) {
+    if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) && player->getLevel() > 10) {
         SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
         return;
     }
