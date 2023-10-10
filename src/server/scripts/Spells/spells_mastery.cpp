@@ -14,6 +14,13 @@ enum Masteries
     // Warrior
     MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF = 199999,
 
+    // Hunter
+    MASTERY_HUNTER_FROM_THE_SHADOWS = 499996,
+    MASTERY_HUNTER_FROM_THE_SHADOWS_BUFF = 499998,
+    MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_BUFF = 499995,
+    MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK = 499999,
+    SPELL_HUNTER_INVIS_ACTIVATOR = 85008,
+
     // Deathknight
     MASTERY_DK_UNHOLY = 600005,
     MASTERY_DK_BLOOD = 590001,
@@ -611,6 +618,72 @@ class spell_mastery_spirit_bound : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_mastery_spirit_bound::HandleCast);
+    }
+};
+
+class spell_mastery_from_the_shadows_periodic : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_from_the_shadows_periodic);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (player->IsAlive())
+        {
+            if (Aura* invisAura = player->GetAura(SPELL_HUNTER_INVIS_ACTIVATOR))
+            {
+                player->AddAura(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK, player);
+
+                if(Aura* stackAura = player->GetAura(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK))
+                    if (stackAura->GetStackAmount() >= 5)
+                    {
+                        float mastery = player->GetMastery();
+                        int32 amount = sSpellMgr->GetSpellInfo(MASTERY_HUNTER_FROM_THE_SHADOWS)->GetEffect(EFFECT_1).CalcValue(GetCaster()) + mastery;
+
+                        player->CastCustomSpell(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_BUFF, SPELLVALUE_BASE_POINT0, amount, player, true);
+                    }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mastery_from_the_shadows_periodic::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_mastery_from_the_shadows : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_from_the_shadows);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_HUNTER_FROM_THE_SHADOWS)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
+
+        caster->CastCustomSpell(MASTERY_HUNTER_FROM_THE_SHADOWS_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_from_the_shadows::HandleCast);
+    }
+};
+
+class spell_mastery_from_the_shadows_buff_remove : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_from_the_shadows_buff_remove);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        if (Aura* stackAura = GetCaster()->GetAura(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK))
+            stackAura->Remove();
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mastery_from_the_shadows_buff_remove::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -1625,4 +1698,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_jack_of_all_master_of_none_proc);
     RegisterSpellScript(spell_mastery_phalanx_dominance);
     RegisterSpellScript(spell_mastery_battle_knowledge);
+    RegisterSpellScript(spell_mastery_from_the_shadows);
+    RegisterSpellScript(spell_mastery_from_the_shadows_periodic);
+    RegisterSpellScript(spell_mastery_from_the_shadows_buff_remove);
 }
