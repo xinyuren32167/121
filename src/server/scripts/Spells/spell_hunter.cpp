@@ -91,6 +91,21 @@ enum HunterSpells
     SPELL_HUNTER_BLACK_CURSE_HEAL = 85005,
     SPELL_HUNTER_TWILIGHT_PIERCER_STUN = 85007,
     SPELL_HUNTER_INVIS_ACTIVATOR = 85008,
+    SPELL_HUNTER_CAMOUFLAGE = 80163,
+    SPELL_HUNTER_BLEND = 85012,
+    SPELL_HUNTER_SHADOW_SHOT = 85016,
+    SPELL_VISUAL_TELEPORT_EFFECT = 82017,
+    SPELL_HUNTER_INSTANT_DISMISS_PET = 85018,
+    SPELL_HUNTER_BEAST_LORE = 1462,
+    SPELL_HUNTER_CALL_PET = 883,
+    SPELL_HUNTER_CALL_STABLED_PET = 62757,
+    SPELL_HUNTER_DISMISS_PET = 2641,
+    SPELL_HUNTER_FEED_PET = 6991,
+    SPELL_HUNTER_MEND_PET = 48990,
+    SPELL_HUNTER_REVIVE_PET = 982,
+    SPELL_HUNTER_TAME_BEAST = 1515,
+    SPELL_HUNTER_ARCANE_SHOT = 49045,
+    SPELL_HUNTER_SPECTRAL_SHOT = 85019,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -3235,6 +3250,114 @@ class spell_hun_invis_activator : public AuraScript
     }
 };
 
+class spell_hun_shadow_shot : public SpellScript
+{
+    PrepareSpellScript(spell_hun_shadow_shot);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (Unit* target = GetHitUnit())
+        {
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_SHADOW_SHOT);
+            uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
+            caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_hun_shadow_shot::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_hun_shadow_movement : public SpellScript
+{
+    PrepareSpellScript(spell_hun_shadow_movement);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        Position pos = GetExplTargetUnit()->GetPosition();
+        caster->NearTeleportTo(pos);
+        caster->CastSpell(caster, SPELL_VISUAL_TELEPORT_EFFECT, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_hun_shadow_movement::HandleCast);
+    }
+};
+
+class spell_hun_shadow_stalker_replacer : public AuraScript
+{
+    PrepareAuraScript(spell_hun_shadow_stalker_replacer);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+        target->CastSpell(target, SPELL_HUNTER_INSTANT_DISMISS_PET, TRIGGERED_FULL_MASK);
+
+        target->removeSpell(SPELL_HUNTER_BEAST_LORE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_CALL_PET, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_CALL_STABLED_PET, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_DISMISS_PET, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_FEED_PET, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_MEND_PET, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_REVIVE_PET, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_TAME_BEAST, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_CAMOUFLAGE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_ARCANE_SHOT, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_HUNTER_BLEND);
+        target->learnSpell(SPELL_HUNTER_SPECTRAL_SHOT);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_HUNTER_BLEND, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_SPECTRAL_SHOT, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_HUNTER_BEAST_LORE);
+        target->learnSpell(SPELL_HUNTER_CALL_PET);
+        target->learnSpell(SPELL_HUNTER_CALL_STABLED_PET);
+        target->learnSpell(SPELL_HUNTER_DISMISS_PET);
+        target->learnSpell(SPELL_HUNTER_FEED_PET);
+        target->learnSpell(SPELL_HUNTER_MEND_PET);
+        target->learnSpell(SPELL_HUNTER_REVIVE_PET);
+        target->learnSpell(SPELL_HUNTER_TAME_BEAST);
+        target->learnSpell(SPELL_HUNTER_CAMOUFLAGE);
+        target->learnSpell(SPELL_HUNTER_ARCANE_SHOT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_shadow_stalker_replacer::HandleLearn, EFFECT_0, SPELL_AURA_MOD_SPELL_DAMAGE_OF_ATTACK_POWER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_shadow_stalker_replacer::HandleUnlearn, EFFECT_0, SPELL_AURA_MOD_SPELL_DAMAGE_OF_ATTACK_POWER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_hun_spectral_shot : public SpellScript
+{
+    PrepareSpellScript(spell_hun_spectral_shot);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (Unit* target = GetHitUnit())
+        {
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_SPECTRAL_SHOT);
+            uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
+            caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_hun_spectral_shot::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -3324,6 +3447,10 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_black_curse_reset);
     RegisterSpellScript(spell_hun_twilight_piercer);
     RegisterSpellScript(spell_hun_invis_activator);
+    RegisterSpellScript(spell_hun_shadow_shot);
+    RegisterSpellScript(spell_hun_shadow_movement);
+    RegisterSpellScript(spell_hun_shadow_stalker_replacer);
+    RegisterSpellScript(spell_hun_spectral_shot);
     new Hunter_AllMapScript();
     new npc_hunter_spell_stampeded();
 }

@@ -762,6 +762,23 @@ void Spell::EffectTriggerSpell(SpellEffIndex effIndex)
 
                     break;
                 }
+            // Blend
+            case 85020:
+                {
+                    unitTarget->RemoveMovementImpairingAuras(true);
+                    unitTarget->RemoveAurasByType(SPELL_AURA_MOD_STALKED);
+
+                    // See if we already are stealthed. If so, we're done.
+                    if (unitTarget->HasAura(85012))
+                        return;
+
+                    // Reset cooldown on Blend if needed
+                    if (unitTarget->GetTypeId() == TYPEID_PLAYER && unitTarget->ToPlayer()->HasSpellCooldown(85012))
+                        unitTarget->ToPlayer()->RemoveSpellCooldown(85012);
+
+                    unitTarget->CastSpell(unitTarget, 85012, true);
+                    return;
+                }
             // Vanish (not exist)
             case 18461:
                 {
@@ -4041,6 +4058,11 @@ void Spell::EffectSanctuary(SpellEffIndex /*effIndex*/)
         //Clean Escape
         if (m_caster->HasAura(23582))
             m_caster->CastSpell(m_caster, 23583, true);
+    }
+
+    if (m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->Id == 85020)
+    {
+        m_caster->ToPlayer()->RemoveAurasByType(SPELL_AURA_MOD_ROOT);
     }
 }
 
