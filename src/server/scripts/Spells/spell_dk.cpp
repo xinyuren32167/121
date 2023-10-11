@@ -2224,6 +2224,7 @@ class spell_dk_frost_fever : public AuraScript
 class spell_dk_lichborne_leech : public AuraScript
 {
     PrepareAuraScript(spell_dk_lichborne_leech);
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)

@@ -42,12 +42,6 @@
 
 enum HunterSpells
 {
-    // Ours
-    SPELL_HUNTER_WYVERN_STING_DOT = 80156,
-    SPELL_HUNTER_WILDFIRE_BOMB = 80188,
-    SPELL_HUNTER_KILL_SHOT = 61006,
-    SPELL_HUNTER_BESTIAL_WRATH_DAMAGE = 80229,
-
     // Theirs
     SPELL_HUNTER_ASPECT_OF_THE_BEAST = 49071,
     SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET = 61669,
@@ -70,6 +64,12 @@ enum HunterSpells
     SPELL_HUNTER_READINESS = 23989,
     SPELL_HUNTER_SNIPER_TRAINING_R1 = 53302,
     SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1 = 64418,
+
+    // Ours
+    SPELL_HUNTER_WYVERN_STING_DOT = 80156,
+    SPELL_HUNTER_WILDFIRE_BOMB = 80188,
+    SPELL_HUNTER_KILL_SHOT = 61006,
+    SPELL_HUNTER_BESTIAL_WRATH_DAMAGE = 80229,
     SPELL_HUNTER_SPEARHEAD = 80206,
     SPELL_HUNTER_VICIOUS_VIPER = 61609,
     SPELL_HUNTER_VIPER_ATTACK_SPEED = 60144,
@@ -106,6 +106,12 @@ enum HunterSpells
     SPELL_HUNTER_TAME_BEAST = 1515,
     SPELL_HUNTER_ARCANE_SHOT = 49045,
     SPELL_HUNTER_SPECTRAL_SHOT = 85019,
+    TALENT_HUNTER_SHADOW_CLOAK = 85034,
+    TALENT_HUNTER_SHADOW_CLOAK_BUFF = 85037,
+    TALENT_HUNTER_IMPROVED_BLEND_PROC = 85053,
+    TALENT_HUNTER_SHADOW_WITHDRAWAL_PROC = 85086,
+    TALENT_HUNTER_SHADOW_WITHDRAWAL_COOLDOWN = 85087,
+    TALENT_HUNTER_IMPROVED_BLACK_CURSE_HEAL = 85108,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -3234,13 +3240,22 @@ class spell_hun_invis_activator : public AuraScript
 
     void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetCaster()->CastSpell(GetCaster(), SPELL_HUNTER_INVIS_ACTIVATOR, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+        caster->CastSpell(caster, SPELL_HUNTER_INVIS_ACTIVATOR, TRIGGERED_FULL_MASK);
+
+        if (AuraEffect* shadowCloak = caster->GetAuraEffectOfRankedSpell(TALENT_HUNTER_SHADOW_CLOAK, EFFECT_0))
+            caster->CastCustomSpell(TALENT_HUNTER_SHADOW_CLOAK_BUFF, SPELLVALUE_BASE_POINT0, shadowCloak->GetAmount(), caster, TRIGGERED_FULL_MASK);
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (Aura* aura = GetCaster()->GetAura(SPELL_HUNTER_INVIS_ACTIVATOR))
+        Unit* caster = GetCaster();
+
+        if (Aura* aura = caster->GetAura(SPELL_HUNTER_INVIS_ACTIVATOR))
             aura->SetDuration(500);
+
+        if (Aura* talentAura = caster->GetAura(TALENT_HUNTER_SHADOW_CLOAK_BUFF))
+            talentAura->SetDuration(5000);
     }
 
     void Register() override
@@ -3296,7 +3311,6 @@ class spell_hun_shadow_stalker_replacer : public AuraScript
     void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        target->CastSpell(target, SPELL_HUNTER_INSTANT_DISMISS_PET, TRIGGERED_FULL_MASK);
 
         target->removeSpell(SPELL_HUNTER_BEAST_LORE, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_HUNTER_CALL_PET, SPEC_MASK_ALL, false);
@@ -3310,6 +3324,9 @@ class spell_hun_shadow_stalker_replacer : public AuraScript
         target->removeSpell(SPELL_HUNTER_ARCANE_SHOT, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_HUNTER_BLEND);
         target->learnSpell(SPELL_HUNTER_SPECTRAL_SHOT);
+
+        if (Pet* pet = target->GetPet())
+            target->CastSpell(target, SPELL_HUNTER_INSTANT_DISMISS_PET, TRIGGERED_FULL_MASK);
     }
 
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -3355,6 +3372,123 @@ class spell_hun_spectral_shot : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_hun_spectral_shot::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_hun_relentless_curse : public AuraScript
+{
+    PrepareAuraScript(spell_hun_relentless_curse);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (Unit* target = eventInfo.GetActionTarget())
+            if (Aura* aura = target->GetAura(SPELL_HUNTER_BLACK_CURSE))
+                if (aura->GetCasterGUID() == GetCaster()->GetGUID())
+                    return true;
+
+        return false;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_hun_relentless_curse::CheckProc);
+    }
+};
+
+class spell_hun_improved_blend : public AuraScript
+{
+    PrepareAuraScript(spell_hun_improved_blend);
+
+    void HandleDummyTick(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (Aura* aura = caster->GetAura(SPELL_HUNTER_INVIS_ACTIVATOR))
+        {
+            int32 health = aurEff->GetAmount();
+            int32 focus = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+            caster->CastCustomSpell(caster, TALENT_HUNTER_IMPROVED_BLEND_PROC, &health, &focus, nullptr, true, nullptr, nullptr);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_hun_improved_blend::HandleDummyTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class spell_hun_shadow_withdrawal : public AuraScript
+{
+    PrepareAuraScript(spell_hun_shadow_withdrawal);
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        if (roll_chance_i(GetAura()->GetEffect(EFFECT_1)->GetAmount()))
+        {
+            Unit* victim = GetTarget();
+
+            if (!victim || victim->isDead())
+                return;
+
+            int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+            int32 healPct = GetAura()->GetEffect(EFFECT_2)->GetAmount();
+
+            if (remainingHealth <= 0 && !victim->HasAura(TALENT_HUNTER_SHADOW_WITHDRAWAL_COOLDOWN))
+            {
+                absorbAmount = dmgInfo.GetDamage();
+                int32 healAmount = int32(victim->CountPctFromMaxHealth(healPct));
+
+                victim->CastSpell(victim, TALENT_HUNTER_SHADOW_WITHDRAWAL_PROC, TRIGGERED_FULL_MASK);
+                victim->CastCustomSpell(TALENT_HUNTER_SHADOW_WITHDRAWAL_COOLDOWN, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
+            }
+            else
+                absorbAmount = 0;
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_hun_shadow_withdrawal::Absorb, EFFECT_0);
+    }
+};
+
+class spell_hun_focused_shots : public AuraScript
+{
+    PrepareAuraScript(spell_hun_focused_shots);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_focused_shots::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_hun_improved_black_curse : public AuraScript
+{
+    PrepareAuraScript(spell_hun_improved_black_curse);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->IsAlive() && eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            if (damage)
+            {
+                int32 healPct = aurEff->GetAmount();
+                int32 healAmount = CalculatePct(damage, healPct);
+                GetCaster()->CastCustomSpell(TALENT_HUNTER_IMPROVED_BLACK_CURSE_HEAL, SPELLVALUE_BASE_POINT0, healAmount, GetCaster(), TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_hun_improved_black_curse::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3451,6 +3585,11 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_shadow_movement);
     RegisterSpellScript(spell_hun_shadow_stalker_replacer);
     RegisterSpellScript(spell_hun_spectral_shot);
+    RegisterSpellScript(spell_hun_relentless_curse);
+    RegisterSpellScript(spell_hun_improved_blend);
+    RegisterSpellScript(spell_hun_shadow_withdrawal);
+    RegisterSpellScript(spell_hun_focused_shots);
+    RegisterSpellScript(spell_hun_improved_black_curse);
     new Hunter_AllMapScript();
     new npc_hunter_spell_stampeded();
 }
