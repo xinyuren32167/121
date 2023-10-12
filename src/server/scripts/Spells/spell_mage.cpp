@@ -143,6 +143,10 @@ enum MageSpells
     SPELL_VISUAL_ARCANE_ORB = 80015,
     SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
+
+    // Runes
+    RUNE_MAGE_SEARING_TOUCH_BUFF = 300747,
+    RUNE_MAGE_SIPHON_STORM_BUFF = 301034,
 };
 
 class npc_mage_spell_arcane_orbs : public CreatureScript
@@ -388,6 +392,27 @@ class spell_mage_arcane_barrage : public SpellScript
 
         if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
             caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL);
+
+        // remove Cord of Infinity's damage buff
+        for (size_t i = 300610; i < 300616; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // remove Explosive Barrage's damage buff
+        for (size_t i = 300622; i < 300628; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // remove Arcane Harmony's damage buff
+        for (size_t i = 300099; i < 300105; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
@@ -1858,6 +1883,17 @@ class spell_mage_alter_time : public AuraScript
 {
     PrepareAuraScript(spell_mage_alter_time);
 
+    Aura* GetTemporalVelocityAura(Unit* caster)
+    {
+        for (size_t i = 300932; i < 300938; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
@@ -1886,6 +1922,12 @@ class spell_mage_alter_time : public AuraScript
 
         caster->NearTeleportTo(originalPosition);
         caster->SetHealth(originalHealth);
+
+        if (GetTemporalVelocityAura(caster))
+        {
+            int32 procSpell = GetTemporalVelocityAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
     }
 
     void Register() override
@@ -2487,7 +2529,7 @@ private:
     Creature* summon;
 };
 
-class spell_mage_black_hole_target_select: public SpellScript
+class spell_mage_black_hole_target_select : public SpellScript
 {
     PrepareSpellScript(spell_mage_black_hole_target_select);
 
@@ -2499,7 +2541,7 @@ class spell_mage_black_hole_target_select: public SpellScript
 
         for (auto const& enemy : targets)
         {
-            if(Unit* target = enemy->ToUnit())
+            if (Unit* target = enemy->ToUnit())
             {
                 if (target->isDead())
                     continue;
@@ -2840,7 +2882,7 @@ class spell_mage_blade_master : public AuraScript
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        
+
         target->removeSpell(SPELL_MAGE_MAGIC_BLOSSOM, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_MAGE_ENCHANT_ARCANIZE, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_MAGE_ENCHANT_FORCE, SPEC_MASK_ALL, false);
@@ -2880,6 +2922,113 @@ class spell_mage_improved_death_blossom : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_mage_improved_death_blossom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
+
+// 12051 Evocation - 300925 Evocation (Movement)
+class spell_mage_evocation : public AuraScript
+{
+    PrepareAuraScript(spell_mage_evocation);
+
+    Aura* GetSiphonStormAura(Unit* caster)
+    {
+        for (size_t i = 300598; i < 300604; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetSiphonStormAura(caster))
+            caster->CastSpell(caster, RUNE_MAGE_SIPHON_STORM_BUFF, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mage_evocation::HandlePeriodic, EFFECT_0, SPELL_AURA_OBS_MOD_POWER);
+    }
+};
+
+// 42859 - Scorch
+class spell_mage_scorch : public SpellScript
+{
+    PrepareSpellScript(spell_mage_scorch);
+
+    Aura* GetSearingTouchAura(Unit* caster)
+    {
+        for (size_t i = 300741; i < 300747; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetSearingTouchAura(caster))
+        {
+            int32 healthThreshold = GetSearingTouchAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                caster->AddAura(RUNE_MAGE_SEARING_TOUCH_BUFF, caster);
+        }
+    }
+
+    void HandleDamage(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+        
+        if (GetSearingTouchAura(caster))
+        {
+            int32 damageIncrease = GetSearingTouchAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 healthThreshold = GetSearingTouchAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                AddPct(damage, damageIncrease);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mage_scorch::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_mage_scorch::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
+
 
 void AddSC_mage_spell_scripts()
 {
@@ -2966,4 +3115,6 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_infused_blades);
     RegisterSpellScript(spell_mage_blade_master);
     RegisterSpellScript(spell_mage_improved_death_blossom);
+    RegisterSpellScript(spell_mage_evocation);
+    RegisterSpellScript(spell_mage_scorch);
 }
