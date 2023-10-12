@@ -106,6 +106,7 @@ enum HunterSpells
     SPELL_HUNTER_TAME_BEAST = 1515,
     SPELL_HUNTER_ARCANE_SHOT = 49045,
     SPELL_HUNTER_SPECTRAL_SHOT = 85019,
+    SPELL_HUNTER_EVANESCENCE = 85020,
     TALENT_HUNTER_SHADOW_CLOAK = 85034,
     TALENT_HUNTER_SHADOW_CLOAK_BUFF = 85037,
     TALENT_HUNTER_IMPROVED_BLEND_PROC = 85053,
@@ -3324,6 +3325,7 @@ class spell_hun_shadow_stalker_replacer : public AuraScript
         target->removeSpell(SPELL_HUNTER_ARCANE_SHOT, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_HUNTER_BLEND);
         target->learnSpell(SPELL_HUNTER_SPECTRAL_SHOT);
+        target->learnSpell(SPELL_HUNTER_EVANESCENCE);
 
         if (Pet* pet = target->GetPet())
             target->CastSpell(target, SPELL_HUNTER_INSTANT_DISMISS_PET, TRIGGERED_FULL_MASK);
@@ -3335,6 +3337,7 @@ class spell_hun_shadow_stalker_replacer : public AuraScript
 
         target->removeSpell(SPELL_HUNTER_BLEND, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_HUNTER_SPECTRAL_SHOT, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_HUNTER_EVANESCENCE, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_HUNTER_BEAST_LORE);
         target->learnSpell(SPELL_HUNTER_CALL_PET);
         target->learnSpell(SPELL_HUNTER_CALL_STABLED_PET);
