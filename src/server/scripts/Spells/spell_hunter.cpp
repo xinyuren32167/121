@@ -109,8 +109,8 @@ enum HunterSpells
     TALENT_HUNTER_SHADOW_CLOAK = 85034,
     TALENT_HUNTER_SHADOW_CLOAK_BUFF = 85037,
     TALENT_HUNTER_IMPROVED_BLEND_PROC = 85053,
-    TALENT_HUNTER_SHADOW_WITHDRAWAL_PROC = 85086,
-    TALENT_HUNTER_SHADOW_WITHDRAWAL_COOLDOWN = 85087,
+    TALENT_HUNTER_BRING_ME_TO_LIFE_PROC = 85086,
+    TALENT_HUNTER_BRING_ME_TO_LIFE_COOLDOWN = 85087,
     TALENT_HUNTER_IMPROVED_BLACK_CURSE_HEAL = 85108,
 };
 
@@ -3418,9 +3418,9 @@ class spell_hun_improved_blend : public AuraScript
     }
 };
 
-class spell_hun_shadow_withdrawal : public AuraScript
+class spell_hun_bring_me_to_life : public AuraScript
 {
-    PrepareAuraScript(spell_hun_shadow_withdrawal);
+    PrepareAuraScript(spell_hun_bring_me_to_life);
 
     void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
@@ -3434,13 +3434,13 @@ class spell_hun_shadow_withdrawal : public AuraScript
             int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
             int32 healPct = GetAura()->GetEffect(EFFECT_2)->GetAmount();
 
-            if (remainingHealth <= 0 && !victim->HasAura(TALENT_HUNTER_SHADOW_WITHDRAWAL_COOLDOWN))
+            if (remainingHealth <= 0 && !victim->HasAura(TALENT_HUNTER_BRING_ME_TO_LIFE_COOLDOWN))
             {
                 absorbAmount = dmgInfo.GetDamage();
                 int32 healAmount = int32(victim->CountPctFromMaxHealth(healPct));
 
-                victim->CastSpell(victim, TALENT_HUNTER_SHADOW_WITHDRAWAL_PROC, TRIGGERED_FULL_MASK);
-                victim->CastCustomSpell(TALENT_HUNTER_SHADOW_WITHDRAWAL_COOLDOWN, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
+                victim->CastSpell(victim, TALENT_HUNTER_BRING_ME_TO_LIFE_PROC, TRIGGERED_FULL_MASK);
+                victim->CastCustomSpell(TALENT_HUNTER_BRING_ME_TO_LIFE_COOLDOWN, SPELLVALUE_BASE_POINT0, healAmount, victim, true, nullptr, aurEff);
             }
             else
                 absorbAmount = 0;
@@ -3449,7 +3449,7 @@ class spell_hun_shadow_withdrawal : public AuraScript
 
     void Register() override
     {
-        OnEffectAbsorb += AuraEffectAbsorbFn(spell_hun_shadow_withdrawal::Absorb, EFFECT_0);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_hun_bring_me_to_life::Absorb, EFFECT_0);
     }
 };
 
@@ -3587,7 +3587,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_spectral_shot);
     RegisterSpellScript(spell_hun_relentless_curse);
     RegisterSpellScript(spell_hun_improved_blend);
-    RegisterSpellScript(spell_hun_shadow_withdrawal);
+    RegisterSpellScript(spell_hun_bring_me_to_life);
     RegisterSpellScript(spell_hun_focused_shots);
     RegisterSpellScript(spell_hun_improved_black_curse);
     new Hunter_AllMapScript();
