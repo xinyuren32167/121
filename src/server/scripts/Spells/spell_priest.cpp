@@ -2164,8 +2164,28 @@ class spell_pri_prayer_of_mending : public AuraScript
     }
 };
 
+class spell_pri_holy_blossom : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_blossom);
 
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_holy_blossom::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
 
 void AddSC_priest_spell_scripts()
 {
@@ -2224,5 +2244,6 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
     RegisterSpellScript(spell_pri_prayer_of_mending);
+    RegisterSpellScript(spell_pri_holy_blossom);
     new npc_pri_shadowy_apparitions();
 }

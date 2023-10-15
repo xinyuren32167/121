@@ -3077,6 +3077,11 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
         {
             for (auto const& target : targets)
                 if (Creature* creatureTarget = target->ToCreature())
+                {
+                    if (CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(creatureTarget->GetEntry()))
+                        if (cinfo->MechanicImmuneMask & 32)
+                            return;
+
                     if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
                     {
                         float distance = target->GetDistance(initialTarget);
@@ -3084,7 +3089,8 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
                             if (Unit* unit = target->ToUnit())
                                 unit->CastSpell(initialTarget, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH_GRIP, TRIGGERED_FULL_MASK);
                     }
-
+                }
+                    
             if (GetEarthsGraspAura(initialTarget))
             {
                 int32 buffSpell = GetEarthsGraspAura(initialTarget)->GetEffect(EFFECT_0)->GetAmount();
