@@ -42,6 +42,8 @@ enum MageSpells
     SPELL_MAGE_ARCANE_SURGE_DAMAGE = 81519,
     SPELL_MAGE_BLAZING_BARRIER = 81526,
     SPELL_MAGE_BLAZING_BARRIER_DAMAGE = 81527,
+    SPELL_MAGE_BRAIN_FREEZE = 44549,
+    SPELL_MAGE_BRAIN_FREEZE_BUFF = 57761,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
     SPELL_MAGE_CAUTERIZE = 81528,
     SPELL_MAGE_CAUTERIZE_AURA = 81529,
@@ -102,6 +104,7 @@ enum MageSpells
     MASTERY_MAGE_SAVANT = 300111,
     MASTERY_MAGE_IGNITE = 300109,
     MASTERY_MAGE_ICICLE = 300105,
+    MASTERY_MAGE_ICICLE_BUFF = 300106,
     MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
 
     // Theirs
@@ -2107,6 +2110,37 @@ class spell_mage_flurry : public AuraScript
 {
     PrepareAuraScript(spell_mage_flurry);
 
+    Aura* GetSplinteringColdAura(Unit* caster)
+    {
+        for (size_t i = 300366; i < 300372; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(MASTERY_MAGE_ICICLE))
+            caster->CastSpell(caster, MASTERY_MAGE_ICICLE_BUFF, TRIGGERED_FULL_MASK);
+
+        if (GetSplinteringColdAura(caster))
+        {
+            int32 procChance = GetSplinteringColdAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->CastSpell(caster, MASTERY_MAGE_ICICLE_BUFF, TRIGGERED_FULL_MASK);
+        }
+    }
+
+
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
@@ -2118,10 +2152,31 @@ class spell_mage_flurry : public AuraScript
         caster->CastSpell(target, SPELL_MAGE_FLURRY_DAMAGE, TRIGGERED_FULL_MASK);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Handle Brain Freeze removal
+        if (Aura* brainFreeze = caster->GetAura(SPELL_MAGE_BRAIN_FREEZE_BUFF))
+            if (brainFreeze->GetDuration() < brainFreeze->GetMaxDuration() - 500)
+                brainFreeze->Remove();
+
+        // remove Brain Fire damage buff
+        for (size_t i = 300384; i < 300390; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
-
+        OnEffectApply += AuraEffectApplyFn(spell_mage_flurry::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_mage_flurry::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_flurry::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3033,6 +3088,31 @@ class spell_mage_scorch : public SpellScript
     }
 };
 
+// 42931 - Cone of Cold
+class spell_mage_cone_of_cold : public SpellScript
+{
+    PrepareSpellScript(spell_mage_cone_of_cold);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Snowstorm Cone of Cold buff
+        for (size_t i = 301036; i < 301042; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_mage_cone_of_cold::HandleAfterHit);
+    }
+};
 
 
 
@@ -3123,4 +3203,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_improved_death_blossom);
     RegisterSpellScript(spell_mage_evocation);
     RegisterSpellScript(spell_mage_scorch);
+    RegisterSpellScript(spell_mage_cone_of_cold);
 }
