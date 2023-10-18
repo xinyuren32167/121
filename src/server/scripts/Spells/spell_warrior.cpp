@@ -2136,7 +2136,7 @@ class spell_warr_intoxicating_swipe : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Player* caster = GetCaster()->ToPlayer();
-        if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARRIOR_INTOXICATING_SWIPE, EFFECT_2))
+        if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_WARRIOR_INTOXICATING_SWIPE, EFFECT_0))
         {
             int32 reductionPerTarget = aurEff->GetAmount();
             int32 targetQte = targets.size();
