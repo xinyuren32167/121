@@ -29,7 +29,7 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_SEL_MAXID_LOADOUT, "SELECT MAX(id) + 1 FROM character_rune_loadout", CONNECTION_SYNCH);
     PrepareStatement(CHAR_INS_PROGESSION, "INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES (?, 0, 0, ?)", CONNECTION_ASYNC);
 
-    PrepareStatement(CHAR_INS_RUNE_SLOT, "INSERT INTO character_rune_slots (id, runeId, runeSpellId, `order`) VALUES (?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_INS_RUNE_SLOT, "INSERT INTO character_rune_slots (id, runeSpellId, `order`) VALUES (?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_SLOT, "DELETE FROM character_rune_slots WHERE `order` = ? AND id = ?", CONNECTION_ASYNC);
 
     PrepareStatement(CHAR_DEL_QUEST_POOL_SAVE, "DELETE FROM pool_quest_save WHERE pool_id = ?", CONNECTION_ASYNC);

@@ -240,6 +240,14 @@ void Eluna::RefreshSlotsRune(Player* pPlayer)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::PushRune(Player* pPlayer, std::string rune)
+{
+    START_HOOK(PLAYER_EVENT_PUSH_RUNE);
+    Push(pPlayer);
+    Push(rune);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
 
 void Eluna::OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId)
 {

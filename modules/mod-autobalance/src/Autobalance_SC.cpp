@@ -88,6 +88,8 @@ public:
         // We dont have a healer probably.
         if (playerCountDungeon <= 4)
             return damageScaling;
+
+        return 1.0f;
     }
 
     uint32 _Modifer_DealDamage(Unit* target, Unit* attacker, uint32 damage)

@@ -453,6 +453,7 @@ ElunaRegister<Player> PlayerMethods[] =
 {
     // Getters
     { "GetRunes", &LuaPlayer::GetRunes },
+    { "GetUpgradableRunes", &LuaPlayer::GetUpgradableRunes },
     { "GetLoadouts", &LuaPlayer::GetLoadouts },
     { "GetSlots", &LuaPlayer::GetSlotsRune },
     { "GetProgression", &LuaPlayer::GetProgression },

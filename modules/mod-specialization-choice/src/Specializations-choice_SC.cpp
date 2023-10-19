@@ -204,6 +204,8 @@ class spell_activate_specialization : public SpellScript
     }
 };
 
+
+
 class SpecChoice_WorldScript : public WorldScript
 {
 public:

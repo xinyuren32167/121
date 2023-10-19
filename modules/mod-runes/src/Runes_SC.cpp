@@ -69,6 +69,7 @@ public:
         static ChatCommandTable commandTable =
         {
             { "reload runes",  HandleReloadCommand, SEC_MODERATOR,     Console::No },
+            { "addRune",  HandleAddRuneCommand, SEC_MODERATOR,     Console::No },
 
         };
         return commandTable;
@@ -88,6 +89,21 @@ public:
 
         return true;
     }
+
+    static bool HandleAddRuneCommand(ChatHandler* handler, Optional<PlayerIdentifier> playerID)
+    {
+        Player* player = handler->GetPlayer();
+        int8 quality = NORMAL_QUALITY;
+        Rune rune = RunesManager::GetRandomRune(player, quality);
+
+        if (!rune) {
+            LOG_ERROR("No Rune", "No rune found, error");
+            return false;
+        }
+        RunesManager::AddRunePlayer(player, rune);
+
+        return true;
+    }
 };
 
 class spell_activate_rune : public SpellScript
@@ -99,16 +115,10 @@ class spell_activate_rune : public SpellScript
         Player* player = GetCaster()->ToPlayer();
         SpellValue const* value = GetSpellValue();
         uint32 runeId = value->EffectBasePoints[EFFECT_0];
-        Rune rune;
-
-        if(RunesManager::IsDebugEnabled())
-            rune = RunesManager::GetRuneBySpellId(runeId);
-        else
-            rune = RunesManager::GetRuneById(player, runeId);
-
+        Rune rune = RunesManager::GetRuneBySpellId(runeId);
         RunesManager::SpellConversion(rune.spellId, player, true);
         GetCaster()->AddAura(rune.spellId, GetCaster());
-        RunesManager::AddRuneToSlot(player, rune, runeId);
+        RunesManager::AddRuneToSlot(player, rune);
         sEluna->OnActivateRune(player, "Rune successfully activated!", 0);
     }
 
@@ -133,10 +143,39 @@ public:
         RunesManager::LoadAllSlotRune();
         RunesManager::LoadAllProgression();
         RunesManager::LoadSpellsConversion();
+        RunesManager::LoadCharacterDraws();
     }
 };
 
 
+class spell_generate_random_rune : public SpellScript
+{
+    PrepareSpellScript(spell_generate_random_rune);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        int8 quality = NORMAL_QUALITY;
+        if (m_scriptSpellId == 79501) quality = UNCOMMON_QUALITY;
+        else if (m_scriptSpellId == 79502) quality = RARE_QUALITY;
+        else if (m_scriptSpellId == 79503) quality = EPIC_QUALITY;
+        else quality = LEGENDARY_QUALITY;
+
+        Rune rune = RunesManager::GetRandomRune(player, quality);
+
+        if (!rune) {
+            LOG_ERROR("No Rune", "No rune found, error");
+            return;
+        }
+
+        RunesManager::AddRunePlayer(player, rune);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_generate_random_rune::HandleProc);
+    }
+};
 
 // Add all scripts in one
 void AddSC_runesScripts()
@@ -145,4 +184,5 @@ void AddSC_runesScripts()
     new Runes_WorldScript();
     new Runes_CommandsScript();
     RegisterSpellScript(spell_activate_rune);
+    RegisterSpellScript(spell_generate_random_rune);
 }
