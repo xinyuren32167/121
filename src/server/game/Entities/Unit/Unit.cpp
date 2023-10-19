@@ -6955,8 +6955,35 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     if (!counter)
                         return true;
 
-                    // can't proc if aoe
                     int32 procID = procSpell->Id;
+                    Unit* caster = target;
+
+                    // Fuel the Fire rune
+                    for (size_t i = 301042; i < 301048; i++)
+                    {
+                        if (caster->HasAura(i) && procID == 42926)
+                        {
+                            int32 chancePct = caster->GetAura(i)->GetEffect(EFFECT_0)->GetAmount();
+                            float critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+                            int32 procChance = CalculatePct(critChance, chancePct);
+
+                            if (roll_chance_i(procChance))
+                            {
+                                if (procEx & PROC_EX_CRITICAL_HIT)
+                                {
+                                    counter->SetAmount(counter->GetAmount() * 2);
+                                    if (counter->GetAmount() < 100) // not enough
+                                        return true;
+
+                                    CastSpell(this, 48108, true, castItem, triggeredByAura);
+                                }
+                                counter->SetAmount(25);
+                                return true;
+                            }
+                        }
+                    }
+           
+                    // can't proc if aoe                    
                     if (procID == 42926 || procID == 42945 || procID == 42950 || procID == 55362 ||
                         procID == 55355 || procID == 80030 || procID == 81531)
                         return true;

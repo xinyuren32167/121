@@ -42,6 +42,7 @@ enum MageSpells
     SPELL_MAGE_ARCANE_SURGE_DAMAGE = 81519,
     SPELL_MAGE_BLAZING_BARRIER = 81526,
     SPELL_MAGE_BLAZING_BARRIER_DAMAGE = 81527,
+    SPELL_MAGE_BLINK = 1953,
     SPELL_MAGE_BRAIN_FREEZE = 44549,
     SPELL_MAGE_BRAIN_FREEZE_BUFF = 57761,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
@@ -386,6 +387,17 @@ class spell_mage_arcane_barrage : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_barrage);
 
+    Aura* GetArcaneTempoAura(Unit* caster)
+    {
+        for (size_t i = 301134; i < 301140; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleAfterHit()
     {
         Unit* caster = GetCaster();
@@ -393,8 +405,16 @@ class spell_mage_arcane_barrage : public SpellScript
         if (!caster)
             return;
 
-        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
-            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL);
+        if (Aura* arcaneCharges = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
+        {
+            if (GetArcaneTempoAura(caster))
+            {
+                int32 procSpell = GetArcaneTempoAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+
+            arcaneCharges->Remove();
+        }
 
         // remove Cord of Infinity's damage buff
         for (size_t i = 300610; i < 300616; i++)
@@ -1691,6 +1711,17 @@ class spell_mage_arcane_explosion : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_explosion);
 
+    Aura* GetReverberateAura(Unit* caster)
+    {
+        for (size_t i = 301090; i < 301096; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
@@ -1707,6 +1738,17 @@ class spell_mage_arcane_explosion : public SpellScript
             return;
         }
 
+        if (GetReverberateAura(caster))
+        {
+            int32 targetThreshold = GetReverberateAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 procChance = GetReverberateAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (targetQte >= targetThreshold)
+            {
+                if (roll_chance_i(procChance))
+                    caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
+            }
+        }
 
         caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
     }
@@ -1897,6 +1939,17 @@ class spell_mage_alter_time : public AuraScript
         return nullptr;
     }
 
+    Aura* GetMasterOfTimeAura(Unit* caster)
+    {
+        for (size_t i = 301066; i < 301072; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
@@ -1930,6 +1983,12 @@ class spell_mage_alter_time : public AuraScript
         {
             int32 procSpell = GetTemporalVelocityAura(caster)->GetEffect(EFFECT_1)->GetAmount();
             caster->AddAura(procSpell, caster);
+        }
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (GetMasterOfTimeAura(caster))
+                player->RemoveSpellCooldown(SPELL_MAGE_BLINK, true);
         }
     }
 
@@ -3034,6 +3093,17 @@ class spell_mage_scorch : public SpellScript
         return nullptr;
     }
 
+    Aura* GetCardinalAccelerationAura(Unit* caster)
+    {
+        for (size_t i = 301072; i < 301078; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleCast()
     {
         Unit* caster = GetCaster();
@@ -3053,6 +3123,15 @@ class spell_mage_scorch : public SpellScript
             if (target->GetHealthPct() < healthThreshold)
                 caster->AddAura(RUNE_MAGE_SEARING_TOUCH_BUFF, caster);
         }
+
+        if (GetCardinalAccelerationAura(caster))
+        {
+            int32 healthThreshold = GetCardinalAccelerationAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+            int32 procSpell = GetCardinalAccelerationAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                caster->AddAura(procSpell, target);
+        }
     }
 
     void HandleDamage(SpellEffIndex /*effIndex*/)
@@ -3068,7 +3147,7 @@ class spell_mage_scorch : public SpellScript
             return;
 
         int32 damage = GetHitDamage();
-        
+
         if (GetSearingTouchAura(caster))
         {
             int32 damageIncrease = GetSearingTouchAura(caster)->GetEffect(EFFECT_0)->GetAmount();

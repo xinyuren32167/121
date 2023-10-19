@@ -48,6 +48,7 @@ enum MageSpells
     SPELL_MAGE_LIVING_BOMB_MAIN_EXPLOSION = 55362,
     SPELL_MAGE_LIVING_BOMB_SECOND = 55354,
     SPELL_MAGE_LIVING_BOMB_SECOND_EXPLOSION = 55355,
+    SPELL_MAGE_MAGIC_STRIKE = 81546,
     SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION = 55343,
     SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID = 31216,
     SPELL_MAGE_PRISMATIC_BARRIER = 81523,
@@ -115,6 +116,7 @@ enum MageSpells
     RUNE_MAGE_DIVERTED_ENERGY_HEAL = 300142,
     RUNE_MAGE_SUN_KINGS_BLESSING_LISTENER = 300696,
     RUNE_MAGE_SUN_KINGS_BLESSING_BUFF = 301035,
+    RUNE_MAGE_SIPHONING_STRIKES_HEAL = 301132,
 };
 
 class spell_tempest_barrier : public SpellScript
@@ -1971,56 +1973,36 @@ class spell_incendiary_eruptions : public AuraScript
 {
     PrepareAuraScript(spell_incendiary_eruptions);
 
-    Aura* GetRuneAura()
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(300986))
-            return GetCaster()->GetAura(300986);
-
-        if (GetCaster()->HasAura(300987))
-            return GetCaster()->GetAura(300987);
-
-        if (GetCaster()->HasAura(300988))
-            return GetCaster()->GetAura(300988);
-
-        if (GetCaster()->HasAura(300990))
-            return GetCaster()->GetAura(300990);
-
-        if (GetCaster()->HasAura(300991))
-            return GetCaster()->GetAura(300991);
-
-        if (GetCaster()->HasAura(300992))
-            return GetCaster()->GetAura(300992);
-
-        return nullptr;
+        return eventInfo.GetDamageInfo();
     }
 
-    int GetProcSpell()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-    }
+        Unit* caster = GetCaster();
 
-    int GetProcPct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
+        if (!caster || caster->isDead())
+            return;
 
-    void HandleProc(AuraEffect const* aurEff)
-    {
-        if (GetRuneAura())
-        {
-            if (!GetTarget()->HasAura(GetProcSpell()))
-            {
-                uint32 random = urand(1, 100);
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
 
-                if (random <= GetProcPct())
-                    GetCaster()->AddAura(GetProcSpell(), GetTarget());
-            }
-        }
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (victim->HasAura(SPELL_MAGE_LIVING_BOMB_MAIN))
+            return;
+
+        caster->AddAura(SPELL_MAGE_LIVING_BOMB_MAIN, victim);
     }
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_incendiary_eruptions::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE);
+        DoCheckProc += AuraCheckProcFn(spell_incendiary_eruptions::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_incendiary_eruptions::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2137,6 +2119,55 @@ class rune_mage_convection : public SpellScript
     }
 };
 
+class rune_mage_siphoning_strikes : public AuraScript
+{
+    PrepareAuraScript(rune_mage_siphoning_strikes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!eventInfo.GetSpellInfo())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 procSpell;
+
+        if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+            procSpell = GetEffect(EFFECT_1)->GetAmount();
+        else
+            procSpell = aurEff->GetAmount();
+
+        if (spellID == SPELL_MAGE_MAGIC_STRIKE)
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        else
+        {
+            int32 amount = eventInfo.GetDamageInfo()->GetDamage();
+
+            caster->CastCustomSpell(RUNE_MAGE_SIPHONING_STRIKES_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_siphoning_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_siphoning_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_mage_perks_scripts()
@@ -2192,6 +2223,9 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_fervent_flickering);
     RegisterSpellScript(spell_accumulative_shielding);
     RegisterSpellScript(rune_mage_convection);
+    RegisterSpellScript(rune_mage_siphoning_strikes);
+
+
 
 }
 
