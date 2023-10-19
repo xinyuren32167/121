@@ -2778,7 +2778,12 @@ class spell_dk_gorefiends_grasp : public SpellScript
         if (targets.size() > 0)
         {
             for (auto const& target : targets)
-                if(Creature* creatureTarget = target->ToCreature())
+                if (Creature* creatureTarget = target->ToCreature())
+                {
+                    if (CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(creatureTarget->GetEntry()))
+                        if (cinfo->MechanicImmuneMask & 32)
+                            return;
+
                     if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
                     {
                         float distance = target->GetDistance(initialTarget);
@@ -2786,6 +2791,7 @@ class spell_dk_gorefiends_grasp : public SpellScript
                             if (Unit* unit = target->ToUnit())
                                 unit->CastSpell(initialTarget, SPELL_DK_GOREFIENDS_GRASP_PULL, TRIGGERED_FULL_MASK);
                     }
+                }
         }
     }
 

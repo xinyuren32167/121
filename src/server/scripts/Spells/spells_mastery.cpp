@@ -14,6 +14,16 @@ enum Masteries
     // Warrior
     MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF = 199999,
 
+    // Mage
+    MASTERY_MAGE_ICICLE = 300105,
+    MASTERY_MAGE_ICICLE_BUFF = 300106,
+    MASTERY_MAGE_ICICLE_DAMAGE = 300107,
+    MASTERY_MAGE_ICICLE_PERIODIC = 300108,
+    MASTERY_MAGE_IGNITE = 300109,
+    MASTERY_MAGE_IGNITE_DOTS = 300110,
+    MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
+    MASTERY_MAGE_BATTLE_KNOWLEDGE_BUFF = 300116,
+
     // Hunter
     MASTERY_HUNTER_FROM_THE_SHADOWS = 499996,
     MASTERY_HUNTER_FROM_THE_SHADOWS_BUFF = 499998,
@@ -63,12 +73,6 @@ enum Masteries
     MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF = 1100017,
     MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF = 1100016,
     MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF = 1100015,
-
-    // Mage
-    MASTERY_MAGE_IGNITE = 300109,
-    MASTERY_MAGE_IGNITE_DOTS = 300110,
-    MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
-    MASTERY_MAGE_BATTLE_KNOWLEDGE_BUFF = 300116,
 };
 
 // Mage
@@ -76,26 +80,29 @@ class spell_icicle_ice_lance : public SpellScript
 {
     PrepareSpellScript(spell_icicle_ice_lance);
 
-    Aura* GetBuffAura()
-    {
-        if (GetCaster()->HasAura(300106))
-            return GetCaster()->GetAura(300106);
-
-        return nullptr;
-    }
-
     void HandleProc()
     {
-        if (GetBuffAura())
-        {
-            GetCaster()->CastSpell(GetExplTargetUnit(), 300108, TRIGGERED_FULL_MASK);
-            if (Aura* aura = GetExplTargetUnit()->GetAura(300108)) {
-                if (Aura* buffAura = GetBuffAura()) {
-                    aura->SetDuration(buffAura->GetStackAmount() * 200);
-                    GetCaster()->RemoveAura(GetBuffAura());
-                }
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(MASTERY_MAGE_ICICLE_BUFF))
+            return;
+
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        caster->CastSpell(target, MASTERY_MAGE_ICICLE_PERIODIC, TRIGGERED_FULL_MASK);
+
+        if (Aura* aura = target->GetAura(MASTERY_MAGE_ICICLE_PERIODIC))
+            if (Aura* buffAura = caster->GetAura(MASTERY_MAGE_ICICLE_BUFF))
+            {
+                aura->SetDuration(buffAura->GetStackAmount() * 200);
+                caster->RemoveAura(buffAura);
             }
-        }
     }
 
     void Register() override
@@ -108,28 +115,28 @@ class spell_icicle_ice_lance_aura : public AuraScript
 {
     PrepareAuraScript(spell_icicle_ice_lance_aura);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(300105))
-            return GetCaster()->GetAura(300105);
-
-        return nullptr;
-    }
-
-    int GetProcPct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-        Player* player = GetCaster()->ToPlayer();
-        if (player->IsAlive())
-        {
-            float pct = player->GetMastery() + GetProcPct();
-            int32 amount = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct));
+        Unit* caster = GetCaster();
 
-            player->CastCustomSpell(300107, SPELLVALUE_BASE_POINT0, amount, GetTarget(), true);
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(MASTERY_MAGE_ICICLE))
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            int32 procPct = caster->GetAura(MASTERY_MAGE_ICICLE)->GetEffect(EFFECT_0)->GetAmount();
+            float pct = player->GetMastery() + procPct;
+            int32 amount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct);
+
+            player->CastCustomSpell(MASTERY_MAGE_ICICLE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, true);
         }
     }
 
@@ -139,40 +146,43 @@ class spell_icicle_ice_lance_aura : public AuraScript
     }
 };
 
-class spell_icicle_frostbolt : public SpellScript
+class spell_icicle_frostbolt_flurry : public SpellScript
 {
-    PrepareSpellScript(spell_icicle_frostbolt);
-
-    int GetStackIcicle()
-    {
-        return GetCaster()->GetAura(300106)->GetStackAmount();
-    }
-
-    int GetProcSpell()
-    {
-        return GetCaster()->GetAura(300106)->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-    }
-
-    int GetProcPct()
-    {
-        return GetCaster()->GetAura(300105)->GetEffect(EFFECT_0)->GetAmount();
-    }
+    PrepareSpellScript(spell_icicle_frostbolt_flurry);
 
     void HandleProc()
     {
-        Player* player = GetCaster()->ToPlayer();
-        if (player->HasAura(300106)) {
-            if (GetStackIcicle() == 5) {
-                float pct = player->GetMastery() + GetProcPct();
-                int32 amount = int32(CalculatePct(player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct));
-                player->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetExplTargetUnit(), true);
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(MASTERY_MAGE_ICICLE))
+            return;
+
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            if (Aura* icicleBuff = player->GetAura(MASTERY_MAGE_ICICLE_BUFF))
+            {
+                if (icicleBuff->GetStackAmount() < 5)
+                    return;
+
+                int32 procPct = caster->GetAura(MASTERY_MAGE_ICICLE)->GetEffect(EFFECT_0)->GetAmount();
+                float pct = player->GetMastery() + procPct;
+                int32 amount = CalculatePct(player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST), pct);
+                player->CastCustomSpell(MASTERY_MAGE_ICICLE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, true);
             }
         }
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_icicle_frostbolt::HandleProc);
+        OnCast += SpellCastFn(spell_icicle_frostbolt_flurry::HandleProc);
     }
 };
 
@@ -634,7 +644,7 @@ class spell_mastery_from_the_shadows_periodic : public AuraScript
             {
                 player->AddAura(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK, player);
 
-                if(Aura* stackAura = player->GetAura(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK))
+                if (Aura* stackAura = player->GetAura(MASTERY_HUNTER_FROM_THE_SHADOWS_INVIS_STACK))
                     if (stackAura->GetStackAmount() >= 5)
                     {
                         float mastery = player->GetMastery();
@@ -683,7 +693,7 @@ class spell_mastery_from_the_shadows_buff_remove : public AuraScript
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mastery_from_the_shadows_buff_remove::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mastery_from_the_shadows_buff_remove::HandlePeriodic, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
     }
 };
 
@@ -1284,7 +1294,7 @@ class spell_mastery_sha_elemental_overload : public AuraScript
                 // Check for Power of The Maelstrom Buff
                 if (!player->HasAura(1000636) || spellID != 84057)
                     return;
-                else 
+                else
                     player->GetAura(1000636)->ModCharges(-1);
             }
 
@@ -1301,7 +1311,7 @@ class spell_mastery_sha_elemental_overload : public AuraScript
                 // check if Elemental Mastery is known and on cooldown
                 if (player->HasSpell(16166) && player->HasSpellCooldown(16166))
                     player->ModifySpellCooldown(16166, -amount);
-            }                
+            }
         }
     }
 
@@ -1655,7 +1665,7 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_warlock_chaotic_energies);
     RegisterSpellScript(spell_mastery_warlock_potent_afflictions);
     RegisterSpellScript(spell_icicle_ice_lance);
-    RegisterSpellScript(spell_icicle_frostbolt);
+    RegisterSpellScript(spell_icicle_frostbolt_flurry);
     RegisterSpellScript(spell_icicle_ice_lance_aura);
     RegisterSpellScript(spell_mastery_ignite);
     RegisterSpellScript(spell_mastery_savant);

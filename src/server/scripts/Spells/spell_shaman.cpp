@@ -164,6 +164,7 @@ enum ShamanSpells
     // Talents
     TALENT_SHAMAN_SEAMLESS_WATER = 84149,
     TALENT_SHAMAN_TIDAL_WAVES_BUFF = 53390,
+    TALENT_SHAMAN_STORM_PROFICIENCY_PROC = 84175,
 
     // Runes
     RUNE_SHAMAN_GUARDIANS_CUDGEL_DEBUFF = 1000428,
@@ -3077,6 +3078,11 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
         {
             for (auto const& target : targets)
                 if (Creature* creatureTarget = target->ToCreature())
+                {
+                    if (CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(creatureTarget->GetEntry()))
+                        if (cinfo->MechanicImmuneMask & 32)
+                            return;
+
                     if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
                     {
                         float distance = target->GetDistance(initialTarget);
@@ -3084,7 +3090,8 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
                             if (Unit* unit = target->ToUnit())
                                 unit->CastSpell(initialTarget, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH_GRIP, TRIGGERED_FULL_MASK);
                     }
-
+                }
+                    
             if (GetEarthsGraspAura(initialTarget))
             {
                 int32 buffSpell = GetEarthsGraspAura(initialTarget)->GetEffect(EFFECT_0)->GetAmount();
@@ -4454,9 +4461,25 @@ class spell_sha_tidal_wave_consumed : public SpellScript
     }
 };
 
+class spell_sha_storm_proficiency: public AuraScript
+{
+    PrepareAuraScript(spell_sha_storm_proficiency);
 
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_STORM)
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+            {
+                if (eventInfo.GetActionTarget() != GetCaster())
+                    GetCaster()->CastSpell(eventInfo.GetActionTarget(), TALENT_SHAMAN_STORM_PROFICIENCY_PROC, TRIGGERED_FULL_MASK);
+            }
+    }
 
-
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_storm_proficiency::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_shaman_spell_scripts()
 {
@@ -4560,4 +4583,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_healing_rain_periodic);
     RegisterSpellScript(spell_sha_healing_tide_totem_heal);
     RegisterSpellScript(spell_sha_tidal_wave_consumed);
+    RegisterSpellScript(spell_sha_storm_proficiency);
 }

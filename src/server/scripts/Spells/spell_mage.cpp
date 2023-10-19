@@ -42,6 +42,9 @@ enum MageSpells
     SPELL_MAGE_ARCANE_SURGE_DAMAGE = 81519,
     SPELL_MAGE_BLAZING_BARRIER = 81526,
     SPELL_MAGE_BLAZING_BARRIER_DAMAGE = 81527,
+    SPELL_MAGE_BLINK = 1953,
+    SPELL_MAGE_BRAIN_FREEZE = 44549,
+    SPELL_MAGE_BRAIN_FREEZE_BUFF = 57761,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
     SPELL_MAGE_CAUTERIZE = 81528,
     SPELL_MAGE_CAUTERIZE_AURA = 81529,
@@ -102,6 +105,7 @@ enum MageSpells
     MASTERY_MAGE_SAVANT = 300111,
     MASTERY_MAGE_IGNITE = 300109,
     MASTERY_MAGE_ICICLE = 300105,
+    MASTERY_MAGE_ICICLE_BUFF = 300106,
     MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
 
     // Theirs
@@ -143,6 +147,10 @@ enum MageSpells
     SPELL_VISUAL_ARCANE_ORB = 80015,
     SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
+
+    // Runes
+    RUNE_MAGE_SEARING_TOUCH_BUFF = 300747,
+    RUNE_MAGE_SIPHON_STORM_BUFF = 301034,
 };
 
 class npc_mage_spell_arcane_orbs : public CreatureScript
@@ -379,6 +387,17 @@ class spell_mage_arcane_barrage : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_barrage);
 
+    Aura* GetArcaneTempoAura(Unit* caster)
+    {
+        for (size_t i = 301134; i < 301140; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleAfterHit()
     {
         Unit* caster = GetCaster();
@@ -386,8 +405,37 @@ class spell_mage_arcane_barrage : public SpellScript
         if (!caster)
             return;
 
-        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
-            caster->RemoveAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL);
+        if (Aura* arcaneCharges = caster->GetAura(SPELL_MAGE_ARCANE_CHARGE_VISUAL))
+        {
+            if (GetArcaneTempoAura(caster))
+            {
+                int32 procSpell = GetArcaneTempoAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+
+            arcaneCharges->Remove();
+        }
+
+        // remove Cord of Infinity's damage buff
+        for (size_t i = 300610; i < 300616; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // remove Explosive Barrage's damage buff
+        for (size_t i = 300622; i < 300628; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // remove Arcane Harmony's damage buff
+        for (size_t i = 300099; i < 300105; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
@@ -1663,6 +1711,17 @@ class spell_mage_arcane_explosion : public SpellScript
 {
     PrepareSpellScript(spell_mage_arcane_explosion);
 
+    Aura* GetReverberateAura(Unit* caster)
+    {
+        for (size_t i = 301090; i < 301096; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
@@ -1679,6 +1738,17 @@ class spell_mage_arcane_explosion : public SpellScript
             return;
         }
 
+        if (GetReverberateAura(caster))
+        {
+            int32 targetThreshold = GetReverberateAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 procChance = GetReverberateAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (targetQte >= targetThreshold)
+            {
+                if (roll_chance_i(procChance))
+                    caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
+            }
+        }
 
         caster->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
     }
@@ -1858,6 +1928,28 @@ class spell_mage_alter_time : public AuraScript
 {
     PrepareAuraScript(spell_mage_alter_time);
 
+    Aura* GetTemporalVelocityAura(Unit* caster)
+    {
+        for (size_t i = 300932; i < 300938; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetMasterOfTimeAura(Unit* caster)
+    {
+        for (size_t i = 301066; i < 301072; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
@@ -1886,6 +1978,18 @@ class spell_mage_alter_time : public AuraScript
 
         caster->NearTeleportTo(originalPosition);
         caster->SetHealth(originalHealth);
+
+        if (GetTemporalVelocityAura(caster))
+        {
+            int32 procSpell = GetTemporalVelocityAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (GetMasterOfTimeAura(caster))
+                player->RemoveSpellCooldown(SPELL_MAGE_BLINK, true);
+        }
     }
 
     void Register() override
@@ -2065,6 +2169,37 @@ class spell_mage_flurry : public AuraScript
 {
     PrepareAuraScript(spell_mage_flurry);
 
+    Aura* GetSplinteringColdAura(Unit* caster)
+    {
+        for (size_t i = 300366; i < 300372; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(MASTERY_MAGE_ICICLE))
+            caster->CastSpell(caster, MASTERY_MAGE_ICICLE_BUFF, TRIGGERED_FULL_MASK);
+
+        if (GetSplinteringColdAura(caster))
+        {
+            int32 procChance = GetSplinteringColdAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->CastSpell(caster, MASTERY_MAGE_ICICLE_BUFF, TRIGGERED_FULL_MASK);
+        }
+    }
+
+
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
@@ -2076,10 +2211,31 @@ class spell_mage_flurry : public AuraScript
         caster->CastSpell(target, SPELL_MAGE_FLURRY_DAMAGE, TRIGGERED_FULL_MASK);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Handle Brain Freeze removal
+        if (Aura* brainFreeze = caster->GetAura(SPELL_MAGE_BRAIN_FREEZE_BUFF))
+            if (brainFreeze->GetDuration() < brainFreeze->GetMaxDuration() - 500)
+                brainFreeze->Remove();
+
+        // remove Brain Fire damage buff
+        for (size_t i = 300384; i < 300390; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
-
+        OnEffectApply += AuraEffectApplyFn(spell_mage_flurry::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_mage_flurry::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_flurry::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2487,7 +2643,7 @@ private:
     Creature* summon;
 };
 
-class spell_mage_black_hole_target_select: public SpellScript
+class spell_mage_black_hole_target_select : public SpellScript
 {
     PrepareSpellScript(spell_mage_black_hole_target_select);
 
@@ -2499,7 +2655,7 @@ class spell_mage_black_hole_target_select: public SpellScript
 
         for (auto const& enemy : targets)
         {
-            if(Unit* target = enemy->ToUnit())
+            if (Unit* target = enemy->ToUnit())
             {
                 if (target->isDead())
                     continue;
@@ -2511,8 +2667,14 @@ class spell_mage_black_hole_target_select: public SpellScript
                 if (distance <= 15)
                 {
                     if (Creature* creatureTarget = target->ToCreature())
-                        if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
+                    {
+                        if (CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(creatureTarget->GetEntry()))
+                            if (cinfo->MechanicImmuneMask & 32)
+                                return;
+
+                        if (creatureTarget->isWorldBoss() || creatureTarget->IsDungeonBoss())
                             target->GetMotionMaster()->MoveJump(pos, 8.0f, 8.0f);
+                    }
                 }
             }
         }
@@ -2840,7 +3002,7 @@ class spell_mage_blade_master : public AuraScript
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        
+
         target->removeSpell(SPELL_MAGE_MAGIC_BLOSSOM, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_MAGE_ENCHANT_ARCANIZE, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_MAGE_ENCHANT_FORCE, SPEC_MASK_ALL, false);
@@ -2880,6 +3042,158 @@ class spell_mage_improved_death_blossom : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_mage_improved_death_blossom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
+
+// 12051 Evocation - 300925 Evocation (Movement)
+class spell_mage_evocation : public AuraScript
+{
+    PrepareAuraScript(spell_mage_evocation);
+
+    Aura* GetSiphonStormAura(Unit* caster)
+    {
+        for (size_t i = 300598; i < 300604; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetSiphonStormAura(caster))
+            caster->CastSpell(caster, RUNE_MAGE_SIPHON_STORM_BUFF, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_mage_evocation::HandlePeriodic, EFFECT_0, SPELL_AURA_OBS_MOD_POWER);
+    }
+};
+
+// 42859 - Scorch
+class spell_mage_scorch : public SpellScript
+{
+    PrepareSpellScript(spell_mage_scorch);
+
+    Aura* GetSearingTouchAura(Unit* caster)
+    {
+        for (size_t i = 300741; i < 300747; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetCardinalAccelerationAura(Unit* caster)
+    {
+        for (size_t i = 301072; i < 301078; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetSearingTouchAura(caster))
+        {
+            int32 healthThreshold = GetSearingTouchAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                caster->AddAura(RUNE_MAGE_SEARING_TOUCH_BUFF, caster);
+        }
+
+        if (GetCardinalAccelerationAura(caster))
+        {
+            int32 healthThreshold = GetCardinalAccelerationAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+            int32 procSpell = GetCardinalAccelerationAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                caster->AddAura(procSpell, target);
+        }
+    }
+
+    void HandleDamage(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (GetSearingTouchAura(caster))
+        {
+            int32 damageIncrease = GetSearingTouchAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 healthThreshold = GetSearingTouchAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            if (target->GetHealthPct() < healthThreshold)
+                AddPct(damage, damageIncrease);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_mage_scorch::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_mage_scorch::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 42931 - Cone of Cold
+class spell_mage_cone_of_cold : public SpellScript
+{
+    PrepareSpellScript(spell_mage_cone_of_cold);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Snowstorm Cone of Cold buff
+        for (size_t i = 301036; i < 301042; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_mage_cone_of_cold::HandleAfterHit);
+    }
+};
+
+
 
 void AddSC_mage_spell_scripts()
 {
@@ -2966,4 +3280,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_infused_blades);
     RegisterSpellScript(spell_mage_blade_master);
     RegisterSpellScript(spell_mage_improved_death_blossom);
+    RegisterSpellScript(spell_mage_evocation);
+    RegisterSpellScript(spell_mage_scorch);
+    RegisterSpellScript(spell_mage_cone_of_cold);
 }

@@ -99,13 +99,21 @@ enum PriestSpells
     SPELL_PRIEST_VOID_ERUPTION = 81042,
     SPELL_PRIEST_VOID_ERUPTION_DAMAGE = 81043,
     SPELL_PRIEST_VOIDFORM = 81044,
+    SPELL_PRIEST_HOLY_FLAME_DAMAGE = 86206,
+    SPELL_PRIEST_HOLY_FLAME_HEAL = 86207,
+    SPELL_PRIEST_HOLY_MIGHT = 86208,
+    SPELL_PRIEST_HOLY_MIGHT_STRENGTH = 86209,
+    SPELL_PRIEST_HOLY_MIGHT_AGILITY = 86210,
+    SPELL_PRIEST_HOLY_MIGHT_INTELLECT = 86211,
+    SPELL_PRIEST_HOLY_MIGHT_SPIRIT = 86212,
+    SPELL_PRIEST_HOLY_MIGHT_AOE = 86214,
+    SPELL_PRIEST_HOLY_WOUNDS_PROC = 86222,
 
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
     SPELL_PRIEST_TWIN_DISCIPLINE_R1 = 47586,
     SPELL_PRIEST_SPIRITUAL_HEALING_R1 = 14898,
     SPELL_PRIEST_DIVINE_PROVIDENCE_R1 = 47562,
-
 };
 
 enum PriestSpellIcons
@@ -2164,8 +2172,183 @@ class spell_pri_prayer_of_mending : public AuraScript
     }
 };
 
+class spell_pri_holy_blossom : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_blossom);
 
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
 
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_holy_blossom::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class spell_pri_holy_flame : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_flame);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        if (Unit* unitTarget = GetHitUnit())
+        {
+            if (!caster->IsFriendlyTo(unitTarget))
+                caster->CastSpell(unitTarget, SPELL_PRIEST_HOLY_FLAME_DAMAGE, TRIGGERED_FULL_MASK);
+            else
+                caster->CastSpell(unitTarget, SPELL_PRIEST_HOLY_FLAME_HEAL, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_holy_flame::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+class spell_pri_holy_might : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_might);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        targets.remove_if(Acore::RaidCheck(caster, false));
+        targets.remove(caster);
+
+        int32 statPct = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_MIGHT)->GetEffect(EFFECT_0).CalcValue();
+
+        int32 casterSTR = caster->GetStat(STAT_STRENGTH);
+        int32 casterAGI = caster->GetStat(STAT_AGILITY);
+        int32 casterINT = caster->GetStat(STAT_INTELLECT);
+        int32 casterSPR = caster->GetStat(STAT_SPIRIT);
+
+        int32 highestCasterStat = std::max({casterSTR, casterAGI, casterINT, casterSPR});
+        int32 buffAmount = CalculatePct(highestCasterStat, statPct);
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+            if (target->isDead())
+                continue;
+
+            int32 targetSTR = target->GetStat(STAT_STRENGTH);
+            int32 targetAGI = target->GetStat(STAT_AGILITY);
+            int32 targetINT = target->GetStat(STAT_INTELLECT);
+            int32 targetSPR = target->GetStat(STAT_SPIRIT);
+            int32 highestTargetStat = std::max({ targetSTR, targetAGI, targetINT, targetSPR });
+
+            if (highestTargetStat == targetSTR)
+                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_STRENGTH, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+            else if (highestTargetStat == targetAGI)
+                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_AGILITY, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+            else if (highestTargetStat == targetINT)
+                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_INTELLECT, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+            else
+                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_SPIRIT, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_holy_might::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ALLY);
+    }
+};
+
+class spell_pri_holy_might_proc : public AuraScript
+{
+    PrepareAuraScript(spell_pri_holy_might_proc);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_PRIEST_HOLY_MIGHT_AOE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_holy_might_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pri_holy_might_increase : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_might_increase);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_HOLY_MIGHT)->GetEffect(EFFECT_2).CalcValue(caster);
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* aura = caster->GetAura(SPELL_PRIEST_HOLY_MIGHT))
+            aura->SetDuration(aura->GetDuration() + amount);
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || !target->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH) && !target->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY) && !target->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT) && !target->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+                continue;
+
+            if (Aura* aura = target->GetAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH))
+                aura->SetDuration(aura->GetDuration() + amount);
+            else if (Aura* aura = target->GetAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY))
+                aura->SetDuration(aura->GetDuration() + amount);
+            else if (Aura* aura = target->GetAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT))
+                aura->SetDuration(aura->GetDuration() + amount);
+            else if (Aura* aura = target->GetAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+                aura->SetDuration(aura->GetDuration() + amount);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_holy_might_increase::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class spell_pri_wave_of_light_accumulation : public AuraScript
+{
+    PrepareAuraScript(spell_pri_wave_of_light_accumulation);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* eventTarget = eventInfo.GetActor();
+        if (!eventTarget || !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+            return;
+
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+                if (spellInfo->Id == SPELL_PRIEST_HOLY_WOUNDS_PROC)
+                    return;
+
+            Unit* target = GetAura()->GetOwner()->ToUnit();
+            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+            GetCaster()->CastCustomSpell(SPELL_PRIEST_HOLY_WOUNDS_PROC, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_wave_of_light_accumulation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_priest_spell_scripts()
 {
@@ -2224,5 +2407,11 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
     RegisterSpellScript(spell_pri_prayer_of_mending);
+    RegisterSpellScript(spell_pri_holy_blossom);
+    RegisterSpellScript(spell_pri_holy_flame);
+    RegisterSpellScript(spell_pri_holy_might);
+    RegisterSpellScript(spell_pri_holy_might_proc);
+    RegisterSpellScript(spell_pri_holy_might_increase);
+    RegisterSpellScript(spell_pri_wave_of_light_accumulation);
     new npc_pri_shadowy_apparitions();
 }
