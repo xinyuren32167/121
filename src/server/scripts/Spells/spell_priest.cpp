@@ -107,6 +107,7 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_MIGHT_INTELLECT = 86211,
     SPELL_PRIEST_HOLY_MIGHT_SPIRIT = 86212,
     SPELL_PRIEST_HOLY_MIGHT_AOE = 86214,
+    SPELL_PRIEST_HOLY_WOUNDS_PROC = 86222,
 
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
@@ -2320,6 +2321,35 @@ class spell_pri_holy_might_increase : public SpellScript
     }
 };
 
+class spell_pri_wave_of_light_accumulation : public AuraScript
+{
+    PrepareAuraScript(spell_pri_wave_of_light_accumulation);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* eventTarget = eventInfo.GetActor();
+        if (!eventTarget || !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+            return;
+
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+                if (spellInfo->Id == SPELL_PRIEST_HOLY_WOUNDS_PROC)
+                    return;
+
+            Unit* target = GetAura()->GetOwner()->ToUnit();
+            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+            GetCaster()->CastCustomSpell(SPELL_PRIEST_HOLY_WOUNDS_PROC, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_wave_of_light_accumulation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_priest_spell_scripts()
 {
     RegisterSpellScript(spell_pri_shadowfiend_scaling);
@@ -2382,5 +2412,6 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_might);
     RegisterSpellScript(spell_pri_holy_might_proc);
     RegisterSpellScript(spell_pri_holy_might_increase);
+    RegisterSpellScript(spell_pri_wave_of_light_accumulation);
     new npc_pri_shadowy_apparitions();
 }
