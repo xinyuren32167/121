@@ -148,6 +148,10 @@ enum MageSpells
     SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
 
+    // Passives
+    PASSIVE_MAGE_HOT_STREAK = 44448,
+    PASSIVE_MAGE_HOT_STREAK_BUFF = 48108,
+
     // Runes
     RUNE_MAGE_SEARING_TOUCH_BUFF = 300747,
     RUNE_MAGE_SIPHON_STORM_BUFF = 301034,
@@ -3193,6 +3197,56 @@ class spell_mage_cone_of_cold : public SpellScript
     }
 };
 
+// 42926 - Flamestrike
+class spell_mage_flamestrike : public SpellScript
+{
+    PrepareSpellScript(spell_mage_flamestrike);
+
+    Aura* GetFuelTheFireAura(Unit* caster)
+    {
+        for (size_t i = 301042; i < 301048; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetFuelTheFireAura(caster))
+        {
+            if (AuraEffect* hotStreak = caster->GetAura(PASSIVE_MAGE_HOT_STREAK)->GetEffect(EFFECT_1))
+            {
+                int32 chancePct = GetFuelTheFireAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                float critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+                int32 procChance = CalculatePct(critChance, chancePct);
+
+                if (roll_chance_i(procChance))
+                {
+                    hotStreak->SetAmount(hotStreak->GetAmount() * 2);
+                    if (hotStreak->GetAmount() < 100) // not enough
+                        return;
+
+                    caster->CastSpell(caster, PASSIVE_MAGE_HOT_STREAK_BUFF, TRIGGERED_FULL_MASK);
+                    hotStreak->SetAmount(25);
+                }
+            }        
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mage_flamestrike::HandleCast);
+    }
+};
+
 
 
 void AddSC_mage_spell_scripts()
@@ -3283,4 +3337,9 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_evocation);
     RegisterSpellScript(spell_mage_scorch);
     RegisterSpellScript(spell_mage_cone_of_cold);
+    RegisterSpellScript(spell_mage_flamestrike);
+
+
+
+
 }
