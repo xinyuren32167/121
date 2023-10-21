@@ -1902,8 +1902,11 @@ class spell_warr_warbreaker_replacer : public AuraScript
     {
         Player* target = GetCaster()->ToPlayer();
 
-        target->removeSpell(SPELL_WARRIOR_COLOSSUS_SMASH, SPEC_MASK_ALL, false);
-        target->learnSpell(SPELL_WARRIOR_WARBREAKER);
+        if (target->HasSpell(SPELL_WARRIOR_COLOSSUS_SMASH))
+        {
+            target->removeSpell(SPELL_WARRIOR_COLOSSUS_SMASH, SPEC_MASK_ALL, false);
+            target->learnSpell(SPELL_WARRIOR_WARBREAKER);
+        }
     }
 
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)

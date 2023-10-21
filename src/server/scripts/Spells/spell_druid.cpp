@@ -2986,16 +2986,22 @@ class spell_dru_replacer_ursoc : public AuraScript
     {
         Player* target = GetCaster()->ToPlayer();
 
-        target->removeSpell(SPELL_DRUID_BERSERK_BEAR, SPEC_MASK_ALL, false);
-        target->learnSpell(SPELL_DRUID_GUARDIAN_OF_URSOC);
+        if (target->HasSpell(SPELL_DRUID_BERSERK_BEAR))
+        {
+            target->removeSpell(SPELL_DRUID_BERSERK_BEAR, SPEC_MASK_ALL, false);
+            target->learnSpell(SPELL_DRUID_GUARDIAN_OF_URSOC);
+        }
     }
 
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
 
-        target->removeSpell(SPELL_DRUID_GUARDIAN_OF_URSOC, SPEC_MASK_ALL, false);
-        target->learnSpell(SPELL_DRUID_BERSERK_BEAR);
+        if (target->HasSpell(SPELL_DRUID_GUARDIAN_OF_URSOC))
+        {
+            target->removeSpell(SPELL_DRUID_GUARDIAN_OF_URSOC, SPEC_MASK_ALL, false);
+            target->learnSpell(SPELL_DRUID_BERSERK_BEAR);
+        }
     }
 
     void Register() override

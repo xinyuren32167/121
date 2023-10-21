@@ -2964,8 +2964,11 @@ class spell_hun_rabid_mongoose : public AuraScript
     void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-        target->removeSpell(48996, SPEC_MASK_ALL, false);
-        target->learnSpell(53339);
+        if (target->HasSpell(48996))
+        {
+            target->removeSpell(48996, SPEC_MASK_ALL, false);
+            target->learnSpell(53339);
+        }
     }
 
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)

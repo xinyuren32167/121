@@ -169,11 +169,38 @@ class spell_activate_specialization : public SpellScript
             for (auto const& spellId : PlayerSpecialization::m_SpecSpells[currentSpecId]) {
                 player->removeSpell(spellId, SPEC_MASK_ALL, false, true);
                 player->RemoveAura(spellId);
+
+                // VERY ugly code made to make matth angry because he won't add an exception system
+                if (player->HasAura(80675) && !player->HasSpell(50334))
+                {
+                    player->removeSpell(80548, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(80548);
+                }
+                else if (player->HasAura(80674) && !player->HasSpell(80566))
+                {
+                    player->removeSpell(80568, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(80568);
+                }
+                else if (player->HasAura(80234) && !player->HasSpell(48996))
+                {
+                    player->removeSpell(53339, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(53339);
+                }
+                else if (player->HasAura(84546) && !player->HasSpell(80002))
+                {
+                    player->removeSpell(84519, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(84519);
+                }
             }
         }
 
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
+        {
+            // VERY ugly code made to make matth angry because he won't add an exception system
+            if ((player->HasAura(80675) && spellId == 50334) || (player->HasAura(80674) && spellId == 80566) || (player->HasAura(80234) && spellId == 48996) || (player->HasAura(84546) && spellId == 80002))
+                continue;
             player->learnSpell(spellId, false, false);
+        }
 
         if (newSpec.powerType != POWER_ALL) {
             player->setPowerType(newSpec.powerType);
