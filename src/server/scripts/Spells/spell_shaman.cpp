@@ -1469,8 +1469,6 @@ class spell_sha_lava_lash : public SpellScript
             if (Item* castItem = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
                 int32 itemId = castItem->GetGUID();
-                LOG_ERROR("error", "item name = {}", itemId);
-                LOG_ERROR("error", "GetEnchantmentId = {}", castItem->GetEnchantmentId(EnchantmentSlot(TEMP_ENCHANTMENT_SLOT)));
                 if (castItem->GetEnchantmentId(EnchantmentSlot(TEMP_ENCHANTMENT_SLOT)) == SPELL_SHAMAN_FLAMETONGUE_WEAPON_AURA)
                 {
                     int32 flametongueIncrease = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
