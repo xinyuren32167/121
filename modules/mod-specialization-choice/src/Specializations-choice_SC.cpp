@@ -191,6 +191,11 @@ class spell_activate_specialization : public SpellScript
         if(player->HasAura(SPELL_HUNTER_LONE_WOLF))
             player->RemoveAura(80182);
 
+        if (!player->HasSpell(674) && player->m_canDualWield)
+            player->SetCanDualWield(false);
+
+        player->AutoUnequipOffhandIfNeed();
+
         PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
         CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
         sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true, newSpecId);
