@@ -8095,7 +8095,6 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
 
                             // apply cooldown before cast to prevent processing itself
                             // player->AddSpellCooldown(dummySpell->Id, 0, 3 * IN_MILLISECONDS);
-                            player->AddSpellCooldown(dummySpell->Id, 0, 300);
                             int32 attacks = 2;
                             int32 unrulyWindsRune = 0;
 
