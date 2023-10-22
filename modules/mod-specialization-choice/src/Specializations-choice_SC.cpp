@@ -26,9 +26,29 @@ enum WarlockSpells
     SPELL_MINION_INCREASE_BOMBER = 1100014,
 };
 
+enum WarriorSpells
+{
+    SPELL_WARRIOR_WARBREAKER_REPLACER = 84546,
+    SPELL_WARRIOR_WARBREAKER = 84519,
+    SPELL_WARRIOR_COLOSSUS_SMASH = 80002,
+};
 
-enum HunterSpells {
+enum HunterSpells
+{
     SPELL_HUNTER_LONE_WOLF = 80182,
+    SPELL_HUNTER_MONGOOSE_BITE_REPLACER = 80234,
+    SPELL_HUNTER_MONGOOSE_BITE = 53339,
+    SPELL_HUNTER_RAPTOR_STRIKE = 48996,
+};
+
+enum DruidSpells
+{
+    SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER = 80675,
+    SPELL_DRUID_AVATAR_OF_ASHAMANE = 80548,
+    SPELL_DRUID_BERSERK_CAT = 50334,
+    SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER = 80674,
+    SPELL_DRUID_GUARDIAN_OF_URSOC = 80568,
+    SPELL_DRUID_BERSERK_BEAR = 80566,
 };
 
  // Add player scripts
@@ -170,34 +190,32 @@ class spell_activate_specialization : public SpellScript
                 player->removeSpell(spellId, SPEC_MASK_ALL, false, true);
                 player->RemoveAura(spellId);
 
-                // VERY ugly code made to make matth angry because he won't add an exception system
-                if (player->HasAura(80675) && !player->HasSpell(50334))
+                if (player->HasAura(SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER) && !player->HasSpell(SPELL_DRUID_BERSERK_CAT))
                 {
-                    player->removeSpell(80548, SPEC_MASK_ALL, false, true);
-                    player->RemoveAura(80548);
+                    player->removeSpell(SPELL_DRUID_AVATAR_OF_ASHAMANE, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(SPELL_DRUID_AVATAR_OF_ASHAMANE);
                 }
-                else if (player->HasAura(80674) && !player->HasSpell(80566))
+                else if (player->HasAura(SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER) && !player->HasSpell(SPELL_DRUID_BERSERK_BEAR))
                 {
-                    player->removeSpell(80568, SPEC_MASK_ALL, false, true);
-                    player->RemoveAura(80568);
+                    player->removeSpell(SPELL_DRUID_GUARDIAN_OF_URSOC, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(SPELL_DRUID_GUARDIAN_OF_URSOC);
                 }
-                else if (player->HasAura(80234) && !player->HasSpell(48996))
+                else if (player->HasAura(SPELL_HUNTER_MONGOOSE_BITE_REPLACER) && !player->HasSpell(SPELL_HUNTER_RAPTOR_STRIKE))
                 {
-                    player->removeSpell(53339, SPEC_MASK_ALL, false, true);
-                    player->RemoveAura(53339);
+                    player->removeSpell(SPELL_HUNTER_MONGOOSE_BITE, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(SPELL_HUNTER_MONGOOSE_BITE);
                 }
-                else if (player->HasAura(84546) && !player->HasSpell(80002))
+                else if (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && !player->HasSpell(SPELL_WARRIOR_COLOSSUS_SMASH))
                 {
-                    player->removeSpell(84519, SPEC_MASK_ALL, false, true);
-                    player->RemoveAura(84519);
+                    player->removeSpell(SPELL_WARRIOR_WARBREAKER, SPEC_MASK_ALL, false, true);
+                    player->RemoveAura(SPELL_WARRIOR_WARBREAKER);
                 }
             }
         }
 
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
         {
-            // VERY ugly code made to make matth angry because he won't add an exception system
-            if ((player->HasAura(80675) && spellId == 50334) || (player->HasAura(80674) && spellId == 80566) || (player->HasAura(80234) && spellId == 48996) || (player->HasAura(84546) && spellId == 80002))
+            if ((player->HasAura(SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER) && spellId == SPELL_DRUID_BERSERK_CAT) || (player->HasAura(SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER) && spellId == SPELL_DRUID_BERSERK_BEAR) || (player->HasAura(SPELL_HUNTER_MONGOOSE_BITE_REPLACER) && spellId == SPELL_HUNTER_RAPTOR_STRIKE) || (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && spellId == SPELL_WARRIOR_COLOSSUS_SMASH))
                 continue;
             player->learnSpell(spellId, false, false);
         }
