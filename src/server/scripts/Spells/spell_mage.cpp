@@ -39,6 +39,8 @@ enum MageSpells
     SPELL_MAGE_ARCANE_CHARGE_BUFF1 = 81501,
     SPELL_MAGE_ARCANE_CHARGE_BUFF2 = 81502,
     SPELL_MAGE_ARCANE_CHARGE_VISUAL = 81503,
+    SPELL_MAGE_ARCANE_ORB = 80016,
+    SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
     SPELL_MAGE_ARCANE_SURGE_DAMAGE = 81519,
     SPELL_MAGE_BLAZING_BARRIER = 81526,
     SPELL_MAGE_BLAZING_BARRIER_DAMAGE = 81527,
@@ -61,6 +63,7 @@ enum MageSpells
     SPELL_MAGE_FLURRY_DAMAGE = 81534,
     SPELL_MAGE_FROSTBOLT = 81504,
     SPELL_MAGE_FROST_NOVA = 42917,
+    SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_INVISIBILITY = 66,
     SPELL_MAGE_GREATER_INVISIBILITY = 81511,
     SPELL_MAGE_GREATER_INVISIBILITY_AURA = 81513,
@@ -143,10 +146,9 @@ enum MageSpells
     SPELL_MAGE_TALENT_INFUSED_BLADES_PROC = 81668,
     SPELL_MAGE_TALENT_IMPROVED_DEATH_BLOSSOM = 81622,
 
+    // Visuals
     SPELL_VISUAL_FROZEN_ORB = 72067,
     SPELL_VISUAL_ARCANE_ORB = 80015,
-    SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
-    SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
 
     // Passives
     PASSIVE_MAGE_HOT_STREAK = 44448,
@@ -155,6 +157,7 @@ enum MageSpells
     // Runes
     RUNE_MAGE_SEARING_TOUCH_BUFF = 300747,
     RUNE_MAGE_SIPHON_STORM_BUFF = 301034,
+    RUNE_MAGE_MANA_ADEPT_ENERGIZE = 301158,
 };
 
 class npc_mage_spell_arcane_orbs : public CreatureScript
@@ -270,18 +273,50 @@ class spell_mage_pheonix_flame : public SpellScript
     }
 };
 
-class spell_mage_combustion_on_remove : public AuraScript
+// 11129 - Combustion
+class spell_mage_combustion : public AuraScript
 {
-    PrepareAuraScript(spell_mage_combustion_on_remove);
+    PrepareAuraScript(spell_mage_combustion);
 
-    void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    Aura* GetWildfireAura(Unit* caster)
+    {
+        for (size_t i = 301222; i < 301228; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetWildfireAura(caster))
+        {
+            int32 selfBuff = GetWildfireAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 allyBuff = GetWildfireAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            caster->AddAura(selfBuff, caster);
+            caster->CastSpell(caster, allyBuff, TRIGGERED_FULL_MASK);
+
+            caster->RemoveAura(allyBuff);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         GetCaster()->RemoveAura(11129);
     }
 
     void Register() override
     {
-        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_combustion_on_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_mage_combustion::HandleApply, EFFECT_0, SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_combustion::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -402,6 +437,28 @@ class spell_mage_arcane_barrage : public SpellScript
         return nullptr;
     }
 
+    Aura* GetOrbBarrageAura(Unit* caster)
+    {
+        for (size_t i = 301146; i < 301152; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetManaAdeptAura(Unit* caster)
+    {
+        for (size_t i = 301152; i < 301158; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleAfterHit()
     {
         Unit* caster = GetCaster();
@@ -415,6 +472,23 @@ class spell_mage_arcane_barrage : public SpellScript
             {
                 int32 procSpell = GetArcaneTempoAura(caster)->GetEffect(EFFECT_0)->GetAmount();
                 caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+
+            if (GetOrbBarrageAura(caster))
+            {
+                int32 procChance = GetOrbBarrageAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                procChance *= arcaneCharges->GetStackAmount();
+
+                if (roll_chance_i(procChance))
+                    caster->CastSpell(caster, SPELL_MAGE_ARCANE_ORB, TRIGGERED_FULL_MASK);
+            }
+
+            if (GetManaAdeptAura(caster))
+            {
+                int32 manaPct = GetManaAdeptAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                manaPct *= arcaneCharges->GetStackAmount();
+
+                caster->CastCustomSpell(RUNE_MAGE_MANA_ADEPT_ENERGIZE, SPELLVALUE_BASE_POINT0, manaPct, caster, TRIGGERED_FULL_MASK);
             }
 
             arcaneCharges->Remove();
@@ -1781,6 +1855,32 @@ class spell_mage_arcane_missiles : public SpellScript
     void Register() override
     {
         AfterCast += SpellCastFn(spell_mage_arcane_missiles::HandleAfterCast);
+    }
+};
+
+// 42847 - Arcane Missile
+class spell_mage_arcane_missiles_aura : public AuraScript
+{
+    PrepareAuraScript(spell_mage_arcane_missiles_aura);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Amplification buff
+        for (size_t i = 301166; i < 301172; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_arcane_missiles_aura::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3247,6 +3347,81 @@ class spell_mage_flamestrike : public SpellScript
     }
 };
 
+// 44401 - Missile Barrage Proc
+class spell_mage_missile_barrage_proc : public AuraScript
+{
+    PrepareAuraScript(spell_mage_missile_barrage_proc);
+
+    Aura* GetAmplificationAura(Unit* caster)
+    {
+        for (size_t i = 301160; i < 301166; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetAmplificationAura(caster))
+        {
+            int32 procSpell = GetAmplificationAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_missile_barrage_proc::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 42833 - Fireball
+class spell_mage_fireball : public SpellScript
+{
+    PrepareSpellScript(spell_mage_fireball);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Flame Accelerant listener
+        for (size_t i = 301264; i < 301270; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Flame Accelerant buff
+        for (size_t i = 301270; i < 301276; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mage_fireball::HandleCast);
+        AfterHit += SpellHitFn(spell_mage_fireball::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_mage_spell_scripts()
@@ -3289,10 +3464,11 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_raging_winds);
     RegisterSpellScript(spell_mage_pheonix_flame);
     RegisterSpellScript(spell_mage_empowered_fire);
-    RegisterSpellScript(spell_mage_combustion_on_remove);
+    RegisterSpellScript(spell_mage_combustion);
     RegisterSpellScript(spell_mage_arcane_charge);
     RegisterSpellScript(spell_mage_arcane_explosion);
     RegisterSpellScript(spell_mage_arcane_missiles);
+    RegisterSpellScript(spell_mage_arcane_missiles_aura);
     RegisterSpellScript(spell_mage_blink_displacement);
     RegisterSpellScript(spell_mage_displacement);
     RegisterSpellScript(spell_mage_greater_invisibility);
@@ -3338,8 +3514,10 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_scorch);
     RegisterSpellScript(spell_mage_cone_of_cold);
     RegisterSpellScript(spell_mage_flamestrike);
+    RegisterSpellScript(spell_mage_missile_barrage_proc);
+    RegisterSpellScript(spell_mage_fireball);
 
 
 
-
+    
 }

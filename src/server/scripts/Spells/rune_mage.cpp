@@ -51,6 +51,7 @@ enum MageSpells
     SPELL_MAGE_MAGIC_STRIKE = 81546,
     SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION = 55343,
     SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID = 31216,
+    SPELL_MAGE_PHOENIX_FLAMES = 80029,
     SPELL_MAGE_PRISMATIC_BARRIER = 81523,
     SPELL_MAGE_GALVANIZING_BARRIER = 81560,
     SPELL_MAGE_RAY_OF_FROST_FINGERS = 81539,
@@ -72,6 +73,7 @@ enum MageSpells
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
     MASTERY_MAGE_IGNITE = 300109,
+    MASTERY_MAGE_IGNITE_DOT = 300110,
     MASTERY_MAGE_ICICLE = 300105,
     MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
 
@@ -117,6 +119,7 @@ enum MageSpells
     RUNE_MAGE_SUN_KINGS_BLESSING_LISTENER = 300696,
     RUNE_MAGE_SUN_KINGS_BLESSING_BUFF = 301035,
     RUNE_MAGE_SIPHONING_STRIKES_HEAL = 301132,
+    RUNE_MAGE_OIL_FIRE_BUFF = 301202,
 };
 
 class spell_tempest_barrier : public SpellScript
@@ -2168,6 +2171,202 @@ class rune_mage_siphoning_strikes : public AuraScript
     }
 };
 
+class rune_mage_oil_fire : public SpellScript
+{
+    PrepareSpellScript(rune_mage_oil_fire);
+
+    Aura* GetOilFireAura(Unit* caster)
+    {
+        for (size_t i = 301196; i < 301202; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetOilFireAura(caster))
+        {
+            int32 healthThreshold = GetOilFireAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (target->GetHealthPct() > healthThreshold)
+                caster->AddAura(RUNE_MAGE_OIL_FIRE_BUFF, caster);
+        }
+    }
+
+    void HandleHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_MAGE_OIL_FIRE_BUFF))
+            caster->RemoveAura(RUNE_MAGE_OIL_FIRE_BUFF);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(rune_mage_oil_fire::HandleCast);
+        AfterHit += SpellHitFn(rune_mage_oil_fire::HandleHit);
+    }
+};
+
+class rune_mage_conflagration : public AuraScript
+{
+    PrepareAuraScript(rune_mage_conflagration);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 conflagDot = aurEff->GetAmount();
+        int32 conflagDamage = GetEffect(EFFECT_2)->GetAmount();
+        int32 procChance = GetEffect(EFFECT_1)->GetAmount();
+
+        if (target->HasAura(MASTERY_MAGE_IGNITE_DOT) || target->HasAura(conflagDot))
+            if (roll_chance_i(procChance))
+                caster->CastSpell(target, conflagDamage, TRIGGERED_FULL_MASK);
+
+        caster->CastSpell(target, conflagDot, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_conflagration::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_conflagration::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_fiery_rush : public AuraScript
+{
+    PrepareAuraScript(rune_mage_fiery_rush);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_MAGE_COMBUSTION))
+            return;
+
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            player->ModifySpellCooldown(SPELL_MAGE_FIRE_BLAST, -cooldown);
+            player->ModifySpellCooldown(SPELL_MAGE_PHOENIX_FLAMES, -cooldown);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_mage_fiery_rush::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_mage_hyperthermia : public AuraScript
+{
+    PrepareAuraScript(rune_mage_hyperthermia);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(PASSIVE_MAGE_HOT_STREAK_BUFF))
+            return;
+
+        if (caster->HasAura(SPELL_MAGE_COMBUSTION))
+            return;
+
+        int32 procChance = aurEff->GetAmount();
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_mage_hyperthermia::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_flame_accelerant_proc : public AuraScript
+{
+    PrepareAuraScript(rune_mage_flame_accelerant_proc);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 301258; i < 301264; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        int32 stackAmount = GetStackAmount();
+        int32 maxStack = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        if (GetStackAmount() < maxStack)
+            return;
+
+        caster->AddAura(procSpell, caster);
+        SetStackAmount(1);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_mage_flame_accelerant_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
 
 
 void AddSC_mage_perks_scripts()
@@ -2224,6 +2423,12 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_accumulative_shielding);
     RegisterSpellScript(rune_mage_convection);
     RegisterSpellScript(rune_mage_siphoning_strikes);
+    RegisterSpellScript(rune_mage_oil_fire);
+    RegisterSpellScript(rune_mage_conflagration);
+    RegisterSpellScript(rune_mage_fiery_rush);
+    RegisterSpellScript(rune_mage_hyperthermia);
+    RegisterSpellScript(rune_mage_flame_accelerant_proc);
+
 
 
 
