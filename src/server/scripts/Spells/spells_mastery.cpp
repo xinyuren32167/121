@@ -45,6 +45,8 @@ enum Masteries
     MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL = 900007,
     MASTERY_PRIEST_SHADOW_WEAVING = 900008,
     MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE = 900009,
+    MASTERY_PRIEST_HARMONY_BUFF = 900011,
+    MASTERY_PRIEST_HARMONY_DEBUFF = 900012,
 
     // Rogue
     MASTERY_ROGUE_POTENT_ASSASSIN = 1100000,
@@ -1154,6 +1156,44 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
     }
 };
 
+class spell_mastery_pri_harmony : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_pri_harmony);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetActionTarget() != GetCaster();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (caster->IsAlive())
+            {
+                Unit* target = eventInfo.GetActionTarget();
+
+                if (target->IsFriendlyTo(caster))
+                {
+                    int32 buffAmount = aurEff->GetAmount() + caster->GetMastery();
+                    caster->CastCustomSpell(MASTERY_PRIEST_HARMONY_BUFF, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+                }
+                else
+                {
+                    int32 debuffAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + caster->GetMastery();
+                    caster->CastCustomSpell(MASTERY_PRIEST_HARMONY_DEBUFF, SPELLVALUE_BASE_POINT0, debuffAmount, target, TRIGGERED_FULL_MASK);
+                }
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_pri_harmony::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_pri_harmony::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 // Rogue
 class spell_mastery_rog_potent_assassin : public SpellScript
@@ -1711,4 +1751,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_from_the_shadows);
     RegisterSpellScript(spell_mastery_from_the_shadows_periodic);
     RegisterSpellScript(spell_mastery_from_the_shadows_buff_remove);
+    RegisterSpellScript(spell_mastery_pri_harmony);
 }
