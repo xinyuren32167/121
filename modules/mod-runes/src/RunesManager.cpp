@@ -6,6 +6,7 @@
 #include "boost/iterator/counting_iterator.hpp"
 
 std::map<uint32 /* SpellId */, Rune> RunesManager::m_Runes = {};
+std::unordered_multimap<uint32 /* groupId */, Rune> RunesManager::m_unorderedRunes = {};
 std::map<uint32 /* accountId */, std::vector<KnownRune>> RunesManager::m_KnownRunes = {};
 std::map<uint64 /* guid */, std::vector<Loadout>> RunesManager::m_Loadout = {};
 std::map<uint64 /* LoadoutId */, std::vector<SlotRune>> RunesManager::m_SlotRune = {};
@@ -21,6 +22,22 @@ void RunesManager::SetupConfig()
     config.debug = false;
     config.maxSlots  = 8;
     config.defaultSlot = 8;
+
+    config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, 200));
+    config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, 500));
+    config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, 1500));
+    config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, 2500));
+
+    config.costMineralToUpgradeToEpic = 6;
+    config.costMineralToUpgradeToLegendary = 20;
+    config.costMineralToUpgradeToMythic = 100;
+
+    config.costSkullUpgradeRankLegendary = 3;
+    config.costSkullUpgradeRankMythic = 3;
+
+    config.costBetterSkullUpgradeRankLegendary = 1;
+    config.costBetterSkullUpgradeRankMythic = 5;
+
 }
 
 void RunesManager::LoadAllRunes()
@@ -45,6 +62,7 @@ void RunesManager::LoadAllRunes()
         std::string keywords = fields[8].Get<std::string>();
         Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, refundItemId, refundDusts, keywords };
         m_Runes.insert(std::make_pair(id, rune));
+        m_unorderedRunes.insert(std::make_pair(groupId, rune));
     } while (result->NextRow());
 
 }
@@ -296,6 +314,61 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
     return rune;
 }
 
+void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
+{
+    Rune previousRune = GetRuneByQuality(nextRune.groupId, nextRune.quality - 1);
+
+    uint32 accountId = player->GetSession()->GetAccountId();
+
+    auto it = m_KnownRunes.find(accountId); 
+
+    auto ij = std::find_if(it->second.begin(), it->second.end(),
+        [&](const KnownRune& accountRune) {
+        return accountRune.rune.quality == previousRune.quality && accountRune.rune.spellId == previousRune.spellId;
+    });
+
+    if (ij == it->second.end())
+        return;
+
+    if (ij->count > 3)
+        ij->count -= 3;
+    else
+        it->second.erase(ij);
+
+    CharacterDatabase.Execute("DELETE FROM account_know_runes WHERE accountId = {} AND spellId = {} LIMIT 3", accountId, previousRune.spellId);
+
+    if (nextRune.quality >= RARE_QUALITY) {
+        uint32 cost = config.upgradeCostRunicEssence[nextRune.quality];
+        player->DestroyItemCount(70009, cost, true);
+    }
+
+    if (nextRune.quality == EPIC_QUALITY) {
+        int8 cost = config.costMineralToUpgradeToEpic;
+        player->DestroyItemCount(70010, cost, true);
+    }
+
+    if (nextRune.quality == LEGENDARY_QUALITY) {
+        int8 costMineralToUpgradeToLegendary = config.costMineralToUpgradeToLegendary;
+        int8 costSkullUpgradeRankLegendary = config.costSkullUpgradeRankLegendary;
+        int8 costBetterSkullUpgradeRankLegendary = config.costBetterSkullUpgradeRankLegendary;
+
+        player->DestroyItemCount(70011, costMineralToUpgradeToLegendary, true);
+        player->DestroyItemCount(70013, costSkullUpgradeRankLegendary, true);
+        player->DestroyItemCount(70014, costBetterSkullUpgradeRankLegendary, true);
+    }
+
+    if (nextRune.quality == MYTHICAL_QUALITY) {
+        int8 costMineralToUpgradeToMythic = config.costMineralToUpgradeToMythic;
+        int8 costSkullUpgradeRankMythic = config.costSkullUpgradeRankMythic;
+        int8 costBetterSkullUpgradeRankMythic = config.costBetterSkullUpgradeRankMythic;
+
+        player->DestroyItemCount(70012, costMineralToUpgradeToMythic, true);
+        player->DestroyItemCount(70013, costSkullUpgradeRankMythic, true);
+        player->DestroyItemCount(70014, costBetterSkullUpgradeRankMythic, true);
+    }
+
+}
+
 void RunesManager::AddRunePlayer(Player* player, Rune rune)
 {
     uint32 accountId = player->GetSession()->GetAccountId();
@@ -325,12 +398,12 @@ void RunesManager::AddRunePlayer(Player* player, Rune rune)
 
     CharacterDatabase.Execute("INSERT INTO account_know_runes (accountId, spellId) VALUES ({}, {}) ", accountId, rune.spellId);
 
-    std::string str = RuneForClient(player, rune, count);
+    std::string str = RuneForClient(player, rune, true, count);
     sEluna->PushRune(player, str);
 }
 
 
-std::string RunesManager::RuneForClient(Player* player, Rune rune, uint32 count)
+std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, uint32 count)
 {
     std::string fmt =
             std::to_string(rune.spellId)
@@ -340,35 +413,23 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, uint32 count)
         + ";" + std::to_string(rune.refundDusts)
         + ";" + rune.keywords
         + ";" + std::to_string(rune.allowableClass)
-        + ";" + std::to_string(count)
-        + ";" + std::to_string(true);
+        + ";" + std::to_string(config.debug ? 1 : count)
+        + ";" + std::to_string(config.debug ? true : known);
 
     return fmt;
 }
 
 std::vector<std::string> RunesManager::RunesForClient(Player* player)
 {
-    std::vector<uint32> runeIds = {};
-    std::vector<std::string > elements = {};
-    auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
-    auto pushRune = [&](Rune rune, bool known, uint32 count) {
-        std::string fmt = 
-                    std::to_string(rune.spellId)
-            + ";" + std::to_string(rune.quality)
-            + ";" + std::to_string(rune.maxStack)
-            + ";" + std::to_string(rune.groupId)
-            + ";" + std::to_string(rune.refundDusts)
-            + ";" + rune.keywords
-            + ";" + std::to_string(rune.allowableClass)
-            + ";" + std::to_string(config.debug ? 1 : count)
-            + ";" + std::to_string(config.debug ? true : known);
-        elements.push_back(fmt);
-    };
 
+    std::vector<uint32> runeIds = {};
+    std::vector<std::string> elements = {};
+
+    auto known = m_KnownRunes.find(player->GetSession()->GetAccountId());
     if (known != m_KnownRunes.end()) {
         for (auto const& kwownRune : known->second) {
             runeIds.push_back(kwownRune.rune.spellId);
-            pushRune(kwownRune.rune, true, kwownRune.count);
+            elements.emplace_back(RuneForClient(player, kwownRune.rune, true, kwownRune.count));
         }
     }
 
@@ -376,11 +437,28 @@ std::vector<std::string> RunesManager::RunesForClient(Player* player)
     {
         Rune rune = it->second;
         if (std::find(runeIds.begin(), runeIds.end(), rune.spellId) == runeIds.end()) {
-            pushRune(rune, false, 0);
+            elements.emplace_back(RuneForClient(player, rune, false, 0));
         }
     }
 
+
+    // Calculez la durée d'exécution en nanosecondes
+
     return elements;
+}
+
+
+double calculatePayloadInMegabytes(const std::vector<std::string>& strVector) {
+    size_t payloadSize = 0;
+
+    for (const std::string& str : strVector) {
+        payloadSize += str.size(); // Ajoute la taille de chaque chaîne au payload en octets
+    }
+
+    // Convertir la taille en mégaoctets
+    double payloadInMegabytes = static_cast<double>(payloadSize) / 1048576.0; // 2^20
+
+    return payloadInMegabytes;
 }
 
 
@@ -392,58 +470,42 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
     if (known == m_KnownRunes.end())
         return elements;
 
-    std::map<uint8, uint32> upgradeCostRunicEssence;
-
-    upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, 200));
-    upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, 500));
-    upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, 1500));
-    upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, 2500));
-
-    const int8 costMineralToUpgradeToEpic = 6;
-    const int8 costMineralToUpgradeToLegendary = 20;
-    const int8 costMineralToUpgradeToMythic = 100;
-
-    const int8 costSkullUpgradeRankLegendary = 3;
-    const int8 costSkullUpgradeRankMythic = 3;
-
-    const int8 costBetterSkullUpgradeRankLegendary = 1;
-    const int8 costBetterSkullUpgradeRankMythic = 5;
 
 
     for (auto const& knownRune : known->second) {
 
-        int8 quality = knownRune.rune.quality;
         int8 nextQuality = knownRune.rune.quality + 1;
+
+        Rune nextRune = GetRuneByQuality(knownRune.rune.groupId, nextQuality);
+        bool isUpgradable = IsRuneUpgradable(player, nextRune, knownRune.count);
+
+        if (!isUpgradable)
+            continue;
+
+        if (knownRune.count <= 2)
+            continue;
 
         if (nextQuality > MYTHICAL_QUALITY)
             continue;
 
         std::stringstream fmt;
 
-        fmt << knownRune.rune.spellId << "," << knownRune.count;
+        fmt << knownRune.rune.spellId << "," << knownRune.count << "," << 3 << "," << std::to_string(knownRune.rune.quality);
+
+        fmt << "|" << nextRune.spellId << "," << std::to_string(nextQuality);
 
         if(nextQuality >= RARE_QUALITY)
-            fmt << ";" << "70009" << "," << upgradeCostRunicEssence[nextQuality];
+            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality];
         if (nextQuality == EPIC_QUALITY)
-            fmt << ";" << "70010" << "," << costMineralToUpgradeToEpic;
+            fmt << "|" << "70010" << "," << config.costMineralToUpgradeToEpic;
         if (nextQuality == LEGENDARY_QUALITY)
-            fmt << ";" << "70011" << "," << costMineralToUpgradeToLegendary << ";" << "70013" << "," << costSkullUpgradeRankLegendary << ";" << "70014" << "," << costBetterSkullUpgradeRankLegendary;
+            fmt << "|" << "70011" << "," << config.costMineralToUpgradeToLegendary << ";" << "70013" << "," << config.costSkullUpgradeRankLegendary << ";" << "70014" << "," << config.costBetterSkullUpgradeRankLegendary;
         if (nextQuality == MYTHICAL_QUALITY)
-            fmt << ";" << "70012" << "," << costMineralToUpgradeToMythic << ";" << "70013" << "," << costSkullUpgradeRankMythic << ";" << "70014" << "," << costBetterSkullUpgradeRankMythic;
+            fmt << "|" << "70012" << "," << config.costMineralToUpgradeToMythic << ";" << "70013" << "," << config.costSkullUpgradeRankMythic << ";" << "70014" << "," << config.costBetterSkullUpgradeRankMythic;
 
-
-        Rune nextRune = GetRuneByQuality(knownRune.rune.groupId, nextQuality);
-
-        fmt << "|" << nextRune.spellId << "," << nextQuality;
-
-        bool isUpgradable = IsRuneUpgradable(player, nextRune, knownRune.count);
-
-
-        fmt << "|" << isUpgradable;
 
         elements.push_back(fmt.str());
     }
-
 
     return elements;
 }
@@ -502,44 +564,40 @@ std::string RunesManager::ProgressionCachingForClient(Player* player)
 
 Rune RunesManager::GetRuneByQuality(uint32 groupId, int8 nextQuality)
 {
-    std::vector<Rune> runeVector = {};
+    auto range = m_unorderedRunes.equal_range(groupId);
+    Rune runeQuality;
 
-    for (const auto& pair : m_Runes)
-        if (pair.second.groupId == groupId)
-            runeVector.push_back(pair.second);
+    for (auto it = range.first; it != range.second; ++it) {
+        const Rune& rune = it->second;
+        if (rune.quality == nextQuality) {
+            runeQuality = rune;
+            break;
+        }
+    }
 
-
-    auto it = std::find_if(runeVector.begin(), runeVector.end(), [nextQuality](const Rune& rune) {
-        return rune.quality == nextQuality;
-    });
-
-    if (it == runeVector.end())
-        return {};
-
-    return *it;
+    return runeQuality;
 }
 
-bool RunesManager::IsRuneUpgradable(Player* player, Rune rune, uint32 countRune)
+bool RunesManager::IsRuneUpgradable(Player* player, Rune targetRune, uint32 countRune)
 {
-    int8 quality = rune.quality;
+    int8 nextQuality = targetRune.quality;
 
-    bool didHasRunes = countRune == 3;
+    bool didHasRunes = countRune >= 3;
 
-
-    if (quality == UNCOMMON_QUALITY)
+    if (nextQuality == UNCOMMON_QUALITY)
         return didHasRunes;
 
-    if (quality == RARE_QUALITY)
+    if (nextQuality == RARE_QUALITY)
         return didHasRunes && player->HasItemCount(70009, 200);
 
-    if (quality == EPIC_QUALITY)
+    if (nextQuality == EPIC_QUALITY)
         return didHasRunes && player->HasItemCount(70009, 500) && player->HasItemCount(70010, 6);
 
-    if (quality == LEGENDARY_QUALITY)
-        return didHasRunes && player->HasItemCount(70009, 1500) && player->HasItemCount(70011, 20);
+    if (nextQuality == LEGENDARY_QUALITY)
+        return didHasRunes && player->HasItemCount(70009, 1500) && player->HasItemCount(70011, 20) && player->HasItemCount(70013, 3) && player->HasItemCount(70014, 1);
 
-    if (quality == MYTHICAL_QUALITY)
-        return didHasRunes && player->HasItemCount(70009, 2500) && player->HasItemCount(70012, 100);
+    if (nextQuality == MYTHICAL_QUALITY)
+        return didHasRunes && player->HasItemCount(70009, 2500) && player->HasItemCount(70012, 100) && player->HasItemCount(70013, 3) && player->HasItemCount(70014, 5);
 
     return false;
 }
@@ -882,10 +940,10 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     else
         it->second.erase(ij);
 
-    player->AddItem(70008, runicDust);
 
     CharacterDatabase.Execute("DELETE FROM account_know_runes WHERE accountId = {} AND spellId = {} LIMIT 1", accountId, rune.spellId);
 
+    player->AddItem(70008, runicDust);
 
     if (RuneAlreadyActivated(player, rune.spellId))
     {
@@ -895,9 +953,31 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     }
 }
 
-void RunesManager::UpgradeRune(Player* player, uint64 runeId)
+void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
 {
-    
+    Rune rune = GetRuneBySpellId(runeSpellId);
+
+    uint32 accountId = player->GetSession()->GetAccountId();
+
+    auto it = m_KnownRunes.find(accountId);
+
+    auto ij = std::find_if(it->second.begin(), it->second.end(),
+        [&](const KnownRune& accountRune) {
+        return accountRune.rune.quality == rune.quality && accountRune.rune.spellId == rune.spellId;
+    });
+
+    if (ij == it->second.end())
+        return;
+
+    Rune nextRune = GetRuneByQuality(ij->rune.groupId, rune.quality + 1);
+    bool isUpgradable = IsRuneUpgradable(player, nextRune, ij->count);
+
+    if (!isUpgradable) {
+        return SendPlayerMessage(player, "You don't meet the requierement to upgrade this rune.");
+    }
+
+    player->CastCustomSpell(79505, SPELLVALUE_BASE_POINT0, nextRune.spellId, player, TRIGGERED_NONE);
+
 }
 
 void RunesManager::AddRuneToSlot(Player* player, Rune rune)
@@ -923,8 +1003,8 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune)
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_RUNE_SLOT);
     stmt->SetData(0, slot.id);
-    stmt->SetData(2, slot.runeSpellId);
-    stmt->SetData(1, slot.order);
+    stmt->SetData(1, slot.runeSpellId);
+    stmt->SetData(2, slot.order);
     trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
     sEluna->RefreshSlotsRune(player);

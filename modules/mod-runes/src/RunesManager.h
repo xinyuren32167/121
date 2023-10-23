@@ -37,12 +37,17 @@ struct RuneConfig {
     bool debug;
     uint32 maxSlots;
     uint32 defaultSlot;
-    float chanceDropRuneQualityWhite;
-    float chanceDropRuneQualityGreen;
-    float chanceDropRuneQualityBlue;
-    float chanceDropRuneQualityEpic;
-    float chanceDropRuneQualityLegendary;
-    float chanceDropRuneQualityRed;
+    std::map<uint8, uint32> upgradeCostRunicEssence;
+
+    int8 costMineralToUpgradeToEpic;
+    int8 costMineralToUpgradeToLegendary;
+    int8 costMineralToUpgradeToMythic;
+
+    int8 costSkullUpgradeRankLegendary;
+    int8 costSkullUpgradeRankMythic;
+
+    int8 costBetterSkullUpgradeRankLegendary;
+    int8 costBetterSkullUpgradeRankMythic;
 };
 
 struct KnownRune {
@@ -81,6 +86,7 @@ class RunesManager {
 
 private:
     static std::map<uint32, Rune> m_Runes;
+    static std::unordered_multimap<uint32 /* groupId */, Rune>  m_unorderedRunes;
     static std::map<uint32 /* accountId */, std::vector<KnownRune>> m_KnownRunes;
     static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadout;
     static std::map<uint64 /* slotId */, std::vector<SlotRune>> m_SlotRune;
@@ -102,7 +108,7 @@ public:
     static void LoadSpellsConversion();
     static void CreateDefaultCharacter(Player* player);
     static std::vector<std::string> KnownRuneForClient(Player* player);
-    static std::string RuneForClient(Player* player, Rune rune, uint32 count);
+    static std::string RuneForClient(Player* player, Rune rune, bool known, uint32 count);
     static std::vector<std::string> RunesForClient(Player* player);
     static std::vector<std::string> RunesUpgradeForClient(Player* player);
     static std::vector<std::string> LoadoutCachingForClient(Player* player);
@@ -125,12 +131,14 @@ public:
     static void OnCastActivateLoadout(Player* player, uint64 loadoutId);
     static void DisableRune(Player* player, uint64 runeId);
     static void RefundRune(Player* player, uint32 runeSpellId);
-    static void UpgradeRune(Player* player, uint64 runeId);
+    static void UpgradeRune(Player* player, uint32 runeSpellId);
     static void AddRuneToSlot(Player* player, Rune rune);
     static void RemoveRuneFromSlots(Player* player, Rune rune);
+    static void RemoveRune(Player* player, Rune rune, int8 quantity);
     static bool HasEnoughToUpgrade(Player* player, uint32 spellId);
     static void SpellConversion(uint32 runeId, Player* player, bool apply);
     static void SendPlayerMessage(Player* player, std::string msg);
     static Rune GetRandomRune(Player* player, uint8 quality);
+    static void RemoveNecessaryItemsForUpgrade(Player* player, Rune rune);
     static void AddRunePlayer(Player* player, Rune rune);
 };

@@ -177,6 +177,26 @@ class spell_generate_random_rune : public SpellScript
     }
 };
 
+class spell_upgrade_rune : public SpellScript
+{
+    PrepareSpellScript(spell_upgrade_rune);
+
+    void HandleProc()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        SpellValue const* value = GetSpellValue();
+        uint32 runeId = value->EffectBasePoints[EFFECT_0];
+        Rune rune = RunesManager::GetRuneBySpellId(runeId);
+        RunesManager::RemoveNecessaryItemsForUpgrade(player, rune);
+        RunesManager::AddRunePlayer(player, rune);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_upgrade_rune::HandleProc);
+    }
+};
+
 // Add all scripts in one
 void AddSC_runesScripts()
 {
