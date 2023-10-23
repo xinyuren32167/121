@@ -59,6 +59,42 @@ enum Specializations {
     HUNTER_DARK_RANGER = 35,
 };
 
+enum WarlockSpells
+{
+    SPELL_MINION_INCREASE_DREAD_STALKER = 1100009,
+    SPELL_MINION_INCREASE_WILD_IMP = 1100010,
+    SPELL_MINION_INCREASE_DARKGLARE = 1100011,
+    SPELL_MINION_INCREASE_VILEFIEND = 1100012,
+    SPELL_MINION_INCREASE_DEMONIC_TYRANT = 1100013,
+    SPELL_MINION_INCREASE_BOMBER = 1100014,
+};
+
+enum WarriorSpells
+{
+    SPELL_WARRIOR_WARBREAKER_REPLACER = 84546,
+    SPELL_WARRIOR_WARBREAKER = 84519,
+    SPELL_WARRIOR_COLOSSUS_SMASH = 80002,
+};
+
+enum HunterSpells
+{
+    SPELL_HUNTER_LONE_WOLF = 80182,
+    SPELL_HUNTER_MONGOOSE_BITE_REPLACER = 80234,
+    SPELL_HUNTER_MONGOOSE_BITE = 53339,
+    SPELL_HUNTER_RAPTOR_STRIKE = 48996,
+};
+
+enum DruidSpells
+{
+    SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER = 80675,
+    SPELL_DRUID_AVATAR_OF_ASHAMANE = 80548,
+    SPELL_DRUID_BERSERK_CAT = 50334,
+    SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER = 80674,
+    SPELL_DRUID_GUARDIAN_OF_URSOC = 80568,
+    SPELL_DRUID_BERSERK_BEAR = 80566,
+};
+
+
 
 class PlayerSpecialization {
 public:
@@ -70,6 +106,8 @@ public:
     static void InitializeSpecializations();
     static void ActivateSpecialization(Player* player, uint32 specId);
     static void UpdateMastery(Player* player, uint32 rating);
+    static bool Exception(Player* player, uint32 spellId);
+    static void RemoveSpellsAndAuras(Player* player);
     static uint32 GetCurrentSpecId(Player* player);
     static std::vector<std::string> GetSpecializations(Player* player);
 };

@@ -16,40 +16,6 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-enum WarlockSpells
-{
-    SPELL_MINION_INCREASE_DREAD_STALKER = 1100009,
-    SPELL_MINION_INCREASE_WILD_IMP = 1100010,
-    SPELL_MINION_INCREASE_DARKGLARE = 1100011,
-    SPELL_MINION_INCREASE_VILEFIEND = 1100012,
-    SPELL_MINION_INCREASE_DEMONIC_TYRANT = 1100013,
-    SPELL_MINION_INCREASE_BOMBER = 1100014,
-};
-
-enum WarriorSpells
-{
-    SPELL_WARRIOR_WARBREAKER_REPLACER = 84546,
-    SPELL_WARRIOR_WARBREAKER = 84519,
-    SPELL_WARRIOR_COLOSSUS_SMASH = 80002,
-};
-
-enum HunterSpells
-{
-    SPELL_HUNTER_LONE_WOLF = 80182,
-    SPELL_HUNTER_MONGOOSE_BITE_REPLACER = 80234,
-    SPELL_HUNTER_MONGOOSE_BITE = 53339,
-    SPELL_HUNTER_RAPTOR_STRIKE = 48996,
-};
-
-enum DruidSpells
-{
-    SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER = 80675,
-    SPELL_DRUID_AVATAR_OF_ASHAMANE = 80548,
-    SPELL_DRUID_BERSERK_CAT = 50334,
-    SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER = 80674,
-    SPELL_DRUID_GUARDIAN_OF_URSOC = 80568,
-    SPELL_DRUID_BERSERK_BEAR = 80566,
-};
 
  // Add player scripts
 class SpecChoice_PlayerScripts : public PlayerScript
@@ -168,11 +134,6 @@ class spell_activate_specialization : public SpellScript
     PrepareSpellScript(spell_activate_specialization);
 
 
-    void UnlearnSpells()
-    {
-
-    }
-
     void HandleProc()
     {
         Player* player = GetCaster()->ToPlayer();
@@ -182,18 +143,23 @@ class spell_activate_specialization : public SpellScript
         uint32 currentSpecId = PlayerSpecialization::GetCurrentSpecId(player);
         Specialization newSpec = PlayerSpecialization::m_Specializations[newSpecId];
 
-        if (currentSpecId == HUNTER_MARSKMANSHIP)
-            player->RemoveAura(80182);
 
         if (currentSpecId > 0) {
+
             for (auto const& spellId : PlayerSpecialization::m_SpecSpells[currentSpecId]) {
                 player->removeSpell(spellId, SPEC_MASK_ALL, false, true);
                 player->RemoveAura(spellId);
             }
+
+            PlayerSpecialization::RemoveSpellsAndAuras(player);
         }
 
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
         {
+
+            if (PlayerSpecialization::Exception(player, spellId))
+                continue;
+
             player->learnSpell(spellId, false, false);
         }
 
@@ -209,9 +175,6 @@ class spell_activate_specialization : public SpellScript
         for (const auto& pet : summonedUnits)
             if (pet->GetCharmInfo())
                 pet->ToTempSummon()->DespawnOrUnsummon();
-
-        if(player->HasAura(SPELL_HUNTER_LONE_WOLF))
-            player->RemoveAura(80182);
 
         if (!player->HasSpell(674) && player->m_canDualWield)
             player->SetCanDualWield(false);

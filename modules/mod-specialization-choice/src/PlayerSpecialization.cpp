@@ -139,6 +139,39 @@ void PlayerSpecialization::UpdateMastery(Player* player, uint32 rating)
     }
 }
 
+bool PlayerSpecialization::Exception(Player* player, uint32 spellId)
+{
+    return player->HasAura(SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER) && spellId == SPELL_DRUID_BERSERK_CAT
+        || (player->HasAura(SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER) && spellId == SPELL_DRUID_BERSERK_BEAR)
+        || (player->HasAura(SPELL_HUNTER_MONGOOSE_BITE_REPLACER) && spellId == SPELL_HUNTER_RAPTOR_STRIKE)
+        || (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && spellId == SPELL_WARRIOR_COLOSSUS_SMASH);
+}
+
+void PlayerSpecialization::RemoveSpellsAndAuras(Player* player)
+{
+    if (player->HasAura(SPELL_HUNTER_LONE_WOLF))
+        player->RemoveAura(SPELL_HUNTER_LONE_WOLF);
+
+    if (player->HasAura(SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER) && !player->HasSpell(SPELL_DRUID_BERSERK_CAT)) {
+        player->removeSpell(SPELL_DRUID_AVATAR_OF_ASHAMANE, SPEC_MASK_ALL, false, true);
+        player->RemoveAura(SPELL_DRUID_AVATAR_OF_ASHAMANE);
+    }
+
+    if (player->HasAura(SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER) && !player->HasSpell(SPELL_DRUID_BERSERK_BEAR)) {
+        player->removeSpell(SPELL_DRUID_GUARDIAN_OF_URSOC, SPEC_MASK_ALL, false, true);
+        player->RemoveAura(SPELL_DRUID_GUARDIAN_OF_URSOC);
+    }
+
+    if (player->HasAura(SPELL_HUNTER_MONGOOSE_BITE_REPLACER) && !player->HasSpell(SPELL_HUNTER_RAPTOR_STRIKE)) {
+        player->removeSpell(SPELL_HUNTER_MONGOOSE_BITE, SPEC_MASK_ALL, false, true);
+        player->RemoveAura(SPELL_HUNTER_MONGOOSE_BITE);
+    }
+
+    if (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && !player->HasSpell(SPELL_WARRIOR_COLOSSUS_SMASH)) {
+        player->removeSpell(SPELL_WARRIOR_WARBREAKER, SPEC_MASK_ALL, false, true);
+    }
+}
+
 
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
 {
