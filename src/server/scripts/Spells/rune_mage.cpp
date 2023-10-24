@@ -32,6 +32,7 @@ enum MageSpells
     SPELL_MAGE_FINGERS_OF_FROST_AURA = 44544,
     SPELL_MAGE_FINGERS_OF_FROST_VISUAL = 74396,
     SPELL_MAGE_FIRE_BLAST = 42873,
+    SPELL_MAGE_FIREBALL = 42833,
     SPELL_MAGE_FLURRY = 81533,
     SPELL_MAGE_FLURRY_DAMAGE = 81534,
     SPELL_MAGE_FROSTBOLT = 81504,
@@ -49,6 +50,7 @@ enum MageSpells
     SPELL_MAGE_LIVING_BOMB_SECOND = 55354,
     SPELL_MAGE_LIVING_BOMB_SECOND_EXPLOSION = 55355,
     SPELL_MAGE_MAGIC_STRIKE = 81546,
+    SPELL_MAGE_METEOR = 81531,
     SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION = 55343,
     SPELL_MAGE_MIRROR_IMAGE_SUMMON_ID = 31216,
     SPELL_MAGE_PHOENIX_FLAMES = 80029,
@@ -120,6 +122,10 @@ enum MageSpells
     RUNE_MAGE_SUN_KINGS_BLESSING_BUFF = 301035,
     RUNE_MAGE_SIPHONING_STRIKES_HEAL = 301132,
     RUNE_MAGE_OIL_FIRE_BUFF = 301202,
+    RUNE_MAGE_MASTER_OF_FLAME_TARGETFINDER = 301300,
+    RUNE_MAGE_MASTER_OF_FLAME_DAMAGE = 301301,
+    RUNE_MAGE_FIREFALL_LISTENER = 301314,
+    RUNE_MAGE_FIREFALL_BUFF = 301315,
 };
 
 class spell_tempest_barrier : public SpellScript
@@ -2367,6 +2373,293 @@ class rune_mage_flame_accelerant_proc : public AuraScript
     }
 };
 
+class rune_mage_alextraszas_fury : public AuraScript
+{
+    PrepareAuraScript(rune_mage_alextraszas_fury);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (AuraEffect* hotStreak = caster->GetAura(PASSIVE_MAGE_HOT_STREAK)->GetEffect(EFFECT_1))
+        {
+            int32 chancePct = aurEff->GetAmount();
+            float critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+            int32 procChance = CalculatePct(critChance, chancePct);
+
+            if (roll_chance_i(procChance))
+            {
+                hotStreak->SetAmount(hotStreak->GetAmount() * 2);
+
+                if (hotStreak->GetAmount() < 100) // not enough
+                    return;
+
+                caster->CastSpell(caster, PASSIVE_MAGE_HOT_STREAK_BUFF, TRIGGERED_FULL_MASK);
+                hotStreak->SetAmount(25);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_mage_alextraszas_fury::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_phoenix_reborn : public AuraScript
+{
+    PrepareAuraScript(rune_mage_phoenix_reborn);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_PHOENIX_FLAMES, -cooldown);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_phoenix_reborn::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_phoenix_reborn::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_mage_master_of_flame : public AuraScript
+{
+    PrepareAuraScript(rune_mage_master_of_flame);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = eventInfo.GetSpellInfo()->Id;
+
+        if (procSpell == SPELL_MAGE_FIRE_BLAST)
+        {
+            if (Aura* ignite = target->GetAura(MASTERY_MAGE_IGNITE_DOT))
+            {
+                int32 amount = ignite->GetEffect(EFFECT_0)->GetAmount();
+
+                GetEffect(EFFECT_2)->SetAmount(amount);
+                caster->CastSpell(target, RUNE_MAGE_MASTER_OF_FLAME_TARGETFINDER, TRIGGERED_FULL_MASK);
+            }
+        }
+
+        if (procSpell == MASTERY_MAGE_IGNITE_DOT && !caster->HasAura(SPELL_MAGE_COMBUSTION))
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            int32 damagePct = GetEffect(EFFECT_1)->GetAmount();
+            int32 amount = CalculatePct(damage, damagePct);
+
+            caster->CastCustomSpell(RUNE_MAGE_MASTER_OF_FLAME_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (caster->HasAura(procSpell))
+            caster->RemoveAura(procSpell);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_master_of_flame::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_master_of_flame::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_mage_master_of_flame::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_mage_master_of_flame_targets : public SpellScript
+{
+    PrepareSpellScript(rune_mage_master_of_flame_targets);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 301294; i < 301300; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        uint32 const maxTargets = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        if (targets.size() > maxTargets)
+        {
+            targets.remove_if(Acore::UnitAuraCheck(true, MASTERY_MAGE_IGNITE_DOT, caster->GetGUID()));
+            targets.resize(maxTargets);
+        }
+
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            int32 amount = GetRuneAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+
+            caster->CastCustomSpell(MASTERY_MAGE_IGNITE_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_mage_master_of_flame_targets::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_mage_firefall : public AuraScript
+{
+    PrepareAuraScript(rune_mage_firefall);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!eventInfo.GetSpellInfo())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = eventInfo.GetSpellInfo()->Id;
+        int32 maxStack = aurEff->GetAmount();
+
+        if (Aura* listener = caster->GetAura(RUNE_MAGE_FIREFALL_LISTENER))
+        {
+            listener->ModStackAmount(1);
+
+            if (listener->GetStackAmount() >= maxStack)
+            {
+                listener->SetStackAmount(maxStack);
+                caster->AddAura(RUNE_MAGE_FIREFALL_BUFF, caster);
+                listener->Remove();
+            }
+        }
+        else
+            caster->AddAura(RUNE_MAGE_FIREFALL_LISTENER, caster);
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (procSpell == SPELL_MAGE_FIREBALL && caster->HasAura(RUNE_MAGE_FIREFALL_BUFF))
+            {
+                caster->CastSpell(target, SPELL_MAGE_METEOR, TRIGGERED_FULL_MASK);
+                caster->RemoveAura(RUNE_MAGE_FIREFALL_BUFF);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_MAGE_FIREFALL_LISTENER))
+            caster->RemoveAura(RUNE_MAGE_FIREFALL_LISTENER);
+
+        if (caster->HasAura(RUNE_MAGE_FIREFALL_BUFF))
+            caster->RemoveAura(RUNE_MAGE_FIREFALL_BUFF);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_firefall::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_firefall::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_mage_firefall::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_mage_from_the_ashes : public AuraScript
+{
+    PrepareAuraScript(rune_mage_from_the_ashes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_PHOENIX_FLAMES, -cooldown);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_from_the_ashes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_from_the_ashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_mage_perks_scripts()
@@ -2428,6 +2721,12 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(rune_mage_fiery_rush);
     RegisterSpellScript(rune_mage_hyperthermia);
     RegisterSpellScript(rune_mage_flame_accelerant_proc);
+    RegisterSpellScript(rune_mage_alextraszas_fury);
+    RegisterSpellScript(rune_mage_phoenix_reborn);
+    RegisterSpellScript(rune_mage_master_of_flame);
+    RegisterSpellScript(rune_mage_master_of_flame_targets);
+    RegisterSpellScript(rune_mage_firefall);
+    RegisterSpellScript(rune_mage_from_the_ashes);
 
 
 

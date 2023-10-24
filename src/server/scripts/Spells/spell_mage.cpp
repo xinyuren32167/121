@@ -158,6 +158,7 @@ enum MageSpells
     RUNE_MAGE_SEARING_TOUCH_BUFF = 300747,
     RUNE_MAGE_SIPHON_STORM_BUFF = 301034,
     RUNE_MAGE_MANA_ADEPT_ENERGIZE = 301158,
+    RUNE_MAGE_FRACTURED_FROST_BUFF = 301358,
 };
 
 class npc_mage_spell_arcane_orbs : public CreatureScript
@@ -485,10 +486,13 @@ class spell_mage_arcane_barrage : public SpellScript
 
             if (GetManaAdeptAura(caster))
             {
+                int32 maxMana = caster->GetMaxPower(POWER_MANA);
                 int32 manaPct = GetManaAdeptAura(caster)->GetEffect(EFFECT_0)->GetAmount();
                 manaPct *= arcaneCharges->GetStackAmount();
+                int32 amount = CalculatePct(maxMana, manaPct);
+                amount /= 10;
 
-                caster->CastCustomSpell(RUNE_MAGE_MANA_ADEPT_ENERGIZE, SPELLVALUE_BASE_POINT0, manaPct, caster, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(RUNE_MAGE_MANA_ADEPT_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
             }
 
             arcaneCharges->Remove();
@@ -3422,6 +3426,86 @@ class spell_mage_fireball : public SpellScript
     }
 };
 
+// 81504 - Frostbolt
+class spell_mage_frostbolt : public SpellScript
+{
+    PrepareSpellScript(spell_mage_frostbolt);
+
+    Aura* GetDeepShatterAura(Unit* caster)
+    {
+        for (size_t i = 301346; i < 301352; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetFracturedFrostAura(Unit* caster)
+    {
+        for (size_t i = 301352; i < 301358; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleBeforeCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Fractured Frost multi target
+        if (GetFracturedFrostAura(caster))
+        {
+            int32 procChance = GetFracturedFrostAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->AddAura(RUNE_MAGE_FRACTURED_FROST_BUFF, caster);
+        }
+    }
+
+    void HandleDamage(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+        LOG_ERROR("error", "proc");
+        // Deep Shatter damage increase
+        if (GetDeepShatterAura(caster))
+        {
+            LOG_ERROR("error", "rune check");
+            if (target->HasAuraState(AURA_STATE_FROZEN))
+            {
+                LOG_ERROR("error", "aurastate check");
+                int32 damageIncrease = GetDeepShatterAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, damageIncrease);
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_mage_frostbolt::HandleBeforeCast);
+        OnEffectHitTarget += SpellEffectFn(spell_mage_frostbolt::HandleDamage, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 
 
 void AddSC_mage_spell_scripts()
@@ -3516,6 +3600,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_flamestrike);
     RegisterSpellScript(spell_mage_missile_barrage_proc);
     RegisterSpellScript(spell_mage_fireball);
+    RegisterSpellScript(spell_mage_frostbolt);
 
 
 

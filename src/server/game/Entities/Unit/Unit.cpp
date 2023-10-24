@@ -11413,7 +11413,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                         AddPct(DoneTotalMod, aurEff->GetAmount());
             }
             // Ice Lance
-            else if (spellProto->SpellIconID == 186)
+            else if (spellProto->Id == 42914)
             {
                 if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
                 {
