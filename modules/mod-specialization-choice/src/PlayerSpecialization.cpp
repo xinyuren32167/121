@@ -80,7 +80,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[PRIEST_DISCI] = { 29, 48066, "Discipline", 5, 900000, 25.93, true, 900001, POWER_ALL };
     m_Specializations[PRIEST_HOLY] = { 30, 48078, "Holy", 5, 900005, 28.00, false, 0, POWER_ALL };
     m_Specializations[PRIEST_SHADOW] = { 31, 81048, "Shadow", 5, 900008, 70.00, false, 0, POWER_ALL };
-    m_Specializations[PRIEST_HARMONIST] = { 36, 900010, "Harmonist", 5, 900010, 57.00, false, 0, POWER_ALL };
+    m_Specializations[PRIEST_ABSOLUTION] = { 36, 900013, "Absolution", 5, 900010, 57.00, false, 0, POWER_ALL };
 
     m_Specializations[SHAMAN_ELEMENTAL] = { 23, 403, "Elemental", 7, 1000000, 18.75, false, 0, POWER_RUNIC_POWER };
     m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 324, "Enchancement", 7, 1000002, 17.5, true, 1000003, POWER_MANA };

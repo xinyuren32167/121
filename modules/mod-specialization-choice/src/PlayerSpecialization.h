@@ -57,7 +57,7 @@ enum Specializations {
     WARRIOR_HOPLITE = 33,
     MAGE_SPELLBLADE = 34,
     HUNTER_DARK_RANGER = 35,
-    PRIEST_HARMONIST = 36,
+    PRIEST_ABSOLUTION = 36,
 };
 
 enum WarlockSpells

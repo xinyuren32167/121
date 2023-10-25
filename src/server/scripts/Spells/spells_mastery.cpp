@@ -45,8 +45,8 @@ enum Masteries
     MASTERY_PRIEST_ECHO_OF_LIGHT_HEAL = 900007,
     MASTERY_PRIEST_SHADOW_WEAVING = 900008,
     MASTERY_PRIEST_SHADOW_WEAVING_DAMAGE = 900009,
-    MASTERY_PRIEST_HARMONY_BUFF = 900011,
-    MASTERY_PRIEST_HARMONY_DEBUFF = 900012,
+    MASTERY_PRIEST_ABSOLUTIONS_EMBRACE_BUFF = 900011,
+    MASTERY_PRIEST_ABSOLUTIONS_EMBRACE_DEBUFF = 900012,
 
     // Rogue
     MASTERY_ROGUE_POTENT_ASSASSIN = 1100000,
@@ -1156,9 +1156,9 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
     }
 };
 
-class spell_mastery_pri_harmony : public AuraScript
+class spell_mastery_pri_absolutions_embrace : public AuraScript
 {
-    PrepareAuraScript(spell_mastery_pri_harmony);
+    PrepareAuraScript(spell_mastery_pri_absolutions_embrace);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -1176,12 +1176,12 @@ class spell_mastery_pri_harmony : public AuraScript
                 if (target->IsFriendlyTo(caster))
                 {
                     int32 buffAmount = aurEff->GetAmount() + caster->GetMastery();
-                    caster->CastCustomSpell(MASTERY_PRIEST_HARMONY_BUFF, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(MASTERY_PRIEST_ABSOLUTIONS_EMBRACE_BUFF, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
                 }
                 else
                 {
                     int32 debuffAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount() + caster->GetMastery();
-                    caster->CastCustomSpell(MASTERY_PRIEST_HARMONY_DEBUFF, SPELLVALUE_BASE_POINT0, debuffAmount, target, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(MASTERY_PRIEST_ABSOLUTIONS_EMBRACE_DEBUFF, SPELLVALUE_BASE_POINT0, debuffAmount, target, TRIGGERED_FULL_MASK);
                 }
             }
         }
@@ -1189,8 +1189,8 @@ class spell_mastery_pri_harmony : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(spell_mastery_pri_harmony::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_mastery_pri_harmony::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_mastery_pri_absolutions_embrace::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_pri_absolutions_embrace::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1751,5 +1751,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_from_the_shadows);
     RegisterSpellScript(spell_mastery_from_the_shadows_periodic);
     RegisterSpellScript(spell_mastery_from_the_shadows_buff_remove);
-    RegisterSpellScript(spell_mastery_pri_harmony);
+    RegisterSpellScript(spell_mastery_pri_absolutions_embrace);
 }

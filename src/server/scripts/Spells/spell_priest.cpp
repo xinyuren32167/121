@@ -108,12 +108,21 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_MIGHT_SPIRIT = 86212,
     SPELL_PRIEST_HOLY_MIGHT_AOE = 86214,
     SPELL_PRIEST_HOLY_WOUNDS_PROC = 86222,
+    SPELL_PRIEST_HOLY_STRIKE = 86215,
+    SPELL_PRIEST_HOLY_ERUPTION = 86204,
+    SPELL_PRIEST_HOLY_ERUPTION_LIGHT_OVERLOAD = 86301,
+    SPELL_PRIEST_BLISTERING_BARRIER = 86200,
 
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
     SPELL_PRIEST_TWIN_DISCIPLINE_R1 = 47586,
     SPELL_PRIEST_SPIRITUAL_HEALING_R1 = 14898,
     SPELL_PRIEST_DIVINE_PROVIDENCE_R1 = 47562,
+
+    TALENT_PRIEST_HOLY_WEAVING_PROC = 86252,
+    TALENT_PRIEST_SURPRISE_BURST_PROC = 86281,
+    TALENT_PRIEST_DEFY_FATE_HEAL = 86286,
+    TALENT_PRIEST_DEFY_FATE_COOLDOWN = 86287,
 };
 
 enum PriestSpellIcons
@@ -2350,6 +2359,123 @@ class spell_pri_wave_of_light_accumulation : public AuraScript
     }
 };
 
+class spell_pri_holy_weaving : public AuraScript
+{
+    PrepareAuraScript(spell_pri_holy_weaving);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            GetCaster()->CastCustomSpell(TALENT_PRIEST_HOLY_WEAVING_PROC, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_holy_weaving::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pri_regenerative_barrier : public AuraScript
+{
+    PrepareAuraScript(spell_pri_regenerative_barrier);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* aura = GetCaster()->GetAura(SPELL_PRIEST_BLISTERING_BARRIER))
+            aura->ModCharges(1);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_regenerative_barrier::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pri_surprise_burst : public AuraScript
+{
+    PrepareAuraScript(spell_pri_surprise_burst);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        int32 holyFlameChance = aurEff->GetAmount();
+        int32 holyStrikeChance = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+        int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        if (procSpell == SPELL_PRIEST_HOLY_STRIKE)
+        {
+            if (roll_chance_i(holyStrikeChance))
+            {
+                caster->CastSpell(GetCaster(), TALENT_PRIEST_SURPRISE_BURST_PROC, TRIGGERED_FULL_MASK);
+                caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION);
+            }
+        }
+        else
+        {
+            if (roll_chance_i(holyFlameChance))
+            {
+                caster->CastSpell(GetCaster(), TALENT_PRIEST_SURPRISE_BURST_PROC, TRIGGERED_FULL_MASK);
+                caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_surprise_burst::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pri_defy_fate : public AuraScript
+{
+    PrepareAuraScript(spell_pri_defy_fate);
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+
+        if (remainingHealth <= 0 && !victim->HasAura(TALENT_PRIEST_DEFY_FATE_COOLDOWN))
+        {
+            absorbAmount = dmgInfo.GetDamage();
+            victim->CastSpell(victim, TALENT_PRIEST_DEFY_FATE_HEAL, TRIGGERED_FULL_MASK);
+            victim->CastSpell(victim, TALENT_PRIEST_DEFY_FATE_COOLDOWN, TRIGGERED_FULL_MASK);
+        }
+        else
+            absorbAmount = 0;
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_pri_defy_fate::Absorb, EFFECT_0);
+    }
+};
+
+class spell_pri_light_overload: public AuraScript
+{
+    PrepareAuraScript(spell_pri_light_overload);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            GetCaster()->CastSpell(eventInfo.GetActionTarget(), SPELL_PRIEST_HOLY_ERUPTION_LIGHT_OVERLOAD, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_light_overload::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_priest_spell_scripts()
 {
     RegisterSpellScript(spell_pri_shadowfiend_scaling);
@@ -2413,5 +2539,10 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_might_proc);
     RegisterSpellScript(spell_pri_holy_might_increase);
     RegisterSpellScript(spell_pri_wave_of_light_accumulation);
+    RegisterSpellScript(spell_pri_holy_weaving);
+    RegisterSpellScript(spell_pri_regenerative_barrier);
+    RegisterSpellScript(spell_pri_surprise_burst);
+    RegisterSpellScript(spell_pri_defy_fate);
+    RegisterSpellScript(spell_pri_light_overload);
     new npc_pri_shadowy_apparitions();
 }

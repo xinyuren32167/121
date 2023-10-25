@@ -3351,14 +3351,14 @@ class spell_dk_rime : public AuraScript
 
         if (procSpell == SPELL_DK_FROSTSCYTHE)
         {
-            if (!roll_chance_i(22))
+            if (roll_chance_i(22))
             {
                 caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
             }
         }
         else
         {
-            if (!roll_chance_i(45))
+            if (roll_chance_i(45))
             {
                 caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
             }
