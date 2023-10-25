@@ -460,6 +460,8 @@ public:
 
     void RefreshSlotsRune(Player* pPlayer);
     void PushRune(Player* pPlayer, std::string rune);
+    void RemoveRune(Player* pPlayer, std::string str);
+
     void OnRuneMessage(Player* pPlayer, std::string message);
     void OnActivateSpec(Player* pPlayer, std::string message, bool activated, uint32 specId);
     void OnActivateRune(Player* pPlayer, std::string message, uint32 index);

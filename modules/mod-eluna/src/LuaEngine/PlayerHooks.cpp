@@ -248,6 +248,13 @@ void Eluna::PushRune(Player* pPlayer, std::string rune)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::RemoveRune(Player* pPlayer, std::string str)
+{
+    START_HOOK(PLAYER_EVENT_REMOVE_RUNE);
+    Push(pPlayer);
+    Push(str);
+    CallAllFunctions(PlayerEventBindings, key);
+}
 
 void Eluna::OnUpgradeRune(Player* pPlayer, std::string message, uint32 spellId)
 {

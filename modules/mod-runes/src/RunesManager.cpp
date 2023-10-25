@@ -367,6 +367,11 @@ void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
         player->DestroyItemCount(70014, costBetterSkullUpgradeRankMythic, true);
     }
 
+    std::stringstream fmt;
+
+    fmt << std::to_string(previousRune.spellId);
+
+    sEluna->RemoveRune(player, fmt.str());
 }
 
 void RunesManager::AddRunePlayer(Player* player, Rune rune)
@@ -399,6 +404,7 @@ void RunesManager::AddRunePlayer(Player* player, Rune rune)
     CharacterDatabase.Execute("INSERT INTO account_know_runes (accountId, spellId) VALUES ({}, {}) ", accountId, rune.spellId);
 
     std::string str = RuneForClient(player, rune, true, count);
+  
     sEluna->PushRune(player, str);
 }
 
@@ -409,8 +415,6 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, u
             std::to_string(rune.spellId)
         + ";" + std::to_string(rune.quality)
         + ";" + std::to_string(rune.maxStack)
-        + ";" + std::to_string(rune.groupId)
-        + ";" + std::to_string(rune.refundDusts)
         + ";" + rune.keywords
         + ";" + std::to_string(rune.allowableClass)
         + ";" + std::to_string(config.debug ? 1 : count)
@@ -448,20 +452,6 @@ std::vector<std::string> RunesManager::RunesForClient(Player* player)
 }
 
 
-double calculatePayloadInMegabytes(const std::vector<std::string>& strVector) {
-    size_t payloadSize = 0;
-
-    for (const std::string& str : strVector) {
-        payloadSize += str.size(); // Ajoute la taille de chaque chaîne au payload en octets
-    }
-
-    // Convertir la taille en mégaoctets
-    double payloadInMegabytes = static_cast<double>(payloadSize) / 1048576.0; // 2^20
-
-    return payloadInMegabytes;
-}
-
-
 std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
 {
     std::vector<std::string > elements = {};
@@ -494,19 +484,22 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
 
         fmt << "|" << nextRune.spellId << "," << std::to_string(nextQuality);
 
-        if(nextQuality >= RARE_QUALITY)
+        if(nextQuality == RARE_QUALITY)
             fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality];
         if (nextQuality == EPIC_QUALITY)
-            fmt << "|" << "70010" << "," << config.costMineralToUpgradeToEpic;
+            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70010"
+            << "," << std::to_string(config.costMineralToUpgradeToEpic);
         if (nextQuality == LEGENDARY_QUALITY)
-            fmt << "|" << "70011" << "," << config.costMineralToUpgradeToLegendary << ";" << "70013" << "," << config.costSkullUpgradeRankLegendary << ";" << "70014" << "," << config.costBetterSkullUpgradeRankLegendary;
+            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70011" << "," << std::to_string(config.costMineralToUpgradeToLegendary)
+            << ";" << "70013" << "," << config.costSkullUpgradeRankLegendary << ";" << "70014" << "," << config.costBetterSkullUpgradeRankLegendary;
         if (nextQuality == MYTHICAL_QUALITY)
-            fmt << "|" << "70012" << "," << config.costMineralToUpgradeToMythic << ";" << "70013" << "," << config.costSkullUpgradeRankMythic << ";" << "70014" << "," << config.costBetterSkullUpgradeRankMythic;
+            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70012" << "," << std::to_string(config.costMineralToUpgradeToMythic)
+            << ";" << "70013" << "," << std::to_string(config.costSkullUpgradeRankMythic) << ";" << "70014" << "," << std::to_string(config.costBetterSkullUpgradeRankMythic);
 
 
         elements.push_back(fmt.str());
     }
-
+   
     return elements;
 }
 

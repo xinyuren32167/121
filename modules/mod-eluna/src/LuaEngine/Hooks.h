@@ -234,6 +234,7 @@ namespace Hooks
 
         PLAYER_SEND_UI_WARNING_SPEC = 65,
         PLAYER_EVENT_PUSH_RUNE = 66,       // (event, player, rune)
+        PLAYER_EVENT_REMOVE_RUNE = 67,       // (event, player, spellId)
 
 
 

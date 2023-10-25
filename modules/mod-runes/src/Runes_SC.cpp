@@ -101,7 +101,6 @@ public:
             return false;
         }
         RunesManager::AddRunePlayer(player, rune);
-
         return true;
     }
 };
@@ -186,7 +185,12 @@ class spell_upgrade_rune : public SpellScript
         Player* player = GetCaster()->ToPlayer();
         SpellValue const* value = GetSpellValue();
         uint32 runeId = value->EffectBasePoints[EFFECT_0];
+
         Rune rune = RunesManager::GetRuneBySpellId(runeId);
+
+        if (!rune)
+            return;
+
         RunesManager::RemoveNecessaryItemsForUpgrade(player, rune);
         RunesManager::AddRunePlayer(player, rune);
     }
@@ -205,4 +209,5 @@ void AddSC_runesScripts()
     new Runes_CommandsScript();
     RegisterSpellScript(spell_activate_rune);
     RegisterSpellScript(spell_generate_random_rune);
+    RegisterSpellScript(spell_upgrade_rune);
 }

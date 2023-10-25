@@ -7888,7 +7888,6 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
         loot = &creature->loot;
 
-
         std::list<Creature*> creatures;
         GetDeadCreatureListInGrid(creatures, 30.f);
 
@@ -9752,6 +9751,18 @@ public:
         return a->value < b->value;
     }
 };
+
+uint32 Player::GetRemaningSpellCooldown(uint32 spellId)
+{
+    auto itr = GetSpellCooldownMap().find(spellId);
+
+    if (itr == GetSpellCooldownMap().end())
+        return 0;
+
+    uint32 remaningCooldown = itr->second.end;
+
+    return remaningCooldown;
+}
 
 void Player::AddSpellMod(SpellModifier* mod, bool apply)
 {
