@@ -74,11 +74,9 @@ enum PaladinSpells
     SPELL_PALADIN_SANCTIFIED_WRATH_TALENT_R1 = 53375,
 
     SPELL_PALADIN_SEAL_OF_RIGHTEOUSNESS = 25742,
-
     SPELL_PALADIN_CONCENTRACTION_AURA = 19746,
     SPELL_PALADIN_SANCTIFIED_RETRIBUTION_R1 = 31869,
     SPELL_PALADIN_SWIFT_RETRIBUTION_R1 = 53379,
-
     SPELL_PALADIN_IMPROVED_CONCENTRACTION_AURA = 63510,
     SPELL_PALADIN_IMPROVED_DEVOTION_AURA = 63514,
     SPELL_PALADIN_SANCTIFIED_RETRIBUTION_AURA = 63531,
@@ -91,6 +89,16 @@ enum PaladinSpells
     SPELL_PALADIN_EXORCISM = 48801,
     SPELL_PALADIN_RETRIBUTION_AURA = 54043,
     SPELL_PALADIN_SHIELD_OF_RIGHTEOUS = 61411,
+
+    SPELL_PALADIN_SEAL_OF_DISCIPLINE_PROC = 86501,
+    SPELL_PALADIN_SEAL_OF_FAITH_PROC = 86504,
+    SPELL_PALADIN_BEACON_OF_WRATH = 86506,
+    SPELL_PALADIN_BEACON_OF_WRATH_PROC = 86507,
+    SPELL_PALADIN_GODS_JUDGEMENT_DAMAGE = 86513,
+    SPELL_PALADIN_INQUISITION = 86515,
+    SPELL_PALADIN_DIVINE_ZEAL = 86508,
+    SPELL_PALADIN_SEAL_OF_DISCIPLINE = 86500,
+    SPELL_PALADIN_SANCTIFIED_FLAME = 86516,
 };
 
 enum PaladinSpellIcons
@@ -859,7 +867,7 @@ class spell_pal_judgement : public SpellScript
 
 public:
     spell_pal_judgement(uint32 spellId) : SpellScript(), _spellId(spellId) { }
-
+    
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_PALADIN_JUDGEMENT_DAMAGE, _spellId });
@@ -867,7 +875,8 @@ public:
 
     void HandleScriptEffect(SpellEffIndex /*effIndex*/)
     {
-        uint32 spellId2 = SPELL_PALADIN_JUDGEMENT_DAMAGE;
+        Unit* caster = GetCaster();
+        uint32 spellId2 = 0;
 
         // some seals have SPELL_AURA_DUMMY in EFFECT_2
         Unit::AuraEffectList const& auras = GetCaster()->GetAuraEffectsByType(SPELL_AURA_DUMMY);
@@ -881,12 +890,13 @@ public:
                 }
         }
 
-        GetCaster()->CastSpell(GetHitUnit(), _spellId, true);
-        GetCaster()->CastSpell(GetHitUnit(), spellId2, true);
+        caster->CastSpell(GetHitUnit(), _spellId, true);
+        caster->CastSpell(GetHitUnit(), spellId2, true);
+        caster->CastSpell(GetHitUnit(), SPELL_PALADIN_JUDGEMENT_DAMAGE, true);
 
         // Judgement of the Just
-        if (GetCaster()->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_PALADIN, 3015, 0))
-            GetCaster()->CastSpell(GetHitUnit(), 68055, true);
+        if (caster->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_PALADIN, 3015, 0))
+            caster->CastSpell(GetHitUnit(), 68055, true);
     }
 
     void Register() override
@@ -1780,7 +1790,7 @@ class spell_pal_glimmer_of_light_heal : public AuraScript
 
         for (auto const& targetheal : FindTargets())
         {
-            GetCaster()->CastSpell(targetheal, 80086, true);
+            GetCaster()->CastSpell(targetheal, 80086, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1828,7 +1838,7 @@ class spell_pal_glimmer_of_light_damage : public AuraScript
 
         for (auto const& targetdamage : FindTargets())
         {
-            GetCaster()->CastSpell(targetdamage, 80085, true);
+            GetCaster()->CastSpell(targetdamage, 80085, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1846,7 +1856,7 @@ class spell_pal_glimmer_of_light_listener : public SpellScript
     {
         if (GetCaster()->HasSpell(80084))
             if (!GetExplTargetUnit()->HasAura(80087))
-                GetCaster()->CastSpell(GetExplTargetUnit(), 80087, true);
+                GetCaster()->CastSpell(GetExplTargetUnit(), 80087, TRIGGERED_FULL_MASK);
         if (GetCaster()->HasSpell(80084))
         {
             int32 duration = GetExplTargetUnit()->GetAura(80087)->GetMaxDuration();
@@ -1891,7 +1901,7 @@ class spell_pal_shining_light : public AuraScript
         if (stacksAmount < requireStacks)
             return;
 
-        caster->CastSpell(GetCaster(), 80095, true);
+        caster->CastSpell(GetCaster(), 80095, TRIGGERED_FULL_MASK);
         caster->RemoveAura(80094);
     }
 
@@ -1908,7 +1918,7 @@ class spell_pal_sacred_duty : public SpellScript
     void HandleProc()
     {
         if (GetCaster()->HasAura(31848) || GetCaster()->HasAura(31849))
-            GetCaster()->CastSpell(GetCaster(), 80102, true);
+            GetCaster()->CastSpell(GetCaster(), 80102, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -1929,12 +1939,220 @@ class spell_pal_grand_crusader : public AuraScript
         GetCaster()->ToPlayer()->RemoveSpellCooldown(48827, true);
 
         if (GetCaster()->HasAura(80105))
-            GetCaster()->CastSpell(GetCaster(), 80104, true);
+            GetCaster()->CastSpell(GetCaster(), 80104, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_pal_grand_crusader::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_seal_of_discipline : public AuraScript
+{
+    PrepareAuraScript(spell_pal_seal_of_discipline);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetProcTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), SPELL_PALADIN_SEAL_OF_DISCIPLINE_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_seal_of_discipline::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_seal_of_discipline::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_seal_of_faith : public AuraScript
+{
+    PrepareAuraScript(spell_pal_seal_of_faith);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetProcTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), SPELL_PALADIN_SEAL_OF_FAITH_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_seal_of_faith::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_seal_of_faith::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_beacon_of_wrath : public AuraScript
+{
+    PrepareAuraScript(spell_pal_beacon_of_wrath);
+
+    std::list <Unit*> FindTargets()
+    {
+        auto const& threatlist = GetCaster()->getAttackers();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatlist)
+        {
+            if (target)
+                if (target->HasAura(SPELL_PALADIN_BEACON_OF_WRATH))
+                    if (target->GetAura(SPELL_PALADIN_BEACON_OF_WRATH)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = target->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }return targetAvailable;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage() || damageInfo->GetDamage() == 0)
+        {
+            return false;
+        }
+
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        for (auto const& target : FindTargets())
+        {
+            caster->CastCustomSpell(SPELL_PALADIN_BEACON_OF_WRATH_PROC, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_beacon_of_wrath::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_beacon_of_wrath::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_gods_judgement : public AuraScript
+{
+    PrepareAuraScript(spell_pal_gods_judgement);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage() || damageInfo->GetDamage() == 0)
+        {
+            return false;
+        }
+
+        return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        AuraEffect* storage = GetEffect(EFFECT_1);
+        uint32 dmgPct = aurEff->GetAmount();
+        uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), dmgPct);
+        
+        storage->ChangeAmount(damage);
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->IsAlive())
+            return;
+
+        uint32 storedDamage = GetEffect(EFFECT_1)->GetAmount();
+
+        float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), GetAura()->GetEffect(EFFECT_2)->GetAmount()));
+        uint32 damage = storedDamage + sp;
+
+        caster->CastCustomSpell(SPELL_PALADIN_GODS_JUDGEMENT_DAMAGE, SPELLVALUE_BASE_POINT0, damage, GetUnitOwner(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_gods_judgement::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_gods_judgement::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_gods_judgement::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_pal_inquisition : public SpellScript
+{
+    PrepareSpellScript(spell_pal_inquisition);
+
+    void HandleScriptEffect(SpellEffIndex /*effIndex*/)
+    {
+        uint32 reduction = sSpellMgr->AssertSpellInfo(SPELL_PALADIN_INQUISITION)->GetEffect(EFFECT_1).CalcValue();
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_PALADIN_DIVINE_ZEAL, reduction);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pal_inquisition::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_pal_way_of_the_inquisitor: public AuraScript
+{
+    PrepareAuraScript(spell_pal_way_of_the_inquisitor);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_PALADIN_SEAL_OF_DISCIPLINE);
+        target->learnSpell(SPELL_PALADIN_SANCTIFIED_FLAME);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_PALADIN_SEAL_OF_DISCIPLINE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_PALADIN_SANCTIFIED_FLAME, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pal_way_of_the_inquisitor::HandleLearn, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pal_way_of_the_inquisitor::HandleUnlearn, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1995,4 +2213,10 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_shining_light);
     RegisterSpellScript(spell_pal_sacred_duty);
     RegisterSpellScript(spell_pal_grand_crusader);
+    RegisterSpellScript(spell_pal_seal_of_discipline);
+    RegisterSpellScript(spell_pal_seal_of_faith);
+    RegisterSpellScript(spell_pal_beacon_of_wrath);
+    RegisterSpellScript(spell_pal_gods_judgement);
+    RegisterSpellScript(spell_pal_inquisition);
+    RegisterSpellScript(spell_pal_way_of_the_inquisitor);
 }
