@@ -3672,14 +3672,15 @@ class spell_mage_cone_of_cold : public SpellScript
 
         if (!caster || caster->isDead())
             return;
-
+        LOG_ERROR("error", "caster check");
         Unit* target = GetHitUnit();
 
         if (!target || target->isDead())
             return;
-
+        LOG_ERROR("error", "target check");
+        LOG_ERROR("error", "target = {}", target->GetName());
         if (GetColdestSnapAura(caster))
-            caster->AddAura(SPELL_MAGE_WINTERS_CHILL, target);
+            caster->CastSpell(target, SPELL_MAGE_WINTERS_CHILL, TRIGGERED_FULL_MASK);
     }
 
     void HandleAfterHit()
@@ -3700,7 +3701,7 @@ class spell_mage_cone_of_cold : public SpellScript
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_cone_of_cold::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_104);
-        OnEffectHitTarget += SpellEffectFn(spell_mage_cone_of_cold::HandleEffectHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_mage_cone_of_cold::HandleEffectHitTarget, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
         AfterHit += SpellHitFn(spell_mage_cone_of_cold::HandleAfterHit);
     }
 };
