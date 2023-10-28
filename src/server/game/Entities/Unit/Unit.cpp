@@ -11412,8 +11412,25 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     if (victim->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
                         AddPct(DoneTotalMod, aurEff->GetAmount());
             }
+
+            // Frost Spell
+            if (spellProto->SchoolMask == SPELL_SCHOOL_MASK_FROST)
+            {
+                // Check Subzero rune rank
+                int32 subzeroRuneRank = 0;
+                for (size_t i = 301366; i < 301372; i++)
+                {
+                    if (owner->HasAura(i))
+                        subzeroRuneRank = i;
+                }
+
+                if (subzeroRuneRank != 0)
+                    if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
+                        AddPct(DoneTotalMod, owner->GetAura(subzeroRuneRank)->GetEffect(EFFECT_0)->GetAmount());                      
+            }
+
             // Ice Lance
-            else if (spellProto->Id == 42914)
+            if (spellProto->Id == 42914)
             {
                 if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
                 {

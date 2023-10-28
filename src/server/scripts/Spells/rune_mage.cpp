@@ -17,15 +17,25 @@ enum MageSpells
     SPELL_MAGE_ARCANE_CHARGE_BUFF2 = 81502,
     SPELL_MAGE_ARCANE_CHARGE_VISUAL = 81503,
     SPELL_MAGE_ARCANE_SURGE_DAMAGE = 81519,
+    SPELL_MAGE_ARCANIC_SLASH = 81550,
+    SPELL_MAGE_ARCHON = 81551,
+    SPELL_MAGE_ARCHON_DAMAGE = 81552,
+    SPELL_MAGE_BLACK_HOLE = 81553,
+    SPELL_MAGE_BLACK_HOLE_AURA = 81554,
+    SPELL_MAGE_BLACK_HOLE_TARGET_SELECT = 81559,
     SPELL_MAGE_BLAZING_BARRIER = 81526,
     SPELL_MAGE_BLAZING_BARRIER_DAMAGE = 81527,
+    SPELL_MAGE_BLIZZARD = 42940,
+    SPELL_MAGE_BLIZZARD_DAMAGE = 42938,
     SPELL_MAGE_BURNOUT_TRIGGER = 44450,
     SPELL_MAGE_CAUTERIZE = 81528,
     SPELL_MAGE_CAUTERIZE_AURA = 81529,
     SPELL_MAGE_CAUTERIZE_DEBUFF = 81530,
     SPELL_MAGE_COMBUSTION = 11129,
-    SPELL_MAGE_COMET_STORM = 81537,
+    SPELL_MAGE_COMET_STORM = 81536,
+    SPELL_MAGE_COMET_STORM_DAMAGE = 81537,
     SPELL_MAGE_CONE_OF_COLD = 42931,
+    SPELL_MAGE_DEATH_BLOSSOM = 81556,
     SPELL_MAGE_DISPLACEMENT_AURA = 81510,
     SPELL_MAGE_FINGERS_OF_FROST_R1 = 44543,
     SPELL_MAGE_FINGERS_OF_FROST_R2 = 44545,
@@ -35,8 +45,11 @@ enum MageSpells
     SPELL_MAGE_FIREBALL = 42833,
     SPELL_MAGE_FLURRY = 81533,
     SPELL_MAGE_FLURRY_DAMAGE = 81534,
+    SPELL_MAGE_FLURRY_OF_SLASHES = 81547,
     SPELL_MAGE_FROSTBOLT = 81504,
     SPELL_MAGE_FROST_NOVA = 42917,
+    SPELL_MAGE_FROZEN_ORB = 80013,
+    SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_INVISIBILITY = 66,
     SPELL_MAGE_GREATER_INVISIBILITY = 81511,
     SPELL_MAGE_GREATER_INVISIBILITY_AURA = 81513,
@@ -49,6 +62,7 @@ enum MageSpells
     SPELL_MAGE_LIVING_BOMB_MAIN_EXPLOSION = 55362,
     SPELL_MAGE_LIVING_BOMB_SECOND = 55354,
     SPELL_MAGE_LIVING_BOMB_SECOND_EXPLOSION = 55355,
+    SPELL_MAGE_MAGIC_BLOSSOM = 81561,
     SPELL_MAGE_MAGIC_STRIKE = 81546,
     SPELL_MAGE_METEOR = 81531,
     SPELL_MAGE_MIRROR_IMAGE_DAMAGE_REDUCTION = 55343,
@@ -58,19 +72,15 @@ enum MageSpells
     SPELL_MAGE_GALVANIZING_BARRIER = 81560,
     SPELL_MAGE_RAY_OF_FROST_FINGERS = 81539,
     SPELL_MAGE_RAY_OF_FROST_BUFF = 81540,
+    SPELL_MAGE_SUMMON_WATER_ELEMENTAL = 31687,
     SPELL_MAGE_SUPERNOVA_DAMAGE = 81525,
     SPELL_MAGE_SUPERNOVA_KNOCKUP = 81541,
-    SPELL_MAGE_WINTERS_CHILL = 81535,
-    SPELL_MAGE_FLURRY_OF_SLASHES = 81547,
-    SPELL_MAGE_ARCHON_DAMAGE = 81552,
-    SPELL_MAGE_BLACKHOLE_AURA = 81554,
-    SPELL_MAGE_BLACKHOLE_TARGET_SELECT = 81559,
-    SPELL_MAGE_DEATH_BLOSSOM = 81556,
     SPELL_MAGE_UNSTABLE_ANOMALY = 81564,
     SPELL_MAGE_UNSTABLE_ANOMALY_SHIELD = 81565,
     SPELL_MAGE_UNSTABLE_ANOMALY_KNOCKBACK = 81566,
     SPELL_MAGE_UNSTABLE_ANOMALY_COOLDOWN = 81567,
-    SPELL_MAGE_MAGIC_BLOSSOM = 81561,
+    SPELL_MAGE_WAVE_OF_FORCE = 81568,
+    SPELL_MAGE_WINTERS_CHILL = 81535,
 
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
@@ -95,7 +105,6 @@ enum MageSpells
 
     SPELL_VISUAL_FROZEN_ORB = 72067,
     SPELL_VISUAL_ARCANE_ORB = 80015,
-    SPELL_MAGE_FROZEN_ORB_DAMAGE = 80012,
     SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
 
     // Weapon Enchants
@@ -126,6 +135,12 @@ enum MageSpells
     RUNE_MAGE_MASTER_OF_FLAME_DAMAGE = 301301,
     RUNE_MAGE_FIREFALL_LISTENER = 301314,
     RUNE_MAGE_FIREFALL_BUFF = 301315,
+    RUNE_MAGE_SPLINTERING_RAY_DAMAGE = 301408,
+    RUNE_MAGE_GLACIAL_ASSAULT_DAMAGE = 301446,
+    RUNE_MAGE_COLD_FRONT_LISTENER = 301484,
+    RUNE_MAGE_COLD_FRONT_BUFF = 301485,
+    RUNE_MAGE_MASTER_OF_ARCANA_DAMAGE = 301540,
+
 };
 
 class spell_tempest_barrier : public SpellScript
@@ -2660,6 +2675,435 @@ class rune_mage_from_the_ashes : public AuraScript
     }
 };
 
+class rune_mage_lonely_winter : public AuraScript
+{
+    PrepareAuraScript(rune_mage_lonely_winter);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->learnSpell(aurEff->GetAmount());
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            for (size_t i = 301378; i < 301384; i++)
+            {
+                if (caster->HasSpell(i))
+                    player->removeSpell(i, SPEC_MASK_ALL, false);
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_mage_lonely_winter::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_mage_lonely_winter::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_mage_splintering_ray : public AuraScript
+{
+    PrepareAuraScript(rune_mage_splintering_ray);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damagePct = aurEff->GetAmount();
+        int32 amount = CalculatePct(damage, damagePct);
+
+        caster->CastCustomSpell(RUNE_MAGE_SPLINTERING_RAY_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_splintering_ray::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_splintering_ray::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_glacial_assault : public AuraScript
+{
+    PrepareAuraScript(rune_mage_glacial_assault);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!eventInfo.GetSpellInfo())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 procSpell = aurEff->GetAmount();
+
+        if (spellID == SPELL_MAGE_COMET_STORM_DAMAGE)
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        else if (spellID == SPELL_MAGE_FLURRY_DAMAGE)
+        {
+            int32 procChance = GetEffect(EFFECT_1)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->CastSpell(target, RUNE_MAGE_GLACIAL_ASSAULT_DAMAGE, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_glacial_assault::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_glacial_assault::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_cold_front : public AuraScript
+{
+    PrepareAuraScript(rune_mage_cold_front);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id != SPELL_MAGE_FLURRY_DAMAGE;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = eventInfo.GetSpellInfo()->Id;
+        int32 maxStack = aurEff->GetAmount();
+
+        if (Aura* listener = caster->GetAura(RUNE_MAGE_COLD_FRONT_LISTENER))
+        {
+            listener->ModStackAmount(1);
+
+            if (listener->GetStackAmount() >= maxStack)
+            {
+                listener->SetStackAmount(maxStack);
+                caster->AddAura(RUNE_MAGE_COLD_FRONT_BUFF, caster);
+                listener->Remove();
+            }
+        }
+        else
+            caster->AddAura(RUNE_MAGE_COLD_FRONT_LISTENER, caster);
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (caster->HasAura(RUNE_MAGE_COLD_FRONT_BUFF))
+            {
+                caster->CastSpell(target, SPELL_MAGE_FROZEN_ORB, TRIGGERED_FULL_MASK);
+                caster->RemoveAura(RUNE_MAGE_COLD_FRONT_BUFF);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_MAGE_COLD_FRONT_LISTENER))
+            caster->RemoveAura(RUNE_MAGE_COLD_FRONT_LISTENER);
+
+        if (caster->HasAura(RUNE_MAGE_COLD_FRONT_BUFF))
+            caster->RemoveAura(RUNE_MAGE_COLD_FRONT_BUFF);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_cold_front::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_cold_front::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_mage_cold_front::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_mage_master_of_arcana : public AuraScript
+{
+    PrepareAuraScript(rune_mage_master_of_arcana);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_MAGE_ARCHON))
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_MAGE_MASTER_OF_ARCANA_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_master_of_arcana::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_master_of_arcana::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_spellblade_adept : public AuraScript
+{
+    PrepareAuraScript(rune_mage_spellblade_adept);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (spellID != SPELL_MAGE_MAGIC_STRIKE && spellID != SPELL_MAGE_ARCANIC_SLASH)
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_ARCHON, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_spellblade_adept::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_spellblade_adept::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_pulsating_power : public AuraScript
+{
+    PrepareAuraScript(rune_mage_pulsating_power);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_MAGE_ARCHON))
+            return;
+
+        caster->CastSpell(caster, SPELL_MAGE_WAVE_OF_FORCE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_mage_pulsating_power::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_mage_lethal_bloom : public AuraScript
+{
+    PrepareAuraScript(rune_mage_lethal_bloom);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_FLURRY_OF_SLASHES, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_lethal_bloom::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_lethal_bloom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_arcane_momentum : public AuraScript
+{
+    PrepareAuraScript(rune_mage_arcane_momentum);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_ARCHON, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_arcane_momentum::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_arcane_momentum::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_arcanic_precision : public AuraScript
+{
+    PrepareAuraScript(rune_mage_arcanic_precision);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_BLACK_HOLE, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_arcanic_precision::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_arcanic_precision::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_more_slashes : public AuraScript
+{
+    PrepareAuraScript(rune_mage_more_slashes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_MAGE_FLURRY_OF_SLASHES, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_more_slashes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_more_slashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_mage_dimensional_rifts_aura : public AuraScript
+{
+    PrepareAuraScript(rune_mage_dimensional_rifts_aura);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        target->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, caster->GetGUID());
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_mage_dimensional_rifts_aura::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 
 
 void AddSC_mage_perks_scripts()
@@ -2727,6 +3171,18 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(rune_mage_master_of_flame_targets);
     RegisterSpellScript(rune_mage_firefall);
     RegisterSpellScript(rune_mage_from_the_ashes);
+    RegisterSpellScript(rune_mage_lonely_winter);
+    RegisterSpellScript(rune_mage_splintering_ray);
+    RegisterSpellScript(rune_mage_glacial_assault);
+    RegisterSpellScript(rune_mage_cold_front);
+    RegisterSpellScript(rune_mage_master_of_arcana);
+    RegisterSpellScript(rune_mage_spellblade_adept);
+    RegisterSpellScript(rune_mage_pulsating_power);
+    RegisterSpellScript(rune_mage_lethal_bloom);
+    RegisterSpellScript(rune_mage_arcane_momentum);
+    RegisterSpellScript(rune_mage_arcanic_precision);
+    RegisterSpellScript(rune_mage_more_slashes);
+    RegisterSpellScript(rune_mage_dimensional_rifts_aura);
 
 
 
