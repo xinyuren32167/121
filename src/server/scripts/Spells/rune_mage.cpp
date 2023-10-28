@@ -3077,33 +3077,6 @@ class rune_mage_more_slashes : public AuraScript
     }
 };
 
-class rune_mage_dimensional_rifts_aura : public AuraScript
-{
-    PrepareAuraScript(rune_mage_dimensional_rifts_aura);
-
-    void HandlePeriodic(AuraEffect const* aurEff)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        Unit* target = GetUnitOwner();
-
-        if (!target || target->isDead())
-            return;
-
-        int32 procSpell = aurEff->GetAmount();
-
-        target->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, caster->GetGUID());
-    }
-
-    void Register() override
-    {
-        OnEffectPeriodic += AuraEffectPeriodicFn(rune_mage_dimensional_rifts_aura::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
-    }
-};
-
 
 
 void AddSC_mage_perks_scripts()
@@ -3182,7 +3155,6 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(rune_mage_arcane_momentum);
     RegisterSpellScript(rune_mage_arcanic_precision);
     RegisterSpellScript(rune_mage_more_slashes);
-    RegisterSpellScript(rune_mage_dimensional_rifts_aura);
 
 
 
