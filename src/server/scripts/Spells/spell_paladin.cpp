@@ -99,6 +99,10 @@ enum PaladinSpells
     SPELL_PALADIN_DIVINE_ZEAL = 86508,
     SPELL_PALADIN_SEAL_OF_DISCIPLINE = 86500,
     SPELL_PALADIN_SANCTIFIED_FLAME = 86516,
+    SPELL_PALADIN_RIGHTEOUS_BARRAGE_WAVE = 86519,
+
+    TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC = 86555,
+    TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC = 86604,
 };
 
 enum PaladinSpellIcons
@@ -2156,6 +2160,181 @@ class spell_pal_way_of_the_inquisitor: public AuraScript
     }
 };
 
+class spell_pal_break_their_kneecaps : public AuraScript
+{
+    PrepareAuraScript(spell_pal_break_their_kneecaps);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActor();
+        if (!target || !target->IsAlive())
+            return false;
+
+        Unit* caster = eventInfo.GetActionTarget();
+        if (!caster || !caster->IsAlive())
+            return false;
+
+        return target != caster;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActor(), TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_break_their_kneecaps::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_break_their_kneecaps::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_book_mastery: public AuraScript
+{
+    PrepareAuraScript(spell_pal_book_mastery);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_book_mastery::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_book_mastery::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_the_art_of_inquisiting: public AuraScript
+{
+    PrepareAuraScript(spell_pal_the_art_of_inquisiting);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_PALADIN_EXORCISM);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pal_the_art_of_inquisiting::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_blessed_armor : public AuraScript
+{
+    PrepareAuraScript(spell_pal_blessed_armor);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActor();
+        if (!target || !target->IsAlive())
+            return false;
+
+        Unit* caster = eventInfo.GetActionTarget();
+        if (!caster || !caster->IsAlive())
+            return false;
+
+        return target != caster;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), SPELL_PALADIN_RIGHTEOUS_BARRAGE_WAVE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_blessed_armor::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_blessed_armor::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_blessed_by_the_light : public AuraScript
+{
+    PrepareAuraScript(spell_pal_blessed_by_the_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+
+        if (!healInfo || !healInfo->GetHeal())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_blessed_by_the_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_blessed_by_the_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pal_holy_vendetta : public AuraScript
+{
+    PrepareAuraScript(spell_pal_holy_vendetta);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* healInfo = eventInfo.GetDamageInfo();
+
+        if (!healInfo || !healInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 spell = aurEff->GetAmount();
+
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), spell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_pal_holy_vendetta::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_pal_holy_vendetta::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -2219,4 +2398,10 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_gods_judgement);
     RegisterSpellScript(spell_pal_inquisition);
     RegisterSpellScript(spell_pal_way_of_the_inquisitor);
+    RegisterSpellScript(spell_pal_break_their_kneecaps);
+    RegisterSpellScript(spell_pal_book_mastery);
+    RegisterSpellScript(spell_pal_the_art_of_inquisiting);
+    RegisterSpellScript(spell_pal_blessed_armor);
+    RegisterSpellScript(spell_pal_blessed_by_the_light);
+    RegisterSpellScript(spell_pal_holy_vendetta);
 }

@@ -58,6 +58,7 @@ enum Specializations {
     MAGE_SPELLBLADE = 34,
     HUNTER_DARK_RANGER = 35,
     PRIEST_ABSOLUTION = 36,
+    PALADIN_INQUISITOR = 37,
 };
 
 enum WarlockSpells

@@ -62,6 +62,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[PALADIN_HOLY] = { 17, 48782, "Holy", 2, 400000, 23.33, false,	0, POWER_ALL };
     m_Specializations[PALADIN_PROTECTION] = { 18, 48952, "Protection", 2, 400002, 35.00, true, 400004, POWER_ALL };
     m_Specializations[PALADIN_RETRIBUTION] = { 19, 35395, "Retribution", 2, 400006,	21.88, true, 400008, POWER_ALL };
+    m_Specializations[PALADIN_INQUISITOR] = { 37, 86510, "Inquisitor", 2, 399999,	18.5, true, 399998, POWER_ALL };
 
     m_Specializations[HUNTER_BEAST] = { 14, 80132, "Beast Mastery", 3, 500003, 18.42, true,	500006, POWER_ALL };
     m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3, 500004, 56.00,	true, 500007, POWER_ALL  };

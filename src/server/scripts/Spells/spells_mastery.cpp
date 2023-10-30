@@ -24,6 +24,9 @@ enum Masteries
     MASTERY_MAGE_BATTLE_KNOWLEDGE = 300114,
     MASTERY_MAGE_BATTLE_KNOWLEDGE_BUFF = 300116,
 
+    // Paladin
+    MASTERY_PALADIN_DIVINE_TRIBUNAL_BUFF = 399997,
+
     // Hunter
     MASTERY_HUNTER_FROM_THE_SHADOWS = 499996,
     MASTERY_HUNTER_FROM_THE_SHADOWS_BUFF = 499998,
@@ -561,6 +564,26 @@ class spell_mastery_hand_of_light : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_mastery_hand_of_light::HandleCast);
+    }
+};
+
+class spell_mastery_divine_tribunal : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_divine_tribunal);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        int32 bonus1 = sSpellMgr->GetSpellInfo(MASTERY_MAGE_BATTLE_KNOWLEDGE)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + mastery;
+        int32 bonus2 = sSpellMgr->GetSpellInfo(MASTERY_MAGE_BATTLE_KNOWLEDGE)->GetEffect(EFFECT_1).CalcValue(GetCaster()) + mastery;
+
+        caster->CastCustomSpell(caster, MASTERY_PALADIN_DIVINE_TRIBUNAL_BUFF, &bonus1, &bonus2, &bonus1, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_divine_tribunal::HandleCast);
     }
 };
 
@@ -1752,4 +1775,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_from_the_shadows_periodic);
     RegisterSpellScript(spell_mastery_from_the_shadows_buff_remove);
     RegisterSpellScript(spell_mastery_pri_absolutions_embrace);
+    RegisterSpellScript(spell_mastery_divine_tribunal);
 }
