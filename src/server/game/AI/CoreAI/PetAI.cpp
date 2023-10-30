@@ -647,6 +647,9 @@ void PetAI::DoAttackSummonedUnits(Unit* target, bool chase)
 
     for (const auto& unit : summonedUnits) {
 
+        if (unit->IsTotem())
+            continue;
+
         if (unit->Attack(target, true)) {
             unit->GetMotionMaster()->MoveChase(target);
         }

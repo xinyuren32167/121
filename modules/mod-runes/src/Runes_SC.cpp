@@ -201,12 +201,25 @@ class spell_upgrade_rune : public SpellScript
     }
 };
 
+class go_rune_upgrader : public GameObjectScript
+{
+public:
+    go_rune_upgrader() : GameObjectScript("go_rune_upgrader") { }
+
+    bool OnGossipHello(Player* player, GameObject* /*go*/) override
+    {
+        sEluna->OpenForgeRune(player);
+        return true;
+    }
+};
+
 // Add all scripts in one
 void AddSC_runesScripts()
 {
     new Runes_PlayerScripts();
     new Runes_WorldScript();
     new Runes_CommandsScript();
+    new go_rune_upgrader();
     RegisterSpellScript(spell_activate_rune);
     RegisterSpellScript(spell_generate_random_rune);
     RegisterSpellScript(spell_upgrade_rune);

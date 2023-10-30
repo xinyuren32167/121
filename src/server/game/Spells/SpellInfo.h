@@ -509,6 +509,7 @@ public:
     uint32 GetRecoveryTime() const;
 
     int32 CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask, Spell* spell = nullptr) const;
+    int32 CalcDuration(Unit const* caster, Spell* spell = nullptr) const;
 
     bool IsRanked() const;
     uint8 GetRank() const;

@@ -248,6 +248,14 @@ void Eluna::PushRune(Player* pPlayer, std::string rune)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::OpenForgeRune(Player* pPlayer)
+{
+    START_HOOK(PLAYER_EVENT_OPEN_FORGE_RUNE_UI);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
 void Eluna::RemoveRune(Player* pPlayer, std::string str)
 {
     START_HOOK(PLAYER_EVENT_REMOVE_RUNE);

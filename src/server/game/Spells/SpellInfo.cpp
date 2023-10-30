@@ -2380,6 +2380,16 @@ uint32 SpellInfo::GetRecoveryTime() const
     return RecoveryTime > CategoryRecoveryTime ? RecoveryTime : CategoryRecoveryTime;
 }
 
+int32 SpellInfo::CalcDuration(Unit const* caster, Spell* spell) const
+{
+    int32 duration = GetDuration();
+
+    if (Player* modOwner = caster->GetSpellModOwner())
+        modOwner->ApplySpellMod(Id, SPELLMOD_DURATION, duration, spell);
+
+    return duration;
+}
+
 int32 SpellInfo::CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask, Spell* spell) const
 {
     // Spell drain all exist power on cast (Only paladin lay of Hands)
