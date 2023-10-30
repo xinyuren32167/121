@@ -100,6 +100,7 @@ enum PaladinSpells
     SPELL_PALADIN_SEAL_OF_DISCIPLINE = 86500,
     SPELL_PALADIN_SANCTIFIED_FLAME = 86516,
     SPELL_PALADIN_RIGHTEOUS_BARRAGE_WAVE = 86519,
+    SPELL_PALADIN_REPRIMAND = 86514,
 
     TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC = 86555,
     TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC = 86604,
@@ -896,7 +897,6 @@ public:
 
         caster->CastSpell(GetHitUnit(), _spellId, true);
         caster->CastSpell(GetHitUnit(), spellId2, true);
-        caster->CastSpell(GetHitUnit(), SPELL_PALADIN_JUDGEMENT_DAMAGE, true);
 
         // Judgement of the Just
         if (caster->GetAuraEffect(SPELL_AURA_ADD_FLAT_MODIFIER, SPELLFAMILY_PALADIN, 3015, 0))
