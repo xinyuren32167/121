@@ -66,6 +66,7 @@ enum RogueSpells
     SPELL_ROGUE_VAMPIRIC_BURST_HEAL             = 82061,
     SPELL_ROGUE_SINISTER_CALLING_PROC           = 82063,
     SPELL_ROGUE_RIPOSTE                         = 82064,
+    SPELL_ROGUE_DUELISTS_REFLEX                 = 82067,
 
     //POISONS
     //LETHAL
@@ -937,7 +938,6 @@ class spell_rog_blade_flurry_triggered : public SpellScript
             int32 damage = GetEffectValue();
             Unit* caster = GetCaster();
             SpellInfo const* flurry = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_BLADE_FLURRY);
-            int32 targetCount = flurry->GetEffect(EFFECT_2).CalcValue(caster);
 
             std::list<WorldObject*> targets;
             spell->SearchAreaTargets(targets, 5.0f, target, caster, TARGET_OBJECT_TYPE_UNIT, TARGET_CHECK_ENEMY, nullptr);
@@ -945,7 +945,6 @@ class spell_rog_blade_flurry_triggered : public SpellScript
 
             if (targets.size() > 0)
             {
-                targets.resize(targetCount);
                 for (auto const& enemy : targets)
                     if (Unit* creatureTarget = enemy->ToUnit())
                     {
@@ -1552,33 +1551,6 @@ class spell_rog_sinister_calling : public AuraScript
     }
 };
 
-class spell_rog_riposte : public AuraScript
-{
-    PrepareAuraScript(spell_rog_riposte);
-
-    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        GetCaster()->ToPlayer()->learnSpell(SPELL_ROGUE_RIPOSTE);
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_RIPOSTE, true);
-    }
-
-    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        GetCaster()->ToPlayer()->removeSpell(SPELL_ROGUE_RIPOSTE, SPEC_MASK_ALL, false);
-    }
-
-    void Register() override
-    {
-        OnEffectApply += AuraEffectApplyFn(spell_rog_riposte::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectProc += AuraEffectProcFn(spell_rog_riposte::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        OnEffectRemove += AuraEffectRemoveFn(spell_rog_riposte::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
 class spell_rog_forced_counter : public AuraScript
 {
     PrepareAuraScript(spell_rog_forced_counter);
@@ -1598,6 +1570,106 @@ class spell_rog_forced_counter : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_rog_forced_counter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_amplifying_poison_replacer : public AuraScript
+{
+    PrepareAuraScript(spell_rog_amplifying_poison_replacer);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_ROGUE_INSTANT_POISON, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_ROGUE_AMPLIFYING_POISON);
+
+        Item* itemMain = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (uint32 mainEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (mainEnchantID == SPELL_ROGUE_INSTANT_POISON_PROC)
+                itemMain->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+
+        Item* itemOff = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (offEnchantID == SPELL_ROGUE_INSTANT_POISON_PROC)
+                itemOff->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        
+        target->removeSpell(SPELL_ROGUE_AMPLIFYING_POISON, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_ROGUE_INSTANT_POISON);
+
+        Item* itemMain = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (uint32 mainEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (mainEnchantID == SPELL_ROGUE_AMPLIFYING_POISON_PROC)
+                itemMain->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+
+        Item* itemOff = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if(uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (offEnchantID == SPELL_ROGUE_AMPLIFYING_POISON_PROC)
+                itemOff->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_amplifying_poison_replacer::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_amplifying_poison_replacer::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_rog_duelists_reflex : public AuraScript
+{
+    PrepareAuraScript(spell_rog_duelists_reflex);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_ROGUE_RIPOSTE, true);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_duelists_reflex::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_master_duelist : public AuraScript
+{
+    PrepareAuraScript(spell_rog_master_duelist);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_ROGUE_VAMPIRIC_POISON);
+        target->learnSpell(SPELL_ROGUE_DUELISTS_REFLEX);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_ROGUE_VAMPIRIC_POISON, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_ROGUE_DUELISTS_REFLEX, SPEC_MASK_ALL, false);
+
+        Item* itemMain = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (uint32 mainEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (mainEnchantID == SPELL_ROGUE_VAMPIRIC_POISON_PROC)
+                itemMain->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+
+        Item* itemOff = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (offEnchantID == SPELL_ROGUE_VAMPIRIC_POISON_PROC)
+                itemOff->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_master_duelist::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_master_duelist::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1648,6 +1720,8 @@ void AddSC_rogue_spell_scripts()
     new spell_rog_secret_technique();
     RegisterSpellScript(spell_rog_secret_technique_teacher);
     RegisterSpellScript(spell_rog_sinister_calling);
-    RegisterSpellScript(spell_rog_riposte);
     RegisterSpellScript(spell_rog_forced_counter);
+    RegisterSpellScript(spell_rog_amplifying_poison_replacer);
+    RegisterSpellScript(spell_rog_duelists_reflex);
+    RegisterSpellScript(spell_rog_master_duelist);
 }
