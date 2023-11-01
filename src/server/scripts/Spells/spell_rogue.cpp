@@ -1673,6 +1673,28 @@ class spell_rog_master_duelist : public AuraScript
     }
 };
 
+class spell_rog_cut_to_the_chase: public AuraScript
+{
+    PrepareAuraScript(spell_rog_cut_to_the_chase);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (Aura* aura = caster->GetAura(SPELL_ROGUE_SLICE_AND_DICE))
+        {
+            uint32 comboPoints = caster->GetComboPoints();
+            uint32 duration = aurEff->GetAmount() * comboPoints;
+
+            aura->SetDuration(aura->GetDuration() + duration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_cut_to_the_chase::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1724,4 +1746,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_amplifying_poison_replacer);
     RegisterSpellScript(spell_rog_duelists_reflex);
     RegisterSpellScript(spell_rog_master_duelist);
+    RegisterSpellScript(spell_rog_cut_to_the_chase);
 }

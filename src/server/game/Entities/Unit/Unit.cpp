@@ -7552,7 +7552,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     break;
                 }
                 // Cut to the Chase
-                if (dummySpell->SpellIconID == 2909)
+                /*if (dummySpell->SpellIconID == 2909)
                 {
                     // "refresh your Slice and Dice duration to its 5 combo point maximum"
                     // lookup Slice and Dice
@@ -7562,7 +7562,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                         return true;
                     }
                     return false;
-                }
+                }*/
                 // Deadly Brew
                 else if (dummySpell->SpellIconID == 2963)
                 {
