@@ -3110,6 +3110,22 @@ class spell_mage_death_blossom : public SpellScript
     }
 };
 
+class spell_mage_death_blossom_target_select : public SpellScript
+{
+    PrepareSpellScript(spell_mage_death_blossom_target_select);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_death_blossom_target_select::FilterTargets, EFFECT_0, TARGET_UNIT_CONE_ENEMY_24);
+    }
+};
+
 class spell_mage_galvanizing_barrier : public AuraScript
 {
     PrepareAuraScript(spell_mage_galvanizing_barrier);
@@ -4026,6 +4042,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_black_hole_target_select);
     RegisterSpellScript(spell_mage_black_hole_explosion);
     RegisterSpellScript(spell_mage_death_blossom);
+    RegisterSpellScript(spell_mage_death_blossom_target_select);
     RegisterSpellScript(spell_mage_galvanizing_barrier);
     RegisterSpellScript(spell_mage_magic_blossom);
     RegisterSpellScript(spell_mage_unstable_anomaly);
