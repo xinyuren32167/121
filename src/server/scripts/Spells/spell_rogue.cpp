@@ -1905,15 +1905,15 @@ class spell_rog_roll_the_bones : public SpellScript
 
         if (rand == 1)
             caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, TRIGGERED_FULL_MASK);
-        if (rand == 2)
+        else if (rand == 2)
             caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE, TRIGGERED_FULL_MASK);
-        if (rand == 3)
+        else if (rand == 3)
             caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION, TRIGGERED_FULL_MASK);
-        if (rand == 4)
+        else if (rand == 4)
             caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE, TRIGGERED_FULL_MASK);
-        if (rand == 5)
+        else if (rand == 5)
             caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES, TRIGGERED_FULL_MASK);
-        else
+        else if (rand == 6)
             caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING, TRIGGERED_FULL_MASK);
     }
 
