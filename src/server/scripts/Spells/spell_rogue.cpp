@@ -67,6 +67,30 @@ enum RogueSpells
     SPELL_ROGUE_SINISTER_CALLING_PROC           = 82063,
     SPELL_ROGUE_RIPOSTE                         = 82064,
     SPELL_ROGUE_DUELISTS_REFLEX                 = 82067,
+    SPELL_ROGUE_SCIMITAR_RUSH_PROC              = 82077,
+    SPELL_ROGUE_SCIMITAR_RUSH_AOE               = 82076,
+    SPELL_ROGUE_SCIMITAR_RUSH_ENERGY            = 82078,
+    SPELL_ROGUE_DREADBLADES_SELF_DAMAGE         = 82081,
+    SPELL_ROGUE_SINISTER_STRIKE                 = 48638,
+    SPELL_ROGUE_OPPORTUNITY_PROC                = 82086,
+    SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF           = 82088,
+    SPELL_ROGUE_SEA_OF_STRIKES_PROC             = 82089,
+    SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE      = 82092,
+    SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE        = 82093,
+    SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION = 82094,
+    SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE  = 82095,
+    SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES = 82096,
+    SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING     = 82097,
+    SPELL_ROGUE_ADRENALINE_RUSH                 = 13750,
+    SPELL_ROGUE_BETWEEN_THE_EYES                = 82072,
+    SPELL_ROGUE_SCIMITAR_RUSH                   = 82075,
+    SPELL_ROGUE_DREADBLADES                     = 82080,
+    SPELL_ROGUE_CAPTAIN_STRIKE                  = 82083,
+    SPELL_ROGUE_GRAPPLING_HOOK                  = 82084,
+    SPELL_ROGUE_KEEP_IT_ROLLING                 = 82098,
+    SPELL_ROGUE_ROLL_THE_BONES                  = 82091,
+    SPELL_ROGUE_SPRINT                          = 11305,
+    SPELL_ROGUE_VANISH                          = 26889,
 
     //POISONS
     //LETHAL
@@ -1695,6 +1719,283 @@ class spell_rog_cut_to_the_chase: public AuraScript
     }
 };
 
+class spell_rog_between_the_eyes : public SpellScript
+{
+    PrepareSpellScript(spell_rog_between_the_eyes);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        int32 damageRatio = caster->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_between_the_eyes::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_rog_scimitar_rush : public SpellScript
+{
+    PrepareSpellScript(spell_rog_scimitar_rush);
+
+    void HandleHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (Unit* target = GetHitUnit())
+        {
+            caster->CastSpell(target, SPELL_ROGUE_SCIMITAR_RUSH_AOE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(target, SPELL_ROGUE_SCIMITAR_RUSH_PROC, TRIGGERED_FULL_MASK);
+            caster->CastSpell(caster, SPELL_ROGUE_SCIMITAR_RUSH_ENERGY, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_scimitar_rush::HandleHit);
+    }
+};
+
+class spell_rog_scimitar_rush_target_select : public SpellScript
+{
+    PrepareSpellScript(spell_rog_scimitar_rush_target_select);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_rog_scimitar_rush_target_select::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class spell_rog_dispatch : public SpellScript
+{
+    PrepareSpellScript(spell_rog_dispatch);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        int32 damageRatio = caster->GetComboPoints() * GetEffectValue();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
+
+        if (Unit* target = GetHitUnit())
+        {
+            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_dispatch::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_rog_dreadblades : public AuraScript
+{
+    PrepareAuraScript(spell_rog_dreadblades);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        uint32 health = caster->CountPctFromCurHealth(aurEff->GetAmount());
+        caster->CastCustomSpell(SPELL_ROGUE_DREADBLADES_SELF_DAMAGE, SPELLVALUE_BASE_POINT0, health, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_dreadblades::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_opportunity : public AuraScript
+{
+    PrepareAuraScript(spell_rog_opportunity);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
+        caster->CastSpell(caster, SPELL_ROGUE_OPPORTUNITY_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_opportunity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rogue_sea_of_strikes : public AuraScript
+{
+    PrepareAuraScript(spell_rogue_sea_of_strikes);
+
+    std::list <Unit*> FindTargets()
+    {
+        auto const& threatlist = GetCaster()->getAttackers();
+        std::list <Unit*> targetAvailable;
+
+        for (auto const& target : threatlist)
+        {
+            if (target)
+                if (target->HasAura(SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF))
+                    if (target->GetAura(SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = target->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }return targetAvailable;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage() || damageInfo->GetDamage() == 0)
+        {
+            return false;
+        }
+
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        for (auto const& target : FindTargets())
+        {
+            caster->CastCustomSpell(SPELL_ROGUE_SEA_OF_STRIKES_PROC, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            target->RemoveAura(SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_rogue_sea_of_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_rogue_sea_of_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_roll_the_bones : public SpellScript
+{
+    PrepareSpellScript(spell_rog_roll_the_bones);
+
+    void HandleCast()
+    {
+        uint32 rand = urand(1, 6);
+        Unit* caster = GetCaster();
+
+        if (rand == 1)
+            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, TRIGGERED_FULL_MASK);
+        if (rand == 2)
+            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE, TRIGGERED_FULL_MASK);
+        if (rand == 3)
+            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION, TRIGGERED_FULL_MASK);
+        if (rand == 4)
+            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE, TRIGGERED_FULL_MASK);
+        if (rand == 5)
+            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES, TRIGGERED_FULL_MASK);
+        else
+            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_rog_roll_the_bones::HandleCast);
+    }
+};
+
+class spell_rog_roll_the_bones_skull_and_crossbones : public AuraScript
+{
+    PrepareAuraScript(spell_rog_roll_the_bones_skull_and_crossbones);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_roll_the_bones_skull_and_crossbones::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_roll_the_bones_true_bearing : public AuraScript
+{
+    PrepareAuraScript(spell_rog_roll_the_bones_true_bearing);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        uint32 reduction = aurEff->GetAmount();
+        caster->ModifySpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_BLADE_FLURRY, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_ADRENALINE_RUSH, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_BETWEEN_THE_EYES, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_SCIMITAR_RUSH, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_DREADBLADES, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_CAPTAIN_STRIKE, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_GRAPPLING_HOOK, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_KEEP_IT_ROLLING, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_ROLL_THE_BONES, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_SPRINT, reduction);
+        caster->ModifySpellCooldown(SPELL_ROGUE_VANISH, reduction);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_roll_the_bones_true_bearing::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_keep_it_rolling : public SpellScript
+{
+    PrepareSpellScript(spell_rog_keep_it_rolling);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        uint32 increase = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_KEEP_IT_ROLLING)->GetEffect(EFFECT_0).CalcValue(caster);
+
+        if (Aura* grand = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE))
+            grand->SetDuration(grand->GetDuration() + increase);
+        else if (Aura* bones = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE))
+            bones->SetDuration(bones->GetDuration() + increase);
+        else if (Aura* precision = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION))
+            precision->SetDuration(precision->GetDuration() + increase);
+        else if (Aura* treasure = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE))
+            treasure->SetDuration(treasure->GetDuration() + increase);
+        else if (Aura* skull = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES))
+            skull->SetDuration(skull->GetDuration() + increase);
+        else if (Aura* bearing = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
+            bearing->SetDuration(bearing->GetDuration() + increase);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_rog_keep_it_rolling::HandleCast);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -1731,7 +2032,6 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_serrated_bone_spike_death);
     RegisterSpellScript(spell_rog_kingsbane);
     RegisterSpellScript(spell_rog_kingsbane_combopoint);
-    RegisterSpellScript(spell_rog_blade_rush);
     RegisterSpellScript(spell_rog_flagellation);
     RegisterSpellScript(spell_rog_black_powder);
     RegisterSpellScript(spell_rog_shadow_blade);
@@ -1747,4 +2047,15 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_duelists_reflex);
     RegisterSpellScript(spell_rog_master_duelist);
     RegisterSpellScript(spell_rog_cut_to_the_chase);
+    RegisterSpellScript(spell_rog_between_the_eyes);
+    RegisterSpellScript(spell_rog_scimitar_rush);
+    RegisterSpellScript(spell_rog_scimitar_rush_target_select);
+    RegisterSpellScript(spell_rog_dispatch);
+    RegisterSpellScript(spell_rog_dreadblades);
+    RegisterSpellScript(spell_rog_opportunity);
+    RegisterSpellScript(spell_rogue_sea_of_strikes);
+    RegisterSpellScript(spell_rog_roll_the_bones);
+    RegisterSpellScript(spell_rog_roll_the_bones_skull_and_crossbones);
+    RegisterSpellScript(spell_rog_roll_the_bones_true_bearing);
+    RegisterSpellScript(spell_rog_keep_it_rolling);
 }
