@@ -1978,15 +1978,15 @@ class spell_rog_keep_it_rolling : public SpellScript
 
         if (Aura* grand = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE))
             grand->SetDuration(grand->GetDuration() + increase);
-        else if (Aura* bones = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE))
+        if (Aura* bones = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE))
             bones->SetDuration(bones->GetDuration() + increase);
-        else if (Aura* precision = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION))
+        if (Aura* precision = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION))
             precision->SetDuration(precision->GetDuration() + increase);
-        else if (Aura* treasure = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE))
+        if (Aura* treasure = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE))
             treasure->SetDuration(treasure->GetDuration() + increase);
-        else if (Aura* skull = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES))
+        if (Aura* skull = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES))
             skull->SetDuration(skull->GetDuration() + increase);
-        else if (Aura* bearing = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
+        if (Aura* bearing = caster->GetAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
             bearing->SetDuration(bearing->GetDuration() + increase);
     }
 
