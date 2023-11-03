@@ -19,7 +19,7 @@ RuneConfig RunesManager::config = {};
 void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
-    config.debug = false;
+    config.debug = true;
     config.maxSlots  = 8;
     config.defaultSlot = 8;
 
