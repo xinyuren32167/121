@@ -136,7 +136,7 @@ void PlayerSpecialization::UpdateMastery(Player* player, uint32 rating)
         player->SetMastery(value);
         if (spec.update) {
             player->RemoveAura(spec.castSpellId);
-            player->CastSpell(player, spec.castSpellId);
+            player->CastSpell(player, spec.castSpellId, TRIGGERED_IGNORE_CAST_IN_PROGRESS);
         }
     }
 }

@@ -384,7 +384,7 @@ class spell_mage_frozen_orbs : public SpellScript
 
         Position pos = *caster;
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-        Creature* summon = caster->SummonCreature(500500, pos, TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetMaxDuration(), 0, properties);
+        Creature* summon = caster->SummonCreature(500500, pos, TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
 
         if (!summon)
             return;
@@ -443,7 +443,7 @@ class spell_mage_arcane_orb : public SpellScript
     {
         Position pos = *GetCaster();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-        Creature* summon = GetCaster()->SummonCreature(500501, pos, TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
+        Creature* summon = GetCaster()->SummonCreature(500501, pos, TEMPSUMMON_TIMED_DESPAWN, GetSpellInfo()->CalcDuration(GetCaster(), GetSpell()), 0, properties);
 
         if (!summon)
             return;
@@ -3999,7 +3999,7 @@ void AddSC_mage_spell_scripts()
     //RegisterSpellScript(spell_mage_fingers_of_frost_proc_aura);
     //RegisterSpellScript(spell_mage_fingers_of_frost_proc);
     RegisterSpellScript(spell_mage_arcane_barrage);
-    //RegisterSpellScript(spell_mage_frozen_orbs);
+    RegisterSpellScript(spell_mage_frozen_orbs);
     RegisterSpellScript(spell_mage_frozen_orb_damage);
     RegisterSpellScript(spell_mage_frozen_orb_aura);
     RegisterSpellScript(spell_mage_rule_of_threes);
