@@ -3006,7 +3006,7 @@ class spell_mage_black_hole_target_select : public SpellScript
                             if (cinfo->MechanicImmuneMask & 32)
                                 return;
 
-                        if (creatureTarget->isWorldBoss() || creatureTarget->IsDungeonBoss())
+                        if (!creatureTarget->isWorldBoss() || !creatureTarget->IsDungeonBoss())
                             target->GetMotionMaster()->MoveJump(pos, 8.0f, 8.0f);
                     }
                 }

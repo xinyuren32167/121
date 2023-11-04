@@ -2216,27 +2216,27 @@ class spell_sword_and_spear_board_reset : public AuraScript
     }
 };
 
-class spell_warr_heroic_leap : public SpellScript
-{
-    PrepareSpellScript(spell_warr_heroic_leap);
-
-    void HandleCast()
-    {
-        if (Player* caster = GetCaster()->ToPlayer())
-        {
-            if (caster->IsAlive())
-            {
-                Position pos = GetExplTargetDest()->GetPosition();
-                caster->GetMotionMaster()->MoveJump(pos, 23.0f, 15.0f);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_warr_heroic_leap::HandleCast);
-    }
-};
+//class spell_warr_heroic_leap : public SpellScript
+//{
+//    PrepareSpellScript(spell_warr_heroic_leap);
+//
+//    void HandleCast()
+//    {
+//        if (Player* caster = GetCaster()->ToPlayer())
+//        {
+//            if (caster->IsAlive())
+//            {
+//                Position pos = GetExplTargetDest()->GetPosition();
+//                caster->GetMotionMaster()->MoveJump(pos, 23.0f, 15.0f);
+//            }
+//        }
+//    }
+//
+//    void Register() override
+//    {
+//        OnCast += SpellCastFn(spell_warr_heroic_leap::HandleCast);
+//    }
+//};
 
 void AddSC_warrior_spell_scripts()
 {
@@ -2304,6 +2304,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_furious_stabs);
     RegisterSpellScript(spell_warr_slam_and_thrust);
     RegisterSpellScript(spell_sword_and_spear_board_reset);
-    RegisterSpellScript(spell_warr_heroic_leap);
+    //RegisterSpellScript(spell_warr_heroic_leap);
     RegisterCreatureAI(npc_pet_ravager);
 }
