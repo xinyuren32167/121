@@ -656,6 +656,10 @@ class spell_rog_rupture : public AuraScript
                 cp = 5;
 
             amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * attackpowerPerCombo[cp]);
+
+            if (AuraEffect const* gamblersLuck = GetCaster()->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
+                if (GetCaster()->HasAura(82092) || GetCaster()->HasAura(82093) || GetCaster()->HasAura(82094) || GetCaster()->HasAura(82095) || GetCaster()->HasAura(82096) || GetCaster()->HasAura(82097))
+                    AddPct(amount, gamblersLuck->GetAmount());
         }
     }
 
@@ -804,6 +808,10 @@ class spell_rog_deadly_throw : public SpellScript
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
+        if (AuraEffect const* gamblersLuck = GetCaster()->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
+            if (GetCaster()->HasAura(82092) || GetCaster()->HasAura(82093) || GetCaster()->HasAura(82094) || GetCaster()->HasAura(82095) || GetCaster()->HasAura(82096) || GetCaster()->HasAura(82097))
+                AddPct(damage, gamblersLuck->GetAmount());
+
         SetHitDamage(damage);
     }
 
@@ -827,6 +835,10 @@ class spell_rog_eviscerate : public SpellScript
             damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
+
+        if (AuraEffect const* gamblersLuck = GetCaster()->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
+            if (GetCaster()->HasAura(82092) || GetCaster()->HasAura(82093) || GetCaster()->HasAura(82094) || GetCaster()->HasAura(82095) || GetCaster()->HasAura(82096) || GetCaster()->HasAura(82097))
+                AddPct(damage, gamblersLuck->GetAmount());
 
         SetHitDamage(damage);
     }
@@ -1517,6 +1529,10 @@ class spell_rog_sinister_strike : public SpellScript
             damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
+        if (AuraEffect const* gamblersLuck = GetCaster()->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
+            if (GetCaster()->HasAura(82092) || GetCaster()->HasAura(82093) || GetCaster()->HasAura(82094) || GetCaster()->HasAura(82095) || GetCaster()->HasAura(82096) || GetCaster()->HasAura(82097))
+                AddPct(damage, gamblersLuck->GetAmount());
+
         SetHitDamage(damage);
     }
    
@@ -1742,6 +1758,10 @@ class spell_rog_between_the_eyes : public SpellScript
             damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
+
+        if (AuraEffect const* gamblersLuck = GetCaster()->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
+            if (GetCaster()->HasAura(82092) || GetCaster()->HasAura(82093) || GetCaster()->HasAura(82094) || GetCaster()->HasAura(82095) || GetCaster()->HasAura(82096) || GetCaster()->HasAura(82097))
+                AddPct(damage, gamblersLuck->GetAmount());
 
         SetHitDamage(damage);
     }
