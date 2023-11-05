@@ -91,6 +91,14 @@ enum RogueSpells
     SPELL_ROGUE_ROLL_THE_BONES                  = 82091,
     SPELL_ROGUE_SPRINT                          = 11305,
     SPELL_ROGUE_VANISH                          = 26889,
+    SPELL_ROGUE_OPPORTUNITY                     = 82085,
+
+    TALENT_ROGUE_RELENTLESS_ATTACKS_COMBOPOINT  = 82112,
+    TALENT_ROGUE_RELENTLESS_ATTACKS_STACK       = 82113,
+    TALENT_ROGUE_RUTHLESS_COMBOPOINT            = 82134,
+    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH       = 82165,
+    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC  = 82168,
+    TALENT_ROGUE_AUDACITY_PROC                  = 82183,
 
     //POISONS
     //LETHAL
@@ -1833,6 +1841,9 @@ class spell_rog_opportunity : public AuraScript
         Unit* caster = GetCaster();
         caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
         caster->CastSpell(caster, SPELL_ROGUE_OPPORTUNITY_PROC, TRIGGERED_FULL_MASK);
+
+        if (roll_chance_i(aurEff->GetAmount()))
+            caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1946,7 +1957,8 @@ class spell_rog_roll_the_bones_true_bearing : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
-        uint32 reduction = aurEff->GetAmount();
+        uint32 reduction = aurEff->GetAmount() * GetCaster()->GetComboPoints();
+
         caster->ModifySpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, reduction);
         caster->ModifySpellCooldown(SPELL_ROGUE_BLADE_FLURRY, reduction);
         caster->ModifySpellCooldown(SPELL_ROGUE_ADRENALINE_RUSH, reduction);
@@ -1993,6 +2005,101 @@ class spell_rog_keep_it_rolling : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_rog_keep_it_rolling::HandleCast);
+    }
+};
+
+class spell_rog_relentless_attacks : public AuraScript
+{
+    PrepareAuraScript(spell_rog_relentless_attacks);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        uint32 limit = aurEff->GetAmount();
+
+        caster->CastSpell(caster, TALENT_ROGUE_RELENTLESS_ATTACKS_STACK, TRIGGERED_FULL_MASK);
+
+        if (Aura* stack = caster->GetAura(TALENT_ROGUE_RELENTLESS_ATTACKS_STACK))
+            if (stack->GetStackAmount() >= limit)
+            {
+                caster->CastSpell(caster, TALENT_ROGUE_RELENTLESS_ATTACKS_COMBOPOINT, TRIGGERED_FULL_MASK);
+                stack->Remove();
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_relentless_attacks::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_ruthless : public AuraScript
+{
+    PrepareAuraScript(spell_rog_ruthless);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        uint32 chance = aurEff->GetAmount() * caster->GetComboPoints();
+
+        if (roll_chance_i(chance))
+            caster->CastSpell(caster, TALENT_ROGUE_RUTHLESS_COMBOPOINT, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_ruthless::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_improved_adrenaline_rush : public AuraScript
+{
+    PrepareAuraScript(spell_rog_improved_adrenaline_rush);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (AuraEffect* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH, EFFECT_0))
+        {
+            if (roll_chance_i(aurEff->GetAmount()))
+                GetCaster()->CastSpell(GetCaster(), TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (AuraEffect* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH, EFFECT_0))
+        {
+            if (roll_chance_i(aurEff->GetAmount()))
+                GetCaster()->CastSpell(GetCaster(), TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_improved_adrenaline_rush::HandleApply, EFFECT_0, SPELL_AURA_MOD_POWER_REGEN_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_improved_adrenaline_rush::HandleRemove, EFFECT_0, SPELL_AURA_MOD_POWER_REGEN_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_rog_audacity : public AuraScript
+{
+    PrepareAuraScript(spell_rog_audacity);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* aura = GetCaster()->GetAura(SPELL_ROGUE_OPPORTUNITY))
+        {
+            Unit* caster = GetCaster();
+            uint32 chance = aura->GetSpellInfo()->ProcChance;
+
+            if (roll_chance_i(chance))
+                caster->CastSpell(caster, TALENT_ROGUE_AUDACITY_PROC, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_rog_audacity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2058,4 +2165,8 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_roll_the_bones_skull_and_crossbones);
     RegisterSpellScript(spell_rog_roll_the_bones_true_bearing);
     RegisterSpellScript(spell_rog_keep_it_rolling);
+    RegisterSpellScript(spell_rog_relentless_attacks);
+    RegisterSpellScript(spell_rog_ruthless);
+    RegisterSpellScript(spell_rog_improved_adrenaline_rush);
+    RegisterSpellScript(spell_rog_audacity);
 }
