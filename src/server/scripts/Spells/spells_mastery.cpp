@@ -58,6 +58,7 @@ enum Masteries
     MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE = 1100004,
     MASTERY_ROGUE_EXECUTIONER = 1100005,
     MASTERY_ROGUE_EXECUTIONER_BUFF = 1100007,
+    MASTERY_ROGUE_PISTOLERO_BUFF = 1099997,
 
     // Shaman
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
@@ -1297,6 +1298,30 @@ class spell_mastery_rog_executioner : public SpellScript
     }
 };
 
+class spell_mastery_rog_pistolero : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_rog_pistolero);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (Aura* aura = caster->GetAura(MASTERY_ROGUE_POTENT_ASSASSIN))
+        {
+            float mastery = caster->GetMastery();
+            int32 opportunityBonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+            int32 damageBonus = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+
+            caster->CastCustomSpell(caster, MASTERY_ROGUE_PISTOLERO_BUFF, &opportunityBonus, &damageBonus, nullptr, true, nullptr, nullptr);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_rog_pistolero::HandleCast);
+    }
+};
+
+
 // Shaman
 class spell_mastery_sha_elemental_overload : public AuraScript
 {
@@ -1776,4 +1801,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_from_the_shadows_buff_remove);
     RegisterSpellScript(spell_mastery_pri_absolutions_embrace);
     RegisterSpellScript(spell_mastery_divine_tribunal);
+    RegisterSpellScript(spell_mastery_rog_pistolero);
 }

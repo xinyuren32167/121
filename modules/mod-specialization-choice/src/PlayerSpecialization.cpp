@@ -91,6 +91,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 4, 1100000, 20.59, true, 1100001, POWER_ALL };
     m_Specializations[ROGUE_COMBAT] = { 21, 51690, "Combat", 4, 1100003, 24.14, false, 0, POWER_ALL };
     m_Specializations[ROGUE_SUBTLETY] = { 22, 82016 , "Subtlety", 4, 1100005, 14.28, true, 1100006, POWER_ALL };
+    m_Specializations[ROGUE_OUTLAW] = { 38, 82082, "Outlaw", 4, 1099999, 17.50, true, 1099998, POWER_ALL };
 
     m_Specializations[WARLOCK_AFFLICTION] = { 26, 57993, "Affliction", 9, 1100018, 14.00, true, 1100021, POWER_ALL };
     m_Specializations[WARLOCK_DEMONOLOGY] = { 27, 51690, "Demonology", 9, 1100020, 24.00, true, 1100023, POWER_ALL };
