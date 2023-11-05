@@ -659,7 +659,7 @@ class spell_rog_rupture : public AuraScript
 
             if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
                 if (caster->HasAura(82092) || caster->HasAura(82093) || caster->HasAura(82094) || caster->HasAura(82095) || caster->HasAura(82096) || caster->HasAura(82097))
-                    AddPct(damage, gamblersLuck->GetAmount());
+                    AddPct(amount, gamblersLuck->GetAmount());
         }
     }
 
