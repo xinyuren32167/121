@@ -2006,14 +2006,6 @@ class spell_rog_keep_it_rolling : public SpellScript
 {
     PrepareSpellScript(spell_rog_keep_it_rolling);
 
-    SpellCastResult CheckCast()
-    {
-        Unit* caster = GetCaster();
-        if (!caster->HasAura(82092) || !caster->HasAura(82093) || !caster->HasAura(82094) || !caster->HasAura(82095) || !caster->HasAura(82096) || !caster->HasAura(82097))
-            return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
-        return SPELL_CAST_OK;
-    }
-
     void HandleCast()
     {
         Unit* caster = GetCaster();
@@ -2035,7 +2027,6 @@ class spell_rog_keep_it_rolling : public SpellScript
 
     void Register() override
     {
-        OnCheckCast += SpellCheckCastFn(spell_rog_keep_it_rolling::CheckCast);
         OnCast += SpellCastFn(spell_rog_keep_it_rolling::HandleCast);
     }
 };
