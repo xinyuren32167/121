@@ -107,12 +107,17 @@ enum HunterSpells
     SPELL_HUNTER_ARCANE_SHOT = 49045,
     SPELL_HUNTER_SPECTRAL_SHOT = 85019,
     SPELL_HUNTER_EVANESCENCE = 85020,
+
+    // Talents
     TALENT_HUNTER_SHADOW_CLOAK = 85034,
     TALENT_HUNTER_SHADOW_CLOAK_BUFF = 85037,
     TALENT_HUNTER_IMPROVED_BLEND_PROC = 85053,
     TALENT_HUNTER_BRING_ME_TO_LIFE_PROC = 85086,
     TALENT_HUNTER_BRING_ME_TO_LIFE_COOLDOWN = 85087,
     TALENT_HUNTER_IMPROVED_BLACK_CURSE_HEAL = 85108,
+
+    // Runes
+    RUNE_HUNTER_EVASIVE_MANEUVERS_SHIELD = 501732,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -1550,7 +1555,7 @@ class spell_hun_bestial_apply : public SpellScript
             return;
 
         player->AddAura(80132, pet);
-        player->AddAura(80132, player);  
+        player->AddAura(80132, player);
 
         pet->CastCustomSpellTrigger(SPELL_HUNTER_BESTIAL_WRATH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
 
@@ -3115,7 +3120,7 @@ class spell_hunter_stampeded : public AuraScript
         summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
         summon->SetReactState(REACT_PASSIVE);
         summon->SetTarget();
-    } 
+    }
 
     void Register() override
     {
@@ -3172,33 +3177,76 @@ class spell_hun_backshot : public SpellScript
 {
     PrepareSpellScript(spell_hun_backshot);
 
+    Aura* GetTormentingShadowsAura(Unit* caster)
+    {
+        for (size_t i = 501586; i < 501592; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleDamage(SpellEffIndex effIndex)
     {
-        Player* caster = GetCaster()->ToPlayer();
-        if (Unit* target = GetHitUnit())
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (!target->HasInArc(M_PI, caster))
         {
-            if (!target->HasInArc(M_PI, caster))
+            uint32 damageBonus = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+            AddPct(damage, damageBonus);
+
+            if (Player* player = caster->ToPlayer())
             {
-                int32 damage = GetEffectValue();
-                SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_BACKSHOT);
-                uint32 damageBonus = value->GetEffect(EFFECT_1).CalcValue(caster);
-
-                damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-                damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-
-                AddPct(damage, damageBonus);
-
-                SetHitDamage(damage);
-
-                uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
-                caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
+                uint32 reduction = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
+                player->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
             }
+
+            if (GetTormentingShadowsAura(caster))
+            {
+                int32 damagePct = GetTormentingShadowsAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+                int32 procSpell = GetTormentingShadowsAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+                AddPct(damage, damagePct);
+
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Perforated Veins rune Buff
+        for (size_t i = 501672; i < 501678; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
         }
     }
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_hun_backshot::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_hun_backshot::HandleAfterHit);
     }
 };
 
@@ -3235,6 +3283,57 @@ class spell_hun_twilight_piercer : public SpellScript
     void Register() override
     {
         BeforeCast += SpellCastFn(spell_hun_twilight_piercer::HandleProc);
+    }
+};
+
+// 85006 - Twilight Piercer Aura
+class spell_hun_twilight_piercer_aura : public AuraScript
+{
+    PrepareAuraScript(spell_hun_twilight_piercer_aura);
+
+    Aura* GetEphemeralStrikeAura(Unit* caster)
+    {
+        for (size_t i = 501824; i < 501830; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (GetEphemeralStrikeAura(caster))
+        {
+            int32 procSpell = GetEphemeralStrikeAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_twilight_piercer_aura::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hun_twilight_piercer_aura::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3375,9 +3474,18 @@ class spell_hun_spectral_shot : public SpellScript
         }
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_hun_spectral_shot::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_hun_spectral_shot::HandleAfterHit);
     }
 };
 
@@ -3498,6 +3606,404 @@ class spell_hun_improved_black_curse : public AuraScript
     }
 };
 
+// 85013 - Lord of Shadows
+class spell_hun_lord_of_shadows : public AuraScript
+{
+    PrepareAuraScript(spell_hun_lord_of_shadows);
+
+    Aura* GetTormentingShadowsAura(Unit* caster)
+    {
+        for (size_t i = 501572; i < 501578; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetShadowMasteryAura(Unit* caster)
+    {
+        for (size_t i = 501734; i < 501740; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetTheLastDanceAura(Unit* caster)
+    {
+        for (size_t i = 501800; i < 501806; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetShadowMasteryAura(caster))
+        {
+            int32 procSpell = GetShadowMasteryAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+
+        if (GetTheLastDanceAura(caster))
+        {
+            int32 procSpell = GetTheLastDanceAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetTormentingShadowsAura(caster))
+        {
+            int32 procSpell = GetTormentingShadowsAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+            caster->GetAura(procSpell)->SetStackAmount(20);
+        }
+
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_lord_of_shadows::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_lord_of_shadows::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 85010 - Desecrating Shots
+class spell_hun_desecrating_shots : public AuraScript
+{
+    PrepareAuraScript(spell_hun_desecrating_shots);
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Silent Death rune Buff
+        for (size_t i = 501640; i < 501646; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_desecrating_shots::OnRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 85009 - Crescent Veil
+class spell_hun_crescent_veil : public AuraScript
+{
+    PrepareAuraScript(spell_hun_crescent_veil);
+
+    Aura* GetMoonlessNightAura(Unit* caster)
+    {
+        for (size_t i = 501684; i < 501690; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetVeilOfRenewalAura(Unit* caster)
+    {
+        for (size_t i = 501702; i < 501708; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetVeiledAmbushAura(Unit* caster)
+    {
+        for (size_t i = 501714; i < 501720; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetMoonlessNightAura(caster))
+        {
+            int32 procSpell = GetMoonlessNightAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+
+        if (GetVeilOfRenewalAura(caster))
+        {
+            int32 procSpell = GetVeilOfRenewalAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        if (GetVeiledAmbushAura(caster))
+        {
+            int32 procSpell = GetVeiledAmbushAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Moonless Night rune Buff
+        for (size_t i = 501690; i < 501696; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // remove Veiled Ambush rune Buff
+        for (size_t i = 501720; i < 501726; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_crescent_veil::OnApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_crescent_veil::OnRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 85012 - Blend
+class spell_hun_blend : public AuraScript
+{
+    PrepareAuraScript(spell_hun_blend);
+
+    Aura* GetEvasiveManeuversAura(Unit* caster)
+    {
+        for (size_t i = 501726; i < 501732; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetShadowMasteryAura(Unit* caster)
+    {
+        for (size_t i = 501734; i < 501740; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetEvasiveManeuversAura(caster))
+        {
+            int32 shieldPct = GetEvasiveManeuversAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 maxhealth = caster->GetMaxHealth();
+            int32 amount = CalculatePct(maxhealth, shieldPct);
+
+            caster->CastCustomSpell(RUNE_HUNTER_EVASIVE_MANEUVERS_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+
+        if (GetShadowMasteryAura(caster))
+        {
+            int32 procSpell = GetShadowMasteryAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Handle Evasive Maneuvers' shield duration
+        if (Aura* evasiveShield = caster->GetAura(RUNE_HUNTER_EVASIVE_MANEUVERS_SHIELD))
+        {
+            int32 duration = 0;
+
+            if (GetEvasiveManeuversAura(caster))
+                duration = GetEvasiveManeuversAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+            evasiveShield->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_blend::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_blend::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 85014 - Shadow Empowerment
+class spell_hun_shadow_empowerment : public AuraScript
+{
+    PrepareAuraScript(spell_hun_shadow_empowerment);
+
+    Aura* GetShadowGlideAura(Unit* caster)
+    {
+        for (size_t i = 501882; i < 501888; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetGLoomAura(Unit* caster)
+    {
+        for (size_t i = 501894; i < 501900; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetShadowGlideAura(caster))
+        {
+            int32 procSpell = GetShadowGlideAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+
+        if (GetGLoomAura(caster))
+        {
+            int32 procSpell = GetGLoomAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Shadow Glide Rune Buff
+        for (size_t i = 501888; i < 501894; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Remove Gloom Rune Buff
+        for (size_t i = 501900; i < 501906; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_shadow_empowerment::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_shadow_empowerment::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 85002 - Withering Fire Aura
+class spell_hun_withering_fire_aura : public AuraScript
+{
+    PrepareAuraScript(spell_hun_withering_fire_aura);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Echoing Fire Rune Buff
+        for (size_t i = 501924; i < 501930; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_hun_withering_fire_aura::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_hun_withering_fire_aura::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_check_pet_los);
@@ -3586,6 +4092,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_backshot);
     RegisterSpellScript(spell_hun_black_curse_reset);
     RegisterSpellScript(spell_hun_twilight_piercer);
+    RegisterSpellScript(spell_hun_twilight_piercer_aura);
     RegisterSpellScript(spell_hun_invis_activator);
     RegisterSpellScript(spell_hun_shadow_shot);
     RegisterSpellScript(spell_hun_shadow_movement);
@@ -3596,6 +4103,16 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_bring_me_to_life);
     RegisterSpellScript(spell_hun_focused_shots);
     RegisterSpellScript(spell_hun_improved_black_curse);
+    RegisterSpellScript(spell_hun_lord_of_shadows);
+    RegisterSpellScript(spell_hun_desecrating_shots);
+    RegisterSpellScript(spell_hun_crescent_veil);
+    RegisterSpellScript(spell_hun_blend);
+    RegisterSpellScript(spell_hun_shadow_empowerment);
+    RegisterSpellScript(spell_hun_withering_fire_aura);
+
+
+    
+    
     new Hunter_AllMapScript();
     new npc_hunter_spell_stampeded();
 }

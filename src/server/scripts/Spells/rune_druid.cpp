@@ -2714,6 +2714,9 @@ class rune_druid_knowledge_agreement : public AuraScript
         if (!GetCaster()->HasAura(FORM_MOONKIN_FORM) || !caster->HasAura(SPELL_CELESTIAL_ALIGNMENT))
             return;
 
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_RUNIC_POWER)
+            return;
+
         int32 spellAstralPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
 
         if (spellAstralPower <= 0)

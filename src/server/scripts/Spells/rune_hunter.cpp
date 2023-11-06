@@ -13,130 +13,100 @@
 
 enum HunterSpells
 {
-
+    // Spells
     SPELL_HUNTER_ASPECT_OF_THE_BEAST = 13161,
     SPELL_HUNTER_ASPECT_OF_THE_DRAGONHAWK = 5118,
     SPELL_HUNTER_ASPECT_OF_THE_HAWK = 27044,
     SPELL_HUNTER_ASPECT_OF_THE_MONKEY = 13163,
     SPELL_HUNTER_ASPECT_OF_THE_WILD = 80130,
-
     SPELL_HUNTER_AIMED_SHOT = 49050,
     SPELL_HUNTER_ARCANE_SHOT = 49045,
-
     SPELL_HUNTER_BARBED_SHOT = 80172,
     SPELL_HUNTER_BARBED_SHOT_FRENZY = 80174,
-
     SPELL_HUNTER_BESTIAL_WRATH = 80133,
     SPELL_HUNTER_BESTIAL_WRATH_AURA = 80132,
     SPELL_HUNTER_BLACK_ARROW = 63672,
+    SPELL_HUNTER_BLEND = 85012,
     SPELL_HUNTER_BUTCHERY = 80191,
     SPELL_HUNTER_BURSTING_SHOT = 80184,
-
-
-    SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
-    SPELL_HUNTER_FREEZING_TRAP = 80139,
-    SPELL_HUNTER_FROST_TRAP = 13809,
-    SPELL_HUNTER_IMMOLATION_TRAP = 49056,
-    SPELL_HUNTER_IMMOLATION_TRAP_DOT = 49054,
-    SPELL_HUNTER_SNAKE_TRAP = 34600,
-    SPELL_HUNTER_SNAKE_TRAP_RANGED = 34601,
-
+    SPELL_HUNTER_CRESCENT_VEIL = 85009,
     SPELL_HUNTER_CALL_OF_THE_WILD = 80186,
     SPELL_HUNTER_DISENGAGE = 781,
+    SPELL_HUNTER_EVANESCENCE = 85020,
     SPELL_HUNTER_EXHILARATION = 80161,
-
+    SPELL_HUNTER_EXPLOSIVE_TRAP = 80138,
     SPELL_HUNTER_FEIGN_DEATH = 5384,
     SPELL_HUNTER_FLANKING_STRIKE = 80197,
+    SPELL_HUNTER_FREEZING_TRAP = 80139,
+    SPELL_HUNTER_FROST_TRAP = 13809,
     SPELL_HUNTER_FURY_OF_THE_EAGLE = 80194,
-
+    SPELL_HUNTER_IMMOLATION_TRAP = 49056,
+    SPELL_HUNTER_IMMOLATION_TRAP_DOT = 49054,
     SPELL_HUNTER_KILL_COMMAND = 80141,
     SPELL_HUNTER_KILL_SHOT = 61006,
-
+    SPELL_HUNTER_LORD_OF_SHADOWS = 85013,
     SPELL_HUNTER_RABID_AURA = 53401,
     SPELL_HUNTER_RAPID_FIRE = 80146,
     SPELL_HUNTER_RAPID_FIRE_DAMAGE = 80147,
-
     SPELL_HUNTER_SERPENT_STING = 49001,
+    SPELL_HUNTER_SHADOW_EMPOWERMENT = 85014,
+    SPELL_HUNTER_SNAKE_TRAP = 34600,
+    SPELL_HUNTER_SNAKE_TRAP_RANGED = 34601,
     SPELL_HUNTER_SPEARHEAD_AURA = 80208,
     SPELL_HUNTER_STEADY_SHOT = 49052,
     SPELL_HUNTER_TRUESHOT = 80148,
-
     SPELL_HUNTER_WAILING_ARROW_AOE = 80149,
     SPELL_HUNTER_WAILING_ARROW_ST = 80150,
     SPELL_HUNTER_WEAK_SPOT = 80160,
     SPELL_HUNTER_WILDFIRE_BOMB = 80188,
-
     SPELL_HUNTER_WIND_ARROW = 80225,
     SPELL_HUNTER_WIND_ARROW_DAMAGE = 80226,
+    SPELL_HUNTER_WITHERING_FIRE = 85002,
+    SPELL_HUNTER_WITHERING_FIRE_DAMAGE = 85003,
 
+    //Runes
     RUNE_HUNTER_BULLSEYE_BUFF = 500044,
-
     RUNE_HUNTER_50CAL_DAMAGE = 500052,
-
     RUNE_HUNTER_SNIPER_TRAINING_CHECK = 500066,
-
     RUNE_HUNTER_SERPENT_TOUCH_DAMAGE = 500074,
-
     RUNE_HUNTER_POISON_INJECTION_DAMAGE = 500094,
-
     RUNE_HUNTER_REJUVENATING_WIND_HOT = 500258,
-
     RUNE_HUNTER_REST_IN_PEACE_HEAL = 500314,
-
     RUNE_HUNTER_KILLER_INSTINCT_DAMAGE = 500366,
-
     RUNE_HUNTER_PLAYING_WITH_MATCHES_AOE = 500352,
-
     RUNE_HUNTER_CLEAVE_COMMAND_DAMAGE = 500380,
-
     RUNE_HUNTER_RAZOR_FRAGMENTS_DAMAGE = 500442,
-
     RUNE_HUNTER_BEAST_CLEAVE_DAMAGE = 500480,
-
     RUNE_HUNTER_TRICK_SHOTS_LISTENER = 500518,
-
     RUNE_HUNTER_ASPECT_OF_THE_STORM_DAMAGE = 500538,
-
     RUNE_HUNTER_BLACK_MAMBA_DOT = 500570,
     RUNE_HUNTER_BLACK_MAMBA_DAMAGE = 500571,
-
     RUNE_HUNTER_STOMP_DAMAGE = 500730,
-
     RUNE_HUNTER_BLOODTHIRSTY_WRATH_HEAL = 500750,
     RUNE_HUNTER_BLOODTHIRSTY_WRATH_SHIELD = 500751,
-
     RUNE_HUNTER_THUNDERSLASH_DAMAGE = 500814,
-
     RUNE_HUNTER_POISON_FANGS_DOT = 500900,
     RUNE_HUNTER_POISON_FANGS_DAMAGE = 500901,
-
     RUNE_HUNTER_TRUE_AIMED_SHOT_BUFF = 500908,
     RUNE_HUNTER_TRUE_AIMED_SHOT_CHECK = 500909,
-
     RUNE_HUNTER_DOUBLE_IMPACT_DAMAGE = 500928,
-
     RUNE_HUNTER_LETHAL_AMMUNITION_BUFF = 500986,
-
     RUNE_HUNTER_QUICK_LOAD_LISTENER = 501059,
-
     RUNE_HUNTER_STEADFAST_FOCUS_LISTENER = 501030,
-
     RUNE_HUNTER_ON_THE_TRAIL_DOT = 501058,
-
     RUNE_HUNTER_ECHOES_OF_ONHARA_DAMAGE = 501066,
-
     RUNE_HUNTER_STEADY_FOCUS_LISTENER = 501174,
-
     RUNE_HUNTER_FOCALISED_TRUESHOT_BUFF = 501200,
     RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER = 501201,
-
     RUNE_HUNTER_UNERRING_VISION_BUFF = 501214,
-
     RUNE_HUNTER_RUTHLESS_MARAUDER_BUFF = 501410,
-
     RUNE_HUNTER_VOLATILE_BOMB_DAMAGE = 501520,
-
     RUNE_HUNTER_SHRAPNEL_BOMB_DOT = 501534,
+    RUNE_HUNTER_TORMENTING_SHADOWS_DAMAGE = 501584,
+    RUNE_HUNTER_CURSE_DRAIN_HEAL = 501614,
+    RUNE_HUNTER_VORPAL_SHOT_DOT = 501658,
+    RUNE_HUNTER_SHADOW_QUIVER_ENERGIZE = 501848,
+    RUNE_HUNTER_BLOOD_MOON_HEAL = 501880,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -727,37 +697,42 @@ class rune_hunter_ice_skate : public SpellScript
     }
 };
 
-class rune_hunter_playing_with_matches : public SpellScript
+class rune_hunter_playing_with_matches : public AuraScript
 {
-    PrepareSpellScript(rune_hunter_playing_with_matches);
+    PrepareAuraScript(rune_hunter_playing_with_matches);
 
-    Aura* GetRuneAura()
+    Aura* GetRuneAura(Unit* caster)
     {
         for (size_t i = 500346; i < 500352; i++)
         {
-            if (GetOriginalCaster()->HasAura(i))
-                return GetOriginalCaster()->GetAura(i);
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
         }
 
         return nullptr;
     }
 
-    void HandleApplyAura()
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (!GetRuneAura() || GetCaster()->isDead())
-            return;
-        Unit* unit = GetExplTargetUnit();
+        Unit* caster = GetCaster();
 
-        if (!unit || unit->isDead())
+        if (!caster || caster->isDead())
             return;
-        Position dest = unit->GetPosition();
 
-        GetOriginalCaster()->CastSpell(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ(), RUNE_HUNTER_PLAYING_WITH_MATCHES_AOE, true);
+        Unit* target = GetUnitOwner();
+        
+        if (!target || target->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        caster->CastSpell(target, RUNE_HUNTER_PLAYING_WITH_MATCHES_AOE, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(rune_hunter_playing_with_matches::HandleApplyAura);
+        OnEffectApply += AuraEffectApplyFn(rune_hunter_playing_with_matches::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -765,19 +740,27 @@ class rune_hunter_playing_with_matches_proc : public SpellScript
 {
     PrepareSpellScript(rune_hunter_playing_with_matches_proc);
 
-    void HandleApplyAura(SpellEffIndex effIndex)
+    void SelectTarget(std::list<WorldObject*>& targets)
     {
-        Unit* unit = GetExplTargetUnit();
+        Unit* caster = GetCaster();
 
-        if (!unit || !unit->IsAlive())
+        if (!caster || caster->isDead())
             return;
 
-        GetOriginalCaster()->CastSpell(unit, SPELL_HUNTER_IMMOLATION_TRAP_DOT, TRIGGERED_FULL_MASK);
+        for (auto const& object : targets)
+        {
+            Unit* target = object->ToUnit();
+
+            if (target->isDead() || target->HasAura(SPELL_HUNTER_IMMOLATION_TRAP_DOT))
+                continue;
+
+            caster->AddAura(SPELL_HUNTER_IMMOLATION_TRAP_DOT, target);
+        }
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(rune_hunter_playing_with_matches_proc::HandleApplyAura, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_hunter_playing_with_matches_proc::SelectTarget, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
 
@@ -3968,6 +3951,430 @@ class rune_hunter_shrapnel_bomb : public AuraScript
     }
 };
 
+class rune_hunter_improved_backshot : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_improved_backshot);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target)
+            return false;
+
+        Unit* caster = GetCaster();
+
+        if (!caster)
+            return false;
+
+        return !target->HasInArc(M_PI, caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_improved_backshot::CheckProc);
+    }
+};
+
+class rune_hunter_tormenting_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_tormenting_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_HUNTER_TORMENTING_SHADOWS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        ModStackAmount(-1);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_tormenting_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_tormenting_shadows::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_hunter_tormenting_shadows::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_hunter_curse_drain_heal : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_curse_drain_heal);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        caster->CastCustomSpell(RUNE_HUNTER_CURSE_DRAIN_HEAL, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_hunter_curse_drain_heal::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class rune_hunter_silent_death : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_silent_death);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 501634; i < 501640; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleBuff()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 procSpell = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+        GetCaster()->AddAura(procSpell, GetCaster());
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_hunter_silent_death::HandleBuff);
+    }
+};
+
+class rune_hunter_vorpal_shot : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_vorpal_shot);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+        int32 maxTicks = sSpellMgr->AssertSpellInfo(RUNE_HUNTER_VORPAL_SHOT_DOT)->GetMaxTicks();
+        amount /= maxTicks;
+
+        caster->CastCustomSpell(RUNE_HUNTER_VORPAL_SHOT_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_vorpal_shot::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_vorpal_shot::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_bowmaster : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_bowmaster);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = eventInfo.GetSpellInfo()->Id;
+
+        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_bowmaster::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_bowmaster::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_haunting_presence : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_haunting_presence);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_HUNTER_CRESCENT_VEIL, -cooldown);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_hunter_haunting_presence::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_enveloping_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_enveloping_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_FOCUS)
+            return;
+
+        int32 spellFocus = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (spellFocus <= 0)
+            return;
+
+        int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
+        int32 focusAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellFocus;
+        int32 focusThreshold = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            for (focusAccumulated; focusAccumulated > focusThreshold; focusAccumulated -= focusThreshold)
+                player->ModifySpellCooldown(SPELL_HUNTER_LORD_OF_SHADOWS, -cooldown);
+
+        GetEffect(EFFECT_2)->SetAmount(focusAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_enveloping_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_enveloping_shadows::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_shadow_quiver : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_shadow_quiver);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 focusAmount = aurEff->GetAmount();
+
+        if (caster->HasAura(SPELL_HUNTER_BLEND) || caster->HasAura(SPELL_HUNTER_LORD_OF_SHADOWS) || caster->HasAura(SPELL_HUNTER_EVANESCENCE))
+            focusAmount *= 2;
+
+        caster->CastCustomSpell(RUNE_HUNTER_SHADOW_QUIVER_ENERGIZE, SPELLVALUE_BASE_POINT0, focusAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_shadow_quiver::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_shadow_quiver::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_twilight_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_twilight_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_HUNTER_LORD_OF_SHADOWS, -cooldown);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_twilight_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_twilight_shadows::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_eternal_night : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_eternal_night);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_HUNTER_SHADOW_EMPOWERMENT))
+            return;
+
+        int32 procSpellID = eventInfo.GetSpellInfo()->Id;
+
+        if (procSpellID == SPELL_HUNTER_WITHERING_FIRE || procSpellID == SPELL_HUNTER_WITHERING_FIRE_DAMAGE)
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->RemoveSpellCooldown(SPELL_HUNTER_WITHERING_FIRE, true);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_eternal_night::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_eternal_night::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_blood_moon : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_blood_moon);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_HUNTER_SHADOW_EMPOWERMENT))
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_blood_moon::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_hunter_blood_moon::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_hunter_blood_moon_heal : public SpellScript
+{
+    PrepareSpellScript(rune_hunter_blood_moon_heal);
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        caster->CastCustomSpell(RUNE_HUNTER_BLOOD_MOON_HEAL, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(rune_hunter_blood_moon_heal::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
 
 void AddSC_hunter_perks_scripts()
 {
@@ -4077,4 +4484,21 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_volatile_bomb);
     RegisterSpellScript(rune_hunter_pheromone_bomb);
     RegisterSpellScript(rune_hunter_shrapnel_bomb);
+    RegisterSpellScript(rune_hunter_improved_backshot);
+    RegisterSpellScript(rune_hunter_tormenting_shadows);
+    RegisterSpellScript(rune_hunter_curse_drain_heal);
+    RegisterSpellScript(rune_hunter_silent_death);
+    RegisterSpellScript(rune_hunter_vorpal_shot);
+    RegisterSpellScript(rune_hunter_bowmaster);
+    RegisterSpellScript(rune_hunter_haunting_presence);
+    RegisterSpellScript(rune_hunter_enveloping_shadows);
+    RegisterSpellScript(rune_hunter_shadow_quiver);
+    RegisterSpellScript(rune_hunter_twilight_shadows);
+    RegisterSpellScript(rune_hunter_eternal_night);
+    RegisterSpellScript(rune_hunter_blood_moon);
+    RegisterSpellScript(rune_hunter_blood_moon_heal);
+
+
+
+    
 }

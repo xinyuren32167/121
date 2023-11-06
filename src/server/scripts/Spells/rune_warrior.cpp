@@ -112,7 +112,7 @@ class spell_the_art_of_war : public AuraScript
         if (!aura)
             return;
 
-        int32 spellRage=  eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
+        int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
         int32 rageAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
 
         if (spellRage <= 0)
