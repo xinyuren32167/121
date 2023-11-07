@@ -2205,7 +2205,7 @@ class spell_sword_and_spear_board_reset : public AuraScript
     {
         if (Player* caster = GetCaster()->ToPlayer())
         {
-            caster->RemoveSpellCooldown(SPELL_WARRIOR_SHIELD_SLAM);
+            caster->RemoveSpellCooldown(SPELL_WARRIOR_SHIELD_SLAM, true);
             caster->RemoveCategoryCooldown(1209);
         }
     }

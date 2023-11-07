@@ -162,6 +162,9 @@ enum DeathKnightSpells
     SPELL_DK_FROST_STRIKE                       = 55268,
     MASTERY_DK_UNHOLY                           = 600005,
     NPC_CONTAGION_AREA                          = 500508,
+    SPELL_DK_DEATHS_EMBRACE                     = 87001,
+    SPELL_DK_DEATHS_EMBRACE_HEAL                = 87002,
+    SPELL_DK_DEATHS_EMBRACE_LISTENER            = 87003,
 };
 
 enum DeathKnightSpellIcons
@@ -2720,7 +2723,7 @@ class spell_dk_deaths_caress : public SpellScript
         Unit* caster = GetCaster();
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_DEATHS_CARESS);
-        int32 stackAmount = value->GetEffect(EFFECT_2).CalcValue(GetCaster());
+        int32 stackAmount = value->GetEffect(EFFECT_2).CalcValue(caster);
 
         if (Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD))
             aura->ModStackAmount(stackAmount);
@@ -2748,7 +2751,7 @@ class spell_dk_marrowrend : public SpellScript
         Unit* caster = GetCaster();
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_MARROWREND);
-        int32 stackAmount = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        int32 stackAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
 
         if (Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD))
             aura->ModStackAmount(stackAmount);
@@ -2819,9 +2822,9 @@ class spell_dk_tombstone : public SpellScript
         int32 maxHealth = caster->GetMaxHealth();
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_TOMBSTONE_BUFF);
-        int32 removalAmount = value->GetEffect(EFFECT_2).CalcValue(GetCaster());
-        int32 energyAmount = value->GetEffect(EFFECT_0).CalcValue(GetCaster());
-        int32 absorbPct = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        int32 removalAmount = value->GetEffect(EFFECT_2).CalcValue(caster);
+        int32 energyAmount = value->GetEffect(EFFECT_0).CalcValue(caster);
+        int32 absorbPct = value->GetEffect(EFFECT_1).CalcValue(caster);
 
         Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD);
         int32 stackAmount = aura->GetStackAmount();
@@ -3492,6 +3495,77 @@ class spell_dk_thassarian : public AuraScript
     }
 };
 
+class spell_dk_deaths_embrace : public AuraScript
+{
+    PrepareAuraScript(spell_dk_deaths_embrace);
+
+    std::list <Unit*> FindTargets(int32 spellId)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->HasAura(spellId))
+                    if (player->GetAura(spellId)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = player->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }
+        return targetAvailable;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+            int32 heal = CalculatePct(damage, aurEff->GetAmount());
+
+            for (auto const& targetheal : FindTargets(SPELL_DK_DEATHS_EMBRACE))
+            {
+                GetCaster()->CastCustomSpell(SPELL_DK_DEATHS_EMBRACE_HEAL, SPELLVALUE_BASE_POINT0, heal, targetheal, true, nullptr);
+            }
+        }
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup() || !player || !player->IsAlive())
+            return false;
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_deaths_embrace::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_deaths_embrace::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_deaths_embrace_listener : public SpellScript
+{
+    PrepareSpellScript(spell_dk_deaths_embrace_listener);
+
+    void HandleProc()
+    {
+        GetCaster()->AddAura(SPELL_DK_DEATHS_EMBRACE_LISTENER, GetCaster());
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_dk_deaths_embrace_listener::HandleProc);
+    }
+};
+
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3585,6 +3659,8 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_contagion_replacer);
     RegisterSpellScript(spell_dk_infected_claws);
     RegisterSpellScript(spell_dk_thassarian);
+    RegisterSpellScript(spell_dk_deaths_embrace);
+    RegisterSpellScript(spell_dk_deaths_embrace_listener);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

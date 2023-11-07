@@ -123,6 +123,7 @@ enum PriestSpells
     TALENT_PRIEST_SURPRISE_BURST_PROC = 86281,
     TALENT_PRIEST_DEFY_FATE_HEAL = 86286,
     TALENT_PRIEST_DEFY_FATE_COOLDOWN = 86287,
+    TALENT_PRIEST_CELERITY  = 86246,
 };
 
 enum PriestSpellIcons
@@ -2246,6 +2247,10 @@ class spell_pri_holy_might : public SpellScript
 
         int32 highestCasterStat = std::max({casterSTR, casterAGI, casterINT, casterSPR});
         int32 buffAmount = CalculatePct(highestCasterStat, statPct);
+        int32 speedAmount = 0;
+
+        if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_PRIEST_CELERITY, EFFECT_0))
+            speedAmount = aurEff->GetAmount();
 
         for (auto const& object : targets)
         {
@@ -2260,13 +2265,13 @@ class spell_pri_holy_might : public SpellScript
             int32 highestTargetStat = std::max({ targetSTR, targetAGI, targetINT, targetSPR });
 
             if (highestTargetStat == targetSTR)
-                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_STRENGTH, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(target, SPELL_PRIEST_HOLY_MIGHT_STRENGTH, &buffAmount, &speedAmount, nullptr, true, nullptr);
             else if (highestTargetStat == targetAGI)
-                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_AGILITY, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(target, SPELL_PRIEST_HOLY_MIGHT_AGILITY, &buffAmount, &speedAmount, nullptr, true, nullptr);
             else if (highestTargetStat == targetINT)
-                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_INTELLECT, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(target, SPELL_PRIEST_HOLY_MIGHT_INTELLECT, &buffAmount, &speedAmount, nullptr, true, nullptr);
             else
-                caster->CastCustomSpell(SPELL_PRIEST_HOLY_MIGHT_SPIRIT, SPELLVALUE_BASE_POINT0, buffAmount, target, TRIGGERED_FULL_MASK);
+                caster->CastCustomSpell(target, SPELL_PRIEST_HOLY_MIGHT_SPIRIT, &buffAmount, &speedAmount, nullptr, true, nullptr);
         }
     }
 
@@ -2410,7 +2415,7 @@ class spell_pri_surprise_burst : public AuraScript
             if (roll_chance_i(holyStrikeChance))
             {
                 caster->CastSpell(GetCaster(), TALENT_PRIEST_SURPRISE_BURST_PROC, TRIGGERED_FULL_MASK);
-                caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION);
+                caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION, true);
             }
         }
         else

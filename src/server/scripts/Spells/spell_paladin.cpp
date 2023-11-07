@@ -2229,7 +2229,7 @@ class spell_pal_the_art_of_inquisiting: public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_PALADIN_EXORCISM);
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_PALADIN_EXORCISM, true);
     }
 
     void Register() override

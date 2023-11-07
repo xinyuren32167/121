@@ -600,7 +600,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                     break;
                 }
             case SPELLFAMILY_ROGUE:
-                {
+                {//Gambler's Luck
                     if (AuraEffect const* gamblersLuck = m_caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
                         if (m_caster->HasAura(82092) || m_caster->HasAura(82093) || m_caster->HasAura(82094) || m_caster->HasAura(82095) || m_caster->HasAura(82096) || m_caster->HasAura(82097))
                             AddPct(damage, gamblersLuck->GetAmount());
@@ -781,7 +781,7 @@ void Spell::EffectTriggerSpell(SpellEffIndex effIndex)
 
                     // Reset cooldown on Blend if needed
                     if (unitTarget->GetTypeId() == TYPEID_PLAYER && unitTarget->ToPlayer()->HasSpellCooldown(85012))
-                        unitTarget->ToPlayer()->RemoveSpellCooldown(85012);
+                        unitTarget->ToPlayer()->RemoveSpellCooldown(85012, true);
 
                     unitTarget->CastSpell(unitTarget, 85012, true);
                     return;

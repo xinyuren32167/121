@@ -2508,7 +2508,7 @@ class rune_furious_onslaught: public AuraScript
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
-        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_COLOSSAL_THRUST);
+        GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_COLOSSAL_THRUST, true);
     }
 
     void Register() override

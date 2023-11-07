@@ -99,6 +99,7 @@ enum RogueSpells
     TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH       = 82165,
     TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC  = 82168,
     TALENT_ROGUE_AUDACITY_PROC                  = 82183,
+    TALENT_ROGUE_GAMBLERS_LUCK                  = 82179,
 
     //POISONS
     //LETHAL
@@ -657,8 +658,8 @@ class spell_rog_rupture : public AuraScript
 
             amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * attackpowerPerCombo[cp]);
 
-            if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
-                if (caster->HasAura(82092) || caster->HasAura(82093) || caster->HasAura(82094) || caster->HasAura(82095) || caster->HasAura(82096) || caster->HasAura(82097))
+            if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(TALENT_ROGUE_GAMBLERS_LUCK, EFFECT_0))
+                if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                     AddPct(amount, gamblersLuck->GetAmount());
         }
     }
@@ -809,8 +810,8 @@ class spell_rog_deadly_throw : public SpellScript
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
-            if (caster->HasAura(82092) || caster->HasAura(82093) || caster->HasAura(82094) || caster->HasAura(82095) || caster->HasAura(82096) || caster->HasAura(82097))
+        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(TALENT_ROGUE_GAMBLERS_LUCK, EFFECT_0))
+            if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                 AddPct(damage, gamblersLuck->GetAmount());
 
         SetHitDamage(damage);
@@ -838,8 +839,8 @@ class spell_rog_eviscerate : public SpellScript
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
-            if (caster->HasAura(82092) || caster->HasAura(82093) || caster->HasAura(82094) || caster->HasAura(82095) || caster->HasAura(82096) || caster->HasAura(82097))
+        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(TALENT_ROGUE_GAMBLERS_LUCK, EFFECT_0))
+            if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                 AddPct(damage, gamblersLuck->GetAmount());
 
         SetHitDamage(damage);
@@ -1532,8 +1533,8 @@ class spell_rog_sinister_strike : public SpellScript
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
-            if (caster->HasAura(82092) || caster->HasAura(82093) || caster->HasAura(82094) || caster->HasAura(82095) || caster->HasAura(82096) || caster->HasAura(82097))
+        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(TALENT_ROGUE_GAMBLERS_LUCK, EFFECT_0))
+            if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                 AddPct(damage, gamblersLuck->GetAmount());
 
         SetHitDamage(damage);
@@ -1762,8 +1763,8 @@ class spell_rog_between_the_eyes : public SpellScript
             damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
         }
 
-        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(82179, EFFECT_0))
-            if (caster->HasAura(82092) || caster->HasAura(82093) || caster->HasAura(82094) || caster->HasAura(82095) || caster->HasAura(82096) || caster->HasAura(82097))
+        if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(TALENT_ROGUE_GAMBLERS_LUCK, EFFECT_0))
+            if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                 AddPct(damage, gamblersLuck->GetAmount());
 
         SetHitDamage(damage);

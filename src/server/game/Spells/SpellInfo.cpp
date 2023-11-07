@@ -2262,7 +2262,7 @@ SpellSpecificType SpellInfo::LoadSpellSpecific() const
                 break;
             }
         case SPELLFAMILY_DEATHKNIGHT:
-            if (Id == 48266 || Id == 48263 || Id == 48265)
+            if (Id == 48266 || Id == 48263 || Id == 48265 || Id == 87000)
                 return SPELL_SPECIFIC_PRESENCE;
             break;
     }
