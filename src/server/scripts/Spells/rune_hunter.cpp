@@ -2053,6 +2053,11 @@ class rune_hunter_howl : public AuraScript
 {
     PrepareAuraScript(rune_hunter_howl);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->HasSpell(SPELL_HUNTER_BESTIAL_WRATH);
+    }
+
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
         Player* player = GetCaster()->ToPlayer();
@@ -2122,6 +2127,7 @@ class rune_hunter_howl : public AuraScript
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_howl::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_hunter_howl::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };

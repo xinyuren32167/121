@@ -3566,6 +3566,43 @@ class spell_dk_deaths_embrace_listener : public SpellScript
 };
 
 
+class spell_dk_ebon_renewal : public SpellScript
+{
+    PrepareSpellScript(spell_dk_ebon_renewal);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+        SpellInfo const* spell = GetSpellInfo();
+        int32 healRatio = GetEffectValue();
+        int32 heal = CalculatePct(caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_SHADOW), healRatio);
+        int32 runicPower = caster->GetPower(POWER_ENERGY);
+        int32 consumption = spell->GetEffect(EFFECT_1).CalcValue(caster);
+
+        if (runicPower > 0)
+        {
+            int32 bonusPercent = std::min<int32>(runicPower, consumption);
+            int32 bonusDamage = bonusPercent * (spell->GetEffect(EFFECT_1).CalcValue(caster));
+            heal += int32(CalculatePct(heal, bonusDamage));
+
+            caster->ModifyPower(POWER_ENERGY, -bonusPercent);
+        }
+
+        if (Unit* target = GetHitUnit())
+        {
+            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
+            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dk_ebon_renewal::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);

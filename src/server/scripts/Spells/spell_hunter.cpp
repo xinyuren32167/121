@@ -3377,7 +3377,7 @@ class spell_hun_shadow_shot : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
         if (Unit* target = GetHitUnit())
         {
-            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_SHADOW_SHOT);
+            SpellInfo const* value = GetSpellInfo();
             uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
             caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
         }
