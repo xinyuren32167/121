@@ -1935,21 +1935,14 @@ class spell_rog_roll_the_bones : public SpellScript
 
     void HandleCast()
     {
-        uint32 rand = urand(1, 6);
+        uint32 rand = urand(0, 5);
         Unit* caster = GetCaster();
 
-        if (rand == 1)
-            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, TRIGGERED_FULL_MASK);
-        else if (rand == 2)
-            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE, TRIGGERED_FULL_MASK);
-        else if (rand == 3)
-            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION, TRIGGERED_FULL_MASK);
-        else if (rand == 4)
-            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE, TRIGGERED_FULL_MASK);
-        else if (rand == 5)
-            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES, TRIGGERED_FULL_MASK);
-        else if (rand == 6)
-            caster->CastSpell(caster, SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING, TRIGGERED_FULL_MASK);
+        RogueSpells arr[6] = { SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE,
+            SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION, SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE,
+            SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES, SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING };
+
+        caster->CastSpell(caster, arr[rand], TRIGGERED_FULL_MASK);
     }
 
     void Register() override

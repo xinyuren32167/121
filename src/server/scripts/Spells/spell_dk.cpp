@@ -3520,9 +3520,17 @@ class spell_dk_deaths_embrace : public AuraScript
         return targetAvailable;
     }
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup() || !player || !player->IsAlive())
+            return false;
+        return true;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
 
@@ -3533,14 +3541,6 @@ class spell_dk_deaths_embrace : public AuraScript
                 GetCaster()->CastCustomSpell(SPELL_DK_DEATHS_EMBRACE_HEAL, SPELLVALUE_BASE_POINT0, heal, targetheal, true, nullptr);
             }
         }
-    }
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        Player* player = GetCaster()->ToPlayer();
-        if (!player->GetGroup() || !player || !player->IsAlive())
-            return false;
-        return true;
     }
 
     void Register() override
