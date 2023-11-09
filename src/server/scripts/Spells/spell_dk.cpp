@@ -165,6 +165,14 @@ enum DeathKnightSpells
     SPELL_DK_DEATHS_EMBRACE                     = 87001,
     SPELL_DK_DEATHS_EMBRACE_HEAL                = 87002,
     SPELL_DK_DEATHS_EMBRACE_LISTENER            = 87003,
+    SPELL_DK_EBON_RENEWAL_HEAL                  = 87005,
+    SPELL_DK_LEECHING_STRIKE_ENERGY             = 87011,
+    SPELL_DK_NECROTIC_BLESSING_HEAL             = 87013,
+    SPELL_DK_SOUL_BARRIER_HEAL                  = 87015,
+    SPELL_DK_SOUL_LINK                          = 87016,
+    SPELL_DK_SOUL_LINK_LISTENER                 = 87017,
+    SPELL_DK_SOUL_LINK_HEAL                     = 87018,
+    SPELL_DK_SOULBOLT_HEAL                      = 87021,
 };
 
 enum DeathKnightSpellIcons
@@ -195,7 +203,6 @@ class spell_dk_death_pact: public SpellScript
         AfterCast += SpellCastFn(spell_dk_death_pact::HandleCast);
     }
 };
-
 
 class spell_dk_breath_of_sindragosa : public AuraScript
 {
@@ -237,7 +244,6 @@ class spell_dk_breath_of_sindragosa : public AuraScript
     }
 };
 
-
 class spell_dk_chill_streak : public AuraScript
 {
     PrepareAuraScript(spell_dk_chill_streak);
@@ -273,7 +279,6 @@ class spell_dk_chill_streak : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_dk_chill_streak::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
 
 class spell_dk_bone_shield_calculation : public AuraScript
 {
@@ -343,7 +348,6 @@ public:
         return new npc_dk_spell_glacial_advanceAI(creature);
     }
 };
-
 
 class npc_dk_spell_frostwyrm : public CreatureScript
 {
@@ -415,7 +419,6 @@ class spell_dk_frostwyrm : public SpellScript
     }
 };
 
-
 class spell_dk_pillar_of_frost : public AuraScript
 {
     PrepareAuraScript(spell_dk_pillar_of_frost);
@@ -452,7 +455,6 @@ class spell_dk_pillar_of_frost : public AuraScript
     }
 };
 
-
 class spell_dk_blood_strike : public SpellScript
 {
     PrepareSpellScript(spell_dk_blood_strike);
@@ -484,7 +486,6 @@ class spell_dk_blood_strike : public SpellScript
         OnEffectHitTarget += SpellEffectFn(spell_dk_blood_strike::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
-
 
 // 50526 - Wandering Plague
 class spell_dk_wandering_plague : public SpellScript
@@ -682,7 +683,6 @@ class spell_dk_aotd_taunt : public SpellScript
     }
 };
 
-    
 // 52143 - Master of Ghouls
 class spell_dk_master_of_ghouls : public AuraScript
 {
@@ -3556,7 +3556,7 @@ class spell_dk_deaths_embrace_listener : public SpellScript
 
     void HandleProc()
     {
-        GetCaster()->AddAura(SPELL_DK_DEATHS_EMBRACE_LISTENER, GetCaster());
+        GetCaster()->CastSpell(GetCaster(), SPELL_DK_DEATHS_EMBRACE_LISTENER, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -3564,7 +3564,6 @@ class spell_dk_deaths_embrace_listener : public SpellScript
         OnCast += SpellCastFn(spell_dk_deaths_embrace_listener::HandleProc);
     }
 };
-
 
 class spell_dk_ebon_renewal : public SpellScript
 {
@@ -3574,32 +3573,244 @@ class spell_dk_ebon_renewal : public SpellScript
     {
         Unit* caster = GetCaster();
         SpellInfo const* spell = GetSpellInfo();
-        int32 healRatio = GetEffectValue();
-        int32 heal = CalculatePct(caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_SHADOW), healRatio);
-        int32 runicPower = caster->GetPower(POWER_ENERGY);
+        int32 heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue());
+        int32 hotDuration = sSpellMgr->AssertSpellInfo(SPELL_DK_EBON_RENEWAL_HEAL)->GetDuration();
+        int32 hotRate = sSpellMgr->AssertSpellInfo(SPELL_DK_EBON_RENEWAL_HEAL)->GetEffect(EFFECT_1).Amplitude;
+        int32 runicPower = caster->GetPower(POWER_RUNIC_POWER);
         int32 consumption = spell->GetEffect(EFFECT_1).CalcValue(caster);
+        int32 hotPct = spell->GetEffect(EFFECT_2).CalcValue(caster);
 
-        if (runicPower > 0)
+        if (runicPower >= 0)
         {
-            int32 bonusPercent = std::min<int32>(runicPower, consumption);
-            int32 bonusDamage = bonusPercent * (spell->GetEffect(EFFECT_1).CalcValue(caster));
-            heal += int32(CalculatePct(heal, bonusDamage));
+            int32 bonusPercent = std::min<int32>(runicPower, consumption) + 200;
+            heal = (bonusPercent / 10) * heal;
 
-            caster->ModifyPower(POWER_ENERGY, -bonusPercent);
+            caster->ModifyPower(POWER_RUNIC_POWER, -(bonusPercent - 200));
         }
 
         if (Unit* target = GetHitUnit())
         {
-            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
-            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
-        }
+            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), HEAL, effIndex);
+            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), HEAL);
 
-        SetHitHeal(heal);
+            int32 healPerTick = heal / (hotDuration / hotRate);
+            ApplyPct(healPerTick, hotPct);
+
+            healPerTick = std::max<int32>(1, healPerTick);
+
+            caster->CastCustomSpell(target, SPELL_DK_EBON_RENEWAL_HEAL, &heal, &healPerTick, nullptr, true, nullptr);
+        }
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_dk_ebon_renewal::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_dk_ebon_renewal::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+class spell_dk_face_of_death : public AuraScript
+{
+    PrepareAuraScript(spell_dk_face_of_death);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->SetDisplayId(32759);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        GetCaster()->DeMorph();
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_face_of_death::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_face_of_death::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dk_leeching_strike_energy : public SpellScript
+{
+    PrepareSpellScript(spell_dk_leeching_strike_energy);
+
+    void HandleCast()
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_DK_LEECHING_STRIKE_ENERGY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dk_leeching_strike_energy::HandleCast);
+    }
+};
+
+class spell_dk_lifedrain_bolt : public SpellScript
+{
+    PrepareSpellScript(spell_dk_lifedrain_bolt);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        targets.remove_if(Acore::RaidCheck(GetCaster(), false));
+
+        uint32 const maxTargets = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(GetCaster());
+
+        if (targets.size() > maxTargets)
+        {
+            targets.sort(Acore::HealthPctOrderPred());
+            targets.resize(maxTargets);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_lifedrain_bolt::FilterTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
+class spell_dk_necrotic_blessing : public SpellScript
+{
+    PrepareSpellScript(spell_dk_necrotic_blessing);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        if (GetHitUnit()->HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
+            GetCaster()->CastSpell(GetCaster(), SPELL_DK_NECROTIC_BLESSING_HEAL, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dk_necrotic_blessing::HandleHit, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
+class spell_dk_soul_barrier : public AuraScript
+{
+    PrepareAuraScript(spell_dk_soul_barrier);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (GetCaster() && GetCaster()->IsAlive())
+        {
+            Unit* target = GetAura()->GetOwner()->ToUnit();
+            GetCaster()->CastSpell(target, SPELL_DK_SOUL_BARRIER_HEAL, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_soul_barrier::HandleRemove, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dk_soul_link : public AuraScript
+{
+    PrepareAuraScript(spell_dk_soul_link);
+
+    std::list <Unit*> FindTargets(int32 spellId)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+        for (auto const& target : allyList)
+        {
+            Player* player = ObjectAccessor::FindPlayer(target.guid);
+            if (player)
+                if (player->HasAura(spellId))
+                    if (player->GetAura(spellId)->GetCasterGUID() == GetCaster()->GetGUID())
+                    {
+                        Unit* dummy = player->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+        }
+        return targetAvailable;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->GetGroup() || !player || !player->IsAlive())
+            return false;
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+
+            int32 heal = CalculatePct(damage, aurEff->GetAmount());
+
+            for (auto const& targetheal : FindTargets(SPELL_DK_SOUL_LINK))
+            {
+                GetCaster()->CastCustomSpell(SPELL_DK_SOUL_LINK_HEAL, SPELLVALUE_BASE_POINT0, heal, targetheal, true, nullptr);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_soul_link::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_soul_link::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_soul_link_listener : public SpellScript
+{
+    PrepareSpellScript(spell_dk_soul_link_listener);
+
+    void HandleProc()
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_DK_SOUL_LINK_LISTENER, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_dk_soul_link_listener::HandleProc);
+    }
+};
+
+class spell_dk_soulbolt : public AuraScript
+{
+    PrepareAuraScript(spell_dk_soulbolt);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player || !player->IsAlive())
+            return false;
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            uint32 count = eventInfo.GetActionTarget()->GetDiseasesByCaster(GetCaster()->GetGUID());
+            int32 amount = aurEff->GetAmount() * count;
+            int32 heal = CalculatePct(damage, amount);
+            
+            GetCaster()->CastCustomSpell(SPELL_DK_SOULBOLT_HEAL, SPELLVALUE_BASE_POINT0, heal, GetCaster(), true, nullptr);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_soulbolt::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_soulbolt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3698,6 +3909,15 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_thassarian);
     RegisterSpellScript(spell_dk_deaths_embrace);
     RegisterSpellScript(spell_dk_deaths_embrace_listener);
+    RegisterSpellScript(spell_dk_ebon_renewal);
+    RegisterSpellScript(spell_dk_face_of_death);
+    RegisterSpellScript(spell_dk_leeching_strike_energy);
+    RegisterSpellScript(spell_dk_lifedrain_bolt);
+    RegisterSpellScript(spell_dk_necrotic_blessing);
+    RegisterSpellScript(spell_dk_soul_barrier);
+    RegisterSpellScript(spell_dk_soul_link);
+    RegisterSpellScript(spell_dk_soul_link_listener);
+    RegisterSpellScript(spell_dk_soulbolt);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
