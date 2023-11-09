@@ -60,6 +60,7 @@ enum Specializations {
     PRIEST_ABSOLUTION = 36,
     PALADIN_INQUISITOR = 37,
     ROGUE_OUTLAW = 38,
+    DK_SOULWEAVER = 39,
 };
 
 enum WarlockSpells

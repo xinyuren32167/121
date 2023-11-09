@@ -39,6 +39,8 @@ enum Masteries
     MASTERY_DK_BLOOD = 590001,
     MASTERY_DK_BLOOD_INCREASE_AP = 590002,
     SPELL_DK_BlOOD_SHIELD = 590003,
+    MASTERY_DK_LIFE_AND_DEATH = 590005,
+    SPELL_DK_LIFE_AND_DEATH_SHIELD = 590006,
 
     // Priest
     MASTERY_PRIEST_GRACE = 900000,
@@ -1052,6 +1054,51 @@ class spell_mastery_bloodshield_attack_power : public SpellScript
     }
 };
 
+class spell_mastery_life_and_death_shield : public AuraScript
+{
+    PrepareAuraScript(spell_mastery_life_and_death_shield);
+
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return false;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            float mastery = caster->GetMastery();
+            int32 bonus = aurEff->GetAmount() + mastery;
+            int32 damage = procInfo.GetDamageInfo()->GetDamage();
+            int32 shieldBonus = ApplyPct(damage, bonus);
+
+            if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
+            {
+                int32 currentAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+                int32 total = shieldBonus + currentAmount;
+                int32 maxAmount = caster->CountPctFromMaxHealth(30);
+
+                if (total > maxAmount)
+                    total = maxAmount;
+
+                shield->GetEffect(EFFECT_0)->ChangeAmount(total);
+                shield->RefreshDuration();
+            }
+            else
+                caster->CastCustomSpell(SPELL_DK_LIFE_AND_DEATH_SHIELD, SPELLVALUE_BASE_POINT0, shieldBonus, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mastery_life_and_death_shield::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mastery_life_and_death_shield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 // Priest
 class spell_mastery_pri_grace : public SpellScript
@@ -1802,4 +1849,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_pri_absolutions_embrace);
     RegisterSpellScript(spell_mastery_divine_tribunal);
     RegisterSpellScript(spell_mastery_rog_pistolero);
+    RegisterSpellScript(spell_mastery_life_and_death_shield);
 }

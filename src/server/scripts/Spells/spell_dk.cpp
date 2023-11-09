@@ -173,6 +173,10 @@ enum DeathKnightSpells
     SPELL_DK_SOUL_LINK_LISTENER                 = 87017,
     SPELL_DK_SOUL_LINK_HEAL                     = 87018,
     SPELL_DK_SOULBOLT_HEAL                      = 87021,
+
+    //MASTERY
+    SPELL_DK_LIFE_AND_DEATH                     = 590005,
+    SPELL_DK_LIFE_AND_DEATH_SHIELD              = 590006,
 };
 
 enum DeathKnightSpellIcons
@@ -3593,6 +3597,26 @@ class spell_dk_ebon_renewal : public SpellScript
             heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), HEAL, effIndex);
             heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), HEAL);
 
+            if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
+            {
+                if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
+                {
+                    int32 mastery = caster->ToPlayer()->GetMastery();
+                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                    int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+                    int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
+
+                    int32 amount = std::min(consumeAmount, shieldAmount);
+
+                    heal += CalculatePct(heal, amount);
+
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(-amount);
+
+                    if (shield->GetEffect(EFFECT_0)->GetAmount() <= 0)
+                        shield->Remove();
+                }
+            }
+
             int32 healPerTick = heal / (hotDuration / hotRate);
             ApplyPct(healPerTick, hotPct);
 
@@ -3685,6 +3709,39 @@ class spell_dk_necrotic_blessing : public SpellScript
     {
         if (GetHitUnit()->HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
             GetCaster()->CastSpell(GetCaster(), SPELL_DK_NECROTIC_BLESSING_HEAL, TRIGGERED_FULL_MASK);
+
+        if (Unit* target = GetHitUnit())
+        {
+            Unit* caster = GetCaster();
+            int32 heal = GetEffectValue();
+
+            heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), heal);
+
+            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
+            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
+
+            if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
+            {
+                if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
+                {
+                    int32 mastery = caster->ToPlayer()->GetMastery();
+                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                    int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+                    int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
+
+                    int32 amount = std::min(consumeAmount, shieldAmount);
+
+                    heal += CalculatePct(heal, amount);
+
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(-amount);
+
+                    if (shield->GetEffect(EFFECT_0)->GetAmount() <= 0)
+                        shield->Remove();
+                }
+            }
+
+            SetHitHeal(heal);
+        }
     }
 
     void Register() override
@@ -3814,6 +3871,52 @@ class spell_dk_soulbolt : public AuraScript
     }
 };
 
+class spell_dk_vitality_burst : public SpellScript
+{
+    PrepareSpellScript(spell_dk_vitality_burst);
+
+    void HandleHeal(SpellEffIndex effIndex)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Unit* caster = GetCaster();
+            int32 heal = GetEffectValue();
+
+            heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), heal);
+
+            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
+            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
+
+            if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
+            {
+                if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
+                {
+                    int32 mastery = caster->ToPlayer()->GetMastery();
+                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                    int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+                    int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
+
+                    int32 amount = std::min(consumeAmount, shieldAmount);
+
+                    heal += CalculatePct(heal, amount);
+
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(-amount);
+
+                    if (shield->GetEffect(EFFECT_0)->GetAmount() <= 0)
+                        shield->Remove();
+                }
+            }
+
+            SetHitHeal(heal);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_dk_vitality_burst::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -3918,6 +4021,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_soul_link);
     RegisterSpellScript(spell_dk_soul_link_listener);
     RegisterSpellScript(spell_dk_soulbolt);
+    RegisterSpellScript(spell_dk_vitality_burst);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

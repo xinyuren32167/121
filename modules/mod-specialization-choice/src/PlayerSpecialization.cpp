@@ -72,6 +72,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[DK_BLOOD] = { 7, 50371, "Blood", 6, 590001, 17.50, true, 590004, POWER_ALL };
     m_Specializations[DK_FROST] = { 8, 50385, "Frost", 6, 600000, 17.50, true, 600002, POWER_ALL };
     m_Specializations[DK_UNHOLY] = { 9, 50392, "Unholy", 6, 600005, 15.5, true, 590000, POWER_ALL };
+    m_Specializations[DK_SOULWEAVER] = { 39, 87000, "Soulweaver", 6, 590005, 24.50, false, 0, POWER_ALL };
 
     m_Specializations[DRUID_BALANCE] = { 10, 80536, "Balance", 11, 700000, 7.00, false, 0, POWER_ALL };
     m_Specializations[DRUID_FERAL] = { 11, 80549, "Feral", 11, 700004, 17.50, true, 700006, POWER_ALL };
