@@ -11,124 +11,89 @@
 
 enum PaladinSpells
 {
+    // Spells
     SPELL_PALADIN_ARDENT_DEFENDER = 31852,
     SPELL_PALADIN_AURA_MASTERY = 31821,
-
     SPELL_PALADIN_ART_OF_WAR_RANK1 = 53486,
     SPELL_PALADIN_ART_OF_WAR_RANK2 = 53488,
-
     SPELL_PALADIN_AVENGERS_SHIELD = 48827,
     SPELL_PALADIN_AVENGING_WRATH = 31884,
-
     SPELL_PALADIN_BEACON_OF_LIGHT = 53563,
     SPELL_PALADIN_BEACON_OF_VIRTUE = 80048,
     SPELL_PALADIN_BEACON_OF_FAITH = 80049,
-
     SPELL_PALADIN_BLADE_OF_JUSTICE = 80045,
-
     SPELL_PALADIN_CONSECRATION_ON_ENEMY = 401048,
-
     SPELL_PALADIN_DIVINE_ILLUMINATION = 31842,
     SPELL_PALADIN_DIVINE_SHIELD = 642,
-
+    SPELL_PALADIN_DIVINE_ZEAL = 86508,
     SPELL_PALADIN_EXECUTION_SENTENCE = 80064,
     SPELL_PALADIN_EXECUTION_SENTENCE_LISTENER = 80063,
     SPELL_PALADIN_EXECUTION_SENTENCE_DAMAGE = 80088,
     SPELL_PALADIN_EXORCISM = 48801,
-
     SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS = 80070,
+    SPELL_PALADIN_GUIDING_LIGHT = 86510,
     SPELL_PALADIN_HAMMER_OF_WRATH = 48806,
-
+    SPELL_PALADIN_HAMMER_OF_WRATH_USEABLE = 400068,
     SPELL_PALADIN_HOLY_SHOCK = 48825,
     SPELL_PALADIN_HOLY_SHOCK_DAMAGE = 25912,
     SPELL_PALADIN_HOLY_SHOCK_HEAL = 25914,
-
     SPELL_PALADIN_INFUSION_OF_LIGHT_R1 = 53672,
     SPELL_PALADIN_INFUSION_OF_LIGHT_R2 = 54149,
-
+    SPELL_PALADIN_INQUISITION = 86515,
     SPELL_PALADIN_LAY_ON_HANDS = 48788,
+    SPELL_PALADIN_RIGHTEOUS_BARRAGE = 86518,
+    SPELL_PALADIN_RIGHTEOUS_BARRAGE_DAMAGE = 86519,
     SPELL_PALADIN_SERAPHIM = 80039,
     SPELL_PALADIN_TEMPLARS_VERDICT = 80046,
-
     SPELL_PALADIN_WORD_OF_GLORY = 80062,
     SPELL_PALADIN_WAKE_OF_ASHES = 80060,
 
+    // Runes
     RUNE_PALADIN_TOUCH_OF_LIGHT_DAMAGE = 400046,
     RUNE_PALADIN_TOUCH_OF_LIGHT_HEAL = 400047,
-
     RUNE_PALADIN_JUSTICES_CLEMENCY_HEAL = 400054,
-
     RUNE_PALADIN_UNTOUCHABLE_JUDGEMENT_SHIELD = 400088,
-
     RUNE_PALADIN_VIRTUOUS_COMMAND_DAMAGE = 400108,
-
     RUNE_PALADIN_GOLDEN_PATH_HEAL = 400236,
-
     RUNE_PALADIN_CRUSADE_HASTE = 400244,
-
     RUNE_PALADIN_TITAN_OF_LIGHT_HEAL = 400288,
-
     RUNE_PALADIN_SOOTHING_AURA_HEAL = 400314,
-
     RUNE_PALADIN_CRUSADERS_REPRIEVE_HEAL = 400322,
-
     RUNE_PALADIN_AVENGING_LIGHT_DAMAGE = 400330,
-
     RUNE_PALADIN_RESPLENDENT_LIGHT_HEAL = 400338,
-
     RUNE_PALADIN_HOLY_REFLECTION_DAMAGE = 400400,
-
     RUNE_PALADIN_DIVINE_PERFECTION_HEAL = 400408,
-
     RUNE_PALADIN_LIGHT_OF_THE_TITANS_HEAL = 400452,
-
     RUNE_PALADIN_ANSWERED_PRAYER_COOLDOWN = 400479,
-
     RUNE_PALADIN_HAND_OF_THE_PROTECTOR_HEAL = 400478,
-
     RUNE_PALADIN_SHOCK_BARRIER_SHIELD = 400564,
-
     RUNE_PALADIN_POWER_OF_THE_SILVER_HAND_BUFF = 400600,
-
     RUNE_PALADIN_AVENGER_BUFF = 400614,
-
     RUNE_PALADIN_SAVED_BY_THE_LIGHT_SHIELD = 400726,
     RUNE_PALADIN_SAVED_BY_THE_LIGHT_DEBUFF = 400727,
-
     RUNE_PALADIN_SIGN_OF_FAITH_HEAL = 400740,
     RUNE_PALADIN_SIGN_OF_FAITH_DEBUFF = 400741,
-
     RUNE_PALADIN_DIVINE_REVELATIONS_ENERGIZE = 400760,
-
     RUNE_PALADIN_INFLORESCENCE_OF_THE_SUNWELL_POWER = 400768,
-
     RUNE_PALADIN_BULWARK_OF_ORDER_SHIELD = 400794,
-
     RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_HEAL = 400880,
     RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_DEBUFF = 400881,
-
     RUNE_PALADIN_INNER_LIGHT_DAMAGE = 400906,
-
     RUNE_PALADIN_DIVINE_VINDICATION_DAMAGE = 400996,
-
     RUNE_PALADIN_LIGHT_STORM_HEAL = 401004,
-
     RUNE_PALADIN_TEMPEST_OF_THE_LIGHTBRINGER_DAMAGE = 401032,
-
     RUNE_PALADIN_LIGHTS_DECREE_DAMAGE = 401040,
-
     RUNE_PALADIN_TEMPLARS_VINDICATION_DAMAGE = 401074,
-
     RUNE_PALADIN_EXPURGATION_DAMAGE = 401148,
-
     RUNE_PALADIN_EXECUTIONERS_WRATH_DAMAGE = 401174,
     RUNE_PALADIN_EXECUTIONERS_WRATH_LISTENER = 401175,
-
     RUNE_PALADIN_TRUTHS_WAKE_DAMAGE = 401200,
-
     RUNE_PALADIN_VIRTUOUS_DESTINY_DAMAGE = 401226,
-
     RUNE_PALADIN_ZEALOTS_FERVOR_HEAL = 401234,
+    RUNE_PALADIN_HOLY_INFUSION_HEAL = 401278,
+    RUNE_PALADIN_LIGHT_GALE_HEAL = 401328,
+    RUNE_PALADIN_SEARING_RADIANCE_DOT = 401352,
+    RUNE_PALADIN_INQUISITORS_VENGEANCE_REPRIMAND = 401514,
 };
 
 class rune_pal_inner_grace : public AuraScript
@@ -330,17 +295,18 @@ class rune_pal_fortified_empyrean_legacy : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* target = GetTarget();
+        Unit* caster = GetTarget();
 
-        if (!target || target->isDead())
+        if (!caster || caster->isDead())
             return;
 
-        GetCaster()->CastSpell(target, SPELL_PALADIN_AVENGERS_SHIELD, TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD);
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PALADIN_AVENGERS_SHIELD, true);
     }
 
     void Register()
     {
-        OnEffectProc += AuraEffectProcFn(rune_pal_fortified_empyrean_legacy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(rune_pal_fortified_empyrean_legacy::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
@@ -746,26 +712,23 @@ class rune_pal_holy_reflection : public AuraScript
 {
     PrepareAuraScript(rune_pal_holy_reflection);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff)
     {
-        if (!eventInfo.GetDamageInfo() || eventInfo.GetDamageInfo()->GetUnmitigatedDamage() <= 0)
-            return false;
-        if (!GetCaster()->HasAura(642))
-            return false;
-        return true;
-    }
+        Player* caster = GetCaster()->ToPlayer();
 
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        float damage = eventInfo.GetDamageInfo()->GetUnmitigatedDamage();
-        int32 amount = int32(CalculatePct(damage, aurEff->GetAmount()));
-        GetCaster()->CastCustomSpell(RUNE_PALADIN_HOLY_REFLECTION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_PALADIN_DIVINE_SHIELD))
+            return;
+
+        int32 procspell = aurEff->GetAmount();
+        caster->CastSpell(caster, procspell, TRIGGERED_FULL_MASK);
     }
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_pal_holy_reflection::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_pal_holy_reflection::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_pal_holy_reflection::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -802,27 +765,6 @@ class rune_pal_divine_perfection : public AuraScript
     void Register() override
     {
         OnEffectAbsorb += AuraEffectAbsorbFn(rune_pal_divine_perfection::Absorb, EFFECT_0);
-    }
-};
-
-class rune_pal_punishment : public AuraScript
-{
-    PrepareAuraScript(rune_pal_punishment);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return true;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        GetCaster()->CastSpell(GetTarget(), SPELL_PALADIN_TEMPLARS_VERDICT, TRIGGERED_FULL_MASK);
-    }
-
-    void Register()
-    {
-        DoCheckProc += AuraCheckProcFn(rune_pal_punishment::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_pal_punishment::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2612,6 +2554,483 @@ class rune_pal_zealots_fervor : public AuraScript
     }
 };
 
+class rune_pal_holy_infusion : public AuraScript
+{
+    PrepareAuraScript(rune_pal_holy_infusion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_HOLY_INFUSION_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_holy_infusion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_holy_infusion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_tempest_of_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_tempest_of_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetTarget();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+            return false;
+
+        int32 spellHolyPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        return spellHolyPower > 0;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_tempest_of_light::CheckProc);
+    }
+};
+
+class rune_pal_light_gale : public AuraScript
+{
+    PrepareAuraScript(rune_pal_light_gale);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_LIGHT_GALE_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_light_gale::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_light_gale::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_searing_radiance : public AuraScript
+{
+    PrepareAuraScript(rune_pal_searing_radiance);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_SEARING_RADIANCE_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_searing_radiance::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_searing_radiance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_holy_convergence : public AuraScript
+{
+    PrepareAuraScript(rune_pal_holy_convergence);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        target->CastSpell(target, SPELL_PALADIN_CONSECRATION_ON_ENEMY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_holy_convergence::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_holy_convergence::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_wrathblow : public AuraScript
+{
+    PrepareAuraScript(rune_pal_wrathblow);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procID = eventInfo.GetSpellInfo()->Id;
+        int32 procChance = 0;
+
+        if (procID == SPELL_PALADIN_INQUISITION)
+            procChance = aurEff->GetAmount();
+
+        if (procID == SPELL_PALADIN_RIGHTEOUS_BARRAGE_DAMAGE)
+            procChance = GetEffect(EFFECT_1)->GetAmount();
+
+        if (procChance == 0)
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            player->RemoveSpellCooldown(SPELL_PALADIN_HAMMER_OF_WRATH, true);
+            player->AddAura(SPELL_PALADIN_HAMMER_OF_WRATH_USEABLE, caster);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_wrathblow::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_wrathblow::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_steady_judgement : public AuraScript
+{
+    PrepareAuraScript(rune_pal_steady_judgement);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+        int32 procQte = GetEffect(EFFECT_1)->GetAmount();
+
+        if (eventInfo.GetSpellInfo()->Id == SPELL_PALADIN_INQUISITION)
+        {
+            if (procQte >= 100)
+            {
+                caster->AddAura(procSpell, caster);
+                GetEffect(EFFECT_1)->SetAmount(50);
+            }
+            else
+                GetEffect(EFFECT_1)->SetAmount(procQte * 2);
+        }
+        else
+            GetEffect(EFFECT_1)->SetAmount(50);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_steady_judgement::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_steady_judgement::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_righteous_Judgement : public AuraScript
+{
+    PrepareAuraScript(rune_pal_righteous_Judgement);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PALADIN_RIGHTEOUS_BARRAGE, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_righteous_Judgement::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_righteous_Judgement::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_inquisitors_vengeance : public AuraScript
+{
+    PrepareAuraScript(rune_pal_inquisitors_vengeance);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->Id == RUNE_PALADIN_INQUISITORS_VENGEANCE_REPRIMAND)
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_PALADIN_INQUISITORS_VENGEANCE_REPRIMAND, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_inquisitors_vengeance::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_inquisitors_vengeance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_avengers_will : public AuraScript
+{
+    PrepareAuraScript(rune_pal_avengers_will);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 durationIncrease = aurEff->GetAmount();
+
+        if (Aura* divineZeal = caster->GetAura(SPELL_PALADIN_DIVINE_ZEAL))
+            divineZeal->SetDuration(divineZeal->GetDuration() + durationIncrease);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_avengers_will::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_avengers_will::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_righteous_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_righteous_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PALADIN_GUIDING_LIGHT, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_righteous_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_righteous_light::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pal_final_light : public AuraScript
+{
+    PrepareAuraScript(rune_pal_final_light);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PALADIN_HAMMER_OF_WRATH, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_final_light::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_final_light::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pal_zealous_onslaught : public AuraScript
+{
+    PrepareAuraScript(rune_pal_zealous_onslaught);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_PALADIN_DIVINE_ZEAL, -cooldown);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_zealous_onslaught::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_zealous_onslaught::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_calling_the_lord : public AuraScript
+{
+    PrepareAuraScript(rune_pal_calling_the_lord);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+            return;
+
+        int32 spellHolyPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (spellHolyPower <= 0)
+            return;
+
+        int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
+        int32 holyPowerAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellHolyPower;
+        int32 holyPowerThreshold = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            for (holyPowerAccumulated; holyPowerAccumulated >= holyPowerThreshold; holyPowerAccumulated -= holyPowerThreshold)
+                player->ModifySpellCooldown(SPELL_PALADIN_DIVINE_ZEAL, -cooldown);
+
+        GetEffect(EFFECT_2)->SetAmount(holyPowerAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_calling_the_lord::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_calling_the_lord::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pal_unerring_faith : public AuraScript
+{
+    PrepareAuraScript(rune_pal_unerring_faith);
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_PALADIN_DIVINE_ZEAL))
+            return;
+
+        int32 procspell = aurEff->GetAmount();
+        caster->CastSpell(caster, procspell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_pal_unerring_faith::HandleProc, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -2637,7 +3056,6 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_resplendent_light);
     RegisterSpellScript(rune_pal_holy_reflection);
     RegisterSpellScript(rune_pal_divine_perfection);
-    RegisterSpellScript(rune_pal_punishment);
     RegisterSpellScript(rune_pal_light_of_the_titans);
     RegisterSpellScript(rune_pal_answered_prayer);
     RegisterSpellScript(rune_pal_hand_of_the_protector);
@@ -2691,6 +3109,23 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_avenging_art);
     RegisterSpellScript(rune_pal_virtuous_destiny);
     RegisterSpellScript(rune_pal_zealots_fervor);
+    RegisterSpellScript(rune_pal_holy_infusion);
+    RegisterSpellScript(rune_pal_tempest_of_light);
+    RegisterSpellScript(rune_pal_light_gale);
+    RegisterSpellScript(rune_pal_searing_radiance);
+    RegisterSpellScript(rune_pal_holy_convergence);
+    RegisterSpellScript(rune_pal_wrathblow);
+    RegisterSpellScript(rune_pal_steady_judgement);
+    RegisterSpellScript(rune_pal_righteous_Judgement);
+    RegisterSpellScript(rune_pal_inquisitors_vengeance);
+    RegisterSpellScript(rune_pal_avengers_will);
+    RegisterSpellScript(rune_pal_righteous_light);
+    RegisterSpellScript(rune_pal_final_light);
+    RegisterSpellScript(rune_pal_zealous_onslaught);
+    RegisterSpellScript(rune_pal_calling_the_lord);
+    RegisterSpellScript(rune_pal_unerring_faith);
+
+
 
 
 }

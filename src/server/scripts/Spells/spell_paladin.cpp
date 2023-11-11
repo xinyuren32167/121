@@ -34,45 +34,35 @@
 
 enum PaladinSpells
 {
-    SPELL_PALADIN_DIVINE_PLEA = 54428,
+    // Spells
+    SPELL_PALADIN_AVENGERS_SHIELD = 48827,
     SPELL_PALADIN_BLESSING_OF_SANCTUARY_BUFF = 67480,
     SPELL_PALADIN_BLESSING_OF_SANCTUARY_ENERGIZE = 57319,
-
-    SPELL_PALADIN_HOLY_SHOCK_R1 = 48825,
-    SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE = 25912,
-    SPELL_PALADIN_HOLY_SHOCK_R1_HEALING = 25914,
-
     SPELL_PALADIN_BLESSING_OF_LOWER_CITY_DRUID = 37878,
     SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PALADIN = 37879,
     SPELL_PALADIN_BLESSING_OF_LOWER_CITY_PRIEST = 37880,
     SPELL_PALADIN_BLESSING_OF_LOWER_CITY_SHAMAN = 37881,
-
+    SPELL_PALADIN_DIVINE_PLEA = 54428,
+    SPELL_PALADIN_DIVINE_SACRIFICE = 64205,
     SPELL_PALADIN_DIVINE_STORM = 53385,
     SPELL_PALADIN_DIVINE_STORM_DUMMY = 54171,
     SPELL_PALADIN_DIVINE_STORM_HEAL = 54172,
-
     SPELL_PALADIN_EYE_FOR_AN_EYE_DAMAGE = 25997,
-
     SPELL_PALADIN_FORBEARANCE = 25771,
-
+    SPELL_PALADIN_GLYPH_OF_SALVATION = 63225,
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
-    SPELL_PALADIN_DIVINE_SACRIFICE = 64205,
-
+    SPELL_PALADIN_HOLY_SHOCK_R1 = 48825,
+    SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE = 25912,
+    SPELL_PALADIN_HOLY_SHOCK_R1_HEALING = 25914,
     SPELL_PALADIN_INFUSION_OF_LIGHT_R1 = 53672,
     SPELL_PALADIN_INFUSION_OF_LIGHT_R2 = 54149,
-
     SPELL_PALADIN_JUDGEMENT_DAMAGE = 54158,
     SPELL_PALADIN_JUDGEMENT_OF_JUSTICE = 20184,
     SPELL_PALADIN_JUDGEMENT_OF_LIGHT = 20185,
     SPELL_PALADIN_JUDGEMENT_OF_WISDOM = 20186,
-
-    SPELL_PALADIN_GLYPH_OF_SALVATION = 63225,
-
     SPELL_PALADIN_RIGHTEOUS_DEFENSE_TAUNT = 31790,
-
     SPELL_PALADIN_SANCTIFIED_WRATH = 57318,
     SPELL_PALADIN_SANCTIFIED_WRATH_TALENT_R1 = 53375,
-
     SPELL_PALADIN_SEAL_OF_RIGHTEOUSNESS = 25742,
     SPELL_PALADIN_CONCENTRACTION_AURA = 19746,
     SPELL_PALADIN_SANCTIFIED_RETRIBUTION_R1 = 31869,
@@ -81,15 +71,12 @@ enum PaladinSpells
     SPELL_PALADIN_IMPROVED_DEVOTION_AURA = 63514,
     SPELL_PALADIN_SANCTIFIED_RETRIBUTION_AURA = 63531,
     SPELL_PALADIN_AURA_MASTERY_IMMUNE = 64364,
-
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
-
     SPELL_PALADIN_CONSECRATION = 48819,
     SPELL_PALADIN_EXORCISM = 48801,
     SPELL_PALADIN_RETRIBUTION_AURA = 54043,
     SPELL_PALADIN_SHIELD_OF_RIGHTEOUS = 61411,
-
     SPELL_PALADIN_SEAL_OF_DISCIPLINE_PROC = 86501,
     SPELL_PALADIN_SEAL_OF_FAITH_PROC = 86504,
     SPELL_PALADIN_BEACON_OF_WRATH = 86506,
@@ -102,6 +89,7 @@ enum PaladinSpells
     SPELL_PALADIN_RIGHTEOUS_BARRAGE_WAVE = 86519,
     SPELL_PALADIN_REPRIMAND = 86514,
 
+    // Talents
     TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC = 86555,
     TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC = 86604,
 };
@@ -872,7 +860,7 @@ class spell_pal_judgement : public SpellScript
 
 public:
     spell_pal_judgement(uint32 spellId) : SpellScript(), _spellId(spellId) { }
-    
+
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_PALADIN_JUDGEMENT_DAMAGE, _spellId });
@@ -1244,26 +1232,6 @@ class spell_pal_ret_aura : public AuraScript
     {
         DoCheckProc += AuraCheckProcFn(spell_pal_ret_aura::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_pal_ret_aura::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-class spell_pal_shield_righteous : public SpellScript
-{
-    PrepareSpellScript(spell_pal_shield_righteous);
-
-    void HandleDummy(SpellEffIndex effIndex)
-    {
-        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), GetEffectValue());
-
-        if (!GetCaster() || !GetCaster()->IsAlive())
-            return;
-
-        GetCaster()->CastCustomSpell(80042, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
-    }
-
-    void Register()
-    {
-        OnEffectHit += SpellEffectFn(spell_pal_shield_righteous::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -2090,7 +2058,7 @@ class spell_pal_gods_judgement : public AuraScript
         AuraEffect* storage = GetEffect(EFFECT_1);
         uint32 dmgPct = aurEff->GetAmount();
         uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), dmgPct);
-        
+
         storage->ChangeAmount(damage);
     }
 
@@ -2121,19 +2089,57 @@ class spell_pal_inquisition : public SpellScript
 {
     PrepareSpellScript(spell_pal_inquisition);
 
-    void HandleScriptEffect(SpellEffIndex /*effIndex*/)
+    Aura* GetCarefulJudgementAura(Unit* caster)
     {
-        uint32 reduction = sSpellMgr->AssertSpellInfo(SPELL_PALADIN_INQUISITION)->GetEffect(EFFECT_1).CalcValue();
-        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_PALADIN_DIVINE_ZEAL, reduction);
+        for (size_t i = 401420; i < 401426; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Aura* runeAura = GetCarefulJudgementAura(caster))
+        {
+            int32 targetHealthThreshold = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 damageIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (target->GetHealthPct() >= targetHealthThreshold)
+                AddPct(damage, damageIncrease);
+        }
+
+        SetHitDamage(damage);
+
+        if (Player* player = caster->ToPlayer())
+        {
+            uint32 reduction = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue();
+            player->ModifySpellCooldown(SPELL_PALADIN_DIVINE_ZEAL, reduction);
+        }
+
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_pal_inquisition::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_pal_inquisition::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
-class spell_pal_way_of_the_inquisitor: public AuraScript
+class spell_pal_way_of_the_inquisitor : public AuraScript
 {
     PrepareAuraScript(spell_pal_way_of_the_inquisitor);
 
@@ -2189,7 +2195,7 @@ class spell_pal_break_their_kneecaps : public AuraScript
     }
 };
 
-class spell_pal_book_mastery: public AuraScript
+class spell_pal_book_mastery : public AuraScript
 {
     PrepareAuraScript(spell_pal_book_mastery);
 
@@ -2223,7 +2229,7 @@ class spell_pal_book_mastery: public AuraScript
     }
 };
 
-class spell_pal_the_art_of_inquisiting: public AuraScript
+class spell_pal_the_art_of_inquisiting : public AuraScript
 {
     PrepareAuraScript(spell_pal_the_art_of_inquisiting);
 
@@ -2335,6 +2341,376 @@ class spell_pal_holy_vendetta : public AuraScript
     }
 };
 
+// 86520 - Zealous Gale
+class spell_pal_zealous_gale : public SpellScript
+{
+    PrepareSpellScript(spell_pal_zealous_gale);
+
+    Aura* GetRadiantOutburstAura(Unit* caster)
+    {
+        for (size_t i = 401354; i < 401360; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void SelectTarget(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetRadiantOutburstAura(caster))
+        {
+            int32 targetThreshold = GetRadiantOutburstAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            if (targets.size() >= targetThreshold)
+            {
+                int32 procSpell = GetRadiantOutburstAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Avenger's Ire Rune Buff
+        for (size_t i = 401340; i < 401346; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pal_zealous_gale::SelectTarget, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+        AfterHit += SpellHitFn(spell_pal_zealous_gale::HandleAfterHit);
+    }
+};
+
+// 80062 - Word of Glory
+class spell_pal_word_of_glory : public SpellScript
+{
+    PrepareSpellScript(spell_pal_word_of_glory);
+
+    Aura* GetStrengthOfConvictionAura(Unit* caster)
+    {
+        for (size_t i = 400920; i < 400926; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        // Check the consecration creature
+        if (Creature* creature = GetCaster()->FindNearestCreature(500502, 30))
+        {   // Check if it's the caster's consecration
+            if (creature->GetCharmerOrOwnerGUID() != caster->GetGUID())
+            {
+                Position pos = caster->GetPosition();
+                float distance = creature->GetDistance(caster);
+
+                // Check if Caster is within it's consecration
+                if (distance <= 8)
+                {
+                    if (Aura* runeAura = GetStrengthOfConvictionAura(caster))
+                    {
+                        int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                        AddPct(heal, increasePct);
+                    }
+                }
+            }
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pal_word_of_glory::HandleHit, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
+// 86510 - Guiding Light
+class spell_pal_guiding_light : public AuraScript
+{
+    PrepareAuraScript(spell_pal_guiding_light);
+
+    Aura* GetEmpoweredGuidanceAura(Unit* caster)
+    {
+        for (size_t i = 401384; i < 401390; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (GetEmpoweredGuidanceAura(caster))
+        {
+            int32 procSpell = GetEmpoweredGuidanceAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+
+        // remove Righteous Light rune Buff
+        for (size_t i = 401528; i < 401534; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Empowered Guidance rune Buff
+        for (size_t i = 401390; i < 401396; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pal_guiding_light::OnApply, EFFECT_2, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_pal_guiding_light::OnRemove, EFFECT_2, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 86516 - Sanctified Flame
+class spell_pal_sanctified_flame : public SpellScript
+{
+    PrepareSpellScript(spell_pal_sanctified_flame);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Holy Shots Rune Buff
+        for (size_t i = 401444; i < 401450; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pal_sanctified_flame::HandleAfterHit);
+    }
+};
+
+// 86518 - Righteous Barrage
+class spell_pal_righteous_barrage : public AuraScript
+{
+    PrepareAuraScript(spell_pal_righteous_barrage);
+
+    Aura* GetRighteousRythmAura(Unit* caster)
+    {
+        for (size_t i = 401456; i < 401462; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetRighteousRythmAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pal_righteous_barrage::OnApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_pal_righteous_barrage::OnRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 86508 - Divine Zeal
+class spell_pal_divine_zeal : public AuraScript
+{
+    PrepareAuraScript(spell_pal_divine_zeal);
+
+    void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Unerring Faith Rune Buff
+        for (size_t i = 401564; i < 401570; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pal_divine_zeal::OnApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_pal_divine_zeal::OnRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 48827 - Avenger's Shield
+class spell_pal_avengers_shield : public SpellScript
+{
+    PrepareSpellScript(spell_pal_avengers_shield);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Fortified Empyrean Legacy Rune Buff
+        for (size_t i = 400146; i < 400152; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pal_avengers_shield::HandleAfterHit);
+    }
+};
+
+// 61411 - Shield of the Righteous
+class spell_pal_shield_of_the_righteous : public SpellScript
+{
+    PrepareSpellScript(spell_pal_shield_of_the_righteous);
+
+    Aura* GetStrengthOfConvictionAura(Unit* caster)
+    {
+        for (size_t i = 400920; i < 400926; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        int32 armor = CalculatePct(GetCaster()->GetStat(STAT_STRENGTH), GetEffectValue());
+
+        if (!GetCaster() || !GetCaster()->IsAlive())
+            return;
+
+        GetCaster()->CastCustomSpell(80042, SPELLVALUE_BASE_POINT0, armor, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void HandleHitDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Check the consecration creature
+        if (Creature* creature = GetCaster()->FindNearestCreature(500502, 30))
+        {   // Check if it's the caster's consecration
+            if (creature->GetCharmerOrOwnerGUID() != caster->GetGUID())
+            {
+                Position pos = caster->GetPosition();
+                float distance = creature->GetDistance(caster);
+
+                // Check if Caster is within it's consecration
+                if (distance <= 8)
+                {
+                    if (Aura* runeAura = GetStrengthOfConvictionAura(caster))
+                    {
+                        int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                        AddPct(damage, increasePct);
+                    }
+                }
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_pal_shield_of_the_righteous::HandleHit, EFFECT_1, SPELL_EFFECT_DUMMY);
+        OnEffectHitTarget += SpellEffectFn(spell_pal_shield_of_the_righteous::HandleHitDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -2366,8 +2742,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_seraphim);
     RegisterSpellScript(spell_pal_exorcism);
     RegisterSpellScript(spell_pal_consecration);
-    RegisterSpellScript(spell_pal_ret_aura);
-    RegisterSpellScript(spell_pal_shield_righteous);
+    RegisterSpellScript(spell_pal_ret_aura); 
     RegisterSpellScript(spell_pal_holy_power);
     RegisterSpellScript(spell_pal_infusion_of_light_power);
     RegisterSpellScript(spell_pal_light_of_dawn);
@@ -2404,4 +2779,15 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_blessed_armor);
     RegisterSpellScript(spell_pal_blessed_by_the_light);
     RegisterSpellScript(spell_pal_holy_vendetta);
+    RegisterSpellScript(spell_pal_zealous_gale);
+    RegisterSpellScript(spell_pal_word_of_glory);
+    RegisterSpellScript(spell_pal_guiding_light);
+    RegisterSpellScript(spell_pal_sanctified_flame);
+    RegisterSpellScript(spell_pal_righteous_barrage);
+    RegisterSpellScript(spell_pal_divine_zeal);
+    RegisterSpellScript(spell_pal_avengers_shield);
+    RegisterSpellScript(spell_pal_shield_of_the_righteous);
+
+
+    
 }
