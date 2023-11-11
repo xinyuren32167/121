@@ -1883,22 +1883,6 @@ class spell_pal_shining_light : public AuraScript
     }
 };
 
-class spell_pal_sacred_duty : public SpellScript
-{
-    PrepareSpellScript(spell_pal_sacred_duty);
-
-    void HandleProc()
-    {
-        if (GetCaster()->HasAura(31848) || GetCaster()->HasAura(31849))
-            GetCaster()->CastSpell(GetCaster(), 80102, TRIGGERED_FULL_MASK);
-    }
-
-    void Register()
-    {
-        OnCast += SpellCastFn(spell_pal_sacred_duty::HandleProc);
-    }
-};
-
 class spell_pal_grand_crusader : public AuraScript
 {
     PrepareAuraScript(spell_pal_grand_crusader);
@@ -2765,7 +2749,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_glimmer_of_light_damage);
     RegisterSpellScript(spell_pal_glimmer_of_light_listener);
     RegisterSpellScript(spell_pal_shining_light);
-    RegisterSpellScript(spell_pal_sacred_duty);
     RegisterSpellScript(spell_pal_grand_crusader);
     RegisterSpellScript(spell_pal_seal_of_discipline);
     RegisterSpellScript(spell_pal_seal_of_faith);

@@ -173,10 +173,22 @@ enum DeathKnightSpells
     SPELL_DK_SOUL_LINK_LISTENER                 = 87017,
     SPELL_DK_SOUL_LINK_HEAL                     = 87018,
     SPELL_DK_SOULBOLT_HEAL                      = 87021,
+    SPELL_DK_SOUL_PRESENCE                      = 87000,
 
     //MASTERY
     SPELL_DK_LIFE_AND_DEATH                     = 590005,
     SPELL_DK_LIFE_AND_DEATH_SHIELD              = 590006,
+
+    //TALENT
+    TALENT_DK_NECROTIC_PRESENCE_PROC            = 87056,
+    TALENT_DK_IMPROVED_LEECHING_STRIKE_PROC     = 87081,
+    TALENT_DK_NECROTIC_VENGEANCE_HEAL_BUFF      = 87090,
+    TALENT_DK_NECROTIC_VENGEANCE_DAMAGE_BUFF    = 87091,
+    TALENT_DK_MERCIFUL_COMBAT                   = 87092,
+    TALENT_DK_SUDDEN_SALVATION_LIFEBOLT         = 87108,
+    TALENT_DK_DEATH_AND_RENEW                   = 87109,
+    TAlENT_DK_DEATH_AND_RENEW_HEAL              = 87110,
+    TALENT_DK_NECROTIC_PROTECTION_PROC          = 87114,
 };
 
 enum DeathKnightSpellIcons
@@ -3617,6 +3629,15 @@ class spell_dk_ebon_renewal : public SpellScript
                 }
             }
 
+            if (AuraEffect const* mercifulCombat = caster->GetAuraEffectOfRankedSpell(TALENT_DK_MERCIFUL_COMBAT, EFFECT_0))
+            {
+                if (target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
+                {
+                    int32 bonus = mercifulCombat->GetAmount();
+                    heal += CalculatePct(heal, bonus);
+                }
+            }
+
             int32 healPerTick = heal / (hotDuration / hotRate);
             ApplyPct(healPerTick, hotPct);
 
@@ -3759,7 +3780,8 @@ class spell_dk_soul_barrier : public AuraScript
         if (GetCaster() && GetCaster()->IsAlive())
         {
             Unit* target = GetAura()->GetOwner()->ToUnit();
-            GetCaster()->CastSpell(target, SPELL_DK_SOUL_BARRIER_HEAL, TRIGGERED_FULL_MASK);
+            target->CastSpell(target, SPELL_DK_SOUL_BARRIER_HEAL, TRIGGERED_FULL_MASK, nullptr, nullptr, GetCaster()->GetGUID());
+
         }
     }
 
@@ -3907,6 +3929,15 @@ class spell_dk_vitality_burst : public SpellScript
                 }
             }
 
+            if (AuraEffect const* mercifulCombat = caster->GetAuraEffectOfRankedSpell(TALENT_DK_MERCIFUL_COMBAT, EFFECT_0))
+            {
+                if (target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
+                {
+                    int32 bonus = mercifulCombat->GetAmount();
+                    heal += CalculatePct(heal, bonus);
+                }
+            }
+
             SetHitHeal(heal);
         }
     }
@@ -3914,6 +3945,160 @@ class spell_dk_vitality_burst : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_dk_vitality_burst::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
+class spell_dk_necrotic_presence : public AuraScript
+{
+    PrepareAuraScript(spell_dk_necrotic_presence);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+         if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == TALENT_DK_NECROTIC_PRESENCE_PROC)
+            return false;
+
+        return (player && player->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+            int32 heal = CalculatePct(damage, aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
+
+            GetCaster()->CastCustomSpell(eventInfo.GetActionTarget(), TALENT_DK_NECROTIC_PRESENCE_PROC, &damage, &heal, nullptr, true, nullptr);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_necrotic_presence::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_necrotic_presence::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_improved_leeching_strike : public AuraScript
+{
+    PrepareAuraScript(spell_dk_improved_leeching_strike);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player->HasAura(SPELL_DK_SOUL_PRESENCE))
+            return false;
+
+        return (player && player->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            GetCaster()->CastSpell(eventInfo.GetActionTarget(), TALENT_DK_IMPROVED_LEECHING_STRIKE_PROC, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_improved_leeching_strike::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_improved_leeching_strike::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_necrotic_vengeance : public AuraScript
+{
+    PrepareAuraScript(spell_dk_necrotic_vengeance);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = aurEff->GetAmount();
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+            GetCaster()->CastCustomSpell(TALENT_DK_NECROTIC_VENGEANCE_DAMAGE_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true, nullptr);
+        else if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+            GetCaster()->CastCustomSpell(TALENT_DK_NECROTIC_VENGEANCE_HEAL_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true, nullptr);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_necrotic_vengeance::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_necrotic_vengeance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_sudden_salvation : public AuraScript
+{
+    PrepareAuraScript(spell_dk_sudden_salvation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            GetCaster()->CastSpell(eventInfo.GetActionTarget(), TALENT_DK_SUDDEN_SALVATION_LIFEBOLT, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_sudden_salvation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_sudden_salvation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_dk_death_and_renew : public SpellScript
+{
+    PrepareSpellScript(spell_dk_death_and_renew);
+
+    void HandleProc()
+    {
+        if (GetCaster()->HasAura(TALENT_DK_DEATH_AND_RENEW))
+        {
+            GetCaster()->CastSpell(GetExplTargetDest()->GetPositionX(), GetExplTargetDest()->GetPositionY(), GetExplTargetDest()->GetPositionZ(), TAlENT_DK_DEATH_AND_RENEW_HEAL, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(spell_dk_death_and_renew::HandleProc);
+    }
+};
+
+class spell_dk_necrotic_protection : public AuraScript
+{
+    PrepareAuraScript(spell_dk_necrotic_protection);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+        {
+            if ((eventInfo.GetActionTarget()->GetMaxHealth() - eventInfo.GetActionTarget()->GetHealth()) > eventInfo.GetHealInfo()->GetHeal())
+                return false;
+
+            return (GetCaster() && GetCaster()->IsAlive());
+        }
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastCustomSpell(TALENT_DK_NECROTIC_PROTECTION_PROC, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), eventInfo.GetProcTarget(), true, nullptr);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_necrotic_protection::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_necrotic_protection::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -4022,6 +4207,12 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_soul_link_listener);
     RegisterSpellScript(spell_dk_soulbolt);
     RegisterSpellScript(spell_dk_vitality_burst);
+    RegisterSpellScript(spell_dk_necrotic_presence);
+    RegisterSpellScript(spell_dk_improved_leeching_strike);
+    RegisterSpellScript(spell_dk_necrotic_vengeance);
+    RegisterSpellScript(spell_dk_sudden_salvation);
+    RegisterSpellScript(spell_dk_death_and_renew);
+    RegisterSpellScript(spell_dk_necrotic_protection);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
