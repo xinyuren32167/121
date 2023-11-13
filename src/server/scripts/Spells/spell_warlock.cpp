@@ -90,6 +90,15 @@ enum WarlockSpells
     TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2              = 71162,
     TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3              = 71165,
     SPELL_WARLOCK_SHADOW_BOLT                       = 47809,
+    SPELL_WARLOCK_SHADOW_BOLT_ENERGY                = 83080,
+    SPELL_WARLOCK_DRAIN_SOUL_ENERGY                 = 83081,
+    SPELL_WARLOCK_UNSTABLE_AFFLICTION_ENERGY        = 83082,
+    SPELL_WARLOCK_SOUL_STRIKE_ENERGY                = 83083,
+    SPELL_WARLOCK_CONFLAGRATE_ENERGY                = 83084,
+    SPELL_WARLOCK_IMMOLATE_ENERGY                   = 83085,
+    SPELL_WARLOCK_INCINERATE_ENERGY                 = 83086,
+    SPELL_WARLOCK_SHADOWBURN_ENERGY                 = 83087,
+    SPELL_WARLOCK_SOUL_FIRE_ENERGY                  = 83088,
     MASTERY_WARLOCK_MASTER_DEMONOLOGIST             = 1100020,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
@@ -1227,7 +1236,8 @@ class spell_warl_unstable_affliction : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+        if (GetCaster() && GetCaster()->IsAlive())
+            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_UNSTABLE_AFFLICTION_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void HandleDispel(DispelInfo* dispelInfo)
@@ -1573,25 +1583,24 @@ class spell_warlock_soul_strike : public SpellScript
         return SPELL_FAILED_NO_PET;
     }
 
-    void HandleCast()
+    void HandleHit(SpellEffIndex /*effIndex*/)
     {
         Player* player = GetCaster()->ToPlayer();
         Unit* target = player->GetSelectedUnit();
         Unit* pet = GetPet();
-        uint32 energy = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SOUL_STRIKE)->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
         if (pet && target)
         {
             pet->ToCreature()->AI()->AttackStart(target);
             pet->CastSpell(target, SPELL_WARLOCK_SOUL_STRIKE, TRIGGERED_IGNORE_GCD, nullptr, nullptr, player->GetGUID());
-            player->ModifyPower(POWER_ENERGY, energy);
+            player->CastSpell(player, SPELL_WARLOCK_SOUL_STRIKE_ENERGY, TRIGGERED_FULL_MASK);
         }
     }
 
     void Register() override
     {
         OnCheckCast += SpellCheckCastFn(spell_warlock_soul_strike::CheckCast);
-        OnCast += SpellCastFn(spell_warlock_soul_strike::HandleCast);
+        OnEffectHit += SpellEffectFn(spell_warlock_soul_strike::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -2076,7 +2085,8 @@ class spell_warl_drain_soul_energy : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+        if (GetCaster() && GetCaster()->IsAlive())
+            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_DRAIN_SOUL_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2116,17 +2126,15 @@ class spell_warl_conflagrate_energy : public SpellScript
 {
     PrepareSpellScript(spell_warl_conflagrate_energy);
 
-    void HandleCast()
+    void HandleHit(SpellEffIndex /*effIndex*/)
     {
-        Unit* caster = GetCaster();
-        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_CONFLAGRATE);
-        uint32 energyAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
-        GetCaster()->ModifyPower(POWER_ENERGY, energyAmount);
+        if (GetCaster() && GetCaster()->IsAlive())
+            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_CONFLAGRATE_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warl_conflagrate_energy::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_warl_conflagrate_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -2141,13 +2149,13 @@ class spell_warl_immolate_energy : public AuraScript
         if (!caster || !caster->IsAlive())
             return;
 
-        caster->ModifyPower(POWER_ENERGY, 1);
+        caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATE_ENERGY, TRIGGERED_FULL_MASK);
 
         uint32 procChance = aurEff->GetAmount();
 
         if (roll_chance_f(procChance) && caster->GetTypeId() == TYPEID_PLAYER)
         {
-            caster->ModifyPower(POWER_ENERGY, 1);
+            caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATE_ENERGY, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2163,7 +2171,8 @@ class spell_warl_incinerate_energy : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+        if (GetCaster() && GetCaster()->IsAlive())
+            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_INCINERATE_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2179,7 +2188,8 @@ class spell_warl_shadowburn_death : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-        caster->ModifyPower(POWER_ENERGY, aurEff->GetAmount());
+        if (caster && caster->IsAlive())
+            caster->CastSpell(caster, SPELL_WARLOCK_SHADOWBURN_ENERGY, TRIGGERED_FULL_MASK);
         caster->ToPlayer()->RemoveSpellCooldown(SPELL_WARLOCK_SHADOWBURN, true);
 
     }
@@ -2194,17 +2204,16 @@ class spell_warl_soul_fire_energy : public SpellScript
 {
     PrepareSpellScript(spell_warl_soul_fire_energy);
 
-    void HandleCast()
+    void HandleHit(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
-        SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SOUL_FIRE);
-        uint32 energyAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
-        GetCaster()->ModifyPower(POWER_ENERGY, energyAmount);
+        if (caster && caster->IsAlive())
+            caster->CastSpell(caster, SPELL_WARLOCK_SOUL_FIRE_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warl_soul_fire_energy::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_warl_soul_fire_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -2559,20 +2568,18 @@ class spell_warl_shadow_bolt_energy : public SpellScript
 {
     PrepareSpellScript(spell_warl_shadow_bolt_energy);
 
-    void HandleCast()
+    void HandleHit(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
         if (caster->HasAura(MASTERY_WARLOCK_MASTER_DEMONOLOGIST))
         {
-            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SHADOW_BOLT);
-            uint32 energyAmount = value->GetEffect(EFFECT_1).CalcValue(caster);
-            GetCaster()->ModifyPower(POWER_ENERGY, energyAmount);
+            caster->CastSpell(caster, SPELL_WARLOCK_SHADOW_BOLT_ENERGY, TRIGGERED_FULL_MASK);
         }
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warl_shadow_bolt_energy::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_warl_shadow_bolt_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
