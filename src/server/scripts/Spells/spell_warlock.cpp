@@ -99,6 +99,8 @@ enum WarlockSpells
     SPELL_WARLOCK_INCINERATE_ENERGY                 = 83086,
     SPELL_WARLOCK_SHADOWBURN_ENERGY                 = 83087,
     SPELL_WARLOCK_SOUL_FIRE_ENERGY                  = 83088,
+    SPELL_WARLOCK_IMMOLATION_AURA_ENERGY            = 83089,
+    PET_SPELL_IMMOLATION_AURA_DAMAGE                = 50590,
     MASTERY_WARLOCK_MASTER_DEMONOLOGIST             = 1100020,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
@@ -2587,6 +2589,32 @@ class spell_warl_shadow_bolt_energy : public SpellScript
     }
 };
 
+class spell_warl_infernal_immolation_aura_energy : public AuraScript
+{
+    PrepareAuraScript(spell_warl_infernal_immolation_aura_energy);
+
+    void HandleDamage(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster()->ToPlayer();
+        Unit* infernal = GetAura()->GetOwner()->ToUnit();
+        int32 spellDamage = caster->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.4972f);
+        infernal->CastCustomSpell(PET_SPELL_IMMOLATION_AURA_DAMAGE, SPELLVALUE_BASE_POINT0, spellDamage, infernal);
+    }
+
+    void HandleEnergy(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster()->ToPlayer();
+        if (caster && caster->IsAlive())
+            caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_infernal_immolation_aura_energy::HandleDamage, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_infernal_immolation_aura_energy::HandleEnergy, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2659,4 +2687,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_molten_hand);
     RegisterSpellScript(spell_warl_all_minion_scaling);
     RegisterSpellScript(spell_warl_shadow_bolt_energy);
+    RegisterSpellScript(spell_warl_infernal_immolation_aura_energy);
 }
