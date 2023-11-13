@@ -2426,9 +2426,13 @@ class spell_warl_channel_demonfire : public SpellScript
 
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
-        if (GetCaster() && GetHitUnit())
-            if(!GetHitUnit()->HasAura(SPELL_WARLOCK_IMMOLATE))
-                GetCaster()->CastSpell(GetHitUnit(), 47811, false);
+        Unit* target = GetHitUnit();
+
+        if (GetCaster() && target)
+            if (Aura* immolate = target->GetAura(SPELL_WARLOCK_IMMOLATE))
+                immolate->RefreshDuration();
+            else
+                GetCaster()->CastSpell(target, SPELL_WARLOCK_IMMOLATE, TRIGGERED_FULL_MASK);
     }
 
     void Register() override

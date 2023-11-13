@@ -582,7 +582,7 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
             {
             case 1:
                 if (Unit* target = owner->GetSelectedUnit()) {
-                    int32 spellDamage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.53f);
+                    int32 spellDamage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.53625f);
                     me->CastCustomSpell(SPELL_DEMONBOLT, SPELLVALUE_BASE_POINT0, spellDamage, target);
                     _events.ScheduleEvent(1, 2000);
                 }
