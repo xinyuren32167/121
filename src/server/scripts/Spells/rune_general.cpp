@@ -9,58 +9,6 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-class spell_vampirism : public AuraScript
-{
-    PrepareAuraScript(spell_vampirism);
-
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(100000))
-            return GetCaster()->GetAura(100000);
-
-        if (GetCaster()->HasAura(100001))
-            return GetCaster()->GetAura(100001);
-
-        if (GetCaster()->HasAura(100002))
-            return GetCaster()->GetAura(100002);
-
-        if (GetCaster()->HasAura(100003))
-            return GetCaster()->GetAura(100003);
-
-        if (GetCaster()->HasAura(100004))
-            return GetCaster()->GetAura(100004);
-
-        if (GetCaster()->HasAura(100005))
-            return GetCaster()->GetAura(100005);
-
-        return nullptr;
-    }
-
-    int GetProcPct()
-    {
-        if (!GetRuneAura())
-            return 0;
-
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
-            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-            if (damage) {
-                GetCaster()->CastCustomSpellPct(100006, SPELLVALUE_BASE_POINT0,
-                    std::max(1, damage), GetProcPct(), false, false, false, 0, GetCaster());
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_vampirism::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
 class spell_second_wind : public AuraScript
 {
     PrepareAuraScript(spell_second_wind);
@@ -1088,9 +1036,45 @@ class rune_general_multi_element_boost : public AuraScript
     }
 };
 
+class rune_general_school_vampirism : public AuraScript
+{
+    PrepareAuraScript(rune_general_school_vampirism);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 healPct = aurEff->GetAmount();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, healPct);
+
+        if (amount <= 0)
+            return;
+
+        int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        caster->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_general_school_vampirism::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_general_school_vampirism::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
+
 void AddSC_generals_perks_scripts()
 {
-    RegisterSpellScript(spell_vampirism);
     RegisterSpellScript(spell_second_wind);
     RegisterSpellScript(spell_medic_now);
     RegisterSpellScript(spell_overwhelming_power);
@@ -1113,4 +1097,5 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_juggling_balance);
     RegisterSpellScript(spell_mana_filled_wounds);
     RegisterSpellScript(rune_general_multi_element_boost);
+    RegisterSpellScript(rune_general_school_vampirism);
 }
