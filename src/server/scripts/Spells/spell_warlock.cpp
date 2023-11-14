@@ -2595,17 +2595,20 @@ class spell_warl_infernal_immolation_aura_energy : public AuraScript
 
     void HandleDamage(AuraEffect const* aurEff)
     {
-        Unit* caster = GetCaster()->ToPlayer();
         Unit* infernal = GetAura()->GetOwner()->ToUnit();
-        int32 spellDamage = caster->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.4972f);
-        infernal->CastCustomSpell(PET_SPELL_IMMOLATION_AURA_DAMAGE, SPELLVALUE_BASE_POINT0, spellDamage, infernal);
+        if (Unit* caster = infernal->GetOwner())
+        {
+            int32 spellDamage = caster->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.4972f);
+            infernal->CastCustomSpell(PET_SPELL_IMMOLATION_AURA_DAMAGE, SPELLVALUE_BASE_POINT0, spellDamage, infernal);
+        }
     }
 
     void HandleEnergy(AuraEffect const* aurEff)
     {
-        Unit* caster = GetCaster()->ToPlayer();
-        if (caster && caster->IsAlive())
-            caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY, TRIGGERED_FULL_MASK);
+        Unit* infernal = GetAura()->GetOwner()->ToUnit();
+        if (Unit* caster = infernal->GetOwner())
+            if (caster && caster->IsAlive())
+                caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
