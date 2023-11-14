@@ -154,6 +154,7 @@ enum PetScalingSpells
     SPELL_INFERNAL_SCALING_03           = 36189,
     SPELL_INFERNAL_SCALING_04           = 36190,
     SPELL_RITUAL_ENSLAVEMENT            = 22987,
+    SPELL_INFERNAL_AOE                  = 19483,
 
     // Shaman
     SPELL_FERAL_SPIRIT_SPIRIT_HUNT      = 58877,

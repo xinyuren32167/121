@@ -1239,6 +1239,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_INFERNAL_SCALING_02, this);
             AddAura(SPELL_INFERNAL_SCALING_03, this);
             AddAura(SPELL_INFERNAL_SCALING_04, this);
+            AddAura(SPELL_INFERNAL_AOE, this);
             break;
         }
         case NPC_DOOMGUARD:
