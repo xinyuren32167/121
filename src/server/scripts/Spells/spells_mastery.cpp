@@ -864,6 +864,7 @@ class spell_mastery_harmony : public AuraScript
 
                 if (!procInfo.GetHealInfo())
                     return;
+
                 if (procInfo.GetHealInfo()->GetSpellInfo()->Id == 700011)
                     return;
 

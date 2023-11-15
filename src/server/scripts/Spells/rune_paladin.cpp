@@ -47,6 +47,7 @@ enum PaladinSpells
     SPELL_PALADIN_TEMPLARS_VERDICT = 80046,
     SPELL_PALADIN_WORD_OF_GLORY = 80062,
     SPELL_PALADIN_WAKE_OF_ASHES = 80060,
+    SPELL_PALADIN_CRUSADER_STRIKE = 35395,
 
     // Runes
     RUNE_PALADIN_TOUCH_OF_LIGHT_DAMAGE = 400046,
@@ -3029,7 +3030,37 @@ class rune_pal_unerring_faith : public AuraScript
     }
 };
 
+class rune_pal_holy_grace : public AuraScript
+{
+    PrepareAuraScript(rune_pal_holy_grace);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), SPELL_PALADIN_CRUSADER_STRIKE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_holy_grace::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_holy_grace::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_paladin_perks_scripts()
 {
@@ -3124,8 +3155,5 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_zealous_onslaught);
     RegisterSpellScript(rune_pal_calling_the_lord);
     RegisterSpellScript(rune_pal_unerring_faith);
-
-
-
-
+    RegisterSpellScript(rune_pal_holy_grace);
 }

@@ -2301,9 +2301,9 @@ class spell_pal_holy_vendetta : public AuraScript
         if (!target)
             return false;
 
-        DamageInfo* healInfo = eventInfo.GetDamageInfo();
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
 
-        if (!healInfo || !healInfo->GetDamage())
+        if (!damageInfo || !damageInfo->GetDamage())
         {
             return false;
         }

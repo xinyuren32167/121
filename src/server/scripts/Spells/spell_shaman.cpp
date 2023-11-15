@@ -109,7 +109,7 @@ enum ShamanSpells
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD = 1000000,
     MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF = 1000001,
 
-    // Shit Spec
+    // Spirit Master
     SPELL_SHAMAN_SPIRIT_OF_FIRE = 84089,
     SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE = 84136,
     SPELL_SHAMAN_SPIRIT_OF_STORM = 84090,
@@ -153,6 +153,8 @@ enum ShamanSpells
     SPELL_SHAMAN_SEEPING_LIFE_FORCE_HEAL = 84231,
     SPELL_SHAMAN_PATH_OF_THE_ASCENDANT = 84242,
     SPELL_SHAMAN_ASCENDANT_EARTH = 84113,
+    SPELL_SHAMAN_ASCENDENCE_AIR = 84035,
+    SPELL_SHAMAN_ASCENDENCE_WATER = 84040,
     SPELL_SHAMAN_STORMBRAND_TOTEM_PROC = 84245,
     SPELL_SHAMAN_SPIRIT_WEAPON_NATURE = 84247,
     SPELL_SHAMAN_SPIRIT_WEAPON_FIRE = 84248,
@@ -4479,6 +4481,59 @@ class spell_sha_storm_proficiency: public AuraScript
     }
 };
 
+class spell_sha_ascendancy_morphs : public AuraScript
+{
+    PrepareAuraScript(spell_sha_ascendancy_morphs);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        uint32 spellId = m_scriptSpellId;
+        uint32 morphId = 0;
+
+        if (spellId == SPELL_SHAMAN_ASCENDANCE_FIRE)
+            morphId = 50016;
+        else if (spellId == SPELL_SHAMAN_ASCENDENCE_AIR)
+            morphId = 50015;
+        else if (spellId == SPELL_SHAMAN_ASCENDENCE_WATER)
+            morphId = 50017;
+        else
+            morphId = 50023;
+
+        caster->SetDisplayId(morphId);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        GetCaster()->DeMorph();
+
+        if (ShapeshiftForm form = caster->GetShapeshiftForm())
+            if (form == FORM_SPIRIT_OF_FIRE)
+                caster->SetDisplayId(32756);
+            else if (form == FORM_SPIRIT_OF_STORM)
+                caster->SetDisplayId(32757);
+            else if (form == FORM_SPIRIT_OF_EARTH)
+                caster->SetDisplayId(32758);
+            else if (form == FORM_SPIRIT_OF_WATER)
+                caster->SetDisplayId(32755);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_ascendancy_morphs::HandleApply, EFFECT_ALL, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sha_ascendancy_morphs::HandleRemove, EFFECT_ALL, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -4582,4 +4637,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_healing_tide_totem_heal);
     RegisterSpellScript(spell_sha_tidal_wave_consumed);
     RegisterSpellScript(spell_sha_storm_proficiency);
+    RegisterSpellScript(spell_sha_ascendancy_morphs);
 }
