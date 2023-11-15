@@ -182,8 +182,8 @@ void RunesManager::LoadAllSlotRune()
     {
         Field* fields = result->Fetch();
         uint64 loadoutId = fields[0].Get<uint64>();
-        uint32 order = fields[1].Get<uint32>();
-        uint64 runeSpellId = fields[2].Get<uint64>();
+        uint32 runeSpellId = fields[1].Get<uint32>();
+        uint64 order = fields[2].Get<uint64>();
         SlotRune slot = { loadoutId, runeSpellId, order };
         m_SlotRune[loadoutId].push_back(slot);
     } while (result->NextRow());

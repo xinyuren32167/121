@@ -1359,10 +1359,7 @@ class rune_hunter_black_mamba_proc : public AuraScript
         if (!player || player->isDead())
             return;
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
-
-        if (summonedUnits.empty())
-            return;
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
@@ -2639,20 +2636,6 @@ class rune_hunter_poison_fangs_aura : public AuraScript
 
         if (pet && !pet->HasAura(procSpell))
             player->AddAura(procSpell, pet);
-
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
-
-        if (summonedUnits.empty())
-            return;
-
-        for (auto const& unit : summonedUnits)
-        {
-            if (unit->isDead())
-                continue;
-
-            if (!unit->HasAura(procSpell))
-                player->AddAura(procSpell, unit);
-        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -2668,19 +2651,6 @@ class rune_hunter_poison_fangs_aura : public AuraScript
         if (pet && pet->IsAlive() && pet->HasAura(procSpell))
             pet->RemoveAura(procSpell);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
-
-        if (summonedUnits.empty())
-            return;
-
-        for (auto const& unit : summonedUnits)
-        {
-            if (unit->isDead())
-                continue;
-
-            if (unit->HasAura(procSpell))
-                unit->RemoveAura(procSpell);
-        }
     }
 
     void Register() override
