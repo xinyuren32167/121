@@ -41,6 +41,7 @@ enum PriestSpells
     SPELL_PRIEST_DEVOURING_PLAGUE_EXTRA_DAMAGE = 63675,
     SPELL_PRIEST_DEVOURING_PLAGUE_HEAL = 75999,
     SPELL_PRIEST_DIVINE_AEGIS = 47753,
+    SPELL_PRIEST_DIVINE_HYMN_HEAL = 64844,
     SPELL_PRIEST_DIVINE_WORD = 81033,
     SPELL_PRIEST_DIVINE_WORD_AURA = 81034,
     SPELL_PRIEST_DIVINE_FAVOR_CHASTISE = 81035,
@@ -123,7 +124,7 @@ enum PriestSpells
     TALENT_PRIEST_SURPRISE_BURST_PROC = 86281,
     TALENT_PRIEST_DEFY_FATE_HEAL = 86286,
     TALENT_PRIEST_DEFY_FATE_COOLDOWN = 86287,
-    TALENT_PRIEST_CELERITY  = 86246,
+    TALENT_PRIEST_CELERITY = 86246,
 };
 
 enum PriestSpellIcons
@@ -1709,6 +1710,74 @@ class spell_pri_holy_fire : public SpellScript
     }
 };
 
+// 48135 - Holy Fire Aura
+class spell_pri_holy_fire_aura : public AuraScript
+{
+    PrepareAuraScript(spell_pri_holy_fire_aura);
+
+    Aura* GetHolyHellstoneAura(Unit* caster)
+    {
+        for (size_t i = 900200; i < 900206; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Unit* findNearestTarget(Unit* caster, Unit* target)
+    {
+        Unit* nearTarget = nullptr;
+        auto const& threatList = caster->getAttackers();
+
+        for (auto const& threat : threatList)
+            if (threat->IsAlive())
+            {
+                if (threat->HasAura(SPELL_PRIEST_HOLY_FIRE))
+                    continue;
+
+                if (threat == target)
+                    continue;
+
+                nearTarget = threat;               
+            }
+
+        return nearTarget;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetHolyHellstoneAura(caster))
+            if (Unit* nearTarget = findNearestTarget(caster, target))
+                    caster->AddAura(SPELL_PRIEST_HOLY_FIRE, nearTarget);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_holy_fire_aura::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_holy_fire_aura::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 // 81027 - Empyreal Blaze
 class spell_pri_empyreal_blaze : public SpellScript
 {
@@ -2126,9 +2195,21 @@ public:
     }
 };
 
+// 48113 - Prayer of Mending
 class spell_pri_prayer_of_mending : public AuraScript
 {
     PrepareAuraScript(spell_pri_prayer_of_mending);
+
+    Aura* GetRenewTheFaithAura(Unit* caster)
+    {
+        for (size_t i = 900100; i < 900106; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     Unit* findNearestTarget()
     {
@@ -2162,18 +2243,37 @@ class spell_pri_prayer_of_mending : public AuraScript
         PreventDefaultAction();
 
         Unit* caster = GetCaster();
-        Unit* target = GetTarget();
+        Unit* target = GetUnitOwner();
+        LOG_ERROR("error", "proc");
+        if (eventInfo.GetHealInfo())
+            if (eventInfo.GetSpellInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
+                if (Aura* runeAura = GetRenewTheFaithAura(caster))
+                    if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
+                    {
+                        LOG_ERROR("error", "rune check");
+                        charges += 1;
+                        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
 
+                        Unit* nextTarget = findNearestTarget();
 
-        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
+                        if (nextTarget && charges > 0) {
+                            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
+                            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
+                            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
+                        }
+                    }
+                    else if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+                    {
+                        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
 
-        Unit* nextTarget = findNearestTarget();
+                        Unit* nextTarget = findNearestTarget();
 
-        if (nextTarget && charges > 0) {
-            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
-            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
-            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget,true, nullptr, nullptr, caster->GetGUID());
-        }
+                        if (nextTarget && charges > 0) {
+                            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
+                            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
+                            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
+                        }
+                    }
     }
 
     void Register() override
@@ -2245,7 +2345,7 @@ class spell_pri_holy_might : public SpellScript
         int32 casterINT = caster->GetStat(STAT_INTELLECT);
         int32 casterSPR = caster->GetStat(STAT_SPIRIT);
 
-        int32 highestCasterStat = std::max({casterSTR, casterAGI, casterINT, casterSPR});
+        int32 highestCasterStat = std::max({ casterSTR, casterAGI, casterINT, casterSPR });
         int32 buffAmount = CalculatePct(highestCasterStat, statPct);
         int32 speedAmount = 0;
 
@@ -2463,7 +2563,7 @@ class spell_pri_defy_fate : public AuraScript
     }
 };
 
-class spell_pri_light_overload: public AuraScript
+class spell_pri_light_overload : public AuraScript
 {
     PrepareAuraScript(spell_pri_light_overload);
 
@@ -2480,6 +2580,79 @@ class spell_pri_light_overload: public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_pri_light_overload::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
+// 586 - Fade 
+class spell_pri_fade : public AuraScript
+{
+    PrepareAuraScript(spell_pri_fade);
+
+    Aura* GetFadedAura(Unit* caster)
+    {
+        for (size_t i = 900118; i < 900124; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetFadedAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_fade::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_fade::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 48071 - Flash Heal
+class spell_pri_flash_heal : public SpellScript
+{
+    PrepareSpellScript(spell_pri_flash_heal);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove From Darkness Comes Light Rune Buff
+        for (size_t i = 900168; i < 900174; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_flash_heal::HandleAfterHit);
+    }
+};
+
+
 
 void AddSC_priest_spell_scripts()
 {
@@ -2524,6 +2697,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_holy_word_serenity_cooldown);
     RegisterSpellScript(spell_pri_holy_word_chastise_cooldown);
     RegisterSpellScript(spell_pri_holy_fire);
+    RegisterSpellScript(spell_pri_holy_fire_aura);
     RegisterSpellScript(spell_pri_empyreal_blaze);
     RegisterSpellScript(spell_pri_holy_word_sanctify_cooldown);
     RegisterSpellScript(spell_pri_apotheosis);
@@ -2549,5 +2723,13 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_surprise_burst);
     RegisterSpellScript(spell_pri_defy_fate);
     RegisterSpellScript(spell_pri_light_overload);
+    RegisterSpellScript(spell_pri_fade);
+    RegisterSpellScript(spell_pri_flash_heal);
+
+
+
+
+
+
     new npc_pri_shadowy_apparitions();
 }
