@@ -1136,10 +1136,26 @@ class spell_pri_devouring_plague : public SpellScript
         }
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Mind Devourer Rune Buff
+        for (size_t i = 900286; i < 900292; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
         BeforeHit += BeforeSpellHitFn(spell_pri_devouring_plague::HandleExtraDamage);
         OnHit += SpellHitFn(spell_pri_devouring_plague::HandleHealing);
+        AfterHit += SpellHitFn(spell_pri_devouring_plague::HandleAfterHit);
     }
 };
 
@@ -1740,7 +1756,7 @@ class spell_pri_holy_fire_aura : public AuraScript
                 if (threat == target)
                     continue;
 
-                nearTarget = threat;               
+                nearTarget = threat;
             }
 
         return nearTarget;
@@ -1768,7 +1784,7 @@ class spell_pri_holy_fire_aura : public AuraScript
 
         if (Aura* runeAura = GetHolyHellstoneAura(caster))
             if (Unit* nearTarget = findNearestTarget(caster, target))
-                    caster->AddAura(SPELL_PRIEST_HOLY_FIRE, nearTarget);
+                caster->AddAura(SPELL_PRIEST_HOLY_FIRE, nearTarget);
     }
 
     void Register() override
@@ -2652,6 +2668,62 @@ class spell_pri_flash_heal : public SpellScript
     }
 };
 
+// 48076 - Holy Nova Heal
+class spell_pri_holy_nova_heal : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_nova_heal);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Rhapsody Rune Buff
+        for (size_t i = 900226; i < 900232; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_holy_nova_heal::HandleAfterHit);
+    }
+};
+
+// 48127 - Mind Blast
+class spell_pri_mind_blast : public SpellScript
+{
+    PrepareSpellScript(spell_pri_mind_blast);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Shadowy Insight Rune Buff
+        if (caster->HasAura(900250))
+            caster->RemoveAura(900250);
+
+        // Remove Anund's Shackles Rune Buff
+        for (size_t i = 900266; i < 900272; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_mind_blast::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -2725,6 +2797,8 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_light_overload);
     RegisterSpellScript(spell_pri_fade);
     RegisterSpellScript(spell_pri_flash_heal);
+    RegisterSpellScript(spell_pri_holy_nova_heal);
+    RegisterSpellScript(spell_pri_mind_blast);
 
 
 
