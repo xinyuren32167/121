@@ -121,6 +121,7 @@ enum WarlockSpells
     SPELL_WARLOCK_SHADOW_CLEAVE                     = 50581,
     SPELL_WARLOCK_DEMON_CHARGE                      = 54785,
     SPELL_WARLOCK_SHROUD_OF_DARKNESS                = 83114,
+    SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF   = 83116,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -2857,7 +2858,6 @@ class spell_warl_demonkin : public AuraScript
         target->learnSpell(SPELL_WARLOCK_IMMOLATION_AURA);
         target->learnSpell(SPELL_WARLOCK_SHADOW_CLEAVE);
         target->learnSpell(SPELL_WARLOCK_DEMON_CHARGE);
-        target->learnSpell(SPELL_WARLOCK_SOUL_COLLECTOR);
         target->learnSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS);
         target->learnSpell(SPELL_WARLOCK_SOUL_BOMB);
     }
@@ -2869,7 +2869,6 @@ class spell_warl_demonkin : public AuraScript
         target->removeSpell(SPELL_WARLOCK_IMMOLATION_AURA, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SHADOW_CLEAVE, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_DEMON_CHARGE, SPEC_MASK_ALL, false);
-        target->removeSpell(SPELL_WARLOCK_SOUL_COLLECTOR, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SOUL_BOMB, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_WARLOCK_SUMMON_FELGUARD);
@@ -2884,6 +2883,34 @@ class spell_warl_demonkin : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_warl_demonkin::HandleLearn, EFFECT_0, SPELL_AURA_MOD_ATTACK_POWER_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonkin::HandleUnlearn, EFFECT_0, SPELL_AURA_MOD_ATTACK_POWER_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warl_demonic_protection_mastery : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonic_protection_mastery);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+        if (Aura* aura = caster->GetAura(MASTERY_WARLOCK_FEL_BLOOD))
+        {
+            int32 amount = aura->GetEffect(EFFECT_0)->GetAmount() + caster->ToPlayer()->GetMastery();
+
+            caster->CastCustomSpell(SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (Aura* aura = GetCaster()->GetAura(SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF))
+            aura->Remove();
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_demonic_protection_mastery::HandleApply, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonic_protection_mastery::HandleRemove, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2968,4 +2995,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_frailty);;
     RegisterSpellScript(spell_warl_fracture_fragment);
     RegisterSpellScript(spell_warl_demonkin);
+    RegisterSpellScript(spell_warl_demonic_protection_mastery);
 }

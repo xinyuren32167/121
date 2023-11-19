@@ -97,6 +97,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[WARLOCK_AFFLICTION] = { 26, 57993, "Affliction", 9, 1100018, 14.00, true, 1100021, POWER_ALL };
     m_Specializations[WARLOCK_DEMONOLOGY] = { 27, 51690, "Demonology", 9, 1100020, 24.00, true, 1100023, POWER_ALL };
     m_Specializations[WARLOCK_DESTRUCTION] = { 28, 82016 , "Destruction", 9, 1100019, 48.00, true, 1100022, POWER_ALL };
+    m_Specializations[WARLOCK_DEMONBOUND] = { 40, 83115, "Demonbound", 9, 1100024, 35.00, true, 1100025, POWER_ALL };
 }
     
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
