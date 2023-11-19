@@ -116,6 +116,7 @@ enum WarlockSpells
     SPELL_WARLOCK_SUMMON_IMP                        = 688,
     SPELL_WARLOCK_SUMMON_SUCCUBUS                   = 712,
     SPELL_WARLOCK_SUMMON_VOIDWALKER                 = 697,
+    SPELL_WARLOCK_EYE_OF_KILLROG                    = 126,
     SPELL_WARLOCK_IMMOLATION_AURA                   = 50589,
     SPELL_WARLOCK_SHADOW_CLEAVE                     = 50581,
     SPELL_WARLOCK_DEMON_CHARGE                      = 54785,
@@ -2852,6 +2853,7 @@ class spell_warl_demonkin : public AuraScript
         target->removeSpell(SPELL_WARLOCK_SUMMON_IMP, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SUMMON_SUCCUBUS, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SUMMON_VOIDWALKER, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_EYE_OF_KILLROG, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_WARLOCK_IMMOLATION_AURA);
         target->learnSpell(SPELL_WARLOCK_SHADOW_CLEAVE);
         target->learnSpell(SPELL_WARLOCK_DEMON_CHARGE);
@@ -2875,6 +2877,7 @@ class spell_warl_demonkin : public AuraScript
         target->learnSpell(SPELL_WARLOCK_SUMMON_IMP);
         target->learnSpell(SPELL_WARLOCK_SUMMON_SUCCUBUS);
         target->learnSpell(SPELL_WARLOCK_SUMMON_VOIDWALKER);
+        target->learnSpell(SPELL_WARLOCK_EYE_OF_KILLROG);
     }
 
     void Register() override
