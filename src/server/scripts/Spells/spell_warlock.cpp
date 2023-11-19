@@ -102,6 +102,24 @@ enum WarlockSpells
     SPELL_WARLOCK_IMMOLATION_AURA_ENERGY            = 83089,
     PET_SPELL_IMMOLATION_AURA_DAMAGE                = 20153,
     MASTERY_WARLOCK_MASTER_DEMONOLOGIST             = 1100020,
+    SPELL_WARLOCK_SOUL_COLLECTOR                    = 83094,
+    SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT           = 83095,
+    SPELL_WARLOCK_SOUL_COLLECTOR_DEMON_BUFF         = 83096,
+    SPELL_WARLOCK_SOUL_COLLECTOR_HEAL               = 83097,
+    SPELL_WARLOCK_SEARING_PAIN_ENERGY               = 83100,
+    MASTERY_WARLOCK_FEL_BLOOD                       = 1100024,
+    SPELL_WARLOCK_FRAILTY_HEAL                      = 83104,
+    SPELL_WARLOCK_SOUL_BOMB                         = 83102,
+    SPELL_WARLOCK_SOUL_BOMB_DAMAGE                  = 83105,
+    SPELL_WARLOCK_SUMMON_FELGUARD                   = 30146,
+    SPELL_WARLOCK_SUMMON_FELHUNTER                  = 691,
+    SPELL_WARLOCK_SUMMON_IMP                        = 688,
+    SPELL_WARLOCK_SUMMON_SUCCUBUS                   = 712,
+    SPELL_WARLOCK_SUMMON_VOIDWALKER                 = 697,
+    SPELL_WARLOCK_IMMOLATION_AURA                   = 50589,
+    SPELL_WARLOCK_SHADOW_CLEAVE                     = 50581,
+    SPELL_WARLOCK_DEMON_CHARGE                      = 54785,
+    SPELL_WARLOCK_SHROUD_OF_DARKNESS                = 83114,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -126,7 +144,6 @@ enum WarlockSpells
     SPELL_MINION_INCREASE_VILEFIEND                 = 1100012,
     SPELL_MINION_INCREASE_DEMONIC_TYRANT            = 1100013,
     SPELL_MINION_INCREASE_BOMBER                    = 1100014,
-
 
     SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE    = 83032,
 };
@@ -2618,6 +2635,255 @@ class spell_warl_infernal_immolation_aura_energy : public AuraScript
     }
 };
 
+class spell_warl_soul_collector : public AuraScript
+{
+    PrepareAuraScript(spell_warl_soul_collector);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT, TRIGGERED_FULL_MASK);
+
+        if (Unit* target = eventInfo.GetActionTarget())
+        {
+            if (Creature* creature = target->ToCreature())
+                if (CreatureTemplate const* cinfo = creature->GetCreatureTemplate())
+                    if (cinfo && cinfo->type == CREATURE_TYPE_DEMON)
+                        GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_SOUL_COLLECTOR_DEMON_BUFF, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_soul_collector::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_soul_collector::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_soul_collector_fragment : public AuraScript
+{
+    PrepareAuraScript(spell_warl_soul_collector_fragment);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), eventInfo.GetSchoolMask()) > 0)
+            return true;
+
+        return false;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_soul_collector_fragment::CheckProc);
+    }
+};
+
+class spell_warl_searing_pain_energy : public SpellScript
+{
+    PrepareSpellScript(spell_warl_searing_pain_energy);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        if (caster->HasAura(MASTERY_WARLOCK_FEL_BLOOD))
+        {
+            caster->CastSpell(caster, SPELL_WARLOCK_SEARING_PAIN_ENERGY, TRIGGERED_FULL_MASK);
+
+            if (roll_chance_i(GetSpellInfo()->GetEffect(EFFECT_1).CalcValue()))
+                caster->CastSpell(caster, SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_searing_pain_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_warl_demonic_barrier : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonic_barrier);
+
+    void ApplyEffect(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        int32 baseRatio = aurEff->GetAmount();
+        int32 baseShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), baseRatio);
+        int32 fragmentShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), (baseRatio / 6));
+
+        if (Aura* soulFragment = caster->GetAura(SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT))
+        {
+            int32 fragmentAmount = soulFragment->GetStackAmount();
+            baseShield += fragmentAmount * fragmentShield;
+            soulFragment->Remove();
+
+            for (int i = 0; i < fragmentAmount; ++i)
+            {
+                caster->CastSpell(caster, SPELL_WARLOCK_SOUL_COLLECTOR_HEAL, TRIGGERED_FULL_MASK);
+            }
+        }
+
+        int32 healMulti = 100;
+        int32 currHP = caster->GetHealth();
+        int32 maxHP = caster->GetMaxHealth();
+
+        if (currHP <= maxHP / 5)
+            healMulti = 100;
+        else
+            healMulti = std::max(20,(healMulti - 100 * (currHP / maxHP)));
+
+        ApplyPct(baseShield, healMulti);
+
+        aurEff->GetBase()->GetEffect(EFFECT_0)->ChangeAmount(baseShield);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_demonic_barrier::ApplyEffect, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warl_soul_bomb : public SpellScript
+{
+    PrepareSpellScript(spell_warl_soul_bomb);
+
+    SpellCastResult CheckCast()
+    {
+        if (!GetCaster()->HasAura(SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT))
+            return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
+        return SPELL_CAST_OK;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+        int32 damage = CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE), sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_SOUL_BOMB)->GetEffect(EFFECT_0).CalcValue(caster));
+
+        if (Aura* soulFragment = caster->GetAura(SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT))
+        {
+            int32 stackAmount = soulFragment->GetStackAmount();
+            for (int i = 0; i < stackAmount; ++i)
+            {
+                caster->CastSpell(caster, SPELL_WARLOCK_SOUL_COLLECTOR_HEAL, TRIGGERED_FULL_MASK);
+            }
+
+            if (stackAmount <= 3)
+            {
+                damage *= stackAmount;
+                soulFragment->Remove();
+            }
+            else
+            {
+                damage *= 3;
+                soulFragment->ModStackAmount(-3);
+            }
+        }
+
+        caster->CastCustomSpell(SPELL_WARLOCK_SOUL_BOMB_DAMAGE, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_warl_soul_bomb::CheckCast);
+        OnCast += SpellCastFn(spell_warl_soul_bomb::HandleCast);
+    }
+};
+
+class spell_warl_frailty : public AuraScript
+{
+    PrepareAuraScript(spell_warl_frailty);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
+    }
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 healPct = aurEff->GetAmount();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, healPct);
+
+        if (amount <= 0)
+            return;
+
+        caster->CastCustomSpell(SPELL_WARLOCK_FRAILTY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_frailty::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_frailty::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_fracture_fragment : public SpellScript
+{
+    PrepareSpellScript(spell_warl_fracture_fragment);
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        if (roll_chance_i(GetSpellInfo()->GetEffect(EFFECT_1).CalcValue()))
+            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_fracture_fragment::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_warl_demonkin : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonkin);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARLOCK_SUMMON_FELGUARD, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SUMMON_FELHUNTER, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SUMMON_IMP, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SUMMON_SUCCUBUS, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SUMMON_VOIDWALKER, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_WARLOCK_IMMOLATION_AURA);
+        target->learnSpell(SPELL_WARLOCK_SHADOW_CLEAVE);
+        target->learnSpell(SPELL_WARLOCK_DEMON_CHARGE);
+        target->learnSpell(SPELL_WARLOCK_SOUL_COLLECTOR);
+        target->learnSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS);
+        target->learnSpell(SPELL_WARLOCK_SOUL_BOMB);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_WARLOCK_IMMOLATION_AURA, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SHADOW_CLEAVE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_DEMON_CHARGE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SOUL_COLLECTOR, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_SOUL_BOMB, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_WARLOCK_SUMMON_FELGUARD);
+        target->learnSpell(SPELL_WARLOCK_SUMMON_FELHUNTER);
+        target->learnSpell(SPELL_WARLOCK_SUMMON_IMP);
+        target->learnSpell(SPELL_WARLOCK_SUMMON_SUCCUBUS);
+        target->learnSpell(SPELL_WARLOCK_SUMMON_VOIDWALKER);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_demonkin::HandleLearn, EFFECT_0, SPELL_AURA_MOD_ATTACK_POWER_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonkin::HandleUnlearn, EFFECT_0, SPELL_AURA_MOD_ATTACK_POWER_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -2691,4 +2957,12 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_all_minion_scaling);
     RegisterSpellScript(spell_warl_shadow_bolt_energy);
     RegisterSpellScript(spell_warl_infernal_immolation_aura_energy);
+    RegisterSpellScript(spell_warl_soul_collector);
+    RegisterSpellScript(spell_warl_searing_pain_energy);
+    RegisterSpellScript(spell_warl_demonic_barrier);
+    RegisterSpellScript(spell_warl_soul_collector_fragment);
+    RegisterSpellScript(spell_warl_soul_bomb);
+    RegisterSpellScript(spell_warl_frailty);;
+    RegisterSpellScript(spell_warl_fracture_fragment);
+    RegisterSpellScript(spell_warl_demonkin);
 }
