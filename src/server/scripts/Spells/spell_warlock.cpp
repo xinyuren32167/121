@@ -100,6 +100,7 @@ enum WarlockSpells
     SPELL_WARLOCK_SHADOWBURN_ENERGY                 = 83087,
     SPELL_WARLOCK_SOUL_FIRE_ENERGY                  = 83088,
     SPELL_WARLOCK_IMMOLATION_AURA_ENERGY            = 83089,
+    SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY    = 83188,
     PET_SPELL_IMMOLATION_AURA_DAMAGE                = 20153,
     MASTERY_WARLOCK_MASTER_DEMONOLOGIST             = 1100020,
     SPELL_WARLOCK_SOUL_COLLECTOR                    = 83094,
@@ -121,7 +122,16 @@ enum WarlockSpells
     SPELL_WARLOCK_SHADOW_CLEAVE                     = 50581,
     SPELL_WARLOCK_DEMON_CHARGE                      = 54785,
     SPELL_WARLOCK_SHROUD_OF_DARKNESS                = 83114,
+    SPELL_WARLOCK_DEMONIC_ASCENSION                 = 83110,
+    SPELL_WARLOCK_DEMONIC_PROTECTION                = 83111,
     SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF   = 83116,
+    SPELL_WARLOCK_FRACTURE_ENERGY                   = 83107,
+
+    TALENT_WARLOCK_DEMON_SPIKES_DAMAGE              = 83197,
+    TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN        = 83199,
+    TALENT_WARLOCK_ARCHDEMON_DAMAGE                 = 83201,
+    TALENT_WARLOCK_ARCHDEMON_MARK                   = 83202,
+    TALENT_WARLOCK_ARCHDEMON_COOLDOWN               = 83203,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
@@ -1514,7 +1524,6 @@ class spell_warl_shadowburn : public AuraScript
     }
 };
 
-
 // 83000
 class spell_warlock_summon_darkhound : public SpellScript
 {
@@ -2672,15 +2681,23 @@ class spell_warl_soul_collector_fragment : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), eventInfo.GetSchoolMask()) > 0)
+        if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->PowerType == POWER_ENERGY && eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), eventInfo.GetSchoolMask()) > 0))
             return true;
 
         return false;
     }
 
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetAura()->ModStackAmount(-1);
+
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_SOUL_COLLECTOR_HEAL, TRIGGERED_FULL_MASK);
+    }
+
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(spell_warl_soul_collector_fragment::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_soul_collector_fragment::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2703,6 +2720,36 @@ class spell_warl_searing_pain_energy : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warl_searing_pain_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+class spell_warl_immolation_aura_energy : public SpellScript
+{
+    PrepareSpellScript(spell_warl_immolation_aura_energy);
+
+    void HandleCast()
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_immolation_aura_energy::HandleCast);
+    }
+};
+
+class spell_warl_fracture_energy : public SpellScript
+{
+    PrepareSpellScript(spell_warl_fracture_energy);
+
+    void HandleCast()
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_fracture_energy::HandleCast);
     }
 };
 
@@ -2860,6 +2907,8 @@ class spell_warl_demonkin : public AuraScript
         target->learnSpell(SPELL_WARLOCK_DEMON_CHARGE);
         target->learnSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS);
         target->learnSpell(SPELL_WARLOCK_SOUL_BOMB);
+
+        target->UnsummonPetTemporaryIfAny();
     }
 
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -2911,6 +2960,153 @@ class spell_warl_demonic_protection_mastery : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_warl_demonic_protection_mastery::HandleApply, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonic_protection_mastery::HandleRemove, EFFECT_0, SPELL_AURA_MOD_RESISTANCE_OF_STAT_PERCENT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warl_chaos_brand : public AuraScript
+{
+    PrepareAuraScript(spell_warl_chaos_brand);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_chaos_brand::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_chaos_brand::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_demonic_thirst: public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonic_thirst);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_WARLOCK_DEMONIC_PROTECTION, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_warl_demonic_thirst::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_demon_spikes : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demon_spikes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        return GetCaster()->HasAura(SPELL_WARLOCK_DEMONIC_PROTECTION);
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
+
+        caster->CastCustomSpell(TALENT_WARLOCK_DEMON_SPIKES_DAMAGE, SPELLVALUE_BASE_POINT0, damage, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_demon_spikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_demon_spikes::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_forced_ascension : public AuraScript
+{
+    PrepareAuraScript(spell_warl_forced_ascension);
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+
+        if (remainingHealth <= 0 && !victim->HasAura(TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN))
+        {
+            absorbAmount = dmgInfo.GetDamage();
+            victim->CastSpell(victim, SPELL_WARLOCK_DEMONIC_ASCENSION, TRIGGERED_FULL_MASK);
+            victim->CastSpell(victim, TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN, TRIGGERED_FULL_MASK);
+        }
+        else
+            absorbAmount = 0;
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_warl_forced_ascension::Absorb, EFFECT_0);
+    }
+};
+
+class spell_warl_archdemon : public AuraScript
+{
+    PrepareAuraScript(spell_warl_archdemon);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || GetCaster()->isDead() || GetCaster()->HasAura(TALENT_WARLOCK_ARCHDEMON_COOLDOWN))
+            return false;
+
+        return true;
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), TALENT_WARLOCK_ARCHDEMON_MARK, TRIGGERED_FULL_MASK);
+        LOG_ERROR("error", "getowner is {}", GetAura()->GetOwner()->ToUnit()->GetName());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_archdemon::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_archdemon::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_warl_archdemon_proc : public AuraScript
+{
+    PrepareAuraScript(spell_warl_archdemon_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster() || GetCaster()->isDead() || GetCaster()->HasAura(TALENT_WARLOCK_ARCHDEMON_COOLDOWN))
+            return false;
+
+        return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && eventInfo.GetSpellInfo();
+    }
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(GetAura()->GetOwner()->ToUnit(), TALENT_WARLOCK_ARCHDEMON_DAMAGE, TRIGGERED_FULL_MASK);
+        LOG_ERROR("error", "getowner is {}", GetAura()->GetOwner()->ToUnit()->GetName());
+        caster->CastSpell(caster, TALENT_WARLOCK_ARCHDEMON_COOLDOWN, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warl_archdemon_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warl_archdemon_proc::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2996,4 +3192,12 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_fracture_fragment);
     RegisterSpellScript(spell_warl_demonkin);
     RegisterSpellScript(spell_warl_demonic_protection_mastery);
+    RegisterSpellScript(spell_warl_chaos_brand);
+    RegisterSpellScript(spell_warl_demonic_thirst);
+    RegisterSpellScript(spell_warl_immolation_aura_energy);
+    RegisterSpellScript(spell_warl_demon_spikes);
+    RegisterSpellScript(spell_warl_forced_ascension);
+    RegisterSpellScript(spell_warl_archdemon);
+    RegisterSpellScript(spell_warl_archdemon_proc);
+    RegisterSpellScript(spell_warl_fracture_energy);
 }
