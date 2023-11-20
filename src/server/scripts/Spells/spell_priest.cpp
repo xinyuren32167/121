@@ -31,6 +31,7 @@
 
 enum PriestSpells
 {
+    // Spells
     SPELL_PRIEST_LIGHTWELL_RENEW = 48085,
     SPELL_PRIEST_LIGHTWELL_CHARGE = 59907,
     SPELL_PRIEST_AUTONEMENT = 81009,
@@ -73,6 +74,7 @@ enum PriestSpells
     SPELL_PRIEST_PENANCE_R1 = 47540,
     SPELL_PRIEST_PENANCE_R1_DAMAGE = 47758,
     SPELL_PRIEST_PENANCE_R1_HEAL = 47757,
+    SPELL_PRIEST_POWER_INFUSION = 10060,
     SPELL_PRIEST_POWER_WORD_LIFE = 81006,
     SPELL_PRIEST_POWER_WORD_LIFE_LISTENER = 81007,
     SPELL_PRIEST_POWER_WORD_RADIANCE = 00000,
@@ -114,17 +116,23 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_ERUPTION_LIGHT_OVERLOAD = 86301,
     SPELL_PRIEST_BLISTERING_BARRIER = 86200,
 
+    // Passives
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
     SPELL_GENERIC_BATTLEGROUND_DAMPENING = 74411,
     SPELL_PRIEST_TWIN_DISCIPLINE_R1 = 47586,
     SPELL_PRIEST_SPIRITUAL_HEALING_R1 = 14898,
     SPELL_PRIEST_DIVINE_PROVIDENCE_R1 = 47562,
 
+    // Talents
     TALENT_PRIEST_HOLY_WEAVING_PROC = 86252,
     TALENT_PRIEST_SURPRISE_BURST_PROC = 86281,
     TALENT_PRIEST_DEFY_FATE_HEAL = 86286,
     TALENT_PRIEST_DEFY_FATE_COOLDOWN = 86287,
     TALENT_PRIEST_CELERITY = 86246,
+
+    // Runes
+    RUNE_PRIEST_CRYSTALLINE_REFLECTION_DAMAGE = 900366,
+    RUNE_PRIEST_SHIELD_DISCIPLINE_ENERGIZE = 900374,
 };
 
 enum PriestSpellIcons
@@ -738,6 +746,61 @@ class spell_pri_power_word_shield_aura : public AuraScript
 {
     PrepareAuraScript(spell_pri_power_word_shield_aura);
 
+    Aura* GetBodyAndSoulAura(Unit* caster)
+    {
+        for (size_t i = 900336; i < 900342; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetCrystallineReflectionAura(Unit* caster)
+    {
+        for (size_t i = 900354; i < 900360; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetShieldDisciplineAura(Unit* caster)
+    {
+        for (size_t i = 900368; i < 900374; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetAegisOfWrathAura(Unit* caster)
+    {
+        for (size_t i = 900382; i < 900388; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetWordsOfThePiousAura(Unit* caster)
+    {
+        for (size_t i = 900388; i < 900394; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED, SPELL_PRIEST_REFLECTIVE_SHIELD_R1 });
@@ -748,22 +811,53 @@ class spell_pri_power_word_shield_aura : public AuraScript
         canBeRecalculated = false;
         float ratio = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
         if (Unit* caster = GetCaster())
+        {
             amount = CalculateSpellAmount(caster, ratio, amount, GetSpellInfo(), aurEff);
+
+            if (Aura* runeAura = GetAegisOfWrathAura(caster))
+            {
+                int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(amount, increasePct);
+            }
+        }
     }
 
     void ReflectDamage(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
+        Unit* caster = GetCaster();
+        Unit* owner = GetUnitOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetTarget();
         if (dmgInfo.GetAttacker() == target)
             return;
 
-        if (Unit* owner = GetUnitOwner())
+        if (owner)
             if (AuraEffect* talentAurEff = owner->GetAuraEffectOfRankedSpell(SPELL_PRIEST_REFLECTIVE_SHIELD_R1, EFFECT_0))
             {
                 int32 bp = CalculatePct(absorbAmount, talentAurEff->GetAmount());
                 // xinef: prevents infinite loop!
                 if (!dmgInfo.GetSpellInfo() || dmgInfo.GetSpellInfo()->Id != SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED)
                     target->CastCustomSpell(dmgInfo.GetAttacker(), SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED, &bp, nullptr, nullptr, true, nullptr, aurEff);
+            }
+
+        if (Aura* runeAura = GetCrystallineReflectionAura(caster))
+        {
+            int32 damagePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = CalculatePct(absorbAmount, damagePct);
+
+            caster->CastCustomSpell(RUNE_PRIEST_CRYSTALLINE_REFLECTION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, dmgInfo.GetAttacker(), TRIGGERED_FULL_MASK);
+        }
+
+        if (Aura* runeAura = GetShieldDisciplineAura(caster))
+            if (dmgInfo.GetUnmitigatedDamage() > aurEff->GetAmount())
+            {
+                int32 manaPct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                int32 amount = CalculatePct(caster->GetMaxPower(POWER_MANA), manaPct) / 10;
+
+                caster->CastCustomSpell(RUNE_PRIEST_SHIELD_DISCIPLINE_ENERGIZE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
             }
     }
 
@@ -775,10 +869,52 @@ class spell_pri_power_word_shield_aura : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        if (!caster->HasAura(SPELL_PRIEST_AUTONEMENT))
+        if (caster->HasAura(SPELL_PRIEST_AUTONEMENT))
+            caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+
+        if (Aura* runeAura = GetBodyAndSoulAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, target);
+        }
+
+        if (Aura* runeAura = GetCrystallineReflectionAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        if (Aura* runeAura = GetWordsOfThePiousAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
             return;
 
-        caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetAegisOfWrathAura(caster))
+        {
+            int32 reducPct = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 amount = GetEffect(EFFECT_0)->GetAmount();
+            int32 reduction = CalculatePct(amount, reducPct);
+
+            if (reduction > 0)
+                GetEffect(EFFECT_0)->ChangeAmount(amount - reduction);
+        }
     }
 
     void Register() override
@@ -786,6 +922,7 @@ class spell_pri_power_word_shield_aura : public AuraScript
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_power_word_shield_aura::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
         AfterEffectAbsorb += AuraEffectAbsorbFn(spell_pri_power_word_shield_aura::ReflectDamage, EFFECT_0);
         OnEffectApply += AuraEffectApplyFn(spell_pri_power_word_shield_aura::HandleProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_pri_power_word_shield_aura::HandlePeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -1228,6 +1365,17 @@ class spell_pri_leap_of_faith : public SpellScript
 {
     PrepareSpellScript(spell_pri_leap_of_faith);
 
+    Aura* GetBodyAndSoulAura(Unit* caster)
+    {
+        for (size_t i = 900336; i < 900342; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     SpellCastResult CheckCast()
     {
         Unit* caster = GetCaster();
@@ -1255,6 +1403,13 @@ class spell_pri_leap_of_faith : public SpellScript
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(1766); // Rogue kick
             if (!target->IsImmunedToSpellEffect(spellInfo, EFFECT_0))
                 target->InterruptNonMeleeSpells(true);
+
+            if (Aura* runeAura = GetBodyAndSoulAura(caster))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                caster->AddAura(procSpell, target);
+            }
         }
         else
             baseTarget->CastSpell(caster, SPELL_PRIEST_LEAP_OF_FAITH_PROC, true);
@@ -1426,9 +1581,6 @@ class spell_pri_atonement_heal : public SpellScript
 
             if (target->isDead() || !target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
                 continue;
-
-            amount = GetCaster()->SpellHealingBonusDone(target, GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE, amount);
-            amount = target->SpellHealingBonusTaken(GetCaster(), GetSpellInfo(), uint32(amount), SPELL_DIRECT_DAMAGE);
 
             caster->CastCustomSpell(SPELL_PRIEST_AUTONEMENT_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
@@ -2260,13 +2412,12 @@ class spell_pri_prayer_of_mending : public AuraScript
 
         Unit* caster = GetCaster();
         Unit* target = GetUnitOwner();
-        LOG_ERROR("error", "proc");
+
         if (eventInfo.GetHealInfo())
             if (eventInfo.GetSpellInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
                 if (Aura* runeAura = GetRenewTheFaithAura(caster))
                     if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
                     {
-                        LOG_ERROR("error", "rune check");
                         charges += 1;
                         caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
 
@@ -2724,6 +2875,124 @@ class spell_pri_mind_blast : public SpellScript
     }
 };
 
+// 81041 - Mind Sear
+class spell_pri_mind_sear_aura : public AuraScript
+{
+    PrepareAuraScript(spell_pri_mind_sear_aura);
+
+    Aura* GetBurningSearAura(Unit* caster)
+    {
+        for (size_t i = 900318; i < 900324; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetBurningSearAura(caster))
+        {
+            int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (target->HasAura(SPELL_PRIEST_SHADOW_WORD_PAIN) && target->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+            {
+                auto const& threatList = caster->getAttackers();
+
+                for (auto const& victim : threatList)
+                    if (victim->IsAlive())
+                    {
+                        if (victim == target)
+                            continue;
+
+                        float distance = victim->GetDistance(target->GetPosition());
+
+                        if (distance > 10)
+                            continue;
+
+                        if (!roll_chance_i(procChance))
+                            continue;
+
+                        caster->AddAura(SPELL_PRIEST_SHADOW_WORD_PAIN, victim);
+                        caster->AddAura(SPELL_PRIEST_VAMPIRIC_TOUCH, victim);
+                    }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_pri_mind_sear_aura::HandleProc, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+// 10060 - Power Infusion 
+class spell_pri_power_infusion : public AuraScript
+{
+    PrepareAuraScript(spell_pri_power_infusion);
+
+    Aura* GetTwinsoftheSunPriestessAura(Unit* caster)
+    {
+        for (size_t i = 900330; i < 900336; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetTwinsoftheSunPriestessAura(caster))
+        {
+            if (target != caster)
+            {
+                int32 procPct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                int32 amount = CalculatePct(aurEff->GetAmount(), procPct);
+
+                caster->CastCustomSpell(SPELL_PRIEST_POWER_INFUSION, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_power_infusion::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_power_infusion::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -2799,6 +3068,8 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_flash_heal);
     RegisterSpellScript(spell_pri_holy_nova_heal);
     RegisterSpellScript(spell_pri_mind_blast);
+    RegisterSpellScript(spell_pri_mind_sear_aura);
+    RegisterSpellScript(spell_pri_power_infusion);
 
 
 

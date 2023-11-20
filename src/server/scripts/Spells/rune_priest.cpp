@@ -16,8 +16,13 @@ enum PriestSpells
     SPELL_PRIEST_FADE = 586,
     SPELL_PRIEST_FLASH_HEAL = 48071,
     SPELL_PRIEST_MIND_BLAST = 48127,
+    SPELL_PRIEST_PENANCE = 47540,
+    SPELL_PRIEST_POWER_WORD_SHIELD = 48066,
+    SPELL_PRIEST_POWER_WORD_SOLACE = 81016,
     SPELL_PRIEST_PURGE_THE_WICKED = 81017,
+    SPELL_PRIEST_RENEW = 48068,
     SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
+    SPELL_PRIEST_SMITE = 48123,
     SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
 
     // Talents
@@ -453,6 +458,79 @@ class rune_pri_expiation : public AuraScript
     }
 };
 
+class rune_pri_void_shield : public AuraScript
+{
+    PrepareAuraScript(rune_pri_void_shield);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* shield = caster->GetAura(SPELL_PRIEST_POWER_WORD_SHIELD))
+        {
+            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+            int32 increase = CalculatePct(damage, aurEff->GetAmount());
+            int32 amount = shield->GetEffect(EFFECT_0)->GetAmount();
+            LOG_ERROR("error", "amount = {}", amount);
+            shield->GetEffect(EFFECT_0)->ChangeAmount(amount + increase);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_void_shield::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_void_shield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_train_of_thought : public AuraScript
+{
+    PrepareAuraScript(rune_pri_train_of_thought);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (spellID == SPELL_PRIEST_FLASH_HEAL || spellID == SPELL_PRIEST_RENEW)
+            {
+                int32 cooldown = aurEff->GetAmount();
+                player->ModifySpellCooldown(SPELL_PRIEST_POWER_WORD_SHIELD, -cooldown);
+            }
+            else if (spellID == SPELL_PRIEST_SMITE || spellID == SPELL_PRIEST_POWER_WORD_SOLACE)
+            {
+                int32 cooldown = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+                player->ModifySpellCooldown(SPELL_PRIEST_PENANCE, -cooldown);                
+            }
+        }     
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_train_of_thought::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_train_of_thought::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -468,9 +546,11 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_insidious_ire);
     RegisterSpellScript(rune_pri_psychic_link);
     RegisterSpellScript(rune_pri_expiation);
+    RegisterSpellScript(rune_pri_void_shield);
+    RegisterSpellScript(rune_pri_train_of_thought);
 
 
-
-
+    
+    
 }
 
