@@ -3018,8 +3018,7 @@ class spell_warl_demon_spikes : public AuraScript
     {
         Unit* caster = GetCaster();
         int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
-
-        caster->CastCustomSpell(TALENT_WARLOCK_DEMON_SPIKES_DAMAGE, SPELLVALUE_BASE_POINT0, damage, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(TALENT_WARLOCK_DEMON_SPIKES_DAMAGE, SPELLVALUE_BASE_POINT0, damage, eventInfo.GetActor(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -3073,7 +3072,6 @@ class spell_warl_archdemon : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         GetCaster()->CastSpell(eventInfo.GetActionTarget(), TALENT_WARLOCK_ARCHDEMON_MARK, TRIGGERED_FULL_MASK);
-        LOG_ERROR("error", "getowner is {}", GetAura()->GetOwner()->ToUnit()->GetName());
     }
 
     void Register() override
@@ -3099,7 +3097,6 @@ class spell_warl_archdemon_proc : public AuraScript
     {
         Unit* caster = GetCaster();
         caster->CastSpell(GetAura()->GetOwner()->ToUnit(), TALENT_WARLOCK_ARCHDEMON_DAMAGE, TRIGGERED_FULL_MASK);
-        LOG_ERROR("error", "getowner is {}", GetAura()->GetOwner()->ToUnit()->GetName());
         caster->CastSpell(caster, TALENT_WARLOCK_ARCHDEMON_COOLDOWN, TRIGGERED_FULL_MASK);
     }
 
