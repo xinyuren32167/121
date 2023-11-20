@@ -2234,7 +2234,7 @@ class spell_hun_call_of_wild : public SpellScript
                 pet->SetDisplayId(displayId);
 
                 if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId))
-                    if (displayInfo->scale > 1.f)
+                    if (displayInfo->scale > 1)
                         pet->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
 
                 ((Guardian*)pet)->InitStatsForLevel(caster->getLevel());
@@ -2291,7 +2291,7 @@ class spell_hun_call_of_wild_periodic : public SpellScript
             pet->SetDisplayId(displayId);
 
             if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId))
-                if (displayInfo->scale > 1.f)
+                if (displayInfo->scale > 1)
                     pet->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
 
             ((Guardian*)pet)->InitStatsForLevel(GetCaster()->getLevel());
@@ -2760,9 +2760,10 @@ static void ApplySecondaryPet(Creature* summon, auto firstPet, Unit* caster)
     caster->AddAura(34903, summon);
     caster->AddAura(34904, summon);
 
-    if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(summon->GetNativeDisplayId()))
-        if (displayInfo->scale > 1.f)
+    if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(summon->GetNativeDisplayId())) {
+        if (displayInfo->scale > 1)
             summon->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
+    }
 }
 
 class Hunter_AllMapScript : public AllMapScript

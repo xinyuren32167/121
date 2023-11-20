@@ -228,13 +228,12 @@ float AutoBalanceManager::CalculateHealthRaidScaling(uint8 totalPlayerInRaid, do
 
 float AutoBalanceManager::CalculateHealthDungeonScaling(uint8 totalPlayerInDungeon, double healthScaling)
 {
+    if (totalPlayerInDungeon == 5)
+        return healthScaling / 3.7;
     if (totalPlayerInDungeon == 4)
-        return healthScaling;
+        return healthScaling / 3.0;
     if (totalPlayerInDungeon == 3)
-        return healthScaling / 1.5;
+        return healthScaling / 2.3;
     if (totalPlayerInDungeon == 2)
-        return healthScaling / 1.8;
-
-    // If we are more than 5 just return the normal amount;
-    return 1.0f;
+        return healthScaling / 1.5;
 }
