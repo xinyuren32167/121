@@ -81,6 +81,8 @@ enum Masteries
     MASTERY_WARLOCK_POTENT_AFFLICTIONS_BUFF = 1100017,
     MASTERY_WARLOCK_CHAOTIC_ENERGIES_BUFF = 1100016,
     MASTERY_WARLOCK_MASTER_DEMONOLOGY_BUFF = 1100015,
+    MASTERY_WARLOCK_FEL_BLOOD = 1100024,
+    MASTERY_WARLOCK_FEL_BLOOD_BUFF = 1100026,
 };
 
 // Mage
@@ -1738,7 +1740,7 @@ class spell_mastery_jack_of_all_master_of_none_proc : public SpellScript
     }
 };
 
-
+//WARLOCK
 class spell_mastery_warlock_potent_afflictions : public SpellScript
 {
     PrepareSpellScript(spell_mastery_warlock_potent_afflictions);
@@ -1792,6 +1794,29 @@ class spell_mastery_warlock_master_demonology : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_mastery_warlock_master_demonology::HandleCast);
+    }
+};
+
+class spell_mastery_warlock_fel_blood : public SpellScript
+{
+    PrepareSpellScript(spell_mastery_warlock_fel_blood);
+
+    void HandleCast()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        float mastery = caster->GetMastery();
+        if (Aura* aura = caster->GetAura(MASTERY_WARLOCK_FEL_BLOOD))
+        {
+            int32 armorRating = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
+            int32 attackRating = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+
+            caster->CastCustomSpell(caster, MASTERY_WARLOCK_FEL_BLOOD_BUFF, &armorRating, &attackRating, nullptr, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_mastery_warlock_fel_blood::HandleCast);
     }
 };
 
@@ -1851,4 +1876,5 @@ void AddSC_spells_mastery_scripts()
     RegisterSpellScript(spell_mastery_divine_tribunal);
     RegisterSpellScript(spell_mastery_rog_pistolero);
     RegisterSpellScript(spell_mastery_life_and_death_shield);
+    RegisterSpellScript(spell_mastery_warlock_fel_blood);
 }
