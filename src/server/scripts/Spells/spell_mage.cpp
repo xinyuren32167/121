@@ -2584,7 +2584,7 @@ class spell_mage_comet_storm : public AuraScript
         //int32 rand = urand(0, GetAura()->GetEffect(EFFECT_1)->GetAmount());
         //Position position = targetPosition.GetPositionWithOffset(rand);
 
-        caster->CastSpell(target, SPELL_MAGE_COMET_STORM, true);
+        caster->CastSpell(target, SPELL_MAGE_COMET_STORM_DAMAGE, true);
     }
 
     void Register() override
@@ -3688,13 +3688,11 @@ class spell_mage_cone_of_cold : public SpellScript
 
         if (!caster || caster->isDead())
             return;
-        LOG_ERROR("error", "caster check");
         Unit* target = GetHitUnit();
 
         if (!target || target->isDead())
             return;
-        LOG_ERROR("error", "target check");
-        LOG_ERROR("error", "target = {}", target->GetName());
+
         if (GetColdestSnapAura(caster))
             caster->CastSpell(target, SPELL_MAGE_WINTERS_CHILL, TRIGGERED_FULL_MASK);
     }
