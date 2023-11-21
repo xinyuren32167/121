@@ -2458,6 +2458,15 @@ class spell_pri_prayer_of_mending : public AuraScript
                     int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
                     caster->CastSpell(nextTarget, procSpell, TRIGGERED_FULL_MASK);
                 }
+
+            // Check for chance to leave a renew on old target
+            if (Aura* runeAura = GetBenedictionAura(caster))
+            {
+                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                if (roll_chance_i(procChance))
+                    caster->AddAura(SPELL_PRIEST_RENEW, target);
+            }
         }
     }
 
@@ -2469,42 +2478,24 @@ class spell_pri_prayer_of_mending : public AuraScript
         Unit* caster = GetCaster();
         Unit* target = GetUnitOwner();
 
-        if (eventInfo.GetHealInfo() && eventInfo.GetSpellInfo()
-            &&  eventInfo.GetHealInfo()->GetHeal() > 0) {
-            if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
-            {
-                charges += 1;
-
-                CastMendingToNearestTarget(target, caster, charges);
-
-                // Check for chance to leave a renew on old target
-                if (Aura* runeAura = GetBenedictionAura(caster))
+        if (eventInfo.GetHealInfo() && eventInfo.GetSpellInfo() &&  eventInfo.GetHealInfo()->GetHeal() > 0)
+            if (Aura* runeAura = GetRenewTheFaithAura(caster))
+                if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
                 {
-                    int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                    charges += 1;
 
-                    if (roll_chance_i(procChance))
-                        caster->AddAura(SPELL_PRIEST_RENEW, target);
-                }
-            }
-        }
+                    CastMendingToNearestTarget(target, caster, charges);
+                }     
         
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
+            // Chance to not consume any charge
             if (Aura* runeAura = GetSayYourPrayersAura(caster))
             {
                 int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
                 if (roll_chance_i(procChance))
                     charges += 1;
-            }
-
-            // Check for chance to leave a renew on old target
-            if (Aura* runeAura = GetBenedictionAura(caster))
-            {
-                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
-
-                if (roll_chance_i(procChance))
-                    caster->AddAura(SPELL_PRIEST_RENEW, target);
             }
 
             CastMendingToNearestTarget(target, caster, charges);

@@ -614,25 +614,30 @@ class rune_pri_answered_prayers : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+        caster->CastSpell(caster, RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER, TRIGGERED_FULL_MASK);
+
         if (Aura* listener = caster->GetAura(RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER))
         {
             int32 threshold = aurEff->GetAmount();
 
-            if (listener->GetStackAmount() >= threshold)
+            if (listener->GetStackAmount() < threshold)
+                return;
+
+            int32 duration = GetEffect(EFFECT_1)->GetAmount();
+
+            if (Aura* apotheosisAura = caster->GetAura(SPELL_PRIEST_APOTHEOSIS))
             {
-                int32 duration = GetEffect(EFFECT_1)->GetAmount();
-
-                if (Aura* apotheosisAura = caster->GetAura(SPELL_PRIEST_APOTHEOSIS))
-                {
-                    duration /= 2;
-                    duration += apotheosisAura->GetDuration();
-                }
-                else if (!caster->HasAura(SPELL_PRIEST_APOTHEOSIS))
-                    caster->AddAura(SPELL_PRIEST_APOTHEOSIS, caster);
-
-                caster->GetAura(SPELL_PRIEST_APOTHEOSIS)->SetDuration(duration);
-                caster->RemoveAura(listener);
+                duration /= 2;
+                duration += apotheosisAura->GetDuration();
+                apotheosisAura->SetDuration(duration);
             }
+            else
+            {
+                caster->AddAura(SPELL_PRIEST_APOTHEOSIS, caster);
+                caster->GetAura(SPELL_PRIEST_APOTHEOSIS)->SetDuration(duration);
+            }
+
+            listener->Remove();
         }
     }
 
@@ -669,7 +674,7 @@ class rune_pri_lasting_renovation : public AuraScript
             int32 duration = renew->GetDuration() + aurEff->GetAmount();
             renew->SetDuration(duration);
             renew->GetEffect(EFFECT_0)->ResetTicks();
-        }       
+        }
     }
 
     void Register()
@@ -703,6 +708,6 @@ void AddSC_priest_perks_scripts()
 
 
 
-    
+
 }
 
