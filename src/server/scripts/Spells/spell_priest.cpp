@@ -2429,9 +2429,6 @@ class spell_pri_prayer_of_mending : public AuraScript
                 if (!caster->IsWithinDistInMap(Target, 20.f))
                     continue;
 
-                if (caster->GetGUID() == Target->GetGUID())
-                    continue;
-
                 // IsHostileTo check duel and controlled by enemy
                 if (Target->IsAlive() && !caster->IsHostileTo(Target))
                     nearMembers.push_back(Target);
@@ -2443,6 +2440,27 @@ class spell_pri_prayer_of_mending : public AuraScript
         return nearMembers.front();
     }
 
+
+    void CastMendingToNearestTarget(Unit* target, Unit* caster, uint32 charges)
+    {
+        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
+        Unit* nextTarget = findNearestTarget();
+        if (nextTarget && charges > 0)
+        {
+            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
+            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
+            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
+
+            // Check if new target has Renew, if so heal them
+            if (Aura* runeAura = GetHolyMendingAura(caster))
+                if (nextTarget->HasAura(SPELL_PRIEST_RENEW))
+                {
+                    int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                    caster->CastSpell(nextTarget, procSpell, TRIGGERED_FULL_MASK);
+                }
+        }
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         uint8 charges = aurEff->GetBase()->GetCharges() - 1;
@@ -2450,48 +2468,29 @@ class spell_pri_prayer_of_mending : public AuraScript
 
         Unit* caster = GetCaster();
         Unit* target = GetUnitOwner();
-        LOG_ERROR("error", "proc");
-        if (eventInfo.GetHealInfo())
-            if (eventInfo.GetSpellInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
-                if (Aura* runeAura = GetRenewTheFaithAura(caster))
-                    if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
-                    {
-                        LOG_ERROR("error", "faith rune check");
-                        charges += 1;
-                        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
 
-                        Unit* nextTarget = findNearestTarget();
+        if (eventInfo.GetHealInfo() && eventInfo.GetSpellInfo()
+            &&  eventInfo.GetHealInfo()->GetHeal() > 0) {
+            if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
+            {
+                charges += 1;
 
-                        // Check for chance to leave a renew on old target
-                        if (Aura* runeAura = GetBenedictionAura(caster))
-                        {
-                            int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                CastMendingToNearestTarget(target, caster, charges);
 
-                            if (roll_chance_i(procChance))
-                                caster->AddAura(SPELL_PRIEST_RENEW, target);
-                        }
+                // Check for chance to leave a renew on old target
+                if (Aura* runeAura = GetBenedictionAura(caster))
+                {
+                    int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
-                        if (nextTarget && charges > 0)
-                        {
-                            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
-                            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
-                            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
-
-                            // Check if new target has Renew, if so heal them
-                            if (Aura* runeAura = GetHolyMendingAura(caster))
-                                if (nextTarget->HasAura(SPELL_PRIEST_RENEW))
-                                {
-                                    int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
-                                    caster->CastSpell(nextTarget, procSpell, TRIGGERED_FULL_MASK);
-                                }
-                        }
-                    }
+                    if (roll_chance_i(procChance))
+                        caster->AddAura(SPELL_PRIEST_RENEW, target);
+                }
+            }
+        }
         
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
-            caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
-
-            Unit* nextTarget = findNearestTarget();
+            LOG_ERROR("PROC", "PROC DAMAGE");
 
             if (Aura* runeAura = GetSayYourPrayersAura(caster))
             {
@@ -2507,23 +2506,10 @@ class spell_pri_prayer_of_mending : public AuraScript
                 int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
                 if (roll_chance_i(procChance))
-                    caster->AddAura(SPELL_PRIEST_RENEW, target);
+                    caster->CastSpell(target, SPELL_PRIEST_RENEW, TRIGGERED_FULL_MASK);
             }
 
-            if (nextTarget && charges > 0)
-            {
-                target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
-                target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
-                target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
-
-                // Check if new target has Renew, if so heal them
-                if (Aura* runeAura = GetHolyMendingAura(caster))
-                    if (nextTarget->HasAura(SPELL_PRIEST_RENEW))
-                    {
-                        int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
-                        caster->CastSpell(nextTarget, procSpell, TRIGGERED_FULL_MASK);
-                    }
-            }
+            CastMendingToNearestTarget(target, caster, charges);
         }
     }
 
