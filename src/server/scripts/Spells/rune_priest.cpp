@@ -12,6 +12,7 @@
 enum PriestSpells
 {
     // Spells
+    SPELL_PRIEST_APOTHEOSIS = 81030,
     SPELL_PRIEST_DEVOURING_PLAGUE = 48300,
     SPELL_PRIEST_FADE = 586,
     SPELL_PRIEST_FLASH_HEAL = 48071,
@@ -19,6 +20,7 @@ enum PriestSpells
     SPELL_PRIEST_PENANCE = 47540,
     SPELL_PRIEST_POWER_WORD_SHIELD = 48066,
     SPELL_PRIEST_POWER_WORD_SOLACE = 81016,
+    SPELL_PRIEST_PRAYER_OF_MENDING = 48113,
     SPELL_PRIEST_PURGE_THE_WICKED = 81017,
     SPELL_PRIEST_RENEW = 48068,
     SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
@@ -35,6 +37,7 @@ enum PriestSpells
     RUNE_PRIEST_INSIDIOUS_IRE_DAMAGE = 900258,
     RUNE_PRIEST_PSYCHIC_LINK_DAMAGE = 900278,
     RUNE_PRIEST_EXPIATION_DAMAGE = 900310,
+    RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER = 900492,
 };
 
 class rune_pri_faded : public AuraScript
@@ -479,7 +482,7 @@ class rune_pri_void_shield : public AuraScript
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
             int32 increase = CalculatePct(damage, aurEff->GetAmount());
             int32 amount = shield->GetEffect(EFFECT_0)->GetAmount();
-            LOG_ERROR("error", "amount = {}", amount);
+
             shield->GetEffect(EFFECT_0)->ChangeAmount(amount + increase);
         }
     }
@@ -519,15 +522,160 @@ class rune_pri_train_of_thought : public AuraScript
             else if (spellID == SPELL_PRIEST_SMITE || spellID == SPELL_PRIEST_POWER_WORD_SOLACE)
             {
                 int32 cooldown = GetAura()->GetEffect(EFFECT_1)->GetAmount();
-                player->ModifySpellCooldown(SPELL_PRIEST_PENANCE, -cooldown);                
+                player->ModifySpellCooldown(SPELL_PRIEST_PENANCE, -cooldown);
             }
-        }     
+        }
     }
 
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_pri_train_of_thought::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pri_train_of_thought::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_revitalizing_prayers : public AuraScript
+{
+    PrepareAuraScript(rune_pri_revitalizing_prayers);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 duration = aurEff->GetAmount();
+            caster->AddAura(SPELL_PRIEST_RENEW, target);
+            target->GetAura(SPELL_PRIEST_RENEW)->SetDuration(duration);
+        }
+
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_revitalizing_prayers::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_revitalizing_prayers::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_epiphany : public AuraScript
+{
+    PrepareAuraScript(rune_pri_epiphany);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PRIEST_PRAYER_OF_MENDING, true);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_epiphany::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_epiphany::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_answered_prayers : public AuraScript
+{
+    PrepareAuraScript(rune_pri_answered_prayers);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* listener = caster->GetAura(RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER))
+        {
+            int32 threshold = aurEff->GetAmount();
+
+            if (listener->GetStackAmount() >= threshold)
+            {
+                int32 duration = GetEffect(EFFECT_1)->GetAmount();
+
+                if (Aura* apotheosisAura = caster->GetAura(SPELL_PRIEST_APOTHEOSIS))
+                {
+                    duration /= 2;
+                    duration += apotheosisAura->GetDuration();
+                }
+                else if (!caster->HasAura(SPELL_PRIEST_APOTHEOSIS))
+                    caster->AddAura(SPELL_PRIEST_APOTHEOSIS, caster);
+
+                caster->GetAura(SPELL_PRIEST_APOTHEOSIS)->SetDuration(duration);
+                caster->RemoveAura(listener);
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_answered_prayers::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_answered_prayers::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pri_lasting_renovation : public AuraScript
+{
+    PrepareAuraScript(rune_pri_lasting_renovation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* renew = target->GetAura(SPELL_PRIEST_RENEW))
+        {
+            int32 duration = renew->GetDuration() + aurEff->GetAmount();
+            renew->SetDuration(duration);
+            renew->GetEffect(EFFECT_0)->ResetTicks();
+        }       
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_lasting_renovation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_lasting_renovation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -548,9 +696,13 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_expiation);
     RegisterSpellScript(rune_pri_void_shield);
     RegisterSpellScript(rune_pri_train_of_thought);
+    RegisterSpellScript(rune_pri_revitalizing_prayers);
+    RegisterSpellScript(rune_pri_epiphany);
+    RegisterSpellScript(rune_pri_answered_prayers);
+    RegisterSpellScript(rune_pri_lasting_renovation);
 
 
-    
+
     
 }
 

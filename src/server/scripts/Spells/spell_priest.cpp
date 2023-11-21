@@ -133,6 +133,8 @@ enum PriestSpells
     // Runes
     RUNE_PRIEST_CRYSTALLINE_REFLECTION_DAMAGE = 900366,
     RUNE_PRIEST_SHIELD_DISCIPLINE_ENERGIZE = 900374,
+    RUNE_PRIEST_PRAYERFUL_LITANY_HEAL = 900418,
+    RUNE_PRIEST_PRAYERFUL_LITANY_LISTENER = 900419,
 };
 
 enum PriestSpellIcons
@@ -2379,6 +2381,39 @@ class spell_pri_prayer_of_mending : public AuraScript
         return nullptr;
     }
 
+    Aura* GetHolyMendingAura(Unit* caster)
+    {
+        for (size_t i = 900456; i < 900462; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetBenedictionAura(Unit* caster)
+    {
+        for (size_t i = 900468; i < 900474; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetSayYourPrayersAura(Unit* caster)
+    {
+        for (size_t i = 900474; i < 900480; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     Unit* findNearestTarget()
     {
         Unit* caster = GetCaster();
@@ -2415,35 +2450,81 @@ class spell_pri_prayer_of_mending : public AuraScript
 
         Unit* caster = GetCaster();
         Unit* target = GetUnitOwner();
-
+        LOG_ERROR("error", "proc");
         if (eventInfo.GetHealInfo())
             if (eventInfo.GetSpellInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
                 if (Aura* runeAura = GetRenewTheFaithAura(caster))
                     if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
                     {
+                        LOG_ERROR("error", "faith rune check");
                         charges += 1;
                         caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
 
                         Unit* nextTarget = findNearestTarget();
 
-                        if (nextTarget && charges > 0) {
+                        // Check for chance to leave a renew on old target
+                        if (Aura* runeAura = GetBenedictionAura(caster))
+                        {
+                            int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                            if (roll_chance_i(procChance))
+                                caster->AddAura(SPELL_PRIEST_RENEW, target);
+                        }
+
+                        if (nextTarget && charges > 0)
+                        {
                             target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
                             target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
                             target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
+
+                            // Check if new target has Renew, if so heal them
+                            if (Aura* runeAura = GetHolyMendingAura(caster))
+                                if (nextTarget->HasAura(SPELL_PRIEST_RENEW))
+                                {
+                                    int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                                    caster->CastSpell(nextTarget, procSpell, TRIGGERED_FULL_MASK);
+                                }
                         }
                     }
-                    else if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
+
+            Unit* nextTarget = findNearestTarget();
+
+            if (Aura* runeAura = GetSayYourPrayersAura(caster))
+            {
+                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                if (roll_chance_i(procChance))
+                    charges += 1;
+            }
+
+            // Check for chance to leave a renew on old target
+            if (Aura* runeAura = GetBenedictionAura(caster))
+            {
+                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                if (roll_chance_i(procChance))
+                    caster->AddAura(SPELL_PRIEST_RENEW, target);
+            }
+
+            if (nextTarget && charges > 0)
+            {
+                target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
+                target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
+                target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
+
+                // Check if new target has Renew, if so heal them
+                if (Aura* runeAura = GetHolyMendingAura(caster))
+                    if (nextTarget->HasAura(SPELL_PRIEST_RENEW))
                     {
-                        caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
-
-                        Unit* nextTarget = findNearestTarget();
-
-                        if (nextTarget && charges > 0) {
-                            target->RemoveAura(SPELL_PRIEST_PRAYER_OF_MENDING);
-                            target->CastSpell(nextTarget, 41637 /*Dummy visual effect triggered by main spell cast*/, true);
-                            target->CastCustomSpell(SPELL_PRIEST_PRAYER_OF_MENDING, SPELLVALUE_AURA_CHARGE, charges, nextTarget, true, nullptr, nullptr, caster->GetGUID());
-                        }
+                        int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                        caster->CastSpell(nextTarget, procSpell, TRIGGERED_FULL_MASK);
                     }
+            }
+        }
     }
 
     void Register() override
@@ -2996,6 +3077,72 @@ class spell_pri_power_infusion : public AuraScript
     }
 };
 
+// 48072 - Prayer of Healing
+class spell_pri_prayer_of_healing : public SpellScript
+{
+    PrepareSpellScript(spell_pri_prayer_of_healing);
+
+    Aura* GetPrayerfulLitanyAura(Unit* caster)
+    {
+        for (size_t i = 900412; i < 900418; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetPrayerfulLitanyAura(caster))
+        {
+            auto litanyTargets = targets;
+            litanyTargets.sort(Acore::HealthPctOrderPred());
+            litanyTargets.resize(1);
+
+            for (auto const& object : litanyTargets)
+            {
+                Unit* target = object->ToUnit();
+                caster->AddAura(RUNE_PRIEST_PRAYERFUL_LITANY_LISTENER, target);
+            }
+        }
+    }
+
+    void HandleEffectHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        if (Aura* runeAura = GetPrayerfulLitanyAura(caster))
+            if (target->HasAura(RUNE_PRIEST_PRAYERFUL_LITANY_LISTENER))
+            {
+                int32 amount = CalculatePct(heal, runeAura->GetEffect(EFFECT_0)->GetAmount());
+                caster->CastCustomSpell(RUNE_PRIEST_PRAYERFUL_LITANY_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_prayer_of_healing::FilterTargets, EFFECT_ALL, TARGET_UNIT_SRC_AREA_ALLY);
+        OnEffectHitTarget += SpellEffectFn(spell_pri_prayer_of_healing::HandleEffectHit, EFFECT_0, SPELL_EFFECT_HEAL);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -3073,6 +3220,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mind_blast);
     RegisterSpellScript(spell_pri_mind_sear_aura);
     RegisterSpellScript(spell_pri_power_infusion);
+    RegisterSpellScript(spell_pri_prayer_of_healing);
 
 
 
