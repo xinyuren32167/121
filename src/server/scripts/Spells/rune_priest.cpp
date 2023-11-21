@@ -13,6 +13,7 @@ enum PriestSpells
 {
     // Spells
     SPELL_PRIEST_APOTHEOSIS = 81030,
+    SPELL_PRIEST_APOTHEOSIS_HOLY_FORM = 81031,
     SPELL_PRIEST_DEVOURING_PLAGUE = 48300,
     SPELL_PRIEST_FADE = 586,
     SPELL_PRIEST_FLASH_HEAL = 48071,
@@ -625,7 +626,7 @@ class rune_pri_answered_prayers : public AuraScript
 
             int32 duration = GetEffect(EFFECT_1)->GetAmount();
 
-            if (Aura* apotheosisAura = caster->GetAura(SPELL_PRIEST_APOTHEOSIS))
+            if (Aura* apotheosisAura = caster->GetAura(SPELL_PRIEST_APOTHEOSIS_HOLY_FORM))
             {
                 duration /= 2;
                 duration += apotheosisAura->GetDuration();
@@ -633,10 +634,9 @@ class rune_pri_answered_prayers : public AuraScript
             }
             else
             {
-                caster->AddAura(SPELL_PRIEST_APOTHEOSIS, caster);
-                caster->GetAura(SPELL_PRIEST_APOTHEOSIS)->SetDuration(duration);
+                caster->AddAura(SPELL_PRIEST_APOTHEOSIS_HOLY_FORM, caster);
+                caster->GetAura(SPELL_PRIEST_APOTHEOSIS_HOLY_FORM)->SetDuration(duration);
             }
-
             listener->Remove();
         }
     }
@@ -644,7 +644,7 @@ class rune_pri_answered_prayers : public AuraScript
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_pri_answered_prayers::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_pri_answered_prayers::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(rune_pri_answered_prayers::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 

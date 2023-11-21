@@ -2483,7 +2483,6 @@ class spell_pri_prayer_of_mending : public AuraScript
                 if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
                 {
                     charges += 1;
-
                     CastMendingToNearestTarget(target, caster, charges);
                 }     
         
