@@ -2490,8 +2490,6 @@ class spell_pri_prayer_of_mending : public AuraScript
         
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
-            LOG_ERROR("PROC", "PROC DAMAGE");
-
             if (Aura* runeAura = GetSayYourPrayersAura(caster))
             {
                 int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
@@ -2506,7 +2504,7 @@ class spell_pri_prayer_of_mending : public AuraScript
                 int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
                 if (roll_chance_i(procChance))
-                    caster->CastSpell(target, SPELL_PRIEST_RENEW, TRIGGERED_FULL_MASK);
+                    caster->AddAura(SPELL_PRIEST_RENEW, target);
             }
 
             CastMendingToNearestTarget(target, caster, charges);
