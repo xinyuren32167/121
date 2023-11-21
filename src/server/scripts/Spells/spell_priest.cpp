@@ -2394,6 +2394,9 @@ class spell_pri_prayer_of_mending : public AuraScript
                 if (!caster->IsWithinDistInMap(Target, 20.f))
                     continue;
 
+                if (caster->GetGUID() == Target->GetGUID())
+                    continue;
+
                 // IsHostileTo check duel and controlled by enemy
                 if (Target->IsAlive() && !caster->IsHostileTo(Target))
                     nearMembers.push_back(Target);
