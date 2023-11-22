@@ -2478,14 +2478,14 @@ class spell_pri_prayer_of_mending : public AuraScript
         Unit* caster = GetCaster();
         Unit* target = GetUnitOwner();
 
-        if (eventInfo.GetHealInfo() && eventInfo.GetSpellInfo() &&  eventInfo.GetHealInfo()->GetHeal() > 0)
+        if (eventInfo.GetHealInfo() && eventInfo.GetSpellInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
             if (Aura* runeAura = GetRenewTheFaithAura(caster))
                 if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_DIVINE_HYMN_HEAL)
                 {
                     charges += 1;
                     CastMendingToNearestTarget(target, caster, charges);
-                }     
-        
+                }
+
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             // Chance to not consume any charge
@@ -3117,6 +3117,118 @@ class spell_pri_prayer_of_healing : public SpellScript
     }
 };
 
+// 48068 - Renew 
+class spell_pri_renew : public AuraScript
+{
+    PrepareAuraScript(spell_pri_renew);
+
+    Aura* GetSinsOfTheManyAura(Unit* caster)
+    {
+        for (size_t i = 900506; i < 900512; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetSinsOfTheManyAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (Aura* buff = caster->GetAura(procSpell))
+                buff->ModStackAmount(1);
+            else
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Reduce Sins of the many stacks by 1.
+        for (size_t i = 900512; i < 900518; i++)
+        {
+            if (Aura* buff = caster->GetAura(i))
+                buff->ModStackAmount(-1);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_renew::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_renew::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 48125 - Shadow Word: Pain 
+class spell_pri_shadow_word_pain : public AuraScript
+{
+    PrepareAuraScript(spell_pri_shadow_word_pain);
+
+    Aura* GetSinsOfTheManyAura(Unit* caster)
+    {
+        for (size_t i = 900506; i < 900512; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetSinsOfTheManyAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (Aura* buff = caster->GetAura(procSpell))
+                buff->ModStackAmount(1);
+            else
+                caster->AddAura(procSpell, caster);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Reduce Sins of the many stacks by 1.
+        for (size_t i = 900518; i < 900524; i++)
+        {
+            if (Aura* buff = caster->GetAura(i))
+                buff->ModStackAmount(-1);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_shadow_word_pain::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_pain::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -3195,10 +3307,12 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mind_sear_aura);
     RegisterSpellScript(spell_pri_power_infusion);
     RegisterSpellScript(spell_pri_prayer_of_healing);
+    RegisterSpellScript(spell_pri_renew);
+    RegisterSpellScript(spell_pri_shadow_word_pain);
 
 
-
-
+    
+    
 
 
     new npc_pri_shadowy_apparitions();

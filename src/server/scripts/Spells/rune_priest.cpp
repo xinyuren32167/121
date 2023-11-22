@@ -39,6 +39,7 @@ enum PriestSpells
     RUNE_PRIEST_PSYCHIC_LINK_DAMAGE = 900278,
     RUNE_PRIEST_EXPIATION_DAMAGE = 900310,
     RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER = 900492,
+    RUNE_PRIEST_RENEWED_FAITH_HEAL = 900524,
 };
 
 class rune_pri_faded : public AuraScript
@@ -684,6 +685,46 @@ class rune_pri_lasting_renovation : public AuraScript
     }
 };
 
+class rune_pri_renewed_faith : public AuraScript
+{
+    PrepareAuraScript(rune_pri_renewed_faith);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_PRIEST_RENEW))
+            return;
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+        int32 amount = CalculatePct(heal, aurEff->GetAmount());
+
+        if (amount == 0)
+            return;
+
+        caster->CastCustomSpell(RUNE_PRIEST_RENEWED_FAITH_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_renewed_faith::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_renewed_faith::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -705,9 +746,10 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_epiphany);
     RegisterSpellScript(rune_pri_answered_prayers);
     RegisterSpellScript(rune_pri_lasting_renovation);
+    RegisterSpellScript(rune_pri_renewed_faith);
 
 
 
-
+    
 }
 
