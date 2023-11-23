@@ -1035,8 +1035,24 @@ class spell_pri_shadow_word_death : public SpellScript
 {
     PrepareSpellScript(spell_pri_shadow_word_death);
 
+    Aura* GetDeathspeakerBuff(Unit* caster)
+    {
+        for (size_t i = 900668; i < 900674; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleDamage(SpellEffIndex effIndex)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetHitUnit();
         int32 damage = GetEffectValue();
 
@@ -1050,7 +1066,7 @@ class spell_pri_shadow_word_death : public SpellScript
 
         int32 targetHealthPct = target->GetHealthPct();
 
-        if (target->HealthBelowPct(20))
+        if (target->HealthBelowPct(20) || GetDeathspeakerBuff(caster))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
@@ -1060,22 +1076,9 @@ class spell_pri_shadow_word_death : public SpellScript
         GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
-    /*void HandleReflect()
-    {
-        Unit* target = GetHitUnit();
-        int32 damage = GetHitDamage();
-
-        if (!target)
-            return;
-
-        if (target->IsAlive())
-            GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
-    }*/
-
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_shadow_word_death::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-        // AfterHit += SpellHitFn(spell_pri_shadow_word_death::HandleReflect);
     }
 };
 
@@ -1090,6 +1093,17 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
         {
             if (GetCaster()->HasAura(i))
                 return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetDeathspeakerBuff(Unit* caster)
+    {
+        for (size_t i = 900668; i < 900674; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
         }
 
         return nullptr;
@@ -1113,7 +1127,7 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
             caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
         }
 
-        GetAura()->GetEffect(EFFECT_0)->SetAmount(0);
+        GetEffect(EFFECT_0)->SetAmount(0);
         GetAura()->Remove();
     }
 
@@ -1128,7 +1142,10 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
         if (GetUnitOwner()->isDead())
             return;
 
-        caster->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        if (!GetDeathspeakerBuff(caster))
+            caster->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        else
+            GetDeathspeakerBuff(caster)->Remove();
     }
 
     void Register() override
@@ -3147,7 +3164,7 @@ class spell_pri_renew : public AuraScript
             if (Aura* buff = caster->GetAura(procSpell))
                 buff->ModStackAmount(1);
             else
-            caster->AddAura(procSpell, caster);
+                caster->AddAura(procSpell, caster);
         }
     }
 
@@ -3173,10 +3190,51 @@ class spell_pri_renew : public AuraScript
     }
 };
 
-// 48125 - Shadow Word: Pain 
-class spell_pri_shadow_word_pain : public AuraScript
+// 48125 - Shadow Word: Pain  
+class spell_pri_shadow_word_pain : public SpellScript
 {
-    PrepareAuraScript(spell_pri_shadow_word_pain);
+    PrepareSpellScript(spell_pri_shadow_word_pain);
+
+    Aura* GetCatharstickAura(Unit* caster)
+    {
+        for (size_t i = 900650; i < 900656; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHitDamage(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Aura* runeAura = GetCatharstickAura(caster))
+        {
+            int32 increase = runeAura->GetEffect(EFFECT_2)->GetAmount();
+            damage += increase;
+            runeAura->GetEffect(EFFECT_2)->SetAmount(0);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_shadow_word_pain::HandleHitDamage, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 48125 - Shadow Word: Pain Aura
+class spell_pri_shadow_word_pain_aura : public AuraScript
+{
+    PrepareAuraScript(spell_pri_shadow_word_pain_aura);
 
     Aura* GetSinsOfTheManyAura(Unit* caster)
     {
@@ -3224,8 +3282,8 @@ class spell_pri_shadow_word_pain : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_shadow_word_pain::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_pain::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_shadow_word_pain_aura::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_pain_aura::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3309,10 +3367,10 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_prayer_of_healing);
     RegisterSpellScript(spell_pri_renew);
     RegisterSpellScript(spell_pri_shadow_word_pain);
+    RegisterSpellScript(spell_pri_shadow_word_pain_aura);
 
 
-    
-    
+
 
 
     new npc_pri_shadowy_apparitions();

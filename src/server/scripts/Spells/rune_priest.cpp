@@ -24,6 +24,7 @@ enum PriestSpells
     SPELL_PRIEST_PRAYER_OF_MENDING = 48113,
     SPELL_PRIEST_PURGE_THE_WICKED = 81017,
     SPELL_PRIEST_RENEW = 48068,
+    SPELL_PRIEST_SHADOW_WORD_DEATH = 48158,
     SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
     SPELL_PRIEST_SMITE = 48123,
     SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
@@ -40,6 +41,9 @@ enum PriestSpells
     RUNE_PRIEST_EXPIATION_DAMAGE = 900310,
     RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER = 900492,
     RUNE_PRIEST_RENEWED_FAITH_HEAL = 900524,
+    RUNE_PRIEST_PAINBREAKER_PSALM_DAMAGE = 900686,
+    RUNE_PRIEST_BLESSED_RECOVERY_HOT = 900718,
+    RUNE_PRIEST_DESPERATE_TIMES_HEAL = 900750,
 };
 
 class rune_pri_faded : public AuraScript
@@ -725,6 +729,232 @@ class rune_pri_renewed_faith : public AuraScript
     }
 };
 
+class rune_pri_catharstick : public AuraScript
+{
+    PrepareAuraScript(rune_pri_catharstick);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        int32 healthThreshold = CalculatePct(caster->GetMaxHealth(), GetEffect(EFFECT_1)->GetAmount());
+        int32 amount = std::min<int32>(GetEffect(EFFECT_2)->GetAmount() + damage, healthThreshold);
+
+        GetEffect(EFFECT_2)->SetAmount(amount);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_catharstick::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_catharstick::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_deathspeaker : public AuraScript
+{
+    PrepareAuraScript(rune_pri_deathspeaker);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PRIEST_SHADOW_WORD_DEATH, true);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_deathspeaker::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_deathspeaker::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
+class rune_pri_painbreaker_psalm : public AuraScript
+{
+    PrepareAuraScript(rune_pri_painbreaker_psalm);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_PRIEST_SHADOW_WORD_PAIN) && !target->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+            return;
+
+        int32 amount = 0;
+
+        if (Aura* swPain = target->GetAura(SPELL_PRIEST_SHADOW_WORD_PAIN))
+        {
+            int32 remainingTick = swPain->GetEffect(EFFECT_0)->GetRemaningTicks();
+            amount += swPain->GetEffect(EFFECT_0)->GetAmount() * remainingTick;
+            swPain->Remove();
+        }
+
+        if (Aura* vampiric = target->GetAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+        {
+            int32 remainingTick = vampiric->GetEffect(EFFECT_0)->GetRemaningTicks();
+            amount += vampiric->GetEffect(EFFECT_0)->GetAmount() * remainingTick;
+            vampiric->Remove();
+        }
+
+        if (amount == 0)
+            return;
+
+        ApplyPct(amount, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_PRIEST_PAINBREAKER_PSALM_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_painbreaker_psalm::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_painbreaker_psalm::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_blessed_recovery : public AuraScript
+{
+    PrepareAuraScript(rune_pri_blessed_recovery);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        amount /= 6;
+       
+        caster->CastCustomSpell(RUNE_PRIEST_BLESSED_RECOVERY_HOT, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_blessed_recovery::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_blessed_recovery::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_twist_of_fate : public AuraScript
+{
+    PrepareAuraScript(rune_pri_twist_of_fate);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = nullptr;
+
+        if (eventInfo.GetHealInfo())
+        {
+            target = eventInfo.GetHealInfo()->GetTarget();
+
+            if (eventInfo.GetHealInfo()->GetHeal() <= 0)
+                return;
+        }
+        else if (eventInfo.GetDamageInfo())
+        {
+            target = eventInfo.GetDamageInfo()->GetVictim();
+
+            if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+                return;
+        }
+
+        if (!target || target->isDead())
+            return;
+
+        int32 healthThreshold = aurEff->GetAmount();
+
+        if (target->GetHealthPct() > healthThreshold)
+            return;
+
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+
+        caster->AddAura(procSpell, caster);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_twist_of_fate::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_desperate_times : public AuraScript
+{
+    PrepareAuraScript(rune_pri_desperate_times);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 healthThreshold = GetEffect(EFFECT_1)->GetAmount();
+
+        if (target->GetHealthPct() > healthThreshold)
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_PRIEST_DESPERATE_TIMES_HEAL, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_desperate_times::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_desperate_times::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -747,9 +977,14 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_answered_prayers);
     RegisterSpellScript(rune_pri_lasting_renovation);
     RegisterSpellScript(rune_pri_renewed_faith);
+    RegisterSpellScript(rune_pri_catharstick);
+    RegisterSpellScript(rune_pri_deathspeaker);
+    RegisterSpellScript(rune_pri_painbreaker_psalm);
+    RegisterSpellScript(rune_pri_blessed_recovery);
+    RegisterSpellScript(rune_pri_twist_of_fate);
+    RegisterSpellScript(rune_pri_desperate_times);
 
 
 
-    
 }
 
