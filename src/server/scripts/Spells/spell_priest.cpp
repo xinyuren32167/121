@@ -72,8 +72,8 @@ enum PriestSpells
     SPELL_PRIEST_MANA_LEECH_PROC = 34650,
     SPELL_PRIEST_MASS_RESURRECTION = 81002,
     SPELL_PRIEST_PENANCE_R1 = 47540,
-    SPELL_PRIEST_PENANCE_R1_DAMAGE = 47758,
-    SPELL_PRIEST_PENANCE_R1_HEAL = 47757,
+    SPELL_PRIEST_PENANCE_PERIODIC_DAMAGE = 47758,
+    SPELL_PRIEST_PENANCE_PERIODIC_HEAL = 47757,
     SPELL_PRIEST_POWER_INFUSION = 10060,
     SPELL_PRIEST_POWER_WORD_LIFE = 81006,
     SPELL_PRIEST_POWER_WORD_LIFE_LISTENER = 81007,
@@ -614,9 +614,9 @@ class spell_pri_penance : public SpellScript
             return false;
 
         uint8 rank = spellInfo->GetRank();
-        if (!sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_R1_DAMAGE, rank, true))
+        if (!sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_PERIODIC_DAMAGE, rank, true))
             return false;
-        if (!sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_R1_HEAL, rank, true))
+        if (!sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_PERIODIC_HEAL, rank, true))
             return false;
 
         return true;
@@ -633,10 +633,10 @@ class spell_pri_penance : public SpellScript
             uint8 rank = GetSpellInfo()->GetRank();
 
             if (caster->IsFriendlyTo(unitTarget))
-                caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_R1_HEAL, rank), false);
+                caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_PERIODIC_HEAL, rank), false);
             else
             {
-                caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_R1_DAMAGE, rank), false);
+                caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PRIEST_PENANCE_PERIODIC_DAMAGE, rank), false);
 
                 if (unitTarget->HasAura(SPELL_PRIEST_PURGE_THE_WICKED))
                     caster->CastSpell(unitTarget, SPELL_PRIEST_PURGE_THE_WICKED_AOE, TRIGGERED_FULL_MASK);
@@ -668,6 +668,42 @@ class spell_pri_penance : public SpellScript
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_penance::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
         OnCheckCast += SpellCheckCastFn(spell_pri_penance::CheckCast);
+    }
+};
+
+// 47758 - Penance (damage periodic) / 47757 - Penance (heal periodic)
+class spell_pri_penance_hit : public SpellScript
+{
+    PrepareSpellScript(spell_pri_penance_hit);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_PRIEST_PENANCE_PERIODIC_DAMAGE) && !caster->HasAura(SPELL_PRIEST_PENANCE_PERIODIC_HEAL))
+        {
+            // Remove Power of the Dark Side buff.
+            for (size_t i = 900810; i < 900816; i++)
+            {
+                if (caster->HasAura(i))
+                    caster->RemoveAura(i);
+            }
+
+            // Remove Resonating Penance buff.
+            for (size_t i = 900834; i < 900840; i++)
+            {
+                if (caster->HasAura(i))
+                    caster->RemoveAura(i);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_penance_hit::HandleAfterHit);
     }
 };
 
@@ -739,6 +775,16 @@ static int32 CalculateSpellAmount(Unit* caster, float ratio, int32 amount, Spell
     else if (AuraEffect const* bgDampening = caster->GetAuraEffect(SPELL_GENERIC_BATTLEGROUND_DAMPENING, EFFECT_0))
     {
         AddPct(amount, bgDampening->GetAmount());
+    }
+
+    // Weal and Woe Rune Buff
+    for (size_t i = 900798; i < 900804; i++)
+    {
+        if (AuraEffect const* runeBuff = caster->GetAuraEffect(i, EFFECT_0))
+        {
+            AddPct(amount, runeBuff->GetAmount());
+            caster->RemoveAura(i);
+        }
     }
 
     return amount;
@@ -815,7 +861,7 @@ class spell_pri_power_word_shield_aura : public AuraScript
         if (Unit* caster = GetCaster())
         {
             amount = CalculateSpellAmount(caster, ratio, amount, GetSpellInfo(), aurEff);
-
+            LOG_ERROR("error", "amount = {}", amount);
             if (Aura* runeAura = GetAegisOfWrathAura(caster))
             {
                 int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
@@ -1030,7 +1076,7 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
 };
 
 
-// -32379 - Shadow Word: Death
+// 48158 - Shadow Word: Death
 class spell_pri_shadow_word_death : public SpellScript
 {
     PrepareSpellScript(spell_pri_shadow_word_death);
@@ -1054,23 +1100,18 @@ class spell_pri_shadow_word_death : public SpellScript
             return;
 
         Unit* target = GetHitUnit();
-        int32 damage = GetEffectValue();
-
-        ApplyPct(damage, GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW));
+        int32 damage = GetHitDamage();
 
         if (!target)
             return;
 
-        damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-
         int32 targetHealthPct = target->GetHealthPct();
-
+        LOG_ERROR("error", "damage = {}", damage);
         if (target->HealthBelowPct(20) || GetDeathspeakerBuff(caster))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
-
+        LOG_ERROR("error", "damage = {}", damage);
         SetHitDamage(damage);
 
         GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
@@ -3287,6 +3328,102 @@ class spell_pri_shadow_word_pain_aura : public AuraScript
     }
 };
 
+// 33206 - Pain Suppression
+class spell_pri_pain_suppression : public AuraScript
+{
+    PrepareAuraScript(spell_pri_pain_suppression);
+
+    Aura* GetPainTransformationAura(Unit* caster)
+    {
+        for (size_t i = 900774; i < 900780; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetPainTransformationAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+
+            if (caster->HasAura(SPELL_PRIEST_AUTONEMENT))
+                caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_pain_suppression::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 48123 - Smite
+class spell_pri_smite : public SpellScript
+{
+    PrepareSpellScript(spell_pri_smite);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Weal and Woe Rune Buff
+        for (size_t i = 900792; i < 900798; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_smite::HandleAfterHit);
+    }
+};
+
+// 81016 - Power Word: Solace
+class spell_pri_power_word_solace : public SpellScript
+{
+    PrepareSpellScript(spell_pri_power_word_solace);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Weal and Woe Rune Buff
+        for (size_t i = 900792; i < 900798; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_power_word_solace::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -3304,8 +3441,9 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mana_burn);
     RegisterSpellScript(spell_pri_mana_leech);
     RegisterSpellScript(spell_pri_mind_sear);
-    RegisterSpellScript(spell_pri_pain_and_suffering_proc);
+    RegisterSpellScript(spell_pri_pain_and_suffering_proc); 
     RegisterSpellScript(spell_pri_penance);
+    RegisterSpellScript(spell_pri_penance_hit);
     RegisterSpellScript(spell_pri_penance_purge);
     RegisterSpellAndAuraScriptPair(spell_pri_power_word_shield, spell_pri_power_word_shield_aura);
     RegisterSpellScript(spell_pri_prayer_of_mending_heal);
@@ -3368,10 +3506,13 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_renew);
     RegisterSpellScript(spell_pri_shadow_word_pain);
     RegisterSpellScript(spell_pri_shadow_word_pain_aura);
+    RegisterSpellScript(spell_pri_pain_suppression);
+    RegisterSpellScript(spell_pri_smite);
+    RegisterSpellScript(spell_pri_power_word_solace);
 
 
-
-
+    
+    
 
     new npc_pri_shadowy_apparitions();
 }

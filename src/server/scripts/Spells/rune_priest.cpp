@@ -14,11 +14,15 @@ enum PriestSpells
     // Spells
     SPELL_PRIEST_APOTHEOSIS = 81030,
     SPELL_PRIEST_APOTHEOSIS_HOLY_FORM = 81031,
+    SPELL_PRIEST_AUTONEMENT_AURA = 81010,
     SPELL_PRIEST_DEVOURING_PLAGUE = 48300,
     SPELL_PRIEST_FADE = 586,
     SPELL_PRIEST_FLASH_HEAL = 48071,
     SPELL_PRIEST_MIND_BLAST = 48127,
+    SPELL_PRIEST_PAIN_SUPPRESSION = 33206,
     SPELL_PRIEST_PENANCE = 47540,
+    SPELL_PRIEST_PENANCE_DAMAGE = 47666,
+    SPELL_PRIEST_PENANCE_HEAL = 47750,
     SPELL_PRIEST_POWER_WORD_SHIELD = 48066,
     SPELL_PRIEST_POWER_WORD_SOLACE = 81016,
     SPELL_PRIEST_PRAYER_OF_MENDING = 48113,
@@ -40,10 +44,13 @@ enum PriestSpells
     RUNE_PRIEST_PSYCHIC_LINK_DAMAGE = 900278,
     RUNE_PRIEST_EXPIATION_DAMAGE = 900310,
     RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER = 900492,
-    RUNE_PRIEST_RENEWED_FAITH_HEAL = 900524,
+    RUNE_PRIEST_RENEWED_FAITH_HEAL = 900530,
     RUNE_PRIEST_PAINBREAKER_PSALM_DAMAGE = 900686,
     RUNE_PRIEST_BLESSED_RECOVERY_HOT = 900718,
     RUNE_PRIEST_DESPERATE_TIMES_HEAL = 900750,
+
+    // Summons
+    SUMMON_PRIEST_GOLDEN_APPARITION = 900001,
 };
 
 class rune_pri_faded : public AuraScript
@@ -859,7 +866,7 @@ class rune_pri_blessed_recovery : public AuraScript
 
         int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
         amount /= 6;
-       
+
         caster->CastCustomSpell(RUNE_PRIEST_BLESSED_RECOVERY_HOT, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
 
@@ -955,6 +962,334 @@ class rune_pri_desperate_times : public AuraScript
     }
 };
 
+class rune_pri_golden_apparitions : public AuraScript
+{
+    PrepareAuraScript(rune_pri_golden_apparitions);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 apparitionNbr = aurEff->GetAmount();
+
+        if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+            apparitionNbr = GetEffect(EFFECT_1)->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            auto const& allyList = player->GetGroup()->GetMemberSlots();
+
+            for (auto const& target : allyList)
+            {
+                Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                if (alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_RENEW))
+                    continue;
+
+                int32 apparition = apparitionNbr;
+
+                while (apparition > 0)
+                {
+                    Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
+                    SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+                    Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
+
+                    if (!summon)
+                        continue;
+
+                    summon->SetOwnerGUID(caster->GetGUID());
+                    summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                    summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    summon->SetReactState(REACT_PASSIVE);
+                    summon->SetTarget(alliedPlayer->GetGUID());
+
+                    apparition--;
+                }
+            }
+        }
+
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_golden_apparitions::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// Golden Apparition Pet behaviour
+class npc_pri_golden_apparitions : public CreatureScript
+{
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 900756; i < 900762; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+public:
+    npc_pri_golden_apparitions() : CreatureScript("npc_pri_golden_apparitions") { }
+
+    struct spell_pri_golden_apparitionsAI : public ScriptedAI
+    {
+        spell_pri_golden_apparitionsAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 250;
+
+        void Reset() override
+        {
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 250) {
+                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                {
+                    Position pos = target->GetPosition();
+                    me->GetMotionMaster()->MovePoint(0, pos);
+                }
+                update = 0;
+            }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override
+        {
+            Unit* caster = me->GetOwner();
+
+            /*if (Aura* rune = GetRuneAura(caster))
+                if (id == 0) {
+                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                    {
+                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
+                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
+                    }
+
+                    me->DespawnOrUnsummon();
+                }*/
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new spell_pri_golden_apparitionsAI(creature);
+    }
+};
+
+class rune_pri_protector_of_the_frail : public AuraScript
+{
+    PrepareAuraScript(rune_pri_protector_of_the_frail);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_PRIEST_PAIN_SUPPRESSION, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_protector_of_the_frail::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_protector_of_the_frail::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_weal_and_woe : public AuraScript
+{
+    PrepareAuraScript(rune_pri_weal_and_woe);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 procSpell = 0;
+
+        if (spellID == SPELL_PRIEST_PENANCE_HEAL)
+            procSpell = aurEff->GetAmount();
+        else if (spellID == SPELL_PRIEST_PENANCE_DAMAGE)
+            procSpell = GetEffect(EFFECT_1)->GetAmount();
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_weal_and_woe::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_weal_and_woe::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_contemptuous_homily : public AuraScript
+{
+    PrepareAuraScript(rune_pri_contemptuous_homily);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = nullptr;
+
+        if (eventInfo.GetHealInfo())
+        {
+            target = eventInfo.GetHealInfo()->GetTarget();
+
+            if (eventInfo.GetHealInfo()->GetHeal() <= 0)
+                return;
+        }
+        else if (eventInfo.GetDamageInfo())
+        {
+            target = eventInfo.GetDamageInfo()->GetVictim();
+
+            if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+                return;
+        }
+
+        if (!target || target->isDead())
+            return;
+
+        int32 durationIncrease = aurEff->GetAmount();
+
+        if (Aura* swPain = target->GetAura(SPELL_PRIEST_SHADOW_WORD_PAIN))
+        {
+            int32 duration = swPain->GetDuration() + durationIncrease;
+            swPain->SetDuration(duration);
+            swPain->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* renew = target->GetAura(SPELL_PRIEST_RENEW))
+        {
+            int32 duration = renew->GetDuration() + durationIncrease;
+            renew->SetDuration(duration);
+            renew->GetEffect(EFFECT_0)->ResetTicks();
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_contemptuous_homily::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_blaze_of_light : public AuraScript
+{
+    PrepareAuraScript(rune_pri_blaze_of_light);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = nullptr;
+        int32 procSpell = 0;
+
+        if (eventInfo.GetHealInfo())
+        {
+            target = eventInfo.GetHealInfo()->GetTarget();
+            procSpell = GetEffect(EFFECT_1)->GetAmount();
+
+            if (eventInfo.GetHealInfo()->GetHeal() <= 0)
+                return;
+        }
+        else if (eventInfo.GetDamageInfo())
+        {
+            target = eventInfo.GetDamageInfo()->GetVictim();
+            procSpell = aurEff->GetAmount();
+
+            if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+                return;
+        }
+
+        if (!target || target->isDead())
+            return;
+
+        if (procSpell == 0)
+            return;
+
+        caster->AddAura(procSpell, target);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_blaze_of_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_contrition : public AuraScript
+{
+    PrepareAuraScript(rune_pri_contrition);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            auto const& allyList = player->GetGroup()->GetMemberSlots();
+
+            if (caster->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+
+            if (!player->GetGroup())
+                return;
+
+            if (allyList.size() <= 0)
+                return;
+
+            for (auto const& target : allyList)
+            {
+                Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                if (alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                    continue;
+
+                caster->CastSpell(alliedPlayer, procSpell, TRIGGERED_FULL_MASK); 
+            }
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_contrition::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -983,8 +1318,18 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_blessed_recovery);
     RegisterSpellScript(rune_pri_twist_of_fate);
     RegisterSpellScript(rune_pri_desperate_times);
+    RegisterSpellScript(rune_pri_golden_apparitions);
+    RegisterSpellScript(rune_pri_protector_of_the_frail);
+    RegisterSpellScript(rune_pri_weal_and_woe);
+    RegisterSpellScript(rune_pri_contemptuous_homily);
+    RegisterSpellScript(rune_pri_blaze_of_light);
+    RegisterSpellScript(rune_pri_contrition);
 
 
+    
+    
 
+
+    new npc_pri_golden_apparitions();
 }
 
