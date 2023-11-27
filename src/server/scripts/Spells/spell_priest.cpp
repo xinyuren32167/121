@@ -1900,7 +1900,7 @@ class spell_pri_light_wrath : public SpellScript
         int32 atonementPct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
         int32 atonementTarget = 0;
 
-        Player* player = GetCaster()->ToPlayer();
+        Player* player = caster->ToPlayer();
 
         if (!player)
             return;
