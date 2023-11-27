@@ -1905,7 +1905,7 @@ class spell_pri_light_wrath : public SpellScript
         if (!player)
             return;
 
-        Group* group = caster->ToPlayer()->GetGroup();
+        Group* group = player->GetGroup();
 
         if (!group)
             return;
