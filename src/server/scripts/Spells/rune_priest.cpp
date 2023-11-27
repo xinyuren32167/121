@@ -1290,6 +1290,81 @@ class rune_pri_contrition : public AuraScript
     }
 };
 
+class rune_pri_make_amends : public AuraScript
+{
+    PrepareAuraScript(rune_pri_make_amends);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = nullptr;
+        int32 procSpell = 0;
+
+        if (eventInfo.GetHealInfo())
+        {
+            target = eventInfo.GetHealInfo()->GetTarget();
+
+            if (eventInfo.GetHealInfo()->GetHeal() <= 0)
+                return;
+        }
+        else if (eventInfo.GetDamageInfo())
+        {
+            target = caster;
+
+            if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+                return;
+        }
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA))
+        {
+            int32 duration = atonement->GetDuration();
+            duration = std::min<int32>(duration + aurEff->GetAmount(), atonement->GetMaxDuration());
+            atonement->SetDuration(duration);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_make_amends::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_wicked_pain : public AuraScript
+{
+    PrepareAuraScript(rune_pri_wicked_pain);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA))
+        {
+            int32 duration = atonement->GetDuration();
+            atonement->SetDuration(duration + aurEff->GetAmount());
+        }
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(rune_pri_wicked_pain::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -1324,6 +1399,7 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_contemptuous_homily);
     RegisterSpellScript(rune_pri_blaze_of_light);
     RegisterSpellScript(rune_pri_contrition);
+    RegisterSpellScript(rune_pri_make_amends);
 
 
     

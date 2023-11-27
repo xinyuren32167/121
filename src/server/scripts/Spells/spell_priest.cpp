@@ -849,6 +849,17 @@ class spell_pri_power_word_shield_aura : public AuraScript
         return nullptr;
     }
 
+    Aura* GetIndemnityAura(Unit* caster)
+    {
+        for (size_t i = 900882; i < 900888; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_PRIEST_REFLECTIVE_SHIELD_TRIGGERED, SPELL_PRIEST_REFLECTIVE_SHIELD_R1 });
@@ -861,7 +872,7 @@ class spell_pri_power_word_shield_aura : public AuraScript
         if (Unit* caster = GetCaster())
         {
             amount = CalculateSpellAmount(caster, ratio, amount, GetSpellInfo(), aurEff);
-            LOG_ERROR("error", "amount = {}", amount);
+
             if (Aura* runeAura = GetAegisOfWrathAura(caster))
             {
                 int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
@@ -918,7 +929,17 @@ class spell_pri_power_word_shield_aura : public AuraScript
             return;
 
         if (caster->HasAura(SPELL_PRIEST_AUTONEMENT))
+        {
             caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+
+            if (Aura* runeAura = GetIndemnityAura(caster))
+            {
+                int32 duration = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                if (Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                    atonement->SetDuration(atonement->GetDuration() + duration);
+            }
+        }
 
         if (Aura* runeAura = GetBodyAndSoulAura(caster))
         {
@@ -1704,10 +1725,62 @@ class spell_pri_power_word_barrier : public SpellScript
     }
 };
 
+// 81017 - Purge the Wicked
+class spell_pri_purge_the_wicked_aura : public AuraScript
+{
+    PrepareAuraScript(spell_pri_purge_the_wicked_aura);
+
+    Aura* GetWickedPainAura(Unit* caster)
+    {
+        for (size_t i = 900930; i < 900936; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetWickedPainAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_purge_the_wicked_aura::HandleProc, EFFECT_2, SPELL_AURA_DUMMY);
+    }
+};
+
 // 81018 - Purge the Wicked AOE
 class spell_pri_purge_the_wicked : public SpellScript
 {
     PrepareSpellScript(spell_pri_purge_the_wicked);
+
+    Aura* GetRevelInPurityAura(Unit* caster)
+    {
+        for (size_t i = 900942; i < 900948; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
@@ -1716,17 +1789,46 @@ class spell_pri_purge_the_wicked : public SpellScript
         if (!caster || caster->isDead())
             return;
 
+        int32 targetNbr = 1;
+
+        if (Aura* runeAura = GetRevelInPurityAura(caster))
+            targetNbr++;
+
+        std::list<Unit*> wickedTargets = {};
+
         for (auto const& object : targets)
         {
             Unit* target = object->ToUnit();
 
-            if (target->isDead() || target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED))
+            if (target->isDead())
                 continue;
 
             if (target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
+            {
+                wickedTargets.emplace_back(target);
                 continue;
+            }
 
-            caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, true);
+            caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
+            targetNbr--;
+
+            if (targetNbr <= 0)
+                break;
+        }
+
+        if (targetNbr > 0)
+        {
+            for (auto const& target : wickedTargets)
+            {
+                if (target->isDead())
+                    continue;
+
+                caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
+                targetNbr--;
+
+                if (targetNbr <= 0)
+                    break;
+            }
         }
 
         caster->AddAura(SPELL_PRIEST_PURGE_THE_WICKED, GetExplTargetUnit());
@@ -1793,16 +1895,40 @@ class spell_pri_light_wrath : public SpellScript
 {
     PrepareSpellScript(spell_pri_light_wrath);
 
-    void HandleProc()
+    void HandleDamage(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
 
-        caster->CastSpell(caster, SPELL_PRIEST_LIGHTS_WRATH_AOE, TRIGGERED_FULL_MASK);
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+        int32 atonementPct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+        int32 atonementTarget = 0;
+
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            Group* group = caster->ToPlayer()->GetGroup();
+
+            if (group)
+            {
+                for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+                    if (Player* target = itr->GetSource())
+                        if (target->IsAlive() && !caster->IsHostileTo(target))
+                            if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                                atonementTarget++;
+
+                if (atonementTarget > 0)
+                    AddPct(damage, atonementPct * atonementTarget);
+            }          
+        }
+
+        SetHitDamage(damage);
     }
 
     void Register() override
     {
-        BeforeCast += SpellCastFn(spell_pri_light_wrath::HandleProc);
+        OnEffectHitTarget += SpellEffectFn(spell_pri_light_wrath::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -3441,7 +3567,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mana_burn);
     RegisterSpellScript(spell_pri_mana_leech);
     RegisterSpellScript(spell_pri_mind_sear);
-    RegisterSpellScript(spell_pri_pain_and_suffering_proc); 
+    RegisterSpellScript(spell_pri_pain_and_suffering_proc);
     RegisterSpellScript(spell_pri_penance);
     RegisterSpellScript(spell_pri_penance_hit);
     RegisterSpellScript(spell_pri_penance_purge);
@@ -3462,6 +3588,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_atonement_heal);
     RegisterSpellScript(spell_pri_power_word_radiance);
     RegisterSpellScript(spell_pri_power_word_barrier);
+    RegisterSpellScript(spell_pri_purge_the_wicked_aura);
     RegisterSpellScript(spell_pri_purge_the_wicked);
     RegisterSpellScript(spell_pri_rapture);
     RegisterSpellScript(spell_pri_evangelism);
@@ -3511,8 +3638,8 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_power_word_solace);
 
 
-    
-    
+
+
 
     new npc_pri_shadowy_apparitions();
 }
