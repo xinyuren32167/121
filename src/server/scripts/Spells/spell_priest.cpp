@@ -1911,17 +1911,18 @@ class spell_pri_light_wrath : public SpellScript
             Group* group = caster->ToPlayer()->GetGroup();
 
             if (group)
-            {
                 for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
                     if (Player* target = itr->GetSource())
                         if (target->IsAlive() && !caster->IsHostileTo(target))
                             if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
                                 atonementTarget++;
 
-                if (atonementTarget > 0)
-                    AddPct(damage, atonementPct * atonementTarget);
-            }          
+            if (caster->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                atonementTarget++;
         }
+
+        if (atonementTarget > 0)
+            AddPct(damage, atonementPct * atonementTarget);
 
         SetHitDamage(damage);
     }
