@@ -1912,8 +1912,8 @@ class spell_pri_light_wrath : public SpellScript
 
         for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
             if (Player* target = itr->GetSource())
-                    if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
-                        atonementTarget++;
+                if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                    atonementTarget++;
 
         if (atonementTarget > 0)
             AddPct(damage, atonementPct * atonementTarget);
