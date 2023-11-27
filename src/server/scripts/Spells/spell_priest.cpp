@@ -1789,49 +1789,43 @@ class spell_pri_purge_the_wicked : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        int32 targetNbr = 1;
+        int32 maxTarget = 1;
 
         if (Aura* runeAura = GetRevelInPurityAura(caster))
-            targetNbr++;
+            maxTarget++;
 
-        std::list<Unit*> wickedTargets = {};
+
+        targets.remove_if([caster](WorldObject const* target) -> bool
+        {
+            Unit const* plrTarget = target->ToUnit();
+            if (!plrTarget)
+                return true;
+
+            if (plrTarget->isDead())
+                return true;
+
+            if (plrTarget->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && plrTarget->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
+                return true;
+
+            return false;
+        });
 
         for (auto const& object : targets)
         {
             Unit* target = object->ToUnit();
 
-            if (target->isDead())
-                continue;
-
-            if (target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
-            {
-                wickedTargets.emplace_back(target);
+            if (Aura* aura = target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)) {
+                aura->RefreshDuration(true);
                 continue;
             }
 
             caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
-            targetNbr--;
 
-            if (targetNbr <= 0)
+            maxTarget--;
+
+            if (maxTarget <= 0)
                 break;
         }
-
-        if (targetNbr > 0)
-        {
-            for (auto const& target : wickedTargets)
-            {
-                if (target->isDead())
-                    continue;
-
-                caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
-                targetNbr--;
-
-                if (targetNbr <= 0)
-                    break;
-            }
-        }
-
-        caster->AddAura(SPELL_PRIEST_PURGE_THE_WICKED, GetExplTargetUnit());
     }
 
     void Register() override
@@ -1906,22 +1900,23 @@ class spell_pri_light_wrath : public SpellScript
         int32 atonementPct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
         int32 atonementTarget = 0;
 
-        if (Player* player = GetCaster()->ToPlayer())
-        {
-            Group* group = caster->ToPlayer()->GetGroup();
+        Player* player = GetCaster()->ToPlayer();
 
-            if (group)
-            {
-                for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
-                    if (Player* target = itr->GetSource())
-                        if (target->IsAlive() && !caster->IsHostileTo(target))
-                            if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
-                                atonementTarget++;
+        if (!player)
+            return;
 
-                if (atonementTarget > 0)
-                    AddPct(damage, atonementPct * atonementTarget);
-            }          
-        }
+        Group* group = caster->ToPlayer()->GetGroup();
+
+        if (!group)
+            return;
+
+        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+            if (Player* target = itr->GetSource())
+                    if (target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                        atonementTarget++;
+
+        if (atonementTarget > 0)
+            AddPct(damage, atonementPct * atonementTarget);
 
         SetHitDamage(damage);
     }
