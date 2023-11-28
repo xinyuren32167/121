@@ -1794,38 +1794,45 @@ class spell_pri_purge_the_wicked : public SpellScript
         if (Aura* runeAura = GetRevelInPurityAura(caster))
             maxTarget++;
 
-
-        targets.remove_if([caster](WorldObject const* target) -> bool
-        {
-            Unit const* plrTarget = target->ToUnit();
-            if (!plrTarget)
-                return true;
-
-            if (plrTarget->isDead())
-                return true;
-
-            if (plrTarget->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && plrTarget->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
-                return true;
-
-            return false;
-        });
+        std::list<Unit*> wickedTargets = {};
 
         for (auto const& object : targets)
         {
             Unit* target = object->ToUnit();
 
-            if (Aura* aura = target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)) {
-                aura->RefreshDuration(true);
+            if (target->isDead())
+                continue;
+            // if the target is already affected by Purge the Wicked switch it to the second list.
+            if (target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
+            {
+                wickedTargets.emplace_back(target);
                 continue;
             }
 
             caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
-
             maxTarget--;
 
             if (maxTarget <= 0)
                 break;
         }
+        // If there wasn't enough target without Purge the Wicked, cast it on the targets already affected by it
+        if (maxTarget > 0)
+        {
+            for (auto const& target : wickedTargets)
+            {
+                if (target->isDead())
+                    continue;
+
+                caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
+                maxTarget--;
+
+                if (maxTarget <= 0)
+                    break;
+            }
+        }
+        // No matter what refresh the duration of Purge the Wicked on the main target.
+        if (Aura* aura = GetExplTargetUnit()->GetAura(SPELL_PRIEST_PURGE_THE_WICKED))
+            aura->RefreshDuration(true);
     }
 
     void Register() override
