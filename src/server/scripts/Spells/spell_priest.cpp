@@ -55,6 +55,7 @@ enum PriestSpells
     SPELL_PRIEST_GLYPH_OF_CIRCLE_OF_HEALING = 55675,
     SPELL_PRIEST_GLYPH_OF_LIGHTWELL = 55673,
     SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL = 56161,
+    SPELL_PRIEST_GUARDIAN_SPIRIT = 47788,
     SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL = 48153,
     SPELL_PRIEST_HOLY_FIRE = 48135,
     SPELL_PRIEST_HOLY_WORD_CHASTISE = 81026,
@@ -350,6 +351,28 @@ class spell_pri_guardian_spirit : public AuraScript
 
     uint32 healPct;
 
+    Aura* GetGuardianAngelAura(Unit* caster)
+    {
+        for (size_t i = 901020; i < 901026; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetGuardiansoftheLightAura(Unit* caster)
+    {
+        for (size_t i = 901026; i < 901032; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL });
@@ -361,6 +384,36 @@ class spell_pri_guardian_spirit : public AuraScript
         return true;
     }
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetGuardiansoftheLightAura(caster))
+        {
+            if (target != caster)
+            {
+                int32 procPct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                int32 amount0 = CalculatePct(aurEff->GetAmount(), procPct);
+                int32 amount1 = CalculatePct(GetEffect(EFFECT_1)->GetAmount(), procPct);
+
+                caster->AddAura(SPELL_PRIEST_GUARDIAN_SPIRIT, caster);
+                if (Aura* guardianAura = caster->GetAura(SPELL_PRIEST_GUARDIAN_SPIRIT))
+                {
+                    guardianAura->GetEffect(EFFECT_0)->ChangeAmount(amount0);
+                    guardianAura->GetEffect(EFFECT_1)->ChangeAmount(amount1);
+                }
+            }
+        }
+    }
+
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
         // Set absorbtion amount to unlimited
@@ -369,22 +422,60 @@ class spell_pri_guardian_spirit : public AuraScript
 
     void Absorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetTarget();
-        if (dmgInfo.GetDamage() < target->GetHealth())
+        if (dmgInfo.GetDamage() < target->GetHealth() || hasSavedTheTarget)
             return;
 
         int32 healAmount = int32(target->CountPctFromMaxHealth(healPct));
-        // remove the aura now, we don't want 40% healing bonus
-        Remove(AURA_REMOVE_BY_ENEMY_SPELL);
+        // Remove the aura now, we don't want 40% healing bonus if you don't have the Guardian Angel Rune.
+        if (!GetGuardianAngelAura(caster)) 
+            Remove(AURA_REMOVE_BY_ENEMY_SPELL);
+
         target->CastCustomSpell(target, SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL, &healAmount, nullptr, nullptr, true);
         absorbAmount = dmgInfo.GetDamage();
+        hasSavedTheTarget = true;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Reduce cooldown if you have the Guardian Angel Rune and Guardien Spirit hasn't saved the target.
+            if (Aura* runeAura = GetGuardianAngelAura(caster))
+                if (!hasSavedTheTarget)
+                {
+                    int32 cooldown = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                    int32 remainingCooldown = player->GetSpellCooldownDelay(SPELL_PRIEST_GUARDIAN_SPIRIT);
+                    cooldown = remainingCooldown - cooldown;
+                    player->ModifySpellCooldown(SPELL_PRIEST_GUARDIAN_SPIRIT, -cooldown);
+                }
+        }
     }
 
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_guardian_spirit::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_guardian_spirit::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
         OnEffectAbsorb += AuraEffectAbsorbFn(spell_pri_guardian_spirit::Absorb, EFFECT_1);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_guardian_spirit::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
+private:
+    bool hasSavedTheTarget = false;
 };
 
 // 64904 - Hymn of Hope
@@ -1789,6 +1880,12 @@ class spell_pri_purge_the_wicked : public SpellScript
         if (!caster || caster->isDead())
             return;
 
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        targets.remove(target);
         int32 maxTarget = 1;
 
         if (Aura* runeAura = GetRevelInPurityAura(caster))
@@ -1798,18 +1895,18 @@ class spell_pri_purge_the_wicked : public SpellScript
 
         for (auto const& object : targets)
         {
-            Unit* target = object->ToUnit();
+            Unit* victim = object->ToUnit();
 
-            if (target->isDead())
+            if (victim->isDead())
                 continue;
             // if the target is already affected by Purge the Wicked switch it to the second list.
-            if (target->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
+            if (victim->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && victim->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
             {
-                wickedTargets.emplace_back(target);
+                wickedTargets.emplace_back(victim);
                 continue;
             }
 
-            caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
+            caster->CastSpell(victim, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
             maxTarget--;
 
             if (maxTarget <= 0)
@@ -1818,12 +1915,12 @@ class spell_pri_purge_the_wicked : public SpellScript
         // If there wasn't enough target without Purge the Wicked, cast it on the targets already affected by it
         if (maxTarget > 0)
         {
-            for (auto const& target : wickedTargets)
+            for (auto const& victim : wickedTargets)
             {
-                if (target->isDead())
+                if (victim->isDead())
                     continue;
 
-                caster->CastSpell(target, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
+                caster->CastSpell(victim, SPELL_PRIEST_PURGE_THE_WICKED, TRIGGERED_FULL_MASK);
                 maxTarget--;
 
                 if (maxTarget <= 0)
@@ -1831,7 +1928,7 @@ class spell_pri_purge_the_wicked : public SpellScript
             }
         }
         // No matter what refresh the duration of Purge the Wicked on the main target.
-        if (Aura* aura = GetExplTargetUnit()->GetAura(SPELL_PRIEST_PURGE_THE_WICKED))
+        if (Aura* aura = target->GetAura(SPELL_PRIEST_PURGE_THE_WICKED))
             aura->RefreshDuration(true);
     }
 
@@ -3055,6 +3152,13 @@ class spell_pri_flash_heal : public SpellScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove Resonant Words Rune Buff
+        for (size_t i = 901078; i < 901084; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
@@ -3552,6 +3656,77 @@ class spell_pri_power_word_solace : public SpellScript
     }
 };
 
+// 6064 - Heal
+class spell_pri_heal : public SpellScript
+{
+    PrepareSpellScript(spell_pri_heal);
+
+    Aura* GetEverlastingLightAura(Unit* caster)
+    {
+        for (size_t i = 901046; i < 901052; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleEffectHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        if (Aura* runeAura = GetEverlastingLightAura(caster))
+        {
+            int32 manaPct = caster->GetPowerPct(POWER_MANA);
+            int32 amountPct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 minimumThreshold = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            float effectiveness;
+
+            if (manaPct <= minimumThreshold)
+                effectiveness = 100;
+            if (manaPct > minimumThreshold)
+                effectiveness = 100 * (100 - manaPct) / (100 - minimumThreshold);
+
+            int32 finalPct = CalculatePct(amountPct, effectiveness);
+            AddPct(heal,finalPct);
+        }
+
+        SetHitHeal(heal);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Resonant Words Rune Buff
+        for (size_t i = 901078; i < 901084; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_heal::HandleEffectHit, EFFECT_0, SPELL_EFFECT_HEAL);
+        AfterHit += SpellHitFn(spell_pri_heal::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -3638,8 +3813,9 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_pain_suppression);
     RegisterSpellScript(spell_pri_smite);
     RegisterSpellScript(spell_pri_power_word_solace);
+    RegisterSpellScript(spell_pri_heal);
 
-
+    
 
 
 
