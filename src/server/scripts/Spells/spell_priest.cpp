@@ -63,6 +63,7 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_WORD_SALVATION_MENDING = 81040,
     SPELL_PRIEST_HOLY_WORD_SANCTIFY = 81029,
     SPELL_PRIEST_HOLY_WORD_SERENITY = 81025,
+    SPELL_PRIEST_INSANITY_ENERGIZE = 81093,
     SPELL_PRIEST_ITEM_EFFICIENCY = 37595,
     SPELL_PRIEST_LEAP_OF_FAITH = 81003,
     SPELL_PRIEST_LEAP_OF_FAITH_PROC = 81004,
@@ -136,6 +137,7 @@ enum PriestSpells
     RUNE_PRIEST_SHIELD_DISCIPLINE_ENERGIZE = 900374,
     RUNE_PRIEST_PRAYERFUL_LITANY_HEAL = 900418,
     RUNE_PRIEST_PRAYERFUL_LITANY_LISTENER = 900419,
+    RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD = 901156,
 };
 
 enum PriestSpellIcons
@@ -433,7 +435,7 @@ class spell_pri_guardian_spirit : public AuraScript
 
         int32 healAmount = int32(target->CountPctFromMaxHealth(healPct));
         // Remove the aura now, we don't want 40% healing bonus if you don't have the Guardian Angel Rune.
-        if (!GetGuardianAngelAura(caster)) 
+        if (!GetGuardianAngelAura(caster))
             Remove(AURA_REMOVE_BY_ENEMY_SPELL);
 
         target->CastCustomSpell(target, SPELL_PRIEST_GUARDIAN_SPIRIT_HEAL, &healAmount, nullptr, nullptr, true);
@@ -1318,6 +1320,17 @@ class spell_pri_vampiric_touch : public AuraScript
         return ValidateSpellInfo({ SPELL_PRIEST_VAMPIRIC_TOUCH_DISPEL });
     }
 
+    Aura* GetMentalFortitudeAura(Unit* caster)
+    {
+        for (size_t i = 901150; i < 901156; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleDispel(DispelInfo* dispelInfo)
     {
         if (Unit* caster = GetCaster())
@@ -1337,7 +1350,29 @@ class spell_pri_vampiric_touch : public AuraScript
 
         int32 heal = int32(CalculatePct(damage, healPct));
 
-        GetCaster()->CastCustomSpell(SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+        // Mental Fortitude rune, shield instead of healing if caster is at full health.
+        if (Aura* runeAura = GetMentalFortitudeAura(caster))
+            if (caster->GetHealthPct() == 100)
+            {
+                int32 maxAmount = CalculatePct(caster->GetMaxHealth(), runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+                if (Aura* shield = caster->GetAura(RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD))
+                {
+                    int32 amount = std::min<int32>(shield->GetEffect(EFFECT_0)->GetAmount() + heal, maxAmount);
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(amount);
+                    shield->RefreshDuration();
+                }
+                else
+                {
+                    int32 amount = std::min<int32>(heal, maxAmount);
+                    caster->CastCustomSpell(RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+                }
+
+                heal = 0;
+            }
+
+        if (heal > 0)
+            caster->CastCustomSpell(SPELL_PRIEST_VAMPIRIC_TOUCH_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1405,6 +1440,17 @@ class spell_pri_devouring_plague : public SpellScript
 {
     PrepareSpellScript(spell_pri_devouring_plague);
 
+    Aura* GetMentalFortitudeAura(Unit* caster)
+    {
+        for (size_t i = 901150; i < 901156; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleExtraDamage(SpellMissInfo missInfo)
     {
         Unit* caster = GetCaster();
@@ -1424,8 +1470,31 @@ class spell_pri_devouring_plague : public SpellScript
         int32 amount = damage * (remainingTicks + 1);
         int32 heal = int32(CalculatePct(amount, healPct));
 
+        // Mental Fortitude rune, shield instead of healing if caster is at full health.
+        if (Aura* runeAura = GetMentalFortitudeAura(caster))
+            if (caster->GetHealthPct() == 100)
+            {
+                int32 maxAmount = CalculatePct(caster->GetMaxHealth(), runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+                if (Aura* shield = caster->GetAura(RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD))
+                {
+                    int32 amount = std::min<int32>(shield->GetEffect(EFFECT_0)->GetAmount() + heal, maxAmount);
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(amount);
+                    shield->RefreshDuration();
+                }
+                else
+                {
+                    int32 amount = std::min<int32>(heal, maxAmount);
+                    caster->CastCustomSpell(RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+                }
+
+                heal = 0;
+            }
+
+        if (heal > 0)
+            caster->CastCustomSpell(caster, SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, &heal, nullptr, nullptr, true, nullptr, devouringEff);
+
         caster->CastCustomSpell(target, SPELL_PRIEST_DEVOURING_PLAGUE_EXTRA_DAMAGE, &amount, nullptr, nullptr, true, nullptr, devouringEff);
-        caster->CastCustomSpell(caster, SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, &heal, nullptr, nullptr, true, nullptr, devouringEff);
     }
 
     void HandleHealing()
@@ -1473,14 +1542,46 @@ class spell_pri_devouring_plague_heal : public AuraScript
 {
     PrepareAuraScript(spell_pri_devouring_plague_heal);
 
+    Aura* GetMentalFortitudeAura(Unit* caster)
+    {
+        for (size_t i = 901150; i < 901156; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
-
         int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
         int32 heal = int32(CalculatePct(aurEff->GetAmount(), healPct));
 
-        GetCaster()->CastCustomSpell(SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+        // Mental Fortitude rune, shield instead of healing if caster is at full health.
+        if (Aura* runeAura = GetMentalFortitudeAura(caster))
+            if (caster->GetHealthPct() == 100)
+            {
+                int32 maxAmount = CalculatePct(caster->GetMaxHealth(), runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+                if (Aura* shield = caster->GetAura(RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD))
+                {
+                    int32 amount = std::min<int32>(shield->GetEffect(EFFECT_0)->GetAmount() + heal, maxAmount);
+                    shield->GetEffect(EFFECT_0)->ChangeAmount(amount);
+                    shield->RefreshDuration();
+                }
+                else
+                {
+                    int32 amount = std::min<int32>(heal, maxAmount);
+                    caster->CastCustomSpell(RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+                }
+
+                heal = 0;
+            }
+
+        if (heal > 0)
+            caster->CastCustomSpell(SPELL_PRIEST_DEVOURING_PLAGUE_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -2451,7 +2552,7 @@ class spell_pri_insanity_on_cast : public SpellScript
 
         int32 insanityAmount = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
 
-        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + insanityAmount, true);
+        caster->CastCustomSpell(SPELL_PRIEST_INSANITY_ENERGIZE, SPELLVALUE_BASE_POINT0, insanityAmount, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2471,7 +2572,7 @@ class spell_pri_insanity_on_periodic : public AuraScript
 
         int32 insanityAmount = aurEff->GetAmount();
 
-        caster->SetPower(POWER_RUNIC_POWER, caster->GetPower(POWER_RUNIC_POWER) + insanityAmount, true);
+        caster->CastCustomSpell(SPELL_PRIEST_INSANITY_ENERGIZE, SPELLVALUE_BASE_POINT0, insanityAmount, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -3699,7 +3800,7 @@ class spell_pri_heal : public SpellScript
                 effectiveness = 100 * (100 - manaPct) / (100 - minimumThreshold);
 
             int32 finalPct = CalculatePct(amountPct, effectiveness);
-            AddPct(heal,finalPct);
+            AddPct(heal, finalPct);
         }
 
         SetHitHeal(heal);
@@ -3718,12 +3819,71 @@ class spell_pri_heal : public SpellScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove Lightweaver Rune Buff
+        for (size_t i = 901090; i < 901096; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_heal::HandleEffectHit, EFFECT_0, SPELL_EFFECT_HEAL);
         AfterHit += SpellHitFn(spell_pri_heal::HandleAfterHit);
+    }
+};
+
+// 48156 - Mind Flay
+class spell_pri_mind_flay : public AuraScript
+{
+    PrepareAuraScript(spell_pri_mind_flay);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Surge of Insanity Rune Buff
+        for (size_t i = 901164; i < 901176; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_mind_flay::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 81048 - Mind Spike
+class spell_pri_mind_spike : public SpellScript
+{
+    PrepareSpellScript(spell_pri_mind_spike);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Surge of Insanity Rune Buff
+        for (size_t i = 901164; i < 901176; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pri_mind_spike::HandleAfterHit);
     }
 };
 
@@ -3814,10 +3974,11 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_smite);
     RegisterSpellScript(spell_pri_power_word_solace);
     RegisterSpellScript(spell_pri_heal);
+    RegisterSpellScript(spell_pri_mind_flay);
+    RegisterSpellScript(spell_pri_mind_spike);
 
-    
 
 
-
+        
     new npc_pri_shadowy_apparitions();
 }

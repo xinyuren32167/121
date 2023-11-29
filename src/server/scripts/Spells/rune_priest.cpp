@@ -1022,7 +1022,7 @@ class rune_pri_golden_apparitions : public AuraScript
 
 // Golden Apparition Pet behaviour
 class npc_pri_golden_apparitions : public CreatureScript
-{   
+{
 public:
     npc_pri_golden_apparitions() : CreatureScript("npc_pri_golden_apparitions") { }
 
@@ -1371,7 +1371,7 @@ class rune_pri_phyrinxs_embrace : public AuraScript
             if (group)
             {
                 auto const& allyList = player->GetGroup()->GetMemberSlots();
-                
+
                 for (auto const& ally : allyList)
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(ally.guid);
@@ -1424,14 +1424,115 @@ class rune_pri_trail_of_light : public AuraScript
         if (!target || target->isDead())
             return;
 
-        RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER;
-        //caster->CastCustomSpell(RUNE_PRIEST_TRAIL_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, amount, _oldTarget, TRIGGERED_FULL_MASK);
+        if (target->HasAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER))
+            return;
+
+        Unit* oldTarget = target;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Group* group = player->GetGroup();
+
+            if (group)
+            {
+                auto const& allyList = player->GetGroup()->GetMemberSlots();
+
+                for (auto const& ally : allyList)
+                {
+                    Player* alliedPlayer = ObjectAccessor::FindPlayer(ally.guid);
+
+                    if (alliedPlayer->HasAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER))
+                        oldTarget = alliedPlayer;
+                }
+
+                if (group->IsMember(target->GetGUID()))
+                {
+                    caster->AddAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER, target);
+
+                    if (oldTarget != target)
+                        oldTarget->RemoveAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER);
+                }
+
+                if (oldTarget == target || oldTarget->isDead())
+                    return;
+
+                caster->CastCustomSpell(RUNE_PRIEST_TRAIL_OF_LIGHT_HEAL, SPELLVALUE_BASE_POINT0, amount, oldTarget, TRIGGERED_FULL_MASK);
+            }
+        }
     }
 
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_pri_trail_of_light::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pri_trail_of_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_screams_of_the_void : public AuraScript
+{
+    PrepareAuraScript(rune_pri_screams_of_the_void);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        auto const& threatList = caster->getAttackers();
+
+        for (auto const& targets : threatList)
+            if (targets->IsAlive())
+            {
+                if (Aura* vampiric = targets->GetAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+                {
+                    vampiric->GetEffect(EFFECT_0)->ResetTicks();
+                    vampiric->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
+                }
+
+                if (Aura* swPain = targets->GetAura(SPELL_PRIEST_SHADOW_WORD_PAIN))
+                {
+                    swPain->GetEffect(EFFECT_0)->ResetTicks();
+                    swPain->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
+                }
+            }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        auto const& threatList = caster->getAttackers();
+
+        for (auto const& targets : threatList)
+            if (targets->IsAlive())
+            {
+                if (Aura* vampiric = targets->GetAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+                {
+                    vampiric->GetEffect(EFFECT_0)->ResetTicks();
+                    vampiric->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
+                }
+
+                if (Aura* swPain = targets->GetAura(SPELL_PRIEST_SHADOW_WORD_PAIN))
+                {
+                    swPain->GetEffect(EFFECT_0)->ResetTicks();
+                    swPain->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
+                }
+            }
+    }
+
+    void Register()
+    {
+        AfterEffectApply += AuraEffectApplyFn(rune_pri_screams_of_the_void::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(rune_pri_screams_of_the_void::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1472,10 +1573,11 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_make_amends);
     RegisterSpellScript(rune_pri_phyrinxs_embrace);
     RegisterSpellScript(rune_pri_trail_of_light);
+    RegisterSpellScript(rune_pri_screams_of_the_void);
 
 
 
-    
+
 
 
     new npc_pri_golden_apparitions();
