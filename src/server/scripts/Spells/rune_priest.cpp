@@ -19,7 +19,11 @@ enum PriestSpells
     SPELL_PRIEST_FADE = 586,
     SPELL_PRIEST_FLASH_HEAL = 48071,
     SPELL_PRIEST_GUARDIAN_SPIRIT = 47788,
+    SPELL_PRIEST_INSANITY_ENERGIZE = 81093,
     SPELL_PRIEST_MIND_BLAST = 48127,
+    SPELL_PRIEST_MIND_FLAY = 48156,
+    SPELL_PRIEST_MIND_DAMAGE = 48156,
+    SPELL_PRIEST_MIND_SPIKE = 81048,
     SPELL_PRIEST_PAIN_SUPPRESSION = 33206,
     SPELL_PRIEST_PENANCE = 47540,
     SPELL_PRIEST_PENANCE_DAMAGE = 47666,
@@ -33,6 +37,7 @@ enum PriestSpells
     SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
     SPELL_PRIEST_SMITE = 48123,
     SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
+    SPELL_PRIEST_VOID_TORRENT = 81049,
 
     // Talents
     TALENT_PRIEST_SHADOWY_APPARITIONS_DAMAGE = 81086,
@@ -53,9 +58,15 @@ enum PriestSpells
     RUNE_PRIEST_GOLDEN_APPARITION_VISUAL = 901039,
     RUNE_PRIEST_TRAIL_OF_LIGHT_HEAL = 901046,
     RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER = 901047,
+    RUNE_PRIEST_UNFURLING_DARKNESS_DEBUFF = 901282,
+    RUNE_PRIEST_IDOL_OF_NZOTH_ECHOING = 901302,
+    RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC = 901303,
+    RUNE_PRIEST_IDOL_OF_NZOTH_DAMAGE = 901304,
 
     // Summons
     SUMMON_PRIEST_GOLDEN_APPARITION = 900001,
+    SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_TENDRIL = 900002,
+    SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_LASHER = 900003,
 };
 
 class rune_pri_faded : public AuraScript
@@ -1472,11 +1483,6 @@ class rune_pri_screams_of_the_void : public AuraScript
 {
     PrepareAuraScript(rune_pri_screams_of_the_void);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetSpellInfo();
-    }
-
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -1536,6 +1542,384 @@ class rune_pri_screams_of_the_void : public AuraScript
     }
 };
 
+class rune_pri_idol_of_cthun : public AuraScript
+{
+    PrepareAuraScript(rune_pri_idol_of_cthun);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (spellID != SPELL_PRIEST_MIND_FLAY && spellID != SPELL_PRIEST_MIND_SPIKE && spellID != SPELL_PRIEST_VOID_TORRENT)
+            return;
+
+        auto const& threatList = caster->getAttackers();
+        int32 targetNbr = 0;
+
+        for (auto const& targets : threatList)
+            if (targets->IsAlive())
+            {
+                if (target == targets)
+                    continue;
+
+                int32 distance = target->GetDistance(targets);
+
+                if (distance < 10)
+                    targetNbr++;
+            }
+
+        int32 summonedCreature = SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_TENDRIL;
+
+        if (targetNbr >= 2)
+            summonedCreature = SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_LASHER;
+
+        Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = caster->SummonCreature(summonedCreature, pos, TEMPSUMMON_TIMED_DESPAWN, 16000, 0, properties);
+
+        if (!summon)
+            return;
+
+        summon->SetOwnerGUID(caster->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetTarget(target->GetGUID());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_idol_of_cthun::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_idol_of_cthun::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// Golden Apparition Pet behaviour
+class npc_pri_idol_of_cthun : public CreatureScript
+{
+public:
+    npc_pri_idol_of_cthun() : CreatureScript("npc_pri_idol_of_cthun") { }
+
+    struct rune_pri_idol_of_cthunAI : public ScriptedAI
+    {
+        Aura* GetRuneAura(Unit* caster)
+        {
+            for (size_t i = 900756; i < 900762; i++)
+            {
+                if (caster->HasAura(i))
+                    return caster->GetAura(i);
+            }
+
+            return nullptr;
+        }
+
+        rune_pri_idol_of_cthunAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 250;
+
+        void Reset() override
+        {
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 250) {
+                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                {
+                    Position pos = target->GetPosition();
+                    me->GetMotionMaster()->MovePoint(0, pos);
+                }
+                update = 0;
+            }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override
+        {
+            Unit* caster = me->GetOwner();
+
+            if (Aura* rune = GetRuneAura(caster))
+                if (id == 0) {
+                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                    {
+                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
+                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
+                    }
+
+                    me->DespawnOrUnsummon();
+                }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new rune_pri_idol_of_cthunAI(creature);
+    }
+};
+
+class rune_pri_idol_of_cthun_energize : public SpellScript
+{
+    PrepareSpellScript(rune_pri_idol_of_cthun_energize);
+
+    void HandleProc()
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 insanityAmount = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+
+        caster->CastCustomSpell(SPELL_PRIEST_INSANITY_ENERGIZE, SPELLVALUE_BASE_POINT0, insanityAmount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_pri_idol_of_cthun_energize::HandleProc);
+    }
+};
+
+class rune_pri_mental_decay : public AuraScript
+{
+    PrepareAuraScript(rune_pri_mental_decay);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!eventInfo.GetSpellInfo())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 durationIncrease = aurEff->GetAmount();
+
+        if (spellID == SPELL_PRIEST_MIND_SPIKE)
+            durationIncrease *= 2;
+
+        if (Aura* vampiric = target->GetAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+        {
+            int32 duration = std::min<int32>(vampiric->GetDuration() + durationIncrease, vampiric->GetMaxDuration());
+            vampiric->SetDuration(duration);
+            vampiric->GetEffect(EFFECT_0)->ResetTicks();
+        }
+
+        if (Aura* swPain = target->GetAura(SPELL_PRIEST_SHADOW_WORD_PAIN))
+        {
+            int32 duration = std::min<int32>(swPain->GetDuration() + durationIncrease, swPain->GetMaxDuration());
+            swPain->SetDuration(duration);
+            swPain->GetEffect(EFFECT_0)->ResetTicks();
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_mental_decay::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_mental_decay::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_dark_evangelism : public AuraScript
+{
+    PrepareAuraScript(rune_pri_dark_evangelism);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_dark_evangelism::CheckProc);
+    }
+};
+
+class rune_pri_unfurling_darkness : public AuraScript
+{
+    PrepareAuraScript(rune_pri_unfurling_darkness);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        return !caster->HasAura(RUNE_PRIEST_UNFURLING_DARKNESS_DEBUFF);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_unfurling_darkness::CheckProc);
+    }
+};
+
+class rune_pri_idol_of_nzoth : public AuraScript
+{
+    PrepareAuraScript(rune_pri_idol_of_nzoth);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procChance = GetEffect(EFFECT_1)->GetAmount();
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        caster->AddAura(RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC, target);          
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 stack = aurEff->GetAmount();
+
+        while (stack > 0)
+        {
+            caster->CastSpell(target, RUNE_PRIEST_IDOL_OF_NZOTH_DAMAGE, TRIGGERED_FULL_MASK);
+            stack--;
+        }
+
+        Remove();
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (target->HasAura(RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC))
+            target->RemoveAura(RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC);
+    }
+
+    void Register()
+    {
+        AfterEffectApply += AuraEffectApplyFn(rune_pri_idol_of_nzoth::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectProc += AuraEffectProcFn(rune_pri_idol_of_nzoth::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pri_idol_of_nzoth::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_idol_of_nzoth_periodic : public AuraScript
+{
+    PrepareAuraScript(rune_pri_idol_of_nzoth_periodic);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* echoing = target->GetAura(RUNE_PRIEST_IDOL_OF_NZOTH_ECHOING))
+        {
+            caster->CastSpell(target, RUNE_PRIEST_IDOL_OF_NZOTH_DAMAGE, TRIGGERED_FULL_MASK);
+            echoing->ModStackAmount(-1);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_pri_idol_of_nzoth_periodic::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_pri_whispering_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_pri_whispering_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        caster->CastSpell(target, SPELL_PRIEST_VAMPIRIC_TOUCH, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_whispering_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_whispering_shadows::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -1574,12 +1958,21 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_phyrinxs_embrace);
     RegisterSpellScript(rune_pri_trail_of_light);
     RegisterSpellScript(rune_pri_screams_of_the_void);
+    RegisterSpellScript(rune_pri_idol_of_cthun);
+    RegisterSpellScript(rune_pri_idol_of_cthun_energize);
+    RegisterSpellScript(rune_pri_mental_decay);
+    RegisterSpellScript(rune_pri_dark_evangelism);
+    RegisterSpellScript(rune_pri_unfurling_darkness);
+    RegisterSpellScript(rune_pri_idol_of_nzoth);
+    RegisterSpellScript(rune_pri_idol_of_nzoth_periodic);
+    RegisterSpellScript(rune_pri_whispering_shadows);
 
-
-
-
-
+    
+    
+    
+    
 
     new npc_pri_golden_apparitions();
+    new npc_pri_idol_of_cthun();
 }
 
