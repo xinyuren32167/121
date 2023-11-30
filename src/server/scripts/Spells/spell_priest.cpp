@@ -2700,6 +2700,59 @@ class spell_pri_shadowy_apparitions_aoe : public SpellScript
     }
 };
 
+// 81086 - Shadowy Apparition Damage
+class spell_pri_shadowy_apparitions_damage : public SpellScript
+{
+    PrepareSpellScript(spell_pri_shadowy_apparitions_damage);
+
+    Aura* GetPhantasmalPathogenAura(Unit* caster)
+    {
+        for (size_t i = 901342; i < 901348; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleEffectHit(SpellEffIndex effIndex)
+    {
+        Unit* shadow = GetCaster();
+
+        if (!shadow || shadow->isDead())
+            return;
+
+        Unit* caster = shadow->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Aura* runeAura = GetPhantasmalPathogenAura(caster))
+        {
+            if (target->HasAura(SPELL_PRIEST_DEVOURING_PLAGUE))
+            {
+                int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, increasePct);
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_shadowy_apparitions_damage::HandleEffectHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 // Shadowy Apparition Pet
 class npc_pri_shadowy_apparitions : public CreatureScript
 {
@@ -3312,6 +3365,13 @@ class spell_pri_mind_blast : public SpellScript
 
         // Remove Anund's Shackles Rune Buff
         for (size_t i = 900266; i < 900272; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Remove Mind Melt Rune Buff
+        for (size_t i = 901318; i < 901324; i++)
         {
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
@@ -3948,7 +4008,8 @@ void AddSC_priest_spell_scripts()
     //RegisterSpellScript(spell_pri_death_tap);
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
-    RegisterSpellScript(spell_pri_prayer_of_mending);
+    RegisterSpellScript(spell_pri_shadowy_apparitions_damage);
+    RegisterSpellScript(spell_pri_prayer_of_mending); 
     RegisterSpellScript(spell_pri_holy_blossom);
     RegisterSpellScript(spell_pri_holy_flame);
     RegisterSpellScript(spell_pri_holy_might);
