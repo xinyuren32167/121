@@ -1832,8 +1832,6 @@ class rune_pri_idol_of_nzoth : public AuraScript
             caster->CastSpell(target, RUNE_PRIEST_IDOL_OF_NZOTH_DAMAGE, TRIGGERED_FULL_MASK);
             stack--;
         }
-
-        Remove();
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)

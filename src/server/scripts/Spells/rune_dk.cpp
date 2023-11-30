@@ -73,7 +73,7 @@ class rune_frozen_pulse : public AuraScript
         Player* player = caster->ToPlayer();
 
         if (!player)
-            return;
+            return false;
 
         return AtLeastTwoRuneAvailable(player);
     }
