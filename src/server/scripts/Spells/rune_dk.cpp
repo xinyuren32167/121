@@ -15,6 +15,7 @@ enum DeathKnightSpells
     SPELL_SHIELD_PERMAFROST = 600029,
     SPELL_FROZEN_PUSLE = 600037,
     SPELL_ANTI_MAGIC_BARRIER_HEAL = 600066,
+    SPELL_BLOOD_TRANSFUSION = 600095,
 };
 
 
@@ -73,7 +74,7 @@ class rune_frozen_pulse : public AuraScript
         Player* player = caster->ToPlayer();
 
         if (!player)
-            return;
+            return false;
 
         return AtLeastTwoRuneAvailable(player);
     }
@@ -135,9 +136,37 @@ class rune_blood_feast: public AuraScript
 };
 
 
+class rune_blood_transfusion : public AuraScript
+{
+    PrepareAuraScript(rune_blood_transfusion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
+            return;
+
+        Unit* caster = GetCaster();
+
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        caster->CastCustomSpell(SPELL_BLOOD_TRANSFUSION, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_blood_transfusion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_blood_transfusion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     new rune_permafrost();
     new rune_frozen_pulse();
     new rune_blood_feast();
+    new rune_blood_transfusion();
 }
