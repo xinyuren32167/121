@@ -138,6 +138,7 @@ enum PriestSpells
     RUNE_PRIEST_PRAYERFUL_LITANY_HEAL = 900418,
     RUNE_PRIEST_PRAYERFUL_LITANY_LISTENER = 900419,
     RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD = 901156,
+    RUNE_PRIEST_HOLY_BLOOD_SHIELD = 901428,
 };
 
 enum PriestSpellIcons
@@ -2617,6 +2618,22 @@ class spell_pri_shadowy_apparitions : public AuraScript
 {
     PrepareAuraScript(spell_pri_shadowy_apparitions);
 
+    Aura* GetTormentedSpiritsAura(Unit* caster)
+    {
+        for (size_t i = 901360; i < 901366; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetDamageInfo();
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
@@ -2625,10 +2642,30 @@ class spell_pri_shadowy_apparitions : public AuraScript
         if (!target || !caster)
             return;
 
+        int32 procID = eventInfo.GetSpellInfo()->Id;
+
+        // Return if Devouring Plague dot damage
+        if (procID == SPELL_PRIEST_DEVOURING_PLAGUE && eventInfo.GetDamageInfo()->GetDamageType() == DOT)
+            return;
+
         int32 shadowNbr = aurEff->GetAmount();
 
         if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
             shadowNbr = GetEffect(EFFECT_1)->GetAmount();
+
+        if (procID == SPELL_PRIEST_SHADOW_WORD_PAIN)
+        {
+            if (Aura* runeAura = GetTormentedSpiritsAura(caster))
+            {
+                int32 procChance = aurEff->GetAmount();
+
+                if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+                    procChance = GetEffect(EFFECT_1)->GetAmount();
+
+                if (!roll_chance_i(procChance))
+                    return;
+            }
+        }
 
         GetEffect(EFFECT_2)->SetAmount(shadowNbr);
         caster->CastSpell(caster, SPELL_PRIEST_SHADOWY_APPARITIONS_AOE, TRIGGERED_FULL_MASK);
@@ -2636,6 +2673,7 @@ class spell_pri_shadowy_apparitions : public AuraScript
 
     void Register()
     {
+        DoCheckProc += AuraCheckProcFn(spell_pri_shadowy_apparitions::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_pri_shadowy_apparitions::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -2948,6 +2986,58 @@ class spell_pri_holy_blossom : public SpellScript
 {
     PrepareSpellScript(spell_pri_holy_blossom);
 
+    Aura* GetDreamofSpringAura(Unit* caster)
+    {
+        for (size_t i = 901466; i < 901472; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (Aura* runeAura = GetDreamofSpringAura(caster))
+            {
+                auto const& allyList = player->GetGroup()->GetMemberSlots();
+                int32 durationIncrease = 1000;
+
+                if (Aura* damage = caster->GetAura(SPELL_PRIEST_HOLY_MIGHT))
+                    damage->SetDuration(std::min<int32>(damage->GetDuration() + durationIncrease, damage->GetMaxDuration()));
+
+                if (player->GetGroup() && allyList.size() > 0)
+                    for (auto const& target : allyList)
+                    {                       
+                        Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                        if (alliedPlayer->isDead())
+                            continue;
+
+                        if (Aura* strength = alliedPlayer->GetAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH))
+                            strength->SetDuration(std::min<int32>(strength->GetDuration() + durationIncrease, strength->GetMaxDuration()));
+
+                        if (Aura* agility = alliedPlayer->GetAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY))
+                            agility->SetDuration(std::min<int32>(agility->GetDuration() + durationIncrease, agility->GetMaxDuration()));
+
+                        if (Aura* intellect = alliedPlayer->GetAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT))
+                            intellect->SetDuration(std::min<int32>(intellect->GetDuration() + durationIncrease, intellect->GetMaxDuration()));
+
+                        if (Aura* spirit = alliedPlayer->GetAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+                            spirit->SetDuration(std::min<int32>(spirit->GetDuration() + durationIncrease, spirit->GetMaxDuration()));
+                    }
+            }
+        }
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
@@ -2963,6 +3053,7 @@ class spell_pri_holy_blossom : public SpellScript
 
     void Register() override
     {
+        OnCast += SpellCastFn(spell_pri_holy_blossom::HandleCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_holy_blossom::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
     }
 };
@@ -3947,6 +4038,59 @@ class spell_pri_mind_spike : public SpellScript
     }
 };
 
+// 86200 - Blistering Barriers
+class spell_pri_blistering_barriers : public AuraScript
+{
+    PrepareAuraScript(spell_pri_blistering_barriers);
+
+    Aura* GetHolyBloodAura(Unit* caster)
+    {
+        for (size_t i = 901422; i < 901428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetHolyBloodAura(caster))
+        {
+            int32 healthPct = caster->GetHealthPct();
+            int32 amountPct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 amount = CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), amountPct);
+            int32 minimumThreshold = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            float effectiveness;
+
+            if (healthPct <= minimumThreshold)
+                effectiveness = 100;
+            if (healthPct > minimumThreshold)
+                effectiveness = 100 * (100 - healthPct) / (100 - minimumThreshold);
+
+            ApplyPct(amount, effectiveness);
+
+            caster->CastCustomSpell(RUNE_PRIEST_HOLY_BLOOD_SHIELD, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_pri_blistering_barriers::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -4009,7 +4153,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_shadowy_apparitions);
     RegisterSpellScript(spell_pri_shadowy_apparitions_aoe);
     RegisterSpellScript(spell_pri_shadowy_apparitions_damage);
-    RegisterSpellScript(spell_pri_prayer_of_mending); 
+    RegisterSpellScript(spell_pri_prayer_of_mending);
     RegisterSpellScript(spell_pri_holy_blossom);
     RegisterSpellScript(spell_pri_holy_flame);
     RegisterSpellScript(spell_pri_holy_might);
@@ -4037,9 +4181,10 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_heal);
     RegisterSpellScript(spell_pri_mind_flay);
     RegisterSpellScript(spell_pri_mind_spike);
+    RegisterSpellScript(spell_pri_blistering_barriers);
 
 
 
-        
+
     new npc_pri_shadowy_apparitions();
 }

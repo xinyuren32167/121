@@ -19,6 +19,7 @@ enum PriestSpells
     SPELL_PRIEST_FADE = 586,
     SPELL_PRIEST_FLASH_HEAL = 48071,
     SPELL_PRIEST_GUARDIAN_SPIRIT = 47788,
+    SPELL_PRIEST_HOLY_BINDING = 86202,
     SPELL_PRIEST_INSANITY_ENERGIZE = 81093,
     SPELL_PRIEST_MIND_BLAST = 48127,
     SPELL_PRIEST_MIND_FLAY = 48156,
@@ -67,6 +68,7 @@ enum PriestSpells
     SUMMON_PRIEST_GOLDEN_APPARITION = 900001,
     SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_TENDRIL = 900002,
     SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_LASHER = 900003,
+    SUMMON_PRIEST_IDOL_YOGG_SARON_THING_FROM_BEYOND = 900004,
 };
 
 class rune_pri_faded : public AuraScript
@@ -1608,7 +1610,7 @@ class rune_pri_idol_of_cthun : public AuraScript
     }
 };
 
-// Golden Apparition Pet behaviour
+// C'thun Pet behaviour
 class npc_pri_idol_of_cthun : public CreatureScript
 {
 public:
@@ -1810,7 +1812,7 @@ class rune_pri_idol_of_nzoth : public AuraScript
         if (!roll_chance_i(procChance))
             return;
 
-        caster->AddAura(RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC, target);          
+        caster->AddAura(RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC, target);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -1918,6 +1920,210 @@ class rune_pri_whispering_shadows : public AuraScript
     }
 };
 
+class rune_pri_idol_of_yogg_saron : public AuraScript
+{
+    PrepareAuraScript(rune_pri_idol_of_yogg_saron);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 stacks = GetStackAmount();
+
+        if (stacks < GetEffect(EFFECT_1)->GetAmount())
+            return;
+
+        Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        Creature* summon = caster->SummonCreature(SUMMON_PRIEST_IDOL_YOGG_SARON_THING_FROM_BEYOND, pos, TEMPSUMMON_TIMED_DESPAWN, 20500, 0, properties);
+
+        if (!summon)
+            return;
+
+        summon->SetOwnerGUID(caster->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetTarget(target->GetGUID());
+
+        caster->RemoveAura(GetAura());
+    }
+
+    void Register()
+    {
+        AfterEffectApply += AuraEffectApplyFn(rune_pri_idol_of_yogg_saron::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+// C'thun Pet behaviour
+class npc_pri_idol_of_yogg_saron : public CreatureScript
+{
+public:
+    npc_pri_idol_of_yogg_saron() : CreatureScript("npc_pri_idol_of_yogg_saron") { }
+
+    struct npc_pri_idol_of_yogg_saronAI : public ScriptedAI
+    {
+        Aura* GetRuneAura(Unit* caster)
+        {
+            for (size_t i = 900756; i < 900762; i++)
+            {
+                if (caster->HasAura(i))
+                    return caster->GetAura(i);
+            }
+
+            return nullptr;
+        }
+
+        npc_pri_idol_of_yogg_saronAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 250;
+
+        void Reset() override
+        {
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 250) {
+                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                {
+                    Position pos = target->GetPosition();
+                    me->GetMotionMaster()->MovePoint(0, pos);
+                }
+                update = 0;
+            }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override
+        {
+            Unit* caster = me->GetOwner();
+
+            if (Aura* rune = GetRuneAura(caster))
+                if (id == 0) {
+                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
+                    {
+                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
+                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
+                    }
+
+                    me->DespawnOrUnsummon();
+                }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_pri_idol_of_yogg_saronAI(creature);
+    }
+};
+
+class rune_pri_ancient_madness : public AuraScript
+{
+    PrepareAuraScript(rune_pri_ancient_madness);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 901410; i < 901416; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetRuneAura(caster))
+        {
+            int32 buffAura = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 stackAmount = runeAura->GetEffect(EFFECT_2)->GetAmount();
+
+            if (caster->HasAura(buffAura))
+                caster->RemoveAura(buffAura);
+
+            caster->AddAura(buffAura, caster);
+            caster->GetAura(buffAura)->SetStackAmount(stackAmount);
+        }
+    }
+
+    void Register()
+    {
+        AfterEffectApply += AuraEffectApplyFn(rune_pri_ancient_madness::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_ancient_madness_periodic : public AuraScript
+{
+    PrepareAuraScript(rune_pri_ancient_madness_periodic);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = GetEffect(EFFECT_0)->GetAmount();
+        int32 stackReduction = aurEff->GetAmount();
+
+        if (Aura* buffAura = caster->GetAura(procSpell))
+            buffAura->ModStackAmount(-stackReduction);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_pri_ancient_madness_periodic::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_pri_holymancy : public AuraScript
+{
+    PrepareAuraScript(rune_pri_holymancy);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_PRIEST_HOLY_BINDING, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_holymancy::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_holymancy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -1964,13 +2170,18 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_idol_of_nzoth);
     RegisterSpellScript(rune_pri_idol_of_nzoth_periodic);
     RegisterSpellScript(rune_pri_whispering_shadows);
+    RegisterSpellScript(rune_pri_idol_of_yogg_saron);
+    RegisterSpellScript(rune_pri_ancient_madness);
+    RegisterSpellScript(rune_pri_ancient_madness_periodic);
+    RegisterSpellScript(rune_pri_holymancy);
+
+
 
     
-    
-    
-    
+
 
     new npc_pri_golden_apparitions();
     new npc_pri_idol_of_cthun();
+    new npc_pri_idol_of_yogg_saron();
 }
 
