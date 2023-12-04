@@ -127,7 +127,7 @@ enum PriestSpells
 
     // Talents
     TALENT_PRIEST_HOLY_WEAVING_PROC = 86252,
-    TALENT_PRIEST_SURPRISE_BURST_PROC = 86281,
+    TALENT_PRIEST_HOLY_BURST_PROC = 86281,
     TALENT_PRIEST_DEFY_FATE_HEAL = 86286,
     TALENT_PRIEST_DEFY_FATE_COOLDOWN = 86287,
     TALENT_PRIEST_CELERITY = 86246,
@@ -139,6 +139,7 @@ enum PriestSpells
     RUNE_PRIEST_PRAYERFUL_LITANY_LISTENER = 900419,
     RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD = 901156,
     RUNE_PRIEST_HOLY_BLOOD_SHIELD = 901428,
+    RUNE_PRIEST_LIGHTS_WARD_SHIELD = 901620,
 };
 
 enum PriestSpellIcons
@@ -2997,6 +2998,17 @@ class spell_pri_holy_blossom : public SpellScript
         return nullptr;
     }
 
+    Aura* GetInnerRadianceAura(Unit* caster)
+    {
+        for (size_t i = 901510; i < 901516; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleCast()
     {
         Unit* caster = GetCaster();
@@ -3016,7 +3028,7 @@ class spell_pri_holy_blossom : public SpellScript
 
                 if (player->GetGroup() && allyList.size() > 0)
                     for (auto const& target : allyList)
-                    {                       
+                    {
                         Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
                         if (alliedPlayer->isDead())
@@ -3051,10 +3063,36 @@ class spell_pri_holy_blossom : public SpellScript
         }
     }
 
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        // apply Inner Radiance increase if used on himself
+        if (Aura* runeAura = GetInnerRadianceAura(caster))
+            if (target == caster)
+            {
+                int32 increase = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(heal, increase);
+            }
+
+        SetHitHeal(heal);
+    }
+
     void Register() override
     {
         OnCast += SpellCastFn(spell_pri_holy_blossom::HandleCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_holy_blossom::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
+        OnEffectHitTarget += SpellEffectFn(spell_pri_holy_blossom::HandleDummy, EFFECT_0, SPELL_EFFECT_HEAL);
     }
 };
 
@@ -3077,6 +3115,53 @@ class spell_pri_holy_flame : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_holy_flame::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 86207 - Holy Flame Heal
+class spell_pri_holy_flame_heal : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_flame_heal);
+
+    Aura* GetInnerRadianceAura(Unit* caster)
+    {
+        for (size_t i = 901510; i < 901516; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        // apply Inner Radiance increase if used on himself
+        if (Aura* runeAura = GetInnerRadianceAura(caster))
+            if (target == caster)
+            {
+                int32 increase = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(heal, increase);
+            }
+
+        SetHitHeal(heal);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_pri_holy_flame_heal::HandleDummy, EFFECT_0, SPELL_EFFECT_HEAL);
     }
 };
 
@@ -3188,12 +3273,76 @@ class spell_pri_holy_might_increase : public SpellScript
     }
 };
 
+// 86220 - Wave of Light
+class spell_pri_wave_of_light : public SpellScript
+{
+    PrepareSpellScript(spell_pri_wave_of_light);
+
+    Aura* GetOverlordAura(Unit* caster)
+    {
+        for (size_t i = 901596; i < 901602; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetOverlordAura(caster))
+        {
+            int32 targetNbr = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            for (auto const& object : targets)
+            {
+                Unit* target = object->ToUnit();
+
+                if (target->isDead())
+                    continue;
+
+                caster->CastSpell(target, SPELL_PRIEST_HOLY_ERUPTION, TRIGGERED_FULL_MASK);
+                targetNbr--;
+
+                if (targetNbr <= 0)
+                    break;
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_wave_of_light::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 class spell_pri_wave_of_light_accumulation : public AuraScript
 {
     PrepareAuraScript(spell_pri_wave_of_light_accumulation);
 
+    Aura* GetLightsWardAura(Unit* caster)
+    {
+        for (size_t i = 901614; i < 901620; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* eventTarget = eventInfo.GetActor();
         if (!eventTarget || !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
             return;
@@ -3204,10 +3353,24 @@ class spell_pri_wave_of_light_accumulation : public AuraScript
                 if (spellInfo->Id == SPELL_PRIEST_HOLY_WOUNDS_PROC)
                     return;
 
-            Unit* target = GetAura()->GetOwner()->ToUnit();
+            Unit* target = GetUnitOwner();
             int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
 
-            GetCaster()->CastCustomSpell(SPELL_PRIEST_HOLY_WOUNDS_PROC, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            if (Aura* runeAura = GetLightsWardAura(caster))
+            {
+                int32 procPct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                int32 maxAmount = CalculatePct(caster->GetMaxHealth(), runeAura->GetEffect(EFFECT_1)->GetAmount());
+                int32 shieldAmount = CalculatePct(amount, procPct);
+
+                if (Aura* shieldAura = eventTarget->GetAura(RUNE_PRIEST_LIGHTS_WARD_SHIELD))
+                    shieldAmount += shieldAura->GetEffect(EFFECT_0)->GetAmount();
+
+                shieldAmount = std::min<int32>(shieldAmount, maxAmount);
+
+                caster->CastCustomSpell(RUNE_PRIEST_LIGHTS_WARD_SHIELD, SPELLVALUE_BASE_POINT0, shieldAmount, eventTarget, TRIGGERED_FULL_MASK);
+            }
+
+            caster->CastCustomSpell(SPELL_PRIEST_HOLY_WOUNDS_PROC, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -3267,7 +3430,7 @@ class spell_pri_surprise_burst : public AuraScript
         {
             if (roll_chance_i(holyStrikeChance))
             {
-                caster->CastSpell(GetCaster(), TALENT_PRIEST_SURPRISE_BURST_PROC, TRIGGERED_FULL_MASK);
+                caster->CastSpell(GetCaster(), TALENT_PRIEST_HOLY_BURST_PROC, TRIGGERED_FULL_MASK);
                 caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION, true);
             }
         }
@@ -3275,7 +3438,7 @@ class spell_pri_surprise_burst : public AuraScript
         {
             if (roll_chance_i(holyFlameChance))
             {
-                caster->CastSpell(GetCaster(), TALENT_PRIEST_SURPRISE_BURST_PROC, TRIGGERED_FULL_MASK);
+                caster->CastSpell(GetCaster(), TALENT_PRIEST_HOLY_BURST_PROC, TRIGGERED_FULL_MASK);
                 caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION);
             }
         }
@@ -4091,6 +4254,87 @@ class spell_pri_blistering_barriers : public AuraScript
     }
 };
 
+// 86217 - Prescience
+class spell_pri_prescience : public AuraScript
+{
+    PrepareAuraScript(spell_pri_prescience);
+
+    Aura* GetFateMirrorAura(Unit* caster)
+    {
+        for (size_t i = 901552; i < 901558; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetAnachronismAura(Unit* caster)
+    {
+        for (size_t i = 901566; i < 901572; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApplyEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetFateMirrorAura(caster))
+        {
+            int32 procAura = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procAura, target);
+        }
+
+        if (Aura* runeAura = GetAnachronismAura(caster))
+        {
+            int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->AddAura(TALENT_PRIEST_HOLY_BURST_PROC, caster);
+        }
+    }
+
+    void HandleRemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Remove Fate Mirror Rune Buff
+        for (size_t i = 901558; i < 901564; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_pri_prescience::HandleApplyEffect, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_pri_prescience::HandleRemoveEffect, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_priest_spell_scripts()
@@ -4156,9 +4400,11 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_prayer_of_mending);
     RegisterSpellScript(spell_pri_holy_blossom);
     RegisterSpellScript(spell_pri_holy_flame);
+    RegisterSpellScript(spell_pri_holy_flame_heal);
     RegisterSpellScript(spell_pri_holy_might);
     RegisterSpellScript(spell_pri_holy_might_proc);
     RegisterSpellScript(spell_pri_holy_might_increase);
+    RegisterSpellScript(spell_pri_wave_of_light);
     RegisterSpellScript(spell_pri_wave_of_light_accumulation);
     RegisterSpellScript(spell_pri_holy_weaving);
     RegisterSpellScript(spell_pri_regenerative_barrier);
@@ -4182,6 +4428,7 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mind_flay);
     RegisterSpellScript(spell_pri_mind_spike);
     RegisterSpellScript(spell_pri_blistering_barriers);
+    RegisterSpellScript(spell_pri_prescience);
 
 
 

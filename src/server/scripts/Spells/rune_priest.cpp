@@ -20,6 +20,12 @@ enum PriestSpells
     SPELL_PRIEST_FLASH_HEAL = 48071,
     SPELL_PRIEST_GUARDIAN_SPIRIT = 47788,
     SPELL_PRIEST_HOLY_BINDING = 86202,
+    SPELL_PRIEST_HOLY_BURST_BUFF = 86281,
+    SPELL_PRIEST_HOLY_MIGHT = 86208,
+    SPELL_PRIEST_HOLY_MIGHT_STRENGTH = 86209,
+    SPELL_PRIEST_HOLY_MIGHT_AGILITY = 86210,
+    SPELL_PRIEST_HOLY_MIGHT_INTELLECT = 86211,
+    SPELL_PRIEST_HOLY_MIGHT_SPIRIT = 86212,
     SPELL_PRIEST_INSANITY_ENERGIZE = 81093,
     SPELL_PRIEST_MIND_BLAST = 48127,
     SPELL_PRIEST_MIND_FLAY = 48156,
@@ -37,6 +43,7 @@ enum PriestSpells
     SPELL_PRIEST_SHADOW_WORD_DEATH = 48158,
     SPELL_PRIEST_SHADOW_WORD_PAIN = 48125,
     SPELL_PRIEST_SMITE = 48123,
+    SPELL_PRIEST_UPHEAVAL = 86219,
     SPELL_PRIEST_VAMPIRIC_TOUCH = 48160,
     SPELL_PRIEST_VOID_TORRENT = 81049,
 
@@ -63,6 +70,10 @@ enum PriestSpells
     RUNE_PRIEST_IDOL_OF_NZOTH_ECHOING = 901302,
     RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC = 901303,
     RUNE_PRIEST_IDOL_OF_NZOTH_DAMAGE = 901304,
+    RUNE_PRIEST_VELENS_APPRENTICE_DAMAGE = 901508,
+    RUNE_PRIEST_FATE_MIRROR_DAMAGE = 901564,
+    RUNE_PRIEST_FATE_MIRROR_HEAL = 901565,
+    RUNE_PRIEST_LIGHTS_PROTECTION_DOT = 901629,
 
     // Summons
     SUMMON_PRIEST_GOLDEN_APPARITION = 900001,
@@ -2124,6 +2135,303 @@ class rune_pri_holymancy : public AuraScript
     }
 };
 
+class rune_pri_accretion : public AuraScript
+{
+    PrepareAuraScript(rune_pri_accretion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 cooldown = aurEff->GetAmount();
+            player->ModifySpellCooldown(SPELL_PRIEST_UPHEAVAL, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_accretion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_accretion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_momentum_shift : public AuraScript
+{
+    PrepareAuraScript(rune_pri_momentum_shift);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_PRIEST_HOLY_BURST_BUFF))
+            return;
+
+        caster->AddAura(aurEff->GetAmount(), caster);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_momentum_shift::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_momentum_shift::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_velens_apprentice : public AuraScript
+{
+    PrepareAuraScript(rune_pri_velens_apprentice);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+        int32 targetNbr = GetEffect(EFFECT_1)->GetAmount();
+        auto const& threatList = caster->getAttackers();
+
+        for (auto const& targets : threatList)
+            if (targets->IsAlive())
+            {
+                if (targets == target)
+                    continue;
+
+                float distance = targets->GetDistance(target->GetPosition());
+
+                if (distance > 20)
+                    continue;
+
+                caster->CastCustomSpell(RUNE_PRIEST_VELENS_APPRENTICE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                targetNbr--;
+
+                if (targetNbr <= 0)
+                    return;
+            }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_velens_apprentice::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_velens_apprentice::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_velens_blessing : public AuraScript
+{
+    PrepareAuraScript(rune_pri_velens_blessing);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            auto const& allyList = player->GetGroup()->GetMemberSlots();
+
+            if (caster->HasAura(SPELL_PRIEST_HOLY_MIGHT))
+                caster->AddAura(procSpell, caster);
+
+            if (player->GetGroup() && allyList.size() > 0)
+                for (auto const& target : allyList)
+                {
+                    Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                    if (alliedPlayer->isDead())
+                        continue;
+
+                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH))
+                        caster->AddAura(procSpell, alliedPlayer);
+
+                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY))
+                        caster->AddAura(procSpell, alliedPlayer);
+
+                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT))
+                        caster->AddAura(procSpell, alliedPlayer);
+
+                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+                        caster->AddAura(procSpell, alliedPlayer);
+                }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_velens_blessing::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_velens_blessing::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_velens_blessing_proc : public AuraScript
+{
+    PrepareAuraScript(rune_pri_velens_blessing_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+        LOG_ERROR("error", "caster = {}", caster->GetName());
+        Unit* owner = GetUnitOwner();
+
+        if (!owner || owner->isDead())
+            return;
+        LOG_ERROR("error", "owner = {}", owner->GetName());
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_velens_blessing_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_velens_blessing_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_fate_mirror : public AuraScript
+{
+    PrepareAuraScript(rune_pri_fate_mirror);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+        LOG_ERROR("error", "caster = {}", caster->GetName());
+        Unit* owner = GetUnitOwner();
+
+        if (!owner || owner->isDead())
+            return;
+        LOG_ERROR("error", "owner = {}", owner->GetName());
+        int32 amount = 0;
+        int32 procSpell = 0;
+        Unit* target;
+
+        if (eventInfo.GetDamageInfo())
+        {
+            amount = eventInfo.GetDamageInfo()->GetDamage();
+            procSpell = RUNE_PRIEST_FATE_MIRROR_DAMAGE;
+            target = eventInfo.GetDamageInfo()->GetVictim();
+        }
+
+        if (eventInfo.GetHealInfo())
+        {
+            amount = eventInfo.GetHealInfo()->GetHeal();
+            procSpell = RUNE_PRIEST_FATE_MIRROR_HEAL;
+            target = eventInfo.GetHealInfo()->GetTarget();
+        }
+
+        if (amount <= 0 || !target || procSpell == 0)
+            return;
+
+        ApplyPct(amount, aurEff->GetAmount());
+        owner->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_fate_mirror::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_fate_mirror::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_pri_lights_protection : public AuraScript
+{
+    PrepareAuraScript(spell_pri_lights_protection);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 901622; i < 901628; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetRuneAura(caster))
+        {
+            int32 amount = CalculatePct(dmgInfo.GetDamage(), runeAura->GetEffect(EFFECT_0)->GetAmount());
+            absorbAmount = amount;
+
+            if (Aura* dot = caster->GetAura(RUNE_PRIEST_LIGHTS_PROTECTION_DOT))
+                amount += dot->GetEffect(EFFECT_0)->GetAmount() * dot->GetEffect(EFFECT_0)->GetRemaningTicks();
+
+            amount /= 10;
+            caster->CastCustomSpell(RUNE_PRIEST_LIGHTS_PROTECTION_DOT, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_pri_lights_protection::Absorb, EFFECT_0);
+    }
+};
+
 
 
 void AddSC_priest_perks_scripts()
@@ -2174,10 +2482,17 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_ancient_madness);
     RegisterSpellScript(rune_pri_ancient_madness_periodic);
     RegisterSpellScript(rune_pri_holymancy);
-
+    RegisterSpellScript(rune_pri_accretion);
+    RegisterSpellScript(rune_pri_momentum_shift);
+    RegisterSpellScript(rune_pri_velens_apprentice);
+    RegisterSpellScript(rune_pri_velens_blessing);
+    RegisterSpellScript(rune_pri_velens_blessing_proc);
+    RegisterSpellScript(rune_pri_fate_mirror);
+    RegisterSpellScript(spell_pri_lights_protection);
 
 
     
+
 
 
     new npc_pri_golden_apparitions();
