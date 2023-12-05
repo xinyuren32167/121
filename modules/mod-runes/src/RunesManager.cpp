@@ -19,14 +19,14 @@ RuneConfig RunesManager::config = {};
 void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
-    config.debug = true;
+    config.debug = false;
     config.maxSlots  = 8;
     config.defaultSlot = 8;
 
-    config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, 200));
-    config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, 500));
-    config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, 1500));
-    config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, 2500));
+    config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, 20));
+    config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, 50));
+    config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, 150));
+    config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, 250));
 
     config.costMineralToUpgradeToEpic = 6;
     config.costMineralToUpgradeToLegendary = 20;
@@ -444,10 +444,6 @@ std::vector<std::string> RunesManager::RunesForClient(Player* player)
             elements.emplace_back(RuneForClient(player, rune, false, 0));
         }
     }
-
-
-    // Calculez la durée d'exécution en nanosecondes
-
     return elements;
 }
 
@@ -459,7 +455,6 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
 
     if (known == m_KnownRunes.end())
         return elements;
-
 
 
     for (auto const& knownRune : known->second) {
@@ -962,12 +957,19 @@ void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
     if (ij == it->second.end())
         return;
 
+    if (RuneAlreadyActivated(player, runeSpellId))
+    {
+        SendPlayerMessage(player, "You cannot upgrade this rune, you have one or more of these runes activated..");
+        return;
+    }
+
     Rune nextRune = GetRuneByQuality(ij->rune.groupId, rune.quality + 1);
     bool isUpgradable = IsRuneUpgradable(player, nextRune, ij->count);
 
     if (!isUpgradable) {
         return SendPlayerMessage(player, "You don't meet the requierement to upgrade this rune.");
     }
+
 
     player->CastCustomSpell(79505, SPELLVALUE_BASE_POINT0, nextRune.spellId, player, TRIGGERED_NONE);
 

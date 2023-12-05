@@ -411,7 +411,7 @@ Aura::Aura(SpellInfo const* spellproto, WorldObject* owner, Unit* caster, Item* 
     m_castItemGuid(itemGUID ? itemGUID : castItem ? castItem->GetGUID() : ObjectGuid::Empty), m_castItemEntry(castItem ? castItem->GetEntry() : 0), m_applyTime(GameTime::GetGameTime().count()),
     m_owner(owner), m_timeCla(0), m_updateTargetMapInterval(0),
     m_casterLevel(caster ? caster->getLevel() : m_spellInfo->SpellLevel), m_procCharges(0), m_stackAmount(1),
-    m_isRemoved(false), m_isSingleTarget(false), m_isUsingCharges(false), m_triggeredByAuraSpellInfo(nullptr)
+    m_isRemoved(false), m_isSingleTarget(false), m_isUsingCharges(false), m_triggeredByAuraSpellInfo(nullptr), m_procCooldown(TimePoint::min())
 {
     if ((m_spellInfo->ManaPerSecond || m_spellInfo->ManaPerSecondPerLevel) && !m_spellInfo->HasAttribute(SPELL_ATTR2_NO_TARGET_PER_SECOND_COST))
         m_timeCla = 1 * IN_MILLISECONDS;
@@ -2236,17 +2236,12 @@ bool Aura::CanStackWith(Aura const* existingAura, bool remove) const
 
 bool Aura::IsProcOnCooldown() const
 {
-    /*if (m_procCooldown)
-    {
-        if (m_procCooldown > GameTime::GetGameTime().count())
-            return true;
-    }*/
-    return false;
+    return m_procCooldown > GameTime::Now();
 }
 
-void Aura::AddProcCooldown(uint32 /*msec*/)
+void Aura::AddProcCooldown(uint32 msec)
 {
-    //m_procCooldown = GameTime::GetGameTime().count() + msec;
+    m_procCooldown = GameTime::Now() + Milliseconds(msec);
 }
 
 void Aura::PrepareProcToTrigger(AuraApplication* aurApp, ProcEventInfo& eventInfo)

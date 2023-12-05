@@ -269,6 +269,8 @@ protected:
     bool m_isSingleTarget: 1;                       // true if it's a single target spell and registered at caster - can change at spell steal for example
     bool m_isUsingCharges: 1;
 
+    TimePoint m_procCooldown;
+
 private:
     Unit::AuraApplicationList m_removedApplications;
 

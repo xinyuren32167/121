@@ -153,9 +153,12 @@ class spell_generate_random_rune : public SpellScript
 
     void HandleProc()
     {
+
         Player* player = GetCaster()->ToPlayer();
-        int8 quality = NORMAL_QUALITY;
-        if (m_scriptSpellId == 79501) quality = UNCOMMON_QUALITY;
+        int8 quality ;
+
+        if (m_scriptSpellId == 79500) quality = NORMAL_QUALITY;
+        else if (m_scriptSpellId == 79501) quality = UNCOMMON_QUALITY;
         else if (m_scriptSpellId == 79502) quality = RARE_QUALITY;
         else if (m_scriptSpellId == 79503) quality = EPIC_QUALITY;
         else quality = LEGENDARY_QUALITY;
