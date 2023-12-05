@@ -2165,35 +2165,6 @@ class rune_pri_accretion : public AuraScript
     }
 };
 
-class rune_pri_momentum_shift : public AuraScript
-{
-    PrepareAuraScript(rune_pri_momentum_shift);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetDamageInfo();
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (!caster->HasAura(SPELL_PRIEST_HOLY_BURST_BUFF))
-            return;
-
-        caster->AddAura(aurEff->GetAmount(), caster);
-    }
-
-    void Register()
-    {
-        DoCheckProc += AuraCheckProcFn(rune_pri_momentum_shift::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_pri_momentum_shift::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
 class rune_pri_velens_apprentice : public AuraScript
 {
     PrepareAuraScript(rune_pri_velens_apprentice);
@@ -2217,7 +2188,9 @@ class rune_pri_velens_apprentice : public AuraScript
 
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
-        int32 targetNbr = GetEffect(EFFECT_1)->GetAmount();
+
+        caster->CastCustomSpell(RUNE_PRIEST_VELENS_APPRENTICE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        /*int32 targetNbr = GetEffect(EFFECT_1)->GetAmount();
         auto const& threatList = caster->getAttackers();
 
         for (auto const& targets : threatList)
@@ -2236,7 +2209,7 @@ class rune_pri_velens_apprentice : public AuraScript
 
                 if (targetNbr <= 0)
                     return;
-            }
+            }*/
     }
 
     void Register()
@@ -2246,13 +2219,53 @@ class rune_pri_velens_apprentice : public AuraScript
     }
 };
 
+class rune_pri_velens_apprentice_targeting : public SpellScript
+{
+    PrepareSpellScript(rune_pri_velens_apprentice_targeting);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 901502; i < 901508; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetExplTargetUnit();
+        targets.remove(target);
+
+        if (!GetRuneAura(caster))
+            return;
+
+        int32 maxTargets = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
+
+        if (targets.size() > maxTargets)
+            targets.resize(maxTargets);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_pri_velens_apprentice_targeting::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 class rune_pri_velens_blessing : public AuraScript
 {
     PrepareAuraScript(rune_pri_velens_blessing);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+        return eventInfo.GetSpellInfo();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2316,12 +2329,12 @@ class rune_pri_velens_blessing_proc : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-        LOG_ERROR("error", "caster = {}", caster->GetName());
+
         Unit* owner = GetUnitOwner();
 
         if (!owner || owner->isDead())
             return;
-        LOG_ERROR("error", "owner = {}", owner->GetName());
+
         Unit* target = eventInfo.GetDamageInfo()->GetVictim();
 
         if (!target || target->isDead())
@@ -2353,12 +2366,12 @@ class rune_pri_fate_mirror : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-        LOG_ERROR("error", "caster = {}", caster->GetName());
+
         Unit* owner = GetUnitOwner();
 
         if (!owner || owner->isDead())
             return;
-        LOG_ERROR("error", "owner = {}", owner->GetName());
+
         int32 amount = 0;
         int32 procSpell = 0;
         Unit* target;
@@ -2482,9 +2495,9 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_ancient_madness);
     RegisterSpellScript(rune_pri_ancient_madness_periodic);
     RegisterSpellScript(rune_pri_holymancy);
-    RegisterSpellScript(rune_pri_accretion);
-    RegisterSpellScript(rune_pri_momentum_shift);
+    RegisterSpellScript(rune_pri_accretion); 
     RegisterSpellScript(rune_pri_velens_apprentice);
+    RegisterSpellScript(rune_pri_velens_apprentice_targeting);
     RegisterSpellScript(rune_pri_velens_blessing);
     RegisterSpellScript(rune_pri_velens_blessing_proc);
     RegisterSpellScript(rune_pri_fate_mirror);

@@ -2658,7 +2658,7 @@ class spell_pri_shadowy_apparitions : public AuraScript
         {
             if (Aura* runeAura = GetTormentedSpiritsAura(caster))
             {
-                int32 procChance = aurEff->GetAmount();
+                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
                 if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
                     procChance = GetEffect(EFFECT_1)->GetAmount();
@@ -4250,7 +4250,7 @@ class spell_pri_blistering_barriers : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_blistering_barriers::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_blistering_barriers::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
 
@@ -4332,6 +4332,39 @@ class spell_pri_prescience : public AuraScript
     {
         AfterEffectApply += AuraEffectApplyFn(spell_pri_prescience::HandleApplyEffect, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
         AfterEffectRemove += AuraEffectRemoveFn(spell_pri_prescience::HandleRemoveEffect, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_pri_holy_eruption : public SpellScript
+{
+    PrepareSpellScript(spell_pri_holy_eruption);
+
+    Aura* GetMomentumShiftAura(Unit* caster)
+    {
+        for (size_t i = 901484; i < 901490; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetMomentumShiftAura(caster))
+            if (caster->HasAura(TALENT_PRIEST_HOLY_BURST_PROC))
+                caster->AddAura(runeAura->GetEffect(EFFECT_0)->GetAmount(), caster);          
+    }
+
+    void Register() override
+    {
+        BeforeCast += SpellCastFn(spell_pri_holy_eruption::HandleCast);
     }
 };
 
@@ -4429,9 +4462,10 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mind_spike);
     RegisterSpellScript(spell_pri_blistering_barriers);
     RegisterSpellScript(spell_pri_prescience);
+    RegisterSpellScript(spell_pri_holy_eruption);
 
 
-
+    
 
     new npc_pri_shadowy_apparitions();
 }
