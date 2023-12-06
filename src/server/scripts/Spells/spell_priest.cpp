@@ -163,6 +163,17 @@ class spell_pri_shadowfiend_scaling : public AuraScript
 {
     PrepareAuraScript(spell_pri_shadowfiend_scaling);
 
+    Aura* GetPowerfulShadowfiendAura(Unit* caster)
+    {
+        for (size_t i = 900544; i < 900550; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         // xinef: shadowfiend inherits 40% of resistance from owner and 35% of armor (guessed)
@@ -191,6 +202,12 @@ class spell_pri_shadowfiend_scaling : public AuraScript
         {
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
             amount = CalculatePct(std::max<int32>(0, shadow), 300); // xinef: deacrased to 300, including 15% from self buff
+
+            if (Aura* runeAura = GetPowerfulShadowfiendAura(owner))
+            {
+                int32 increase = CalculatePct(std::max<int32>(0, shadow), runeAura->GetEffect(EFFECT_0)->GetAmount());
+                amount += increase;
+            }
         }
     }
 
@@ -215,6 +232,15 @@ class spell_pri_shadowfiend_scaling : public AuraScript
             GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ATTACK_POWER_PCT, true, SPELL_BLOCK_TYPE_POSITIVE);
         else if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT)
             GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
+
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            if (Aura* runeAura = GetPowerfulShadowfiendAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+        }
     }
 
     void Register() override

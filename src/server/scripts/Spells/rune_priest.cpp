@@ -59,6 +59,7 @@ enum PriestSpells
     RUNE_PRIEST_EXPIATION_DAMAGE = 900310,
     RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER = 900492,
     RUNE_PRIEST_RENEWED_FAITH_HEAL = 900530,
+    RUNE_PRIEST_POWERFUL_SHADOWFIEND_DAMAGE = 900556,
     RUNE_PRIEST_PAINBREAKER_PSALM_DAMAGE = 900686,
     RUNE_PRIEST_BLESSED_RECOVERY_HOT = 900718,
     RUNE_PRIEST_DESPERATE_TIMES_HEAL = 900750,
@@ -762,6 +763,40 @@ class rune_pri_renewed_faith : public AuraScript
     {
         DoCheckProc += AuraCheckProcFn(rune_pri_renewed_faith::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pri_renewed_faith::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_powerful_shadowfiend_damage : public AuraScript
+{
+    PrepareAuraScript(rune_pri_powerful_shadowfiend_damage);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_PRIEST_POWERFUL_SHADOWFIEND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_powerful_shadowfiend_damage::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_powerful_shadowfiend_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2467,7 +2502,8 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_answered_prayers);
     RegisterSpellScript(rune_pri_lasting_renovation);
     RegisterSpellScript(rune_pri_renewed_faith);
-    RegisterSpellScript(rune_pri_catharstick);
+    RegisterSpellScript(rune_pri_powerful_shadowfiend_damage);
+    RegisterSpellScript(rune_pri_catharstick); 
     RegisterSpellScript(rune_pri_deathspeaker);
     RegisterSpellScript(rune_pri_painbreaker_psalm);
     RegisterSpellScript(rune_pri_blessed_recovery);
