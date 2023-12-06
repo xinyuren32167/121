@@ -1100,18 +1100,6 @@ class spell_pal_exorcism : public SpellScript
 {
     PrepareSpellScript(spell_pal_exorcism);
 
-    void HandleScriptEffect()
-    {
-        Creature* creature = GetCaster()->FindNearestCreature(500502, 30);
-        if (!creature || creature->GetCharmerOrOwnerGUID() != GetCaster()->GetGUID())
-            return;
-
-        for (auto const& targetburn : FindCreatures(creature))
-        {
-            GetCaster()->AddAura(48801, targetburn);
-        }
-    }
-
     std::list <Unit*> FindCreatures(Creature* creature)
     {
         auto const& threatlist = GetCaster()->getAttackers();
@@ -1130,6 +1118,17 @@ class spell_pal_exorcism : public SpellScript
         } return targetAvailable;
     }
 
+    void HandleScriptEffect()
+    {
+        Creature* creature = GetCaster()->FindNearestCreature(500502, 30);
+        if (!creature || creature->GetCharmerOrOwnerGUID() != GetCaster()->GetGUID())
+            return;
+        for (auto const& targetburn : FindCreatures(creature))
+        {
+            GetCaster()->AddAura(48801, targetburn);
+        }
+    }
+
     void Register() override
     {
         OnCast += SpellCastFn(spell_pal_exorcism::HandleScriptEffect);
@@ -1142,12 +1141,13 @@ class spell_pal_consecration : public SpellScript
 
     void HandleScriptEffect()
     {
-        GetCaster()->CastSpell(GetCaster(), 80121, true);
+        GetCaster()->CastSpell(GetCaster(), 80121, true); //dummy consec for duration info
 
         Aura* auraEff = GetCaster()->GetAura(80121);
         int32 duration = auraEff->GetDuration();
 
-        GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, duration);
+        Creature* consecDummy = GetCaster()->SummonCreature(500502, GetCaster()->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, duration);
+        consecDummy->SetOwnerGUID(GetCaster()->GetGUID());
     }
 
     void Register() override

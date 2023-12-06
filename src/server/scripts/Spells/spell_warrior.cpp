@@ -487,6 +487,17 @@ class spell_warr_execute : public SpellScript
         return ValidateSpellInfo({ SPELL_WARRIOR_EXECUTE_DAMAGE, SPELL_WARRIOR_GLYPH_OF_EXECUTION });
     }
 
+    Aura* GetImprovedExecuteAura(Unit* caster)
+    {
+        for (size_t i = 200838; i < 200844; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void SendMiss(SpellMissInfo missInfo)
     {
         if (missInfo != SPELL_MISS_NONE)
@@ -510,7 +521,7 @@ class spell_warr_execute : public SpellScript
             int32 spellCost = spellInfo->CalcPowerCost(caster, SpellSchoolMask(spellInfo->SchoolMask));
             int32 maxRage = spellInfo->GetEffect(EFFECT_1).CalcValue(caster) - spellCost;
             int32 rageAmount = caster->GetPower(POWER_RAGE) - spellCost;
-            int32 rage = spellCost;
+            rage = spellCost;
 
             rage += std::min<int32>(maxRage, rageAmount);
 
@@ -525,8 +536,8 @@ class spell_warr_execute : public SpellScript
             caster->SetPower(POWER_RAGE, newRage);
 
             // Glyph of Execution bonus
-            if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
-                rage += aurEff->GetAmount() * 10;
+            /*if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
+                rage += aurEff->GetAmount() * 10;*/
 
             amount *= rage / 10;
 
@@ -534,11 +545,27 @@ class spell_warr_execute : public SpellScript
         }
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();  
+        if (Aura* runeAura = GetImprovedExecuteAura(caster))
+            if (GetExplTargetUnit()->IsAlive())
+            {
+                int32 rageKept = CalculatePct(rage, runeAura->GetEffect(EFFECT_0)->GetAmount());
+                int32 newRage = std::max<int32>(rageKept, caster->GetPower(POWER_RAGE) - rage);
+                caster->SetPower(POWER_RAGE, newRage);
+            }
+    }
+
     void Register() override
     {
         BeforeHit += BeforeSpellHitFn(spell_warr_execute::SendMiss);
         OnEffectHitTarget += SpellEffectFn(spell_warr_execute::HandleEffect, EFFECT_0, SPELL_EFFECT_DUMMY);
+        AfterHit += SpellHitFn(spell_warr_execute::HandleAfterHit);
     }
+
+private:
+   int32 rage = 0;
 };
 
 // 12809 - Concussion Blow
