@@ -174,6 +174,50 @@ class spell_pri_shadowfiend_scaling : public AuraScript
         return nullptr;
     }
 
+    Aura* GetFiendFriendAura(Unit* caster)
+    {
+        for (size_t i = 900558; i < 900564; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetRabidShadowsAura(Unit* caster)
+    {
+        for (size_t i = 900564; i < 900570; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetPutrefyingClawsAura(Unit* caster)
+    {
+        for (size_t i = 900576; i < 900582; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetEssenceDevourerAura(Unit* caster)
+    {
+        for (size_t i = 900590; i < 900596; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         // xinef: shadowfiend inherits 40% of resistance from owner and 35% of armor (guessed)
@@ -201,13 +245,12 @@ class spell_pri_shadowfiend_scaling : public AuraScript
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            amount = CalculatePct(std::max<int32>(0, shadow), 300); // xinef: deacrased to 300, including 15% from self buff
+            int32 spellPowerPCT = 300;
 
             if (Aura* runeAura = GetPowerfulShadowfiendAura(owner))
-            {
-                int32 increase = CalculatePct(std::max<int32>(0, shadow), runeAura->GetEffect(EFFECT_0)->GetAmount());
-                amount += increase;
-            }
+                AddPct(spellPowerPCT, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            amount = CalculatePct(std::max<int32>(0, shadow), 300); // xinef: deacrased to 300, including 15% from self buff           
         }
     }
 
@@ -218,6 +261,9 @@ class spell_pri_shadowfiend_scaling : public AuraScript
         {
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
             amount = CalculatePct(std::max<int32>(0, shadow), 30);
+
+            if (Aura* runeAura = GetFiendFriendAura(owner))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
 
             // xinef: Update appropriate player field
             if (owner->GetTypeId() == TYPEID_PLAYER)
@@ -238,6 +284,24 @@ class spell_pri_shadowfiend_scaling : public AuraScript
             if (Aura* runeAura = GetPowerfulShadowfiendAura(owner))
             {
                 int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+
+            if (Aura* runeAura = GetRabidShadowsAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+
+            if (Aura* runeAura = GetPutrefyingClawsAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+
+            if (Aura* runeAura = GetEssenceDevourerAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
                 owner->AddAura(procSpell, GetUnitOwner());
             }
         }
