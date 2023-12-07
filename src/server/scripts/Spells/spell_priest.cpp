@@ -2910,6 +2910,9 @@ public:
                     Position pos = target->GetPosition();
                     me->GetMotionMaster()->MovePoint(0, pos);
                 }
+                else
+                    me->DespawnOrUnsummon();
+
                 update = 0;
             }
 

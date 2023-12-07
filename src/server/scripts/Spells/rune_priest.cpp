@@ -1463,7 +1463,7 @@ class rune_pri_golden_apparitions : public AuraScript
                 {
                     Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
                     SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-                    Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
+                    Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, 30000, 0, properties);
 
                     if (!summon)
                         continue;
@@ -1474,7 +1474,7 @@ class rune_pri_golden_apparitions : public AuraScript
                     summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     summon->SetReactState(REACT_PASSIVE);
                     summon->SetTarget(alliedPlayer->GetGUID());
-
+                    LOG_ERROR("error", "alliedPlayer = {}", alliedPlayer->GetName());
                     apparition--;
                 }
             }
@@ -1525,6 +1525,8 @@ public:
                     Position pos = target->GetPosition();
                     me->GetMotionMaster()->MovePoint(0, pos);
                 }
+                else
+                    me->DespawnOrUnsummon();
                 update = 0;
             }
 
@@ -2014,7 +2016,7 @@ class rune_pri_idol_of_cthun : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        Unit* target = GetTarget();
+        Unit* target = eventInfo.GetProcTarget();
 
         if (!target || target->isDead())
             return;
@@ -2044,7 +2046,7 @@ class rune_pri_idol_of_cthun : public AuraScript
         if (targetNbr >= 2)
             summonedCreature = SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_LASHER;
 
-        Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
+        Position pos = caster->GetNearPosition(urand(1, 8), urand(1, 8));
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = caster->SummonCreature(summonedCreature, pos, TEMPSUMMON_TIMED_DESPAWN, 16000, 0, properties);
 
@@ -2052,82 +2054,15 @@ class rune_pri_idol_of_cthun : public AuraScript
             return;
 
         summon->SetOwnerGUID(caster->GetGUID());
-        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-        summon->SetReactState(REACT_PASSIVE);
-        summon->SetTarget(target->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->ClearUnitState(UNIT_STATE_ROOT);
+        summon->SetControlled(true, UNIT_STATE_ROOT);
     }
 
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_pri_idol_of_cthun::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pri_idol_of_cthun::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-// C'thun Pet behaviour
-class npc_pri_idol_of_cthun : public CreatureScript
-{
-public:
-    npc_pri_idol_of_cthun() : CreatureScript("npc_pri_idol_of_cthun") { }
-
-    struct rune_pri_idol_of_cthunAI : public ScriptedAI
-    {
-        Aura* GetRuneAura(Unit* caster)
-        {
-            for (size_t i = 900756; i < 900762; i++)
-            {
-                if (caster->HasAura(i))
-                    return caster->GetAura(i);
-            }
-
-            return nullptr;
-        }
-
-        rune_pri_idol_of_cthunAI(Creature* creature) : ScriptedAI(creature) { }
-
-        uint32 update = 250;
-
-        void Reset() override
-        {
-            me->CombatStop(true);
-            me->AttackStop();
-            me->SetReactState(REACT_PASSIVE);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (update >= 250) {
-                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                {
-                    Position pos = target->GetPosition();
-                    me->GetMotionMaster()->MovePoint(0, pos);
-                }
-                update = 0;
-            }
-
-            update += diff;
-        }
-
-        void MovementInform(uint32 /*type*/, uint32 id) override
-        {
-            Unit* caster = me->GetOwner();
-
-            if (Aura* rune = GetRuneAura(caster))
-                if (id == 0) {
-                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                    {
-                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
-                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
-                    }
-
-                    me->DespawnOrUnsummon();
-                }
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new rune_pri_idol_of_cthunAI(creature);
     }
 };
 
@@ -2378,6 +2313,17 @@ class rune_pri_idol_of_yogg_saron : public AuraScript
 {
     PrepareAuraScript(rune_pri_idol_of_yogg_saron);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 901366; i < 901372; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -2392,94 +2338,26 @@ class rune_pri_idol_of_yogg_saron : public AuraScript
 
         int32 stacks = GetStackAmount();
 
-        if (stacks < GetEffect(EFFECT_1)->GetAmount())
+        if (stacks < GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount())
             return;
 
         Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = caster->SummonCreature(SUMMON_PRIEST_IDOL_YOGG_SARON_THING_FROM_BEYOND, pos, TEMPSUMMON_TIMED_DESPAWN, 20500, 0, properties);
-
+        LOG_ERROR("error", "summon");
         if (!summon)
             return;
-
+        LOG_ERROR("error", "summon check");
         summon->SetOwnerGUID(caster->GetGUID());
-        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-        summon->SetReactState(REACT_PASSIVE);
+        summon->SetReactState(REACT_DEFENSIVE);
         summon->SetTarget(target->GetGUID());
 
-        caster->RemoveAura(GetAura());
+        ModStackAmount(-stacks);
     }
 
     void Register()
     {
         AfterEffectApply += AuraEffectApplyFn(rune_pri_idol_of_yogg_saron::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
-    }
-};
-
-// C'thun Pet behaviour
-class npc_pri_idol_of_yogg_saron : public CreatureScript
-{
-public:
-    npc_pri_idol_of_yogg_saron() : CreatureScript("npc_pri_idol_of_yogg_saron") { }
-
-    struct npc_pri_idol_of_yogg_saronAI : public ScriptedAI
-    {
-        Aura* GetRuneAura(Unit* caster)
-        {
-            for (size_t i = 900756; i < 900762; i++)
-            {
-                if (caster->HasAura(i))
-                    return caster->GetAura(i);
-            }
-
-            return nullptr;
-        }
-
-        npc_pri_idol_of_yogg_saronAI(Creature* creature) : ScriptedAI(creature) { }
-
-        uint32 update = 250;
-
-        void Reset() override
-        {
-            me->CombatStop(true);
-            me->AttackStop();
-            me->SetReactState(REACT_PASSIVE);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (update >= 250) {
-                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                {
-                    Position pos = target->GetPosition();
-                    me->GetMotionMaster()->MovePoint(0, pos);
-                }
-                update = 0;
-            }
-
-            update += diff;
-        }
-
-        void MovementInform(uint32 /*type*/, uint32 id) override
-        {
-            Unit* caster = me->GetOwner();
-
-            if (Aura* rune = GetRuneAura(caster))
-                if (id == 0) {
-                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                    {
-                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
-                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
-                    }
-
-                    me->DespawnOrUnsummon();
-                }
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_pri_idol_of_yogg_saronAI(creature);
     }
 };
 
@@ -2962,7 +2840,5 @@ void AddSC_priest_perks_scripts()
 
 
     new npc_pri_golden_apparitions();
-    new npc_pri_idol_of_cthun();
-    new npc_pri_idol_of_yogg_saron();
 }
 
