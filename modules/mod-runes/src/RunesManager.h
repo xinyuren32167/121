@@ -73,6 +73,17 @@ struct AccountProgression {
     uint32 unlockedSlotRunes;
 };
 
+struct RewardAchievement {
+    uint32 itemId1;
+    uint32 itemId1Amount;
+
+    uint32 itemId2;
+    uint32 itemId2Amount;
+
+    uint32 itemId3;
+    uint32 itemId3Amount;
+};
+
 enum RuneQuality {
     NORMAL_QUALITY = 1,
     UNCOMMON_QUALITY = 2,
@@ -91,6 +102,7 @@ private:
     static std::map<uint64 /* guid */, std::vector<Loadout>> m_Loadout;
     static std::map<uint64 /* slotId */, std::vector<SlotRune>> m_SlotRune;
     static std::map<uint32 /* accountId */, AccountProgression> m_Progression;
+    static std::map<uint32 /* achievementId */, RewardAchievement> m_RewardAchievement;
     static std::vector<SpellRuneConversion> m_SpellRuneConversion;
     static std::map<uint64, int8> m_CharacterRuneDraw;
     static RuneConfig config;
@@ -106,6 +118,7 @@ public:
     static void LoadAllSlotRune();
     static void LoadAllProgression();
     static void LoadSpellsConversion();
+    static void LoadRewardsAchievement();
     static void CreateDefaultCharacter(Player* player);
     static std::vector<std::string> KnownRuneForClient(Player* player);
     static std::string RuneForClient(Player* player, Rune rune, bool known, uint32 count);

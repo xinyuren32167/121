@@ -590,6 +590,7 @@ public:
     virtual void UpdateRealmCharCount(uint32 accid) = 0;
     [[nodiscard]] virtual LocaleConstant GetAvailableDbcLocale(LocaleConstant locale) const = 0;
     virtual void LoadDBVersion() = 0;
+    virtual void InitializeConfigValues() = 0;
     [[nodiscard]] virtual char const* GetDBVersion() const = 0;
     virtual void LoadAutobroadcasts() = 0;
     virtual void UpdateAreaDependentAuras() = 0;
@@ -599,6 +600,8 @@ public:
     [[nodiscard]] virtual std::string const& GetRealmName() const = 0;
     virtual void SetRealmName(std::string name) = 0;
     virtual void RemoveOldCorpses() = 0;
+    virtual int GetValue(std::string value) = 0;
+
 };
 
 #endif //AZEROTHCORE_IWORLD_H

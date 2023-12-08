@@ -122,6 +122,7 @@ void Mythic::OnCompleteMythicDungeon(Player* player)
 
     uint8 upgrade = CalculateUpgradeKey();
 
+
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
         if (Player* currentPlayer = playerIteration->GetSource())
@@ -146,6 +147,8 @@ void Mythic::OnKillBoss(Player* player, Creature* killed)
     SetBossDead(killed->GetEntry());
 
     uint32 index = GetBossIndex(killed->GetEntry());
+
+    killed->loot.clear();
 
     if (!index)
         return;
@@ -181,6 +184,8 @@ void Mythic::OnKillCreature(Player* player, Creature* killed)
         EnemyForces += count;
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
+
+    killed->loot.clear();
 
     if (playerList.IsEmpty())
         return;

@@ -339,6 +339,7 @@ public:
 
     // used World DB version
     void LoadDBVersion() override;
+
     [[nodiscard]] char const* GetDBVersion() const override { return m_DBVersion.c_str(); }
 
     void LoadAutobroadcasts() override;
@@ -353,6 +354,17 @@ public:
     void SetRealmName(std::string name) override { _realmName = name; } // pussywizard
 
     void RemoveOldCorpses() override;
+
+    void InitializeConfigValues() override;
+
+    int GetValue(std::string value)
+    {
+        auto itr = _mValues.find(value);
+        if (itr != _mValues.end())
+            return itr->second;
+
+        return 0;
+    };
 
 protected:
     void _UpdateGameTime();
@@ -372,6 +384,9 @@ protected:
     void CalendarDeleteOldEvents();
     void ResetGuildCap();
 private:
+
+    std::map<std::string, uint32> _mValues;
+
     static std::atomic_long m_stopEvent;
     static uint8 m_ExitCode;
     uint32 m_ShutdownTimer;
@@ -452,6 +467,7 @@ private:
      * @param session The World Session that we are finalizing.
      */
     inline void FinalizePlayerWorldSession(WorldSession* session);
+
 };
 
 std::unique_ptr<IWorld>& getWorldInstance();

@@ -431,6 +431,7 @@ bool StartDB()
     WorldDatabase.Execute("UPDATE version SET core_version = '{}', core_revision = '{}'", GitRevision::GetFullVersion(), GitRevision::GetHash());        // One-time query
 
     sWorld->LoadDBVersion();
+    sWorld->InitializeConfigValues();
 
     LOG_INFO("server.loading", "> Version DB world:     {}", sWorld->GetDBVersion());
 

@@ -151,11 +151,11 @@ void ScriptMgr::ValidateSpellAtCastSpellResult(Player* player, Unit* mover, Spel
     });
 }
 
-void ScriptMgr::OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode)
+void ScriptMgr::OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode, WorldObject* lootSource)
 {
     ExecuteScript<MiscScript>([&](MiscScript* script)
     {
-        script->OnAfterLootTemplateProcess(loot, tab, store, lootOwner, personal, noEmptyError, lootMode);
+        script->OnAfterLootTemplateProcess(loot, tab, store, lootOwner, personal, noEmptyError, lootMode, lootSource);
     });
 }
 

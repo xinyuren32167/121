@@ -11,6 +11,8 @@ std::map<uint32 /* accountId */, std::vector<KnownRune>> RunesManager::m_KnownRu
 std::map<uint64 /* guid */, std::vector<Loadout>> RunesManager::m_Loadout = {};
 std::map<uint64 /* LoadoutId */, std::vector<SlotRune>> RunesManager::m_SlotRune = {};
 std::map<uint32 /* accountId */, AccountProgression> RunesManager::m_Progression = {};
+std::map<uint32 /* achievementId */, RewardAchievement> RunesManager::m_RewardAchievement = {};
+
 std::vector<SpellRuneConversion> RunesManager::m_SpellRuneConversion = {};
 std::map<uint64, int8> RunesManager::m_CharacterRuneDraw = {};
 
@@ -23,20 +25,20 @@ void RunesManager::SetupConfig()
     config.maxSlots  = 8;
     config.defaultSlot = 8;
 
-    config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, 20));
-    config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, 50));
-    config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, 150));
-    config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, 250));
+    config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_RARE")));
+    config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_EPIC")));
+    config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_LEGENDARY")));
+    config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_MYTHICAL")));
 
-    config.costMineralToUpgradeToEpic = 6;
-    config.costMineralToUpgradeToLegendary = 20;
-    config.costMineralToUpgradeToMythic = 100;
+    config.costMineralToUpgradeToEpic = sWorld->GetValue("CONFIG_COST_MINERAL_EPIC");
+    config.costMineralToUpgradeToLegendary = sWorld->GetValue("CONFIG_COST_MINERAL_LEGENDARY");
+    config.costMineralToUpgradeToMythic = sWorld->GetValue("CONFIG_COST_MINERAL_MYTHICAL");
 
-    config.costSkullUpgradeRankLegendary = 3;
-    config.costSkullUpgradeRankMythic = 3;
+    config.costSkullUpgradeRankLegendary = sWorld->GetValue("CONFIG_COST_TOKEN_UPGRADE_LEGENDARY");
+    config.costSkullUpgradeRankMythic = sWorld->GetValue("CONFIG_COST_TOKEN_UPGRADE_MYTHICAL");
 
-    config.costBetterSkullUpgradeRankLegendary = 1;
-    config.costBetterSkullUpgradeRankMythic = 5;
+    config.costBetterSkullUpgradeRankLegendary = sWorld->GetValue("CONFIG_COST_UPPER_TOKEN_UPGRADE_LEGENDARY");
+    config.costBetterSkullUpgradeRankMythic = sWorld->GetValue("CONFIG_COST_UPPER_TOKEN_UPGRADE_MYTHICAL");
 
 }
 
@@ -84,6 +86,33 @@ void RunesManager::LoadSpellsConversion()
         uint32 newSpellId = fields[2].Get<int32>();
         SpellRuneConversion s = { runeSpellId, oldSpellId, newSpellId };
         m_SpellRuneConversion.push_back(s);
+    } while (result->NextRow());
+}
+
+
+void RunesManager::LoadRewardsAchievement()
+{
+    RunesManager::m_RewardAchievement = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT * FROM achievement_reward_bonus");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 achievementId = fields[0].Get<uint32>();
+
+        uint32 itemId1 = fields[1].Get<uint32>();
+        uint32 itemId1Amount = fields[2].Get<uint32>();
+
+        uint32 itemId2 = fields[3].Get<uint32>();
+        uint32 itemId2Amount = fields[4].Get<uint32>();
+
+        uint32 itemId3 = fields[5].Get<uint32>();
+        uint32 itemId3Amount = fields[6].Get<uint32>();
+
     } while (result->NextRow());
 }
 
@@ -464,6 +493,9 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
         Rune nextRune = GetRuneByQuality(knownRune.rune.groupId, nextQuality);
         bool isUpgradable = IsRuneUpgradable(player, nextRune, knownRune.count);
 
+        if ((knownRune.rune.allowableClass & player->getClassMask()) == 0)
+            continue;
+
         if (!isUpgradable)
             continue;
 
@@ -485,8 +517,8 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
             fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70010"
             << "," << std::to_string(config.costMineralToUpgradeToEpic);
         if (nextQuality == LEGENDARY_QUALITY)
-            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70011" << "," << std::to_string(config.costMineralToUpgradeToLegendary)
-            << ";" << "70013" << "," << config.costSkullUpgradeRankLegendary << ";" << "70014" << "," << config.costBetterSkullUpgradeRankLegendary;
+            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";" << "70011" << "," << std::to_string(config.costMineralToUpgradeToLegendary)
+            << ";" << "70013" << "," << std::to_string(config.costSkullUpgradeRankLegendary) << ";" << "70014" << "," << std::to_string(config.costBetterSkullUpgradeRankLegendary);
         if (nextQuality == MYTHICAL_QUALITY)
             fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70012" << "," << std::to_string(config.costMineralToUpgradeToMythic)
             << ";" << "70013" << "," << std::to_string(config.costSkullUpgradeRankMythic) << ";" << "70014" << "," << std::to_string(config.costBetterSkullUpgradeRankMythic);
@@ -959,7 +991,7 @@ void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
 
     if (RuneAlreadyActivated(player, runeSpellId))
     {
-        SendPlayerMessage(player, "You cannot upgrade this rune, you have one or more of these runes activated..");
+        SendPlayerMessage(player, "You cannot upgrade this rune, you have one or more of these runes activated.");
         return;
     }
 

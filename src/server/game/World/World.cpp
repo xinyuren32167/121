@@ -3371,6 +3371,24 @@ void World::RemoveOldCorpses()
     m_timers[WUPDATE_CORPSES].SetCurrent(m_timers[WUPDATE_CORPSES].GetInterval());
 }
 
+void World::InitializeConfigValues()
+{
+    _mValues = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT * FROM configs");
+
+    if (!result)
+        return;
+    do
+    {
+        Field* fields = result->Fetch();
+        std::string configName = fields[0].Get<std::string>();
+        uint32 value = fields[1].Get<uint32>();
+        _mValues[configName] = value;
+    } while (result->NextRow());
+
+}
+
 bool World::IsPvPRealm() const
 {
     return getIntConfig(CONFIG_GAME_TYPE) == REALM_TYPE_PVP || getIntConfig(CONFIG_GAME_TYPE) == REALM_TYPE_RPPVP || getIntConfig(CONFIG_GAME_TYPE) == REALM_TYPE_FFA_PVP;
