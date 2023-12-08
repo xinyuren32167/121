@@ -1,5 +1,6 @@
 #include "PetDefines.h"
 #include "Player.h"
+#include "Pet.h"
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
@@ -59,6 +60,9 @@ enum PriestSpells
     RUNE_PRIEST_EXPIATION_DAMAGE = 900310,
     RUNE_PRIEST_ANSWERED_PRAYERS_LISTENER = 900492,
     RUNE_PRIEST_RENEWED_FAITH_HEAL = 900530,
+    RUNE_PRIEST_POWERFUL_SHADOWFIEND_DAMAGE = 900556,
+    RUNE_PRIEST_PUTREFYING_CLAWS_DOT = 900588,
+    RUNE_PRIEST_PUTREFYING_CLAWS_DAMAGE = 900589,
     RUNE_PRIEST_PAINBREAKER_PSALM_DAMAGE = 900686,
     RUNE_PRIEST_BLESSED_RECOVERY_HOT = 900718,
     RUNE_PRIEST_DESPERATE_TIMES_HEAL = 900750,
@@ -76,6 +80,7 @@ enum PriestSpells
     RUNE_PRIEST_LIGHTS_PROTECTION_DOT = 901629,
 
     // Summons
+    SUMMON_PRIEST_SHADOW_FIEND = 19668,
     SUMMON_PRIEST_GOLDEN_APPARITION = 900001,
     SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_TENDRIL = 900002,
     SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_LASHER = 900003,
@@ -765,6 +770,444 @@ class rune_pri_renewed_faith : public AuraScript
     }
 };
 
+class rune_pri_powerful_shadowfiend : public AuraScript
+{
+    PrepareAuraScript(rune_pri_powerful_shadowfiend);
+
+    Unit* GetShadowFiend(Unit* caster)
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = caster->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == SUMMON_PRIEST_SHADOW_FIEND &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        caster->AddAura(aurEff->GetAmount(), shadowFiend);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        for (size_t i = 900550; i < 900556; i++)
+            if (shadowFiend->HasAura(i))
+                shadowFiend->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pri_powerful_shadowfiend::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pri_powerful_shadowfiend::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_powerful_shadowfiend_damage : public AuraScript
+{
+    PrepareAuraScript(rune_pri_powerful_shadowfiend_damage);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_PRIEST_POWERFUL_SHADOWFIEND_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_powerful_shadowfiend_damage::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_powerful_shadowfiend_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_fiend_friend : public AuraScript
+{
+    PrepareAuraScript(rune_pri_fiend_friend);
+
+    Unit* GetShadowFiend(Unit* caster)
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = caster->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == SUMMON_PRIEST_SHADOW_FIEND &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        if (Creature* shadowF = shadowFiend->ToCreature())
+            shadowF->DespawnOrUnsummon();
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_pri_fiend_friend::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_rabid_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_pri_rabid_shadows);
+
+    Unit* GetShadowFiend(Unit* caster)
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = caster->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == SUMMON_PRIEST_SHADOW_FIEND &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        caster->AddAura(aurEff->GetAmount(), shadowFiend);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        for (size_t i = 900570; i < 900576; i++)
+            if (shadowFiend->HasAura(i))
+                shadowFiend->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pri_rabid_shadows::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pri_rabid_shadows::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_putrefying_claws : public AuraScript
+{
+    PrepareAuraScript(rune_pri_putrefying_claws);
+
+    Unit* GetShadowFiend(Unit* caster)
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = caster->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == SUMMON_PRIEST_SHADOW_FIEND &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        caster->AddAura(aurEff->GetAmount(), shadowFiend);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        for (size_t i = 900582; i < 900588; i++)
+            if (shadowFiend->HasAura(i))
+                shadowFiend->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pri_putrefying_claws::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pri_putrefying_claws::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_putrefying_claws_damage : public AuraScript
+{
+    PrepareAuraScript(rune_pri_putrefying_claws_damage);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* dot = target->GetAura(RUNE_PRIEST_PUTREFYING_CLAWS_DOT))
+            if (dot->GetStackAmount() == 5)
+                caster->CastSpell(target, RUNE_PRIEST_PUTREFYING_CLAWS_DAMAGE, TRIGGERED_FULL_MASK);
+
+        caster->CastSpell(target, RUNE_PRIEST_PUTREFYING_CLAWS_DOT, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_putrefying_claws_damage::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_putrefying_claws_damage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_essence_devourer : public AuraScript
+{
+    PrepareAuraScript(rune_pri_essence_devourer);
+
+    Unit* GetShadowFiend(Unit* caster)
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = caster->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == SUMMON_PRIEST_SHADOW_FIEND &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        caster->AddAura(aurEff->GetAmount(), shadowFiend);
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        for (size_t i = 900596; i < 900602; i++)
+            if (shadowFiend->HasAura(i))
+                shadowFiend->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_pri_essence_devourer::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_pri_essence_devourer::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_pri_essence_devourer_proc : public AuraScript
+{
+    PrepareAuraScript(rune_pri_essence_devourer_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 procSpell = aurEff->GetAmount();
+
+            if (!player->GetGroup())
+            {
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+                return;
+            }
+
+            auto const& allyList = player->GetGroup()->GetMemberSlots();
+
+            if (allyList.size() > 0)
+                for (auto const& target : allyList)
+                {
+                    Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                    caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+                    return;
+                }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_essence_devourer_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_essence_devourer_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_shadowflame_prism : public AuraScript
+{
+    PrepareAuraScript(rune_pri_shadowflame_prism);
+
+    Unit* GetShadowFiend(Unit* caster)
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = caster->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == SUMMON_PRIEST_SHADOW_FIEND &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = GetShadowFiend(caster);
+
+        caster->AddAura(aurEff->GetAmount(), shadowFiend);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_shadowflame_prism::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_shadowflame_prism::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_pri_shadowflame_prism_proc : public AuraScript
+{
+    PrepareAuraScript(rune_pri_shadowflame_prism_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* shadowFiend = eventInfo.GetDamageInfo()->GetAttacker();
+
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (shadowFiend && shadowFiend->IsAlive())
+            caster->CastSpell(shadowFiend, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pri_shadowflame_prism_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pri_shadowflame_prism_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 class rune_pri_catharstick : public AuraScript
 {
     PrepareAuraScript(rune_pri_catharstick);
@@ -1020,7 +1463,7 @@ class rune_pri_golden_apparitions : public AuraScript
                 {
                     Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
                     SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-                    Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, GetSpellInfo()->GetDuration(), 0, properties);
+                    Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, 30000, 0, properties);
 
                     if (!summon)
                         continue;
@@ -1031,7 +1474,7 @@ class rune_pri_golden_apparitions : public AuraScript
                     summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     summon->SetReactState(REACT_PASSIVE);
                     summon->SetTarget(alliedPlayer->GetGUID());
-
+                    LOG_ERROR("error", "alliedPlayer = {}", alliedPlayer->GetName());
                     apparition--;
                 }
             }
@@ -1082,6 +1525,8 @@ public:
                     Position pos = target->GetPosition();
                     me->GetMotionMaster()->MovePoint(0, pos);
                 }
+                else
+                    me->DespawnOrUnsummon();
                 update = 0;
             }
 
@@ -1571,7 +2016,7 @@ class rune_pri_idol_of_cthun : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        Unit* target = GetTarget();
+        Unit* target = eventInfo.GetProcTarget();
 
         if (!target || target->isDead())
             return;
@@ -1601,7 +2046,7 @@ class rune_pri_idol_of_cthun : public AuraScript
         if (targetNbr >= 2)
             summonedCreature = SUMMON_PRIEST_IDOL_OF_CTHUN_VOID_LASHER;
 
-        Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
+        Position pos = caster->GetNearPosition(urand(1, 8), urand(1, 8));
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = caster->SummonCreature(summonedCreature, pos, TEMPSUMMON_TIMED_DESPAWN, 16000, 0, properties);
 
@@ -1609,82 +2054,15 @@ class rune_pri_idol_of_cthun : public AuraScript
             return;
 
         summon->SetOwnerGUID(caster->GetGUID());
-        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-        summon->SetReactState(REACT_PASSIVE);
-        summon->SetTarget(target->GetGUID());
+        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        summon->ClearUnitState(UNIT_STATE_ROOT);
+        summon->SetControlled(true, UNIT_STATE_ROOT);
     }
 
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_pri_idol_of_cthun::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_pri_idol_of_cthun::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-// C'thun Pet behaviour
-class npc_pri_idol_of_cthun : public CreatureScript
-{
-public:
-    npc_pri_idol_of_cthun() : CreatureScript("npc_pri_idol_of_cthun") { }
-
-    struct rune_pri_idol_of_cthunAI : public ScriptedAI
-    {
-        Aura* GetRuneAura(Unit* caster)
-        {
-            for (size_t i = 900756; i < 900762; i++)
-            {
-                if (caster->HasAura(i))
-                    return caster->GetAura(i);
-            }
-
-            return nullptr;
-        }
-
-        rune_pri_idol_of_cthunAI(Creature* creature) : ScriptedAI(creature) { }
-
-        uint32 update = 250;
-
-        void Reset() override
-        {
-            me->CombatStop(true);
-            me->AttackStop();
-            me->SetReactState(REACT_PASSIVE);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (update >= 250) {
-                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                {
-                    Position pos = target->GetPosition();
-                    me->GetMotionMaster()->MovePoint(0, pos);
-                }
-                update = 0;
-            }
-
-            update += diff;
-        }
-
-        void MovementInform(uint32 /*type*/, uint32 id) override
-        {
-            Unit* caster = me->GetOwner();
-
-            if (Aura* rune = GetRuneAura(caster))
-                if (id == 0) {
-                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                    {
-                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
-                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
-                    }
-
-                    me->DespawnOrUnsummon();
-                }
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new rune_pri_idol_of_cthunAI(creature);
     }
 };
 
@@ -1935,6 +2313,17 @@ class rune_pri_idol_of_yogg_saron : public AuraScript
 {
     PrepareAuraScript(rune_pri_idol_of_yogg_saron);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 901366; i < 901372; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -1949,94 +2338,26 @@ class rune_pri_idol_of_yogg_saron : public AuraScript
 
         int32 stacks = GetStackAmount();
 
-        if (stacks < GetEffect(EFFECT_1)->GetAmount())
+        if (stacks < GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount())
             return;
 
         Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = caster->SummonCreature(SUMMON_PRIEST_IDOL_YOGG_SARON_THING_FROM_BEYOND, pos, TEMPSUMMON_TIMED_DESPAWN, 20500, 0, properties);
-
+        LOG_ERROR("error", "summon");
         if (!summon)
             return;
-
+        LOG_ERROR("error", "summon check");
         summon->SetOwnerGUID(caster->GetGUID());
-        summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-        summon->SetReactState(REACT_PASSIVE);
+        summon->SetReactState(REACT_DEFENSIVE);
         summon->SetTarget(target->GetGUID());
 
-        caster->RemoveAura(GetAura());
+        ModStackAmount(-stacks);
     }
 
     void Register()
     {
         AfterEffectApply += AuraEffectApplyFn(rune_pri_idol_of_yogg_saron::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
-    }
-};
-
-// C'thun Pet behaviour
-class npc_pri_idol_of_yogg_saron : public CreatureScript
-{
-public:
-    npc_pri_idol_of_yogg_saron() : CreatureScript("npc_pri_idol_of_yogg_saron") { }
-
-    struct npc_pri_idol_of_yogg_saronAI : public ScriptedAI
-    {
-        Aura* GetRuneAura(Unit* caster)
-        {
-            for (size_t i = 900756; i < 900762; i++)
-            {
-                if (caster->HasAura(i))
-                    return caster->GetAura(i);
-            }
-
-            return nullptr;
-        }
-
-        npc_pri_idol_of_yogg_saronAI(Creature* creature) : ScriptedAI(creature) { }
-
-        uint32 update = 250;
-
-        void Reset() override
-        {
-            me->CombatStop(true);
-            me->AttackStop();
-            me->SetReactState(REACT_PASSIVE);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (update >= 250) {
-                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                {
-                    Position pos = target->GetPosition();
-                    me->GetMotionMaster()->MovePoint(0, pos);
-                }
-                update = 0;
-            }
-
-            update += diff;
-        }
-
-        void MovementInform(uint32 /*type*/, uint32 id) override
-        {
-            Unit* caster = me->GetOwner();
-
-            if (Aura* rune = GetRuneAura(caster))
-                if (id == 0) {
-                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                    {
-                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
-                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
-                    }
-
-                    me->DespawnOrUnsummon();
-                }
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_pri_idol_of_yogg_saronAI(creature);
     }
 };
 
@@ -2467,6 +2788,16 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_answered_prayers);
     RegisterSpellScript(rune_pri_lasting_renovation);
     RegisterSpellScript(rune_pri_renewed_faith);
+    RegisterSpellScript(rune_pri_powerful_shadowfiend);
+    RegisterSpellScript(rune_pri_powerful_shadowfiend_damage);
+    RegisterSpellScript(rune_pri_fiend_friend);
+    RegisterSpellScript(rune_pri_rabid_shadows);
+    RegisterSpellScript(rune_pri_putrefying_claws);
+    RegisterSpellScript(rune_pri_putrefying_claws_damage);
+    RegisterSpellScript(rune_pri_essence_devourer);
+    RegisterSpellScript(rune_pri_essence_devourer_proc);
+    RegisterSpellScript(rune_pri_shadowflame_prism);
+    RegisterSpellScript(rune_pri_shadowflame_prism_proc);
     RegisterSpellScript(rune_pri_catharstick);
     RegisterSpellScript(rune_pri_deathspeaker);
     RegisterSpellScript(rune_pri_painbreaker_psalm);
@@ -2495,7 +2826,7 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_ancient_madness);
     RegisterSpellScript(rune_pri_ancient_madness_periodic);
     RegisterSpellScript(rune_pri_holymancy);
-    RegisterSpellScript(rune_pri_accretion); 
+    RegisterSpellScript(rune_pri_accretion);
     RegisterSpellScript(rune_pri_velens_apprentice);
     RegisterSpellScript(rune_pri_velens_apprentice_targeting);
     RegisterSpellScript(rune_pri_velens_blessing);
@@ -2504,12 +2835,10 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(spell_pri_lights_protection);
 
 
-    
+
 
 
 
     new npc_pri_golden_apparitions();
-    new npc_pri_idol_of_cthun();
-    new npc_pri_idol_of_yogg_saron();
 }
 

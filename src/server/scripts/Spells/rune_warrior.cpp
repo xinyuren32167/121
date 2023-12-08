@@ -10,9 +10,11 @@
 #include "Log.h"
 
 
-enum SpellsWarrior {
+enum SpellsWarrior
+{
     SPELL_WARR_THUNDERCLAP = 47502,
     SPELL_WARR_THUNDERCLAP_SON_OF_THUNDER = 84663,
+    SPELL_WARR_THUNDER_BOLT_THUNDER_CLAP = 201157,
     SPELL_WARR_IGNORE_PAIN = 80004,
     SPELL_WARR_SHIELD_SLAM = 47488,
     SPELL_WARR_REND = 47465,
@@ -23,8 +25,20 @@ enum SpellsWarrior {
     SPELL_WARR_SECOND_CRUSHING_STRIKE = 84664,
     SPELL_WARR_HULN_FURY = 84653,
     SPELL_WARR_BATTLE_TRANCE = 84560,
-    SPELL_WARR_DEVASTATOR = 200868,
     SPELL_WARR_TEST_OF_MIGHT = 200887,
+    MASTERY_WARR_DEEP_WOUNDS = 200000,
+    MASTERY_WARR_DEEP_WOUNDS_DAMAGE = 200001,
+    MASTERY_WARR_DEEP_WOUNDS_DAMAGE_INCREASE = 200002,
+    SPELL_WARR_EXECUTE = 47471,
+    SPELL_WARR_CLEAVE = 47520,
+    SPELL_WARR_MORTAL_STRIKE = 47486,
+
+    RUNE_WARR_DEVASTATOR_PROC = 200868,
+    RUNE_WARR_FATALITY_MARK = 201207,
+    RUNE_WARR_FATALITY_DAMAGE = 201208,
+    RUNE_TEST_OF_MIGHT_COUNTER = 201137,
+    RUNE_TEST_OF_MIGHT_BUFF = 200887,
+    RUNE_STRENGTH_OF_ARMS_PROC = 201215,
 };
 
 class spell_cut_the_veins : public AuraScript
@@ -95,7 +109,6 @@ class spell_cut_the_veins : public AuraScript
     }
 };
 
-
 class spell_the_art_of_war : public AuraScript
 {
     PrepareAuraScript(spell_the_art_of_war);
@@ -134,7 +147,6 @@ class spell_the_art_of_war : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_the_art_of_war::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
 
 // crash...
 class spell_tide_of_blood : public AuraScript
@@ -286,76 +298,6 @@ class spell_tactician : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_tactician::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-class spell_dreadnaught : public SpellScript
-{
-    PrepareSpellScript(spell_dreadnaught);
-
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        int32 damage = GetEffectValue();
-        ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
-
-        if (Unit* target = GetHitUnit())
-        {
-            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
-        SetHitDamage(damage);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_dreadnaught::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
-class spell_blood_and_thunder : public SpellScript
-{
-    PrepareSpellScript(spell_blood_and_thunder);
-
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200193))
-            return GetCaster()->GetAura(200193);
-
-        if (GetCaster()->HasAura(200194))
-            return GetCaster()->GetAura(200194);
-
-        if (GetCaster()->HasAura(200195))
-            return GetCaster()->GetAura(200195);
-
-        if (GetCaster()->HasAura(200196))
-            return GetCaster()->GetAura(200196);
-
-        if (GetCaster()->HasAura(200197))
-            return GetCaster()->GetAura(200197);
-
-        if (GetCaster()->HasAura(200198))
-            return GetCaster()->GetAura(200198);
-
-        return nullptr;
-    }
-
-    void FindTargets(std::list<WorldObject*>& targets)
-    {
-        if (!GetRuneAura())
-            return;
-
-        if (targets.size() > 0)
-        {
-            for (auto const& target : targets)
-                if (Unit* unit = target->ToUnit())
-                    if(!unit->HasAura(47465))
-                        GetCaster()->CastSpell(unit, 200237, TRIGGERED_FULL_MASK);
-        }
-    }
-
-    void Register() override
-    {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_blood_and_thunder::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
 
@@ -1286,53 +1228,40 @@ class spell_sword_and_board : public AuraScript
     }
 };
 
-class spell_violent_outburst : public AuraScript
+class rune_violent_outburst : public AuraScript
 {
-    PrepareAuraScript(spell_violent_outburst);
+    PrepareAuraScript(rune_violent_outburst);
 
-    Aura* GetRuneAura()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(200600))
-            return GetCaster()->GetAura(200600);
-
-        if (GetCaster()->HasAura(200601))
-            return GetCaster()->GetAura(200601);
-
-        if (GetCaster()->HasAura(200602))
-            return GetCaster()->GetAura(200602);
-
-        if (GetCaster()->HasAura(200603))
-            return GetCaster()->GetAura(200603);
-
-        if (GetCaster()->HasAura(200604))
-            return GetCaster()->GetAura(200604);
-
-        if (GetCaster()->HasAura(200605))
-            return GetCaster()->GetAura(200605);
-
-        return nullptr;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        if (!GetCaster())
+        int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
+        if (spellRage <= 0)
             return;
 
-        if (!GetRuneAura())
-            return;
+        int32 rageAccumulated = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount() + spellRage;
+        int32 rageThreshold = aurEff->GetAmount();
 
-        if (GetCaster()->GetAura(200612)->GetStackAmount() < GetRuneAura()->GetEffect(EFFECT_0)->GetAmount())
-            return;
+        if (rageAccumulated >= rageThreshold)
+        {
+            aurEff->GetBase()->GetEffect(EFFECT_2)->SetAmount(rageAccumulated - rageThreshold);
+            GetCaster()->CastSpell(GetCaster(), 200612, TRIGGERED_FULL_MASK);
 
-        uint32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-
-        GetCaster()->RemoveAura(200612);
-        GetCaster()->CastSpell(GetCaster(), buffAura, TRIGGERED_FULL_MASK);
+            if (Aura* aura = GetCaster()->GetAura(200612))
+            {
+                if (aura->GetStackAmount() >= 8)
+                {
+                    aura->Remove();
+                    GetCaster()->CastSpell(GetCaster(), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount(), TRIGGERED_FULL_MASK);
+                }
+            }
+        }
+        else
+            aurEff->GetBase()->GetEffect(EFFECT_2)->SetAmount(rageAccumulated);
     }
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_violent_outburst::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectProc += AuraEffectProcFn(rune_violent_outburst::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1774,6 +1703,7 @@ class spell_healing_block : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_healing_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
 // Crash ..
 class spell_hurricane : public AuraScript
 {
@@ -1921,114 +1851,23 @@ class rune_thunder_weapon : public AuraScript
     }
 };
 
-class rune_improved_heroic_throw : public SpellScript
+class rune_devastator : public AuraScript
 {
-    PrepareSpellScript(rune_improved_heroic_throw);
-
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200850))
-            return GetCaster()->GetAura(200850);
-
-        if (GetCaster()->HasAura(200851))
-            return GetCaster()->GetAura(200851);
-
-        if (GetCaster()->HasAura(200852))
-            return GetCaster()->GetAura(200852);
-
-        if (GetCaster()->HasAura(200853))
-            return GetCaster()->GetAura(200853);
-
-        if (GetCaster()->HasAura(200854))
-            return GetCaster()->GetAura(200854);
-
-        if (GetCaster()->HasAura(200855))
-            return GetCaster()->GetAura(200855);
-
-        return nullptr;
-    }
-
-    void OnHitTarget(SpellEffIndex effIndex)
-    {
-        if (Unit* target = GetHitUnit())
-        {
-            if (Aura* improvedHeroicThrow = GetRuneAura()) {
-                Player* player = GetCaster()->ToPlayer();
-                float amount = 8.0f + player->GetMastery();
-                player->CastCustomSpell(200002, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(rune_improved_heroic_throw::OnHitTarget, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
-class rune_brutal_vitality : public AuraScript
-{
-    PrepareAuraScript(rune_brutal_vitality);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
-
-        if (!damageInfo || !damageInfo->GetDamage())
-        {
-            return false;
-        }
-
-        return GetTarget()->IsAlive();
-    }
-
-    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        PreventDefaultAction();
-        float pct = aurEff->GetAmount();
-        int32 calculatedAmount = CalculatePct(static_cast<int32>(eventInfo.GetDamageInfo()->GetDamage()), pct);
-
-        if (Aura* aura = GetCaster()->GetAura(SPELL_WARR_IGNORE_PAIN))
-        {
-            int32 amount = aura->GetEffect(EFFECT_0)->GetAmount();
-            int32 newAmount = amount += calculatedAmount;
-            LOG_ERROR("", "current Amount {}", amount);
-            aura->GetEffect(EFFECT_0)->SetAmount(newAmount);
-        }
-    }
-
-    void Register() override
-    {
-        DoCheckProc += AuraCheckProcFn(rune_brutal_vitality::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_brutal_vitality::OnProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
-    }
-};
-
-class rune_brutal_devastator : public AuraScript
-{
-    PrepareAuraScript(rune_brutal_devastator);
+    PrepareAuraScript(rune_devastator);
 
 
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        PreventDefaultAction();
         Unit* caster = GetCaster();
-        float totalAttackPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        int32 damage = int32(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
 
-        int32 amountPourcentage = aurEff->GetAmount();
-        int32 attackPower = int32(CalculatePct(totalAttackPower, amountPourcentage));
-
-        Unit* target = eventInfo.GetActionTarget();
-
-        caster->CastCustomSpell(SPELL_WARR_DEVASTATOR, SPELLVALUE_BASE_POINT0, attackPower, target, TRIGGERED_FULL_MASK);
-
-        if (roll_chance_f(20.f))
-            caster->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_SHIELD_SLAM, true);
+        caster->CastCustomSpell(RUNE_WARR_DEVASTATOR_PROC, SPELLVALUE_BASE_POINT0, damage, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        caster->ToPlayer()->RemoveSpellCooldown(SPELL_WARR_SHIELD_SLAM, true);
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_brutal_devastator::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(rune_devastator::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2051,7 +1890,7 @@ private:
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         uint32 allowedHealth = victim->CountPctFromMaxHealth(30.f);
 
-        uint32 battleScaredProcTriggerSpell = aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
+        uint32 battleScaredProcTriggerSpell = aurEff->GetAmount();
 
         if ((remainingHealth < int32(allowedHealth)) && !victim->ToPlayer()->HasSpellCooldown(battleScaredProcTriggerSpell))
         {
@@ -2064,119 +1903,6 @@ private:
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(rune_battle_scarred_veteran::CalculateAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
         OnEffectAbsorb += AuraEffectAbsorbFn(rune_battle_scarred_veteran::Absorb, EFFECT_2);
-    }
-};
-
-class rune_test_of_might : public AuraScript
-{
-    PrepareAuraScript(rune_test_of_might);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-
-        int32 rage = eventInfo.GetSpellInfo()->ManaCost / 10;
-
-        if (rage <= 0)
-            return;
-
-        int32 rageAccumulated = aurEff->GetAmount() + rage;
-
-        aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(rageAccumulated);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(rune_test_of_might::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-
-class rune_test_of_might_effect_remove : public AuraScript
-{
-    PrepareAuraScript(rune_test_of_might_effect_remove);
-
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200881))
-            return GetCaster()->GetAura(200881);
-
-        if (GetCaster()->HasAura(200882))
-            return GetCaster()->GetAura(200882);
-
-        if (GetCaster()->HasAura(200883))
-            return GetCaster()->GetAura(200883);
-
-        if (GetCaster()->HasAura(200884))
-            return GetCaster()->GetAura(200884);
-
-        if (GetCaster()->HasAura(200885))
-            return GetCaster()->GetAura(200885);
-
-        if (GetCaster()->HasAura(200886))
-            return GetCaster()->GetAura(200886);
-
-        return nullptr;
-    }
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        Unit* caster = GetCaster();
-        int32 rageAccumulated = aurEff->GetAmount();
-        if (Aura* rune = GetRuneAura()) {
-            int32 threadshold = rune->GetEffect(EFFECT_0)->GetAmount();
-            int32 calculatedStack = static_cast<int32>(rageAccumulated / threadshold);
-            caster->CastCustomSpell(SPELL_WARR_TEST_OF_MIGHT, SPELLVALUE_AURA_STACK, calculatedStack, caster, TRIGGERED_FULL_MASK);
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might_effect_remove::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
-class rune_in_for_the_kill : public SpellScript
-{
-    PrepareSpellScript(rune_in_for_the_kill);
-
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        if (Unit* target = GetHitUnit())
-        {
-            if (target->GetHealthPct() < 35.f) {
-                
-            }
-            else {
-               
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(rune_in_for_the_kill::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
-class rune_strength_of_arms : public SpellScript
-{
-    PrepareSpellScript(rune_strength_of_arms);
-
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        // Hit with Overpower check if we have the rune first
-        if (Unit* target = GetHitUnit())
-        {
-            if (target->GetHealthPct() < 35.f) {
-                // Give X rage depending on the rune rank.
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(rune_strength_of_arms::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -2194,30 +1920,6 @@ class rune_bonegrinder : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(rune_bonegrinder::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
-
-class rune_bloodletting : public SpellScript
-{
-    PrepareSpellScript(rune_bloodletting);
-
-    void HandleHit(SpellEffIndex effIndex)
-    {
-        // We hit with Mortal strike, we check if we have the rune first.
-        if (Unit* target = GetHitUnit())
-        {
-            if (target->GetHealthPct() < 35.f) {
-                GetCaster()->CastSpell(target, SPELL_WARR_REND);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(rune_bloodletting::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
-
 
 class rune_cold_steel_hot_blood : public AuraScript
 {
@@ -2238,7 +1940,6 @@ class rune_cold_steel_hot_blood : public AuraScript
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* target = eventInfo.GetActionTarget();
-
     }
 
     void Register() override
@@ -2263,7 +1964,6 @@ class rune_invigorating_fury : public SpellScript
     }
 };
 
-
 class rune_hack_and_slash : public AuraScript
 {
     PrepareAuraScript(rune_hack_and_slash);
@@ -2279,7 +1979,6 @@ class rune_hack_and_slash : public AuraScript
     }
 };
 
-
 class rune_merciless : public AuraScript
 {
     PrepareAuraScript(rune_merciless);
@@ -2294,7 +1993,6 @@ class rune_merciless : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(rune_merciless::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
 
 class rune_seismic_reverberation : public SpellScript
 {
@@ -2317,7 +2015,6 @@ class rune_seismic_reverberation : public SpellScript
         }
     }
 
-
     void HandleOnCast()
     {
         if (Aura* aura = GetCaster()->GetAura(0)) {
@@ -2325,15 +2022,12 @@ class rune_seismic_reverberation : public SpellScript
         }
     }
 
-
-
     void Register() override
     {
         OnHit += SpellHitFn(rune_seismic_reverberation::HandleOnHit);
         OnCast += SpellCastFn(rune_seismic_reverberation::HandleOnCast);
     }
 };
-
 
 class rune_heavy_blocks : public AuraScript
 {
@@ -2370,7 +2064,6 @@ class rune_impenetrable_shield : public AuraScript
     }
 };
 
-
 class rune_bolster : public SpellScript
 {
     PrepareSpellScript(rune_bolster);
@@ -2386,7 +2079,6 @@ class rune_bolster : public SpellScript
         OnCast += SpellCastFn(rune_bolster::HandleOnCast);
     }
 };
-
 
 class rune_fierce_striking : public AuraScript
 {
@@ -2453,11 +2145,9 @@ class rune_heavy_impact : public AuraScript
     }
 };
 
-
 class rune_raging_fury : public AuraScript
 {
     PrepareAuraScript(rune_raging_fury);
-
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
@@ -2485,7 +2175,6 @@ class rune_raging_fury : public AuraScript
 class rune_spartan_aegis : public AuraScript
 {
     PrepareAuraScript(rune_spartan_aegis);
-
 
     void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
     {
@@ -2537,7 +2226,6 @@ class rune_impenetrable_barrier : public AuraScript
     }
 };
 
-
 class rune_masterful_swipe : public SpellScript
 {
     PrepareSpellScript(rune_masterful_swipe);
@@ -2559,7 +2247,6 @@ class rune_masterful_swipe : public SpellScript
         }
     }
 
-
     void HandleOnCast()
     {
         if (Aura* aura = GetCaster()->GetAura(0)) {
@@ -2567,15 +2254,12 @@ class rune_masterful_swipe : public SpellScript
         }
     }
 
-
-
     void Register() override
     {
         OnHit += SpellHitFn(rune_masterful_swipe::HandleOnHit);
         OnCast += SpellCastFn(rune_masterful_swipe::HandleOnCast);
     }
 };
-
 
 class rune_the_depth_of_rage : public AuraScript
 {
@@ -2588,7 +2272,6 @@ class rune_the_depth_of_rage : public AuraScript
 
         if (spellRage <= 0)
             return;
-
     }
 
     void Register() override
@@ -2624,39 +2307,385 @@ class rune_gladiator_tourment : public AuraScript
     }
 };
 
-
-class spell_calculated_abandon : public AuraScript
+class rune_reprisal : public AuraScript
 {
-    PrepareAuraScript(spell_calculated_abandon);
+    PrepareAuraScript(rune_reprisal);
 
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-       
+        Unit* caster = GetCaster();
+        int32 duration = aurEff->GetAmount();
+        if (Aura* aura = caster->GetAura(SPELL_WARR_SHIELD_BLOCK))
+        {
+            float remainingDuration = aura->GetDuration();
+            aura->SetDuration(remainingDuration + duration);
+        }
+        else
+        {
+            caster->AddAura(SPELL_WARR_SHIELD_BLOCK, caster);
+            caster->GetAura(SPELL_WARR_SHIELD_BLOCK)->SetDuration(duration);
+        }
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_calculated_abandon::HandleRemove, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectProc += AuraEffectProcFn(rune_reprisal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
+class rune_thunder_bolt : public AuraScript
+{
+    PrepareAuraScript(rune_thunder_bolt);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), SPELL_WARR_THUNDER_BOLT_THUNDER_CLAP, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_thunder_bolt::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_thunder_bolt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_improved_heroic_throw : public AuraScript
+{
+    PrepareAuraScript(rune_improved_heroic_throw);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (Aura* aura = caster->GetAura(MASTERY_WARR_DEEP_WOUNDS))
+        {
+            int32 damageAmount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aura->GetEffect(EFFECT_0)->GetAmount());
+            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), MASTERY_WARR_DEEP_WOUNDS_DAMAGE, SPELL_AURA_PERIODIC_DAMAGE, damageAmount);
+
+            float vulnAmount = aura->GetEffect(EFFECT_1)->GetAmount() + caster->ToPlayer()->GetMastery();
+            caster->CastCustomSpell(MASTERY_WARR_DEEP_WOUNDS_DAMAGE_INCREASE, SPELLVALUE_BASE_POINT0, vulnAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_improved_heroic_throw::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_improved_heroic_throw::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_blood_and_thunder : public AuraScript
+{
+    PrepareAuraScript(rune_blood_and_thunder);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->AddAura(SPELL_WARR_REND, eventInfo.GetActionTarget());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_blood_and_thunder::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_blood_and_thunder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_brutal_vitality : public AuraScript
+{
+    PrepareAuraScript(rune_brutal_vitality);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return GetCaster()->HasAura(SPELL_WARR_IGNORE_PAIN);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (Aura* aura = caster->GetAura(SPELL_WARR_IGNORE_PAIN))
+        {
+            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+            int32 currentAbsorb = aura->GetEffect(EFFECT_0)->GetAmount();
+            aura->GetEffect(EFFECT_0)->ChangeAmount(amount + currentAbsorb);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_brutal_vitality::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_brutal_vitality::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_fatality : public AuraScript
+{
+    PrepareAuraScript(rune_fatality);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        int32 targetHealth = target->GetHealthPct();
+
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+            if (targetHealth > 30 && (spellInfo->Id == SPELL_WARR_MORTAL_STRIKE || spellInfo->Id == SPELL_WARR_CLEAVE))
+                GetCaster()->CastSpell(target, RUNE_WARR_FATALITY_MARK, TRIGGERED_FULL_MASK);
+            else if (targetHealth <= 30 && spellInfo->Id == SPELL_WARR_EXECUTE && target->HasAura(RUNE_WARR_FATALITY_MARK))
+            {
+                target->RemoveAura(RUNE_WARR_FATALITY_MARK);
+                GetCaster()->CastSpell(target, RUNE_WARR_FATALITY_DAMAGE, TRIGGERED_FULL_MASK);
+            }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_fatality::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_fatality::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_test_of_might : public AuraScript
+{
+    PrepareAuraScript(rune_test_of_might);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasAura(RUNE_TEST_OF_MIGHT_COUNTER))
+            return false;
+
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(GetCaster(), SpellSchoolMask(eventInfo.GetSpellInfo()->SchoolMask));
+        if (spellRage <= 0)
+            return;
+
+        if (Aura* mightCounter = GetCaster()->GetAura(RUNE_TEST_OF_MIGHT_COUNTER))
+        {
+            int32 rageAccumulated = mightCounter->GetEffect(EFFECT_0)->GetAmount() + spellRage;
+            mightCounter->GetEffect(EFFECT_0)->ChangeAmount(rageAccumulated);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_test_of_might::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_test_of_might::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_test_of_might_expire : public AuraScript
+{
+    PrepareAuraScript(rune_test_of_might_expire);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 200881; i < 200887; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Aura* runeAura = GetRuneAura())
+        {
+            GetCaster()->AddAura(RUNE_TEST_OF_MIGHT_COUNTER, GetCaster());
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Aura* runeAura = GetRuneAura())
+        {
+            if (Aura* mightCounter = GetCaster()->GetAura(RUNE_TEST_OF_MIGHT_COUNTER))
+            {
+                int32 threadshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                int32 rageAccumulated = mightCounter->GetEffect(EFFECT_0)->GetAmount();
+                int32 calculatedStack = static_cast<int32>(rageAccumulated / threadshold);
+                GetCaster()->CastCustomSpell(RUNE_TEST_OF_MIGHT_BUFF, SPELLVALUE_BASE_POINT0, calculatedStack, GetCaster(), TRIGGERED_FULL_MASK);
+                mightCounter->Remove();
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_test_of_might_expire::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might_expire::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_in_for_the_kill : public AuraScript
+{
+    PrepareAuraScript(rune_in_for_the_kill);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 normalProc = aurEff->GetAmount();
+        int32 improvedProc = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        if (eventInfo.GetActionTarget()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
+            caster->CastSpell(caster, improvedProc);
+        else
+            caster->CastSpell(caster, normalProc);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_in_for_the_kill::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_in_for_the_kill::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_strength_of_arms : public AuraScript
+{
+    PrepareAuraScript(rune_strength_of_arms);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        return target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastCustomSpell(RUNE_STRENGTH_OF_ARMS_PROC, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_strength_of_arms::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_strength_of_arms::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_bloodmark : public AuraScript
+{
+    PrepareAuraScript(rune_bloodmark);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        return target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastCustomSpell(RUNE_STRENGTH_OF_ARMS_PROC, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_bloodmark::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_bloodmark::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_warrior_perks_scripts()
 {
-
     RegisterSpellScript(rune_improved_execute);
     RegisterSpellScript(rune_thunder_weapon);
-    RegisterSpellScript(rune_improved_heroic_throw);
     RegisterSpellScript(rune_brutal_vitality);
-    RegisterSpellScript(rune_brutal_devastator);
+    RegisterSpellScript(rune_devastator);
     RegisterSpellScript(rune_battle_scarred_veteran);
-    RegisterSpellScript(rune_test_of_might);
-    RegisterSpellScript(rune_test_of_might_effect_remove);
-    RegisterSpellScript(rune_strength_of_arms);
-    RegisterSpellScript(rune_in_for_the_kill);
     RegisterSpellScript(rune_bonegrinder);
-    RegisterSpellScript(rune_bloodletting);
     RegisterSpellScript(rune_invigorating_fury);
     RegisterSpellScript(rune_merciless);
     RegisterSpellScript(rune_hack_and_slash);
@@ -2674,16 +2703,12 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(rune_masterful_swipe);
     RegisterSpellScript(rune_the_depth_of_rage);
     RegisterSpellScript(rune_gladiator_tourment);
-    RegisterSpellScript(spell_calculated_abandon);
-
     RegisterSpellScript(spell_cut_the_veins);
     RegisterSpellScript(spell_the_art_of_war);
     RegisterSpellScript(spell_tide_of_blood);
     RegisterSpellScript(spell_vein_cutter);
     RegisterSpellScript(spell_battlelord);
     RegisterSpellScript(spell_tactician);
-    RegisterSpellScript(spell_dreadnaught);
-    RegisterSpellScript(spell_blood_and_thunder);
     RegisterSpellScript(spell_anger_management);
     RegisterSpellScript(spell_blood_dance);
     RegisterSpellScript(spell_keep_spinnin);
@@ -2715,7 +2740,7 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_enduring_defenses_shield_slam);
     RegisterSpellScript(spell_barrier_lord);
     RegisterSpellScript(spell_sword_and_board);
-    RegisterSpellScript(spell_violent_outburst);
+    RegisterSpellScript(rune_violent_outburst);
     RegisterSpellScript(spell_defenders_aegis);
     RegisterSpellScript(spell_offensive_wall);
     RegisterSpellScript(spell_recuperation);
@@ -2731,4 +2756,15 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_block_spike);
     RegisterSpellScript(spell_healing_block);
     RegisterSpellScript(spell_hurricane);
+    RegisterSpellScript(rune_reprisal);
+    RegisterSpellScript(rune_thunder_bolt);
+    RegisterSpellScript(rune_improved_heroic_throw);
+    RegisterSpellScript(rune_blood_and_thunder);
+    RegisterSpellScript(rune_brutal_vitality);
+    RegisterSpellScript(rune_fatality);
+    RegisterSpellScript(rune_test_of_might);
+    RegisterSpellScript(rune_test_of_might_expire);
+    RegisterSpellScript(rune_in_for_the_kill);
+    RegisterSpellScript(rune_strength_of_arms);
+    RegisterSpellScript(rune_bloodmark);
 }

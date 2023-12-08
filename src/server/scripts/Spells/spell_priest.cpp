@@ -117,6 +117,7 @@ enum PriestSpells
     SPELL_PRIEST_HOLY_ERUPTION = 86204,
     SPELL_PRIEST_HOLY_ERUPTION_LIGHT_OVERLOAD = 86301,
     SPELL_PRIEST_BLISTERING_BARRIER = 86200,
+    SPELL_PRIEST_BLISTERING_BARRIER_PROC = 86201,
 
     // Passives
     SPELL_GENERIC_ARENA_DAMPENING = 74410,
@@ -163,6 +164,61 @@ class spell_pri_shadowfiend_scaling : public AuraScript
 {
     PrepareAuraScript(spell_pri_shadowfiend_scaling);
 
+    Aura* GetPowerfulShadowfiendAura(Unit* caster)
+    {
+        for (size_t i = 900544; i < 900550; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetFiendFriendAura(Unit* caster)
+    {
+        for (size_t i = 900558; i < 900564; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetRabidShadowsAura(Unit* caster)
+    {
+        for (size_t i = 900564; i < 900570; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetPutrefyingClawsAura(Unit* caster)
+    {
+        for (size_t i = 900576; i < 900582; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetEssenceDevourerAura(Unit* caster)
+    {
+        for (size_t i = 900590; i < 900596; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         // xinef: shadowfiend inherits 40% of resistance from owner and 35% of armor (guessed)
@@ -190,7 +246,12 @@ class spell_pri_shadowfiend_scaling : public AuraScript
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            amount = CalculatePct(std::max<int32>(0, shadow), 300); // xinef: deacrased to 300, including 15% from self buff
+            int32 spellPowerPCT = 300;
+
+            if (Aura* runeAura = GetPowerfulShadowfiendAura(owner))
+                AddPct(spellPowerPCT, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            amount = CalculatePct(std::max<int32>(0, shadow), 300); // xinef: deacrased to 300, including 15% from self buff           
         }
     }
 
@@ -201,6 +262,9 @@ class spell_pri_shadowfiend_scaling : public AuraScript
         {
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
             amount = CalculatePct(std::max<int32>(0, shadow), 30);
+
+            if (Aura* runeAura = GetFiendFriendAura(owner))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
 
             // xinef: Update appropriate player field
             if (owner->GetTypeId() == TYPEID_PLAYER)
@@ -215,6 +279,33 @@ class spell_pri_shadowfiend_scaling : public AuraScript
             GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ATTACK_POWER_PCT, true, SPELL_BLOCK_TYPE_POSITIVE);
         else if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT)
             GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
+
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            if (Aura* runeAura = GetPowerfulShadowfiendAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+
+            if (Aura* runeAura = GetRabidShadowsAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+
+            if (Aura* runeAura = GetPutrefyingClawsAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+
+            if (Aura* runeAura = GetEssenceDevourerAura(owner))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                owner->AddAura(procSpell, GetUnitOwner());
+            }
+        }
     }
 
     void Register() override
@@ -473,10 +564,10 @@ class spell_pri_guardian_spirit : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_guardian_spirit::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_guardian_spirit::HandleApply, EFFECT_0, SPELL_AURA_MOD_HEALING_PCT, AURA_EFFECT_HANDLE_REAL);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_guardian_spirit::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
         OnEffectAbsorb += AuraEffectAbsorbFn(spell_pri_guardian_spirit::Absorb, EFFECT_1);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_guardian_spirit::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_guardian_spirit::HandleRemove, EFFECT_0, SPELL_AURA_MOD_HEALING_PCT, AURA_EFFECT_HANDLE_REAL);
     }
 private:
     bool hasSavedTheTarget = false;
@@ -2329,8 +2420,8 @@ class spell_pri_holy_fire_aura : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_holy_fire_aura::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_holy_fire_aura::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_holy_fire_aura::HandleApply, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_holy_fire_aura::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2819,6 +2910,9 @@ public:
                     Position pos = target->GetPosition();
                     me->GetMotionMaster()->MovePoint(0, pos);
                 }
+                else
+                    me->DespawnOrUnsummon();
+
                 update = 0;
             }
 
@@ -3537,8 +3631,8 @@ class spell_pri_fade : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_fade::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_fade::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_fade::HandleApply, EFFECT_1, SPELL_AURA_MOD_DETECTED_RANGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_fade::HandleRemove, EFFECT_1, SPELL_AURA_MOD_DETECTED_RANGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3751,8 +3845,8 @@ class spell_pri_power_infusion : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_power_infusion::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_power_infusion::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_power_infusion::HandleApply, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_power_infusion::HandleRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3873,8 +3967,8 @@ class spell_pri_renew : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_renew::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_renew::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_renew::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_renew::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3970,8 +4064,8 @@ class spell_pri_shadow_word_pain_aura : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_shadow_word_pain_aura::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_pain_aura::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_shadow_word_pain_aura::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_shadow_word_pain_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -4015,7 +4109,7 @@ class spell_pri_pain_suppression : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_pain_suppression::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_pain_suppression::HandleApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -4171,7 +4265,7 @@ class spell_pri_mind_flay : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_pri_mind_flay::HandleRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_pri_mind_flay::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -4248,9 +4342,31 @@ class spell_pri_blistering_barriers : public AuraScript
         }
     }
 
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (dmgInfo.GetAttackType() == BASE_ATTACK && !caster->HasSpellCooldown(SPELL_PRIEST_BLISTERING_BARRIER_PROC))
+        {
+            PreventDefaultAction();
+            aurEff->GetBase()->ModCharges(-1);
+            caster->AddSpellCooldown(SPELL_PRIEST_BLISTERING_BARRIER_PROC, 0, 3000);
+            caster->CastSpell(victim, SPELL_PRIEST_BLISTERING_BARRIER_PROC, TRIGGERED_FULL_MASK);
+        }
+        else
+        {
+            absorbAmount = 0;
+        }
+    }
+
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_pri_blistering_barriers::HandleApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectApply += AuraEffectApplyFn(spell_pri_blistering_barriers::HandleApply, EFFECT_1, SPELL_AURA_MOD_BASE_RESISTANCE_PCT, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_pri_blistering_barriers::Absorb, EFFECT_0);
     }
 };
 
@@ -4330,8 +4446,8 @@ class spell_pri_prescience : public AuraScript
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectApplyFn(spell_pri_prescience::HandleApplyEffect, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        AfterEffectRemove += AuraEffectRemoveFn(spell_pri_prescience::HandleRemoveEffect, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectApply += AuraEffectApplyFn(spell_pri_prescience::HandleApplyEffect, EFFECT_0, SPELL_AURA_MOD_CRIT_PCT, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_pri_prescience::HandleRemoveEffect, EFFECT_0, SPELL_AURA_MOD_CRIT_PCT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -4367,8 +4483,6 @@ class spell_pri_holy_eruption : public SpellScript
         BeforeCast += SpellCastFn(spell_pri_holy_eruption::HandleCast);
     }
 };
-
-
 
 void AddSC_priest_spell_scripts()
 {
@@ -4463,9 +4577,6 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_blistering_barriers);
     RegisterSpellScript(spell_pri_prescience);
     RegisterSpellScript(spell_pri_holy_eruption);
-
-
-    
 
     new npc_pri_shadowy_apparitions();
 }

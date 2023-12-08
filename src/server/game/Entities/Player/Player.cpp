@@ -476,6 +476,16 @@ void Player::CleanupsBeforeDelete(bool finalCleanup)
     Unit::CleanupsBeforeDelete(finalCleanup);
 }
 
+// CUSTOM
+int32 Player::CalculateDamageAmount(Player* caster, Unit* victim, SpellSchoolMask mask, float ratio, uint32 spellID)
+{
+    int32 damage = CalculatePct(caster->SpellBaseDamageBonusDone(mask), ratio);
+    damage = caster->SpellDamageBonusDone(victim, sSpellMgr->AssertSpellInfo(spellID), uint32(damage), SPELL_DIRECT_DAMAGE, EFFECT_0);
+    damage = victim->SpellDamageBonusTaken(caster, sSpellMgr->AssertSpellInfo(spellID), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+    return damage;
+}
+
 bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo)
 {
     // FIXME: outfitId not used in player creating

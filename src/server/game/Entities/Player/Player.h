@@ -1059,6 +1059,9 @@ public:
     void AddToWorld() override;
     void RemoveFromWorld() override;
 
+    // CUSTOM
+    int32 CalculateDamageAmount(Player* caster, Unit* victim, SpellSchoolMask mask, float ratio, uint32 spellID);
+
     void SetObjectScale(float scale) override
     {
         Unit::SetObjectScale(scale);
