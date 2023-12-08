@@ -70,6 +70,10 @@ enum PriestSpells
     RUNE_PRIEST_GOLDEN_APPARITION_VISUAL = 901039,
     RUNE_PRIEST_TRAIL_OF_LIGHT_HEAL = 901046,
     RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER = 901047,
+    RUNE_PRIEST_IDOL_OF_CTHUN_MIND_FLAY = 901224,
+    RUNE_PRIEST_IDOL_OF_CTHUN_MIND_FLAY_DAMAGE = 901225,
+    RUNE_PRIEST_IDOL_OF_CTHUN_MIND_SEAR = 901226,
+    RUNE_PRIEST_IDOL_OF_CTHUN_MIND_SEAR_DAMAGE = 901227,
     RUNE_PRIEST_UNFURLING_DARKNESS_DEBUFF = 901282,
     RUNE_PRIEST_IDOL_OF_NZOTH_ECHOING = 901302,
     RUNE_PRIEST_IDOL_OF_NZOTH_PERIODIC = 901303,
@@ -1474,7 +1478,7 @@ class rune_pri_golden_apparitions : public AuraScript
                     summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     summon->SetReactState(REACT_PASSIVE);
                     summon->SetTarget(alliedPlayer->GetGUID());
-                    LOG_ERROR("error", "alliedPlayer = {}", alliedPlayer->GetName());
+
                     apparition--;
                 }
             }
@@ -1484,75 +1488,6 @@ class rune_pri_golden_apparitions : public AuraScript
     void Register()
     {
         OnEffectProc += AuraEffectProcFn(rune_pri_golden_apparitions::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-// Golden Apparition Pet behaviour
-class npc_pri_golden_apparitions : public CreatureScript
-{
-public:
-    npc_pri_golden_apparitions() : CreatureScript("npc_pri_golden_apparitions") { }
-
-    struct spell_pri_golden_apparitionsAI : public ScriptedAI
-    {
-        Aura* GetRuneAura(Unit* caster)
-        {
-            for (size_t i = 900756; i < 900762; i++)
-            {
-                if (caster->HasAura(i))
-                    return caster->GetAura(i);
-            }
-
-            return nullptr;
-        }
-
-        spell_pri_golden_apparitionsAI(Creature* creature) : ScriptedAI(creature) { }
-
-        uint32 update = 250;
-
-        void Reset() override
-        {
-            me->CombatStop(true);
-            me->AttackStop();
-            me->SetReactState(REACT_PASSIVE);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (update >= 250) {
-                if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                {
-                    Position pos = target->GetPosition();
-                    me->GetMotionMaster()->MovePoint(0, pos);
-                }
-                else
-                    me->DespawnOrUnsummon();
-                update = 0;
-            }
-
-            update += diff;
-        }
-
-        void MovementInform(uint32 /*type*/, uint32 id) override
-        {
-            Unit* caster = me->GetOwner();
-
-            if (Aura* rune = GetRuneAura(caster))
-                if (id == 0) {
-                    if (Unit* target = ObjectAccessor::GetCreature(*me, me->GetTarget()))
-                    {
-                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
-                        me->CastSpell(target, procSpell, TRIGGERED_FULL_MASK, nullptr, nullptr, me->GetOwnerGUID());
-                    }
-
-                    me->DespawnOrUnsummon();
-                }
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new spell_pri_golden_apparitionsAI(creature);
     }
 };
 
@@ -2057,6 +1992,7 @@ class rune_pri_idol_of_cthun : public AuraScript
         summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         summon->ClearUnitState(UNIT_STATE_ROOT);
         summon->SetControlled(true, UNIT_STATE_ROOT);
+        summon->SetTarget(target->GetGUID());
     }
 
     void Register()
@@ -2066,30 +2002,38 @@ class rune_pri_idol_of_cthun : public AuraScript
     }
 };
 
-class rune_pri_idol_of_cthun_energize : public SpellScript
+class rune_pri_idol_of_cthun_damage : public AuraScript
 {
-    PrepareSpellScript(rune_pri_idol_of_cthun_energize);
+    PrepareAuraScript(rune_pri_idol_of_cthun_damage);
 
-    void HandleProc()
+    void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* pet = GetCaster();
 
         if (!pet || pet->isDead())
             return;
 
-        Unit* caster = pet->GetOwner();
+        Unit* player = pet->GetOwner();
 
-        if (!caster || caster->isDead())
+        if (!player || player->isDead())
             return;
 
-        int32 insanityAmount = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(caster);
+        Unit* target = ObjectAccessor::GetUnit(*pet, pet->GetTarget());
 
-        caster->CastCustomSpell(SPELL_PRIEST_INSANITY_ENERGIZE, SPELLVALUE_BASE_POINT0, insanityAmount, caster, TRIGGERED_FULL_MASK);
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = GetSpellInfo()->Id;
+        int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+        int32 insanityAmount = GetEffect(EFFECT_0)->GetAmount();
+
+        player->CastCustomSpell(SPELL_PRIEST_INSANITY_ENERGIZE, SPELLVALUE_BASE_POINT0, insanityAmount, player, TRIGGERED_FULL_MASK);
+        player->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
     }
 
-    void Register() override
+    void Register()
     {
-        OnCast += SpellCastFn(rune_pri_idol_of_cthun_energize::HandleProc);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_pri_idol_of_cthun_damage::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -2338,18 +2282,26 @@ class rune_pri_idol_of_yogg_saron : public AuraScript
 
         int32 stacks = GetStackAmount();
 
+        if (!GetRuneAura(caster))
+        {
+            ModStackAmount(-stacks);
+            return;
+        }
+
         if (stacks < GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount())
             return;
 
         Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         Creature* summon = caster->SummonCreature(SUMMON_PRIEST_IDOL_YOGG_SARON_THING_FROM_BEYOND, pos, TEMPSUMMON_TIMED_DESPAWN, 20500, 0, properties);
-        LOG_ERROR("error", "summon");
+
         if (!summon)
             return;
-        LOG_ERROR("error", "summon check");
+
         summon->SetOwnerGUID(caster->GetGUID());
         summon->SetReactState(REACT_DEFENSIVE);
+        summon->ClearUnitState(UNIT_STATE_ROOT);
+        summon->SetControlled(true, UNIT_STATE_ROOT);
         summon->SetTarget(target->GetGUID());
 
         ModStackAmount(-stacks);
@@ -2511,26 +2463,6 @@ class rune_pri_velens_apprentice : public AuraScript
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
 
         caster->CastCustomSpell(RUNE_PRIEST_VELENS_APPRENTICE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
-        /*int32 targetNbr = GetEffect(EFFECT_1)->GetAmount();
-        auto const& threatList = caster->getAttackers();
-
-        for (auto const& targets : threatList)
-            if (targets->IsAlive())
-            {
-                if (targets == target)
-                    continue;
-
-                float distance = targets->GetDistance(target->GetPosition());
-
-                if (distance > 20)
-                    continue;
-
-                caster->CastCustomSpell(RUNE_PRIEST_VELENS_APPRENTICE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
-                targetNbr--;
-
-                if (targetNbr <= 0)
-                    return;
-            }*/
     }
 
     void Register()
@@ -2815,8 +2747,8 @@ void AddSC_priest_perks_scripts()
     RegisterSpellScript(rune_pri_trail_of_light);
     RegisterSpellScript(rune_pri_screams_of_the_void);
     RegisterSpellScript(rune_pri_idol_of_cthun);
-    RegisterSpellScript(rune_pri_idol_of_cthun_energize);
-    RegisterSpellScript(rune_pri_mental_decay);
+    RegisterSpellScript(rune_pri_idol_of_cthun_damage);
+    RegisterSpellScript(rune_pri_mental_decay); 
     RegisterSpellScript(rune_pri_dark_evangelism);
     RegisterSpellScript(rune_pri_unfurling_darkness);
     RegisterSpellScript(rune_pri_idol_of_nzoth);
@@ -2838,7 +2770,5 @@ void AddSC_priest_perks_scripts()
 
 
 
-
-    new npc_pri_golden_apparitions();
 }
 

@@ -85,6 +85,74 @@ struct npc_pet_pri_shadowfiend : public PetAI
     }
 };
 
+// Golden Apparition Pet behaviour
+class npc_pri_golden_apparitions : public CreatureScript
+{
+public:
+    npc_pri_golden_apparitions() : CreatureScript("npc_pri_golden_apparitions") { }
+
+    struct spell_pri_golden_apparitionsAI : public ScriptedAI
+    {
+        Aura* GetRuneAura(Unit* caster)
+        {
+            for (size_t i = 900756; i < 900762; i++)
+            {
+                if (caster->HasAura(i))
+                    return caster->GetAura(i);
+            }
+
+            return nullptr;
+        }
+
+        spell_pri_golden_apparitionsAI(Creature* creature) : ScriptedAI(creature) { }
+
+        uint32 update = 250;
+
+        void Reset() override
+        {
+            me->CombatStop(true);
+            me->AttackStop();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (update >= 250) {
+                if (Unit* target = ObjectAccessor::GetUnit(*me, me->GetTarget()))
+                {
+                    Position pos = target->GetPosition();
+                    me->GetMotionMaster()->MovePoint(0, pos);
+                }
+                else
+                    me->DespawnOrUnsummon();
+                update = 0;
+            }
+
+            update += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override
+        {
+            Unit* caster = me->GetOwner();
+
+            if (Aura* rune = GetRuneAura(caster))
+                if (id == 0)
+                    if (Unit* target = ObjectAccessor::GetUnit(*me, me->GetTarget()))
+                    {
+                        int32 procSpell = rune->GetEffect(EFFECT_2)->GetAmount();
+                        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+                    }
+
+            me->DespawnOrUnsummon();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new spell_pri_golden_apparitionsAI(creature);
+    }
+};
+
 struct npc_pri_idol_of_cthun_tendril : public ScriptedAI
 {
     npc_pri_idol_of_cthun_tendril(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
@@ -99,13 +167,16 @@ struct npc_pri_idol_of_cthun_tendril : public ScriptedAI
 
     void UpdateAI(uint32 diff) override
     {
+        Unit* mainTarget = ObjectAccessor::GetUnit(*me, me->GetTarget());
+
         if (_initAttack)
         {
             if (!me->IsInCombat())
                 if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
-                    if (Unit* target = owner->GetSelectedUnit())
+                    if (Unit* target = mainTarget)
                         if (me->CanCreatureAttack(target))
                             AttackStart(target);
+
             _initAttack = false;
         }
 
@@ -114,16 +185,33 @@ struct npc_pri_idol_of_cthun_tendril : public ScriptedAI
 
         _events.Update(diff);
 
+        bool isCasting = false;
+
         if (_events.ExecuteEvent() == EVENT_PRIEST_CAST_SPELL)
         {
-            if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
-                if (Unit* target = owner->GetSelectedUnit())
+            if (mainTarget && mainTarget->IsAlive())
+            {
+                if (isCasting)
+                    _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 1000);
+                else
                 {
-                    int32 amount = owner->CalculateDamageAmount(owner, target, SPELL_SCHOOL_MASK_SHADOW, 86.15, RUNE_PRIEST_IDOL_OF_CTHUN_MIND_FLAY);
-
-                    me->CastCustomSpell(RUNE_PRIEST_IDOL_OF_CTHUN_MIND_FLAY, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                    me->CastSpell(mainTarget, RUNE_PRIEST_IDOL_OF_CTHUN_MIND_FLAY, TRIGGERED_FULL_MASK);
+                    isCasting = true;
+                    _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 1000);
                 }
-            _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 5000);
+            }
+            else
+            {
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = owner->GetSelectedUnit())
+                    {
+                        me->CastSpell(target, RUNE_PRIEST_IDOL_OF_CTHUN_MIND_FLAY, TRIGGERED_FULL_MASK);
+                        isCasting = true;
+                        mainTarget = target;
+                    }
+
+                _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 1000);
+            }
         }
 
         DoMeleeAttackIfReady();
@@ -148,13 +236,16 @@ struct npc_pri_idol_of_cthun_lasher : public ScriptedAI
 
     void UpdateAI(uint32 diff) override
     {
+        Unit* mainTarget = ObjectAccessor::GetUnit(*me, me->GetTarget());
+
         if (_initAttack)
         {
             if (!me->IsInCombat())
                 if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
-                    if (Unit* target = owner->GetSelectedUnit())
+                    if (Unit* target = mainTarget)
                         if (me->CanCreatureAttack(target))
                             AttackStart(target);
+
             _initAttack = false;
         }
 
@@ -163,16 +254,33 @@ struct npc_pri_idol_of_cthun_lasher : public ScriptedAI
 
         _events.Update(diff);
 
+        bool isCasting = false;
+
         if (_events.ExecuteEvent() == EVENT_PRIEST_CAST_SPELL)
         {
-            if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
-                if (Unit* target = owner->GetSelectedUnit())
+            if (mainTarget && mainTarget->IsAlive())
+            {
+                if (isCasting)
+                    _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 1000);
+                else
                 {
-                    int32 amount = owner->CalculateDamageAmount(owner, target, SPELL_SCHOOL_MASK_SHADOW, 86.15, RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE);
-
-                    me->CastCustomSpell(RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                    me->CastSpell(mainTarget, RUNE_PRIEST_IDOL_OF_CTHUN_MIND_SEAR, TRIGGERED_FULL_MASK);
+                    isCasting = true;
+                    _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 1000);
                 }
-            _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 5000);
+            }
+            else
+            {
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = owner->GetSelectedUnit())
+                    {
+                        me->CastSpell(target, RUNE_PRIEST_IDOL_OF_CTHUN_MIND_SEAR, TRIGGERED_FULL_MASK);
+                        isCasting = true;
+                        mainTarget = target;
+                    }
+
+                _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 1000);
+            }
         }
 
         DoMeleeAttackIfReady();
@@ -219,7 +327,7 @@ struct npc_pri_idol_of_yogg_saron : public ScriptedAI
                 {
                     int32 amount = owner->CalculateDamageAmount(owner, target, SPELL_SCHOOL_MASK_SHADOW, 86.15, RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE);
 
-                    me->CastCustomSpell(RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                    me->CastCustomSpell(RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_IGNORE_POWER_AND_REAGENT_COST);
                 }
 
             _events.ScheduleEvent(EVENT_PRIEST_CAST_SPELL, 2000);
@@ -241,4 +349,6 @@ void AddSC_priest_pet_scripts()
     RegisterCreatureAI(npc_pri_idol_of_cthun_lasher);
     RegisterCreatureAI(npc_pri_idol_of_yogg_saron);
 
+
+    new npc_pri_golden_apparitions();
 }
