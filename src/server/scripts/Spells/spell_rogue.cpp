@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_ROGUE and SPELLFAMILY_GENERIC spells used by rogue players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_rog_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_ROGUE and SPELLFAMILY_GENERIC spells used by rogue players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_rog_".
+  */
 
 #include "CellImpl.h"
 #include "GridNotifiers.h"
@@ -30,100 +30,102 @@
 
 enum RogueSpells
 {
-    SPELL_ROGUE_BLADE_FLURRY_EXTRA_ATTACK       = 22482,
-    SPELL_ROGUE_CHEAT_DEATH_COOLDOWN            = 31231,
-    SPELL_ROGUE_CHEATING_DEATH                  = 45182,
-    SPELL_ROGUE_GLYPH_OF_PREPARATION            = 56819,
-    SPELL_ROGUE_KILLING_SPREE                   = 51690,
-    SPELL_ROGUE_KILLING_SPREE_TELEPORT          = 57840,
-    SPELL_ROGUE_KILLING_SPREE_WEAPON_DMG        = 57841,
-    SPELL_ROGUE_KILLING_SPREE_DMG_BUFF          = 61851,
-    SPELL_ROGUE_PREY_ON_THE_WEAK                = 58670,
-    SPELL_ROGUE_SHIV_TRIGGERED                  = 5940,
-    SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST   = 57933,
-    SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC        = 59628,
+    SPELL_ROGUE_BLADE_FLURRY_EXTRA_ATTACK = 22482,
+    SPELL_ROGUE_CHEAT_DEATH_COOLDOWN = 31231,
+    SPELL_ROGUE_CHEATING_DEATH = 45182,
+    SPELL_ROGUE_GLYPH_OF_PREPARATION = 56819,
+    SPELL_ROGUE_KILLING_SPREE = 51690,
+    SPELL_ROGUE_KILLING_SPREE_TELEPORT = 57840,
+    SPELL_ROGUE_KILLING_SPREE_WEAPON_DMG = 57841,
+    SPELL_ROGUE_KILLING_SPREE_DMG_BUFF = 61851,
+    SPELL_ROGUE_PREY_ON_THE_WEAK = 58670,
+    SPELL_ROGUE_SHIV_TRIGGERED = 5940,
+    SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST = 57933,
+    SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC = 59628,
 
     //OURS
-    SPELL_ROGUE_BACKSTAB                        = 82001,
-    SPELL_ROGUE_BLADE_FLURRY                    = 13877,
-    SPELL_ROG_BLADE_FLURRY_SELECTION            = 82012,
-    SPELL_ROG_BLADE_FLURRY_DAMAGE               = 82013,
-    SPELL_ROGUE_KILLING_SPREE_FLURRY_DMG        = 82014,
-    SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR          = 82018,
-    SPELL_ROGUE_SLICE_AND_DICE                  = 6774,
-    SPELL_ROGUE_MARKED_FOR_DEATH                = 82022,
-    SPELL_ROGUE_DEATHMARK                       = 82025,
-    SPELL_ROGUE_DEATHMARK_PROC                  = 82026,
-    SPELL_ROGUE_SERRATED_BONE_SPIKE             = 82032,
-    SPELL_ROGUE_BLADE_RUSH_AOE                  = 82030,
-    SPELL_ROGUE_KINGSBANE_COMBOPOINT            = 82038,
-    SPELL_ROGUE_FLAGELLATION_MASTERY            = 82035,
-    SPELL_ROGUE_FLAGELLATION_DAMAGE             = 82039,
-    SPELL_ROGUE_SHADOW_BLADES                   = 82043,
-    SPELL_ROGUE_COUNTERATTACK_PROC              = 82053,
-    SPELL_ROGUE_SECRET_TECHNIQUE                = 82057,
-    SPELL_ROGUE_SECRET_TECHNIQUE_AURA           = 82060,
-    SPELL_ROGUE_VAMPIRIC_BURST_HEAL             = 82061,
-    SPELL_ROGUE_SINISTER_CALLING_PROC           = 82063,
-    SPELL_ROGUE_RIPOSTE                         = 82064,
-    SPELL_ROGUE_DUELISTS_REFLEX                 = 82067,
-    SPELL_ROGUE_SCIMITAR_RUSH_PROC              = 82077,
-    SPELL_ROGUE_SCIMITAR_RUSH_AOE               = 82076,
-    SPELL_ROGUE_SCIMITAR_RUSH_ENERGY            = 82078,
-    SPELL_ROGUE_DREADBLADES_SELF_DAMAGE         = 82081,
-    SPELL_ROGUE_SINISTER_STRIKE                 = 48638,
-    SPELL_ROGUE_OPPORTUNITY_PROC                = 82086,
-    SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF           = 82088,
-    SPELL_ROGUE_SEA_OF_STRIKES_PROC             = 82089,
-    SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE      = 82092,
-    SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE        = 82093,
+    SPELL_ROGUE_BACKSTAB = 82001,
+    SPELL_ROGUE_BLADE_FLURRY = 13877,
+    SPELL_ROG_BLADE_FLURRY_SELECTION = 82012,
+    SPELL_ROG_BLADE_FLURRY_DAMAGE = 82013,
+    SPELL_ROGUE_KILLING_SPREE_FLURRY_DMG = 82014,
+    SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR = 82018,
+    SPELL_ROGUE_SLICE_AND_DICE = 6774,
+    SPELL_ROGUE_MARKED_FOR_DEATH = 82022,
+    SPELL_ROGUE_DEATHMARK = 82025,
+    SPELL_ROGUE_DEATHMARK_PROC = 82026,
+    SPELL_ROGUE_SERRATED_BONE_SPIKE = 82032,
+    SPELL_ROGUE_BLADE_RUSH_AOE = 82030,
+    SPELL_ROGUE_KINGSBANE_COMBOPOINT = 82038,
+    SPELL_ROGUE_FLAGELLATION_MASTERY = 82035,
+    SPELL_ROGUE_FLAGELLATION_DAMAGE = 82039,
+    SPELL_ROGUE_SHADOW_BLADES = 82043,
+    SPELL_ROGUE_COUNTERATTACK_PROC = 82053,
+    SPELL_ROGUE_SECRET_TECHNIQUE = 82057,
+    SPELL_ROGUE_SECRET_TECHNIQUE_AURA = 82060,
+    SPELL_ROGUE_VAMPIRIC_BURST_HEAL = 82061,
+    SPELL_ROGUE_SINISTER_CALLING_PROC = 82063,
+    SPELL_ROGUE_RIPOSTE = 82064,
+    SPELL_ROGUE_DUELISTS_REFLEX = 82067,
+    SPELL_ROGUE_SCIMITAR_RUSH_PROC = 82077,
+    SPELL_ROGUE_SCIMITAR_RUSH_AOE = 82076,
+    SPELL_ROGUE_SCIMITAR_RUSH_ENERGY = 82078,
+    SPELL_ROGUE_DREADBLADES_SELF_DAMAGE = 82081,
+    SPELL_ROGUE_SINISTER_STRIKE = 48638,
+    SPELL_ROGUE_OPPORTUNITY_PROC = 82086,
+    SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF = 82088,
+    SPELL_ROGUE_SEA_OF_STRIKES_PROC = 82089,
+    SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE = 82092,
+    SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE = 82093,
     SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION = 82094,
-    SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE  = 82095,
+    SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE = 82095,
     SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES = 82096,
-    SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING     = 82097,
-    SPELL_ROGUE_ADRENALINE_RUSH                 = 13750,
-    SPELL_ROGUE_BETWEEN_THE_EYES                = 82072,
-    SPELL_ROGUE_SCIMITAR_RUSH                   = 82075,
-    SPELL_ROGUE_DREADBLADES                     = 82080,
-    SPELL_ROGUE_CAPTAIN_STRIKE                  = 82083,
-    SPELL_ROGUE_GRAPPLING_HOOK                  = 82084,
-    SPELL_ROGUE_KEEP_IT_ROLLING                 = 82098,
-    SPELL_ROGUE_ROLL_THE_BONES                  = 82091,
-    SPELL_ROGUE_SPRINT                          = 11305,
-    SPELL_ROGUE_VANISH                          = 26889,
-    SPELL_ROGUE_OPPORTUNITY                     = 82085,
+    SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING = 82097,
+    SPELL_ROGUE_ADRENALINE_RUSH = 13750,
+    SPELL_ROGUE_BETWEEN_THE_EYES = 82072,
+    SPELL_ROGUE_SCIMITAR_RUSH = 82075,
+    SPELL_ROGUE_DREADBLADES = 82080,
+    SPELL_ROGUE_CAPTAIN_STRIKE = 82083,
+    SPELL_ROGUE_GRAPPLING_HOOK = 82084,
+    SPELL_ROGUE_KEEP_IT_ROLLING = 82098,
+    SPELL_ROGUE_ROLL_THE_BONES = 82091,
+    SPELL_ROGUE_SHADOW_DANCE = 51713,
+    SPELL_ROGUE_SPRINT = 11305, 
+    SPELL_ROGUE_STEALTH = 1784,
+    SPELL_ROGUE_VANISH = 26889,
+    SPELL_ROGUE_OPPORTUNITY = 82085,
 
-    TALENT_ROGUE_RELENTLESS_ATTACKS_COMBOPOINT  = 82112,
-    TALENT_ROGUE_RELENTLESS_ATTACKS_STACK       = 82113,
-    TALENT_ROGUE_RUTHLESS_COMBOPOINT            = 82134,
-    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH       = 82165,
-    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC  = 82168,
-    TALENT_ROGUE_AUDACITY_PROC                  = 82183,
-    TALENT_ROGUE_GAMBLERS_LUCK                  = 82179,
+    TALENT_ROGUE_RELENTLESS_ATTACKS_COMBOPOINT = 82112,
+    TALENT_ROGUE_RELENTLESS_ATTACKS_STACK = 82113,
+    TALENT_ROGUE_RUTHLESS_COMBOPOINT = 82134,
+    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH = 82165,
+    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC = 82168,
+    TALENT_ROGUE_AUDACITY_PROC = 82183,
+    TALENT_ROGUE_GAMBLERS_LUCK = 82179,
 
     //POISONS
     //LETHAL
-    SPELL_ROGUE_ANESTHETIC_POISON               = 57982,
-    SPELL_ROGUE_ANESTHETIC_POISON_PROC          = 57981,
-    SPELL_ROGUE_WOUND_POISON                    = 57978,
-    SPELL_ROGUE_WOUND_POISON_PROC               = 57975,
-    SPELL_ROGUE_DEADLY_POISON                   = 57973,
-    SPELL_ROGUE_DEADLY_POISON_PROC              = 57970,
-    SPELL_ROGUE_INSTANT_POISON                  = 57968,
-    SPELL_ROGUE_INSTANT_POISON_PROC             = 57965,
-    SPELL_ROGUE_AMPLIFYING_POISON               = 82005,
-    SPELL_ROGUE_AMPLIFYING_POISON_PROC          = 82006,
-    SPELL_ROGUE_VAMPIRIC_POISON                 = 82007,
-    SPELL_ROGUE_VAMPIRIC_POISON_PROC            = 82008,
-    SPELL_ROGUE_VAMPIRIC_POISON_HEAL            = 82009,
+    SPELL_ROGUE_ANESTHETIC_POISON = 57982,
+    SPELL_ROGUE_ANESTHETIC_POISON_PROC = 57981,
+    SPELL_ROGUE_WOUND_POISON = 57978,
+    SPELL_ROGUE_WOUND_POISON_PROC = 57975,
+    SPELL_ROGUE_DEADLY_POISON = 57973,
+    SPELL_ROGUE_DEADLY_POISON_PROC = 57970,
+    SPELL_ROGUE_INSTANT_POISON = 57968,
+    SPELL_ROGUE_INSTANT_POISON_PROC = 57965,
+    SPELL_ROGUE_AMPLIFYING_POISON = 82005,
+    SPELL_ROGUE_AMPLIFYING_POISON_PROC = 82006,
+    SPELL_ROGUE_VAMPIRIC_POISON = 82007,
+    SPELL_ROGUE_VAMPIRIC_POISON_PROC = 82008,
+    SPELL_ROGUE_VAMPIRIC_POISON_HEAL = 82009,
 
     //NON_LETHAL
-    SPELL_ROGUE_NUMBING_POISON                  = 5761,
-    SPELL_ROGUE_NUMBING_POISON_PROC             = 5760,
-    SPELL_ROGUE_NUMBING_POISON_CONCENTRATED     = 82010, //shiv
-    SPELL_ROGUE_ATROPHIC_POISON                 = 82003,
-    SPELL_ROGUE_ATROPHIC_POISON_PROC            = 82004,
-    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED    = 82011, //shiv
+    SPELL_ROGUE_NUMBING_POISON = 5761,
+    SPELL_ROGUE_NUMBING_POISON_PROC = 5760,
+    SPELL_ROGUE_NUMBING_POISON_CONCENTRATED = 82010, //shiv
+    SPELL_ROGUE_ATROPHIC_POISON = 82003,
+    SPELL_ROGUE_ATROPHIC_POISON_PROC = 82004,
+    SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED = 82011, //shiv
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -558,7 +560,7 @@ class spell_rog_preparation : public SpellScript
             if (spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE)
             {
                 if (spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_ROGUE_COLDB_SHADOWSTEP ||      // Cold Blood, Shadowstep
-                        spellInfo->SpellFamilyFlags[0] & SPELLFAMILYFLAG_ROGUE_VAN_EVAS_SPRINT)           // Vanish, Evasion, Sprint
+                    spellInfo->SpellFamilyFlags[0] & SPELLFAMILYFLAG_ROGUE_VAN_EVAS_SPRINT)           // Vanish, Evasion, Sprint
                 {
                     SpellCooldowns::iterator citr = caster->GetSpellCooldownMap().find(spellInfo->Id);
                     if (citr != caster->GetSpellCooldownMap().end() && citr->second.needSendToClient)
@@ -569,9 +571,9 @@ class spell_rog_preparation : public SpellScript
                 else if (hasGlyph)
                 {
                     if (spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_ROGUE_DISMANTLE ||         // Dismantle
-                            spellInfo->SpellFamilyFlags[0] & SPELLFAMILYFLAG_ROGUE_KICK ||               // Kick
-                            (spellInfo->SpellFamilyFlags[0] & SPELLFAMILYFLAG_ROGUE_BLADE_FLURRY &&     // Blade Flurry
-                                spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_ROGUE_BLADE_FLURRY))
+                        spellInfo->SpellFamilyFlags[0] & SPELLFAMILYFLAG_ROGUE_KICK ||               // Kick
+                        (spellInfo->SpellFamilyFlags[0] & SPELLFAMILYFLAG_ROGUE_BLADE_FLURRY &&     // Blade Flurry
+                            spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_ROGUE_BLADE_FLURRY))
                     {
                         SpellCooldowns::iterator citr = caster->GetSpellCooldownMap().find(spellInfo->Id);
                         if (citr != caster->GetSpellCooldownMap().end() && citr->second.needSendToClient)
@@ -763,6 +765,7 @@ class spell_rog_tricks_of_the_trade_proc : public AuraScript
     }
 };
 
+// 82001 - Backstab
 class spell_rog_backstab : public SpellScript
 {
     PrepareSpellScript(spell_rog_backstab);
@@ -788,9 +791,25 @@ class spell_rog_backstab : public SpellScript
         }
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Eviscerating Stab Rune Buff
+        for (size_t i = 1100142; i < 1100148; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_backstab::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_rog_backstab::HandleAfterHit);
     }
 };
 
@@ -823,16 +842,39 @@ class spell_rog_deadly_throw : public SpellScript
     }
 };
 
+// 48668 - Eviscerate
 class spell_rog_eviscerate : public SpellScript
 {
     PrepareSpellScript(spell_rog_eviscerate);
+
+    Aura* GetEvisceratingStabAura(Unit* caster)
+    {
+        for (size_t i = 1100136; i < 1100142; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetShadowsCutAura(Unit* caster)
+    {
+        for (size_t i = 1100214; i < 1100220; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleHit(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
         int32 damageRatio = caster->GetComboPoints() * GetEffectValue();
         int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
-
+       
         if (Unit* target = GetHitUnit())
         {
             damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
@@ -843,7 +885,23 @@ class spell_rog_eviscerate : public SpellScript
             if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                 AddPct(damage, gamblersLuck->GetAmount());
 
+        if (Aura* runeAura = GetShadowsCutAura(caster))
+            if (caster->HasAura(SPELL_ROGUE_STEALTH) || caster->HasAura(SPELL_ROGUE_SHADOW_DANCE))
+            {
+                int32 damageIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, damageIncrease);
+            }
+        
         SetHitDamage(damage);
+
+        if (Aura* runeAura = GetEvisceratingStabAura(caster))
+        {
+            int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount() * caster->GetComboPoints();
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -940,7 +998,7 @@ class spell_rog_shiv_poison : public SpellScript
                 if (enchantID == SPELL_ROGUE_ATROPHIC_POISON_PROC)
                     player->CastSpell(target, SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED, TRIGGERED_FULL_MASK);
             }
-        } 
+        }
     }
 
     void Register() override
@@ -1089,7 +1147,7 @@ class spell_rog_marked_for_death : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Player* caster = GetCaster()->ToPlayer())
-           caster->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
+            caster->RemoveSpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, true);
     }
 
     void Register() override
@@ -1111,7 +1169,7 @@ class spell_rog_poisoned_knife : public SpellScript
             if (uint32 mainHand = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
                 player->CastSpell(target, mainHand, TRIGGERED_FULL_MASK);
 
-            if(uint32 offHand = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (uint32 offHand = player->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
                 player->CastSpell(target, offHand, TRIGGERED_FULL_MASK);
         }
     }
@@ -1343,7 +1401,7 @@ class spell_rog_flagellation : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_rog_flagellation::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
- 
+
 class spell_rog_shadow_blade : public AuraScript
 {
     PrepareAuraScript(spell_rog_shadow_blade);
@@ -1539,7 +1597,7 @@ class spell_rog_sinister_strike : public SpellScript
 
         SetHitDamage(damage);
     }
-   
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_sinister_strike::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
@@ -1579,7 +1637,7 @@ class spell_rog_sinister_calling : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() >0;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -1610,7 +1668,7 @@ class spell_rog_forced_counter : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
-        uint32 chance = CalculatePct(caster->GetUnitParryChance(),aurEff->GetAmount());
+        uint32 chance = CalculatePct(caster->GetUnitParryChance(), aurEff->GetAmount());
 
         if (!roll_chance_i(chance))
         {
@@ -1651,7 +1709,7 @@ class spell_rog_amplifying_poison_replacer : public AuraScript
     {
         Player* target = GetCaster()->ToPlayer();
 
-        
+
         target->removeSpell(SPELL_ROGUE_AMPLIFYING_POISON, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_ROGUE_INSTANT_POISON);
 
@@ -1661,7 +1719,7 @@ class spell_rog_amplifying_poison_replacer : public AuraScript
                 itemMain->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
 
         Item* itemOff = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-        if(uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+        if (uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
             if (offEnchantID == SPELL_ROGUE_AMPLIFYING_POISON_PROC)
                 itemOff->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
     }
@@ -1725,7 +1783,7 @@ class spell_rog_master_duelist : public AuraScript
     }
 };
 
-class spell_rog_cut_to_the_chase: public AuraScript
+class spell_rog_cut_to_the_chase : public AuraScript
 {
     PrepareAuraScript(spell_rog_cut_to_the_chase);
 
@@ -2120,6 +2178,93 @@ class spell_rog_audacity : public AuraScript
     }
 };
 
+// 51723 - Fan of Knives
+class spell_rog_fan_of_knives : public SpellScript
+{
+    PrepareSpellScript(spell_rog_fan_of_knives);
+
+    Aura* GetFlyingDaggersAura(Unit* caster)
+    {
+        for (size_t i = 1100250; i < 1100256; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        multiTarget = false;
+
+        if (Aura* runeAura = GetFlyingDaggersAura(caster))
+        {
+            int32 targetThreshold = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (targets.size() >= targetThreshold)
+                multiTarget = true;
+        }
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Aura* runeAura = GetFlyingDaggersAura(caster))
+            if (multiTarget)
+            {
+                int32 damageIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, damageIncrease);
+            }
+
+        SetHitDamage(damage);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Patient Thrower Rune Buff
+        for (size_t i = 1100238; i < 1100244; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Remove Silent Storm Rune Buff
+        for (size_t i = 1100286; i < 1100292; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_rog_fan_of_knives::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnEffectHitTarget += SpellEffectFn(spell_rog_fan_of_knives::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_rog_fan_of_knives::HandleAfterHit);
+    }
+private:
+    bool multiTarget = false;
+};
+
+
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -2186,4 +2331,11 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_ruthless);
     RegisterSpellScript(spell_rog_improved_adrenaline_rush);
     RegisterSpellScript(spell_rog_audacity);
+    RegisterSpellScript(spell_rog_fan_of_knives);
+
+
+
+
+    
+    
 }
