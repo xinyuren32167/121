@@ -2747,18 +2747,18 @@ class spell_pri_shadowy_apparitions : public AuraScript
 
         if (procID == SPELL_PRIEST_SHADOW_WORD_PAIN)
         {
+            int32 procChance = 0;
+
             if (Aura* runeAura = GetTormentedSpiritsAura(caster))
             {
-                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                procChance += runeAura->GetEffect(EFFECT_0)->GetAmount();
 
                 if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
-                    procChance = GetEffect(EFFECT_1)->GetAmount();
-
-                if (!roll_chance_i(procChance))
-                    return;
+                    procChance = GetEffect(EFFECT_1)->GetAmount();               
             }
-            else
-                return;           
+
+            if (!roll_chance_i(procChance))
+                return;
         }
 
         GetEffect(EFFECT_2)->SetAmount(shadowNbr);
