@@ -2757,6 +2757,8 @@ class spell_pri_shadowy_apparitions : public AuraScript
                 if (!roll_chance_i(procChance))
                     return;
             }
+            else
+                return;           
         }
 
         GetEffect(EFFECT_2)->SetAmount(shadowNbr);

@@ -20,6 +20,7 @@ enum RogueSpells
     POISON_ROGUE_AMPLIFYING_POISON_AURA = 82006,
     POISON_ROGUE_ANESTHETIC_POISON = 57982,
     POISON_ROGUE_ATROPHIC_POISON = 82003,
+    POISON_ROGUE_ATROPHIC_POISON_AURA = 82004,
     POISON_ROGUE_DEADLY_POISON = 57973,
     POISON_ROGUE_DEADLY_POISON_AURA = 57970,
     POISON_ROGUE_INSTANT_POISON = 57968,
@@ -28,7 +29,7 @@ enum RogueSpells
     POISON_ROGUE_VAMPIRIC_POISON = 82007,
     POISON_ROGUE_VAMPIRIC_POISON_AURA = 82008,
     POISON_ROGUE_WOUND_POISON = 57978,
-    POISON_ROGUE_WOUND_POISON = 57975,
+    POISON_ROGUE_WOUND_POISON_AURA = 57975,
 
     // Talents
     TALENT_ROGUE_PLACEHOLDER = 00000,
@@ -37,9 +38,9 @@ enum RogueSpells
     RUNE_ROGUE_PLACEHOLDER = 00000,
 };
 
-class rune_rog_improved_backstab : public AuraScript
+class rune_rog_venom_rush : public AuraScript
 {
-    PrepareAuraScript(rune_rog_improved_backstab);
+    PrepareAuraScript(rune_rog_venom_rush);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -62,19 +63,22 @@ class rune_rog_improved_backstab : public AuraScript
         if (target->HasAura(POISON_ROGUE_AMPLIFYING_POISON_AURA))
             return true;
 
-        if (target->HasAura())
+        if (target->HasAura(POISON_ROGUE_ATROPHIC_POISON_AURA))
             return true;
 
         if (target->HasAura(POISON_ROGUE_DEADLY_POISON_AURA))
             return true;
-
+        
         if (target->HasAura(POISON_ROGUE_VAMPIRIC_POISON_AURA))
+            return true;
+
+        if (target->HasAura(POISON_ROGUE_WOUND_POISON_AURA))
             return true;
     }
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_rog_improved_backstab::CheckProc);
+        DoCheckProc += AuraCheckProcFn(rune_rog_venom_rush::CheckProc);
     }
 };
 
@@ -224,13 +228,14 @@ class rune_rog_eviscerating_dance : public AuraScript
 
 void AddSC_rogue_perks_scripts()
 {
+    RegisterSpellScript(rune_rog_venom_rush);
     RegisterSpellScript(rune_rog_improved_backstab);
     RegisterSpellScript(rune_rog_prey_on_the_weak);
     RegisterSpellScript(rune_rog_prison_break);
     RegisterSpellScript(rune_rog_eviscerating_dance);
 
     
-
+    
 
 
 }

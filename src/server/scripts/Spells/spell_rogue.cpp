@@ -886,7 +886,7 @@ class spell_rog_eviscerate : public SpellScript
                 AddPct(damage, gamblersLuck->GetAmount());
 
         if (Aura* runeAura = GetShadowsCutAura(caster))
-            if (caster->HasAura(SPELL_ROGUE_STEALTH) || caster->HasAura(SPELL_ROGUE_SHADOW_DANCE))
+            if (caster->HasAura(SPELL_ROGUE_SHADOW_DANCE))
             {
                 int32 damageIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
                 AddPct(damage, damageIncrease);
@@ -906,7 +906,7 @@ class spell_rog_eviscerate : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_rog_eviscerate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_rog_eviscerate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);       
     }
 };
 
@@ -2263,6 +2263,32 @@ private:
     bool multiTarget = false;
 };
 
+// 82000 - Ambush
+class spell_rog_ambush : public SpellScript
+{
+    PrepareSpellScript(spell_rog_ambush);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Surprise Ambush Rune Buff
+        for (size_t i = 1100106; i < 1100112; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_ambush::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_rogue_spell_scripts()
@@ -2332,6 +2358,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_improved_adrenaline_rush);
     RegisterSpellScript(spell_rog_audacity);
     RegisterSpellScript(spell_rog_fan_of_knives);
+    RegisterSpellScript(spell_rog_ambush);
 
 
 
