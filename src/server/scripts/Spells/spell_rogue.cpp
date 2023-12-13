@@ -2362,7 +2362,7 @@ void AddSC_rogue_spell_scripts()
 
 
 
-
+    
     
     
 }
