@@ -32,6 +32,9 @@ enum SpellsWarrior
     SPELL_WARR_EXECUTE = 47471,
     SPELL_WARR_CLEAVE = 47520,
     SPELL_WARR_MORTAL_STRIKE = 47486,
+    SPELL_WARR_RECKLESSNESS = 1719,
+    SPELL_WARR_RAVAGER = 84540,
+    SPELL_WARR_ANNIHILATOR = 84543,
 
     RUNE_WARR_DEVASTATOR_PROC = 200868,
     RUNE_WARR_FATALITY_MARK = 201207,
@@ -39,6 +42,8 @@ enum SpellsWarrior
     RUNE_TEST_OF_MIGHT_COUNTER = 201137,
     RUNE_TEST_OF_MIGHT_BUFF = 200887,
     RUNE_STRENGTH_OF_ARMS_PROC = 201215,
+    RUNE_FERVOR_OF_BATTLE_SLAM = 201228,
+    RUNE_BERSERKERS_TORMENT_PROC = 200407,
 };
 
 class spell_cut_the_veins : public AuraScript
@@ -565,18 +570,19 @@ class spell_fervor_of_battle : public SpellScript
     {
         if (!GetRuneAura())
             return;
-
         if (targets.size() > 0)
         {
+            targets.resize(1);
             for (auto const& target : targets)
                 if (Unit* unit = target->ToUnit())
                 {
-                    GetCaster()->CastSpell(unit, 47475, TRIGGERED_FULL_MASK);
+                    GetCaster()->CastSpell(unit, RUNE_FERVOR_OF_BATTLE_SLAM, TRIGGERED_FULL_MASK);
                     return;
                 }
         }
-        else {
-            GetCaster()->CastSpell(GetExplTargetUnit(), 47475, TRIGGERED_FULL_MASK);
+        else
+        {
+            GetCaster()->CastSpell(GetExplTargetUnit(), RUNE_FERVOR_OF_BATTLE_SLAM, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -703,7 +709,8 @@ class spell_depths_of_insanity : public AuraScript
 
         if (rageAccumulated >= rageThreshold)
         {
-            GetCaster()->ToPlayer()->ModifySpellCooldown(1719, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
+            GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_WARR_RECKLESSNESS, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
+            GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_WARR_RAVAGER, -aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount());
             aurEff->GetBase()->GetEffect(EFFECT_1)->SetAmount(rageAccumulated - rageThreshold);
         }
         else
@@ -713,75 +720,6 @@ class spell_depths_of_insanity : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_depths_of_insanity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-class spell_berserkers_tourment : public AuraScript
-{
-    PrepareAuraScript(spell_berserkers_tourment);
-
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(200401))
-            return GetCaster()->GetAura(200401);
-
-        if (GetCaster()->HasAura(200402))
-            return GetCaster()->GetAura(200402);
-
-        if (GetCaster()->HasAura(200403))
-            return GetCaster()->GetAura(200403);
-
-        if (GetCaster()->HasAura(200404))
-            return GetCaster()->GetAura(200404);
-
-        if (GetCaster()->HasAura(200405))
-            return GetCaster()->GetAura(200405);
-
-        if (GetCaster()->HasAura(200406))
-            return GetCaster()->GetAura(200406);
-
-        return nullptr;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        if (!GetRuneAura())
-            return;
-
-        GetCaster()->AddAura(200407, GetCaster());
-    }
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        if (!GetCaster()->HasAura(200407))
-            return;
-
-        GetCaster()->RemoveAura(200407);
-    }
-
-    void Register() override
-    {
-        OnEffectApply += AuraEffectApplyFn(spell_berserkers_tourment::HandleProc, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_berserkers_tourment::HandleRemove, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
-class spell_berserkers_tourment_proc : public AuraScript
-{
-    PrepareAuraScript(spell_berserkers_tourment_proc);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        if (!GetCaster()->HasAura(1719))
-            return;
-
-        uint32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
-        GetCaster()->DealDamage(GetCaster(), GetCaster(), damage, nullptr, DIRECT_DAMAGE);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_berserkers_tourment_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1921,34 +1859,6 @@ class rune_bonegrinder : public AuraScript
     }
 };
 
-class rune_cold_steel_hot_blood : public AuraScript
-{
-    PrepareAuraScript(rune_cold_steel_hot_blood);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
-
-        if (!damageInfo || !damageInfo->GetDamage())
-        {
-            return false;
-        }
-
-        return GetTarget()->IsAlive();
-    }
-
-    void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* target = eventInfo.GetActionTarget();
-    }
-
-    void Register() override
-    {
-        DoCheckProc += AuraCheckProcFn(rune_cold_steel_hot_blood::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_cold_steel_hot_blood::OnProc, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
-    }
-};
-
 class rune_invigorating_fury : public SpellScript
 {
     PrepareSpellScript(rune_invigorating_fury);
@@ -2678,6 +2588,84 @@ class rune_bloodmark : public AuraScript
     }
 };
 
+class rune_cold_steel_hot_blood : public AuraScript
+{
+    PrepareAuraScript(rune_cold_steel_hot_blood);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+        {
+            return false;
+        }
+
+        return target->IsAlive();
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_cold_steel_hot_blood::CheckProc);
+    }
+};
+
+class rune_berserkers_torment : public AuraScript
+{
+    PrepareAuraScript(rune_berserkers_torment);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        return GetCaster()->HasAura(SPELL_WARR_RECKLESSNESS);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 damageAmount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        GetCaster()->CastCustomSpell(RUNE_BERSERKERS_TORMENT_PROC, SPELLVALUE_BASE_POINT0, damageAmount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_berserkers_torment::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_berserkers_torment::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_slaughtering_strikes : public AuraScript
+{
+    PrepareAuraScript(rune_slaughtering_strikes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+            if (spellInfo->Id == SPELL_WARR_RAGING_BLOW)
+                GetCaster()->CastSpell(GetCaster(), aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+            else if (spellInfo->Id == SPELL_WARR_ANNIHILATOR)
+                GetCaster()->CastSpell(GetCaster(), GetAura()->GetEffect(EFFECT_1)->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_slaughtering_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_slaughtering_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(rune_improved_execute);
@@ -2724,8 +2712,6 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_spinning_grip);
     RegisterSpellScript(spell_spinning_grip_jump);
     RegisterSpellScript(spell_depths_of_insanity);
-    RegisterSpellScript(spell_berserkers_tourment);
-    RegisterSpellScript(spell_berserkers_tourment_proc);
     RegisterSpellScript(spell_reckless_abandon);
     RegisterSpellScript(spell_reckless_abandon_proc);
     RegisterSpellScript(spell_true_rage);
@@ -2767,4 +2753,7 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(rune_in_for_the_kill);
     RegisterSpellScript(rune_strength_of_arms);
     RegisterSpellScript(rune_bloodmark);
+    RegisterSpellScript(rune_cold_steel_hot_blood);
+    RegisterSpellScript(rune_berserkers_torment);
+    RegisterSpellScript(rune_slaughtering_strikes);
 }
