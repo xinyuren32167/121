@@ -46,9 +46,12 @@ enum RogueSpells
     //OURS
     SPELL_ROGUE_BACKSTAB = 82001,
     SPELL_ROGUE_BLADE_FLURRY = 13877,
-    SPELL_ROG_BLADE_FLURRY_SELECTION = 82012,
-    SPELL_ROG_BLADE_FLURRY_DAMAGE = 82013,
+    SPELL_ROGUE_BLADE_FLURRY_SELECTION = 82012,
+    SPELL_ROGUE_BLADE_FLURRY_DAMAGE = 82013,
+    SPELL_ROGUE_COMBAT_ECSTASY = 82073,
+    SPELL_ROGUE_GARROTE = 82002,
     SPELL_ROGUE_KILLING_SPREE_FLURRY_DMG = 82014,
+    SPELL_ROGUE_SHADOWSTEP = 36554,
     SPELL_ROGUE_SHADOWSTRIKE_ACTIVATOR = 82018,
     SPELL_ROGUE_SLICE_AND_DICE = 6774,
     SPELL_ROGUE_MARKED_FOR_DEATH = 82022,
@@ -90,7 +93,7 @@ enum RogueSpells
     SPELL_ROGUE_KEEP_IT_ROLLING = 82098,
     SPELL_ROGUE_ROLL_THE_BONES = 82091,
     SPELL_ROGUE_SHADOW_DANCE = 51713,
-    SPELL_ROGUE_SPRINT = 11305, 
+    SPELL_ROGUE_SPRINT = 11305,
     SPELL_ROGUE_STEALTH = 1784,
     SPELL_ROGUE_VANISH = 26889,
     SPELL_ROGUE_OPPORTUNITY = 82085,
@@ -126,6 +129,9 @@ enum RogueSpells
     SPELL_ROGUE_ATROPHIC_POISON = 82003,
     SPELL_ROGUE_ATROPHIC_POISON_PROC = 82004,
     SPELL_ROGUE_ATROPHIC_POISON_CONCENTRATED = 82011, //shiv
+
+    // Runes
+    RUNE_ROGUE_LINGERING_SHADOW_BUFF = 1100440,
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -874,7 +880,7 @@ class spell_rog_eviscerate : public SpellScript
         Unit* caster = GetCaster();
         int32 damageRatio = caster->GetComboPoints() * GetEffectValue();
         int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
-       
+
         if (Unit* target = GetHitUnit())
         {
             damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
@@ -891,7 +897,7 @@ class spell_rog_eviscerate : public SpellScript
                 int32 damageIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
                 AddPct(damage, damageIncrease);
             }
-        
+
         SetHitDamage(damage);
 
         if (Aura* runeAura = GetEvisceratingStabAura(caster))
@@ -904,9 +910,25 @@ class spell_rog_eviscerate : public SpellScript
         }
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Eviscerating Strike Rune Buff
+        for (size_t i = 1100544; i < 1100550; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_rog_eviscerate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);       
+        OnEffectHitTarget += SpellEffectFn(spell_rog_eviscerate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_rog_eviscerate::HandleAfterHit);
     }
 };
 
@@ -1020,7 +1042,7 @@ class spell_rog_blade_flurry_new : public AuraScript
             {
                 int32 damagePct = aurEff->GetAmount();
                 int32 damageAmount = CalculatePct(damage, damagePct);
-                GetCaster()->CastCustomSpell(SPELL_ROG_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+                GetCaster()->CastCustomSpell(SPELL_ROGUE_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
             }
         }
     }
@@ -1053,7 +1075,7 @@ class spell_rog_blade_flurry_triggered : public SpellScript
                 for (auto const& enemy : targets)
                     if (Unit* creatureTarget = enemy->ToUnit())
                     {
-                        caster->CastCustomSpell(SPELL_ROG_BLADE_FLURRY_DAMAGE, SPELLVALUE_BASE_POINT0, damage, creatureTarget, TRIGGERED_FULL_MASK);
+                        caster->CastCustomSpell(SPELL_ROGUE_BLADE_FLURRY_DAMAGE, SPELLVALUE_BASE_POINT0, damage, creatureTarget, TRIGGERED_FULL_MASK);
                     }
             }
         }
@@ -1579,28 +1601,53 @@ class spell_rog_sinister_strike : public SpellScript
 {
     PrepareSpellScript(spell_rog_sinister_strike);
 
+    Aura* GetSinisterAdrenalineAura(Unit* caster)
+    {
+        for (size_t i = 1100520; i < 1100528; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleHit(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-        int32 damageRatio = GetEffectValue();
-        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damageRatio);
-
-        if (Unit* target = GetHitUnit())
-        {
-            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
-        }
+        int32 damage = GetHitDamage();
 
         if (AuraEffect const* gamblersLuck = caster->GetAuraEffectOfRankedSpell(TALENT_ROGUE_GAMBLERS_LUCK, EFFECT_0))
             if (caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES) || caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
                 AddPct(damage, gamblersLuck->GetAmount());
 
+        // Check if you have Adrenalien Rush to apply Sinister Adrenaline rune damage increase.
+        if (Aura* runeAura = GetSinisterAdrenalineAura(caster))
+            if (caster->HasAura(SPELL_ROGUE_ADRENALINE_RUSH) || caster->HasAura(SPELL_ROGUE_COMBAT_ECSTASY))
+                AddPct(damage, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
         SetHitDamage(damage);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Sinister Ripost Rune Buff
+        for (size_t i = 1100532; i < 1100538; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_sinister_strike::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_rog_sinister_strike::HandleAfterHit);
     }
 };
 
@@ -2289,6 +2336,96 @@ class spell_rog_ambush : public SpellScript
     }
 };
 
+// 51713 - Shadow Dance
+class spell_rog_shadow_dance : public AuraScript
+{
+    PrepareAuraScript(spell_rog_shadow_dance);
+
+    Aura* GetLingeringShadowAura(Unit* caster)
+    {
+        for (size_t i = 1100434; i < 1100440; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnAfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetLingeringShadowAura(caster))
+        {
+            int32 stack = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(RUNE_ROGUE_LINGERING_SHADOW_BUFF, caster);
+            caster->GetAura(RUNE_ROGUE_LINGERING_SHADOW_BUFF)->SetStackAmount(stack);
+        }
+
+        // Remove Danse Macabre Rune Buff
+        for (size_t i = 1100448; i < 1100454; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rog_shadow_dance::OnAfterRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 36554 - Shadowstep
+class spell_rog_shadowstep : public SpellScript
+{
+    PrepareSpellScript(spell_rog_shadowstep);
+
+    Aura* GetIntentToKillAura(Unit* caster)
+    {
+        for (size_t i = 1100466; i < 1100472; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+  
+        if (Player* player = caster->ToPlayer())
+        {
+            if (Aura* runeAura = GetIntentToKillAura(caster))
+                if (target->HasAura(SPELL_ROGUE_GARROTE))
+                {
+                    int32 cooldown = player->GetSpellCooldownDelay(SPELL_ROGUE_SHADOWSTEP);
+                    ApplyPct(cooldown, runeAura->GetEffect(EFFECT_0)->GetAmount());
+                    player->ModifySpellCooldown(SPELL_ROGUE_SHADOWSTEP, -cooldown);
+                }              
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_shadowstep::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_rogue_spell_scripts()
@@ -2359,10 +2496,12 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_audacity);
     RegisterSpellScript(spell_rog_fan_of_knives);
     RegisterSpellScript(spell_rog_ambush);
-
+    RegisterSpellScript(spell_rog_shadow_dance);
+    RegisterSpellScript(spell_rog_shadowstep);
 
 
     
-    
-    
+
+
+
 }
