@@ -2413,7 +2413,7 @@ class spell_dk_summon_gargoyle_power : public AuraScript
         if (spellRunic <= 0)
             return;
 
-        std::vector<Unit*> summonedUnits = target->GetSummonedUnits();
+        auto summonedUnits = target->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {

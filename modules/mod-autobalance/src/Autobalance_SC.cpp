@@ -33,6 +33,30 @@ public:
     {
 
     }
+
+    void OnBeforeLootMoney(Player* player, Loot* loot) override
+    {
+        Map* map = player->GetMap();
+
+        if (!map->IsDungeon())
+            return;
+
+        ObjectGuid sourceGuid = loot->sourceWorldObjectGUID;
+
+        if (sourceGuid.IsCreature())
+        {
+            Creature* sourceCreature = ObjectAccessor::GetCreature(*player, sourceGuid);
+            auto maxPlayerCount = map->ToInstanceMap()->GetMaxPlayers();
+            auto currentPlayerCount = map->GetPlayersCountExceptGMs();
+            loot->gold = uint32(loot->gold * ((float)currentPlayerCount / maxPlayerCount));
+        }
+        else
+        {
+            auto maxPlayerCount = map->ToInstanceMap()->GetMaxPlayers();
+            auto currentPlayerCount = map->GetPlayersCountExceptGMs();
+            loot->gold = uint32(loot->gold * ((float)currentPlayerCount / maxPlayerCount));
+        }
+    }
 };
 
 class AutoBalance_UnitScript : public UnitScript

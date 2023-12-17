@@ -15459,6 +15459,7 @@ bool Player::AddItem(uint32 itemId, uint32 count)
     if (count == 0 || dest.empty())
     {
         // -- TODO: Send to mailbox if no space
+        SendMailAddItem(itemId, count);
         ChatHandler(GetSession()).PSendSysMessage("You don't have any space in your bags.");
         return false;
     }
@@ -15471,6 +15472,24 @@ bool Player::AddItem(uint32 itemId, uint32 count)
     return true;
 }
 
+void Player::SendMailAddItem(uint32 itemId, uint32 count)
+{
+    ObjectGuid::LowType senderGuid = GetGUID().GetCounter();
+
+    MailDraft draft("", "");
+    MailSender sender(MAIL_NORMAL, senderGuid, MAIL_STATIONERY_GM);
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+   
+    if (Item* item = Item::CreateItem(itemId, count, this))
+    {
+        item->SaveToDB(trans); // save for prevent lost at next mail load, if send fail then item will deleted
+        draft.AddItem(item);
+    }
+
+    draft.SendMailTo(trans, MailReceiver(this, GetGUID().GetCounter()), sender);
+    CharacterDatabase.CommitTransaction(trans);
+}
+
 Item* Player::AddItem(uint32 itemId)
 {
     uint32 noSpaceForCount = 0;
@@ -15479,7 +15498,7 @@ Item* Player::AddItem(uint32 itemId)
 
     if (dest.empty())
     {
-        // -- TODO: Send to mailbox if no space
+        SendMailAddItem(itemId, 1);
         ChatHandler(GetSession()).PSendSysMessage("You don't have any space in your bags.");
         return nullptr;
     }

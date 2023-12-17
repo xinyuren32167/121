@@ -22,8 +22,8 @@ void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
     config.debug = false;
-    config.maxSlots  = 8;
-    config.defaultSlot = 8;
+    config.maxSlots = 10;
+    config.defaultSlot = 4;
 
     config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_RARE")));
     config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_EPIC")));
@@ -112,6 +112,8 @@ void RunesManager::LoadRewardsAchievement()
 
         uint32 itemId3 = fields[5].Get<uint32>();
         uint32 itemId3Amount = fields[6].Get<uint32>();
+
+        m_RewardAchievement[achievementId] = { itemId1, itemId1Amount, itemId2, itemId2Amount, itemId3, itemId3Amount };
 
     } while (result->NextRow());
 }
@@ -250,6 +252,9 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     {
         Field* fields = result->Fetch();
         startIdSlot = fields[0].Get<uint64>();
+
+        if (startIdSlot == 0)
+            startIdSlot = 1;
     }
 
     uint64 guid = player->GetGUID().GetCounter();
@@ -265,7 +270,7 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     Loadout loadout = { guid, startIdSlot, slotDefault, true };
     m_Loadout[guid].push_back(loadout);
 
-    CharacterDatabase.Query("INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES ({}, 0, 0, 40) ", accountId);
+    CharacterDatabase.Query("INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES ({}, 0, 0, {}) ", accountId, config.defaultSlot);
     CharacterDatabase.Query("INSERT INTO character_draw (guid, totalDraw) VALUES ({}, 0) ", guid);
 
     m_CharacterRuneDraw.insert(std::make_pair(guid, 0));
@@ -273,7 +278,7 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     auto progression = m_Progression.find(player->GetSession()->GetAccountId());
 
     if (progression == m_Progression.end()) {
-        AccountProgression progression = { 0, 0, 40 };
+        AccountProgression progression = { 0, 0, config.defaultSlot };
         m_Progression[accountId] = { progression };
     }
 
@@ -342,6 +347,94 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
 
     return rune;
 }
+
+
+int RunesManager::GetPreviousWeekFromBuyingRuneWithGold(Player* player)
+{
+    uint32 guid = player->GetGUID().GetCounter();
+
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_buying_rune_gold WHERE guid = {}", guid);
+
+    if (!result)
+        return -1;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 oldWeek = fields[2].Get<uint32>();
+        return oldWeek;
+
+    } while (result->NextRow());
+
+}
+
+void RunesManager::ApplyBuyingRuneWithGold(Player* player)
+{
+    std::time_t t = std::time(0);
+    std::tm* now = std::localtime(&t);
+
+    int weekNumber = now->tm_yday / 7 + 1;
+
+    uint32 guid = player->GetGUID().GetCounter();
+
+    uint32 oldWeek = GetPreviousWeekFromBuyingRuneWithGold(player);
+
+    if (oldWeek == -1)
+    {
+        CharacterDatabase.Execute("INSERT INTO character_buying_rune_gold (guid, goldT, dayOfTheWeek) VALUES ({}, {}, {}) ", guid, 1, oldWeek);
+        return;
+    }
+
+    if (oldWeek >= 0)
+    {
+        if (oldWeek != weekNumber)
+            CharacterDatabase.Execute("UPDATE character_buying_rune_gold SET goldT = 1, dayOfTheWeek = {} WHERE guid = {}", guid, oldWeek);
+        else
+            CharacterDatabase.Execute("UPDATE character_buying_rune_gold SET goldT = goldT + 1 WHERE guid = {}", guid, oldWeek);
+    }
+}
+
+uint32 RunesManager::CalculateGoldCostToBuyRune(Player* player)
+{
+
+    std::time_t t = std::time(0);
+    std::tm* now = std::localtime(&t);
+
+    uint32 cost = sWorld->GetValue("CONFIG_BASE_COST_BUYING_RUNE");
+
+    int weekNumber = now->tm_yday / 7 + 1;
+
+    uint32 guid = player->GetGUID().GetCounter();
+
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_buying_rune_gold WHERE guid = {}", guid);
+
+    if (!result)
+    {
+        return cost;
+    }
+
+    int newCost = 0;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 guid = fields[0].Get<uint32>();
+        uint32 goldT = fields[1].Get<uint32>();
+        uint32 oldWeek = fields[2].Get<uint32>();
+
+        if (oldWeek == weekNumber)
+        {
+            newCost = cost + goldT * sWorld->GetValue("CONFIG_INCREMENT_COST_BUYING_RUNE");
+        }
+        else
+            newCost = cost;
+            
+
+    } while (result->NextRow());
+
+    return std::min(newCost, sWorld->GetValue("CONFIG_GOLD_CAP_BUYING_RUNE"));
+}
+
 
 void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
 {
@@ -668,6 +761,26 @@ void RunesManager::RemoveSlotsOnCharacterDel(ObjectGuid guid)
     CharacterDatabase.Execute("DELETE FROM character_rune_loadout WHERE guid = {}", guid.GetCounter());
 }
 
+void RunesManager::GiveAchievementReward(Player* player, uint32 achievementId)
+{
+    auto match = m_RewardAchievement.find(achievementId);
+
+    if (match != m_RewardAchievement.end())
+    {
+        if (match->second.itemId1 > 0)
+            player->AddItem(match->second.itemId1, match->second.itemId1Amount);
+
+        if (match->second.itemId2 > 0)
+            player->AddItem(match->second.itemId2, match->second.itemId2Amount);
+
+        if (match->second.itemId3 > 0)
+            player->AddItem(match->second.itemId3, match->second.itemId3Amount);
+
+        SendPlayerMessage(player, "Congratulations, you have completed an achievement, you have received a reward in your bag!");
+    }
+
+}
+
 void RunesManager::ApplyRunesOnLogin(Player* player)
 {
     uint64 activeId = GetActiveLoadoutId(player);
@@ -973,6 +1086,43 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     }
 }
 
+
+void RunesManager::UpdateRuneDustCountOnLogin(Player* player)
+{
+    uint32 accountId = player->GetSession()->GetAccountId();
+
+    auto it = m_Progression.find(accountId);
+
+    if (it != m_Progression.end()) {
+        Item* item = player->GetItemByEntry(70008);
+
+        if (!item)
+        {
+            player->AddItem(70008, it->second.dusts);
+            return;
+        }
+
+        if (item->GetCount() != it->second.dusts)
+            item->SetCount(it->second.dusts);
+    }
+}
+
+void RunesManager::UpdateRuneDustAmount(Player* player, int32 amount)
+{
+    uint32 accountId = player->GetSession()->GetAccountId();
+
+    auto it = m_Progression.find(accountId);
+
+    if (it != m_Progression.end()) {
+        if (amount < 0)
+            it->second.dusts -= amount;
+        if(amount > 0)
+            it->second.dusts += amount;
+
+        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", accountId, it->second.dusts);
+    }
+}
+
 void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
 {
     Rune rune = GetRuneBySpellId(runeSpellId);
@@ -1012,7 +1162,10 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune)
     uint64 activeId = GetActiveLoadoutId(player);
 
     if (activeId <= 0)
+    {
+        LOG_ERROR("Error", "Couldnt find the Active Loadout");
         return;
+    }
 
     auto match = m_SlotRune.find(activeId);
     SlotRune slot = { activeId, rune.spellId, 1 };
@@ -1048,7 +1201,10 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
     auto match = m_SlotRune.find(activeId);
 
     if (match == m_SlotRune.end())
+    {
+        LOG_ERROR("Error", "Couldnt find the Slot rune");
         return;
+    }
 
     auto it = std::find_if(match->second.begin(),
         match->second.end(),

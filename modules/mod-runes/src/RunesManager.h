@@ -145,6 +145,8 @@ public:
     static void DisableRune(Player* player, uint64 runeId);
     static void RefundRune(Player* player, uint32 runeSpellId);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
+    static void UpdateRuneDustCountOnLogin(Player* player);
+    static void UpdateRuneDustAmount(Player* player, int32 amount);
     static void AddRuneToSlot(Player* player, Rune rune);
     static void RemoveRuneFromSlots(Player* player, Rune rune);
     static void RemoveRune(Player* player, Rune rune, int8 quantity);
@@ -154,4 +156,8 @@ public:
     static Rune GetRandomRune(Player* player, uint8 quality);
     static void RemoveNecessaryItemsForUpgrade(Player* player, Rune rune);
     static void AddRunePlayer(Player* player, Rune rune);
+    static uint32 CalculateGoldCostToBuyRune(Player* player);
+    static void GiveAchievementReward(Player* player, uint32 achievementId);
+    static void ApplyBuyingRuneWithGold(Player* player);
+    static int GetPreviousWeekFromBuyingRuneWithGold(Player* player);
 };

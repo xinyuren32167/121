@@ -1385,6 +1385,7 @@ public:
     void LoadPet();
 
     bool AddItem(uint32 itemId, uint32 count);
+    void SendMailAddItem(uint32 itemId, uint32 count);
     Item* AddItem(uint32 itemId);
 
     /*********************************************************/

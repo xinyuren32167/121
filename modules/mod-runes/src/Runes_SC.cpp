@@ -18,6 +18,9 @@
 #include "Totem.h"
 #include "UnitAI.h"
 #include "Log.h"
+#include "ScriptedGossip.h"
+#include "SpellInfo.h"
+
 
 // Add player scripts
 class Runes_PlayerScripts: public PlayerScript
@@ -43,6 +46,7 @@ public:
     void OnPlayerResurrect(Player* player, float restore_percent, bool applySickness)
     {
         RunesManager::ApplyRunesOnLogin(player);
+        RunesManager::UpdateRuneDustCountOnLogin(player);
     }
 
     void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/) {
@@ -52,20 +56,63 @@ public:
 
         const int32 loadoutId = spell->GetSpellValue()->EffectBasePoints[EFFECT_0];
     }
-};
 
+    void OnAchiComplete(Player* player, AchievementEntry const* achievement)
+    {
+        if (!achievement)
+            return;
+
+        if (!player)
+            return;
+
+        uint32 achievementId = achievement->ID;
+
+        RunesManager::GiveAchievementReward(player, achievementId);
+    }
+
+    void OnLootItem(Player* player, Item* item, uint32 count, ObjectGuid lootguid)
+    {
+        if (item->GetEntry() != 70008)
+            return;
+
+        RunesManager::UpdateRuneDustAmount(player, count);
+    }
+
+    void OnQuestRewardItem(Player* player, Item* item, uint32 count)
+    {
+        if (item->GetEntry() != 70008)
+            return;
+
+        RunesManager::UpdateRuneDustAmount(player, count);
+    }
+
+
+    void OnBeforeBuyItemFromVendor(Player* player, ObjectGuid vendorguid, uint32 vendorslot, uint32& item, uint8 count, uint8 bag, uint8 slot)
+    {
+        if (item != 70002)
+            return;
+
+        RunesManager::UpdateRuneDustAmount(player, -count);
+    };
+};
 
 class Runes_MiscScript : public MiscScript
 {
 public:
     Runes_MiscScript() : MiscScript("Runes_MiscScript") { }
 
+    void AddRunicDustToLoot(uint32 minValue, uint32 maxValue, Loot* loot)
+    {
+        LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, minValue, maxValue);
+        loot->AddItem(storeItem);
+    }
+
     double calculatePourcentage(uint32 skillLevel, double pourcentageInitial)
     {
         return skillLevel / 10 + pourcentageInitial;
     }
 
-    void AddLootDependingOnSkillLevel(Loot* loot, uint32 skillLevel)
+    void AddMetarial(Loot* loot, uint32 skillLevel)
     {
         double lootChanceItem1 = calculatePourcentage(skillLevel, 25.f);
         double lootChanceItem2 = calculatePourcentage(skillLevel, 5.f);
@@ -80,7 +127,7 @@ public:
         if (roll_chance_i(lootChanceItem2))
         {
             LootStoreItem storeItem(70011, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
+            AddRunicDustToLoot(1, 1, loot);
         }
 
         if (roll_chance_i(lootChanceItem3))
@@ -103,47 +150,22 @@ public:
 
         int dropChanceFromMonster = sWorld->GetValue("CONFIG_DROP_CHANCE_FROM_MONSTER_RUNIC_DUST");
 
+        int valueMinFromDungeonBoss = sWorld->GetValue("CONFIG_DUNGEON_BOSS_RUNIC_DUST_MIN");
+        int valueMaxFromDungeonBoss = sWorld->GetValue("CONFIG_DUNGEON_BOSS_RUNIC_DUST_MAX");
+
         Map* map = creature->GetMap();
 
         if (creature->isElite() && !map->IsDungeon())
-        {
-            LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, valueFromEliteMin, valueFromEliteMax);
-            loot->AddItem(storeItem);
-        }
+            AddRunicDustToLoot(valueFromEliteMin, valueFromEliteMax, loot);
 
         if (!creature->isElite() && roll_chance_i(dropChanceFromMonster))
-        {
-            LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
-        }
+            AddRunicDustToLoot(1, 1, loot);
 
         if (creature->GetCreatureTemplate()->rank == CREATURE_ELITE_RARE)
-        {
-            LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, valueFromEliteRareMin, valueFromEliteRareMax);
-            loot->AddItem(storeItem);
-        }
-    }
+            AddRunicDustToLoot(valueFromEliteRareMin, valueFromEliteRareMax, loot);
 
-    void AddBonusRunicDustSkinning(Creature* creature, Player* player, Loot* loot)
-    {
-        if (creature->getLevel() < player->getLevel())
-            return;
-
-        int valueFromSkinningMin = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MIN");
-        int valueFromSkinningMax = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MAX");
-
-
-        LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, valueFromSkinningMin, valueFromSkinningMax);
-        loot->AddItem(storeItem);
-    }
-
-    void AddBonusRunicDustFromMinningAndHerborism(Player* player, Loot* loot)
-    {
-        int valueFromMinningAndHerborsimMin = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MIN");
-        int valueFromMinningAndHerborsimMax = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MAX");
-
-        LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, valueFromMinningAndHerborsimMin, valueFromMinningAndHerborsimMax);
-        loot->AddItem(storeItem);
+        if (creature->IsDungeonBoss())
+            AddRunicDustToLoot(valueMinFromDungeonBoss, valueMaxFromDungeonBoss, loot);
     }
 
     void OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode, WorldObject* source)
@@ -167,8 +189,11 @@ public:
                         {
                             if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(skillId))
                             {
-                                AddLootDependingOnSkillLevel(loot, pureSkillValue);
-                                AddBonusRunicDustFromMinningAndHerborism(lootOwner, loot);
+                                AddMetarial(loot, pureSkillValue);
+                                int valueFromMinningAndHerborsimMin = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MIN");
+                                int valueFromMinningAndHerborsimMax = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MAX");
+
+                                AddRunicDustToLoot(valueFromMinningAndHerborsimMin, valueFromMinningAndHerborsimMax, loot);
                             }
                         }
                        break;
@@ -180,13 +205,14 @@ public:
         {
             if (creature->GetCreatureTemplate()->SkinLootId > 0)
             {
-                if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(SKILL_SKINNING))
+                if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(SKILL_SKINNING) && creature->getLevel() < lootOwner->getLevel())
                 {
-                    AddLootDependingOnSkillLevel(loot, pureSkillValue);
-                    AddBonusRunicDustSkinning(creature, lootOwner, loot);
+                    AddMetarial(loot, pureSkillValue);
+                    int valueFromSkinningMin = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MIN");
+                    int valueFromSkinningMax = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MAX");
+                    AddRunicDustToLoot(valueFromSkinningMin, valueFromSkinningMax, loot);
                 }
             }
-
             AddBonusRunicDust(creature, lootOwner, loot);
         }
     }
@@ -280,6 +306,7 @@ public:
         RunesManager::LoadAllProgression();
         RunesManager::LoadSpellsConversion();
         RunesManager::LoadCharacterDraws();
+        RunesManager::LoadRewardsAchievement();
     }
 };
 
@@ -353,6 +380,42 @@ public:
     }
 };
 
+class npc_buying_rune : public CreatureScript
+{
+public:
+    npc_buying_rune() : CreatureScript("npc_buying_rune") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        ClearGossipMenuFor(player);
+        switch (action)
+        {
+        case GOSSIP_ACTION_INFO_DEF:
+        {
+            RunesManager::ApplyBuyingRuneWithGold(player);
+            uint32 cost = RunesManager::CalculateGoldCostToBuyRune(player);
+            player->ModifyMoney(-cost);
+            player->AddItem(70002, 1);
+            CloseGossipMenuFor(player);
+        }
+            break;
+        case GOSSIP_ACTION_TRADE:
+            player->GetSession()->SendListInventory(creature->GetGUID());
+            break;
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        uint32 cost = RunesManager::CalculateGoldCostToBuyRune(player);
+        AddGossipItemFor(player, GOSSIP_ICON_MONEY_BAG, "Buy a Sealed Common Rune with Gold", 50, GOSSIP_ACTION_INFO_DEF, "Are you sur want to buy a Sealed Common Rune ?", cost, false);
+        AddGossipItemFor(player, GOSSIP_ICON_VENDOR, GOSSIP_TEXT_BROWSE_GOODS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+        SendGossipMenuFor(player, 900900, creature->GetGUID());
+        return true;
+    }
+};
+
 // Add all scripts in one
 void AddSC_runesScripts()
 {
@@ -361,6 +424,7 @@ void AddSC_runesScripts()
     new Runes_CommandsScript();
     new go_rune_upgrader();
     new Runes_MiscScript();
+    new npc_buying_rune();
     RegisterSpellScript(spell_activate_rune);
     RegisterSpellScript(spell_generate_random_rune);
     RegisterSpellScript(spell_upgrade_rune);
