@@ -43,6 +43,11 @@ enum RogueSpells
     RUNE_ROGUE_REPLICATING_SHADOWS_DAMAGE = 1100390,
     RUNE_ROGUE_LINGERING_SHADOW_BUFF = 1100440,
     RUNE_ROGUE_LINGERING_SHADOW_DAMAGE = 1100441,
+    RUNE_ROGUE_CLOAKED_IN_SHADOWS_SHIELD = 1100642,
+    RUNE_ROGUE_ZOLDYCK_RECIPE_DAMAGE = 1100710,
+    RUNE_ROGUE_LEECHING_POISON_HEAL = 1100718,
+    RUNE_ROGUE_VEILTOUCHED_SHADOW_DAMAGE = 1100736,
+    RUNE_ROGUE_VEILTOUCHED_NATURE_DAMAGE = 1100737,
 };
 
 class rune_rog_venom_rush : public AuraScript
@@ -657,6 +662,158 @@ class rune_rog_slice_and_strike : public AuraScript
     }
 };
 
+class rune_rog_recuperator : public AuraScript
+{
+    PrepareAuraScript(rune_rog_recuperator);
+
+    void HandleEffectPeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_ROGUE_SLICE_AND_DICE))
+            return;
+
+        caster->CastSpell(caster, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_rog_recuperator::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_rog_cloaked_in_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_rog_cloaked_in_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 amount = CalculatePct(caster->GetMaxHealth(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_ROGUE_CLOAKED_IN_SHADOWS_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_cloaked_in_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_cloaked_in_shadows::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_zoldyck_recipe : public AuraScript
+{
+    PrepareAuraScript(rune_rog_zoldyck_recipe);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 healthPct = target->GetHealthPct();
+        int32 healthThreshold = GetEffect(EFFECT_1)->GetAmount();
+        
+        if (healthPct > healthThreshold)
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_ROGUE_ZOLDYCK_RECIPE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_zoldyck_recipe::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_zoldyck_recipe::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_leeching_poison : public AuraScript
+{
+    PrepareAuraScript(rune_rog_leeching_poison);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_ROGUE_LEECHING_POISON_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_leeching_poison::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_leeching_poison::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_veiltouched : public AuraScript
+{
+    PrepareAuraScript(rune_rog_veiltouched);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_ROGUE_VEILTOUCHED_SHADOW_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(RUNE_ROGUE_VEILTOUCHED_NATURE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_veiltouched::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_veiltouched::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_rogue_perks_scripts()
@@ -677,10 +834,15 @@ void AddSC_rogue_perks_scripts()
     RegisterSpellScript(rune_rog_deepening_shadows);
     RegisterSpellScript(rune_rog_vampiric_strike);
     RegisterSpellScript(rune_rog_slice_and_strike);
+    RegisterSpellScript(rune_rog_recuperator);
+    RegisterSpellScript(rune_rog_cloaked_in_shadows);
+    RegisterSpellScript(rune_rog_zoldyck_recipe);
+    RegisterSpellScript(rune_rog_leeching_poison);
+    RegisterSpellScript(rune_rog_veiltouched);
 
+    
+    
 
-
-
-
+    
 }
 

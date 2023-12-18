@@ -2372,6 +2372,20 @@ class spell_rog_shadow_dance : public AuraScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove Shadowrunner Rune Buff
+        for (size_t i = 1100594; i < 1100600; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Remove Shadow Focus Rune Buff
+        for (size_t i = 1100618; i < 1100624; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
@@ -2423,6 +2437,49 @@ class spell_rog_shadowstep : public SpellScript
     void Register() override
     {
         AfterHit += SpellHitFn(spell_rog_shadowstep::HandleAfterHit);
+    }
+};
+
+// 1784 - Stealth
+class spell_rog_stealth : public AuraScript
+{
+    PrepareAuraScript(spell_rog_stealth);
+
+    Aura* GetSubterfugeAura(Unit* caster)
+    {
+        for (size_t i = 1100600; i < 1100606; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnAfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetSubterfugeAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
+
+        // Remove Shadow Focus Rune Buff
+        for (size_t i = 1100618; i < 1100624; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rog_stealth::OnAfterRemove, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2498,6 +2555,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_ambush);
     RegisterSpellScript(spell_rog_shadow_dance);
     RegisterSpellScript(spell_rog_shadowstep);
+    RegisterSpellScript(spell_rog_stealth);
 
 
     
