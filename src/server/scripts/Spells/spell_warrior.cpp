@@ -640,7 +640,6 @@ class spell_warr_bloodthirst : public SpellScript
     }
 };
 
-
 // 7384, 7887, 11584, 11585 - Overpower
 class spell_warr_overpower : public SpellScript
 {
@@ -1840,7 +1839,7 @@ class spell_warr_ravager : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_warr_ravager::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_warr_ravager::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 

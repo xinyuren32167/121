@@ -1282,7 +1282,6 @@ class spell_pri_prayer_of_mending_heal : public SpellScript
     }
 };
 
-
 // 48158 - Shadow Word: Death
 class spell_pri_shadow_word_death : public SpellScript
 {
@@ -1313,12 +1312,10 @@ class spell_pri_shadow_word_death : public SpellScript
             return;
 
         int32 targetHealthPct = target->GetHealthPct();
-        LOG_ERROR("error", "damage = {}", damage);
         if (target->HealthBelowPct(20) || GetDeathspeakerBuff(caster))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
-        LOG_ERROR("error", "damage = {}", damage);
         SetHitDamage(damage);
 
         GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);

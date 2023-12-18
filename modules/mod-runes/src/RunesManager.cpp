@@ -776,9 +776,8 @@ void RunesManager::GiveAchievementReward(Player* player, uint32 achievementId)
         if (match->second.itemId3 > 0)
             player->AddItem(match->second.itemId3, match->second.itemId3Amount);
 
-        SendPlayerMessage(player, "Congratulations, you have completed an achievement, you have received a reward in your bag!");
+        SendPlayerMessage(player, "Congratulations! You have completed an achievement, an award has been added to your bag!");
     }
-
 }
 
 void RunesManager::ApplyRunesOnLogin(Player* player)
