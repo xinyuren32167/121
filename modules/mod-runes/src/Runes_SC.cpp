@@ -413,7 +413,7 @@ public:
     bool OnGossipHello(Player* player, Creature* creature) override
     {
         uint32 cost = RunesManager::CalculateGoldCostToBuyRune(player);
-        AddGossipItemFor(player, GOSSIP_ICON_MONEY_BAG, "Buy a Sealed Common Rune with Gold", 50, GOSSIP_ACTION_INFO_DEF, "Are you sur want to buy a Sealed Common Rune ?", cost, false);
+        AddGossipItemFor(player, GOSSIP_ICON_MONEY_BAG, "Buy a Sealed Common Rune with Gold", 50, GOSSIP_ACTION_INFO_DEF, "Are you sure want to buy a Sealed Common Rune?", cost, false);
         AddGossipItemFor(player, GOSSIP_ICON_VENDOR, GOSSIP_TEXT_BROWSE_GOODS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
         SendGossipMenuFor(player, 900900, creature->GetGUID());
         return true;
