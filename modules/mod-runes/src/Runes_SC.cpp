@@ -31,6 +31,7 @@ public:
     void OnLogin(Player* player) override
     {
         RunesManager::ApplyRunesOnLogin(player);
+        RunesManager::UpdateRunicDustCountOnLogin(player);
     }
 
     void OnCreate(Player* player)
@@ -45,17 +46,12 @@ public:
 
     void OnPlayerResurrect(Player* player, float restore_percent, bool applySickness)
     {
-        RunesManager::ApplyRunesOnLogin(player);
-        RunesManager::UpdateRuneDustCountOnLogin(player);
-    }
-
-    void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/) {
-
-        if (spell->GetSpellInfo()->Id != 5000000)
+        if (!player)
             return;
 
-        const int32 loadoutId = spell->GetSpellValue()->EffectBasePoints[EFFECT_0];
+        RunesManager::ApplyRunesOnLogin(player);
     }
+
 
     void OnAchiComplete(Player* player, AchievementEntry const* achievement)
     {
@@ -75,7 +71,7 @@ public:
         if (item->GetEntry() != 70008)
             return;
 
-        RunesManager::UpdateRuneDustAmount(player, count);
+        RunesManager::UpdateRunicDustAmount(player, count);
     }
 
     void OnQuestRewardItem(Player* player, Item* item, uint32 count)
@@ -83,7 +79,7 @@ public:
         if (item->GetEntry() != 70008)
             return;
 
-        RunesManager::UpdateRuneDustAmount(player, count);
+        RunesManager::UpdateRunicDustAmount(player, count);
     }
 
 
@@ -92,7 +88,7 @@ public:
         if (item != 70002)
             return;
 
-        RunesManager::UpdateRuneDustAmount(player, -count);
+        RunesManager::UpdateRunicDustAmount(player, -100);
     };
 };
 
@@ -275,13 +271,21 @@ class spell_activate_rune : public SpellScript
     void HandleProc()
     {
         Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
         SpellValue const* value = GetSpellValue();
         uint32 runeId = value->EffectBasePoints[EFFECT_0];
         Rune rune = RunesManager::GetRuneBySpellId(runeId);
-        RunesManager::SpellConversion(rune.spellId, player, true);
-        GetCaster()->AddAura(rune.spellId, GetCaster());
-        RunesManager::AddRuneToSlot(player, rune);
-        sEluna->OnActivateRune(player, "Rune successfully activated!", 0);
+
+        if (rune.spellId > 0)
+        {
+            RunesManager::SpellConversion(rune.spellId, player, true);
+            RunesManager::AddRuneToSlot(player, rune);
+            sEluna->OnActivateRune(player, "Rune successfully activated!", 0);
+        }
+
     }
 
     void Register() override

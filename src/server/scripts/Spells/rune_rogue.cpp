@@ -81,6 +81,8 @@ class rune_rog_venom_rush : public AuraScript
 
         if (target->HasAura(POISON_ROGUE_WOUND_POISON_AURA))
             return true;
+
+        return false;
     }
 
     void Register()
@@ -304,6 +306,8 @@ class rune_rog_venomous_wounds : public AuraScript
 
         if (target->HasAura(POISON_ROGUE_WOUND_POISON_AURA))
             return true;
+
+        return false;
     }
 
     void Register()

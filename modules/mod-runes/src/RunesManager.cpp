@@ -1077,6 +1077,7 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     CharacterDatabase.Execute("DELETE FROM account_know_runes WHERE accountId = {} AND spellId = {} LIMIT 1", accountId, rune.spellId);
 
     player->AddItem(70008, runicDust);
+    UpdateRunicDustAmount(player, runicDust);
 
     if (RuneAlreadyActivated(player, rune.spellId))
     {
@@ -1087,7 +1088,7 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
 }
 
 
-void RunesManager::UpdateRuneDustCountOnLogin(Player* player)
+void RunesManager::UpdateRunicDustCountOnLogin(Player* player)
 {
     uint32 accountId = player->GetSession()->GetAccountId();
 
@@ -1107,19 +1108,20 @@ void RunesManager::UpdateRuneDustCountOnLogin(Player* player)
     }
 }
 
-void RunesManager::UpdateRuneDustAmount(Player* player, int32 amount)
+void RunesManager::UpdateRunicDustAmount(Player* player, int32 amount)
 {
     uint32 accountId = player->GetSession()->GetAccountId();
 
     auto it = m_Progression.find(accountId);
 
     if (it != m_Progression.end()) {
-        if (amount < 0)
-            it->second.dusts -= amount;
-        if(amount > 0)
-            it->second.dusts += amount;
 
-        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", accountId, it->second.dusts);
+        if (amount > 1)
+            it->second.dusts += amount;
+        else
+            it->second.dusts -= amount;
+
+        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
     }
 }
 
@@ -1187,6 +1189,7 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune)
     stmt->SetData(2, slot.order);
     trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
+    player->AddAura(rune.spellId, player);
     sEluna->RefreshSlotsRune(player);
 }
 
