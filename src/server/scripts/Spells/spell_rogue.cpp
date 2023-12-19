@@ -132,6 +132,7 @@ enum RogueSpells
 
     // Runes
     RUNE_ROGUE_LINGERING_SHADOW_BUFF = 1100440,
+    RUNE_ROGUE_BLINDSIDE_BUFF = 1100880,
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -1001,6 +1002,77 @@ class spell_rog_envenom : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_envenom::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 57993 - Envenom
+class spell_rog_envenom_aura : public AuraScript
+{
+    PrepareAuraScript(spell_rog_envenom_aura);
+
+    Aura* GetTwistTheKnifeAura(Unit* caster)
+    {
+        for (size_t i = 1100804; i < 1100810; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetDashingScoundrelAura(Unit* caster)
+    {
+        for (size_t i = 1100822; i < 1100828; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleAfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetTwistTheKnifeAura(caster))
+        {
+            int32 duration = runeAura->GetEffect(EFFECT_0)->GetAmount()/2;
+
+            SetDuration(duration + GetDuration());
+        }
+
+        if (Aura* runeAura = GetDashingScoundrelAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Dashing Scoundrel Rune Buff
+        for (size_t i = 1100828; i < 1100834; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_rog_envenom_aura::HandleAfterApply, EFFECT_1, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rog_envenom_aura::HandleRemove, EFFECT_1, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2315,6 +2387,40 @@ class spell_rog_ambush : public SpellScript
 {
     PrepareSpellScript(spell_rog_ambush);
 
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Blindside Rune Buff
+        if (caster->HasAura(RUNE_ROGUE_BLINDSIDE_BUFF))
+            caster->RemoveAura(RUNE_ROGUE_BLINDSIDE_BUFF);
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Check for Systemic Failure Rune Buff and apply damage increase.
+        for (size_t i = 1100868; i < 1100874; i++)
+            if (Aura* buffAura = target->GetAura(i))
+                AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
+
+        SetHitDamage(damage);
+    }
+
     void HandleAfterHit()
     {
         Unit* caster = GetCaster();
@@ -2332,6 +2438,8 @@ class spell_rog_ambush : public SpellScript
 
     void Register() override
     {
+        OnCast += SpellCastFn(spell_rog_ambush::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_rog_ambush::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
         AfterHit += SpellHitFn(spell_rog_ambush::HandleAfterHit);
     }
 };
@@ -2421,7 +2529,7 @@ class spell_rog_shadowstep : public SpellScript
 
         if (!target || target->isDead())
             return;
-  
+
         if (Player* player = caster->ToPlayer())
         {
             if (Aura* runeAura = GetIntentToKillAura(caster))
@@ -2430,7 +2538,7 @@ class spell_rog_shadowstep : public SpellScript
                     int32 cooldown = player->GetSpellCooldownDelay(SPELL_ROGUE_SHADOWSTEP);
                     ApplyPct(cooldown, runeAura->GetEffect(EFFECT_0)->GetAmount());
                     player->ModifySpellCooldown(SPELL_ROGUE_SHADOWSTEP, -cooldown);
-                }              
+                }
         }
     }
 
@@ -2483,6 +2591,70 @@ class spell_rog_stealth : public AuraScript
     }
 };
 
+// 5374 - Mutilate (main hand) / 27576 - Mutilate (off hand)
+class spell_rog_mutilate_both : public SpellScript
+{
+    PrepareSpellScript(spell_rog_mutilate_both);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Check for Systemic Failure Rune Buff and apply damage increase.
+        for (size_t i = 1100868; i < 1100874; i++)
+            if (Aura* buffAura = target->GetAura(i))
+                AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_mutilate_both::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 82002 - Garrote
+class spell_rog_garrote : public AuraScript
+{
+    PrepareAuraScript(spell_rog_garrote);
+
+    void OnAfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Remove Systemic Failure Rune Buff
+        for (size_t i = 1100868; i < 1100874; i++)
+        {
+            if (target->HasAura(i))
+                target->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rog_garrote::OnAfterRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_rogue_spell_scripts()
@@ -2505,6 +2677,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_eviscerate);
     RegisterSpellScript(spell_rog_vampiric_poison);
     RegisterSpellScript(spell_rog_envenom);
+    RegisterSpellScript(spell_rog_envenom_aura);
     RegisterSpellScript(spell_rog_shiv_poison);
     RegisterSpellScript(spell_rog_blade_flurry_new);
     RegisterSpellScript(spell_rog_blade_flurry_triggered);
@@ -2556,9 +2729,11 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_shadow_dance);
     RegisterSpellScript(spell_rog_shadowstep);
     RegisterSpellScript(spell_rog_stealth);
+    RegisterSpellScript(spell_rog_mutilate_both);
+    RegisterSpellScript(spell_rog_garrote);
 
 
-    
+
 
 
 
