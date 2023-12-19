@@ -2454,7 +2454,7 @@ class rune_test_of_might_expire : public AuraScript
         }
     }
 
-    /*void HandleOverlap(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    /*void HandleOverlap(AuraEffect const* aurEff, AuraEffectHandleModes mode) //reapply doesn't fucking read for some reason, will probably need to make an oneffecthit script
     {
         if (!GetCaster()->IsAlive())
             return;
