@@ -2454,7 +2454,7 @@ class rune_test_of_might_expire : public AuraScript
         }
     }
 
-    void HandleOverlap(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    /*void HandleOverlap(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         if (!GetCaster()->IsAlive())
             return;
@@ -2470,7 +2470,7 @@ class rune_test_of_might_expire : public AuraScript
                 mightCounter->GetEffect(EFFECT_0)->SetAmount(0);
             }
         }
-    }
+    }*/
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
@@ -2493,7 +2493,7 @@ class rune_test_of_might_expire : public AuraScript
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(rune_test_of_might_expire::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectApply += AuraEffectApplyFn(rune_test_of_might_expire::HandleOverlap, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAPPLY);
+        //OnEffectApply += AuraEffectApplyFn(rune_test_of_might_expire::HandleOverlap, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAPPLY);
         OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might_expire::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
