@@ -2478,6 +2478,24 @@ class rune_test_of_might_expire : public AuraScript
         }
     }
 
+    /*void HandleOverlap(AuraEffect const* aurEff, AuraEffectHandleModes mode) //reapply doesn't fucking read for some reason, will probably need to make an oneffecthit script
+    {
+        if (!GetCaster()->IsAlive())
+            return;
+
+        if (Aura* runeAura = GetRuneAura())
+        {
+            if (Aura* mightCounter = GetCaster()->GetAura(RUNE_WARR_TEST_OF_MIGHT_COUNTER))
+            {
+                int32 threadshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                int32 rageAccumulated = mightCounter->GetEffect(EFFECT_0)->GetAmount();
+                int32 calculatedStack = static_cast<int32>(rageAccumulated / threadshold);
+                GetCaster()->CastCustomSpell(RUNE_WARR_TEST_OF_MIGHT_BUFF, SPELLVALUE_BASE_POINT0, calculatedStack, GetCaster(), TRIGGERED_FULL_MASK);
+                mightCounter->GetEffect(EFFECT_0)->SetAmount(0);
+            }
+        }
+    }*/
+
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (Aura* runeAura = GetRuneAura())
@@ -2496,6 +2514,7 @@ class rune_test_of_might_expire : public AuraScript
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(rune_test_of_might_expire::HandleApply, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        //OnEffectApply += AuraEffectApplyFn(rune_test_of_might_expire::HandleOverlap, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAPPLY);
         OnEffectRemove += AuraEffectRemoveFn(rune_test_of_might_expire::HandleRemove, EFFECT_1, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };

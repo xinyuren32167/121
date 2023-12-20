@@ -907,27 +907,27 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
         return;
 
     if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) && player->getLevel() > 10) {
-        SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
+        SendPlayerMessage(player, "You may only change your runes inside resting areas or while under level 10.");
         return;
     }
 
     bool knownRune = KnowRuneId(player, spellId);
 
     if (!knownRune) {
-        SendPlayerMessage(player, "You don't know this rune.");
+        SendPlayerMessage(player, "You do not know this rune.");
         return;
     }
 
     Rune rune = GetRuneBySpellId(spellId);
 
     if (!rune) {
-        SendPlayerMessage(player, "This rune doesn't exist.");
+        SendPlayerMessage(player, "This rune does not exist.");
         return;
     }
 
     if((rune.allowableClass & player->getClassMask()) == 0)
     {
-        SendPlayerMessage(player, "You can't activate this rune.");
+        SendPlayerMessage(player, "You cannot activate this rune.");
         return;
     }
    
@@ -935,7 +935,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
 
     if (GetCountActivatedRune(player) >= progression->second.unlockedSlotRunes)
     {
-        SendPlayerMessage(player, "You have reach the maximum rune.");
+        SendPlayerMessage(player, "You have reached the maximum amount of runes.");
         return;
     }
 
@@ -944,7 +944,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
 
     if (tooMuchStack)
     {
-        SendPlayerMessage(player, "You can't activate more of this rune.");
+        SendPlayerMessage(player, "You cannot activate more of this rune.");
         return;
     }
 
@@ -1020,21 +1020,21 @@ void RunesManager::DisableRune(Player* player, uint64 runeSpellId)
         return;
 
     if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) && player->getLevel() > 10) {
-        SendPlayerMessage(player, "You can change only your rune inside resting area or under level 10.");
+        SendPlayerMessage(player, "You may only change your runes inside resting areas or while under level 10.");
         return;
     }
 
     bool knownRune = KnowRuneId(player, runeSpellId);
 
     if (!knownRune) {
-        SendPlayerMessage(player, "You don't know this rune.");
+        SendPlayerMessage(player, "You do not know this rune.");
         return;
     }
 
     Rune rune = GetRuneBySpellId(runeSpellId);
 
     if (!rune) {
-        SendPlayerMessage(player, "This rune doesn't exist.");
+        SendPlayerMessage(player, "This rune does not exist.");
         return;
     }
 
@@ -1058,14 +1058,14 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     bool knownRune = KnowRuneId(player, runeSpellId);
 
     if (!knownRune) {
-        SendPlayerMessage(player, "You don't know this rune.");
+        SendPlayerMessage(player, "You do not know this rune.");
         return;
     }
 
     Rune rune = GetRuneBySpellId(runeSpellId);
 
     if (!rune) {
-        SendPlayerMessage(player, "This rune doesn't exist.");
+        SendPlayerMessage(player, "This rune does not exist.");
         return;
     }
 
@@ -1168,7 +1168,7 @@ void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
     bool isUpgradable = IsRuneUpgradable(player, nextRune, ij->count);
 
     if (!isUpgradable) {
-        return SendPlayerMessage(player, "You don't meet the requierement to upgrade this rune.");
+        return SendPlayerMessage(player, "You do not meet the requirement to upgrade this rune.");
     }
 
 
@@ -1182,7 +1182,7 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune)
 
     if (activeId <= 0)
     {
-        LOG_ERROR("Error", "Couldnt find the Active Loadout");
+        LOG_ERROR("Error", "Could not find the Active Loadout.");
         return;
     }
 
@@ -1222,7 +1222,7 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 
     if (match == m_SlotRune.end())
     {
-        LOG_ERROR("Error", "Couldnt find the Slot rune");
+        LOG_ERROR("Error", "Could not find the Slot rune.");
         return;
     }
 

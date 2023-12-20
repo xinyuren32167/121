@@ -9,21 +9,18 @@
 #include "UnitAI.h"
 #include "Log.h"
 
-
 enum DeathKnightSpells
 {
-    SPELL_SHIELD_PERMAFROST = 600029,
-    SPELL_FROZEN_PUSLE = 600037,
-    SPELL_ANTI_MAGIC_BARRIER_HEAL = 600066,
-    SPELL_BLOOD_TRANSFUSION = 600095,
-    SPELL_BLOOD_COIL_OF_DEVASTATION = 600285,
-    SPELL_BLOOD_DRINKER_STAMINA = 600316,
-
+    RUNE_SHIELD_PERMAFROST = 600028,
+    RUNE_FROZEN_PUSLE = 600037,
+    RUNE_ANTI_MAGIC_BARRIER_HEAL = 600066,
+    RUNE_BLOOD_TRANSFUSION = 600095,
+    RUNE_BLOOD_COIL_OF_DEVASTATION = 600285,
+    RUNE_BLOOD_DRINKER_STAMINA = 600316,
 
     SPELL_DEATH_AND_DECAY = 49938,
     SPELL_FROST_FEVER_DOT = 55095,
 };
-
 
 class rune_dk_permafrost : public AuraScript
 {
@@ -31,18 +28,23 @@ class rune_dk_permafrost : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo();
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return GetCaster()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
-            return;
-
         Unit* caster = GetCaster();
 
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-        caster->CastCustomSpell(SPELL_SHIELD_PERMAFROST, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+        caster->CastCustomSpell(RUNE_SHIELD_PERMAFROST, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
 
     }
 
@@ -52,7 +54,6 @@ class rune_dk_permafrost : public AuraScript
         OnEffectProc += AuraEffectProcFn(rune_dk_permafrost::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
 
 class rune_dk_frozen_pulse : public AuraScript
 {
@@ -91,7 +92,7 @@ class rune_dk_frozen_pulse : public AuraScript
         Unit* caster = GetCaster();
 
         int32 amount = int32(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
-        caster->CastCustomSpell(SPELL_FROZEN_PUSLE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+        caster->CastCustomSpell(RUNE_FROZEN_PUSLE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
 
     }
 
@@ -132,7 +133,7 @@ class rune_dk_blood_feast: public AuraScript
         int32 amount = aura->GetEffect(EFFECT_0)->GetAmount();
         int32 finalAmount = int32(CalculatePct(absorbAmount, amount));
 
-        caster->CastCustomSpell(SPELL_ANTI_MAGIC_BARRIER_HEAL, SPELLVALUE_BASE_POINT0, finalAmount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+        caster->CastCustomSpell(RUNE_ANTI_MAGIC_BARRIER_HEAL, SPELLVALUE_BASE_POINT0, finalAmount, caster, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
@@ -140,7 +141,6 @@ class rune_dk_blood_feast: public AuraScript
         OnEffectAbsorb += AuraEffectAbsorbFn(rune_dk_blood_feast::Absorb, EFFECT_0);
     }
 };
-
 
 class rune_dk_blood_transfusion : public AuraScript
 {
@@ -159,13 +159,40 @@ class rune_dk_blood_transfusion : public AuraScript
         Unit* caster = GetCaster();
 
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-        caster->CastCustomSpell(SPELL_BLOOD_TRANSFUSION, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+        caster->CastCustomSpell(RUNE_BLOOD_TRANSFUSION, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(rune_dk_blood_transfusion::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_dk_blood_transfusion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_blood_barrier : public AuraScript
+{
+    PrepareAuraScript(rune_dk_blood_barrier);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetHealInfo()->GetHeal() <= 0)
+            return;
+
+        Unit* caster = GetCaster();
+
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
+        caster->CastCustomSpell(RUNE_BLOOD_TRANSFUSION, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_blood_barrier::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_blood_barrier::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -210,7 +237,6 @@ class rune_dk_shadow_desease : public AuraScript
     }
 };
 
-
 class rune_dk_soul_drinker : public AuraScript
 {
     PrepareAuraScript(rune_dk_soul_drinker);
@@ -242,7 +268,7 @@ class rune_dk_soul_drinker : public AuraScript
 
         if (isOverHealing)
         {
-            if (Aura* aura = caster->GetAura(SPELL_BLOOD_DRINKER_STAMINA))
+            if (Aura* aura = caster->GetAura(RUNE_BLOOD_DRINKER_STAMINA))
             {
                 int32 currentAmount = aura->GetEffect(EFFECT_0)->GetAmount();
                 aura->GetEffect(EFFECT_0)->ChangeAmount(std::min(currentAmount + increasingMaximumHealth, maximumHealthAllowable));
@@ -250,7 +276,7 @@ class rune_dk_soul_drinker : public AuraScript
             }
             else
             {
-                caster->CastCustomSpell(SPELL_BLOOD_DRINKER_STAMINA, SPELLVALUE_BASE_POINT0, increasingMaximumHealth, caster, TRIGGERED_IGNORE_AURA_SCALING);
+                caster->CastCustomSpell(RUNE_BLOOD_DRINKER_STAMINA, SPELLVALUE_BASE_POINT0, increasingMaximumHealth, caster, TRIGGERED_IGNORE_AURA_SCALING);
                 caster->SetFullHealth();
             }
         }
@@ -296,7 +322,6 @@ class rune_dk_phearomones : public SpellScript
     }
 };
 
-
 class rune_dk_sanguine_ground : public SpellScript
 {
     PrepareSpellScript(rune_dk_sanguine_ground);
@@ -330,7 +355,6 @@ class rune_dk_sanguine_ground : public SpellScript
     }
 };
 
-
 class rune_dk_grip_of_the_dead : public SpellScript
 {
     PrepareSpellScript(rune_dk_grip_of_the_dead);
@@ -363,7 +387,6 @@ class rune_dk_grip_of_the_dead : public SpellScript
         OnCast += SpellCastFn(rune_dk_grip_of_the_dead::HandleProc);
     }
 };
-
 
 class rune_dk_clenching_grasp : public SpellScript
 {
@@ -413,7 +436,6 @@ class rune_dk_quick_decay : public AuraScript
     }
 };
 
-
 class rune_dk_coil_of_devastation : public AuraScript
 {
     PrepareAuraScript(rune_dk_coil_of_devastation);
@@ -431,7 +453,7 @@ class rune_dk_coil_of_devastation : public AuraScript
         Unit* caster = GetCaster();
 
         int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-        caster->CastCustomSpell(SPELL_BLOOD_COIL_OF_DEVASTATION, SPELLVALUE_BASE_POINT0, amount, caster->GetVictim(), TRIGGERED_IGNORE_AURA_SCALING);
+        caster->CastCustomSpell(RUNE_BLOOD_COIL_OF_DEVASTATION, SPELLVALUE_BASE_POINT0, amount, caster->GetVictim(), TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
@@ -440,9 +462,6 @@ class rune_dk_coil_of_devastation : public AuraScript
         OnEffectProc += AuraEffectProcFn(rune_dk_coil_of_devastation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
-
-
 
 void AddSC_deathknight_perks_scripts()
 {

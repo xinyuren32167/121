@@ -12,12 +12,36 @@
 enum RogueSpells
 {
     // Spell
+    SPELL_ROGUE_ADRENALINE_RUSH = 13750,
+    SPELL_ROGUE_BETWEEN_THE_EYES = 82072,
+    SPELL_ROGUE_BLADE_FLURRY = 13877,
+    SPELL_ROGUE_BLADE_RUSH = 82028,
+    SPELL_ROGUE_CAPTAIN_STRIKE = 82083,
+    SPELL_ROGUE_COMBAT_ECSTASY = 82073,
+    SPELL_ROGUE_DEATHMARK = 82025,
+    SPELL_ROGUE_DREADBLADES = 82080,
     SPELL_ROGUE_EVASION = 26669,
+    SPELL_ROGUE_FEINT = 48659,
     SPELL_ROGUE_GARROTE = 82002,
+    SPELL_ROGUE_GHOSTLY_STRIKES = 14278,
+    SPELL_ROGUE_GRAPPLING_HOOK = 82084,
+    SPELL_ROGUE_KEEP_IT_ROLLING = 82098,
+    SPELL_ROGUE_KILLING_SPREE = 51690,
+    SPELL_ROGUE_KILLING_SPREE_MAIN_HAND = 57841,
+    SPELL_ROGUE_KILLING_SPREE_OFF_HAND = 57842,
+    SPELL_ROGUE_KINGSBANE = 82037,
+    SPELL_ROGUE_MARKED_FOR_DEATH = 82022,
+    SPELL_ROGUE_RIPOSTE = 82064,
+    SPELL_ROGUE_ROLL_THE_BONES = 82091,
     SPELL_ROGUE_RUPTURE = 48672,
+    SPELL_ROGUE_SCIMITAR_RUSH = 82075,
+    SPELL_ROGUE_SEA_OF_STRIKES = 82087,
     SPELL_ROGUE_SHADOW_DANCE = 51713,
     SPELL_ROGUE_SHADOWSTEP = 36554,
     SPELL_ROGUE_SLICE_AND_DICE = 6774,
+    SPELL_ROGUE_SPRINT = 11305,
+    SPELL_ROGUE_VANISH = 26889,
+
 
     // Poisons
     POISON_ROGUE_AMPLIFYING_POISON = 82005,
@@ -48,6 +72,9 @@ enum RogueSpells
     RUNE_ROGUE_LEECHING_POISON_HEAL = 1100718,
     RUNE_ROGUE_VEILTOUCHED_SHADOW_DAMAGE = 1100736,
     RUNE_ROGUE_VEILTOUCHED_NATURE_DAMAGE = 1100737,
+    RUNE_ROGUE_VICIOUS_VENOMS_DAMAGE = 1100848,
+    RUNE_ROGUE_DOOMBLADE_DOT = 1100856,
+    RUNE_ROGUE_BLINDSIDE_BUFF = 1100880,
 };
 
 class rune_rog_venom_rush : public AuraScript
@@ -736,7 +763,7 @@ class rune_rog_zoldyck_recipe : public AuraScript
 
         int32 healthPct = target->GetHealthPct();
         int32 healthThreshold = GetEffect(EFFECT_1)->GetAmount();
-        
+
         if (healthPct > healthThreshold)
             return;
 
@@ -814,6 +841,592 @@ class rune_rog_veiltouched : public AuraScript
     }
 };
 
+class rune_rog_seal_fate : public AuraScript
+{
+    PrepareAuraScript(rune_rog_seal_fate);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        caster->AddComboPoints(target, aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_seal_fate::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_seal_fate::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_alacrity : public AuraScript
+{
+    PrepareAuraScript(rune_rog_alacrity);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procChance = caster->GetComboPoints() * aurEff->GetAmount();
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+        caster->AddAura(procSpell, caster);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_alacrity::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_alacrity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_relentless_strikes : public AuraScript
+{
+    PrepareAuraScript(rune_rog_relentless_strikes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 energy = caster->GetComboPoints() * aurEff->GetAmount();
+
+        caster->EnergizeBySpell(caster, GetSpellInfo()->Id, energy, POWER_ENERGY);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_relentless_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_relentless_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_restless_blades : public AuraScript
+{
+    PrepareAuraScript(rune_rog_restless_blades);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = caster->GetComboPoints() * aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            player->ModifySpellCooldown(SPELL_ROGUE_ADRENALINE_RUSH, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_BETWEEN_THE_EYES, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_BLADE_FLURRY, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_BLADE_RUSH, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_CAPTAIN_STRIKE, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_COMBAT_ECSTASY, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_DREADBLADES, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_GHOSTLY_STRIKES, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_GRAPPLING_HOOK, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_KEEP_IT_ROLLING, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_KILLING_SPREE, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_MARKED_FOR_DEATH, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_RIPOSTE, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_ROLL_THE_BONES, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_SEA_OF_STRIKES, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_SCIMITAR_RUSH, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_SPRINT, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_VANISH, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_restless_blades::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_restless_blades::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_float_like_a_butterfly : public AuraScript
+{
+    PrepareAuraScript(rune_rog_float_like_a_butterfly);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = caster->GetComboPoints() * aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            player->ModifySpellCooldown(SPELL_ROGUE_EVASION, -cooldown);
+            player->ModifySpellCooldown(SPELL_ROGUE_FEINT, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_float_like_a_butterfly::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_float_like_a_butterfly::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_poison_bomb : public AuraScript
+{
+    PrepareAuraScript(rune_rog_poison_bomb);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procChance = caster->GetComboPoints() * aurEff->GetAmount();
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_poison_bomb::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_poison_bomb::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_vicious_venoms : public AuraScript
+{
+    PrepareAuraScript(rune_rog_vicious_venoms);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_ROGUE_VICIOUS_VENOMS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_vicious_venoms::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_vicious_venoms::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_doomblade : public AuraScript
+{
+    PrepareAuraScript(rune_rog_doomblade);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+        amount /= 8;
+
+        if (Aura* doombladeDot = target->GetAura(RUNE_ROGUE_DOOMBLADE_DOT))
+            if (AuraEffect* dot = doombladeDot->GetEffect(EFFECT_0))
+            {
+                int32 remainingDamage = dot->GetAmount() * dot->GetRemaningTicks();
+                amount += remainingDamage / 8;
+                target->RemoveAura(dot->GetBase());
+            }
+
+        caster->CastCustomSpell(RUNE_ROGUE_DOOMBLADE_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_doomblade::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_doomblade::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_blindside : public AuraScript
+{
+    PrepareAuraScript(rune_rog_blindside);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 procChance = aurEff->GetAmount();
+        int32 healthThreshold = GetEffect(EFFECT_1)->GetAmount();
+
+        if (target->GetHealthPct() < healthThreshold)
+            procChance *= 2;
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        caster->AddAura(RUNE_ROGUE_BLINDSIDE_BUFF, caster);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_blindside::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_blindside::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_advancing_death : public AuraScript
+{
+    PrepareAuraScript(rune_rog_advancing_death);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_ROGUE_DEATHMARK, -cooldown);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_advancing_death::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_advancing_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_everlasting_bane : public AuraScript
+{
+    PrepareAuraScript(rune_rog_everlasting_bane);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 durationIncrease = aurEff->GetAmount();
+
+        if (Aura* kingsbane = target->GetAura(SPELL_ROGUE_KINGSBANE))
+        {
+            int32 duration = std::min<int32>(kingsbane->GetDuration() + durationIncrease, kingsbane->GetMaxDuration());
+            kingsbane->SetDuration(duration);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_everlasting_bane::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_everlasting_bane::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_brigands_blitz : public AuraScript
+{
+    PrepareAuraScript(rune_rog_brigands_blitz);
+
+    void HandleApplyEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 1100954; i < 1100960; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_rog_brigands_blitz::HandleApplyEffect, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(rune_rog_brigands_blitz::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_rog_improved_combat_ecstasy : public AuraScript
+{
+    PrepareAuraScript(rune_rog_improved_combat_ecstasy);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->AddComboPoints(aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_improved_combat_ecstasy::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_improved_combat_ecstasy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_ecstasy_filled_attacks : public AuraScript
+{
+    PrepareAuraScript(rune_rog_ecstasy_filled_attacks);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_ROGUE_COMBAT_ECSTASY, -cooldown);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_ecstasy_filled_attacks::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_ecstasy_filled_attacks::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_ghostly_cut : public AuraScript
+{
+    PrepareAuraScript(rune_rog_ghostly_cut);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+        int32 combo = caster->GetComboPoints();
+
+        caster->AddAura(procSpell, caster);
+        caster->GetAura(procSpell)->SetStackAmount(combo);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_ghostly_cut::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_ghostly_cut::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_echoing_spree : public AuraScript
+{
+    PrepareAuraScript(rune_rog_echoing_spree);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        return eventInfo.GetSpellInfo()->Id == SPELL_ROGUE_KILLING_SPREE_MAIN_HAND || eventInfo.GetSpellInfo()->Id == SPELL_ROGUE_KILLING_SPREE_OFF_HAND;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_echoing_spree::CheckProc);
+    }
+};
+
+class rune_rog_rapid_spree : public AuraScript
+{
+    PrepareAuraScript(rune_rog_rapid_spree);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_ROGUE_KILLING_SPREE, -cooldown);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_rapid_spree::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_rapid_spree::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_quick_riposte_proc : public AuraScript
+{
+    PrepareAuraScript(rune_rog_quick_riposte_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->AddComboPoints(aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_quick_riposte_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_quick_riposte_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_rogue_perks_scripts()
@@ -839,10 +1452,28 @@ void AddSC_rogue_perks_scripts()
     RegisterSpellScript(rune_rog_zoldyck_recipe);
     RegisterSpellScript(rune_rog_leeching_poison);
     RegisterSpellScript(rune_rog_veiltouched);
+    RegisterSpellScript(rune_rog_seal_fate);
+    RegisterSpellScript(rune_rog_alacrity);
+    RegisterSpellScript(rune_rog_relentless_strikes);
+    RegisterSpellScript(rune_rog_restless_blades);
+    RegisterSpellScript(rune_rog_float_like_a_butterfly);
+    RegisterSpellScript(rune_rog_poison_bomb);
+    RegisterSpellScript(rune_rog_vicious_venoms);
+    RegisterSpellScript(rune_rog_doomblade);
+    RegisterSpellScript(rune_rog_blindside);
+    RegisterSpellScript(rune_rog_advancing_death);
+    RegisterSpellScript(rune_rog_everlasting_bane);
+    RegisterSpellScript(rune_rog_brigands_blitz);
+    RegisterSpellScript(rune_rog_improved_combat_ecstasy);
+    RegisterSpellScript(rune_rog_ecstasy_filled_attacks);
+    RegisterSpellScript(rune_rog_ghostly_cut);
+    RegisterSpellScript(rune_rog_echoing_spree);
+    RegisterSpellScript(rune_rog_rapid_spree);
+    RegisterSpellScript(rune_rog_quick_riposte_proc);
+
 
     
     
-
     
 }
 

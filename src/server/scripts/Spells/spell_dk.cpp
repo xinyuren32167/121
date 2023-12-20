@@ -1555,33 +1555,15 @@ class spell_dk_death_coil : public SpellScript
 {
     PrepareSpellScript(spell_dk_death_coil);
 
-    bool Validate(SpellInfo const* /*spell*/) override
-    {
-        return ValidateSpellInfo({ SPELL_DK_DEATH_COIL_DAMAGE, SPELL_DK_DEATH_COIL_HEAL });
-    }
-
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
-        int32 damageScaling = GetEffectValue();
-        int32 healingScaling = GetSpellInfo()->Effects[EFFECT_1].CalcValue(GetCaster());
         Unit* caster = GetCaster();
         if (Unit* target = GetHitUnit())
         {
             if (caster->IsFriendlyTo(target))
-            {
-                uint32 attackPower = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-                int32 bp = ApplyPct(attackPower, healingScaling);
-                caster->CastCustomSpell(target, SPELL_DK_DEATH_COIL_HEAL, &bp, nullptr, nullptr, true);
-            }
+                caster->CastSpell(target, SPELL_DK_DEATH_COIL_HEAL, TRIGGERED_FULL_MASK);
             else
-            {
-                uint32 attackPower = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-                int32 bp = ApplyPct(attackPower, damageScaling);
-
-                if (AuraEffect const* auraEffect = caster->GetAuraEffect(SPELL_DK_ITEM_SIGIL_VENGEFUL_HEART, EFFECT_1))
-                    bp += auraEffect->GetBaseAmount();
-                caster->CastCustomSpell(target, SPELL_DK_DEATH_COIL_DAMAGE, &bp, nullptr, nullptr, true);
-            }
+                caster->CastSpell(target, SPELL_DK_DEATH_COIL_DAMAGE, TRIGGERED_FULL_MASK);
         }
     }
 
