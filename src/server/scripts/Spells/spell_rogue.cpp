@@ -1041,7 +1041,7 @@ class spell_rog_envenom_aura : public AuraScript
 
         if (Aura* runeAura = GetTwistTheKnifeAura(caster))
         {
-            int32 duration = runeAura->GetEffect(EFFECT_0)->GetAmount()/2;
+            int32 duration = runeAura->GetEffect(EFFECT_0)->GetAmount() / 2;
 
             SetDuration(duration + GetDuration());
         }
@@ -1105,22 +1105,33 @@ class spell_rog_blade_flurry_new : public AuraScript
 {
     PrepareAuraScript(spell_rog_blade_flurry_new);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
-        {
-            int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-            if (damage && GetCaster()->IsAlive())
-            {
-                int32 damagePct = aurEff->GetAmount();
-                int32 damageAmount = CalculatePct(damage, damagePct);
-                GetCaster()->CastCustomSpell(SPELL_ROGUE_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
-            }
-        }
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(SPELL_ROGUE_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_rog_blade_flurry_new::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_rog_blade_flurry_new::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -1128,6 +1139,17 @@ class spell_rog_blade_flurry_new : public AuraScript
 class spell_rog_blade_flurry_triggered : public SpellScript
 {
     PrepareSpellScript(spell_rog_blade_flurry_triggered);
+
+    Aura* GetPreciseCutsAura(Unit* caster)
+    {
+        for (size_t i = 1100972; i < 1100978; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleHit(SpellEffIndex effIndex)
     {
@@ -1144,6 +1166,16 @@ class spell_rog_blade_flurry_triggered : public SpellScript
 
             if (targets.size() > 0)
             {
+                // Check for Precise Cuts Rune target number.
+                if (Aura* runeAura = GetPreciseCutsAura(caster))
+                {
+                    int32 targetsQte = targets.size() - 1;
+
+                    if (targetsQte >= 0)
+                        runeAura->GetEffect(EFFECT_2)->SetAmount(targetsQte);
+                }
+
+
                 for (auto const& enemy : targets)
                     if (Unit* creatureTarget = enemy->ToUnit())
                     {
@@ -1156,6 +1188,55 @@ class spell_rog_blade_flurry_triggered : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_blade_flurry_triggered::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 82013 - Blade Flurry (Damage)
+class spell_rog_blade_flurry_damage : public SpellScript
+{
+    PrepareSpellScript(spell_rog_blade_flurry_damage);
+
+    Aura* GetPreciseCutsAura(Unit* caster)
+    {
+        for (size_t i = 1100972; i < 1100978; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Check for Precise Cuts Rune Buff and apply damage increase.
+        if (Aura* runeAura = GetPreciseCutsAura(caster))
+        {
+            int32 amount = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 reduction = runeAura->GetEffect(EFFECT_1)->GetAmount() * runeAura->GetEffect(EFFECT_2)->GetAmount();
+            int32 damageIncrease = std::max<int32>(0, amount - reduction);
+
+            AddPct(damage, damageIncrease);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_rog_blade_flurry_damage::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -1708,7 +1789,7 @@ class spell_rog_sinister_strike : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        // Remove Sinister Ripost Rune Buff
+        // Remove Sinister Riposte Rune Buff
         for (size_t i = 1100532; i < 1100538; i++)
         {
             if (caster->HasAura(i))
@@ -1780,14 +1861,48 @@ class spell_rog_sinister_calling : public AuraScript
     }
 };
 
-class spell_rog_forced_counter : public AuraScript
+class spell_rog_retaliation : public AuraScript
 {
-    PrepareAuraScript(spell_rog_forced_counter);
+    PrepareAuraScript(spell_rog_retaliation);
+
+    Aura* GetQuickRiposteAura(Unit* caster)
+    {
+        for (size_t i = 1101050; i < 1101056; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetCunningRetaliationAura(Unit* caster)
+    {
+        for (size_t i = 1101062; i < 1101068; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
         uint32 chance = CalculatePct(caster->GetUnitParryChance(), aurEff->GetAmount());
+
+        if (Aura* runeAura = GetQuickRiposteAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
+
+        if (Aura* runeAura = GetCunningRetaliationAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
 
         if (!roll_chance_i(chance))
         {
@@ -1798,7 +1913,7 @@ class spell_rog_forced_counter : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_rog_forced_counter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_rog_retaliation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2655,6 +2770,106 @@ class spell_rog_garrote : public AuraScript
     }
 };
 
+// 82073 - Combat Ecstasy
+class spell_rog_combat_ecstasy : public AuraScript
+{
+    PrepareAuraScript(spell_rog_combat_ecstasy);
+
+    Aura* GetImprovedCombatEcstasyAura(Unit* caster)
+    {
+        for (size_t i = 1100960; i < 1100966; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void OnAfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetImprovedCombatEcstasyAura(caster))
+        {
+            int32 chance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (roll_chance_i(chance))
+            {
+                int32 combo = runeAura->GetEffect(EFFECT_1)->GetAmount();
+                caster->AddComboPoints(combo);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_rog_combat_ecstasy::OnAfterRemove, EFFECT_1, SPELL_AURA_MOD_MELEE_HASTE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 14278 - Ghostly Strike
+class spell_rog_ghostly_strike : public SpellScript
+{
+    PrepareSpellScript(spell_rog_ghostly_strike);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Ghostly Cut Rune Buff
+        for (size_t i = 1100990; i < 1100996; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_ghostly_strike::HandleAfterHit);
+    }
+};
+
+// 82064 - Riposte
+class spell_rog_riposte : public SpellScript
+{
+    PrepareSpellScript(spell_rog_riposte);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Quick Riposte Rune Buff
+        for (size_t i = 1101056; i < 1101062; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Remove Cunning Retaliation Rune Buff
+        for (size_t i = 1101068; i < 1101074; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_riposte::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_rogue_spell_scripts()
@@ -2681,6 +2896,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_shiv_poison);
     RegisterSpellScript(spell_rog_blade_flurry_new);
     RegisterSpellScript(spell_rog_blade_flurry_triggered);
+    RegisterSpellScript(spell_rog_blade_flurry_damage);
     RegisterSpellScript(spell_rog_shadowstrike_activator);
     RegisterSpellScript(spell_rog_shadowstrike);
     RegisterSpellScript(spell_rog_premeditation);
@@ -2704,7 +2920,7 @@ void AddSC_rogue_spell_scripts()
     new spell_rog_secret_technique();
     RegisterSpellScript(spell_rog_secret_technique_teacher);
     RegisterSpellScript(spell_rog_sinister_calling);
-    RegisterSpellScript(spell_rog_forced_counter);
+    RegisterSpellScript(spell_rog_retaliation);
     RegisterSpellScript(spell_rog_amplifying_poison_replacer);
     RegisterSpellScript(spell_rog_duelists_reflex);
     RegisterSpellScript(spell_rog_master_duelist);
@@ -2731,9 +2947,12 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_stealth);
     RegisterSpellScript(spell_rog_mutilate_both);
     RegisterSpellScript(spell_rog_garrote);
+    RegisterSpellScript(spell_rog_combat_ecstasy);
+    RegisterSpellScript(spell_rog_ghostly_strike); 
+    RegisterSpellScript(spell_rog_riposte);
 
-
-
+    
+    
 
 
 
