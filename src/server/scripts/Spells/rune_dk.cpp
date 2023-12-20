@@ -169,35 +169,6 @@ class rune_dk_blood_transfusion : public AuraScript
     }
 };
 
-
-class rune_dk_blood_barrier : public AuraScript
-{
-    PrepareAuraScript(rune_dk_blood_barrier);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetHealInfo();
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        if (eventInfo.GetHealInfo()->GetHeal() <= 0)
-            return;
-
-        Unit* caster = GetCaster();
-
-        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
-        caster->CastCustomSpell(SPELL_BLOOD_TRANSFUSION, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
-    }
-
-    void Register() override
-    {
-        DoCheckProc += AuraCheckProcFn(rune_dk_blood_barrier::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_dk_blood_barrier::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-
 class rune_dk_crismon_scourge : public AuraScript
 {
     PrepareAuraScript(rune_dk_crismon_scourge);

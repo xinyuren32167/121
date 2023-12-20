@@ -27,7 +27,7 @@ public:
     static void InitializeScalingPerSpecialization();
     static void InitializeScalingRaid();
     static std::list<Player*> GetPlayersMap(Map* map);
-    static Player* GetFirstPlayerMap(Map* map);
+
     static AutobalanceScalingInfo GetScalingInfo(Map* map, Unit* creature);
     static void ApplyScalingHealthAndMana(Map* map, Creature* creature);
     static float CalculateHealthRaidScaling(uint8 playerCount, double healthScaling);

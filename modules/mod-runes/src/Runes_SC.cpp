@@ -229,6 +229,7 @@ public:
         {
             { "reload runes",  HandleReloadCommand, SEC_MODERATOR,     Console::No },
             { "addRune",  HandleAddRuneCommand, SEC_MODERATOR,     Console::No },
+            { "getRunes",  HandleGetRunesCommand, SEC_MODERATOR,     Console::No },
 
         };
         return commandTable;
@@ -260,6 +261,11 @@ public:
             return false;
         }
         RunesManager::AddRunePlayer(player, rune);
+        return true;
+    }
+
+    static bool HandleGetRunesCommand(ChatHandler* handler, Optional<PlayerIdentifier> playerID)
+    {
         return true;
     }
 };

@@ -41,15 +41,6 @@ void AutoBalanceManager::SendMessageScalingInfo(Map* map)
     }
 }
 
-Player* AutoBalanceManager::GetFirstPlayerMap(Map* map)
-{
-    std::list<Player*> players = GetPlayersMap(map);
-
-    if (players.size() == 0)
-        return nullptr;
-
-    return players.front();
-}
 
 void AutoBalanceManager::InitializeScalingPerSpecialization()
 {
@@ -162,7 +153,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (!creature->IsAlive())
         return;
 
-    uint8 playerCount = map->GetPlayers().getSize();
+    uint8 playerCount = map->GetPlayersCountExceptGMs();
     bool isRaid = map->IsRaid();
 
     if (playerCount == 0)

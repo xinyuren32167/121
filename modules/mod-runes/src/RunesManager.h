@@ -153,6 +153,7 @@ public:
     static bool HasEnoughToUpgrade(Player* player, uint32 spellId);
     static void SpellConversion(uint32 runeId, Player* player, bool apply);
     static void SendPlayerMessage(Player* player, std::string msg);
+    static std::vector<std::string> GetActivatedRunes(Player* player);
     static Rune GetRandomRune(Player* player, uint8 quality);
     static void RemoveNecessaryItemsForUpgrade(Player* player, Rune rune);
     static void AddRunePlayer(Player* player, Rune rune);

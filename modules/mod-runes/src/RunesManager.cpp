@@ -300,6 +300,24 @@ void RunesManager::SpellConversion(uint32 runeId, Player* player, bool apply)
 
 }
 
+std::vector<std::string> RunesManager::GetActivatedRunes(Player* player)
+{
+    uint64 activeId = GetActiveLoadoutId(player);
+
+    std::vector<std::string> ids = {};
+
+    if (activeId <= 0)
+        return ids;
+
+    auto match = m_SlotRune.find(activeId);
+
+    if (match != m_SlotRune.end())
+        for (auto const& slot : match->second)
+            ids.push_back(std::to_string(slot.runeSpellId));
+
+    return ids;
+}
+
 void RunesManager::SendPlayerMessage(Player* player, std::string msg)
 {
     player->GetSession()->SendAreaTriggerMessage(msg.c_str());

@@ -94,11 +94,11 @@ public:
     float GetDamageReductionForRaid(uint8 playerCountInRaid, double damageScaling) {
 
         if (playerCountInRaid <= 10)
-            return damageScaling / 3; // We have 2 healers
+            return damageScaling / 3; 
         if (playerCountInRaid > 10 && playerCountInRaid <= 15)
-            return damageScaling / 2; // We have 3 healers
+            return damageScaling / 2; 
         if (playerCountInRaid > 15 && playerCountInRaid <= 20)
-            return damageScaling; // We have 4 healers
+            return damageScaling;  
 
         return 1.0f; // We have 5 healers no scaling.
     }
@@ -162,11 +162,18 @@ public:
 
     void OnPlayerEnterAll(Map* map, Player* player)
     {
+        if (player->IsGameMaster())
+            return;
+
+
         AutoBalanceManager::SendMessageScalingInfo(map);
     }
 
     void OnPlayerLeaveAll(Map* map, Player* player)
     {
+        if (player->IsGameMaster())
+            return;
+
         AutoBalanceManager::SendMessageScalingInfo(map);
     }
 };
