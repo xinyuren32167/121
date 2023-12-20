@@ -62,9 +62,9 @@ enum SpellsWarrior
     RUNE_WARR_PLANNED_BATTLE_BUFF = 201058,
 };
 
-class rune_cut_the_veins : public AuraScript
+class spell_cut_the_veins : public AuraScript
 {
-    PrepareAuraScript(rune_cut_the_veins);
+    PrepareAuraScript(spell_cut_the_veins);
 
     Aura* GetRuneAura()
     {
@@ -126,13 +126,13 @@ class rune_cut_the_veins : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_cut_the_veins::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_cut_the_veins::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_the_art_of_war : public AuraScript
+class spell_the_art_of_war : public AuraScript
 {
-    PrepareAuraScript(rune_the_art_of_war);
+    PrepareAuraScript(spell_the_art_of_war);
 
     int GetRagePct()
     {
@@ -163,14 +163,14 @@ class rune_the_art_of_war : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_the_art_of_war::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_the_art_of_war::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
 // crash...
-class rune_tide_of_blood : public AuraScript
+class spell_tide_of_blood : public AuraScript
 {
-    PrepareAuraScript(rune_tide_of_blood);
+    PrepareAuraScript(spell_tide_of_blood);
 
     void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
     {
@@ -207,13 +207,13 @@ class rune_tide_of_blood : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_tide_of_blood::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_tide_of_blood::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
-class rune_vein_cutter : public AuraScript
+class spell_vein_cutter : public AuraScript
 {
-    PrepareAuraScript(rune_vein_cutter);
+    PrepareAuraScript(spell_vein_cutter);
 
     Aura* GetRuneAura()
     {
@@ -270,13 +270,13 @@ class rune_vein_cutter : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_vein_cutter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_vein_cutter::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_battlelord : public AuraScript
+class spell_battlelord : public AuraScript
 {
-    PrepareAuraScript(rune_battlelord);
+    PrepareAuraScript(spell_battlelord);
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
@@ -291,13 +291,13 @@ class rune_battlelord : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_battlelord::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_battlelord::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
-class rune_tactician : public AuraScript
+class spell_tactician : public AuraScript
 {
-    PrepareAuraScript(rune_tactician);
+    PrepareAuraScript(spell_tactician);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -316,13 +316,13 @@ class rune_tactician : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_tactician::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_tactician::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_anger_management : public AuraScript
+class spell_anger_management : public AuraScript
 {
-    PrepareAuraScript(rune_anger_management);
+    PrepareAuraScript(spell_anger_management);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -347,13 +347,13 @@ class rune_anger_management : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_anger_management::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_anger_management::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_blood_dance : public AuraScript
+class spell_blood_dance : public AuraScript
 {
-    PrepareAuraScript(rune_blood_dance);
+    PrepareAuraScript(spell_blood_dance);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -377,13 +377,13 @@ class rune_blood_dance : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_blood_dance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_blood_dance::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_keep_spinnin : public AuraScript
+class spell_keep_spinnin : public AuraScript
 {
-    PrepareAuraScript(rune_keep_spinnin);
+    PrepareAuraScript(spell_keep_spinnin);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -392,13 +392,13 @@ class rune_keep_spinnin : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_keep_spinnin::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_keep_spinnin::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_sweeping_rage : public AuraScript
+class spell_sweeping_rage : public AuraScript
 {
-    PrepareAuraScript(rune_sweeping_rage);
+    PrepareAuraScript(spell_sweeping_rage);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -427,13 +427,13 @@ class rune_sweeping_rage : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_sweeping_rage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_sweeping_rage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_sweeping_rage_proc : public AuraScript
+class spell_sweeping_rage_proc : public AuraScript
 {
-    PrepareAuraScript(rune_sweeping_rage_proc);
+    PrepareAuraScript(spell_sweeping_rage_proc);
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
@@ -449,13 +449,13 @@ class rune_sweeping_rage_proc : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_sweeping_rage_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_sweeping_rage_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_collateral_damage : public AuraScript
+class spell_collateral_damage : public AuraScript
 {
-    PrepareAuraScript(rune_collateral_damage);
+    PrepareAuraScript(spell_collateral_damage);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -464,13 +464,13 @@ class rune_collateral_damage : public AuraScript
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_collateral_damage::CheckProc);
+        DoCheckProc += AuraCheckProcFn(spell_collateral_damage::CheckProc);
     }
 };
 
-class rune_collateral_damage_proc : public AuraScript
+class spell_collateral_damage_proc : public AuraScript
 {
-    PrepareAuraScript(rune_collateral_damage_proc);
+    PrepareAuraScript(spell_collateral_damage_proc);
 
     Aura* GetRuneAura()
     {
@@ -513,13 +513,13 @@ class rune_collateral_damage_proc : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_collateral_damage_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_collateral_damage_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_vicious_comtempt : public AuraScript
+class spell_vicious_comtempt : public AuraScript
 {
-    PrepareAuraScript(rune_vicious_comtempt);
+    PrepareAuraScript(spell_vicious_comtempt);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -528,13 +528,13 @@ class rune_vicious_comtempt : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_vicious_comtempt::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_vicious_comtempt::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
-class rune_charging_for_blood : public AuraScript
+class spell_charging_for_blood : public AuraScript
 {
-    PrepareAuraScript(rune_charging_for_blood);
+    PrepareAuraScript(spell_charging_for_blood);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -543,13 +543,13 @@ class rune_charging_for_blood : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_charging_for_blood::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_charging_for_blood::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
-class rune_bloodcraze : public AuraScript
+class spell_bloodcraze : public AuraScript
 {
-    PrepareAuraScript(rune_bloodcraze);
+    PrepareAuraScript(spell_bloodcraze);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -558,13 +558,13 @@ class rune_bloodcraze : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_bloodcraze::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_bloodcraze::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
-class rune_fervor_of_battle : public SpellScript
+class spell_fervor_of_battle : public SpellScript
 {
-    PrepareSpellScript(rune_fervor_of_battle);
+    PrepareSpellScript(spell_fervor_of_battle);
 
     Aura* GetRuneAura()
     {
@@ -611,13 +611,13 @@ class rune_fervor_of_battle : public SpellScript
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_fervor_of_battle::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fervor_of_battle::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
 
-class rune_storm_of_swords : public AuraScript
+class spell_storm_of_swords : public AuraScript
 {
-    PrepareAuraScript(rune_storm_of_swords);
+    PrepareAuraScript(spell_storm_of_swords);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -635,13 +635,13 @@ class rune_storm_of_swords : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_storm_of_swords::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_storm_of_swords::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_spinning_grip : public SpellScript
+class spell_spinning_grip : public SpellScript
 {
-    PrepareSpellScript(rune_spinning_grip);
+    PrepareSpellScript(spell_spinning_grip);
 
     Aura* GetRuneAura()
     {
@@ -682,13 +682,13 @@ class rune_spinning_grip : public SpellScript
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_spinning_grip::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_spinning_grip::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
 
-class rune_spinning_grip_jump : public SpellScript
+class spell_spinning_grip_jump : public SpellScript
 {
-    PrepareSpellScript(rune_spinning_grip_jump);
+    PrepareSpellScript(spell_spinning_grip_jump);
 
     void HandleSpecial(SpellEffIndex effIndex)
     {
@@ -712,13 +712,13 @@ class rune_spinning_grip_jump : public SpellScript
 
     void Register() override
     {
-        OnEffectLaunchTarget += SpellEffectFn(rune_spinning_grip_jump::HandleSpecial, EFFECT_0, SPELL_EFFECT_JUMP);
+        OnEffectLaunchTarget += SpellEffectFn(spell_spinning_grip_jump::HandleSpecial, EFFECT_0, SPELL_EFFECT_JUMP);
     }
 };
 
-class rune_depths_of_insanity : public AuraScript
+class spell_depths_of_insanity : public AuraScript
 {
-    PrepareAuraScript(rune_depths_of_insanity);
+    PrepareAuraScript(spell_depths_of_insanity);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -742,13 +742,13 @@ class rune_depths_of_insanity : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_depths_of_insanity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_depths_of_insanity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_reckless_abandon : public AuraScript
+class spell_reckless_abandon : public AuraScript
 {
-    PrepareAuraScript(rune_reckless_abandon);
+    PrepareAuraScript(spell_reckless_abandon);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -777,13 +777,13 @@ class rune_reckless_abandon : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_reckless_abandon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_reckless_abandon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_reckless_abandon_proc : public AuraScript
+class spell_reckless_abandon_proc : public AuraScript
 {
-    PrepareAuraScript(rune_reckless_abandon_proc);
+    PrepareAuraScript(spell_reckless_abandon_proc);
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
@@ -802,13 +802,13 @@ class rune_reckless_abandon_proc : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_reckless_abandon_proc::HandleProc, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_reckless_abandon_proc::HandleProc, EFFECT_0, SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_true_rage : public AuraScript
+class spell_true_rage : public AuraScript
 {
-    PrepareAuraScript(rune_true_rage);
+    PrepareAuraScript(spell_true_rage);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -828,7 +828,7 @@ class rune_true_rage : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_true_rage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_true_rage::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -899,9 +899,9 @@ class rune_relentless_remove : public AuraScript
     }
 };
 
-class rune_raging_death : public AuraScript
+class spell_raging_death : public AuraScript
 {
-    PrepareAuraScript(rune_raging_death);
+    PrepareAuraScript(spell_raging_death);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -926,13 +926,13 @@ class rune_raging_death : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_raging_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_raging_death::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_son_of_thunder : public AuraScript
+class spell_son_of_thunder : public AuraScript
 {
-    PrepareAuraScript(rune_son_of_thunder);
+    PrepareAuraScript(spell_son_of_thunder);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -944,13 +944,13 @@ class rune_son_of_thunder : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_son_of_thunder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_son_of_thunder::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_best_served_cold : public AuraScript
+class spell_best_served_cold : public AuraScript
 {
-    PrepareAuraScript(rune_best_served_cold);
+    PrepareAuraScript(spell_best_served_cold);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -972,13 +972,13 @@ class rune_best_served_cold : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_best_served_cold::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_best_served_cold::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_side_step : public AuraScript
+class spell_side_step : public AuraScript
 {
-    PrepareAuraScript(rune_side_step);
+    PrepareAuraScript(spell_side_step);
 
     Aura* GetRuneAura()
     {
@@ -1016,13 +1016,13 @@ class rune_side_step : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_side_step::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_side_step::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_shield_parry : public AuraScript
+class spell_shield_parry : public AuraScript
 {
-    PrepareAuraScript(rune_shield_parry);
+    PrepareAuraScript(spell_shield_parry);
 
     Aura* GetRuneAura()
     {
@@ -1060,13 +1060,13 @@ class rune_shield_parry : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_shield_parry::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_shield_parry::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_magic_barrier : public AuraScript
+class spell_magic_barrier : public AuraScript
 {
-    PrepareAuraScript(rune_magic_barrier);
+    PrepareAuraScript(spell_magic_barrier);
 
     Aura* GetRuneAura()
     {
@@ -1112,14 +1112,14 @@ class rune_magic_barrier : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_magic_barrier::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_magic_barrier::HandleRemove, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_magic_barrier::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_magic_barrier::HandleRemove, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_enduring_defenses_shield_block : public AuraScript
+class spell_enduring_defenses_shield_block : public AuraScript
 {
-    PrepareAuraScript(rune_enduring_defenses_shield_block);
+    PrepareAuraScript(spell_enduring_defenses_shield_block);
 
     Aura* GetRuneAura()
     {
@@ -1165,14 +1165,14 @@ class rune_enduring_defenses_shield_block : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_enduring_defenses_shield_block::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_enduring_defenses_shield_block::HandleRemove, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_enduring_defenses_shield_block::HandleProc, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_enduring_defenses_shield_block::HandleRemove, EFFECT_0, SPELL_AURA_MOD_BLOCK_PERCENT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_enduring_defenses_shield_slam : public AuraScript
+class spell_enduring_defenses_shield_slam : public AuraScript
 {
-    PrepareAuraScript(rune_enduring_defenses_shield_slam);
+    PrepareAuraScript(spell_enduring_defenses_shield_slam);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1186,13 +1186,13 @@ class rune_enduring_defenses_shield_slam : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_enduring_defenses_shield_slam::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_enduring_defenses_shield_slam::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_barrier_lord : public AuraScript
+class spell_barrier_lord : public AuraScript
 {
-    PrepareAuraScript(rune_barrier_lord);
+    PrepareAuraScript(spell_barrier_lord);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1201,13 +1201,13 @@ class rune_barrier_lord : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_barrier_lord::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_barrier_lord::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_sword_and_board : public AuraScript
+class spell_sword_and_board : public AuraScript
 {
-    PrepareAuraScript(rune_sword_and_board);
+    PrepareAuraScript(spell_sword_and_board);
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
@@ -1217,7 +1217,7 @@ class rune_sword_and_board : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_sword_and_board::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_sword_and_board::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1261,9 +1261,9 @@ class rune_violent_outburst : public AuraScript
     }
 };
 
-class rune_defenders_aegis : public AuraScript
+class spell_defenders_aegis : public AuraScript
 {
-    PrepareAuraScript(rune_defenders_aegis);
+    PrepareAuraScript(spell_defenders_aegis);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1293,13 +1293,13 @@ class rune_defenders_aegis : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_defenders_aegis::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_defenders_aegis::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_offensive_wall : public AuraScript
+class spell_offensive_wall : public AuraScript
 {
-    PrepareAuraScript(rune_offensive_wall);
+    PrepareAuraScript(spell_offensive_wall);
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
@@ -1309,13 +1309,13 @@ class rune_offensive_wall : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_offensive_wall::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_offensive_wall::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_recuperation : public AuraScript
+class spell_recuperation : public AuraScript
 {
-    PrepareAuraScript(rune_recuperation);
+    PrepareAuraScript(spell_recuperation);
 
     Aura* GetRuneAura()
     {
@@ -1354,13 +1354,13 @@ class rune_recuperation : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_recuperation::HandleProc, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_recuperation::HandleProc, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_rageful_stand : public AuraScript
+class spell_rageful_stand : public AuraScript
 {
-    PrepareAuraScript(rune_rageful_stand);
+    PrepareAuraScript(spell_rageful_stand);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1385,13 +1385,13 @@ class rune_rageful_stand : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_rageful_stand::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_rageful_stand::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_unnerving_focus : public AuraScript
+class spell_unnerving_focus : public AuraScript
 {
-    PrepareAuraScript(rune_unnerving_focus);
+    PrepareAuraScript(spell_unnerving_focus);
 
     Aura* GetRuneAura()
     {
@@ -1437,14 +1437,14 @@ class rune_unnerving_focus : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_unnerving_focus::HandleProc, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_unnerving_focus::HandleRemove, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_unnerving_focus::HandleProc, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_unnerving_focus::HandleRemove, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_preparation : public AuraScript
+class spell_preparation : public AuraScript
 {
-    PrepareAuraScript(rune_preparation);
+    PrepareAuraScript(spell_preparation);
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
@@ -1454,13 +1454,13 @@ class rune_preparation : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_preparation::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_preparation::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_inspiring_wall : public AuraScript
+class spell_inspiring_wall : public AuraScript
 {
-    PrepareAuraScript(rune_inspiring_wall);
+    PrepareAuraScript(spell_inspiring_wall);
 
     Aura* GetRuneAura()
     {
@@ -1506,14 +1506,14 @@ class rune_inspiring_wall : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_inspiring_wall::HandleProc, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_inspiring_wall::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_inspiring_wall::HandleProc, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_inspiring_wall::HandleRemove, EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
-class rune_inspiring_wall_heal : public AuraScript
+class spell_inspiring_wall_heal : public AuraScript
 {
-    PrepareAuraScript(rune_inspiring_wall_heal);
+    PrepareAuraScript(spell_inspiring_wall_heal);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1532,13 +1532,13 @@ class rune_inspiring_wall_heal : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_inspiring_wall_heal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_inspiring_wall_heal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_defensive_quickness : public AuraScript
+class spell_defensive_quickness : public AuraScript
 {
-    PrepareAuraScript(rune_defensive_quickness);
+    PrepareAuraScript(spell_defensive_quickness);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -1547,13 +1547,13 @@ class rune_defensive_quickness : public AuraScript
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_defensive_quickness::CheckProc);
+        DoCheckProc += AuraCheckProcFn(spell_defensive_quickness::CheckProc);
     }
 };
 
-class rune_undying_will : public AuraScript
+class spell_undying_will : public AuraScript
 {
-    PrepareAuraScript(rune_undying_will);
+    PrepareAuraScript(spell_undying_will);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -1562,13 +1562,13 @@ class rune_undying_will : public AuraScript
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_undying_will::CheckProc);
+        DoCheckProc += AuraCheckProcFn(spell_undying_will::CheckProc);
     }
 };
 
-class rune_rumbling_earth : public SpellScript
+class spell_rumbling_earth : public SpellScript
 {
-    PrepareSpellScript(rune_rumbling_earth);
+    PrepareSpellScript(spell_rumbling_earth);
 
     uint32 auraShockwaveStack = 80009;
 
@@ -1626,14 +1626,14 @@ class rune_rumbling_earth : public SpellScript
 
     void Register() override
     {
-        OnHit += SpellHitFn(rune_rumbling_earth::HandleOnHit);
-        OnCast += SpellCastFn(rune_rumbling_earth::HandleOnCast);
+        OnHit += SpellHitFn(spell_rumbling_earth::HandleOnHit);
+        OnCast += SpellCastFn(spell_rumbling_earth::HandleOnCast);
     }
 };
 
-class rune_blade_turning : public AuraScript
+class spell_blade_turning : public AuraScript
 {
-    PrepareAuraScript(rune_blade_turning);
+    PrepareAuraScript(spell_blade_turning);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1654,13 +1654,13 @@ class rune_blade_turning : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_blade_turning::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_blade_turning::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_block_spike : public AuraScript
+class spell_block_spike : public AuraScript
 {
-    PrepareAuraScript(rune_block_spike);
+    PrepareAuraScript(spell_block_spike);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1674,13 +1674,13 @@ class rune_block_spike : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_block_spike::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_block_spike::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class rune_healing_block : public AuraScript
+class spell_healing_block : public AuraScript
 {
-    PrepareAuraScript(rune_healing_block);
+    PrepareAuraScript(spell_healing_block);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -1699,14 +1699,14 @@ class rune_healing_block : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(rune_healing_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_healing_block::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
 // Crash ..
-class rune_hurricane : public AuraScript
+class spell_hurricane : public AuraScript
 {
-    PrepareAuraScript(rune_hurricane);
+    PrepareAuraScript(spell_hurricane);
 
     Aura* GetRuneAura()
     {
@@ -1763,8 +1763,8 @@ class rune_hurricane : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(rune_hurricane::HandleProc, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(rune_hurricane::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_hurricane::HandleProc, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_hurricane::HandleRemove, EFFECT_1, SPELL_AURA_MECHANIC_IMMUNITY_MASK, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3016,58 +3016,58 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(rune_impenetrable_barrier);
     RegisterSpellScript(rune_depths_of_rage);
     RegisterSpellScript(rune_gladiators_torment);
-    RegisterSpellScript(rune_cut_the_veins);
-    RegisterSpellScript(rune_the_art_of_war);
-    RegisterSpellScript(rune_tide_of_blood);
-    RegisterSpellScript(rune_vein_cutter);
-    RegisterSpellScript(rune_battlelord);
-    RegisterSpellScript(rune_tactician);
-    RegisterSpellScript(rune_anger_management);
-    RegisterSpellScript(rune_blood_dance);
-    RegisterSpellScript(rune_keep_spinnin);
-    RegisterSpellScript(rune_sweeping_rage);
-    RegisterSpellScript(rune_sweeping_rage_proc);
-    RegisterSpellScript(rune_collateral_damage);
-    RegisterSpellScript(rune_collateral_damage_proc);
-    RegisterSpellScript(rune_vicious_comtempt);
-    RegisterSpellScript(rune_charging_for_blood);
-    RegisterSpellScript(rune_bloodcraze);
-    RegisterSpellScript(rune_fervor_of_battle);
-    RegisterSpellScript(rune_storm_of_swords);
-    RegisterSpellScript(rune_spinning_grip);
-    RegisterSpellScript(rune_spinning_grip_jump);
-    RegisterSpellScript(rune_depths_of_insanity);
-    RegisterSpellScript(rune_reckless_abandon);
-    RegisterSpellScript(rune_reckless_abandon_proc);
-    RegisterSpellScript(rune_true_rage);
+    RegisterSpellScript(spell_cut_the_veins);
+    RegisterSpellScript(spell_the_art_of_war);
+    RegisterSpellScript(spell_tide_of_blood);
+    RegisterSpellScript(spell_vein_cutter);
+    RegisterSpellScript(spell_battlelord);
+    RegisterSpellScript(spell_tactician);
+    RegisterSpellScript(spell_anger_management);
+    RegisterSpellScript(spell_blood_dance);
+    RegisterSpellScript(spell_keep_spinnin);
+    RegisterSpellScript(spell_sweeping_rage);
+    RegisterSpellScript(spell_sweeping_rage_proc);
+    RegisterSpellScript(spell_collateral_damage);
+    RegisterSpellScript(spell_collateral_damage_proc);
+    RegisterSpellScript(spell_vicious_comtempt);
+    RegisterSpellScript(spell_charging_for_blood);
+    RegisterSpellScript(spell_bloodcraze);
+    RegisterSpellScript(spell_fervor_of_battle);
+    RegisterSpellScript(spell_storm_of_swords);
+    RegisterSpellScript(spell_spinning_grip);
+    RegisterSpellScript(spell_spinning_grip_jump);
+    RegisterSpellScript(spell_depths_of_insanity);
+    RegisterSpellScript(spell_reckless_abandon);
+    RegisterSpellScript(spell_reckless_abandon_proc);
+    RegisterSpellScript(spell_true_rage);
     RegisterSpellScript(rune_relentless);
     RegisterSpellScript(rune_relentless_remove);
-    RegisterSpellScript(rune_raging_death);
-    RegisterSpellScript(rune_son_of_thunder);
-    RegisterSpellScript(rune_best_served_cold);
-    RegisterSpellScript(rune_side_step);
-    RegisterSpellScript(rune_shield_parry);
-    RegisterSpellScript(rune_magic_barrier);
-    RegisterSpellScript(rune_enduring_defenses_shield_block);
-    RegisterSpellScript(rune_enduring_defenses_shield_slam);
-    RegisterSpellScript(rune_barrier_lord);
-    RegisterSpellScript(rune_sword_and_board);
+    RegisterSpellScript(spell_raging_death);
+    RegisterSpellScript(spell_son_of_thunder);
+    RegisterSpellScript(spell_best_served_cold);
+    RegisterSpellScript(spell_side_step);
+    RegisterSpellScript(spell_shield_parry);
+    RegisterSpellScript(spell_magic_barrier);
+    RegisterSpellScript(spell_enduring_defenses_shield_block);
+    RegisterSpellScript(spell_enduring_defenses_shield_slam);
+    RegisterSpellScript(spell_barrier_lord);
+    RegisterSpellScript(spell_sword_and_board);
     RegisterSpellScript(rune_violent_outburst);
-    RegisterSpellScript(rune_defenders_aegis);
-    RegisterSpellScript(rune_offensive_wall);
-    RegisterSpellScript(rune_recuperation);
-    RegisterSpellScript(rune_rageful_stand);
-    RegisterSpellScript(rune_unnerving_focus);
-    RegisterSpellScript(rune_preparation);
-    RegisterSpellScript(rune_inspiring_wall);
-    RegisterSpellScript(rune_inspiring_wall_heal);
-    RegisterSpellScript(rune_defensive_quickness);
-    RegisterSpellScript(rune_undying_will);
-    RegisterSpellScript(rune_rumbling_earth);
-    RegisterSpellScript(rune_blade_turning);
-    RegisterSpellScript(rune_block_spike);
-    RegisterSpellScript(rune_healing_block);
-    RegisterSpellScript(rune_hurricane);
+    RegisterSpellScript(spell_defenders_aegis);
+    RegisterSpellScript(spell_offensive_wall);
+    RegisterSpellScript(spell_recuperation);
+    RegisterSpellScript(spell_rageful_stand);
+    RegisterSpellScript(spell_unnerving_focus);
+    RegisterSpellScript(spell_preparation);
+    RegisterSpellScript(spell_inspiring_wall);
+    RegisterSpellScript(spell_inspiring_wall_heal);
+    RegisterSpellScript(spell_defensive_quickness);
+    RegisterSpellScript(spell_undying_will);
+    RegisterSpellScript(spell_rumbling_earth);
+    RegisterSpellScript(spell_blade_turning);
+    RegisterSpellScript(spell_block_spike);
+    RegisterSpellScript(spell_healing_block);
+    RegisterSpellScript(spell_hurricane);
     RegisterSpellScript(rune_reprisal);
     RegisterSpellScript(rune_thunder_bolt);
     RegisterSpellScript(rune_improved_heroic_throw);
