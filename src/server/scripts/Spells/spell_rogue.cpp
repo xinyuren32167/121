@@ -924,6 +924,13 @@ class spell_rog_eviscerate : public SpellScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove Finality Rune Buff
+        for (size_t i = 1101196; i < 1101208; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
     }
 
     void Register() override
@@ -1124,7 +1131,7 @@ class spell_rog_blade_flurry_new : public AuraScript
 
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
-
+        
         caster->CastCustomSpell(SPELL_ROGUE_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
 
     }
@@ -1159,7 +1166,7 @@ class spell_rog_blade_flurry_triggered : public SpellScript
             int32 damage = GetEffectValue();
             Unit* caster = GetCaster();
             SpellInfo const* flurry = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_BLADE_FLURRY);
-
+            
             std::list<WorldObject*> targets;
             spell->SearchAreaTargets(targets, 5.0f, target, caster, TARGET_OBJECT_TYPE_UNIT, TARGET_CHECK_ENEMY, nullptr);
             targets.remove(target);
@@ -1554,7 +1561,7 @@ class spell_rog_flagellation : public AuraScript
             int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), comboPoints * attackPowerPct);
             if (Unit* target = ObjectAccessor::GetUnit(*player, player->GetTarget()))
             {
-                player->CastCustomSpell(SPELL_ROGUE_FLAGELLATION_MASTERY, SPELLVALUE_AURA_STACK, comboPoints, target, TRIGGERED_FULL_MASK);
+                player->CastCustomSpell(SPELL_ROGUE_FLAGELLATION_MASTERY, SPELLVALUE_AURA_STACK, comboPoints, player, TRIGGERED_FULL_MASK);
                 player->CastCustomSpell(SPELL_ROGUE_FLAGELLATION_DAMAGE, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
             }
         }
@@ -1607,6 +1614,17 @@ class spell_rog_black_powder : public SpellScript
 {
     PrepareSpellScript(spell_rog_black_powder);
 
+    Aura* GetFinalityAura(Unit* caster)
+    {
+        for (size_t i = 1101184; i < 1101190; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleHit(SpellEffIndex effIndex)
     {
         int32 damageRatio = GetCaster()->GetComboPoints() * GetEffectValue();
@@ -1620,9 +1638,32 @@ class spell_rog_black_powder : public SpellScript
 
         SetHitDamage(damage);
     }
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Finality Rune Buff
+        for (size_t i = 1101190; i < 1101202; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        if (Aura* runeAura = GetFinalityAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_2)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_black_powder::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterCast += SpellCastFn(spell_rog_black_powder::HandleAfterCast);
     }
 };
 
@@ -1720,7 +1761,7 @@ class spell_rog_vampiric_burst : public SpellScript
 
         AuraEffect* effect = aura->GetEffect(EFFECT_0);
         uint32 remaningTicks = effect->GetRemaningTicks();
-        uint32 remaningDamage = effect->GetAmount() / remaningTicks;
+        uint32 remaningDamage = effect->GetAmount() * remaningTicks;
         int32 heal = CalculatePct(remaningDamage, ratio);
         caster->CastCustomSpell(SPELL_ROGUE_VAMPIRIC_BURST_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
         aura->Remove();
@@ -2761,6 +2802,20 @@ class spell_rog_garrote : public AuraScript
         {
             if (target->HasAura(i))
                 target->RemoveAura(i);
+        }
+
+        // Remove Finality Rune Buff
+        for (size_t i = 1101190; i < 1101196; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+        }
+
+        // Remove Finality Rune Buff 2
+        for (size_t i = 1101202; i < 1101208; i++)
+        {
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
         }
     }
 
