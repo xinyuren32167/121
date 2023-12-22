@@ -1131,7 +1131,7 @@ class spell_rog_blade_flurry_new : public AuraScript
 
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
-        
+
         caster->CastCustomSpell(SPELL_ROGUE_BLADE_FLURRY_SELECTION, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
 
     }
@@ -1166,7 +1166,7 @@ class spell_rog_blade_flurry_triggered : public SpellScript
             int32 damage = GetEffectValue();
             Unit* caster = GetCaster();
             SpellInfo const* flurry = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_BLADE_FLURRY);
-            
+
             std::list<WorldObject*> targets;
             spell->SearchAreaTargets(targets, 5.0f, target, caster, TARGET_OBJECT_TYPE_UNIT, TARGET_CHECK_ENEMY, nullptr);
             targets.remove(target);
@@ -1281,6 +1281,14 @@ class spell_rog_shadowstrike : public SpellScript
             Position pos = GetExplTargetUnit()->GetPosition();
             caster->NearTeleportTo(pos);
         }
+
+        // Remove The Rotten Rune Buff + Add combo points
+        for (size_t i = 1101306; i < 1101312; i++)
+            if (caster->HasAura(i))
+            {
+                caster->RemoveAura(i);
+                caster->AddComboPoints(4);
+            }
     }
 
     void Register() override
@@ -1590,17 +1598,25 @@ class spell_rog_shadow_blade : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && GetCaster()->GetTarget();
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 attackPowerPct = aurEff->GetAmount();
-        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        damage = CalculatePct(damage, attackPowerPct);
+        Unit* caster = GetCaster();
 
-        if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget()))
-            GetCaster()->CastCustomSpell(SPELL_ROGUE_SHADOW_BLADES, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        uint32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(SPELL_ROGUE_SHADOW_BLADES, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2925,6 +2941,62 @@ class spell_rog_riposte : public SpellScript
     }
 };
 
+// 82048 - Gloomblade
+class spell_rog_gloomblade : public SpellScript
+{
+    PrepareSpellScript(spell_rog_gloomblade);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Perforated Veins Rune Buff
+        for (size_t i = 1101226; i < 1101232; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+
+        // Remove The Rotten Rune Buff + Add combo points
+        for (size_t i = 1101306; i < 1101312; i++)
+            if (caster->HasAura(i))
+            {
+                caster->RemoveAura(i);
+                caster->AddComboPoints(4);
+            }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_gloomblade::HandleAfterHit);
+    }
+};
+
+// 82082 - Pistol Shot
+class spell_rog_pistol_shot : public SpellScript
+{
+    PrepareSpellScript(spell_rog_pistol_shot);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Greenskin's Wickers Rune Buff
+        for (size_t i = 1101324; i < 1101330; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_rog_pistol_shot::HandleAfterHit);
+    }
+};
+
 
 
 void AddSC_rogue_spell_scripts()
@@ -3003,11 +3075,13 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_mutilate_both);
     RegisterSpellScript(spell_rog_garrote);
     RegisterSpellScript(spell_rog_combat_ecstasy);
-    RegisterSpellScript(spell_rog_ghostly_strike); 
+    RegisterSpellScript(spell_rog_ghostly_strike);
     RegisterSpellScript(spell_rog_riposte);
+    RegisterSpellScript(spell_rog_gloomblade);
+    RegisterSpellScript(spell_rog_pistol_shot);
 
-    
-    
+
+
 
 
 

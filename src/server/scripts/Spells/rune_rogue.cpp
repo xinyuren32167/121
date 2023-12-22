@@ -13,6 +13,7 @@ enum RogueSpells
 {
     // Spell
     SPELL_ROGUE_ADRENALINE_RUSH = 13750,
+    SPELL_ROGUE_BACKSTAB = 82001,
     SPELL_ROGUE_BETWEEN_THE_EYES = 82072,
     SPELL_ROGUE_BLACK_POWDER = 82041,
     SPELL_ROGUE_BLADE_FLURRY = 13877,
@@ -38,10 +39,13 @@ enum RogueSpells
     SPELL_ROGUE_RUPTURE = 48672,
     SPELL_ROGUE_SCIMITAR_RUSH = 82075,
     SPELL_ROGUE_SEA_OF_STRIKES = 82087,
+    SPELL_ROGUE_SHADOW_BLADES = 82042,
     SPELL_ROGUE_SHADOW_DANCE = 51713,
     SPELL_ROGUE_SHADOWSTEP = 36554,
+    SPELL_ROGUE_SHADOWSTIKE = 82016,
     SPELL_ROGUE_SLICE_AND_DICE = 6774,
     SPELL_ROGUE_SPRINT = 11305,
+    SPELL_ROGUE_SYMBOLS_OF_DEATH = 82040,
     SPELL_ROGUE_VAMPIRIC_BURST = 82050,
     SPELL_ROGUE_VANISH = 26889,
 
@@ -79,6 +83,7 @@ enum RogueSpells
     RUNE_ROGUE_DOOMBLADE_DOT = 1100856,
     RUNE_ROGUE_BLINDSIDE_BUFF = 1100880,
     RUNE_ROGUE_SHADOWED_FINISHERS_DAMAGE = 1101170,
+    RUNE_ROGUE_WEAPONMASTER_PROC = 1101250,
 };
 
 class rune_rog_venom_rush : public AuraScript
@@ -1571,6 +1576,9 @@ class rune_rog_finality : public AuraScript
         if (spellID == SPELL_ROGUE_RUPTURE)
             procSpell = GetEffect(EFFECT_1)->GetAmount();
 
+        if (spellID == 0)
+            return;
+
         caster->AddAura(procSpell, caster);
     }
 
@@ -1578,6 +1586,180 @@ class rune_rog_finality : public AuraScript
     {
         DoCheckProc += AuraCheckProcFn(rune_rog_finality::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_rog_finality::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_weaponmaster : public AuraScript
+{
+    PrepareAuraScript(rune_rog_weaponmaster);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        caster->CastCustomSpell(RUNE_ROGUE_WEAPONMASTER_PROC, SPELLVALUE_BASE_POINT0, spellID, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_weaponmaster::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_weaponmaster::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_weaponmaster_proc : public AuraScript
+{
+    PrepareAuraScript(rune_rog_weaponmaster_proc);
+
+    void HandleEffectPeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        caster->CastSpell(target, aurEff->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_rog_weaponmaster_proc::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_rog_premeditating_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_rog_premeditating_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 duration = aurEff->GetAmount();
+        int32 combo = GetEffect(EFFECT_1)->GetAmount();
+
+        if (caster->HasAura(SPELL_ROGUE_SLICE_AND_DICE))
+            caster->AddComboPoints(combo);
+        else
+        {
+            caster->AddAura(SPELL_ROGUE_SLICE_AND_DICE, caster);
+            caster->GetAura(SPELL_ROGUE_SLICE_AND_DICE)->SetDuration(duration);
+        } 
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_premeditating_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_premeditating_shadows::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_stiletto_staccato : public AuraScript
+{
+    PrepareAuraScript(rune_rog_stiletto_staccato);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_ROGUE_SHADOW_BLADES, -cooldown);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_stiletto_staccato::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_stiletto_staccato::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_inevitability : public AuraScript
+{
+    PrepareAuraScript(rune_rog_inevitability);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 duration = aurEff->GetAmount();
+
+        if (Aura* symbol = caster->GetAura(SPELL_ROGUE_SYMBOLS_OF_DEATH))
+            symbol->SetDuration(symbol->GetDuration() + duration);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_inevitability::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_inevitability::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_greenskins_wickers : public AuraScript
+{
+    PrepareAuraScript(rune_rog_greenskins_wickers);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        int32 combo = caster->GetComboPoints();
+        int32 chance = GetEffect(EFFECT_0)->GetAmount() * combo;
+
+        return roll_chance_i(chance);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_greenskins_wickers::CheckProc);
     }
 };
 
@@ -1629,8 +1811,14 @@ void AddSC_rogue_perks_scripts()
     RegisterSpellScript(rune_rog_vampiric_hand);
     RegisterSpellScript(rune_rog_shadowed_finishers);
     RegisterSpellScript(rune_rog_finality);
+    RegisterSpellScript(rune_rog_weaponmaster);
+    RegisterSpellScript(rune_rog_weaponmaster_proc);
+    RegisterSpellScript(rune_rog_premeditating_shadows);
+    RegisterSpellScript(rune_rog_stiletto_staccato); 
+    RegisterSpellScript(rune_rog_inevitability);
+    RegisterSpellScript(rune_rog_greenskins_wickers);
 
-
+    
     
     
     
