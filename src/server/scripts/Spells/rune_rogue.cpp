@@ -36,6 +36,12 @@ enum RogueSpells
     SPELL_ROGUE_MARKED_FOR_DEATH = 82022,
     SPELL_ROGUE_RIPOSTE = 82064,
     SPELL_ROGUE_ROLL_THE_BONES = 82091,
+    SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE = 82092,
+    SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE = 82093,
+    SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION = 82094,
+    SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE = 82095,
+    SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES = 82096,
+    SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING = 82097,
     SPELL_ROGUE_RUPTURE = 48672,
     SPELL_ROGUE_SCIMITAR_RUSH = 82075,
     SPELL_ROGUE_SEA_OF_STRIKES = 82087,
@@ -48,8 +54,7 @@ enum RogueSpells
     SPELL_ROGUE_SYMBOLS_OF_DEATH = 82040,
     SPELL_ROGUE_VAMPIRIC_BURST = 82050,
     SPELL_ROGUE_VANISH = 26889,
-
-
+    
     // Poisons
     POISON_ROGUE_AMPLIFYING_POISON = 82005,
     POISON_ROGUE_AMPLIFYING_POISON_AURA = 82006,
@@ -67,7 +72,9 @@ enum RogueSpells
     POISON_ROGUE_WOUND_POISON_AURA = 57975,
 
     // Talents
-    TALENT_ROGUE_PLACEHOLDER = 00000,
+    TALENT_ROGUE_OPPORTUNITY = 82085,
+    TALENT_ROGUE_OPPORTUNITY_BUFF = 82086,
+    TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH = 82189,
 
     // Runes
     RUNE_ROGUE_INTERNAL_BLEEDING_DOT = 1100358,
@@ -1763,6 +1770,143 @@ class rune_rog_greenskins_wickers : public AuraScript
     }
 };
 
+class rune_rog_ace_up_your_sleeve : public AuraScript
+{
+    PrepareAuraScript(rune_rog_ace_up_your_sleeve);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        int32 combo = caster->GetComboPoints();
+        int32 chance = GetEffect(EFFECT_0)->GetAmount() * combo;
+
+        return roll_chance_i(chance);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_ace_up_your_sleeve::CheckProc);
+    }
+};
+
+class rune_rog_count_the_odds : public AuraScript
+{
+    PrepareAuraScript(rune_rog_count_the_odds);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procChance = aurEff->GetAmount();
+        int32 duration = GetEffect(EFFECT_1)->GetAmount();
+
+        if (caster->HasAura(SPELL_ROGUE_SHADOW_DANCE))
+        {
+            procChance *= 2;
+            duration *= 2;
+        }
+
+        if (!roll_chance_i(procChance))
+            return;
+
+        std::vector<int> rolltheBonesBuffs;
+
+        if (!caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE))
+            rolltheBonesBuffs.push_back(SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE);
+
+        if (!caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE))
+            rolltheBonesBuffs.push_back(SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE);
+
+        if (!caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION))
+            rolltheBonesBuffs.push_back(SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION);
+
+        if (!caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE))
+            rolltheBonesBuffs.push_back(SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE);
+
+        if (!caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES))
+            rolltheBonesBuffs.push_back(SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES);
+
+        if (!caster->HasAura(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING))
+            rolltheBonesBuffs.push_back(SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING);
+
+        if (rolltheBonesBuffs.size() <= 0)
+            return;
+
+        uint32 rand = urand(0, rolltheBonesBuffs.size() - 1);
+
+        caster->CastCustomSpell(rolltheBonesBuffs[rand], SPELLVALUE_AURA_DURATION, duration, caster, TRIGGERED_FULL_MASK);
+
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_count_the_odds::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_count_the_odds::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_rog_fan_the_hammer : public AuraScript
+{
+    PrepareAuraScript(rune_rog_fan_the_hammer);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        return caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF) || caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_fan_the_hammer::CheckProc);
+    }
+};
+
+class rune_rog_quick_draw : public AuraScript
+{
+    PrepareAuraScript(rune_rog_quick_draw);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF) && !caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH))
+            return;
+
+        caster->AddComboPoints(aurEff->GetAmount());
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_rog_quick_draw::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_quick_draw::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 
 
 void AddSC_rogue_perks_scripts()
@@ -1817,6 +1961,10 @@ void AddSC_rogue_perks_scripts()
     RegisterSpellScript(rune_rog_stiletto_staccato); 
     RegisterSpellScript(rune_rog_inevitability);
     RegisterSpellScript(rune_rog_greenskins_wickers);
+    RegisterSpellScript(rune_rog_ace_up_your_sleeve);
+    RegisterSpellScript(rune_rog_count_the_odds);
+    RegisterSpellScript(rune_rog_fan_the_hammer);
+    RegisterSpellScript(rune_rog_quick_draw);
 
     
     

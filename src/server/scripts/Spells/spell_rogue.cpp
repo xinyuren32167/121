@@ -75,7 +75,6 @@ enum RogueSpells
     SPELL_ROGUE_SCIMITAR_RUSH_ENERGY = 82078,
     SPELL_ROGUE_DREADBLADES_SELF_DAMAGE = 82081,
     SPELL_ROGUE_SINISTER_STRIKE = 48638,
-    SPELL_ROGUE_OPPORTUNITY_PROC = 82086,
     SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF = 82088,
     SPELL_ROGUE_SEA_OF_STRIKES_PROC = 82089,
     SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE = 82092,
@@ -96,15 +95,18 @@ enum RogueSpells
     SPELL_ROGUE_SPRINT = 11305,
     SPELL_ROGUE_STEALTH = 1784,
     SPELL_ROGUE_VANISH = 26889,
-    SPELL_ROGUE_OPPORTUNITY = 82085,
 
+    // Talent
+    TALENT_ROGUE_AUDACITY_PROC = 82183,
+    TALENT_ROGUE_GAMBLERS_LUCK = 82179,
+    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH = 82165,
+    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC = 82168,
+    TALENT_ROGUE_OPPORTUNITY = 82085,
+    TALENT_ROGUE_OPPORTUNITY_BUFF = 82086,
+    TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH = 82189,
     TALENT_ROGUE_RELENTLESS_ATTACKS_COMBOPOINT = 82112,
     TALENT_ROGUE_RELENTLESS_ATTACKS_STACK = 82113,
     TALENT_ROGUE_RUTHLESS_COMBOPOINT = 82134,
-    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH = 82165,
-    TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH_PROC = 82168,
-    TALENT_ROGUE_AUDACITY_PROC = 82183,
-    TALENT_ROGUE_GAMBLERS_LUCK = 82179,
 
     //POISONS
     //LETHAL
@@ -133,6 +135,8 @@ enum RogueSpells
     // Runes
     RUNE_ROGUE_LINGERING_SHADOW_BUFF = 1100440,
     RUNE_ROGUE_BLINDSIDE_BUFF = 1100880,
+    RUNE_ROGUE_ACE_UP_YOUR_SLEEVE_BUFF = 1101336,
+    RUNE_ROGUE_LOADED_DICE_BUFF = 1101430,
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -2119,9 +2123,26 @@ class spell_rog_between_the_eyes : public SpellScript
         SetHitDamage(damage);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Ace Up Your Sleeve Rune Buff
+        if (Aura* runeBuff = caster->GetAura(RUNE_ROGUE_ACE_UP_YOUR_SLEEVE_BUFF))
+        {
+            int32 combo = runeBuff->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddComboPoints(combo);
+            runeBuff->Remove();
+        }
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_between_the_eyes::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_rog_between_the_eyes::HandleAfterHit);
     }
 };
 
@@ -2167,6 +2188,17 @@ class spell_rog_dispatch : public SpellScript
 {
     PrepareSpellScript(spell_rog_dispatch);
 
+    Aura* GetSummarilyDispatchedAura(Unit* caster)
+    {
+        for (size_t i = 1101362; i < 1101368; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleHit(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
@@ -2180,6 +2212,15 @@ class spell_rog_dispatch : public SpellScript
         }
 
         SetHitDamage(damage);
+
+        if (Aura* runeAura = GetSummarilyDispatchedAura(caster))
+        {
+            int32 comboThreshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (caster->GetComboPoints() >= comboThreshold)
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -2209,11 +2250,28 @@ class spell_rog_opportunity : public AuraScript
 {
     PrepareAuraScript(spell_rog_opportunity);
 
+    Aura* GetHiddenOpportunityAura(Unit* caster)
+    {
+        for (size_t i = 1101398; i < 1101404; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
         caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
-        caster->CastSpell(caster, SPELL_ROGUE_OPPORTUNITY_PROC, TRIGGERED_FULL_MASK);
+
+        int32 procSpell = TALENT_ROGUE_OPPORTUNITY_BUFF;
+
+        if (Aura* runeAura = GetHiddenOpportunityAura(caster))
+            procSpell = TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH;
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
 
         if (roll_chance_i(aurEff->GetAmount()))
             caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
@@ -2222,6 +2280,38 @@ class spell_rog_opportunity : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_rog_opportunity::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_rog_sea_of_strikes : public AuraScript
+{
+    PrepareAuraScript(spell_rog_sea_of_strikes);
+
+    Aura* GetPreciseStrikesAura(Unit* caster)
+    {
+        for (size_t i = 1101438; i < 1101444; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (Aura* runeAura = GetPreciseStrikesAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->AddAura(procSpell, caster);
+        }          
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_sea_of_strikes::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2282,16 +2372,89 @@ class spell_rog_roll_the_bones : public SpellScript
 {
     PrepareSpellScript(spell_rog_roll_the_bones);
 
+    Aura* GetSleightOfHandAura(Unit* caster)
+    {
+        for (size_t i = 1101432; i < 1101438; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleCast()
     {
-        uint32 rand = urand(0, 5);
+        uint32 rand = urand(1, 10000);
         Unit* caster = GetCaster();
+        int32 numberOfBuffs = 1;
 
-        RogueSpells arr[6] = { SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE,
+        int32 sixProcChance = 10; // 0.1% Chance
+        int32 fiveProcChance = 100; // 1% Chance
+        int32 fourProcChance = 300; // 3% Chance
+        int32 threeProcChance = 1000; // 10% Chance
+        int32 twoProcChance = 2000; // 20% Chance
+        LOG_ERROR("error", "sixProcChance = {} , fiveProcChance = {} , fourProcChance = {} , threeProcChance = {} , twoProcChance = {}",
+            sixProcChance, fiveProcChance, fourProcChance, threeProcChance, twoProcChance);
+        // increases the proc chance of each number of matches.
+        if (Aura* runeAura = GetSleightOfHandAura(caster))
+        {
+            int32 chanceIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            AddPct(sixProcChance, chanceIncrease);
+            AddPct(fiveProcChance, chanceIncrease);
+            AddPct(fourProcChance, chanceIncrease);
+            AddPct(threeProcChance, chanceIncrease);
+            AddPct(twoProcChance, chanceIncrease);
+        }
+        LOG_ERROR("error", "sixProcChance = {} , fiveProcChance = {} , fourProcChance = {} , threeProcChance = {} , twoProcChance = {}",
+            sixProcChance, fiveProcChance, fourProcChance, threeProcChance, twoProcChance);
+
+        int32 sixMatchesChance = 10000 - sixProcChance;
+        int32 fiveMatchesChance = sixMatchesChance - fiveProcChance;
+        int32 fourMatchesChance = fiveMatchesChance - fourProcChance;
+        int32 threeMatchesChance = fourMatchesChance - threeProcChance;
+        int32 twoMatchesChance = threeMatchesChance - twoProcChance;
+        LOG_ERROR("error", "sixMatchesChance = {} , fiveMatchesChance = {} , fourMatchesChance = {} , threeMatchesChance = {} , twoMatchesChance = {}",
+            sixMatchesChance, fiveMatchesChance, fourMatchesChance, threeMatchesChance, twoMatchesChance);
+
+        if (rand == sixMatchesChance)
+            numberOfBuffs = 6;
+        else if (rand > fiveMatchesChance)
+            numberOfBuffs = 5;
+        else if (rand > fourMatchesChance)
+            numberOfBuffs = 4;
+        else if (rand > threeMatchesChance)
+            numberOfBuffs = 3;
+        else if (rand > twoMatchesChance)
+            numberOfBuffs = 2;
+        LOG_ERROR("error", "numberOfBuffs = {}", numberOfBuffs);
+        // Loaded Dice rune guarantee at least 2 buffs.
+        if (Aura* LoadedAura = caster->GetAura(RUNE_ROGUE_LOADED_DICE_BUFF))
+        {
+            if (numberOfBuffs == 1)
+                numberOfBuffs = 2;
+
+            LoadedAura->Remove();
+        }
+
+        LOG_ERROR("error", "rand = {}", rand);
+        LOG_ERROR("error", "rand > {} number = 6", sixMatchesChance);
+        LOG_ERROR("error", "{} > rand > {} number = 5", sixMatchesChance, fiveMatchesChance);
+        LOG_ERROR("error", "{} > rand > {} number = 4", fiveMatchesChance, fourMatchesChance);
+        LOG_ERROR("error", "{} > rand > {} number = 3", fourMatchesChance, threeMatchesChance);
+        LOG_ERROR("error", "{} > rand > {} number = 2", threeMatchesChance, twoMatchesChance);
+        std::vector<int> rollTheBonesBuffs = { SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE,
             SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION, SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE,
             SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES, SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING };
 
-        caster->CastSpell(caster, arr[rand], TRIGGERED_FULL_MASK);
+        for (size_t i = numberOfBuffs; i > 0; i--)
+        {
+            int32 randomPlace = urand(0, rollTheBonesBuffs.size() - 1);
+
+            caster->CastSpell(caster, rollTheBonesBuffs[randomPlace], TRIGGERED_FULL_MASK);
+            rollTheBonesBuffs.erase(rollTheBonesBuffs.begin() + randomPlace);
+        }
     }
 
     void Register() override
@@ -2453,7 +2616,7 @@ class spell_rog_audacity : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (Aura* aura = GetCaster()->GetAura(SPELL_ROGUE_OPPORTUNITY))
+        if (Aura* aura = GetCaster()->GetAura(TALENT_ROGUE_OPPORTUNITY))
         {
             Unit* caster = GetCaster();
             uint32 chance = aura->GetSpellInfo()->ProcChance;
@@ -2606,6 +2769,10 @@ class spell_rog_ambush : public SpellScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove Opportunity Buff
+        if (caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH))
+            caster->RemoveAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH);
     }
 
     void Register() override
@@ -2989,6 +3156,17 @@ class spell_rog_pistol_shot : public SpellScript
         for (size_t i = 1101324; i < 1101330; i++)
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
+
+        // Remove Opportunity Buff
+        if (caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF))
+            caster->RemoveAura(TALENT_ROGUE_OPPORTUNITY_BUFF);
+        if (caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH))
+            caster->RemoveAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH);
+
+        // Remove Precise Strikes Rune Buff
+        for (size_t i = 1101444; i < 1101450; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
     }
 
     void Register() override
@@ -3056,8 +3234,9 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_scimitar_rush);
     RegisterSpellScript(spell_rog_scimitar_rush_target_select);
     RegisterSpellScript(spell_rog_dispatch);
-    RegisterSpellScript(spell_rog_dreadblades);
+    RegisterSpellScript(spell_rog_dreadblades); 
     RegisterSpellScript(spell_rog_opportunity);
+    RegisterSpellScript(spell_rog_sea_of_strikes);
     RegisterSpellScript(spell_rogue_sea_of_strikes);
     RegisterSpellScript(spell_rog_roll_the_bones);
     RegisterSpellScript(spell_rog_roll_the_bones_skull_and_crossbones);
