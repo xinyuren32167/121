@@ -2123,26 +2123,9 @@ class spell_rog_between_the_eyes : public SpellScript
         SetHitDamage(damage);
     }
 
-    void HandleAfterHit()
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        // Remove Ace Up Your Sleeve Rune Buff
-        if (Aura* runeBuff = caster->GetAura(RUNE_ROGUE_ACE_UP_YOUR_SLEEVE_BUFF))
-        {
-            int32 combo = runeBuff->GetEffect(EFFECT_0)->GetAmount();
-            caster->AddComboPoints(combo);
-            runeBuff->Remove();
-        }
-    }
-
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_rog_between_the_eyes::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-        AfterHit += SpellHitFn(spell_rog_between_the_eyes::HandleAfterHit);
     }
 };
 
@@ -2388,14 +2371,12 @@ class spell_rog_roll_the_bones : public SpellScript
         uint32 rand = urand(1, 10000);
         Unit* caster = GetCaster();
         int32 numberOfBuffs = 1;
-
         int32 sixProcChance = 10; // 0.1% Chance
         int32 fiveProcChance = 100; // 1% Chance
         int32 fourProcChance = 300; // 3% Chance
         int32 threeProcChance = 1000; // 10% Chance
         int32 twoProcChance = 2000; // 20% Chance
-        LOG_ERROR("error", "sixProcChance = {} , fiveProcChance = {} , fourProcChance = {} , threeProcChance = {} , twoProcChance = {}",
-            sixProcChance, fiveProcChance, fourProcChance, threeProcChance, twoProcChance);
+
         // increases the proc chance of each number of matches.
         if (Aura* runeAura = GetSleightOfHandAura(caster))
         {
@@ -2407,18 +2388,14 @@ class spell_rog_roll_the_bones : public SpellScript
             AddPct(threeProcChance, chanceIncrease);
             AddPct(twoProcChance, chanceIncrease);
         }
-        LOG_ERROR("error", "sixProcChance = {} , fiveProcChance = {} , fourProcChance = {} , threeProcChance = {} , twoProcChance = {}",
-            sixProcChance, fiveProcChance, fourProcChance, threeProcChance, twoProcChance);
 
         int32 sixMatchesChance = 10000 - sixProcChance;
-        int32 fiveMatchesChance = sixMatchesChance - fiveProcChance;
-        int32 fourMatchesChance = fiveMatchesChance - fourProcChance;
-        int32 threeMatchesChance = fourMatchesChance - threeProcChance;
-        int32 twoMatchesChance = threeMatchesChance - twoProcChance;
-        LOG_ERROR("error", "sixMatchesChance = {} , fiveMatchesChance = {} , fourMatchesChance = {} , threeMatchesChance = {} , twoMatchesChance = {}",
-            sixMatchesChance, fiveMatchesChance, fourMatchesChance, threeMatchesChance, twoMatchesChance);
+        int32 fiveMatchesChance = std::max<int32>(0, sixMatchesChance - fiveProcChance);
+        int32 fourMatchesChance = std::max<int32>(0, fiveMatchesChance - fourProcChance);
+        int32 threeMatchesChance = std::max<int32>(0, fourMatchesChance - threeProcChance);
+        int32 twoMatchesChance = std::max<int32>(0, threeMatchesChance - twoProcChance);
 
-        if (rand == sixMatchesChance)
+        if (rand > sixMatchesChance)
             numberOfBuffs = 6;
         else if (rand > fiveMatchesChance)
             numberOfBuffs = 5;
@@ -2428,7 +2405,7 @@ class spell_rog_roll_the_bones : public SpellScript
             numberOfBuffs = 3;
         else if (rand > twoMatchesChance)
             numberOfBuffs = 2;
-        LOG_ERROR("error", "numberOfBuffs = {}", numberOfBuffs);
+        
         // Loaded Dice rune guarantee at least 2 buffs.
         if (Aura* LoadedAura = caster->GetAura(RUNE_ROGUE_LOADED_DICE_BUFF))
         {
@@ -2438,12 +2415,6 @@ class spell_rog_roll_the_bones : public SpellScript
             LoadedAura->Remove();
         }
 
-        LOG_ERROR("error", "rand = {}", rand);
-        LOG_ERROR("error", "rand > {} number = 6", sixMatchesChance);
-        LOG_ERROR("error", "{} > rand > {} number = 5", sixMatchesChance, fiveMatchesChance);
-        LOG_ERROR("error", "{} > rand > {} number = 4", fiveMatchesChance, fourMatchesChance);
-        LOG_ERROR("error", "{} > rand > {} number = 3", fourMatchesChance, threeMatchesChance);
-        LOG_ERROR("error", "{} > rand > {} number = 2", threeMatchesChance, twoMatchesChance);
         std::vector<int> rollTheBonesBuffs = { SPELL_ROGUE_ROLL_THE_BONES_GRAND_MELEE, SPELL_ROGUE_ROLL_THE_BONES_BROADSIDE,
             SPELL_ROGUE_ROLL_THE_BONES_RUTHLESS_PRECISION, SPELL_ROGUE_ROLL_THE_BONES_BURIED_TREASURE,
             SPELL_ROGUE_ROLL_THE_BONES_SKULL_AND_CROSSBONES, SPELL_ROGUE_ROLL_THE_BONES_TRUE_BEARING };
