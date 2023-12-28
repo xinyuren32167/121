@@ -1290,7 +1290,7 @@ class spell_warl_unstable_affliction : public AuraScript
     }
 };
 
-// -603 - Curse of Doom
+// 47867 - Curse of Doom
 class spell_warl_curse_of_doom : public AuraScript
 {
     PrepareAuraScript(spell_warl_curse_of_doom);
@@ -3107,6 +3107,80 @@ class spell_warl_archdemon_proc : public AuraScript
     }
 };
 
+// 47813 - Corruption
+class spell_warl_corruption : public AuraScript
+{
+    PrepareAuraScript(spell_warl_corruption);
+
+    Aura* GetAbsoluteCorruptionAura(Unit* caster)
+    {
+        for (size_t i = 800138; i < 800144; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* runeAura = GetAbsoluteCorruptionAura(caster))
+        {
+            int32 duration = runeAura->GetEffect(EFFECT_2)->GetAmount();
+
+            if (target->IsPlayer())
+                SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_corruption::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 47857 - Drain Life
+class spell_warl_drain_life : public AuraScript
+{
+    PrepareAuraScript(spell_warl_drain_life);
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Remove Inevitable Demise Rune Buff
+        for (size_t i = 800162; i < 800168; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_life::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_LEECH, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -3197,4 +3271,11 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_archdemon);
     RegisterSpellScript(spell_warl_archdemon_proc);
     RegisterSpellScript(spell_warl_fracture_energy);
+    RegisterSpellScript(spell_warl_corruption);
+    RegisterSpellScript(spell_warl_drain_life);
+
+
+    
+
+    
 }

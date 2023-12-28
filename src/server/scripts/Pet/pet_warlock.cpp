@@ -32,6 +32,7 @@
 
 enum WarlockSpells
 {
+    // Spells
     SPELL_MINION_SCALING_DREAD_STALKER                   = 75001,
     SPELL_MINION_SCALING_WILD_IMP                        = 75002,
     SPELL_MINION_SCALING_DARKGLARE                       = 75003,
@@ -40,18 +41,22 @@ enum WarlockSpells
     SPELL_MINION_SCALING_BOMBER                          = 74999,
     SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE              = 83031,
 
+    // Talents
     TALENT_WARLOCK_MOLTEN_HAND                           = 47245,
     TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1               = 83077,
     TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2               = 83078,
     TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3               = 83079,
 
+    // Pet Spells
     SPELL_WILDIMP_FIREBOLT  = 83003,
     SPELL_DEMONIC_CORE      = 83029,
     SPELL_CHARGE_FELBOAR    = 83005,
     SPELL_DEMONBOLT         = 83008,
     SPELL_DARKGLARE_DAMAGE  = 83050,
     SPELL_ACIDE_BOMBER      = 83058,
-    EVENT_TRY_ATTACK_NEW_TARGET = 1,
+
+    // Runes
+    RUNE_WARLOCK_INQUISITORS_GAZE_AURA = 800106,
 };
 
 enum PET_WARLOCKS {
@@ -60,6 +65,12 @@ enum PET_WARLOCKS {
     PET_WILDIMP = 600601,
     PET_FELBOAR = 600602,
     PET_DEMONIC_TYRAN = 600603,
+};
+
+enum WarlockEvents
+{
+    EVENT_TRY_ATTACK_NEW_TARGET = 1,
+    EVENT_WARLOCK_CAST_SPELL = 2,
 };
 
 struct npc_pet_warlock_wildimp : public ScriptedAI
@@ -698,6 +709,77 @@ private:
     int32 shadow;
 };
 
+struct npc_pet_warlock_inquisitors_eye : public ScriptedAI
+{
+    npc_pet_warlock_inquisitors_eye(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
+
+    void EnterCombat(Unit*) override
+    {
+        _events.Reset();
+        _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 0);
+    }
+
+    void InitializeAI() override { }
+
+    void UpdateAI(uint32 diff) override
+    {
+        Unit* mainTarget = ObjectAccessor::GetUnit(*me, me->GetTarget());
+
+        if (_initAttack)
+        {
+            if (!me->IsInCombat())
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = mainTarget)
+                        if (me->CanCreatureAttack(target))
+                            AttackStart(target);
+
+            _initAttack = false;
+        }
+
+        if (!UpdateVictim())
+            return;
+
+        _events.Update(diff);
+
+        bool isCasting = false;
+
+        if (_events.ExecuteEvent() == EVENT_WARLOCK_CAST_SPELL)
+        {
+            if (mainTarget && mainTarget->IsAlive())
+            {
+                if (isCasting)
+                    _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 1000);
+                else
+                {
+                    me->CastSpell(mainTarget, RUNE_WARLOCK_INQUISITORS_GAZE_AURA, TRIGGERED_FULL_MASK);
+                    isCasting = true;
+                    _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 1000);
+                }
+            }
+            else
+            {
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = owner->GetSelectedUnit())
+                    {
+                        me->CastSpell(target, RUNE_WARLOCK_INQUISITORS_GAZE_AURA, TRIGGERED_FULL_MASK);
+                        isCasting = true;
+                        mainTarget = target;
+                    }
+
+                _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 1000);
+            }
+        }
+
+        DoMeleeAttackIfReady();
+    }
+
+private:
+    EventMap _events;
+    bool _initAttack;
+};
+
+
+
 void AddSC_warlock_pet_scripts()
 {
     RegisterCreatureAI(npc_pet_warlock_bomber);
@@ -707,5 +789,10 @@ void AddSC_warlock_pet_scripts()
     RegisterCreatureAI(npc_pet_warlock_dreadstalker);
     RegisterCreatureAI(npc_pet_warlock_vilefiend);
     RegisterCreatureAI(npc_pet_warlock_demonic_tyrant);
+    RegisterCreatureAI(npc_pet_warlock_inquisitors_eye);
+
+
+
+
     new spell_warl_darkglare_spell();
 }

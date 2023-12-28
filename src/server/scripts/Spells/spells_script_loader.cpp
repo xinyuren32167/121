@@ -40,6 +40,7 @@ void AddSC_druid_rune_scripts();
 void AddSC_shaman_perks_scripts();
 void AddSC_rogue_perks_scripts();
 void AddSC_priest_perks_scripts();
+void AddSC_warlock_perks_scripts();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -69,4 +70,5 @@ void AddSpellsScripts()
     AddSC_shaman_perks_scripts();
     AddSC_rogue_perks_scripts();
     AddSC_priest_perks_scripts();
+    AddSC_warlock_perks_scripts();
 }
