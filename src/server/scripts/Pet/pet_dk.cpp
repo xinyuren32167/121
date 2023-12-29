@@ -38,13 +38,13 @@
 
 enum DeathKnightSpells
 {
-    SPELL_DK_SUMMON_GARGOYLE_1      = 49206,
-    SPELL_DK_SUMMON_GARGOYLE_2      = 50514,
-    SPELL_DK_DISMISS_GARGOYLE       = 50515,
-    SPELL_DK_SANCTUARY              = 54661,
-    SPELL_DK_NIGHT_OF_THE_DEAD      = 62137,
-    SPELL_DK_PET_SCALING            = 61017,
-    SPELL_DK_GARGOYLE_DAMAGE_BUFF   = 80327,
+    SPELL_DK_SUMMON_GARGOYLE_1                  = 49206,
+    SPELL_DK_SUMMON_GARGOYLE_2                  = 50514,
+    SPELL_DK_DISMISS_GARGOYLE                   = 50515,
+    SPELL_DK_SANCTUARY                          = 54661,
+    SPELL_DK_NIGHT_OF_THE_DEAD                  = 62137,
+    SPELL_DK_PET_SCALING                        = 61017,
+    SPELL_DK_GARGOYLE_DAMAGE_BUFF               = 80327,
     SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA = 80349,
     SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA    = 80350,
     SPELL_DK_INFECTED_CLAWS_R1                  = 49224,
@@ -52,7 +52,10 @@ enum DeathKnightSpells
     SPELL_DK_INFECTED_CLAWS_R3                  = 49611,
     SPELL_DK_INFECTED_CLAWS_R1_PET              = 80422,
     SPELL_DK_INFECTED_CLAWS_R2_PET              = 80423,
-    SPELL_DK_INFECTED_CLAWS_R3_PET              = 80424
+    SPELL_DK_INFECTED_CLAWS_R3_PET              = 80424,
+
+    RUNE_DK_THE_UNBEAUTIFUL_LISTENER            = 600470,
+    RUNE_DK_ENFEEBLE_LISTENER                   = 600478,
 };
 
 class npc_pet_dk_ebon_gargoyle : public CreatureScript
@@ -254,6 +257,28 @@ public:
     {
         npc_pet_dk_ghoulAI(Creature* c) : CombatAI(c) { }
 
+        Aura* GetUnbeautifulAura(Unit* caster)
+        {
+            for (size_t i = 600464; i < 600470; i++)
+            {
+                if (caster->HasAura(i))
+                    return caster->GetAura(i);
+            }
+
+            return nullptr;
+        }
+
+        Aura* GetEnfeebleAura(Unit* caster)
+        {
+            for (size_t i = 600472; i < 600478; i++)
+            {
+                if (caster->HasAura(i))
+                    return caster->GetAura(i);
+            }
+
+            return nullptr;
+        }
+
         void InitializeAI() override //molly: Rune of the Apocalypse
         {
             me->setPowerType(POWER_ENERGY);
@@ -271,6 +296,12 @@ public:
                 owner->AddAura(SPELL_DK_INFECTED_CLAWS_R2_PET, me);
             else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R3))
                 owner->AddAura(SPELL_DK_INFECTED_CLAWS_R3_PET, me);
+
+            if (Aura* runeAura = GetUnbeautifulAura(owner))
+                owner->AddAura(RUNE_DK_THE_UNBEAUTIFUL_LISTENER, me);
+
+            if (Aura* runeAura = GetEnfeebleAura(owner))
+                me->AddAura(RUNE_DK_ENFEEBLE_LISTENER, me);
         }
 
         void JustDied(Unit* /*who*/) override

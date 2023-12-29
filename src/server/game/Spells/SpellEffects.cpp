@@ -2654,6 +2654,10 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
             if (owner->GetAura(56249))
                 owner->CastCustomSpell(owner, 19658, &heal_amount, nullptr, nullptr, true);
     }
+
+    //Coldthirst Rune for Mind Freeze
+    if (m_spellInfo->Id == 47528)
+        m_caster->CastSpell(m_caster, 600457, TRIGGERED_FULL_MASK);
 }
 
 void Spell::EffectDualWield(SpellEffIndex /*effIndex*/)

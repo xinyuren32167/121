@@ -5702,7 +5702,7 @@ uint32 Unit::GetDiseasesByCaster(ObjectGuid casterGUID, uint8 mode)
 {
     static const AuraType diseaseAuraTypes[] =
     {
-        SPELL_AURA_PERIODIC_DAMAGE, // Frost Fever and Blood Plague
+        SPELL_AURA_PERIODIC_DAMAGE, // Frost Fever, Blood Plague and Virulent Plague
         SPELL_AURA_LINKED,          // Crypt Fever and Ebon Plague
         SPELL_AURA_NONE
     };
@@ -9256,7 +9256,7 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
             case SPELLFAMILY_DEATHKNIGHT:
                 {
                     // Acclimation
-                    if (auraSpellInfo->SpellIconID == 1930)
+                    if (auraSpellInfo->Id == 49200 || auraSpellInfo->Id == 50151 || auraSpellInfo->Id == 50152)
                     {
                         if (!procSpell)
                             return false;
