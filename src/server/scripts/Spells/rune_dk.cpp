@@ -36,6 +36,8 @@ enum DeathKnightSpells
     RUNE_DK_DRAW_BLOOD_PROC = 600534,
     RUNE_DK_DRAW_BLOOD_COOLDOWN = 600535,
     RUNE_DK_BLOOD_BATH_PROC = 600633,
+    RUNE_DK_TORMENT_PROC = 600677,
+    RUNE_DK_RELISH_IN_BLOOD_HEAL = 600690,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -47,6 +49,7 @@ enum DeathKnightSpells
     SPELL_DK_BONE_SHIELD = 49222,
     SPELL_DK_HYSTERIA = 49016,
     SPELL_DK_VAMPIRIC_BLOOD = 55233,
+    SPELL_DK_BONESTORM = 80367,
 };
 
 class rune_dk_permafrost : public AuraScript
@@ -1178,6 +1181,9 @@ class rune_dk_blood_bath_expire : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        if (GetCaster()->isDead())
+            return;
+
         if (Aura* runeAura = GetRuneAura(GetCaster()))
         {
             GetCaster()->CastCustomSpell(RUNE_DK_BLOOD_BATH_PROC, SPELLVALUE_BASE_POINT0, runeAura->GetEffect(EFFECT_1)->GetAmount(), GetCaster(), TRIGGERED_FULL_MASK);
@@ -1187,7 +1193,206 @@ class rune_dk_blood_bath_expire : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_dk_blood_bath_expire::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_blood_bath_expire::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_HEALING_PCT, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_dk_in_service_of_gorefiend : public AuraScript
+{
+    PrepareAuraScript(rune_dk_in_service_of_gorefiend);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* vampiric = GetCaster()->GetAura(SPELL_DK_VAMPIRIC_BLOOD))
+            vampiric->SetDuration(vampiric->GetDuration() + aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_in_service_of_gorefiend::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_in_service_of_gorefiend::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_in_service_of_gorefiend_runic : public SpellScript
+{
+    PrepareSpellScript(rune_dk_in_service_of_gorefiend_runic);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 600635; i < 600641; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleProc()
+    {
+        if (Aura* rune = GetRuneAura(GetCaster()))
+            GetCaster()->EnergizeBySpell(GetCaster(), SPELL_DK_VAMPIRIC_BLOOD, rune->GetEffect(EFFECT_1)->GetAmount(), POWER_RUNIC_POWER);
+    }
+
+    void Register()
+    {
+        OnCast += SpellCastFn(rune_dk_in_service_of_gorefiend_runic::HandleProc);
+    }
+};
+
+class rune_dk_hardened_blood : public AuraScript
+{
+    PrepareAuraScript(rune_dk_hardened_blood);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* vampiric = GetCaster()->GetAura(SPELL_DK_VAMPIRIC_BLOOD))
+            vampiric->SetDuration(vampiric->GetDuration() + 2000);
+        else
+        {
+            if(Aura* aura = GetCaster()->AddAura(SPELL_DK_VAMPIRIC_BLOOD, GetCaster()))
+                aura->SetDuration(4000);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_dk_hardened_blood::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_perserverance_of_the_ebon_blade : public AuraScript
+{
+    PrepareAuraScript(rune_dk_perserverance_of_the_ebon_blade);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 600659; i < 600665; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (GetCaster()->isDead())
+            return;
+
+        if (Aura* runeAura = GetRuneAura(GetCaster()))
+            GetCaster()->CastSpell(GetCaster(), runeAura->GetEffect(EFFECT_0)->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_perserverance_of_the_ebon_blade::HandleEffectRemove, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_dk_torment : public AuraScript
+{
+    PrepareAuraScript(rune_dk_torment);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->HasAura(SPELL_DK_BONESTORM))
+            return false;
+
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+        {
+            int32 spellRage = spellInfo->CalcPowerCost(GetCaster(), SpellSchoolMask(spellInfo->SchoolMask));
+            if (spellRage <= 0)
+                return;
+
+            int32 rageAccumulated = GetAura()->GetEffect(EFFECT_1)->GetAmount() + spellRage;
+            GetAura()->GetEffect(EFFECT_1)->ChangeAmount(rageAccumulated);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_torment::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_torment::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_torment_expire : public AuraScript
+{
+    PrepareAuraScript(rune_dk_torment_expire);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 600671; i < 600677; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (!GetCaster()->IsAlive())
+            return;
+
+        if (Aura* runeAura = GetRuneAura())
+        {
+            int32 threshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 rageAccumulated = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            runeAura->GetEffect(EFFECT_1)->SetAmount(0);
+            int32 calculatedStack = static_cast<int32>(3 * (rageAccumulated / threshold));
+            if (calculatedStack > 0)
+                GetCaster()->CastCustomSpell(RUNE_DK_TORMENT_PROC, SPELLVALUE_BASE_POINT0, calculatedStack, GetCaster(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_torment_expire::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_dk_relish_in_blood: public AuraScript
+{
+    PrepareAuraScript(rune_dk_relish_in_blood);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 600684; i < 600690; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if(Aura* boneShield = GetCaster()->GetAura(SPELL_DK_BONE_SHIELD))
+            if (Aura* rune = GetRuneAura())
+            {
+                Unit* caster = GetCaster();
+                int32 heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), rune->GetEffect(EFFECT_0)->GetAmount());
+                heal *= boneShield->GetStackAmount();
+                caster->CastCustomSpell(RUNE_DK_RELISH_IN_BLOOD_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);
+                caster->EnergizeBySpell(caster, SPELL_DK_DEATH_AND_DECAY, 100, POWER_RUNIC_POWER);
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_dk_relish_in_blood::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1232,4 +1437,11 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_red_thirst);
     RegisterSpellScript(rune_dk_blood_bath);
     RegisterSpellScript(rune_dk_blood_bath_expire);
+    RegisterSpellScript(rune_dk_in_service_of_gorefiend_runic);
+    RegisterSpellScript(rune_dk_in_service_of_gorefiend);
+    RegisterSpellScript(rune_dk_hardened_blood);
+    RegisterSpellScript(rune_dk_perserverance_of_the_ebon_blade);
+    RegisterSpellScript(rune_dk_torment);
+    RegisterSpellScript(rune_dk_torment_expire);
+    RegisterSpellScript(rune_dk_relish_in_blood);
 }
