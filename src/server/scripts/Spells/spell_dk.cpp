@@ -119,8 +119,6 @@ enum DeathKnightSpells
     SPELL_DK_BONESTORM_HEAL                     = 80369,
     SPELL_DK_DARK_TRANSFORMATION_DAMAGE         = 80401,
     SPELL_DK_DARK_TRANSFORMATION_POWERUP        = 80402,
-    SPELL_DK_CONSUMPTION                        = 80371,
-    SPELL_DK_CONSUMPTION_HEAL                   = 80372,
     SPELL_DK_EPIDEMIC_SINGLE                    = 80376,
     SPELL_DK_EPIDEMIC_AOE                       = 80377,
     SPELL_DK_VIRULENT_PLAGUE                    = 80332,
@@ -2950,31 +2948,6 @@ class spell_dk_bonestorm_duration : public AuraScript
     }
 };
 
-class spell_dk_consumption : public SpellScript
-{
-    PrepareSpellScript(spell_dk_consumption);
-
-    uint32 healPct;
-
-    bool Load() override
-    {
-        healPct = GetSpellInfo()->Effects[EFFECT_1].CalcValue(GetCaster());
-        return true;
-    }
-
-    void TriggerHeal()
-    {
-        Unit* caster = GetCaster();
-        if (GetHitUnit() != caster)
-            caster->CastCustomSpell(SPELL_DK_CONSUMPTION_HEAL, SPELLVALUE_BASE_POINT0, (GetHitDamage() * healPct) / 100, caster, true);
-    }
-
-    void Register() override
-    {
-        AfterHit += SpellHitFn(spell_dk_consumption::TriggerHeal);
-    }
-};
-
 class spell_dk_festering_strike : public SpellScript
 {
     PrepareSpellScript(spell_dk_festering_strike);
@@ -4217,7 +4190,6 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_tombstone);
     RegisterSpellScript(spell_dk_bonestorm);
     RegisterSpellScript(spell_dk_bonestorm_duration);
-    RegisterSpellScript(spell_dk_consumption);
     RegisterSpellScript(spell_dk_festering_strike);
     RegisterSpellScript(spell_dk_epidemic);
     RegisterSpellScript(spell_dk_vile_contagion);

@@ -38,6 +38,7 @@ enum DeathKnightSpells
     RUNE_DK_BLOOD_BATH_PROC = 600633,
     RUNE_DK_TORMENT_PROC = 600677,
     RUNE_DK_RELISH_IN_BLOOD_HEAL = 600690,
+    RUNE_DK_DAMNATION_PROC = 600704,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -1396,6 +1397,37 @@ class rune_dk_relish_in_blood: public AuraScript
     }
 };
 
+class rune_dk_damnation : public AuraScript
+{
+    PrepareAuraScript(rune_dk_damnation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DK_DAMNATION_PROC, SPELLVALUE_BASE_POINT0, (damage / 8), eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_damnation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_damnation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     RegisterSpellScript(rune_dk_permafrost);
@@ -1444,4 +1476,5 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_torment);
     RegisterSpellScript(rune_dk_torment_expire);
     RegisterSpellScript(rune_dk_relish_in_blood);
+    RegisterSpellScript(rune_dk_damnation);
 }
