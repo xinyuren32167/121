@@ -3036,15 +3036,12 @@ class spell_sha_fury_of_the_elements_storm : public SpellScript
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM_ECHO, TRIGGERED_FULL_MASK);
         }
 
-        LOG_ERROR("error", "proc");
         // Grants Fire Expert Rune damage buff, x% per target hit.
         if (GetLingeringStormAura(caster))
         {
             int32 buffSpell = GetLingeringStormAura(caster)->GetEffect(EFFECT_0)->GetAmount();
-            LOG_ERROR("error", "buffSpell = {}", buffSpell);
             caster->CastSpell(caster, buffSpell, TRIGGERED_FULL_MASK);
             caster->GetAura(buffSpell)->SetStackAmount(targets.size());
-            LOG_ERROR("error", "targets.size = {}", targets.size());
         }
     }
 
