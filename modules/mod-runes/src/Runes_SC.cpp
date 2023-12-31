@@ -71,7 +71,7 @@ public:
         if (item->GetEntry() != 70008)
             return;
 
-        RunesManager::UpdateRunicDustAmount(player, count);
+        RunesManager::IncreaseRunicDustAmount(player, count);
     }
 
     void OnQuestRewardItem(Player* player, Item* item, uint32 count)
@@ -79,7 +79,7 @@ public:
         if (item->GetEntry() != 70008)
             return;
 
-        RunesManager::UpdateRunicDustAmount(player, count);
+        RunesManager::IncreaseRunicDustAmount(player, count);
     }
 
 
@@ -88,7 +88,7 @@ public:
         if (item != 70002)
             return;
 
-        RunesManager::UpdateRunicDustAmount(player, -100);
+        RunesManager::DecreaseRunicDustAmount(player, 100);
     };
 };
 
