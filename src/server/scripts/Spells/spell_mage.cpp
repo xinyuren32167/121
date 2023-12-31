@@ -3902,14 +3902,11 @@ class spell_mage_frostbolt : public SpellScript
             return;
 
         int32 damage = GetHitDamage();
-        LOG_ERROR("error", "proc");
         // Deep Shatter damage increase
         if (GetDeepShatterAura(caster))
         {
-            LOG_ERROR("error", "rune check");
             if (target->HasAuraState(AURA_STATE_FROZEN))
             {
-                LOG_ERROR("error", "aurastate check");
                 int32 damageIncrease = GetDeepShatterAura(caster)->GetEffect(EFFECT_0)->GetAmount();
                 AddPct(damage, damageIncrease);
             }

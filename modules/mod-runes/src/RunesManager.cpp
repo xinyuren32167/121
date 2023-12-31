@@ -21,9 +21,9 @@ RuneConfig RunesManager::config = {};
 void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
-    config.debug = true;
+    config.debug = false;
     config.maxSlots = 10;
-    config.defaultSlot = 4;
+    config.defaultSlot = 10;
 
     config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_RARE")));
     config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_EPIC")));
@@ -395,11 +395,11 @@ void RunesManager::ApplyBuyingRuneWithGold(Player* player)
 
     uint32 guid = player->GetGUID().GetCounter();
 
-    uint32 oldWeek = GetPreviousWeekFromBuyingRuneWithGold(player);
+    int32 oldWeek = GetPreviousWeekFromBuyingRuneWithGold(player);
 
     if (oldWeek == -1)
     {
-        CharacterDatabase.Execute("INSERT INTO character_buying_rune_gold (guid, goldT, dayOfTheWeek) VALUES ({}, {}, {}) ", guid, 1, oldWeek);
+        CharacterDatabase.Execute("INSERT INTO character_buying_rune_gold (guid, goldT, dayOfTheWeek) VALUES ({}, {}, {}) ", guid, 1, weekNumber);
         return;
     }
 
@@ -687,7 +687,7 @@ std::string RunesManager::ProgressionCachingForClient(Player* player)
 
     if (progression != m_Progression.end()) {
         std::stringstream fmt;
-        fmt << progression->second.unlockedLoadoutCount << ";" << progression->second.unlockedSlotRunes << ";" << config.maxSlots;
+        fmt << progression->second.unlockedLoadoutCount << ";" << progression->second.unlockedSlotRunes << ";" << config.defaultSlot;
         value = fmt.str();
     }
     return value;
@@ -1094,7 +1094,7 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     CharacterDatabase.Execute("DELETE FROM account_know_runes WHERE accountId = {} AND spellId = {} LIMIT 1", accountId, rune.spellId);
 
     player->AddItem(70008, runicDust);
-    UpdateRunicDustAmount(player, runicDust);
+    IncreaseRunicDustAmount(player, runicDust);
 
     if (RuneAlreadyActivated(player, rune.spellId))
     {
@@ -1125,7 +1125,7 @@ void RunesManager::UpdateRunicDustCountOnLogin(Player* player)
     }
 }
 
-void RunesManager::UpdateRunicDustAmount(Player* player, int32 amount)
+void RunesManager::IncreaseRunicDustAmount(Player* player, int32 amount)
 {
     uint32 accountId = player->GetSession()->GetAccountId();
 
@@ -1133,14 +1133,24 @@ void RunesManager::UpdateRunicDustAmount(Player* player, int32 amount)
 
     if (it != m_Progression.end()) {
 
-        if (amount > 1)
-            it->second.dusts += amount;
-        else
-            it->second.dusts -= amount;
-
+        it->second.dusts += amount;
         CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
     }
 }
+
+void RunesManager::DecreaseRunicDustAmount(Player* player, int32 amount)
+{
+    uint32 accountId = player->GetSession()->GetAccountId();
+
+    auto it = m_Progression.find(accountId);
+
+    if (it != m_Progression.end()) {
+
+         it->second.dusts -= amount;
+        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+    }
+}
+
 
 void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
 {
