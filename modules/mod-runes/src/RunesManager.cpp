@@ -23,7 +23,7 @@ void RunesManager::SetupConfig()
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
     config.debug = false;
     config.maxSlots = 10;
-    config.defaultSlot = 4;
+    config.defaultSlot = 10;
 
     config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_RARE")));
     config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_EPIC")));
@@ -687,7 +687,7 @@ std::string RunesManager::ProgressionCachingForClient(Player* player)
 
     if (progression != m_Progression.end()) {
         std::stringstream fmt;
-        fmt << progression->second.unlockedLoadoutCount << ";" << progression->second.unlockedSlotRunes << ";" << config.maxSlots;
+        fmt << progression->second.unlockedLoadoutCount << ";" << progression->second.unlockedSlotRunes << ";" << config.defaultSlot;
         value = fmt.str();
     }
     return value;
