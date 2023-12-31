@@ -38,7 +38,7 @@ enum PriestSpells
     RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE = 901378,
 };
 
-enum ShamanEvents
+enum PriestEvents
 {
     // IDOL OF CTHUN
     EVENT_PRIEST_CAST_SPELL = 1,

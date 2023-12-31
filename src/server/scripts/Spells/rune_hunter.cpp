@@ -887,27 +887,30 @@ class rune_hunter_strength_of_the_pack : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 procSpell = aurEff->GetAmount();
-        Player* player = GetCaster()->ToPlayer();
+        Unit* caster = GetCaster();
 
-        if (!player || player->isDead())
+        if (!caster || caster->isDead())
             return;
 
-        player->AddAura(procSpell, player);
+        int32 procSpell = aurEff->GetAmount();
+        caster->AddAura(procSpell, caster);
 
-        Pet* pet = player->GetPet();
-
-        if (pet && pet->IsAlive())
-            GetCaster()->AddAura(procSpell, pet);
-
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
-
-        for (auto const& unit : summonedUnits)
+        if (Player* player = caster->ToPlayer())
         {
-            if (unit->isDead())
-                continue;
+            Pet* pet = player->GetPet();
 
-            GetCaster()->AddAura(procSpell, unit);
+            if (pet && pet->IsAlive())
+                GetCaster()->AddAura(procSpell, pet);
+
+            std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+
+            for (auto const& unit : summonedUnits)
+            {
+                if (unit->isDead())
+                    continue;
+
+                GetCaster()->AddAura(procSpell, unit);
+            }
         }
     }
 

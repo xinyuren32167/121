@@ -189,6 +189,9 @@ enum DeathKnightSpells
     TALENT_DK_DEATH_AND_RENEW                   = 87109,
     TAlENT_DK_DEATH_AND_RENEW_HEAL              = 87110,
     TALENT_DK_NECROTIC_PROTECTION_PROC          = 87114,
+
+    //RUNE
+    RUNE_DK_SPLINTERING_SHIELD_PROC             = 600572,
 };
 
 enum DeathKnightSpellIcons
@@ -293,27 +296,6 @@ class spell_dk_chill_streak : public AuraScript
     void Register() override
     {
         OnEffectRemove += AuraEffectRemoveFn(spell_dk_chill_streak::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
-class spell_dk_bone_shield_calculation : public AuraScript
-{
-    PrepareAuraScript(spell_dk_bone_shield_calculation);
-
-    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BONE_SHIELD);
-            int32 scaling = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
-            uint32 str = caster->GetStat(STAT_STRENGTH);
-            amount = ApplyPct(str, scaling);
-        }
-    }
-
-    void Register() override
-    {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_bone_shield_calculation::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
     }
 };
 
@@ -860,6 +842,36 @@ class spell_dk_bone_shield : public AuraScript
 {
     PrepareAuraScript(spell_dk_bone_shield);
 
+    Aura* GetSplinteringAura(Unit* caster)
+    {
+        for (size_t i = 600566; i < 600572; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    Aura* GetRunicAura(Unit* caster)
+    {
+        for (size_t i = 600573; i < 600579; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    Aura* GetInsatiableAura(Unit* caster)
+    {
+        for (size_t i = 600579; i < 600585; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
     void HandleProc(ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
@@ -876,11 +888,44 @@ class spell_dk_bone_shield : public AuraScript
             int32 dancingReduction = aurEff->GetAmount(); 
             caster->ModifySpellCooldown(SPELL_DK_DANCING_RUNE_WEAPON, dancingReduction);
         }
+
+        if (Aura* splinteringAura = GetSplinteringAura(caster))
+        {
+            int32 amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), splinteringAura->GetEffect(EFFECT_0)->GetAmount());
+            caster->CastCustomSpell(RUNE_DK_SPLINTERING_SHIELD_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+
+        if (Aura* runicAura = GetRunicAura(caster))
+            caster->EnergizeBySpell(caster, SPELL_DK_BONE_SHIELD, runicAura->GetEffect(EFFECT_0)->GetAmount(), POWER_RUNIC_POWER);
+
+        if (Aura* insatiableAura = GetInsatiableAura(caster))
+            caster->ModifySpellCooldown(SPELL_DK_DANCING_RUNE_WEAPON, insatiableAura->GetEffect(EFFECT_0)->GetAmount());
     }
 
     void Register() override
     {
         OnProc += AuraProcFn(spell_dk_bone_shield::HandleProc);
+    }
+};
+
+class spell_dk_bone_shield_calculation : public AuraScript
+{
+    PrepareAuraScript(spell_dk_bone_shield_calculation);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* caster = GetCaster())
+        {
+            SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BONE_SHIELD);
+            int32 scaling = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
+            uint32 str = caster->GetStat(STAT_STRENGTH);
+            amount = ApplyPct(str, scaling);
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_bone_shield_calculation::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
     }
 };
 
@@ -1205,9 +1250,6 @@ class spell_dk_pet_scaling : public AuraScript
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_pet_scaling::HandlePeriodic, EFFECT_ALL, SPELL_AURA_ANY);
     }
 };
-
-
-
 
 // 50462 - Anti-Magic Zone (on raid member)
 class spell_dk_anti_magic_shell_raid : public AuraScript
@@ -2477,7 +2519,6 @@ class spell_dk_sacrifical_pact : public SpellScript
     }
 };
 
-
 class spell_dk_dark_transformation : public SpellScript
 {
     PrepareSpellScript(spell_dk_dark_transformation);
@@ -2500,7 +2541,7 @@ class spell_dk_dark_transformation : public SpellScript
 
         if (pet->GetEntry() == NPC_DK_GHOUL)
         {
-            caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK);
+            caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK, nullptr, nullptr, GetCaster()->GetOwner()->GetGUID());
             caster->AddAura(SPELL_DK_DARK_TRANSFORMATION_POWERUP, pet);
             pet->unlearnSpell(47468, false, true, false);
             pet->learnSpell(80403, false);
@@ -2560,6 +2601,15 @@ class spell_dk_soul_reaper : public AuraScript
 {
     PrepareAuraScript(spell_dk_soul_reaper);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 600510; i < 600516; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
@@ -2573,6 +2623,9 @@ class spell_dk_soul_reaper : public AuraScript
     {
         Unit* caster = GetCaster();
         caster->CastSpell(caster, SPELL_DK_RUNIC_CORRUPTION, TRIGGERED_FULL_MASK);
+
+        if (Aura* runeAura = GetRuneAura(caster))
+            caster->CastSpell(caster, runeAura->GetEffect(EFFECT_0)->GetAmount(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2948,6 +3001,17 @@ class spell_dk_epidemic : public SpellScript
 {
     PrepareSpellScript(spell_dk_epidemic);
 
+    SpellCastResult CheckCast()
+    {
+        if (Unit* target = GetExplTargetUnit())
+        {
+            if (target->HasAura(SPELL_DK_VIRULENT_PLAGUE))
+                return SPELL_CAST_OK;
+        }
+        else
+            return SPELL_FAILED_BAD_TARGETS;
+    }
+
     void FindTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
@@ -2966,6 +3030,7 @@ class spell_dk_epidemic : public SpellScript
 
     void Register() override
     {
+        OnCheckCast += SpellCheckCastFn(spell_dk_epidemic::CheckCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_epidemic::FindTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
@@ -3145,7 +3210,6 @@ class spell_dk_might_of_mograine : public SpellScript
         OnCast += SpellCastFn(spell_dk_might_of_mograine::HandleCast);
     }
 };
-
 
 class spell_dk_apocalyspe : public SpellScript
 {
