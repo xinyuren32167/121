@@ -21,6 +21,9 @@ public:
         if (player->getLevel() > oldlevel) {
             LearningSpellsManager::GiveSpellsForLevelup(player);
         }
+        if (player->getLevel() >= 60) {
+            player->learnSpell(42777);
+        }
     }
 
     void OnFirstLogin(Player* player) {
