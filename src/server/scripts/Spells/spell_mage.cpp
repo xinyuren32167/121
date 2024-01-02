@@ -3961,7 +3961,22 @@ class spell_mage_icy_veins : public SpellScript
     }
 };
 
+class spell_mage_ice_nova_target_select : public SpellScript
+{
+    PrepareSpellScript(spell_mage_ice_nova_target_select);
 
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_ice_nova_target_select::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mage_ice_nova_target_select::FilterTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
 
 void AddSC_mage_spell_scripts()
 {
@@ -4061,8 +4076,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_fireball);
     RegisterSpellScript(spell_mage_frostbolt);
     RegisterSpellScript(spell_mage_icy_veins);
-
-
-
-
+    RegisterSpellScript(spell_mage_ice_nova_target_select);
 }
