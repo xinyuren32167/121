@@ -452,7 +452,7 @@ class rune_dk_disease_and_decay : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetActionTarget()->isDead())
+        if (!eventInfo.GetActionTarget())
             return false;
 
         return GetCaster()->IsAlive();
@@ -686,7 +686,7 @@ class rune_dk_grip_of_the_dead : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetActionTarget()->isDead())
+        if (!eventInfo.GetActionTarget())
             return false;
 
         return GetCaster()->IsAlive();
