@@ -2598,22 +2598,71 @@ class spell_warl_molten_hand : public AuraScript
     }
 };
 
-class spell_warl_shadow_bolt_energy : public SpellScript
+class spell_warl_shadow_bolt : public SpellScript
 {
-    PrepareSpellScript(spell_warl_shadow_bolt_energy);
+    PrepareSpellScript(spell_warl_shadow_bolt);
+
+    Aura* GetWitheringBoltAura(Unit* caster)
+    {
+        for (size_t i = 800304; i < 800310; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleHit(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
-        if (caster->HasAura(MASTERY_WARLOCK_MASTER_DEMONOLOGIST))
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Check for Withering Bolt Rune Buff and apply damage increase per Dot.
+        if (Aura* runeAura = GetWitheringBoltAura(caster))
         {
-            caster->CastSpell(caster, SPELL_WARLOCK_SHADOW_BOLT_ENERGY, TRIGGERED_FULL_MASK);
+            int32 dotQte = 0;
+            auto targetAuras = target->GetAppliedAuras();
+
+            for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+                if (Aura* aura = itr->second->GetBase())
+                {
+                    if (aura->GetCaster() != caster)
+                        continue;
+
+                    SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                    if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
+                        dotQte++;
+                }
+
+            if (dotQte > 0)
+            {
+                int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount() * dotQte;
+
+                AddPct(damage, increasePct);
+            }           
         }
+
+        SetHitDamage(damage);
+
+        // Energize if in Demonology spec
+        if (caster->HasAura(MASTERY_WARLOCK_MASTER_DEMONOLOGIST))
+            caster->CastSpell(caster, SPELL_WARLOCK_SHADOW_BOLT_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_warl_shadow_bolt_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_warl_shadow_bolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -3252,9 +3301,9 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_ritual_of_ruin);
     RegisterSpellScript(spell_warl_molten_hand);
     RegisterSpellScript(spell_warl_all_minion_scaling);
-    RegisterSpellScript(spell_warl_shadow_bolt_energy);
+    RegisterSpellScript(spell_warl_shadow_bolt);
     RegisterSpellScript(spell_warl_infernal_immolation_aura_energy);
-    RegisterSpellScript(spell_warl_soul_collector);
+    RegisterSpellScript(spell_warl_soul_collector); 
     RegisterSpellScript(spell_warl_searing_pain_energy);
     RegisterSpellScript(spell_warl_demonic_barrier);
     RegisterSpellScript(spell_warl_soul_collector_fragment);

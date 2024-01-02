@@ -25,6 +25,13 @@ enum WarlockSpells
     RUNE_WARLOCK_INQUISITORS_GAZE_DAMAGE = 800107,
     RUNE_WARLOCK_KAZAAKS_FINAL_CURSE_DAMAGE = 800186,
     RUNE_WARLOCK_ACCRUED_VITALITY_HEAL = 800204,
+    RUNE_WARLOCK_CLAW_OF_ENDERETH_HEAL = 800218,
+    RUNE_WARLOCK_FEL_SYNERGY_HEAL = 800328,
+
+    // Pet Scaling
+    PET_SCALING_WARLOCK_DAMAGE_HASTE = 83205,
+    PET_SCALING_WARLOCK_STAMINA_DAMAGEREDUC_ARMOR = 83206,
+    PET_SCALING_WARLOCK_INTELLECT_ALLRES = 83207,
 
     // Summons
     SUMMON_WARLOCK_INQUISITORS_EYE = 800000,
@@ -129,7 +136,7 @@ class rune_warl_sacrolashs_dark_strike : public AuraScript
             return;
 
         int32 durationIncrease = aurEff->GetAmount();
-        std::vector<int> curses = {SPELL_WARLOCK_CURSE_OF_ELEMENTS, SPELL_WARLOCK_CURSE_OF_TONGUES, SPELL_WARLOCK_CURSE_OF_WEAKNESS};
+        std::vector<int> curses = { SPELL_WARLOCK_CURSE_OF_ELEMENTS, SPELL_WARLOCK_CURSE_OF_TONGUES, SPELL_WARLOCK_CURSE_OF_WEAKNESS };
 
         for (auto const& curse : curses)
             if (Aura* curseAura = target->GetAura(curse))
@@ -153,7 +160,7 @@ class rune_warl_kazaaks_final_curse : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage();
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -166,7 +173,7 @@ class rune_warl_kazaaks_final_curse : public AuraScript
         int32 targetNbr = 0;
 
         if (Player* player = caster->ToPlayer())
-        {            
+        {
             Pet* pet = player->GetPet();
 
             if (pet && pet->IsAlive())
@@ -204,7 +211,7 @@ class rune_warl_accrued_vitality : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage();
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -214,7 +221,7 @@ class rune_warl_accrued_vitality : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damage = eventInfo.GetHealInfo()->GetHeal();
         int32 amount = CalculatePct(damage, aurEff->GetAmount()) / 10;
 
         if (Aura* healAura = caster->GetAura(RUNE_WARLOCK_ACCRUED_VITALITY_HEAL))
@@ -234,6 +241,215 @@ class rune_warl_accrued_vitality : public AuraScript
     }
 };
 
+class rune_warl_claw_of_endereth : public AuraScript
+{
+    PrepareAuraScript(rune_warl_claw_of_endereth);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = eventInfo.GetHealInfo()->GetHeal();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_WARLOCK_CLAW_OF_ENDERETH_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_claw_of_endereth::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_claw_of_endereth::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_funerary_ceremony : public AuraScript
+{
+    PrepareAuraScript(rune_warl_funerary_ceremony);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_funerary_ceremony::CheckProc);
+    }
+};
+
+class rune_warl_everlasting_shadows : public AuraScript
+{
+    PrepareAuraScript(rune_warl_everlasting_shadows);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 duration = aurEff->GetAmount();
+        auto targetAuras = target->GetAppliedAuras();
+
+        for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
+        {
+            if (Aura* aura = itr->second->GetBase())
+            {
+                if (aura->GetCaster() != caster)
+                    continue;
+
+                SpellInfo const* auraInfo = aura->GetSpellInfo();
+
+                if (auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && auraInfo->SpellFamilyFlags[2] & 0x80000000)
+                {
+                    int32 newDuration = std::max<int32>(aura->GetDuration() + duration, aura->GetMaxDuration());
+                    aura->SetDuration(newDuration);
+                }
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_everlasting_shadows::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_everlasting_shadows::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_fel_synergy : public AuraScript
+{
+    PrepareAuraScript(rune_warl_fel_synergy);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+            int32 amount = eventInfo.GetHealInfo()->GetHeal();
+
+            caster->CastCustomSpell(RUNE_WARLOCK_FEL_SYNERGY_HEAL, SPELLVALUE_BASE_POINT0, amount, pet, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_fel_synergy::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_fel_synergy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_grimoire_of_synergy : public AuraScript
+{
+    PrepareAuraScript(rune_warl_grimoire_of_synergy);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (Pet* pet = player->GetPet())
+            {
+                int32 procSpell = aurEff->GetAmount();
+
+                caster->CastSpell(pet, procSpell, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (Pet* pet = player->GetPet())
+            {
+                int32 procSpell = aurEff->GetAmount();
+
+                if (pet->HasAura(procSpell))
+                    return;
+
+                caster->CastSpell(pet, procSpell, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_grimoire_of_synergy::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_grimoire_of_synergy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_warl_grimoire_of_synergy::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_warl_grimoire_of_synergy_pet : public AuraScript
+{
+    PrepareAuraScript(rune_warl_grimoire_of_synergy_pet);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_grimoire_of_synergy_pet::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_grimoire_of_synergy_pet::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_warlock_perks_scripts()
@@ -243,9 +459,15 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_sacrolashs_dark_strike);
     RegisterSpellScript(rune_warl_kazaaks_final_curse);
     RegisterSpellScript(rune_warl_accrued_vitality);
+    RegisterSpellScript(rune_warl_claw_of_endereth);
+    RegisterSpellScript(rune_warl_funerary_ceremony);
+    RegisterSpellScript(rune_warl_everlasting_shadows);
+    RegisterSpellScript(rune_warl_fel_synergy);
+    RegisterSpellScript(rune_warl_grimoire_of_synergy);
+    RegisterSpellScript(rune_warl_grimoire_of_synergy_pet);
+
+
 
     
-    
-
 
 }

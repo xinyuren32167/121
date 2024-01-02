@@ -1925,27 +1925,6 @@ class spell_mage_arcane_explosion : public SpellScript
 };
 
 // 42847 - Arcane Missile
-class spell_mage_arcane_missiles : public SpellScript
-{
-    PrepareSpellScript(spell_mage_arcane_missiles);
-
-    void HandleAfterCast()
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || !caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
-            return;
-
-        GetCaster()->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        AfterCast += SpellCastFn(spell_mage_arcane_missiles::HandleAfterCast);
-    }
-};
-
-// 42847 - Arcane Missile
 class spell_mage_arcane_missiles_aura : public AuraScript
 {
     PrepareAuraScript(spell_mage_arcane_missiles_aura);
@@ -1956,6 +1935,9 @@ class spell_mage_arcane_missiles_aura : public AuraScript
 
         if (!caster || caster->isDead())
             return;
+
+        if (caster->HasAura(SPELL_MAGE_ARCANE_CHARGE))
+            GetCaster()->CastSpell(caster, SPELL_MAGE_ARCANE_CHARGE_VISUAL, TRIGGERED_FULL_MASK);
 
         // remove Amplification buff
         for (size_t i = 301166; i < 301172; i++)
@@ -4007,7 +3989,6 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_combustion);
     RegisterSpellScript(spell_mage_arcane_charge);
     RegisterSpellScript(spell_mage_arcane_explosion);
-    RegisterSpellScript(spell_mage_arcane_missiles);
     RegisterSpellScript(spell_mage_arcane_missiles_aura);
     RegisterSpellScript(spell_mage_blink_displacement);
     RegisterSpellScript(spell_mage_displacement);

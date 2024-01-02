@@ -11522,10 +11522,16 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                             break;
                         }
                 }
-            // Drain Soul - increased damage for targets under 25 % HP
-            if (spellProto->SpellFamilyFlags[0] & 0x00004000)
-                if (!victim->HealthAbovePct(20))
+
+            // Drain Soul - increased damage for targets under  X% HP
+            if (spellProto->Id == 47855)
+            {
+                int32 healthThreshold = spellProto->GetEffect(EFFECT_1).CalcValue(owner);
+
+                if (!victim->HealthAbovePct(healthThreshold))
                     DoneTotalMod *= 2;
+            }
+                
             // Shadow Bite (15% increase from each dot)
             if (spellProto->SpellFamilyFlags[1] & 0x00400000 && IsPet())
                 if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
