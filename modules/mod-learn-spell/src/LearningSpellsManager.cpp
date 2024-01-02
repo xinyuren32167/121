@@ -8,6 +8,11 @@ enum SpellWarrior {
     SPELL_WARRIOR_IMPEDING_VICTORY = 84515,
 };
 
+
+enum SpellHunter {
+
+};
+
 void LearningSpellsManager::PreloadAllSpells()
 {
     m_Spells = {};
@@ -32,6 +37,9 @@ bool LearningSpellsManager::Exception(Player* player, uint32 spellId)
 {
     if (spellId == SPELL_WARRIOR_VICTORY_RUSH && player->HasSpell(SPELL_WARRIOR_IMPEDING_VICTORY))
         return false;
+
+
+
 
     return true;
 }

@@ -10607,7 +10607,6 @@ inline bool Player::_StoreOrEquipNewItem(uint32 vendorslot, uint32 item, uint8 c
 // Return true is the bought item has a max count to force refresh of window by caller
 bool Player::BuyItemFromVendorSlot(ObjectGuid vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot)
 {
-    sScriptMgr->OnBeforeBuyItemFromVendor(this, vendorguid, vendorslot, item, count, bag, slot);
 
     // this check can be used from the hook to implement a custom vendor process
     if (item == 0)
@@ -10777,6 +10776,8 @@ bool Player::BuyItemFromVendorSlot(ObjectGuid vendorguid, uint32 vendorslot, uin
         SendEquipError(EQUIP_ERR_ITEM_DOESNT_GO_TO_SLOT, nullptr, nullptr);
         return false;
     }
+
+    sScriptMgr->OnBeforeBuyItemFromVendor(this, vendorguid, vendorslot, item, count, bag, slot);
 
     return crItem->maxcount != 0;
 }
