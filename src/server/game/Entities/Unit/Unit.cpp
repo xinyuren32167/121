@@ -17216,13 +17216,14 @@ void Unit::ApplyCooldownAndAmplitudeReduction()
 
     float speed = GetFloatValue(UNIT_MOD_CAST_SPEED);
 
+    float initialHaste = 1 - 0.99;
+    float maxSpeed = std::min(initialHaste * 100, 50.f);
+
     if (speed == 1) {
         RemoveAura(cooldownSpellId);
         RemoveAura(amplitudeSpellId);
         return;
     }
-
-    float maxSpeed = speed * 100;
 
     RemoveAura(amplitudeSpellId);
     CastCustomSpell(amplitudeSpellId, SPELLVALUE_BASE_POINT0, -maxSpeed, this, TRIGGERED_NONE);

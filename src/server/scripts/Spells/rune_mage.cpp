@@ -2562,9 +2562,18 @@ class rune_mage_master_of_flame_targets : public SpellScript
             targets.resize(maxTargets);
         }
 
+        if (targets.size() == 0)
+            return;
+
         for (auto const& object : targets)
         {
+            if (!object)
+                continue;
+
             Unit* target = object->ToUnit();
+
+            if (!target)
+                continue;
 
             if (target->isDead())
                 continue;
