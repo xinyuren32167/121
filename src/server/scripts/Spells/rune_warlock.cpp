@@ -17,6 +17,8 @@ enum WarlockSpells
     SPELL_WARLOCK_CURSE_OF_TONGUES = 11719,
     SPELL_WARLOCK_CURSE_OF_WEAKNESS = 50511,
     SPELL_WARLOCK_DOOM = 47867,
+    SPELL_WARLOCK_DRAIN_LIFE = 47857,
+    SPELL_WARLOCK_UNENDING_RESOLVE = 83016,
 
     // Talents
     TALENT_WARLOCK_PLACEHOLDER = 00000,
@@ -27,6 +29,7 @@ enum WarlockSpells
     RUNE_WARLOCK_ACCRUED_VITALITY_HEAL = 800204,
     RUNE_WARLOCK_CLAW_OF_ENDERETH_HEAL = 800218,
     RUNE_WARLOCK_FEL_SYNERGY_HEAL = 800328,
+    RUNE_WARLOCK_RESOLUTE_BARRIER_DEBUFF = 800414,
 
     // Pet Scaling
     PET_SCALING_WARLOCK_DAMAGE_HASTE = 83205,
@@ -211,7 +214,7 @@ class rune_warl_accrued_vitality : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -221,7 +224,7 @@ class rune_warl_accrued_vitality : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        int32 damage = eventInfo.GetHealInfo()->GetHeal();
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount()) / 10;
 
         if (Aura* healAura = caster->GetAura(RUNE_WARLOCK_ACCRUED_VITALITY_HEAL))
@@ -247,7 +250,7 @@ class rune_warl_claw_of_endereth : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -257,8 +260,10 @@ class rune_warl_claw_of_endereth : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        int32 damage = eventInfo.GetHealInfo()->GetHeal();
-        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 drainMultiplePct = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_DRAIN_LIFE)->GetEffect(EFFECT_0).CalcValueMultiplier(caster);
+        int32 amount = damage * drainMultiplePct;
+        ApplyPct(amount, aurEff->GetAmount());
 
         caster->CastCustomSpell(RUNE_WARLOCK_CLAW_OF_ENDERETH_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
@@ -282,6 +287,56 @@ class rune_warl_funerary_ceremony : public AuraScript
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_warl_funerary_ceremony::CheckProc);
+    }
+};
+
+class rune_warl_funerary_ceremony_apply : public AuraScript
+{
+    PrepareAuraScript(rune_warl_funerary_ceremony_apply);
+
+    std::list <Unit*> FindTargets()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        std::list <Unit*> targetAvailable;
+        Position casterPos = caster->GetPosition();
+        auto const& enemyList = caster->getAttackers();
+
+        for (auto const& target : enemyList)
+        {
+            if (target->IsAlive())
+            {
+                Unit* dummy = target->ToUnit();
+
+                if (target->HasAura(SPELL_WARLOCK_DRAIN_LIFE))
+                    targetAvailable.push_back(dummy);
+            }
+        }
+        return targetAvailable;
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        std::list <Unit*> targetList = FindTargets();
+
+        if (targetList.size() <= 0)
+            return;
+
+        for (auto const& target : targetList)
+            if (Aura* drainLife = target->GetAura(SPELL_WARLOCK_DRAIN_LIFE))
+            {
+                drainLife->GetEffect(EFFECT_0)->ResetTicks();
+                drainLife->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectRemoveFn(rune_warl_funerary_ceremony_apply::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
 
@@ -320,7 +375,7 @@ class rune_warl_everlasting_shadows : public AuraScript
 
                 if (auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && auraInfo->SpellFamilyFlags[2] & 0x80000000)
                 {
-                    int32 newDuration = std::max<int32>(aura->GetDuration() + duration, aura->GetMaxDuration());
+                    int32 newDuration = std::min<int32>(aura->GetDuration() + duration, aura->GetMaxDuration());
                     aura->SetDuration(newDuration);
                 }
             }
@@ -350,13 +405,11 @@ class rune_warl_fel_synergy : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        if (Player* player = caster->ToPlayer())
-        {
-            Pet* pet = player->GetPet();
-            int32 amount = eventInfo.GetHealInfo()->GetHeal();
+        int32 amount = eventInfo.GetHealInfo()->GetHeal();
 
-            caster->CastCustomSpell(RUNE_WARLOCK_FEL_SYNERGY_HEAL, SPELLVALUE_BASE_POINT0, amount, pet, TRIGGERED_FULL_MASK);
-        }
+        if (Player* player = caster->ToPlayer())
+            if (Pet* pet = player->GetPet())
+                caster->CastCustomSpell(RUNE_WARLOCK_FEL_SYNERGY_HEAL, SPELLVALUE_BASE_POINT0, amount, pet, TRIGGERED_FULL_MASK);
     }
 
     void Register()
@@ -450,6 +503,46 @@ class rune_warl_grimoire_of_synergy_pet : public AuraScript
     }
 };
 
+class rune_warl_resolute_barrier : public AuraScript
+{
+    PrepareAuraScript(rune_warl_resolute_barrier);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_WARLOCK_RESOLUTE_BARRIER_DEBUFF))
+            return;
+
+        int32 damageTaken = eventInfo.GetDamageInfo()->GetDamage();
+        int32 healthThreshold = GetEffect(EFFECT_1)->GetAmount();
+
+        if (damageTaken < caster->CountPctFromMaxHealth(healthThreshold))
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            player->ModifySpellCooldown(SPELL_WARLOCK_UNENDING_RESOLVE, -aurEff->GetAmount());
+            caster->CastSpell(caster, RUNE_WARLOCK_RESOLUTE_BARRIER_DEBUFF, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_resolute_barrier::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_resolute_barrier::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+
 
 
 void AddSC_warlock_perks_scripts()
@@ -461,13 +554,15 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_accrued_vitality);
     RegisterSpellScript(rune_warl_claw_of_endereth);
     RegisterSpellScript(rune_warl_funerary_ceremony);
+    RegisterSpellScript(rune_warl_funerary_ceremony_apply);
     RegisterSpellScript(rune_warl_everlasting_shadows);
     RegisterSpellScript(rune_warl_fel_synergy);
     RegisterSpellScript(rune_warl_grimoire_of_synergy);
     RegisterSpellScript(rune_warl_grimoire_of_synergy_pet);
-
+    RegisterSpellScript(rune_warl_resolute_barrier);
 
 
     
+
 
 }
