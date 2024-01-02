@@ -1242,7 +1242,8 @@ class spell_pal_holy_power : public SpellScript
     void HandleEnergy()
     {
         Unit* caster = GetCaster();
-        if (caster->GetPower(POWER_ENERGY) < 5) {
+        if (caster->GetPower(POWER_ENERGY) < 5)
+        {
             caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
         }
     }
@@ -1261,8 +1262,8 @@ class spell_pal_infusion_of_light_power : public AuraScript
     {
         if (!GetCaster() || !GetCaster()->IsAlive())
             return;
-
-        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        if (GetCaster()->GetPower(POWER_ENERGY) < 5)
+            GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
 
         if (GetCaster()->HasAura(SPELL_PALADIN_INFUSION_OF_LIGHT_R1))
         {
@@ -1550,6 +1551,9 @@ class spell_pal_wake_of_ashes : public SpellScript
     void HandleEnergy()
     {
         GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 3);
+
+        if (GetCaster()->GetPower(POWER_ENERGY) > 5)
+            GetCaster()->SetPower(POWER_ENERGY, 5);
     }
 
     void Register()
