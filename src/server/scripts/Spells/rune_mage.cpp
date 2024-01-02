@@ -2558,20 +2558,25 @@ class rune_mage_master_of_flame_targets : public SpellScript
 
         if (targets.size() > maxTargets)
         {
-            targets.remove_if(Acore::UnitAuraCheck(true, MASTERY_MAGE_IGNITE_DOT, caster->GetGUID()));
-            targets.resize(maxTargets);
+            targets.remove_if(Acore::UnitAuraCheck(true, MASTERY_MAGE_IGNITE_DOT));
+
+            if (targets.size() > maxTargets)
+                targets.resize(maxTargets);
         }
 
         for (auto const& object : targets)
         {
-            Unit* target = object->ToUnit();
+            if (object->GetTypeId() == TYPEID_UNIT) {
 
-            if (target->isDead())
-                continue;
+                if (Unit* target = object->ToUnit()) {
 
-            int32 amount = GetRuneAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+                    if (target->isDead())
+                        continue;
 
-            caster->CastCustomSpell(MASTERY_MAGE_IGNITE_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                    int32 amount = GetRuneAura(caster)->GetEffect(EFFECT_2)->GetAmount();
+                    caster->CastCustomSpell(MASTERY_MAGE_IGNITE_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                }
+            }
         }
     }
 

@@ -134,30 +134,6 @@ class spell_activate_specialization : public SpellScript
     PrepareSpellScript(spell_activate_specialization);
 
 
-    void RemoveOffHandWeapon(Player* player) {
-        Item* offItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-        ItemPosCountVec off_dest;
-        uint8 off_msg = player->CanStoreItem(NULL_BAG, NULL_SLOT, off_dest, offItem, false);
-        if (off_msg == EQUIP_ERR_OK)
-        {
-            player->RemoveItem(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND, true);
-            player->StoreItem(off_dest, offItem, true);
-        }
-        else
-        {
-            player->MoveItemFromInventory(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND, true);
-            CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-            offItem->DeleteFromInventoryDB(trans);                   // deletes item from character's inventory
-            offItem->SaveToDB(trans);                                // recursive and not have transaction guard into self, item not in inventory and can be save standalone
-
-            std::string subject = player->GetSession()->GetAcoreString(LANG_NOT_EQUIPPED_ITEM);
-            MailDraft(subject, "There were problems with equipping one or several items").AddItem(offItem).SendMailTo(trans, player, MailSender(player, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_COPIED);
-
-            CharacterDatabase.CommitTransaction(trans);
-        }
-    }
-
-
     void HandleProc()
     {
         Player* player = GetCaster()->ToPlayer();
@@ -179,7 +155,6 @@ class spell_activate_specialization : public SpellScript
         }
 
         if (currentSpecId == WARRIOR_HOPLITE || currentSpecId == WARRIOR_FURY) {
-            RemoveOffHandWeapon(player);
             player->SetCanTitanGrip(false);
         }
 
