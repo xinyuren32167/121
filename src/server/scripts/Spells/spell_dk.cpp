@@ -2549,7 +2549,7 @@ class spell_dk_dark_transformation : public SpellScript
 
         if (pet->GetEntry() == NPC_DK_GHOUL)
         {
-            caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK, nullptr, nullptr, GetCaster()->GetOwner()->GetGUID());
+            caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK, nullptr, nullptr, GetCaster()->GetGUID());
             caster->AddAura(SPELL_DK_DARK_TRANSFORMATION_POWERUP, pet);
             pet->unlearnSpell(47468, false, true, false);
             pet->learnSpell(80403, false);
