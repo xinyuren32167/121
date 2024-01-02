@@ -2355,7 +2355,13 @@ class spell_warl_malefic_rapture : public SpellScript
 
         for (auto const& target : threatList)
         {
-            if (target->IsAlive())
+            if (!target)
+                continue;
+
+            if (target->isDead())
+                continue;
+
+            if (target)
             {
                 auto targetAuras = target->GetAppliedAuras();
 
