@@ -2526,6 +2526,10 @@ class spell_dk_dark_transformation : public SpellScript
         // Check if we have valid targets, otherwise skip spell casting here
         Player* caster = GetCaster()->ToPlayer();
         Pet* pet = caster->GetPet();
+
+        if (!pet)
+            return SPELL_FAILED_NO_PET;
+
         if (pet && pet->GetEntry() == NPC_DK_GHOUL)
             return SPELL_CAST_OK;
 
@@ -2536,6 +2540,12 @@ class spell_dk_dark_transformation : public SpellScript
     {
         Player* caster = GetCaster()->ToPlayer();
         Pet* pet = caster->GetPet();
+
+        if (!pet)
+            return;
+
+        if (!GetCaster()->GetOwner())
+            return;
 
         if (pet->GetEntry() == NPC_DK_GHOUL)
         {
