@@ -437,6 +437,9 @@ class spell_sweeping_rage_proc : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetCaster()->HasAura(200244))
             return;
 
@@ -497,10 +500,10 @@ class spell_collateral_damage_proc : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster()->HasAura(200252))
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster()->HasAura(200252))
             return;
 
         int32 stackAmount = GetCaster()->GetAura(200252)->GetStackAmount();
@@ -787,10 +790,10 @@ class spell_reckless_abandon_proc : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster()->HasAura(200414))
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster()->HasAura(200414))
             return;
 
         int32 stackAmount = GetCaster()->GetAura(200414)->GetStackAmount();
@@ -889,6 +892,9 @@ class rune_relentless_remove : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (Aura* stackAura = GetCaster()->GetAura(RUNE_WARR_RELENTLESS_STACK))
             stackAura->Remove();
     }
@@ -1005,10 +1011,10 @@ class spell_side_step : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetRuneAura())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        if (!GetCaster()->IsAlive())
+        if (!GetRuneAura())
             return;
 
         GetCaster()->CastSpell(GetCaster(), GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell, TRIGGERED_FULL_MASK);
@@ -1049,10 +1055,10 @@ class spell_shield_parry : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetRuneAura())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        if (!GetCaster()->IsAlive())
+        if (!GetRuneAura())
             return;
 
         GetCaster()->CastSpell(GetCaster(), GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell, TRIGGERED_FULL_MASK);
@@ -1101,6 +1107,9 @@ class spell_magic_barrier : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetRuneAura())
             return;
 
@@ -1154,6 +1163,9 @@ class spell_enduring_defenses_shield_block : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetRuneAura())
             return;
 
@@ -1342,10 +1354,10 @@ class spell_recuperation : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetRuneAura())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        if (!GetCaster()->IsAlive())
+        if (!GetRuneAura())
             return;
 
         uint32 amount = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
@@ -1426,6 +1438,9 @@ class spell_unnerving_focus : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetRuneAura())
             return;
 
@@ -1495,6 +1510,9 @@ class spell_inspiring_wall : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetRuneAura())
             return;
 
@@ -1749,7 +1767,7 @@ class spell_hurricane : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (!GetRuneAura())
@@ -1902,7 +1920,7 @@ class rune_bonegrinder : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* aura = GetRuneAura())
@@ -1947,7 +1965,7 @@ class rune_merciless : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* runeAura = GetRuneAura())
@@ -2456,7 +2474,7 @@ class rune_test_of_might_expire : public AuraScript
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* runeAura = GetRuneAura())
@@ -2691,6 +2709,9 @@ class rune_warpaint_and_cruelty : public AuraScript
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (Aura* buffAura = GetCaster()->GetAura(RUNE_WARR_ENRAGE_ADDITIONAL_BUFF))
             buffAura->Remove();
     }
@@ -2977,7 +2998,7 @@ class rune_planned_battle_expire : public AuraScript
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* runeAura = GetRuneAura())
