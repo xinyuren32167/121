@@ -2364,6 +2364,9 @@ class spell_dk_festering_wound : public AuraScript
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
     }
 
@@ -2467,6 +2470,9 @@ class spell_dk_virulent_plague : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         GetCaster()->CastSpell(GetTarget(), SPELL_DK_VIRULENT_PLAGUE_PROC, TRIGGERED_FULL_MASK);
     }
 
@@ -3293,6 +3299,9 @@ class spell_dk_improved_bloodworms_death : public AuraScript
             healAmount = CalculatePct(damage, 30);
         else if (owner->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_R3))
             healAmount = CalculatePct(damage, 45);
+
+        if (!owner || owner->isDead())
+            return;
 
         bloodworm->CastCustomSpell(SPELL_DK_IMPROVED_BLOODWORMS_HEAL, SPELLVALUE_BASE_POINT0, healAmount, owner, TRIGGERED_FULL_MASK);
     }

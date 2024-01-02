@@ -819,6 +819,9 @@ class rune_dk_unholy_endurance : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (Aura* runeAura = GetRuneAura(GetCaster()))
             if (Aura* aura = GetCaster()->GetAura(runeAura->GetEffect(EFFECT_1)->GetAmount()))
                 aura->Remove();
@@ -1182,7 +1185,7 @@ class rune_dk_blood_bath_expire : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* runeAura = GetRuneAura(GetCaster()))
@@ -1283,7 +1286,7 @@ class rune_dk_perserverance_of_the_ebon_blade : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* runeAura = GetRuneAura(GetCaster()))
@@ -1344,7 +1347,7 @@ class rune_dk_torment_expire : public AuraScript
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (!GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (Aura* runeAura = GetRuneAura())
