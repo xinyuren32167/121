@@ -1112,16 +1112,19 @@ void RunesManager::UpdateRunicDustCountOnLogin(Player* player)
     auto it = m_Progression.find(accountId);
 
     if (it != m_Progression.end()) {
-        Item* item = player->GetItemByEntry(70008);
 
-        if (!item)
-        {
-            player->AddItem(70008, it->second.dusts);
-            return;
+        if (it->second.dusts > 0) {
+            Item* item = player->GetItemByEntry(70008);
+
+            if (!item)
+            {
+                player->AddItem(70008, it->second.dusts);
+                return;
+            }
+
+            if (item->GetCount() != it->second.dusts)
+                item->SetCount(it->second.dusts);
         }
-
-        if (item->GetCount() != it->second.dusts)
-            item->SetCount(it->second.dusts);
     }
 }
 
