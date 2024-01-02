@@ -1006,6 +1006,12 @@ void Player::UpdateVersatility()
 {
     uint32 amount = totalVersatility;
 
+    AuraEffectList const& modExpertise = GetAuraEffectsByType(SPELL_AURA_MOD_EXPERTISE);
+
+    for (auto itr = modExpertise.begin(); itr != modExpertise.end(); ++itr)
+        if (HasAura((*itr)->GetBase()->GetId()))
+            amount += (*itr)->GetAmount();
+
     AuraEffectList const& armorPenAuras = GetAuraEffectsByType(SPELL_AURA_MOD_VERSATILITY_PCT);
 
     for (auto itr = armorPenAuras.begin(); itr != armorPenAuras.end(); ++itr)
