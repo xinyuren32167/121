@@ -103,7 +103,7 @@ class spell_cut_the_veins : public AuraScript
     {
         PreventDefaultAction();
 
-        if (!GetCaster())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (GetRuneAura())

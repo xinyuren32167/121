@@ -275,6 +275,9 @@ class rune_dk_soul_drinker : public AuraScript
     {
         HealInfo* healInfo = eventInfo.GetHealInfo();
 
+        if (!eventInfo.GetActionTarget())
+            return false;
+
         if (!healInfo || !healInfo->GetHeal())
             return false;
 
@@ -476,7 +479,7 @@ class rune_dk_repeated_application : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetActionTarget()->IsAlive();
+        return eventInfo.GetActionTarget();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -549,7 +552,7 @@ class rune_dk_crimson_scourge : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return GetCaster()->IsAlive();
+        return GetCaster() && GetCaster()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -588,7 +591,7 @@ class rune_dk_hemoglobin : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return GetCaster()->IsAlive();
+        return GetCaster() && GetCaster()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -610,6 +613,10 @@ class rune_dk_aura_of_decay : public AuraScript
     void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
+
+        if (!target)
+            return;
+
         target->removeSpell(SPELL_DK_DEATH_AND_DECAY, SPEC_MASK_ALL, false);
         target->learnSpell(RUNE_DK_AURA_OF_DECAY);
     }
@@ -617,6 +624,10 @@ class rune_dk_aura_of_decay : public AuraScript
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
+
+        if (!target)
+            return;
+
         target->removeSpell(RUNE_DK_AURA_OF_DECAY, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_DK_DEATH_AND_DECAY);
     }
@@ -745,7 +756,7 @@ class rune_dk_adaptation : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return GetCaster()->IsAlive();
+        return GetCaster() && GetCaster()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
