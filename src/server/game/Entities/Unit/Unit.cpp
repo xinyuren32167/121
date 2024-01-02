@@ -11526,7 +11526,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
             // Drain Soul - increased damage for targets under  X% HP
             if (spellProto->Id == 47855)
             {
-                int32 healthThreshold = spellProto->GetEffect(EFFECT_1).CalcValue(owner);
+                int32 healthThreshold = spellProto->GetEffect(EFFECT_1).CalcValue(this);
 
                 if (!victim->HealthAbovePct(healthThreshold))
                     DoneTotalMod *= 2;

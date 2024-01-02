@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_WARLOCK and SPELLFAMILY_GENERIC spells used by warlock players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_warl_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_WARLOCK and SPELLFAMILY_GENERIC spells used by warlock players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_warl_".
+  */
 
 #include "Pet.h"
 #include "Player.h"
@@ -33,131 +33,131 @@
 enum WarlockSpells
 {
     //THEIRS
-    SPELL_WARLOCK_DRAIN_SOUL_R1                     = 1120,
-    SPELL_WARLOCK_CREATE_SOULSHARD                  = 43836,
-    SPELL_WARLOCK_CURSE_OF_DOOM_EFFECT              = 18662,
-    SPELL_WARLOCK_DEMONIC_CIRCLE_SUMMON             = 48018,
-    SPELL_WARLOCK_DEMONIC_CIRCLE_TELEPORT           = 48020,
-    SPELL_WARLOCK_DEMONIC_CIRCLE_ALLOW_CAST         = 62388,
-    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_SUCCUBUS      = 54435,
-    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_VOIDWALKER    = 54443,
-    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELGUARD      = 54508,
-    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELHUNTER     = 54509,
-    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_IMP           = 54444,
-    SPELL_WARLOCK_FEL_SYNERGY_HEAL                  = 54181,
-    SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_AURA          = 58070,
-    SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_PROC          = 58068,
-    SPELL_WARLOCK_GLYPH_OF_SHADOWFLAME              = 63311,
-    SPELL_WARLOCK_GLYPH_OF_SIPHON_LIFE              = 56216,
+    SPELL_WARLOCK_DRAIN_SOUL_R1 = 1120,
+    SPELL_WARLOCK_CREATE_SOULSHARD = 43836,
+    SPELL_WARLOCK_CURSE_OF_DOOM_EFFECT = 18662,
+    SPELL_WARLOCK_DEMONIC_CIRCLE_SUMMON = 48018,
+    SPELL_WARLOCK_DEMONIC_CIRCLE_TELEPORT = 48020,
+    SPELL_WARLOCK_DEMONIC_CIRCLE_ALLOW_CAST = 62388,
+    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_SUCCUBUS = 54435,
+    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_VOIDWALKER = 54443,
+    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELGUARD = 54508,
+    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELHUNTER = 54509,
+    SPELL_WARLOCK_DEMONIC_EMPOWERMENT_IMP = 54444,
+    SPELL_WARLOCK_FEL_SYNERGY_HEAL = 54181,
+    SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_AURA = 58070,
+    SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_PROC = 58068,
+    SPELL_WARLOCK_GLYPH_OF_SHADOWFLAME = 63311,
+    SPELL_WARLOCK_GLYPH_OF_SIPHON_LIFE = 56216,
     //SPELL_WARLOCK_HAUNT                             = 48181,
-    SPELL_WARLOCK_HAUNT_HEAL                        = 48210,
-    SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R1           = 18692,
-    SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R2           = 18693,
-    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_R1         = 18703,
-    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_R2         = 18704,
-    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_BUFF_R1    = 60955,
-    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_BUFF_R2    = 60956,
-    SPELL_WARLOCK_LIFE_TAP_ENERGIZE                 = 31818,
-    SPELL_WARLOCK_LIFE_TAP_ENERGIZE_2               = 32553,
-    SPELL_WARLOCK_SOULSHATTER                       = 32835,
-    SPELL_WARLOCK_SIPHON_LIFE_HEAL                  = 63106,
-    SPELL_WARLOCK_UNSTABLE_AFFLICTION_DISPEL        = 31117,
-    SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1            = 18213,
-    SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC          = 18371,
+    SPELL_WARLOCK_HAUNT_HEAL = 48210,
+    SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R1 = 18692,
+    SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R2 = 18693,
+    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_R1 = 18703,
+    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_R2 = 18704,
+    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_BUFF_R1 = 60955,
+    SPELL_WARLOCK_IMPROVED_HEALTH_FUNNEL_BUFF_R2 = 60956,
+    SPELL_WARLOCK_LIFE_TAP_ENERGIZE = 31818,
+    SPELL_WARLOCK_LIFE_TAP_ENERGIZE_2 = 32553,
+    SPELL_WARLOCK_SOULSHATTER = 32835,
+    SPELL_WARLOCK_SIPHON_LIFE_HEAL = 63106,
+    SPELL_WARLOCK_UNSTABLE_AFFLICTION_DISPEL = 31117,
+    SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1 = 18213,
+    SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC = 18371,
 
     //OURS
-    SPELL_FELBOAR_CHARGE                            = 83005,
-    SPELL_WARLOCK_AGONY                             = 83010,
-    SPELL_WARLOCK_DARK_PACT                         = 59092,
-    SPELL_WARLOCK_DARK_PACT_DAMAGE                  = 83011,
-    SPELL_WARLOCK_DARK_PACT_SHIELD                  = 83012,
-    SPELL_WARLOCK_HAUNT                             = 59164,
-    SPELL_WARLOCK_SEED_OF_CORRUPTION                = 47836,
-    SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION     = 47834,
-    SPELL_WARLOCK_SEED_OF_CORRUPTION_VISUAL         = 37826,
-    SPELL_WARLOCK_SHADOWBURN                        = 47827,
-    SPELL_WARLOCK_CONFLAGRATE                       = 17962,
-    SPELL_WARLOCK_SOUL_FIRE                         = 47825,
-    SPELL_WARLOCK_BURNING_RUSH_DAMAGE               = 83019,
-    SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE            = 83021,
-    SPELL_WARLOCK_SOUL_STRIKE                       = 83039,
-    SPELL_WARLOCK_IMMOLATE                          = 47811,
-    TALENT_WARLOCK_SOUL_FLAME                       = 30054,
-    TALENT_WARLOCK_RITUAL_OF_RUIN                   = 83074,
-    TALENT_WARLOCK_RITUAL_OF_RUIN_STACK             = 83075,
-    TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF              = 83076,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1              = 47383,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2              = 71162,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3              = 71165,
-    SPELL_WARLOCK_SHADOW_BOLT                       = 47809,
-    SPELL_WARLOCK_SHADOW_BOLT_ENERGY                = 83080,
-    SPELL_WARLOCK_DRAIN_SOUL_ENERGY                 = 83081,
-    SPELL_WARLOCK_UNSTABLE_AFFLICTION_ENERGY        = 83082,
-    SPELL_WARLOCK_SOUL_STRIKE_ENERGY                = 83083,
-    SPELL_WARLOCK_CONFLAGRATE_ENERGY                = 83084,
-    SPELL_WARLOCK_IMMOLATE_ENERGY                   = 83085,
-    SPELL_WARLOCK_INCINERATE_ENERGY                 = 83086,
-    SPELL_WARLOCK_SHADOWBURN_ENERGY                 = 83087,
-    SPELL_WARLOCK_SOUL_FIRE_ENERGY                  = 83088,
-    SPELL_WARLOCK_IMMOLATION_AURA_ENERGY            = 83089,
-    SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY    = 83188,
-    PET_SPELL_IMMOLATION_AURA_DAMAGE                = 20153,
-    MASTERY_WARLOCK_MASTER_DEMONOLOGIST             = 1100020,
-    SPELL_WARLOCK_SOUL_COLLECTOR                    = 83094,
-    SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT           = 83095,
-    SPELL_WARLOCK_SOUL_COLLECTOR_DEMON_BUFF         = 83096,
-    SPELL_WARLOCK_SOUL_COLLECTOR_HEAL               = 83097,
-    SPELL_WARLOCK_SEARING_PAIN_ENERGY               = 83100,
-    MASTERY_WARLOCK_FEL_BLOOD                       = 1100024,
-    SPELL_WARLOCK_FRAILTY_HEAL                      = 83104,
-    SPELL_WARLOCK_SOUL_BOMB                         = 83102,
-    SPELL_WARLOCK_SOUL_BOMB_DAMAGE                  = 83105,
-    SPELL_WARLOCK_SUMMON_FELGUARD                   = 30146,
-    SPELL_WARLOCK_SUMMON_FELHUNTER                  = 691,
-    SPELL_WARLOCK_SUMMON_IMP                        = 688,
-    SPELL_WARLOCK_SUMMON_SUCCUBUS                   = 712,
-    SPELL_WARLOCK_SUMMON_VOIDWALKER                 = 697,
-    SPELL_WARLOCK_EYE_OF_KILLROG                    = 126,
-    SPELL_WARLOCK_IMMOLATION_AURA                   = 50589,
-    SPELL_WARLOCK_SHADOW_CLEAVE                     = 50581,
-    SPELL_WARLOCK_DEMON_CHARGE                      = 54785,
-    SPELL_WARLOCK_SHROUD_OF_DARKNESS                = 83114,
-    SPELL_WARLOCK_DEMONIC_ASCENSION                 = 83110,
-    SPELL_WARLOCK_DEMONIC_PROTECTION                = 83111,
-    SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF   = 83116,
-    SPELL_WARLOCK_FRACTURE_ENERGY                   = 83107,
+    SPELL_FELBOAR_CHARGE = 83005,
+    SPELL_WARLOCK_AGONY = 83010,
+    SPELL_WARLOCK_DARK_PACT = 59092,
+    SPELL_WARLOCK_DARK_PACT_DAMAGE = 83011,
+    SPELL_WARLOCK_DARK_PACT_SHIELD = 83012,
+    SPELL_WARLOCK_HAUNT = 59164,
+    SPELL_WARLOCK_SEED_OF_CORRUPTION = 47836,
+    SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION = 47834,
+    SPELL_WARLOCK_SEED_OF_CORRUPTION_VISUAL = 37826,
+    SPELL_WARLOCK_SHADOWBURN = 47827,
+    SPELL_WARLOCK_CONFLAGRATE = 17962,
+    SPELL_WARLOCK_SOUL_FIRE = 47825,
+    SPELL_WARLOCK_BURNING_RUSH_DAMAGE = 83019,
+    SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
+    SPELL_WARLOCK_SOUL_STRIKE = 83039,
+    SPELL_WARLOCK_IMMOLATE = 47811,
+    TALENT_WARLOCK_SOUL_FLAME = 30054,
+    TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
+    TALENT_WARLOCK_RITUAL_OF_RUIN_STACK = 83075,
+    TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF = 83076,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1 = 47383,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2 = 71162,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3 = 71165,
+    SPELL_WARLOCK_SHADOW_BOLT = 47809,
+    SPELL_WARLOCK_SHADOW_BOLT_ENERGY = 83080,
+    SPELL_WARLOCK_DRAIN_SOUL_ENERGY = 83081,
+    SPELL_WARLOCK_UNSTABLE_AFFLICTION_ENERGY = 83082,
+    SPELL_WARLOCK_SOUL_STRIKE_ENERGY = 83083,
+    SPELL_WARLOCK_CONFLAGRATE_ENERGY = 83084,
+    SPELL_WARLOCK_IMMOLATE_ENERGY = 83085,
+    SPELL_WARLOCK_INCINERATE_ENERGY = 83086,
+    SPELL_WARLOCK_SHADOWBURN_ENERGY = 83087,
+    SPELL_WARLOCK_SOUL_FIRE_ENERGY = 83088,
+    SPELL_WARLOCK_IMMOLATION_AURA_ENERGY = 83089,
+    SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY = 83188,
+    PET_SPELL_IMMOLATION_AURA_DAMAGE = 20153,
+    MASTERY_WARLOCK_MASTER_DEMONOLOGIST = 1100020,
+    SPELL_WARLOCK_SOUL_COLLECTOR = 83094,
+    SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT = 83095,
+    SPELL_WARLOCK_SOUL_COLLECTOR_DEMON_BUFF = 83096,
+    SPELL_WARLOCK_SOUL_COLLECTOR_HEAL = 83097,
+    SPELL_WARLOCK_SEARING_PAIN_ENERGY = 83100,
+    MASTERY_WARLOCK_FEL_BLOOD = 1100024,
+    SPELL_WARLOCK_FRAILTY_HEAL = 83104,
+    SPELL_WARLOCK_SOUL_BOMB = 83102,
+    SPELL_WARLOCK_SOUL_BOMB_DAMAGE = 83105,
+    SPELL_WARLOCK_SUMMON_FELGUARD = 30146,
+    SPELL_WARLOCK_SUMMON_FELHUNTER = 691,
+    SPELL_WARLOCK_SUMMON_IMP = 688,
+    SPELL_WARLOCK_SUMMON_SUCCUBUS = 712,
+    SPELL_WARLOCK_SUMMON_VOIDWALKER = 697,
+    SPELL_WARLOCK_EYE_OF_KILLROG = 126,
+    SPELL_WARLOCK_IMMOLATION_AURA = 50589,
+    SPELL_WARLOCK_SHADOW_CLEAVE = 50581,
+    SPELL_WARLOCK_DEMON_CHARGE = 54785,
+    SPELL_WARLOCK_SHROUD_OF_DARKNESS = 83114,
+    SPELL_WARLOCK_DEMONIC_ASCENSION = 83110,
+    SPELL_WARLOCK_DEMONIC_PROTECTION = 83111,
+    SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF = 83116,
+    SPELL_WARLOCK_FRACTURE_ENERGY = 83107,
 
-    TALENT_WARLOCK_DEMON_SPIKES_DAMAGE              = 83197,
-    TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN        = 83199,
-    TALENT_WARLOCK_ARCHDEMON_DAMAGE                 = 83201,
-    TALENT_WARLOCK_ARCHDEMON_MARK                   = 83202,
-    TALENT_WARLOCK_ARCHDEMON_COOLDOWN               = 83203,
+    TALENT_WARLOCK_DEMON_SPIKES_DAMAGE = 83197,
+    TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN = 83199,
+    TALENT_WARLOCK_ARCHDEMON_DAMAGE = 83201,
+    TALENT_WARLOCK_ARCHDEMON_MARK = 83202,
+    TALENT_WARLOCK_ARCHDEMON_COOLDOWN = 83203,
 
-    SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE      = 83055,
-    SPELL_WARLOCK_GRIMOIRE_FELGUARD                 = 83031,
-    SPELL_WARLOCK_CHARGE_FELGUARD                   = 25821,
+    SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE = 83055,
+    SPELL_WARLOCK_GRIMOIRE_FELGUARD = 83031,
+    SPELL_WARLOCK_CHARGE_FELGUARD = 25821,
 
-    SPELL_WARLOCK_IMPLOSSION                        = 83038,
-    SPELL_WARLOCK_DEMONBOLT_EMPOREWED               = 83041,
+    SPELL_WARLOCK_IMPLOSSION = 83038,
+    SPELL_WARLOCK_DEMONBOLT_EMPOREWED = 83041,
 
-    SPELL_WARLOCK_HAVOC_AURA                        = 83062,
-    SPELL_WARLOCK_HAVOC_DAMAGE                      = 83061,
+    SPELL_WARLOCK_HAVOC_AURA = 83062,
+    SPELL_WARLOCK_HAVOC_DAMAGE = 83061,
 
-    SPELL_MINION_STAT_DREAD_STALKER                 = 75001,
-    SPELL_MINION_STAT_WILD_IMP                      = 75002,
-    SPELL_MINION_STAT_DARKGLARE                     = 75003,
-    SPELL_MINION_STAT_VILEFIEND                     = 75004,
-    SPELL_MINION_STAT_DEMONIC_TYRANT                = 75005,
-    SPELL_MINION_STAT_BOMBER                        = 74999,
+    SPELL_MINION_STAT_DREAD_STALKER = 75001,
+    SPELL_MINION_STAT_WILD_IMP = 75002,
+    SPELL_MINION_STAT_DARKGLARE = 75003,
+    SPELL_MINION_STAT_VILEFIEND = 75004,
+    SPELL_MINION_STAT_DEMONIC_TYRANT = 75005,
+    SPELL_MINION_STAT_BOMBER = 74999,
 
-    SPELL_MINION_INCREASE_DREAD_STALKER             = 1100009,
-    SPELL_MINION_INCREASE_WILD_IMP                  = 1100010,
-    SPELL_MINION_INCREASE_DARKGLARE                 = 1100011,
-    SPELL_MINION_INCREASE_VILEFIEND                 = 1100012,
-    SPELL_MINION_INCREASE_DEMONIC_TYRANT            = 1100013,
-    SPELL_MINION_INCREASE_BOMBER                    = 1100014,
+    SPELL_MINION_INCREASE_DREAD_STALKER = 1100009,
+    SPELL_MINION_INCREASE_WILD_IMP = 1100010,
+    SPELL_MINION_INCREASE_DARKGLARE = 1100011,
+    SPELL_MINION_INCREASE_VILEFIEND = 1100012,
+    SPELL_MINION_INCREASE_DEMONIC_TYRANT = 1100013,
+    SPELL_MINION_INCREASE_BOMBER = 1100014,
 
-    SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE    = 83032,
+    SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE = 83032,
 };
 
 enum WarlockPets {
@@ -181,8 +181,8 @@ enum WarlockPets {
 
 enum WarlockSpellIcons
 {
-    WARLOCK_ICON_ID_IMPROVED_LIFE_TAP               = 208,
-    WARLOCK_ICON_ID_MANA_FEED                       = 1982
+    WARLOCK_ICON_ID_IMPROVED_LIFE_TAP = 208,
+    WARLOCK_ICON_ID_MANA_FEED = 1982
 };
 
 class spell_warl_eye_of_kilrogg : public AuraScript
@@ -419,7 +419,7 @@ class spell_warl_all_minion_scaling : public AuraScript
         {
             int32 newAmount = 0;
 
-            if(m_scriptSpellId == SPELL_MINION_STAT_DREAD_STALKER)
+            if (m_scriptSpellId == SPELL_MINION_STAT_DREAD_STALKER)
                 newAmount = owner->GetAura(SPELL_MINION_INCREASE_DREAD_STALKER)->GetEffect(EFFECT_0)->GetAmount();
             if (m_scriptSpellId == SPELL_MINION_STAT_WILD_IMP)
                 newAmount = owner->GetAura(SPELL_MINION_INCREASE_WILD_IMP)->GetEffect(EFFECT_0)->GetAmount();
@@ -478,9 +478,9 @@ class spell_warl_generic_scaling : public AuraScript
         // xinef: by default warlock pet inherits 57% of max(SP FIRE, SP SHADOW) as AP
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            int32 fire  = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum  = (fire > shadow) ? fire : shadow;
+            int32 maximum = (fire > shadow) ? fire : shadow;
             amount = CalculatePct(std::max<int32>(0, maximum), 57);
         }
     }
@@ -490,9 +490,9 @@ class spell_warl_generic_scaling : public AuraScript
         // xinef: by default warlock pet inherits 15% of max(SP FIRE, SP SHADOW) as SP
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            int32 fire  = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum  = (fire > shadow) ? fire : shadow;
+            int32 maximum = (fire > shadow) ? fire : shadow;
             amount = CalculatePct(std::max<int32>(0, maximum), 15);
 
             // xinef: Update appropriate player field
@@ -584,9 +584,9 @@ class spell_warl_infernal_scaling : public AuraScript
         // xinef: by default warlock pet inherits 57% of max(SP FIRE, SP SHADOW) as AP
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            int32 fire  = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum  = (fire > shadow) ? fire : shadow;
+            int32 maximum = (fire > shadow) ? fire : shadow;
             amount = CalculatePct(std::max<int32>(0, maximum), 57);
         }
     }
@@ -596,9 +596,9 @@ class spell_warl_infernal_scaling : public AuraScript
         // xinef: by default warlock pet inherits 15% of max(SP FIRE, SP SHADOW) as SP
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            int32 fire  = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum  = (fire > shadow) ? fire : shadow;
+            int32 maximum = (fire > shadow) ? fire : shadow;
             amount = CalculatePct(std::max<int32>(0, maximum), 15);
 
             // xinef: Update appropriate player field
@@ -688,26 +688,26 @@ class spell_warl_demonic_empowerment : public SpellScript
                 CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(targetCreature->GetEntry());
                 switch (ci->family)
                 {
-                    case CREATURE_FAMILY_SUCCUBUS:
-                        targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_SUCCUBUS, true);
-                        break;
-                    case CREATURE_FAMILY_VOIDWALKER:
-                        {
-                            SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_DEMONIC_EMPOWERMENT_VOIDWALKER);
-                            int32 hp = int32(targetCreature->CountPctFromMaxHealth(GetCaster()->CalculateSpellDamage(targetCreature, spellInfo, 0)));
-                            targetCreature->CastCustomSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_VOIDWALKER, &hp, nullptr, nullptr, true);
-                            //unitTarget->CastSpell(unitTarget, 54441, true);
-                            break;
-                        }
-                    case CREATURE_FAMILY_FELGUARD:
-                        targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELGUARD, true);
-                        break;
-                    case CREATURE_FAMILY_FELHUNTER:
-                        targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELHUNTER, true);
-                        break;
-                    case CREATURE_FAMILY_IMP:
-                        targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_IMP, true);
-                        break;
+                case CREATURE_FAMILY_SUCCUBUS:
+                    targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_SUCCUBUS, true);
+                    break;
+                case CREATURE_FAMILY_VOIDWALKER:
+                {
+                    SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_DEMONIC_EMPOWERMENT_VOIDWALKER);
+                    int32 hp = int32(targetCreature->CountPctFromMaxHealth(GetCaster()->CalculateSpellDamage(targetCreature, spellInfo, 0)));
+                    targetCreature->CastCustomSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_VOIDWALKER, &hp, nullptr, nullptr, true);
+                    //unitTarget->CastSpell(unitTarget, 54441, true);
+                    break;
+                }
+                case CREATURE_FAMILY_FELGUARD:
+                    targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELGUARD, true);
+                    break;
+                case CREATURE_FAMILY_FELHUNTER:
+                    targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_FELHUNTER, true);
+                    break;
+                case CREATURE_FAMILY_IMP:
+                    targetCreature->CastSpell(targetCreature, SPELL_WARLOCK_DEMONIC_EMPOWERMENT_IMP, true);
+                    break;
                 }
             }
         }
@@ -754,15 +754,15 @@ class spell_warl_create_healthstone : public SpellScript
             {
                 switch (aurEff->GetId())
                 {
-                    case SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R1:
-                        rank = 1;
-                        break;
-                    case SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R2:
-                        rank = 2;
-                        break;
-                    default:
-                        LOG_ERROR("spells", "Unknown rank of Improved Healthstone id: {}", aurEff->GetId());
-                        break;
+                case SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R1:
+                    rank = 1;
+                    break;
+                case SPELL_WARLOCK_IMPROVED_HEALTHSTONE_R2:
+                    rank = 2;
+                    break;
+                default:
+                    LOG_ERROR("spells", "Unknown rank of Improved Healthstone id: {}", aurEff->GetId());
+                    break;
                 }
             }
             uint8 spellRank = GetSpellInfo()->GetRank();
@@ -837,20 +837,20 @@ class spell_warl_seed_of_corruption : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         targets.remove_if([&](WorldObject const* target)
-        {
-            if (Unit const* unitTarget = target->ToUnit())
             {
-                if (WorldLocation const* dest = GetExplTargetDest())
+                if (Unit const* unitTarget = target->ToUnit())
                 {
-                    if (!unitTarget->IsWithinLOS(dest->GetPositionX(), dest->GetPositionY(), dest->GetPositionZ()))
+                    if (WorldLocation const* dest = GetExplTargetDest())
                     {
-                        return true;
+                        if (!unitTarget->IsWithinLOS(dest->GetPositionX(), dest->GetPositionY(), dest->GetPositionZ()))
+                        {
+                            return true;
+                        }
                     }
                 }
-            }
 
-            return false;
-        });
+        return false;
+            });
     }
 
     void Register() override
@@ -1063,7 +1063,7 @@ class spell_warl_life_tap : public SpellScript
 
     SpellCastResult CheckCast()
     {
-        if ((int32(GetCaster()->GetHealth()) > int32(GetSpellInfo()->Effects[EFFECT_0].CalcValue() + (3.1 * GetSpellInfo()->BaseLevel) + LIFE_TAP_COEFFICIENT )))
+        if ((int32(GetCaster()->GetHealth()) > int32(GetSpellInfo()->Effects[EFFECT_0].CalcValue() + (3.1 * GetSpellInfo()->BaseLevel) + LIFE_TAP_COEFFICIENT)))
             return SPELL_CAST_OK;
         return SPELL_FAILED_FIZZLE;
     }
@@ -1130,8 +1130,8 @@ class spell_warl_soul_power : public AuraScript
         int32 maxRegenerate = aurEff->GetAmount();
         int32 amountRegenerate = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
 
-        if(GetCaster()->GetPower(POWER_ENERGY) < maxRegenerate)
-           GetCaster()->ModifyPower(POWER_ENERGY, amountRegenerate);
+        if (GetCaster()->GetPower(POWER_ENERGY) < maxRegenerate)
+            GetCaster()->ModifyPower(POWER_ENERGY, amountRegenerate);
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
@@ -1425,13 +1425,13 @@ class spell_warl_drain_soul : public AuraScript
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo(
-        {
-            SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1,
-            SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC,
-            SPELL_WARLOCK_CREATE_SOULSHARD,
-            SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_AURA,
-            SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_PROC
-        });
+            {
+                SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1,
+                SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC,
+                SPELL_WARLOCK_CREATE_SOULSHARD,
+                SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_AURA,
+                SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_PROC
+            });
     }
 
     void RemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -1807,7 +1807,7 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
                         player->CastSpell(summon, SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE);
                     }
                 }
-                    
+
 
     }
 
@@ -1852,7 +1852,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-        if(!targets.empty())
+        if (!targets.empty())
             targets.resize(1);
     }
 
@@ -1886,7 +1886,7 @@ class spell_warlock_summon_nether_portal : public SpellScript
     }
 };
 
-class spell_warl_nether_portal_proc: public AuraScript
+class spell_warl_nether_portal_proc : public AuraScript
 {
     PrepareAuraScript(spell_warl_nether_portal_proc);
 
@@ -1908,7 +1908,7 @@ class spell_warl_nether_portal_proc: public AuraScript
             Player* player = GetCaster()->ToPlayer();
             Unit* portal = player->FindNearestCreature(NPC_PORTAL_SUMMON, 40.f, true);
             if (portal) {
-               player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
             }
             aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(0);
         }
@@ -2010,7 +2010,7 @@ class spell_warl_fel_armor : public AuraScript
     PrepareAuraScript(spell_warl_fel_armor);
 
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
-    {  
+    {
         amount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), amount);
     }
 
@@ -2452,7 +2452,7 @@ class spell_warl_grimoire_of_sacrifice : public AuraScript
         int32 chance = aurEff->GetAmount();
 
         if (roll_chance_i(chance)) {
-            GetCaster()->CastCustomSpell(SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, GetCaster()->GetVictim(), true, nullptr, aurEff);
+            GetCaster()->CastSpell(GetCaster()->GetVictim(), SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -2532,7 +2532,7 @@ class spell_warl_soul_flame : public AuraScript
         Unit* caster = GetCaster();
         uint32 spell = aurEff->GetAmount();
 
-        caster->CastSpell(eventInfo.GetProcTarget(), spell, TRIGGERED_FULL_MASK); 
+        caster->CastSpell(eventInfo.GetProcTarget(), spell, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2662,7 +2662,7 @@ class spell_warl_shadow_bolt : public SpellScript
                 int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount() * dotQte;
 
                 AddPct(damage, increasePct);
-            }           
+            }
         }
 
         SetHitDamage(damage);
@@ -2844,7 +2844,7 @@ class spell_warl_demonic_barrier : public AuraScript
         if (currHP <= maxHP / 5)
             healMulti = 100;
         else
-            healMulti = std::max(20,(healMulti - 100 * (currHP / maxHP)));
+            healMulti = std::max(20, (healMulti - 100 * (currHP / maxHP)));
 
         ApplyPct(baseShield, healMulti);
 
@@ -3048,7 +3048,7 @@ class spell_warl_chaos_brand : public AuraScript
     }
 };
 
-class spell_warl_demonic_thirst: public AuraScript
+class spell_warl_demonic_thirst : public AuraScript
 {
     PrepareAuraScript(spell_warl_demonic_thirst);
 
@@ -3234,9 +3234,20 @@ class spell_warl_drain_life : public AuraScript
                 caster->RemoveAura(i);
     }
 
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        GetEffect(EFFECT_0)->CalculatePeriodicData();
+    }
+
     void Register() override
     {
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_life::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_LEECH, AURA_EFFECT_HANDLE_REAL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_drain_life::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_LEECH);
     }
 };
 
@@ -3313,7 +3324,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_all_minion_scaling);
     RegisterSpellScript(spell_warl_shadow_bolt);
     RegisterSpellScript(spell_warl_infernal_immolation_aura_energy);
-    RegisterSpellScript(spell_warl_soul_collector); 
+    RegisterSpellScript(spell_warl_soul_collector);
     RegisterSpellScript(spell_warl_searing_pain_energy);
     RegisterSpellScript(spell_warl_demonic_barrier);
     RegisterSpellScript(spell_warl_soul_collector_fragment);
@@ -3334,7 +3345,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_drain_life);
 
 
-    
 
-    
+
+
 }
