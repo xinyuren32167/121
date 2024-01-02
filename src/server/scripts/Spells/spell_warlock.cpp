@@ -82,7 +82,6 @@ enum WarlockSpells
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
     SPELL_WARLOCK_SOUL_STRIKE = 83039,
     SPELL_WARLOCK_IMMOLATE = 47811,
-    TALENT_WARLOCK_SOUL_FLAME = 30054,
     TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
     TALENT_WARLOCK_RITUAL_OF_RUIN_STACK = 83075,
     TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF = 83076,
@@ -2524,24 +2523,6 @@ class spell_warl_agonizing_corruption : public SpellScript
     }
 };
 
-class spell_warl_soul_flame : public AuraScript
-{
-    PrepareAuraScript(spell_warl_soul_flame);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-        uint32 spell = aurEff->GetAmount();
-
-        caster->CastSpell(eventInfo.GetProcTarget(), spell, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_warl_soul_flame::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
 class spell_warl_ritual_of_ruin : public AuraScript
 {
     PrepareAuraScript(spell_warl_ritual_of_ruin);
@@ -3321,7 +3302,6 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_cataclysm);
     RegisterSpellScript(spell_warl_xavians_teachings);
     RegisterSpellScript(spell_warl_agonizing_corruption);
-    RegisterSpellScript(spell_warl_soul_flame);
     RegisterSpellScript(spell_warl_ritual_of_ruin);
     RegisterSpellScript(spell_warl_molten_hand);
     RegisterSpellScript(spell_warl_all_minion_scaling);
