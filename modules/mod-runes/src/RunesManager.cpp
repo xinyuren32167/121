@@ -1136,8 +1136,10 @@ void RunesManager::IncreaseRunicDustAmount(Player* player, int32 amount)
 
     if (it != m_Progression.end()) {
 
-        it->second.dusts += amount;
-        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+        if (amount > 0) {
+            it->second.dusts += amount;
+            CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+        }
     }
 }
 
@@ -1149,8 +1151,10 @@ void RunesManager::DecreaseRunicDustAmount(Player* player, int32 amount)
 
     if (it != m_Progression.end()) {
 
-         it->second.dusts -= amount;
-        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+        if (it->second.dusts > 0 && amount > 0) {
+            it->second.dusts -= amount;
+            CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+        }
     }
 }
 
