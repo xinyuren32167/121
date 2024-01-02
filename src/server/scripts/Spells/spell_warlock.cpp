@@ -2354,14 +2354,11 @@ class spell_warl_malefic_rapture : public SpellScript
 
         auto const& threatList = caster->getAttackers();
 
-        if (threatList.size() <= 0)
+        if(threatList.size() <= 0)
             return;
 
         for (auto const& target : threatList)
         {
-            if (target->isDead())
-                continue;
-
             if (target)
             {
                 auto targetAuras = target->GetAppliedAuras();
