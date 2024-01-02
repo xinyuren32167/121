@@ -379,19 +379,21 @@ class spell_triune_armor : public SpellScript
             GetCaster()->HasAura(300147) ||
             GetCaster()->HasAura(300148));
     }
-
+        
     void HandleProc()
     {
-        if (HasPerkTriuneArmor())
-        {
-            GetCaster()->RemoveAura(43024);
-            GetCaster()->RemoveAura(43046);
-            GetCaster()->RemoveAura(43008);
+        if (GetCaster()->HasSpell(43008) && GetCaster()->HasSpell(43024) && GetCaster()->HasSpell(43046))
+            if (HasPerkTriuneArmor())
+            {
+                GetCaster()->RemoveAura(43024);
+                GetCaster()->RemoveAura(43046);
+                GetCaster()->RemoveAura(43008);
 
-            GetCaster()->CastSpell(GetCaster(), 300149, TRIGGERED_FULL_MASK);
-            GetCaster()->CastSpell(GetCaster(), 300150, TRIGGERED_FULL_MASK);
-            GetCaster()->CastSpell(GetCaster(), 300151, TRIGGERED_FULL_MASK);
-        }
+                GetCaster()->CastSpell(GetCaster(), 300149, TRIGGERED_FULL_MASK);
+                GetCaster()->CastSpell(GetCaster(), 300150, TRIGGERED_FULL_MASK);
+                GetCaster()->CastSpell(GetCaster(), 300151, TRIGGERED_FULL_MASK);
+            }
+
     }
 
     void Register() override
