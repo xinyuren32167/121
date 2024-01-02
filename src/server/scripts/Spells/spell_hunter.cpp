@@ -1654,6 +1654,9 @@ class spell_hun_explosive_shot : public AuraScript
     {
         Unit* target = GetTarget();
 
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!target || !target->IsAlive())
             return;
 
@@ -1878,7 +1881,6 @@ class spell_hun_bear_applier : public AuraScript
                 continue;
 
         }
-
     }
 
     void Register() override
@@ -2509,7 +2511,8 @@ class spell_hun_coordinated_buff_handler_primary : public AuraScript
 
     void HandlePrimary(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(80204);
+        if (GetCaster()->HasAura(80204))
+            GetCaster()->RemoveAura(80204);
     }
 
     void Register() override
@@ -2524,7 +2527,8 @@ class spell_hun_coordinated_buff_handler_secondary : public AuraScript
 
     void HandlePrimary(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(80202);
+        if (GetCaster()->HasAura(80202))
+            GetCaster()->RemoveAura(80202);
     }
 
     void Register() override
@@ -2628,7 +2632,9 @@ class spell_hun_aspect_mastery_crit : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* caster = GetCaster()->ToPlayer();
-        caster->RemoveAura(80213);
+
+        if (caster->HasAura(80213))
+            caster->RemoveAura(80213);
     }
 
     void Register() override
@@ -2653,7 +2659,9 @@ class spell_hun_aspect_mastery_ranged_damage : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* caster = GetCaster()->ToPlayer();
-        caster->RemoveAura(80214);
+
+        if (caster->HasAura(80214))
+            caster->RemoveAura(80214);
     }
 
     void Register() override

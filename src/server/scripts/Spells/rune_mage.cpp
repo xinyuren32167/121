@@ -350,7 +350,7 @@ class spell_spiritual_armor_rune : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         uint32 buff = aurEff->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
@@ -421,7 +421,7 @@ class spell_triune_armor_rune : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         if (GetCaster()->HasAura(300149))
@@ -987,6 +987,9 @@ class spell_arcano_shatter : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (GetRuneAura())
             GetCaster()->CastSpell(GetCaster(), GetTriggerSpell(), TRIGGERED_FULL_MASK);
     }
@@ -1118,6 +1121,10 @@ class spell_touch_of_the_magi_explosion : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* player = GetCaster()->ToPlayer();
+
+        if (!player || player->isDead())
+            return;
+
         int damage = 0;
 
         if (AuraEffect* protEff = player->GetAuraEffect(300528, 0))

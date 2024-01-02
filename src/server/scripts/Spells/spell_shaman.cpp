@@ -2619,7 +2619,8 @@ class spell_sha_spirit_of_fire : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE);
+        if (GetCaster()->HasAura(SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE))
+            GetCaster()->RemoveAura(SPELL_SHAMAN_SPIRIT_OF_FIRE_PASSIVE);
     }
 
     void Register() override

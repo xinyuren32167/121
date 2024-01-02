@@ -943,7 +943,7 @@ class spell_juggling_balance : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetCaster())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         uint32 hasteAura = aurEff->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;

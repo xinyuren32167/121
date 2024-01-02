@@ -1224,6 +1224,9 @@ class rune_pal_power_of_the_silver_hand : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         int32 amount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         int32 maxAmount = GetCaster()->CountPctFromMaxHealth(50);
 
@@ -1832,6 +1835,9 @@ class rune_pal_inner_light_proc : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetRuneAura())
             return;
 
@@ -2316,6 +2322,9 @@ class rune_pal_executioners_wrath : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!GetRuneAura())
             return;
 

@@ -646,7 +646,10 @@ class rune_hunter_resilience_of_the_hunter : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetRuneAura() || GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (!GetRuneAura())
             return;
 
         int32 buffAura = GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
@@ -1066,7 +1069,10 @@ class rune_hunter_razor_fragments_trick_shots : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        if (!GetRuneAura() || GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (!GetRuneAura())
             return;
 
         int32 procAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
@@ -2479,6 +2485,9 @@ class rune_hunter_enduring_call_aura : public AuraScript
         Pet* pet = player->GetPet();
         int32 durationIncrease = aurEff->GetAmount();
 
+        if (!player || player->isDead())
+            return;
+
         if (Aura* auraEff = player->GetAura(SPELL_HUNTER_CALL_OF_THE_WILD))
             auraEff->SetDuration(auraEff->GetDuration() + durationIncrease);
 
@@ -3341,6 +3350,10 @@ class rune_hunter_focalised_trueshot_remove : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* player = GetCaster();
+
+        if (!player || player->isDead())
+            return;
+
         Aura* listenerAura = player->GetAura(RUNE_HUNTER_FOCALISED_TRUESHOT_LISTENER);
 
         if (!listenerAura)

@@ -1244,6 +1244,9 @@ class spell_warl_haunt_aura : public AuraScript
     {
         if (Unit* caster = GetCaster())
         {
+            if (!caster || caster->isDead())
+                return;
+
             int32 amount = aurEff->GetAmount();
             GetTarget()->CastCustomSpell(caster, SPELL_WARLOCK_HAUNT_HEAL, &amount, nullptr, nullptr, true, nullptr, aurEff, GetCasterGUID());
         }
@@ -2095,6 +2098,12 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
     {
         Unit* target = GetTarget();
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
 
         caster->CastSpell(target, SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION, TRIGGERED_FULL_MASK);
         target->CastSpell(target, SPELL_WARLOCK_SEED_OF_CORRUPTION_VISUAL, TRIGGERED_FULL_MASK);
@@ -3227,8 +3236,6 @@ class spell_warl_drain_life : public AuraScript
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_life::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_LEECH, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
-
 
 void AddSC_warlock_spell_scripts()
 {

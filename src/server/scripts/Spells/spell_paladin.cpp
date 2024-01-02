@@ -1699,6 +1699,9 @@ class spell_pal_shield_of_vengeance_damage : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         int32 hp = CalculatePct(GetCaster()->GetMaxHealth(), 30);
         GetCaster()->CastCustomSpell(80068, SPELLVALUE_BASE_POINT0, hp, GetCaster());
     }
@@ -2050,7 +2053,7 @@ class spell_pal_gods_judgement : public AuraScript
     {
         Unit* caster = GetCaster();
 
-        if (!caster->IsAlive())
+        if (!caster || !caster->IsAlive())
             return;
 
         uint32 storedDamage = GetEffect(EFFECT_1)->GetAmount();

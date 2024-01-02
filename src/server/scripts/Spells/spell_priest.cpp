@@ -1379,6 +1379,10 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 amount = aurEff->GetAmount();
 
         if (amount <= 0)

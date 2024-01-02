@@ -2567,6 +2567,9 @@ class spell_rog_improved_adrenaline_rush : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (AuraEffect* aurEff = GetCaster()->GetAuraEffectOfRankedSpell(TALENT_ROGUE_IMPROVED_ADRENALINE_RUSH, EFFECT_0))
         {
             if (roll_chance_i(aurEff->GetAmount()))

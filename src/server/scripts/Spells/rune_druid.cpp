@@ -300,7 +300,10 @@ class rune_druid_lycara_teachings_cat : public AuraScript
                 GetCaster()->RemoveAura(i);
         }
 
-        if (!GetRuneAura() || GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (!GetRuneAura())
             return;
 
         int32 buffAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
@@ -354,7 +357,10 @@ class rune_druid_lycara_teachings_bear : public AuraScript
                 GetCaster()->RemoveAura(i);
         }
 
-        if (!GetRuneAura() || GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (!GetRuneAura())
             return;
 
         int32 buffAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
@@ -409,7 +415,10 @@ class rune_druid_lycara_teachings_moonkin : public AuraScript
                 GetCaster()->RemoveAura(i);
         }
 
-        if (!GetRuneAura() || GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (!GetRuneAura())
             return;
 
         int32 buffAura = GetRuneAura()->GetEffect(EFFECT_0)->GetAmount();
@@ -477,7 +486,10 @@ class rune_druid_protective_skin : public AuraScript
     {
         Unit* caster = GetCaster();
 
-        if (!GetRuneAura(caster) || caster->isDead())
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
             return;
 
         int32 healthPct = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
@@ -595,7 +607,10 @@ class rune_druid_natural_order : public AuraScript
     {
         Unit* caster = GetCaster();
 
-        if (!GetRuneAura(caster) || caster->isDead())
+        if (!caster || caster->isDead())
+            return;
+
+        if (!GetRuneAura(caster))
             return;
 
         caster->AddAura(SPELL_FRENZIED_REGENERATION, caster);

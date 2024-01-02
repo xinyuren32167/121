@@ -1641,7 +1641,11 @@ class spell_dru_berserk_cat : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(SPELL_DRUID_BERSERK_CAT_CRIT);
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (GetCaster()->HasAura(SPELL_DRUID_BERSERK_CAT_CRIT))
+            GetCaster()->RemoveAura(SPELL_DRUID_BERSERK_CAT_CRIT);
     }
 
     void Register() override
@@ -1844,7 +1848,8 @@ class spell_dru_tiger_dash : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(80516);
+        if (GetCaster()->HasAura(80516))
+            GetCaster()->RemoveAura(80516);
     }
 
     void Register() override
@@ -1938,8 +1943,14 @@ class spell_dru_celestial_alignment : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT);
-        GetCaster()->RemoveAura(SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT);
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (GetCaster()->HasAura(SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT))
+            GetCaster()->RemoveAura(SPELL_DRUID_ECLIPSE_LUNAR_ALIGNMENT);
+
+        if (GetCaster()->HasAura(SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT))
+            GetCaster()->RemoveAura(SPELL_DRUID_ECLIPSE_SOLAR_ALIGNMENT);
     }
 
     void Register() override
@@ -2503,7 +2514,12 @@ class spell_dru_rage_sleeper : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
-        caster->RemoveAura(SPELL_DRUID_RAGE_SLEEPER_BUFFS);
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_DRUID_RAGE_SLEEPER_BUFFS))
+            caster->RemoveAura(SPELL_DRUID_RAGE_SLEEPER_BUFFS);
     }
 
     void Register() override
@@ -2566,7 +2582,12 @@ class spell_dru_tree_of_life : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
-        caster->RemoveAura(SPELL_DRUID_TREE_FORM);
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_DRUID_TREE_FORM))
+            caster->RemoveAura(SPELL_DRUID_TREE_FORM);
     }
 
     void Register() override

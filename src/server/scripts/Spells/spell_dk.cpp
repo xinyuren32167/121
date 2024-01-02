@@ -267,7 +267,6 @@ class spell_dk_chill_streak : public AuraScript
 
     void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
 

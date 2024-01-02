@@ -275,7 +275,8 @@ class spell_mastery_savant_on_remove : public AuraScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetCaster()->RemoveAura(300112);
+        if (GetCaster()->HasAura(300112))
+            GetCaster()->RemoveAura(300112);
     }
 
     void Register() override
@@ -387,7 +388,8 @@ class spell_mastery_critical_block_on_remove : public AuraScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetCaster()->RemoveAura(190750);
+        if (GetCaster()->HasAura(190750))
+            GetCaster()->RemoveAura(190750);
     }
 
     void Register() override
@@ -803,7 +805,8 @@ class spell_mastery_razor_claws_unlearn : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        GetCaster()->RemoveAura(700005);
+        if (GetCaster()->HasAura(700005))
+            GetCaster()->RemoveAura(700005);
     }
 
     void Register() override
