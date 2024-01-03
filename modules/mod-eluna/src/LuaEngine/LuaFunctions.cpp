@@ -464,6 +464,7 @@ ElunaRegister<Player> PlayerMethods[] =
     { "UpgradeRune", &LuaPlayer::UpgradeRune },
     { "GetSpecializations", &LuaPlayer::GetSpecializations },
     { "ActivateSpec", &LuaPlayer::ActivateSpec },
+    { "ReviveAtCapital", &LuaPlayer::ReviveAtCapital },
 
     { "GetMythicData", &LuaPlayer::GetMythicData },
     { "StartMythicDungeon", &LuaPlayer::StartMythicDungeon },

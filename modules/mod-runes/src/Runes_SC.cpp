@@ -168,7 +168,6 @@ public:
 
         if (creature->IsDungeonBoss() && map->IsHeroic())
             AddRunicDustToLoot(valueMinFromDungeonBoss * 2, valueMaxFromDungeonBoss * 2, loot);
-
     }
 
     void OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode, WorldObject* source)
@@ -208,7 +207,7 @@ public:
         {
             if (creature->GetCreatureTemplate()->SkinLootId > 0)
             {
-                if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(SKILL_SKINNING) && creature->getLevel() < lootOwner->getLevel())
+                if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(SKILL_SKINNING) && creature->getLevel() >= lootOwner->getLevel())
                 {
                     AddMetarial(loot, pureSkillValue);
                     int valueFromSkinningMin = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MIN");

@@ -15344,15 +15344,18 @@ void Player::SendRefundInfo(Item* item)
 bool Player::AddItem(uint32 itemId, uint32 count)
 {
     uint32 noSpaceForCount = 0;
+    uint32 itemCount = count;
     ItemPosCountVec dest;
+
     InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, count, &noSpaceForCount);
+
     if (msg != EQUIP_ERR_OK)
         count -= noSpaceForCount;
 
     if (count == 0 || dest.empty())
     {
         // -- TODO: Send to mailbox if no space
-        SendMailAddItem(itemId, count);
+        SendMailAddItem(itemId, itemCount);
         ChatHandler(GetSession()).PSendSysMessage("You don't have any space in your bags.");
         return false;
     }
@@ -15369,13 +15372,13 @@ void Player::SendMailAddItem(uint32 itemId, uint32 count)
 {
     ObjectGuid::LowType senderGuid = GetGUID().GetCounter();
 
-    MailDraft draft("", "");
+    MailDraft draft("Items", "Items");
     MailSender sender(MAIL_NORMAL, senderGuid, MAIL_STATIONERY_GM);
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-   
-    if (Item* item = Item::CreateItem(itemId, count, this))
+
+    if (Item* item = Item::CreateItem(itemId, count, 0))
     {
-        item->SaveToDB(trans); // save for prevent lost at next mail load, if send fail then item will deleted
+        item->SaveToDB(trans);
         draft.AddItem(item);
     }
 
