@@ -465,7 +465,7 @@ class rune_dk_disease_and_decay : public AuraScript
     {
         if (GetCaster()->ToPlayer()->HasSpellCooldown(RUNE_DISEASE_AND_DECAY_PROC))
         {
-            GetCaster()->CastSpell(eventInfo.GetActionTarget()->GetPositionX(), eventInfo.GetActionTarget()->GetPositionY(), eventInfo.GetActionTarget()->GetPositionZ(), RUNE_DISEASE_AND_DECAY_PROC, TRIGGERED_FULL_MASK);
+            GetCaster()->CastSpell(eventInfo.GetActionTarget()->GetPositionX(), eventInfo.GetActionTarget()->GetPositionY(), eventInfo.GetActionTarget()->GetPositionZ(), RUNE_DISEASE_AND_DECAY_PROC, TRIGGERED_IGNORE_AURA_SCALING);
             GetCaster()->ToPlayer()->AddSpellCooldown(RUNE_DISEASE_AND_DECAY_PROC, 0, 4000);
         }
     }
@@ -610,7 +610,7 @@ class rune_dk_hemoglobin : public AuraScript
     {
         if (GetCaster()->ToPlayer()->HasSpellCooldown(RUNE_HEMOGLOBIN_PROC))
         {
-            GetCaster()->CastSpell(GetCaster()->GetPositionX(), GetCaster()->GetPositionY(), GetCaster()->GetPositionZ(), RUNE_HEMOGLOBIN_PROC, TRIGGERED_FULL_MASK);
+            GetCaster()->CastSpell(GetCaster()->GetPositionX(), GetCaster()->GetPositionY(), GetCaster()->GetPositionZ(), RUNE_HEMOGLOBIN_PROC, TRIGGERED_IGNORE_AURA_SCALING);
             GetCaster()->ToPlayer()->AddSpellCooldown(RUNE_HEMOGLOBIN_PROC, 0, 4000);
         }
     }
