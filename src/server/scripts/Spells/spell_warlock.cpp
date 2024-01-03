@@ -1003,7 +1003,8 @@ class spell_vampirism : public AuraScript
     {
         if (DamageInfo* damageInfo = eventInfo.GetDamageInfo()) {
             int32 amount = CalculatePct(static_cast<int32>(eventInfo.GetDamageInfo()->GetDamage()), healPct);
-            GetCaster()->CastCustomSpell(spellId, SPELLVALUE_BASE_POINT0, amount, GetCaster(), true);
+            int32 value = std::max(1, amount);
+            GetCaster()->CastCustomSpell(spellId, SPELLVALUE_BASE_POINT0, value, GetCaster(), true);
         }
     }
 

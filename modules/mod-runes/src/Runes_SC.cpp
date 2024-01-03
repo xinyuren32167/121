@@ -154,14 +154,21 @@ public:
         if (creature->isElite() && !map->IsDungeon())
             AddRunicDustToLoot(valueFromEliteMin, valueFromEliteMax, loot);
 
-        if (!creature->isElite() && roll_chance_i(dropChanceFromMonster))
+        if (roll_chance_i(dropChanceFromMonster) && !map->IsHeroic())
             AddRunicDustToLoot(1, 1, loot);
+
+        if (roll_chance_i(dropChanceFromMonster) && map->IsHeroic())
+            AddRunicDustToLoot(2, 2, loot);
 
         if (creature->GetCreatureTemplate()->rank == CREATURE_ELITE_RARE)
             AddRunicDustToLoot(valueFromEliteRareMin, valueFromEliteRareMax, loot);
 
-        if (creature->IsDungeonBoss())
+        if (creature->IsDungeonBoss() && !map->IsHeroic()) 
             AddRunicDustToLoot(valueMinFromDungeonBoss, valueMaxFromDungeonBoss, loot);
+
+        if (creature->IsDungeonBoss() && map->IsHeroic())
+            AddRunicDustToLoot(valueMinFromDungeonBoss * 2, valueMaxFromDungeonBoss * 2, loot);
+
     }
 
     void OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode, WorldObject* source)
