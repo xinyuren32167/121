@@ -908,7 +908,7 @@ class rune_druid_protector_of_the_grove : public AuraScript
             caster->AddAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF, caster);
 
         if (Aura* aura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF)) {
-            AuraEffect* buffAura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF)->GetEffect(EFFECT_0);
+            AuraEffect* buffAura = aura->GetEffect(EFFECT_0);
 
             int32 maxAmount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), GetAura()->GetEffect(EFFECT_1)->GetAmount());
             int32 amount = buffAura->GetAmount();
