@@ -3480,7 +3480,9 @@ class spell_hun_spectral_shot : public SpellScript
         {
             SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_SPECTRAL_SHOT);
             uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
+            uint32 focus = value->GetEffect(EFFECT_1).CalcValue(caster);
             caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
+            caster->EnergizeBySpell(caster, SPELL_HUNTER_SPECTRAL_SHOT, focus, POWER_FOCUS);
         }
     }
 
