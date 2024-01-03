@@ -888,6 +888,9 @@ class rune_druid_protector_of_the_grove : public AuraScript
     {
         Unit* caster = GetCaster();
 
+        if (!caster || caster->isDead())
+            return;
+
         if (!eventInfo.GetHealInfo())
             return;
 
@@ -904,14 +907,15 @@ class rune_druid_protector_of_the_grove : public AuraScript
         if (!caster->HasAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF))
             caster->AddAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF, caster);
 
-        AuraEffect* buffAura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF)->GetEffect(EFFECT_0);
+        if (Aura* aura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF)) {
+            AuraEffect* buffAura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_GROVE_BUFF)->GetEffect(EFFECT_0);
 
-        int32 maxAmount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), GetAura()->GetEffect(EFFECT_1)->GetAmount());
-        int32 amount = buffAura->GetAmount();
-        amount = std::min<int32>(maxAmount, amount + healStacking);
+            int32 maxAmount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE), GetAura()->GetEffect(EFFECT_1)->GetAmount());
+            int32 amount = buffAura->GetAmount();
+            amount = std::min<int32>(maxAmount, amount + healStacking);
 
-        buffAura->ChangeAmount(amount);
-
+            buffAura->ChangeAmount(amount);
+        }
     }
 
     void Register()
