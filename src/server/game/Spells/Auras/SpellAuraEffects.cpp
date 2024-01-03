@@ -4281,8 +4281,6 @@ void AuraEffect::HandleAuraModExpertise(AuraApplication const* aurApp, uint8 mod
     if (target->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    LOG_ERROR("CHANGE", "CHANGE");
-
     target->ToPlayer()->UpdateVersatility();
 }
 

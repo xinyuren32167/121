@@ -82,7 +82,6 @@ enum WarlockSpells
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
     SPELL_WARLOCK_SOUL_STRIKE = 83039,
     SPELL_WARLOCK_IMMOLATE = 47811,
-    TALENT_WARLOCK_SOUL_FLAME = 30054,
     TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
     TALENT_WARLOCK_RITUAL_OF_RUIN_STACK = 83075,
     TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF = 83076,
@@ -126,6 +125,7 @@ enum WarlockSpells
     SPELL_WARLOCK_DEMONIC_PROTECTION = 83111,
     SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF = 83116,
     SPELL_WARLOCK_FRACTURE_ENERGY = 83107,
+    SPELL_WARLOCK_METAMORPHOSIS = 47241,
 
     TALENT_WARLOCK_DEMON_SPIKES_DAMAGE = 83197,
     TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN = 83199,
@@ -2950,6 +2950,7 @@ class spell_warl_demonkin : public AuraScript
         target->learnSpell(SPELL_WARLOCK_DEMON_CHARGE);
         target->learnSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS);
         target->learnSpell(SPELL_WARLOCK_SOUL_BOMB);
+        target->learnSpell(SPELL_WARLOCK_METAMORPHOSIS);
 
         target->UnsummonPetTemporaryIfAny();
     }
@@ -2963,6 +2964,7 @@ class spell_warl_demonkin : public AuraScript
         target->removeSpell(SPELL_WARLOCK_DEMON_CHARGE, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SOUL_BOMB, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_WARLOCK_METAMORPHOSIS, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_WARLOCK_SUMMON_FELGUARD);
         target->learnSpell(SPELL_WARLOCK_SUMMON_FELHUNTER);
         target->learnSpell(SPELL_WARLOCK_SUMMON_IMP);
