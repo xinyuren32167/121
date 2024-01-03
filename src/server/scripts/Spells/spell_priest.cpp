@@ -2576,28 +2576,35 @@ class spell_pri_void_eruption : public SpellScript
 {
     PrepareSpellScript(spell_pri_void_eruption);
 
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
-        Unit* target = GetHitUnit();
 
         if (!caster || caster->isDead())
             return;
 
+        Unit* target = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
         if (caster->HasAura(SPELL_PRIEST_VOIDFORM))
+        {
             caster->CastSpell(target, SPELL_PRIEST_VOID_BOLT, TRIGGERED_FULL_MASK);
+        }
         else
         {
             caster->AddAura(SPELL_PRIEST_VOIDFORM, caster);
             caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
             caster->CastSpell(target, SPELL_PRIEST_VOID_ERUPTION_DAMAGE, TRIGGERED_FULL_MASK);
-            caster->ToPlayer()->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, -120000);
+            caster->ToPlayer()->RemoveSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, true);
         }
     }
 
     void Register() override
     {
-        OnHit += SpellHitFn(spell_pri_void_eruption::HandleProc);
+        AfterCast += SpellCastFn(spell_pri_void_eruption::HandleProc);
     }
 };
 
@@ -2609,23 +2616,17 @@ class spell_pri_void_eruption_cooldown : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* player = GetCaster()->ToPlayer();
-
-        if (player->HasSpellCooldown(SPELL_PRIEST_VOID_ERUPTION))
-        {
-            int32 cooldownChange = 6000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
-            player->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
-        }
-        else
-        {
-            player->ModifySpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 6000);
-        }
+        int32 cooldownChange = 6000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
+        player->SetSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* player = GetCaster()->ToPlayer();
-
-        player->ToPlayer()->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
+        int32 cooldownChange = 120000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
+        player->SetSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
+        player->SendClearCooldown(SPELL_PRIEST_VOID_ERUPTION, player);
+        player->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
     }
 
     void Register() override

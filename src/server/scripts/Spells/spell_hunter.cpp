@@ -1846,7 +1846,7 @@ class spell_hun_bear_applier : public AuraScript
             return;
 
         player->AddAura(49071, pet);
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
@@ -1870,7 +1870,7 @@ class spell_hun_bear_applier : public AuraScript
         if (!pet)
             return;
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
@@ -1923,7 +1923,7 @@ class spell_hun_survival_fittest : public AuraScript
 
         player->AddAura(80162, pet);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
@@ -1947,7 +1947,7 @@ class spell_hun_survival_fittest : public AuraScript
 
         pet->RemoveAura(80162);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
@@ -2000,12 +2000,13 @@ class spell_hun_camouflage : public AuraScript
 
         pet->RemoveAura(80163);
 
-        std::vector<Unit*> summonedUnits = player->GetSummonedUnits();
+        auto summonedUnits = player->m_Controlled;
 
         for (auto const& unit : summonedUnits)
         {
             if (unit->isDead())
                 continue;
+
             unit->RemoveAura(80175);
         }
     }
