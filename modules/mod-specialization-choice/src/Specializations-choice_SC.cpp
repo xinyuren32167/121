@@ -137,6 +137,12 @@ class spell_activate_specialization : public SpellScript
     void HandleProc()
     {
         Player* player = GetCaster()->ToPlayer();
+
+        if (player->getLevel() < 10) {
+            RunesManager::SendPlayerMessage(player, "You can't do that under level 10");
+            return;
+        }
+
         SpellValue const* value = GetSpellValue();
         uint32 newSpecId = value->EffectBasePoints[EFFECT_0];
 

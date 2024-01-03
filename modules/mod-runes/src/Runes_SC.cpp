@@ -88,7 +88,7 @@ public:
         if (item != 70002)
             return;
 
-        RunesManager::DecreaseRunicDustAmount(player, 100);
+        RunesManager::DecreaseRunicDustAmount(player, 100 * count);
     };
 };
 
