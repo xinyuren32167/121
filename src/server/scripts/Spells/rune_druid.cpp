@@ -947,13 +947,15 @@ class rune_druid_protector_of_the_pack : public AuraScript
         if (!caster->HasAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF))
             caster->AddAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF, caster);
 
-        AuraEffect* buffAura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF)->GetEffect(EFFECT_0);
+        if (Aura* aura = caster->GetAura(RUNE_DRUID_PROTECTOR_OF_THE_PACK_BUFF)) {
+            AuraEffect* buffAura = aura->GetEffect(EFFECT_0);
 
-        int32 maxAmount = CalculatePct(GetCaster()->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL), GetAura()->GetEffect(EFFECT_1)->GetAmount());
-        int32 amount = buffAura->GetAmount();
-        amount = std::min<int32>(maxAmount, amount + damageStacking);
+            int32 maxAmount = CalculatePct(GetCaster()->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_ALL), GetAura()->GetEffect(EFFECT_1)->GetAmount());
+            int32 amount = buffAura->GetAmount();
+            amount = std::min<int32>(maxAmount, amount + damageStacking);
 
-        buffAura->ChangeAmount(amount);
+            buffAura->ChangeAmount(amount);
+        }
     }
 
     void Register()
@@ -1485,26 +1487,29 @@ class rune_druid_nurturing_dormancy : public AuraScript
 
         Aura* rejuvAura = target->GetAura(SPELL_REJUVENATION);
 
+        if (!rejuvAura)
+            return;
+
         if (!target->HasAura(RUNE_DRUID_NURTURING_DORMANCY_LISTENER))
             caster->AddAura(RUNE_DRUID_NURTURING_DORMANCY_LISTENER, target);
 
-        Aura* listenerAura = target->GetAura(RUNE_DRUID_NURTURING_DORMANCY_LISTENER);
-        int32 increasedAmount = listenerAura->GetEffect(EFFECT_0)->GetAmount();
-        int32 maxIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
+        if (Aura* listenerAura = target->GetAura(RUNE_DRUID_NURTURING_DORMANCY_LISTENER)) {
+            int32 increasedAmount = listenerAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 maxIncrease = GetAura()->GetEffect(EFFECT_1)->GetAmount();
 
-        if (increasedAmount >= maxIncrease)
-            return;
+            if (increasedAmount >= maxIncrease)
+                return;
 
-        int32 durationIncrease = aurEff->GetAmount();
+            int32 durationIncrease = aurEff->GetAmount();
 
-        if ((increasedAmount + durationIncrease) > maxIncrease)
-            durationIncrease = maxIncrease - increasedAmount;
+            if ((increasedAmount + durationIncrease) > maxIncrease)
+                durationIncrease = maxIncrease - increasedAmount;
 
-        int32 duration = rejuvAura->GetDuration();
-        rejuvAura->SetDuration(duration + durationIncrease);
-        rejuvAura->GetEffect(EFFECT_0)->ResetTicks();
-
-        listenerAura->GetEffect(EFFECT_0)->SetAmount(increasedAmount + durationIncrease);
+            int32 duration = rejuvAura->GetDuration();
+            rejuvAura->SetDuration(duration + durationIncrease);
+            rejuvAura->GetEffect(EFFECT_0)->ResetTicks();
+            listenerAura->GetEffect(EFFECT_0)->SetAmount(increasedAmount + durationIncrease);
+        }
     }
 
     void Register()
@@ -2198,38 +2203,40 @@ class rune_druid_aetherial_kindling : public AuraScript
 
         if (Aura* moonfire = target->GetAura(SPELL_MOONFIRE))
         {
-            Aura* listener = target->GetAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE);
-            int32 increasedAmount = listener->GetEffect(EFFECT_0)->GetAmount();
+            if (Aura* listener = target->GetAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_MOONFIRE)) {
+                int32 increasedAmount = listener->GetEffect(EFFECT_0)->GetAmount();
 
-            if (increasedAmount < maxIncrease)
-            {
-                if ((increasedAmount + increase) > maxIncrease)
-                    increase = maxIncrease - increasedAmount;
+                if (increasedAmount < maxIncrease)
+                {
+                    if ((increasedAmount + increase) > maxIncrease)
+                        increase = maxIncrease - increasedAmount;
 
-                int32 duration = moonfire->GetDuration();
-                moonfire->SetDuration(duration + increase);
-                moonfire->GetEffect(EFFECT_0)->ResetTicks();
+                    int32 duration = moonfire->GetDuration();
+                    moonfire->SetDuration(duration + increase);
+                    moonfire->GetEffect(EFFECT_0)->ResetTicks();
 
-                listener->GetEffect(EFFECT_0)->SetAmount(increasedAmount + increase);
+                    listener->GetEffect(EFFECT_0)->SetAmount(increasedAmount + increase);
+                }
             }
         }
 
         if (Aura* sunfire = target->GetAura(SPELL_SUNFIRE))
         {
-            Aura* listener = target->GetAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE);
-            int32 increasedAmount = listener->GetEffect(EFFECT_0)->GetAmount();
+            if (Aura* listener = target->GetAura(RUNE_DRUID_AETHERIAL_KINDLING_LISTENER_SUNFIRE)) {
+                int32 increasedAmount = listener->GetEffect(EFFECT_0)->GetAmount();
 
-            if (increasedAmount >= maxIncrease)
-                return;
+                if (increasedAmount >= maxIncrease)
+                    return;
 
-            if ((increasedAmount + increase) > maxIncrease)
-                increase = maxIncrease - increasedAmount;
+                if ((increasedAmount + increase) > maxIncrease)
+                    increase = maxIncrease - increasedAmount;
 
-            int32 duration = sunfire->GetDuration();
-            sunfire->SetDuration(duration + increase);
-            sunfire->GetEffect(EFFECT_0)->ResetTicks();
+                int32 duration = sunfire->GetDuration();
+                sunfire->SetDuration(duration + increase);
+                sunfire->GetEffect(EFFECT_0)->ResetTicks();
 
-            listener->GetEffect(EFFECT_0)->SetAmount(increasedAmount + increase);
+                listener->GetEffect(EFFECT_0)->SetAmount(increasedAmount + increase);
+            }
         }
 
     };
@@ -4646,8 +4653,8 @@ class rune_druid_flashing_claws : public AuraScript
 
         int32 stackIncrease = aurEff->GetAmount();
 
-        if (target->HasAura(SPELL_THRASH_BEAR))
-            target->GetAura(SPELL_THRASH_BEAR)->ModStackAmount(stackIncrease);
+        if (Aura* aura = target->GetAura(SPELL_THRASH_BEAR))
+            aura->ModStackAmount(stackIncrease);
         else
             caster->AddAura(SPELL_THRASH_BEAR, target);
     }
@@ -5541,9 +5548,11 @@ class rune_druid_eternal_bloom : public AuraScript
         if (!target->HasAura(SPELL_LIFEBLOOM))
             return;
 
-        target->GetAura(SPELL_LIFEBLOOM)->RefreshDuration();
-        target->GetAura(SPELL_LIFEBLOOM)->GetEffect(EFFECT_0)->ResetTicks();
-        caster->CastSpell(target, SPELL_LIFEBLOOM_BLOOM, TRIGGERED_FULL_MASK);
+        if (Aura* aura = target->GetAura(SPELL_LIFEBLOOM)) {
+            aura->RefreshDuration();
+            aura->GetEffect(EFFECT_0)->ResetTicks();
+            caster->CastSpell(target, SPELL_LIFEBLOOM_BLOOM, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -5575,7 +5584,10 @@ class rune_druid_budding_leaves : public AuraScript
 
         int32 procSpell = aurEff->GetAmount();
         caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
-        target->GetAura(SPELL_LIFEBLOOM)->GetEffect(EFFECT_0)->RecalculateAmount(caster);
+
+        if (Aura* aura = target->GetAura(SPELL_LIFEBLOOM)) {
+            aura->GetEffect(EFFECT_0)->RecalculateAmount(caster);
+        }
     }
 
     void Register() override
