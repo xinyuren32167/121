@@ -31,6 +31,7 @@ enum WarlockSpells
     SPELL_WARLOCK_SUMMON_SUCCUBUS = 712,
     SPELL_WARLOCK_SUMMON_VOIDWALKER = 697,
     SPELL_WARLOCK_SUMMON_EYE_OF_KILLROG = 126,
+    SPELL_WARLOCK_MASTERY_FEL_BLOOD = 1100024,
 };
 
 
@@ -72,13 +73,13 @@ bool LearningSpellsManager::Exception(Player* player, uint32 spellId)
             return false;
 
 
-        if ((spellId == SPELL_HUNTER_BEAST_LORE
-            || spellId == SPELL_WARLOCK_SUMMON_FELHUNTER
-            || spellId == SPELL_WARLOCK_SUMMON_IMP
-            || spellId == SPELL_WARLOCK_SUMMON_SUCCUBUS
-            || spellId == SPELL_WARLOCK_SUMMON_VOIDWALKER
-            || spellId == SPELL_WARLOCK_SUMMON_EYE_OF_KILLROG) && player->HasSpell(SPELL_HUNTER_MASTERY_FROM_THE_SHADOW))
-            return false;
+    if ((spellId == SPELL_HUNTER_BEAST_LORE
+        || spellId == SPELL_WARLOCK_SUMMON_FELHUNTER
+        || spellId == SPELL_WARLOCK_SUMMON_IMP
+        || spellId == SPELL_WARLOCK_SUMMON_SUCCUBUS
+        || spellId == SPELL_WARLOCK_SUMMON_VOIDWALKER
+        || spellId == SPELL_WARLOCK_SUMMON_EYE_OF_KILLROG) && player->HasSpell(SPELL_WARLOCK_MASTERY_FEL_BLOOD))
+        return false;
 
 
     return true;
