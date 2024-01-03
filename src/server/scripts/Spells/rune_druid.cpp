@@ -6327,7 +6327,16 @@ class rune_druid_regenerative_heartwood : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff)
     {
+        if (!GetCaster())
+            return;
+
         Player* caster = GetCaster()->ToPlayer();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
         Unit* target = GetAura()->GetOwner()->ToUnit();
 
         if (!caster || caster->isDead())

@@ -164,7 +164,7 @@ struct npc_hunter_wild_pet : public ScriptedAI
             {
                 if (Unit* target = owner->GetSelectedUnit())
                 {
-                    if (me->CanCreatureAttack(target))
+                    if (me->CanCreatureAttack(target) && owner->IsInCombat())
                     {
                         AttackTarget(target);
                         _initAttack = false;
@@ -187,7 +187,7 @@ struct npc_hunter_wild_pet : public ScriptedAI
                         if (Unit* victim = me->GetVictim()) {
                             if (victim->GetGUID() != newTarget->GetGUID())
                             {
-                                if (me->CanCreatureAttack(newTarget))
+                                if (me->CanCreatureAttack(newTarget) && owner->IsInCombat())
                                     AttackTarget(newTarget);
                             }
                         }
