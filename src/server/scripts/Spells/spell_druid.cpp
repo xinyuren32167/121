@@ -1238,9 +1238,7 @@ class spell_dru_wild_growth_periodic : public AuraScript
         Unit* caster = GetCaster();
 
         if (!caster || caster->isDead())
-            return;
-
-        Player* caster = GetCaster()->ToPlayer();
+            return; 
 
         int32 amount = aurEff->GetAmount();
         float drop = 20.0f;
