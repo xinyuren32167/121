@@ -595,14 +595,6 @@ class rune_dk_hemoglobin : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        HealInfo* healInfo = eventInfo.GetHealInfo();
-
-        if (!healInfo || !healInfo->GetHeal())
-            return false;
-
-        if (healInfo->GetHeal() < 0)
-            return false;
-
         return GetCaster() && GetCaster()->IsAlive();
     }
 
