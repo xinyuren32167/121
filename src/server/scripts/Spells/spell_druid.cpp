@@ -1235,6 +1235,11 @@ class spell_dru_wild_growth_periodic : public AuraScript
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Player* caster = GetCaster()->ToPlayer();
 
         int32 amount = aurEff->GetAmount();
