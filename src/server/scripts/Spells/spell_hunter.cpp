@@ -2210,7 +2210,7 @@ class spell_hun_call_of_wild : public SpellScript
     {
         Unit* caster = GetCaster();
         Position const& pos = GetCaster()->GetPosition();
-        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(63);
         int32 duration = GetSpellInfo()->GetDuration();
 
         PetStable* petStable = GetCaster()->ToPlayer()->GetPetStable();
@@ -2230,7 +2230,7 @@ class spell_hun_call_of_wild : public SpellScript
 
             uint32 displayId = petStable->StabledPets.at(i)->DisplayId;
 
-            Creature* pet = GetCaster()->SummonCreature(600613, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+            Creature* pet = caster->SummonCreatureGuardian(600613, caster, caster->ToPlayer(), duration, SECOND_PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
 
             if (pet && pet->IsAlive())
             {
@@ -2239,9 +2239,6 @@ class spell_hun_call_of_wild : public SpellScript
                 if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId))
                     if (displayInfo->scale > 1)
                         pet->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
-
-                ((Guardian*)pet)->InitStatsForLevel(caster->getLevel());
-                pet->AI()->AttackStart(GetExplTargetUnit());
             }
         }
     }
@@ -2267,7 +2264,7 @@ class spell_hun_call_of_wild_periodic : public SpellScript
             return;
 
         Position const& pos = GetCaster()->GetPosition();
-        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(63);
         int32 duration = GetSpellInfo()->GetDuration();
 
         int32 petQuantity = -1;
@@ -2287,25 +2284,22 @@ class spell_hun_call_of_wild_periodic : public SpellScript
 
         uint32 displayId = petStable->StabledPets.at(random)->DisplayId;
 
-        Creature* pet = GetCaster()->SummonCreature(600613, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+        Creature* pet = GetCaster()->SummonCreatureGuardian(600613, GetCaster(), GetCaster()->ToPlayer(), duration, SECOND_PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
 
         if (pet && pet->IsAlive())
         {
             pet->SetDisplayId(displayId);
 
-            if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId))
-                if (displayInfo->scale > 1)
+            if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId)) {
+                if (displayInfo->scale > 1.0f) {
                     pet->SetObjectScale((1 / (displayInfo->scale)) - 0.2);
-
-            ((Guardian*)pet)->InitStatsForLevel(GetCaster()->getLevel());
-            pet->AI()->AttackStart(GetExplTargetUnit());
+                }
+            }
 
             pet->AddAura(34902, GetCaster());
             pet->AddAura(34903, GetCaster());
             pet->AddAura(34904, GetCaster());
         }
-
-
     }
 
     void Register() override

@@ -138,7 +138,81 @@ private:
     uint32 _spellTimer;
 };
 
+
+
+struct npc_hunter_wild_pet : public ScriptedAI
+{
+    npc_hunter_wild_pet(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
+
+    void InitializeAI() override
+    {
+        _events.Reset();
+        _events.ScheduleEvent(0, 1500);
+    }
+
+    void AttackTarget(Unit* target)
+    {
+        me->JumpTo(target, 9.375f);
+        AttackStart(target);
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        if (_initAttack)
+        {
+            if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+            {
+                if (Unit* target = owner->GetSelectedUnit())
+                {
+                    if (me->CanCreatureAttack(target))
+                    {
+                        AttackTarget(target);
+                        _initAttack = false;
+                    }
+                }
+            }
+        }
+
+        _events.Update(diff);
+
+        while (uint32 eventId = _events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case 0:
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                {
+                    if (Unit* newTarget = owner->GetSelectedUnit())
+                    {
+                        if (Unit* victim = me->GetVictim()) {
+                            if (victim->GetGUID() != newTarget->GetGUID())
+                            {
+                                if (me->CanCreatureAttack(newTarget))
+                                    AttackTarget(newTarget);
+                            }
+                        }
+                    }
+                }
+                _events.ScheduleEvent(0, 1500);
+                break;
+            }
+        }
+
+        if (!UpdateVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+
+private:
+    EventMap _events;
+    bool _initAttack;
+    Player* owner;
+    int32 shadow;
+};
+
 void AddSC_hunter_pet_scripts()
 {
     RegisterCreatureAI(npc_pet_hunter_snake_trap);
+    RegisterCreatureAI(npc_hunter_wild_pet);
 }
