@@ -145,19 +145,6 @@ void KillRewarder::_RewardHonor(Player* player)
 void KillRewarder::_RewardXP(Player* player, float rate)
 {
     uint32 xp(_xp);
-    if (_group)
-    {
-        // 4.2.1. If player is in group, adjust XP:
-        //        * set to 0 if player's level is more than maximum level of not gray member;
-        //        * cut XP in half if _isFullXP is false.
-        if (_maxNotGrayMember && player->IsAlive() &&
-            _maxNotGrayMember->getLevel() >= player->getLevel())
-            xp = _isFullXP ?
-                 uint32(xp * rate) :             // Reward FULL XP if all group members are not gray.
-                 uint32(xp * rate / 2) + 1;      // Reward only HALF of XP if some of group members are gray.
-        else
-            xp = 0;
-    }
     if (xp)
     {
         // 4.2.2. Apply auras modifying rewarded XP (SPELL_AURA_MOD_XP_PCT).
