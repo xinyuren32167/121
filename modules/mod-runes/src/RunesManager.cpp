@@ -206,7 +206,7 @@ void RunesManager::LoadAllSlotRune()
 {
     RunesManager::m_SlotRune = {};
 
-    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_rune_slots ORDER BY `order` DESC");
+    QueryResult result = CharacterDatabase.Query("SELECT id, runeSpellId, order FROM character_rune_slots ORDER BY `order` DESC");
     if (!result)
         return;
     do
