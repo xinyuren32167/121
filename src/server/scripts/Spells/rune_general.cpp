@@ -1042,15 +1042,15 @@ class rune_general_school_vampirism : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
 
         int32 healPct = aurEff->GetAmount();
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
@@ -1070,8 +1070,6 @@ class rune_general_school_vampirism : public AuraScript
         OnEffectProc += AuraEffectProcFn(rune_general_school_vampirism::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
-
 
 void AddSC_generals_perks_scripts()
 {

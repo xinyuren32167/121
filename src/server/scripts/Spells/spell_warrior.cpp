@@ -1404,6 +1404,8 @@ class spell_bloodrage : public SpellScript
     {
         Unit* caster = GetCaster();
 
+        caster->RemoveMovementImpairingAuras(true);
+
         if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
         {
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
@@ -2264,6 +2266,21 @@ class spell_sword_and_spear_board_reset : public AuraScript
 //    }
 //};
 
+class spell_avatar_freedom : public SpellScript
+{
+    PrepareSpellScript(spell_avatar_freedom);
+
+    void HandleProc()
+    {
+        GetCaster()->RemoveMovementImpairingAuras(true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_avatar_freedom::HandleProc);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -2330,6 +2347,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_furious_stabs);
     RegisterSpellScript(spell_warr_slam_and_thrust);
     RegisterSpellScript(spell_sword_and_spear_board_reset);
+    RegisterSpellScript(spell_avatar_freedom);
     //RegisterSpellScript(spell_warr_heroic_leap);
     RegisterCreatureAI(npc_pet_ravager);
 }

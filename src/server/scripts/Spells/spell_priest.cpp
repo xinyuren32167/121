@@ -4354,11 +4354,15 @@ class spell_pri_blistering_barriers : public AuraScript
         if (!victim || victim->isDead())
             return;
 
+        if (!caster || caster->isDead())
+            return;
+
         if (dmgInfo.GetAttackType() == BASE_ATTACK && !caster->HasSpellCooldown(SPELL_PRIEST_BLISTERING_BARRIER_PROC))
         {
             PreventDefaultAction();
             aurEff->GetBase()->ModCharges(-1);
             caster->AddSpellCooldown(SPELL_PRIEST_BLISTERING_BARRIER_PROC, 0, 3000);
+            victim->CastSpell(victim, SPELL_PRIEST_BLISTERING_BARRIER_PROC, TRIGGERED_FULL_MASK, nullptr, nullptr, caster->GetGUID());
             caster->CastSpell(victim, SPELL_PRIEST_BLISTERING_BARRIER_PROC, TRIGGERED_FULL_MASK);
         }
         else
