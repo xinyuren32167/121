@@ -1924,7 +1924,7 @@ class spell_mage_arcane_explosion : public SpellScript
     }
 };
 
-// 42847 - Arcane Missile
+// 42843 - Arcane Missile
 class spell_mage_arcane_missiles_aura : public AuraScript
 {
     PrepareAuraScript(spell_mage_arcane_missiles_aura);
