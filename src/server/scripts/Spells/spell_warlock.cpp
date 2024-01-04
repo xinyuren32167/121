@@ -91,6 +91,7 @@ enum WarlockSpells
     SPELL_WARLOCK_SHADOW_BOLT = 47809,
     SPELL_WARLOCK_SHADOW_BOLT_ENERGY = 83080,
     SPELL_WARLOCK_DRAIN_SOUL_ENERGY = 83081,
+    SPELL_WARLOCK_UNSTABLE_AFFLICTION = 47843,
     SPELL_WARLOCK_UNSTABLE_AFFLICTION_ENERGY = 83082,
     SPELL_WARLOCK_SOUL_STRIKE_ENERGY = 83083,
     SPELL_WARLOCK_CONFLAGRATE_ENERGY = 83084,
@@ -159,6 +160,9 @@ enum WarlockSpells
     SPELL_MINION_INCREASE_BOMBER = 1100014,
 
     SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE = 83032,
+
+    // Runes
+    RUNE_WARLOCK_SEIZED_VITALITY_DEBUFF = 800484,
 };
 
 enum WarlockPets {
@@ -1215,50 +1219,50 @@ class spell_warl_fel_synergy : public AuraScript
     }
 };
 
-// -48181 - Haunt
-class spell_warl_haunt : public SpellScript
-{
-    PrepareSpellScript(spell_warl_haunt);
-
-    void HandleAfterHit()
-    {
-        if (Aura* aura = GetHitAura())
-            if (AuraEffect* aurEff = aura->GetEffect(EFFECT_1))
-                aurEff->SetAmount(CalculatePct(aurEff->GetAmount(), GetHitDamage()));
-    }
-
-    void Register() override
-    {
-        AfterHit += SpellHitFn(spell_warl_haunt::HandleAfterHit);
-    }
-};
-
-class spell_warl_haunt_aura : public AuraScript
-{
-    PrepareAuraScript(spell_warl_haunt_aura);
-
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ SPELL_WARLOCK_HAUNT_HEAL });
-    }
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            if (!caster || caster->isDead())
-                return;
-
-            int32 amount = aurEff->GetAmount();
-            GetTarget()->CastCustomSpell(caster, SPELL_WARLOCK_HAUNT_HEAL, &amount, nullptr, nullptr, true, nullptr, aurEff, GetCasterGUID());
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectRemove += AuraEffectRemoveFn(spell_warl_haunt_aura::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
-    }
-};
+//// -48181 - Haunt
+//class spell_warl_haunt : public SpellScript
+//{
+//    PrepareSpellScript(spell_warl_haunt);
+//
+//    void HandleAfterHit()
+//    {
+//        if (Aura* aura = GetHitAura())
+//            if (AuraEffect* aurEff = aura->GetEffect(EFFECT_1))
+//                aurEff->SetAmount(CalculatePct(aurEff->GetAmount(), GetHitDamage()));
+//    }
+//
+//    void Register() override
+//    {
+//        AfterHit += SpellHitFn(spell_warl_haunt::HandleAfterHit);
+//    }
+//};
+//
+//class spell_warl_haunt_aura : public AuraScript
+//{
+//    PrepareAuraScript(spell_warl_haunt_aura);
+//
+//    bool Validate(SpellInfo const* /*spellInfo*/) override
+//    {
+//        return ValidateSpellInfo({ SPELL_WARLOCK_HAUNT_HEAL });
+//    }
+//
+//    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+//    {
+//        if (Unit* caster = GetCaster())
+//        {
+//            if (!caster || caster->isDead())
+//                return;
+//
+//            int32 amount = aurEff->GetAmount();
+//            GetTarget()->CastCustomSpell(caster, SPELL_WARLOCK_HAUNT_HEAL, &amount, nullptr, nullptr, true, nullptr, aurEff, GetCasterGUID());
+//        }
+//    }
+//
+//    void Register() override
+//    {
+//        OnEffectRemove += AuraEffectRemoveFn(spell_warl_haunt_aura::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+//    }
+//};
 
 // -30108 - Unstable Affliction
 class spell_warl_unstable_affliction : public AuraScript
@@ -1279,10 +1283,10 @@ class spell_warl_unstable_affliction : public AuraScript
     void HandleDispel(DispelInfo* dispelInfo)
     {
         if (Unit* caster = GetCaster())
-            if (AuraEffect const* aurEff = GetEffect(EFFECT_0))
+            if (AuraEffect const* aurEff = GetEffect(EFFECT_2))
             {
                 int32 damage = aurEff->GetBaseAmount();
-                damage = aurEff->GetSpellInfo()->Effects[EFFECT_0].CalcValue(caster, &damage, nullptr) * 9;
+                damage = aurEff->GetSpellInfo()->Effects[EFFECT_2].CalcValue(caster, &damage, nullptr) * 9;
                 // backfire damage and silence
                 caster->CastCustomSpell(dispelInfo->GetDispeller(), SPELL_WARLOCK_UNSTABLE_AFFLICTION_DISPEL, &damage, nullptr, nullptr, true, nullptr, aurEff);
             }
@@ -1290,7 +1294,7 @@ class spell_warl_unstable_affliction : public AuraScript
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_warl_unstable_affliction::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_warl_unstable_affliction::HandleProc, EFFECT_2, SPELL_AURA_DUMMY);
         AfterDispel += AuraDispelFn(spell_warl_unstable_affliction::HandleDispel);
     }
 };
@@ -1419,92 +1423,39 @@ class spell_warl_glyph_of_shadowflame : public AuraScript
     }
 };
 
-// -1120 - Drain Soul
+// 47855 - Drain Soul
 class spell_warl_drain_soul : public AuraScript
 {
     PrepareAuraScript(spell_warl_drain_soul);
 
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo(
-            {
-                SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1,
-                SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC,
-                SPELL_WARLOCK_CREATE_SOULSHARD,
-                SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_AURA,
-                SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_PROC
-            });
-    }
-
-    void RemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-        Unit* target = GetTarget();
-        if (!(GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_DEATH && caster && target && caster->IsPlayer() && caster->ToPlayer()->isHonorOrXPTarget(target)))
-        {
-            PreventDefaultAction();
-        }
-    }
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        // Drain Soul's proc tries to happen each time the warlock lands a killing blow on a unit while channeling.
-        // Make sure that the dying unit is afflicted by the caster's Drain Soul debuff in order to avoid a false positive.
-
-        Unit* caster = GetCaster();
-        Unit* victim = eventInfo.GetProcTarget();
-
-        if (caster && victim)
-        {
-            return victim->GetAuraApplicationOfRankedSpell(SPELL_WARLOCK_DRAIN_SOUL_R1, caster->GetGUID()) != 0;
-        }
-
-        return false;
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        PreventDefaultAction();
-
-        if (Unit* caster = eventInfo.GetActor())
-        {
-            // Improved Drain Soul.
-            if (Aura const* impDrainSoul = caster->GetAuraOfRankedSpell(SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_R1, caster->GetGUID()))
-            {
-                int32 amount = CalculatePct(caster->GetMaxPower(POWER_MANA), impDrainSoul->GetSpellInfo()->Effects[EFFECT_2].CalcValue());
-                caster->CastCustomSpell(SPELL_WARLOCK_IMPROVED_DRAIN_SOUL_PROC, SPELLVALUE_BASE_POINT0, amount, caster, true, nullptr, aurEff, caster->GetGUID());
-            }
-        }
+        if (GetCaster() && GetCaster()->IsAlive())
+            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_DRAIN_SOUL_ENERGY, TRIGGERED_FULL_MASK);
     }
 
-    void HandleTick(AuraEffect const* aurEff)
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetTarget();
 
-        if (caster && caster->GetTypeId() == TYPEID_PLAYER && caster->ToPlayer()->isHonorOrXPTarget(target))
-        {
-            if (roll_chance_i(20))
-            {
-                caster->CastSpell(caster, SPELL_WARLOCK_CREATE_SOULSHARD, aurEff);
-                // Glyph of Drain Soul - chance to create an additional Soul Shard.
-                if (AuraEffect* aur = caster->GetAuraEffect(SPELL_WARLOCK_GLYPH_OF_DRAIN_SOUL_AURA, EFFECT_0))
-                {
-                    if (roll_chance_i(aur->GetMiscValue()))
-                    {
-                        caster->CastSpell(caster, SPELL_WARLOCK_CREATE_SOULSHARD, aur);
-                    }
-                }
-            }
-        }
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Remove Soul Affliction Rune Buff
+        for (size_t i = 800542; i < 800548; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_soul::RemoveEffect, EFFECT_0, SPELL_AURA_CHANNEL_DEATH_ITEM, AURA_EFFECT_HANDLE_REAL);
-        DoCheckProc += AuraCheckProcFn(spell_warl_drain_soul::CheckProc);
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_drain_soul::HandleTick, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE);
-        OnEffectProc += AuraEffectProcFn(spell_warl_drain_soul::HandleProc, EFFECT_2, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_warl_drain_soul::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_soul::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2050,9 +2001,9 @@ class spell_warl_health_funnel_new : public AuraScript
     }
 };
 
-class spell_warl_haunt_reset : public AuraScript
+class spell_warl_haunt : public AuraScript
 {
-    PrepareAuraScript(spell_warl_haunt_reset);
+    PrepareAuraScript(spell_warl_haunt);
 
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2060,9 +2011,49 @@ class spell_warl_haunt_reset : public AuraScript
         GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_WARLOCK_HAUNT, true);
     }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* target = GetUnitOwner();
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        // If target has the Seized Vitality debuff removes it.
+        if (Aura* seizedVitalityDebuff = target->GetAura(RUNE_WARLOCK_SEIZED_VITALITY_DEBUFF))
+            seizedVitalityDebuff->Remove();
+
+        // Remove Haunted Soul Rune Buff
+        for (size_t i = 800492; i < 800498; i++)
+            if (caster->HasAura(i))
+            {
+                auto const& enemyList = caster->getAttackers();
+                int32 hauntedEnemiesNbr = 0;
+
+                for (auto const& enemy : enemyList)
+                {
+                    if (enemy->isDead())
+                        continue;
+
+                    if (enemy == target)
+                        continue;
+
+                    if (enemy->HasAura(SPELL_WARLOCK_HAUNT))
+                        hauntedEnemiesNbr++;
+                }
+
+                if (hauntedEnemiesNbr == 0)
+                    caster->RemoveAura(i);
+            }
+    }
+
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_warl_haunt_reset::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_warl_haunt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_warl_haunt::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2133,22 +2124,6 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
     }
 };
 
-class spell_warl_drain_soul_energy : public AuraScript
-{
-    PrepareAuraScript(spell_warl_drain_soul_energy);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        if (GetCaster() && GetCaster()->IsAlive())
-            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_DRAIN_SOUL_ENERGY, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_warl_drain_soul_energy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
 class spell_warl_chaos_bolt : public SpellScript
 {
     PrepareSpellScript(spell_warl_chaos_bolt);
@@ -2205,7 +2180,7 @@ class spell_warl_immolate_energy : public AuraScript
 
         caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATE_ENERGY, TRIGGERED_FULL_MASK);
 
-        uint32 procChance = aurEff->GetAmount();
+        uint32 procChance = GetEffect(EFFECT_2)->GetAmount();
 
         if (roll_chance_f(procChance) && caster->GetTypeId() == TYPEID_PLAYER)
         {
@@ -2215,7 +2190,7 @@ class spell_warl_immolate_energy : public AuraScript
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_immolate_energy::OnPeriodic, EFFECT_2, SPELL_AURA_PERIODIC_DAMAGE);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_immolate_energy::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
     }
 };
 
@@ -2376,7 +2351,7 @@ class spell_warl_malefic_rapture : public SpellScript
 
         auto const& threatList = caster->getAttackers();
 
-        if(threatList.size() <= 0)
+        if (threatList.size() <= 0)
             return;
 
         for (auto const& target : threatList)
@@ -2404,6 +2379,53 @@ class spell_warl_malefic_rapture : public SpellScript
     void Register() override
     {
         AfterCast += SpellCastFn(spell_warl_malefic_rapture::HandleCast);
+    }
+};
+
+// 83021 - Malefic Rapture (damage)
+class spell_warl_malefic_rapture_damage : public SpellScript
+{
+    PrepareSpellScript(spell_warl_malefic_rapture_damage);
+
+    Aura* GetFocusedMalignancyAura(Unit* caster)
+    {
+        for (size_t i = 800560; i < 800566; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // If target has Unstable Affliction apply the Focused Malignancy rune damage increase.
+        if (Aura* runeAura = GetFocusedMalignancyAura(caster))
+            if (target->HasAura(SPELL_WARLOCK_UNSTABLE_AFFLICTION))
+            {
+                int32 increase = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, increase);
+            }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_malefic_rapture_damage::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -3266,20 +3288,9 @@ class spell_warl_drain_life : public AuraScript
                 caster->RemoveAura(i);
     }
 
-    void HandlePeriodic(AuraEffect const* aurEff)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        GetEffect(EFFECT_0)->CalculatePeriodicData();
-    }
-
     void Register() override
     {
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_life::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_LEECH, AURA_EFFECT_HANDLE_REAL);
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_drain_life::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_LEECH);
     }
 };
 
@@ -3312,7 +3323,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_siphon_life);
     RegisterSpellScript(spell_warl_soulshatter);
     RegisterSpellScript(spell_warl_unstable_affliction);
-    //RegisterSpellScript(spell_warl_drain_soul);
+    RegisterSpellScript(spell_warl_drain_soul);
     //RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warlock_summon_darkglare);
     RegisterSpellScript(spell_warlock_summon_darkhound);
@@ -3325,9 +3336,8 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_demon_armor);
     RegisterSpellScript(spell_warl_fel_armor);
     RegisterSpellScript(spell_warl_health_funnel_new);
-    RegisterSpellScript(spell_warl_haunt_reset);
+    RegisterSpellScript(spell_warl_haunt);
     RegisterSpellScript(spell_warl_seed_of_corruption_handler);
-    RegisterSpellScript(spell_warl_drain_soul_energy);
     RegisterSpellScript(spell_warl_chaos_bolt);
     RegisterSpellScript(spell_warl_conflagrate_energy);
     RegisterSpellScript(spell_warl_immolate_energy);
@@ -3336,8 +3346,9 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_soul_fire_energy);
     RegisterSpellScript(spell_warl_burning_rush);
     RegisterSpellScript(spell_warl_malefic_rapture);
+    RegisterSpellScript(spell_warl_malefic_rapture_damage);
     RegisterSpellScript(spell_warl_grimoire_of_sacrifice);
-    RegisterSpellScript(spell_warl_channel_demonfire);
+    RegisterSpellScript(spell_warl_channel_demonfire); 
     RegisterSpellScript(spell_warlock_soul_strike);
     RegisterSpellScript(spell_warl_nether_portal_proc);
     RegisterSpellScript(spell_warlock_summon_nether_portal);
