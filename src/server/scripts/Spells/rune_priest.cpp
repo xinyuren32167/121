@@ -978,7 +978,10 @@ class rune_pri_putrefying_claws : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
-        caster->AddAura(aurEff->GetAmount(), shadowFiend);
+        if(shadowFiend) {
+            caster->AddAura(aurEff->GetAmount(), shadowFiend);
+        }
+
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -990,9 +993,12 @@ class rune_pri_putrefying_claws : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
-        for (size_t i = 900582; i < 900588; i++)
-            if (shadowFiend->HasAura(i))
-                shadowFiend->RemoveAura(i);
+        if (shadowFiend) {
+            for (size_t i = 900582; i < 900588; i++)
+                if (shadowFiend->HasAura(i))
+                    shadowFiend->RemoveAura(i);
+
+        }
     }
 
     void Register() override

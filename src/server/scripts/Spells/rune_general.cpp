@@ -1055,13 +1055,14 @@ class rune_general_school_vampirism : public AuraScript
         int32 healPct = aurEff->GetAmount();
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, healPct);
+        int32 value = std::max(1, amount);
 
         if (amount <= 0)
             return;
 
         int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
 
-        caster->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(procSpell, SPELLVALUE_BASE_POINT0, value, caster, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
