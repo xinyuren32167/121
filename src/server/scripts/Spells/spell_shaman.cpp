@@ -2567,7 +2567,7 @@ class spell_sha_summon_cloudburst_totem : public AuraScript
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
         int32 duration = GetSpellInfo()->GetDuration();
         Position pos = caster->GetNearPosition(3.f, 0);
-        summon = caster->GetMap()->SummonCreature(400406, pos, properties, duration + 1000, caster, GetSpellInfo()->Id);
+        caster->GetMap()->SummonCreature(400406, pos, properties, duration + 1000, caster, GetSpellInfo()->Id);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -2582,9 +2582,11 @@ class spell_sha_summon_cloudburst_totem : public AuraScript
         float pct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         totalHealingAmount = CalculatePct(totalHealingAmount, pct);
 
-        if (summon && caster) {
-            summon->CastCustomSpell(SPELL_SHAMAN_OUTBURST_HEAL, SPELLVALUE_BASE_POINT0, totalHealingAmount, caster, true, nullptr, nullptr, caster->GetGUID());
-            summon->DespawnOrUnsummon();
+        Creature* creature = caster->FindNearestCreature(400406, 100.f);
+
+        if (creature && caster) {
+            creature->CastCustomSpell(SPELL_SHAMAN_OUTBURST_HEAL, SPELLVALUE_BASE_POINT0, totalHealingAmount, caster, true, nullptr, nullptr, caster->GetGUID());
+            creature->DespawnOrUnsummon();
         }
     }
 
@@ -3799,15 +3801,26 @@ class spell_sha_stormbrand_totem : public AuraScript
     void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
+
+        if (caster->isDead() || !caster)
+            return;
+
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
         int32 duration = GetSpellInfo()->GetDuration();
         Position pos = caster->GetNearPosition(3.f, 0);
-        summon = caster->GetMap()->SummonCreature(400407, pos, properties, duration + 1000, caster, GetSpellInfo()->Id);
+        caster->GetMap()->SummonCreature(400407, pos, properties, duration + 1000, caster, GetSpellInfo()->Id);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (caster->isDead() || !caster)
+            return;
+
+        if (!summon || summon->isDead())
+            return;
+
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         float damagePct = aurEff->GetAmount();
 
@@ -3815,6 +3828,8 @@ class spell_sha_stormbrand_totem : public AuraScript
             damagePct = 100.f;
 
         int32 damageAmount = CalculatePct(damage, damagePct);
+
+        Creature* summon = caster->FindNearestCreature(400407, 100.f);
 
         if (summon && caster) {
             summon->CastCustomSpell(SPELL_SHAMAN_STORMBRAND_TOTEM_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, true, nullptr, nullptr, caster->GetGUID());

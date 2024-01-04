@@ -2073,7 +2073,8 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->IsAlive();
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() &&
+            eventInfo.GetActor() && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2292,28 +2293,36 @@ class spell_warl_power_siphon : public SpellScript
         Unit* caster = GetCaster();
         uint32 maxSacrifice = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(caster);
         uint8 totalSacrifice = 0;
-        if (Player* player = GetCaster()->ToPlayer())
-            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player)
+            return;
+
+        auto summonedUnits = player->m_Controlled;
+        for (auto const& unit : summonedUnits)
+        {
+            if (!unit || !unit->isDead())
+                return;
+
+            if (Unit* pet = unit)
             {
-                if (Unit* pet = (*itr))
+                if (pet->GetOwnerGUID() == player->GetGUID() && pet->GetEntry() == PET_WILDIMP && pet->IsWithinDist(player, 100.0f, false))
                 {
-                    if (pet->IsAlive() && pet->GetOwnerGUID() == player->GetGUID() && pet->GetEntry() == PET_WILDIMP && pet->IsWithinDist(player, 100.0f, false))
-                    {
-                        if (totalSacrifice >= maxSacrifice)
-                            return;
-                        else {
-                            if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONBOLT_EMPOREWED))
-                                aura->SetCharges(aura->GetCharges() + 1);
-                            else
-                            {
-                                pet->ToTempSummon()->UnSummon();
-                                caster->CastCustomSpell(SPELL_WARLOCK_DEMONBOLT_EMPOREWED, SPELLVALUE_AURA_CHARGE, 1, caster, true);
-                                totalSacrifice++;
-                            }
+                    if (totalSacrifice >= maxSacrifice)
+                        return;
+                    else {
+                        if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONBOLT_EMPOREWED))
+                            aura->SetCharges(aura->GetCharges() + 1);
+                        else
+                        {
+                            pet->ToTempSummon()->UnSummon();
+                            caster->CastCustomSpell(SPELL_WARLOCK_DEMONBOLT_EMPOREWED, SPELLVALUE_AURA_CHARGE, 1, caster, true);
+                            totalSacrifice++;
                         }
                     }
                 }
             }
+        }
     }
 
     void Register() override
@@ -2892,22 +2901,26 @@ class spell_warl_frailty : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (!GetCaster() || GetCaster()->isDead())
-            return false;
-
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* caster = GetCaster();
-        int32 healPct = aurEff->GetAmount();
-        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        int32 amount = CalculatePct(damage, healPct);
-
-        if (amount <= 0)
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        caster->CastCustomSpell(SPELL_WARLOCK_FRAILTY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        if (Unit* actor = eventInfo.GetActor()) {
+            if (actor->GetGUID() == GetCaster()->GetGUID()) {
+                Unit* caster = GetCaster();
+                int32 healPct = aurEff->GetAmount();
+                int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+                int32 amount = CalculatePct(damage, healPct);
+
+                if (amount <= 0)
+                    return;
+
+                caster->CastCustomSpell(SPELL_WARLOCK_FRAILTY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+            }
+        }
     }
     void Register() override
     {
@@ -3136,7 +3149,7 @@ class spell_warl_archdemon_proc : public AuraScript
         if (!GetCaster() || GetCaster()->isDead() || GetCaster()->HasAura(TALENT_WARLOCK_ARCHDEMON_COOLDOWN))
             return false;
 
-        return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && eventInfo.GetSpellInfo();
+        return eventInfo.GetActor() && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && eventInfo.GetSpellInfo();
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -3313,7 +3326,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_demonic_barrier);
     RegisterSpellScript(spell_warl_soul_collector_fragment);
     RegisterSpellScript(spell_warl_soul_bomb);
-    RegisterSpellScript(spell_warl_frailty);;
+    RegisterSpellScript(spell_warl_frailty);
     RegisterSpellScript(spell_warl_fracture_fragment);
     RegisterSpellScript(spell_warl_demonkin);
     RegisterSpellScript(spell_warl_demonic_protection_mastery);

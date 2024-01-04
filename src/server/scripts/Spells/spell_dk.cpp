@@ -2628,6 +2628,13 @@ class spell_dk_soul_reaper : public AuraScript
     {
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
         if (target->GetHealthPct() <= 35 && caster->IsAlive())
             GetCaster()->CastSpell(target, SPELL_DK_SOUL_REAPER_PERIODIC, TRIGGERED_FULL_MASK);
     };
@@ -2635,6 +2642,10 @@ class spell_dk_soul_reaper : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->CastSpell(caster, SPELL_DK_RUNIC_CORRUPTION, TRIGGERED_FULL_MASK);
 
         if (Aura* runeAura = GetRuneAura(caster))
