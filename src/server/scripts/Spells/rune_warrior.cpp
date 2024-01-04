@@ -550,21 +550,6 @@ class spell_charging_for_blood : public AuraScript
     }
 };
 
-class spell_bloodcraze : public AuraScript
-{
-    PrepareAuraScript(spell_bloodcraze);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        GetCaster()->CastSpell(eventInfo.GetActionTarget(), 23881, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_bloodcraze::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
-    }
-};
-
 class spell_fervor_of_battle : public SpellScript
 {
     PrepareSpellScript(spell_fervor_of_battle);
@@ -3052,7 +3037,6 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(spell_collateral_damage_proc);
     RegisterSpellScript(spell_vicious_comtempt);
     RegisterSpellScript(spell_charging_for_blood);
-    RegisterSpellScript(spell_bloodcraze);
     RegisterSpellScript(spell_fervor_of_battle);
     RegisterSpellScript(spell_storm_of_swords);
     RegisterSpellScript(spell_spinning_grip);

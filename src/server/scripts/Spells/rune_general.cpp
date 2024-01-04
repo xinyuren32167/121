@@ -1043,7 +1043,7 @@ class rune_general_school_vampirism : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         if (!GetCaster() || GetCaster()->isDead())
-            return;
+            return false;
 
         return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
