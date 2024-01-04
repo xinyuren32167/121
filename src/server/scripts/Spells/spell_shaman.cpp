@@ -3818,9 +3818,6 @@ class spell_sha_stormbrand_totem : public AuraScript
         if (caster->isDead() || !caster)
             return;
 
-        if (!summon || summon->isDead())
-            return;
-
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         float damagePct = aurEff->GetAmount();
 
@@ -3843,8 +3840,6 @@ class spell_sha_stormbrand_totem : public AuraScript
         OnEffectApply += AuraEffectApplyFn(spell_sha_stormbrand_totem::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 
-private:
-    TempSummon* summon;
 };
 
 class spell_sha_spirit_weapons : public AuraScript
