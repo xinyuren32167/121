@@ -2637,6 +2637,7 @@ class spell_warl_molten_hand : public AuraScript
     }
 };
 
+// 47809 - Shadow Bolt
 class spell_warl_shadow_bolt : public SpellScript
 {
     PrepareSpellScript(spell_warl_shadow_bolt);
@@ -2644,6 +2645,17 @@ class spell_warl_shadow_bolt : public SpellScript
     Aura* GetWitheringBoltAura(Unit* caster)
     {
         for (size_t i = 800304; i < 800310; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetSacrificedSoulsAura(Unit* caster)
+    {
+        for (size_t i = 800630; i < 800636; i++)
         {
             if (caster->HasAura(i))
                 return caster->GetAura(i);
@@ -2691,6 +2703,32 @@ class spell_warl_shadow_bolt : public SpellScript
                 AddPct(damage, increasePct);
             }
         }
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Check for Sacrificed Souls Rune Buff and apply damage increase per demon summoned.
+            if (Aura* runeAura = GetSacrificedSoulsAura(caster))
+            {
+                int32 summonQte = 0;
+                auto summonedUnits = player->m_Controlled;
+
+                for (auto const& unit : summonedUnits)
+                {
+                    if (unit->isDead())
+                        continue;
+
+                    summonQte++;
+                }
+
+                if (summonQte > 0)
+                {
+                    int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount() * summonQte;
+
+                    AddPct(damage, increasePct);
+                }
+            }
+        }
+
 
         SetHitDamage(damage);
 
@@ -2936,7 +2974,7 @@ class spell_warl_frailty : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if(!GetCaster() || GetCaster()->isDead())
+        if (!GetCaster() || GetCaster()->isDead())
             return false;
 
         if (Unit* caster = eventInfo.GetActor())
@@ -3294,6 +3332,72 @@ class spell_warl_drain_life : public AuraScript
     }
 };
 
+// 83028 - Demonbolt
+class spell_warl_demonbolt : public SpellScript
+{
+    PrepareSpellScript(spell_warl_demonbolt);
+
+    Aura* GetSacrificedSoulsAura(Unit* caster)
+    {
+        for (size_t i = 800630; i < 800636; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Check for Sacrificed Souls Rune Buff and apply damage increase per demon summoned.
+            if (Aura* runeAura = GetSacrificedSoulsAura(caster))
+            {
+                int32 summonQte = 0;
+                auto summonedUnits = player->m_Controlled;
+
+                for (auto const& unit : summonedUnits)
+                {
+                    if (unit->isDead())
+                        continue;
+
+                    summonQte++;
+                }
+
+                if (summonQte > 0)
+                {
+                    int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount() * summonQte;
+
+                    AddPct(damage, increasePct);
+                }
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_demonbolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript(spell_warl_eye_of_kilrogg);
@@ -3348,7 +3452,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_malefic_rapture);
     RegisterSpellScript(spell_warl_malefic_rapture_damage);
     RegisterSpellScript(spell_warl_grimoire_of_sacrifice);
-    RegisterSpellScript(spell_warl_channel_demonfire); 
+    RegisterSpellScript(spell_warl_channel_demonfire);
     RegisterSpellScript(spell_warlock_soul_strike);
     RegisterSpellScript(spell_warl_nether_portal_proc);
     RegisterSpellScript(spell_warlock_summon_nether_portal);
@@ -3385,9 +3489,10 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_fracture_energy);
     RegisterSpellScript(spell_warl_corruption);
     RegisterSpellScript(spell_warl_drain_life);
+    RegisterSpellScript(spell_warl_demonbolt);
 
 
-
+    
 
 
 }

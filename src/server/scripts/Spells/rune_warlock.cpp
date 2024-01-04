@@ -42,6 +42,8 @@ enum WarlockSpells
     RUNE_WARLOCK_SEIZED_VITALITY_HEAL = 800485,
     RUNE_WARLOCK_AREA_OF_AFFLICTION_DAMAGE = 800534,
     RUNE_WARLOCK_TORMENTED_CRESCENDO_BUFF = 800572,
+    RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
+    RUNE_WARLOCK_DREAD_TOUCH_DAMAGE = 800585,
 
     // Pet Scaling
     PET_SCALING_WARLOCK_DAMAGE_HASTE = 83205,
@@ -49,6 +51,9 @@ enum WarlockSpells
     PET_SCALING_WARLOCK_INTELLECT_ALLRES = 83207,
 
     // Summons
+    SUMMON_WARLOCK_DARK_GLARE = 83049,
+
+    // Summons Runes
     SUMMON_WARLOCK_INQUISITORS_EYE = 800000,
 };
 
@@ -574,7 +579,7 @@ class rune_warl_soul_conduit : public AuraScript
         if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
             return;
 
-        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
+        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
 
         if (spellSoulPower <= 0)
             return;
@@ -908,31 +913,74 @@ class rune_warl_dread_touch : public AuraScript
         if (!target || target->isDead())
             return;
 
-        if (!target->HasAura(SPELL_WARLOCK_UNSTABLE_AFFLICTION) && !target->HasAura(SPELL_WARLOCK_AGONY) || !target->HasAura(SPELL_WARLOCK_CORRUPTION))
-            return;
-
         int32 spellID = eventInfo.GetSpellInfo()->Id;
-        int32 procChance = 0;
 
         if (spellID == SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE)
-        {
-            procChance = aurEff->GetAmount();
-        }
-            
-
-        if (spellID == SPELL_WARLOCK_DRAIN_SOUL)
-            procChance = GetEffect(EFFECT_1)->GetAmount();
-
-        if (!roll_chance_i(procChance))
+            if (target->HasAura(SPELL_WARLOCK_UNSTABLE_AFFLICTION))
+                caster->CastSpell(target, RUNE_WARLOCK_DREAD_TOUCH_BUFF, TRIGGERED_FULL_MASK);
+                   
+        if (eventInfo.GetDamageInfo()->GetDamageType() != DOT || !target->HasAura(RUNE_WARLOCK_DREAD_TOUCH_BUFF))
             return;
 
-        caster->CastSpell(caster, RUNE_WARLOCK_TORMENTED_CRESCENDO_BUFF, TRIGGERED_FULL_MASK);
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_WARLOCK_DREAD_TOUCH_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(rune_warl_dread_touch::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_warl_dread_touch::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_grand_warlocks_design : public AuraScript
+{
+    PrepareAuraScript(rune_warl_grand_warlocks_design);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+            return;
+
+        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (spellSoulPower <= 0)
+            return;
+
+        int32 powerAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellSoulPower;
+        int32 powerThreshold = aurEff->GetAmount();
+        int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            while (powerAccumulated > powerThreshold)
+            {
+                player->ModifySpellCooldown(SUMMON_WARLOCK_DARK_GLARE, -cooldown);
+
+                powerAccumulated -= powerThreshold;
+            }
+        }
+
+
+        GetEffect(EFFECT_2)->SetAmount(powerAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_grand_warlocks_design::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_grand_warlocks_design::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -962,6 +1010,8 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_doom_blossom);
     RegisterSpellScript(rune_warl_area_of_affliction);
     RegisterSpellScript(rune_warl_tourmented_crescendo);
+    RegisterSpellScript(rune_warl_dread_touch);
+    RegisterSpellScript(rune_warl_grand_warlocks_design);
 
     
     
