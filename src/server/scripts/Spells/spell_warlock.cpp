@@ -2078,8 +2078,16 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() &&
-            eventInfo.GetActor() && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->IsAlive();
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        if (Unit* caster = eventInfo.GetActor())
+        {
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && caster->GetGUID() == GetCaster()->GetGUID())
+                return true;
+        }
+        else
+            return false;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2906,7 +2914,16 @@ class spell_warl_frailty : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+        if(!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        if (Unit* caster = eventInfo.GetActor())
+        {
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && caster->GetGUID() == GetCaster()->GetGUID())
+                return true;
+        }
+        else
+            return false;
     }
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -3075,7 +3092,13 @@ class spell_warl_demon_spikes : public AuraScript
         if (!GetCaster() || GetCaster()->isDead())
             return false;
 
-        return GetCaster()->HasAura(SPELL_WARLOCK_DEMONIC_PROTECTION);
+        if (Unit* caster = eventInfo.GetActor())
+        {
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && caster->GetGUID() == GetCaster()->GetGUID() && GetCaster()->HasAura(SPELL_WARLOCK_DEMONIC_PROTECTION))
+                return true;
+        }
+        else
+            return false;
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -3154,7 +3177,13 @@ class spell_warl_archdemon_proc : public AuraScript
         if (!GetCaster() || GetCaster()->isDead() || GetCaster()->HasAura(TALENT_WARLOCK_ARCHDEMON_COOLDOWN))
             return false;
 
-        return eventInfo.GetActor() && eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && eventInfo.GetSpellInfo();
+        if (Unit* caster = eventInfo.GetActor())
+        {
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && caster->GetGUID() == GetCaster()->GetGUID())
+                return true;
+        }
+        else
+            return false;
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

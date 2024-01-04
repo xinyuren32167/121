@@ -2033,14 +2033,16 @@ class spell_pal_gods_judgement : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
-
-        if (!damageInfo || !damageInfo->GetDamage() || damageInfo->GetDamage() == 0)
-        {
+        if (!GetCaster() || GetCaster()->isDead())
             return false;
-        }
 
-        return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
+        if (Unit* caster = eventInfo.GetActor())
+        {
+            if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && caster->GetGUID() == GetCaster()->GetGUID())
+                return true;
+        }
+        else
+            return false;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
