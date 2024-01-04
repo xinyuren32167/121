@@ -7241,11 +7241,15 @@ void Player::_SaveAuras(CharacterDatabaseTransaction trans, bool logout)
 void Player::_SaveInventory(CharacterDatabaseTransaction trans)
 {
     CharacterDatabasePreparedStatement* stmt = nullptr;
+
+    LOG_ERROR("entities.player", "Player(Name: {})::_SaveInventory!", GetName());
+
     // force items in buyback slots to new state
     // and remove those that aren't already
     for (uint8 i = BUYBACK_SLOT_START; i < BUYBACK_SLOT_END; ++i)
     {
         Item* item = m_items[i];
+
         if (!item)
             continue;
 
