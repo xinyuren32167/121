@@ -132,6 +132,7 @@ enum WarlockSpells
     TALENT_WARLOCK_ARCHDEMON_DAMAGE = 83201,
     TALENT_WARLOCK_ARCHDEMON_MARK = 83202,
     TALENT_WARLOCK_ARCHDEMON_COOLDOWN = 83203,
+    TALENT_WARLOCK_MOLTEN_HAND = 47245,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD = 83031,
@@ -1543,6 +1544,10 @@ class spell_warlock_summon_darkhound : public SpellScript
         for (size_t i = 0; i < totalSummons; i++)
         {
             int32 duration = GetSpellInfo()->GetDuration();
+
+            if (AuraEffect* talent = player->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_1))
+                duration += talent->GetAmount();
+
             TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration, WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
 
             if (summon)

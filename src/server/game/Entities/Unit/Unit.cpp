@@ -5702,7 +5702,8 @@ uint32 Unit::GetDiseasesByCaster(ObjectGuid casterGUID, uint8 mode)
 {
     static const AuraType diseaseAuraTypes[] =
     {
-        SPELL_AURA_PERIODIC_DAMAGE, // Frost Fever, Blood Plague and Virulent Plague
+        SPELL_AURA_PERIODIC_DAMAGE, // Frost Fever and Virulent Plague
+        SPELL_AURA_PERIODIC_LEECH,  // Blood Plague
         SPELL_AURA_LINKED,          // Crypt Fever and Ebon Plague
         SPELL_AURA_NONE
     };
