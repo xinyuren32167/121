@@ -7311,7 +7311,8 @@ void Player::_SaveInventory(CharacterDatabaseTransaction trans)
     for (size_t i = 0; i < m_itemUpdateQueue.size(); ++i)
     {
         Item* item = m_itemUpdateQueue[i];
-        if (!item)
+
+        if (item == nullptr)
             continue;
 
         Bag* container = item->GetContainer();
@@ -7363,7 +7364,7 @@ void Player::_SaveInventory(CharacterDatabaseTransaction trans)
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_REP_INVENTORY_ITEM);
                 stmt->SetData(0, lowGuid);
                 stmt->SetData(1, bag_guid);
-                stmt->SetData (2, item->GetSlot());
+                stmt->SetData(2, item->GetSlot());
                 stmt->SetData(3, item->GetGUID().GetCounter());
                 trans->Append(stmt);
                 break;

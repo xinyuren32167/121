@@ -2623,10 +2623,9 @@ class spell_pri_void_eruption_cooldown : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* player = GetCaster()->ToPlayer();
-        int32 cooldownChange = 120000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
-        player->SetSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
-        player->SendClearCooldown(SPELL_PRIEST_VOID_ERUPTION, player);
-        player->SendCooldownEvent(sSpellMgr->AssertSpellInfo(SPELL_PRIEST_VOID_ERUPTION));
+        player->RemoveSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, true);
+        player->AddSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 0, 120000);
+        player->SendSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 120000);
     }
 
     void Register() override

@@ -4002,11 +4002,12 @@ class spell_dk_necrotic_presence : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        Player* player = GetCaster()->ToPlayer();
+        Unit* caster = GetCaster();
+
          if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == TALENT_DK_NECROTIC_PRESENCE_PROC)
             return false;
 
-        return (player && player->IsAlive());
+        return (caster && caster->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -4015,7 +4016,6 @@ class spell_dk_necrotic_presence : public AuraScript
         {
             int32 damage = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
             int32 heal = CalculatePct(damage, aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
-
             GetCaster()->CastCustomSpell(eventInfo.GetActionTarget(), TALENT_DK_NECROTIC_PRESENCE_PROC, &damage, &heal, nullptr, true, nullptr);
         }
     }

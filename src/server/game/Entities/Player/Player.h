@@ -1768,6 +1768,7 @@ public:
     void AddSpellCooldown(uint32 spell_id, uint32 itemid, uint32 end_time, bool needSendToClient = false, bool forceSendToSpectator = false) override;
     void _AddSpellCooldown(uint32 spell_id, uint16 categoryId, uint32 itemid, uint32 end_time, bool needSendToClient = false, bool forceSendToSpectator = false);
     void SetSpellCooldown(uint32 spellId, int32 cooldown);
+    void SendSpellCooldown(uint32 spellId, int32 cooldown);
     void ModifySpellCooldown(uint32 spellId, int32 cooldown);
     void SendCooldownEvent(SpellInfo const* spellInfo, uint32 itemId = 0, Spell* spell = nullptr, bool setCooldown = true);
     void ProhibitSpellSchool(SpellSchoolMask idSchoolMask, uint32 unTimeMs) override;

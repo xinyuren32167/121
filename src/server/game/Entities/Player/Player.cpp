@@ -10928,6 +10928,17 @@ void Player::SetSpellCooldown(uint32 spellId, int32 cooldown)
     GetSession()->SendPacket(&data);
 }
 
+
+void Player::SendSpellCooldown(uint32 spellId, int32 cooldown)
+{
+    WorldPacket data(SMSG_SPELL_COOLDOWN, 8 + 1 + 4 + 4);
+    data << GetGUID();
+    data << uint8(SPELL_COOLDOWN_FLAG_INCLUDE_GCD);
+    data << uint32(spellId);
+    data << uint32(cooldown);
+    SendDirectMessage(&data);
+}
+
 void Player::SendCooldownEvent(SpellInfo const* spellInfo, uint32 itemId /*= 0*/, Spell* spell /*= nullptr*/, bool setCooldown /*= true*/)
 {
     // start cooldowns at server side, if any
