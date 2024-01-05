@@ -2589,13 +2589,14 @@ class spell_warl_ritual_of_ruin : public AuraScript
         if (Aura* stackAura = caster->GetAura(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK))
         {
             uint32 stackAmount = stackAura->GetStackAmount();
-            stackAura->ModStackAmount(powerCost);
 
             if (stackAmount >= maxStacks)
             {
                 caster->CastSpell(caster, TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF, TRIGGERED_FULL_MASK);
                 stackAura->ModStackAmount(-stackAmount);
             }
+            else
+                stackAura->ModStackAmount(powerCost);
         }
         else
             caster->CastCustomSpell(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK, SPELLVALUE_AURA_STACK, powerCost, caster, true, nullptr, aurEff);

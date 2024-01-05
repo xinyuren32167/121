@@ -1938,6 +1938,7 @@ class spell_sha_ascendance_flame : public SpellScript
             if (Aura* flameShock = treath->GetAura(SPELL_SHAMAN_FLAME_SHOCK))
             {
                 GetCaster()->CastSpell(treath, SPELL_SHAMAN_LAVA_BURST, TRIGGERED_FULL_MASK);
+                GetCaster()->ToPlayer()->RemoveSpellCooldown(SPELL_SHAMAN_LAVA_BURST);
                 flameShock->RefreshDuration();
                 flameShock->GetEffect(EFFECT_1)->ResetTicks();
             }
@@ -1995,6 +1996,23 @@ class spell_sha_ascendance_flame_aura : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_sha_ascendance_flame_aura::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_sha_ascendance_flame_aura::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 49271 - Chain Lightning
+class spell_sha_chain_lightning : public SpellScript
+{
+    PrepareSpellScript(spell_sha_chain_lightning);
+
+    void HandleCast()
+    {
+        if (Aura* ascendance = GetCaster()->GetAura(SPELL_SHAMAN_ASCENDANCE_FIRE))
+            GetCaster()->CastSpell(GetExplTargetUnit(), SPELL_SHAMAN_LAVA_BEAM, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_sha_chain_lightning::HandleCast);
     }
 };
 
@@ -2393,7 +2411,7 @@ class spell_sha_lava_burst : public SpellScript
         if (caster->HasAura(SPELL_SHAMAN_ASCENDANCE_FIRE))
         {
             float crit_chance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
-            ApplyPct(damage, crit_chance);
+            AddPct(damage, crit_chance);
         }
 
         SetHitDamage(damage);
@@ -4542,6 +4560,36 @@ class spell_sha_ascendancy_morphs : public AuraScript
     }
 };
 
+class spell_sha_liquid_magma_eruption : public SpellScript
+{
+    PrepareSpellScript(spell_sha_liquid_magma_eruption);
+
+    void FindTargets(std::list<WorldObject*>& targets)
+    {
+        if (Unit* caster = GetCaster()->GetCharmerOrOwnerOrSelf())
+        {
+            if (targets.size() > 0)
+            {
+                uint8 count = 0;
+                for (auto const& target : targets)
+                    if (Unit* unit = target->ToUnit())
+                        if (unit->IsAlive())
+                        {
+                            count += 1;
+
+                            if (count < 3)
+                                caster->AddAura(SPELL_SHAMAN_FLAME_SHOCK, unit);
+                        }
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_liquid_magma_eruption::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_totem_of_wrath);
@@ -4646,4 +4694,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_tidal_wave_consumed);
     RegisterSpellScript(spell_sha_storm_proficiency);
     RegisterSpellScript(spell_sha_ascendancy_morphs);
+    RegisterSpellScript(spell_sha_chain_lightning);
+    RegisterSpellScript(spell_sha_liquid_magma_eruption);
 }
