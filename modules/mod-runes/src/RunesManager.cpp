@@ -1094,7 +1094,7 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     CharacterDatabase.Execute("DELETE FROM account_know_runes WHERE accountId = {} AND spellId = {} LIMIT 1", accountId, rune.spellId);
 
     player->AddItem(70008, runicDust);
-    IncreaseRunicDustAmount(player, runicDust);
+    UpdateRunicDustAmount(player, runicDust, true);
 
     if (RuneAlreadyActivated(player, rune.spellId))
     {
@@ -1113,22 +1113,24 @@ void RunesManager::UpdateRunicDustCountOnLogin(Player* player)
 
     if (it != m_Progression.end()) {
 
-        if (it->second.dusts > 0) {
+        uint32 amount = it->second.dusts;
+
+        if (amount > 0) {
             Item* item = player->GetItemByEntry(70008);
 
             if (!item)
             {
-                player->AddItem(70008, it->second.dusts);
+                player->AddItem(70008, amount);
                 return;
             }
 
-            if (item->GetCount() != it->second.dusts)
-                item->SetCount(it->second.dusts);
+            if (item->GetCount() != amount)
+                item->SetCount(amount);
         }
     }
 }
 
-void RunesManager::IncreaseRunicDustAmount(Player* player, int32 amount)
+void RunesManager::UpdateRunicDustAmount(Player* player, int32 amount, bool increase)
 {
     uint32 accountId = player->GetSession()->GetAccountId();
 
@@ -1137,33 +1139,17 @@ void RunesManager::IncreaseRunicDustAmount(Player* player, int32 amount)
     if (it != m_Progression.end()) {
 
         if (amount > 0) {
-            it->second.dusts += amount;
-            CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+            if (increase) {
+                it->second.dusts += amount;
+                CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+            }
+            if (it->second.dusts > 0 && !increase) {
+                it->second.dusts -= amount;
+                CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
+            }
         }
     }
 }
-
-void RunesManager::DecreaseRunicDustAmount(Player* player, int32 amount)
-{
-    uint32 accountId = player->GetSession()->GetAccountId();
-
-    auto it = m_Progression.find(accountId);
-
-    if (it != m_Progression.end()) {
-
-        if ((it->second.dusts - amount) < 0) {
-            it->second.dusts = 0;
-            CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", 0, accountId);
-            return;
-        }
-
-        if (it->second.dusts > 0 && amount > 0) {
-            it->second.dusts -= amount;
-            CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
-        }
-    }
-}
-
 
 void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
 {

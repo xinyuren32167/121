@@ -21,8 +21,6 @@
 #include "ScriptedGossip.h"
 #include "SpellInfo.h"
 
-
-// Add player scripts
 class Runes_PlayerScripts: public PlayerScript
 {
 public:
@@ -31,7 +29,6 @@ public:
     void OnLogin(Player* player) override
     {
         RunesManager::ApplyRunesOnLogin(player);
-        RunesManager::UpdateRunicDustCountOnLogin(player);
     }
 
     void OnCreate(Player* player)
@@ -52,7 +49,6 @@ public:
         RunesManager::ApplyRunesOnLogin(player);
     }
 
-
     void OnAchiComplete(Player* player, AchievementEntry const* achievement)
     {
         if (!achievement)
@@ -65,162 +61,7 @@ public:
 
         RunesManager::GiveAchievementReward(player, achievementId);
     }
-
-    void OnLootItem(Player* player, Item* item, uint32 count, ObjectGuid lootguid)
-    {
-        if (item->GetEntry() != 70008)
-            return;
-
-        RunesManager::IncreaseRunicDustAmount(player, count);
-    }
-
-    void OnQuestRewardItem(Player* player, Item* item, uint32 count)
-    {
-        if (item->GetEntry() != 70008)
-            return;
-
-        RunesManager::IncreaseRunicDustAmount(player, count);
-    }
-
-
-    void OnBeforeBuyItemFromVendor(Player* player, ObjectGuid vendorguid, uint32 vendorslot, uint32& item, uint8 count, uint8 bag, uint8 slot)
-    {
-        if (item != 70002)
-            return;
-
-        RunesManager::DecreaseRunicDustAmount(player, 100 * count);
-    };
 };
-
-class Runes_MiscScript : public MiscScript
-{
-public:
-    Runes_MiscScript() : MiscScript("Runes_MiscScript") { }
-
-    void AddRunicDustToLoot(uint32 minValue, uint32 maxValue, Loot* loot)
-    {
-        LootStoreItem storeItem(70008, 0, 100, 0, LOOT_MODE_DEFAULT, 0, minValue, maxValue);
-        loot->AddItem(storeItem);
-    }
-
-    double calculatePourcentage(uint32 skillLevel, double pourcentageInitial)
-    {
-        return skillLevel / 10 + pourcentageInitial;
-    }
-
-    void AddMetarial(Loot* loot, uint32 skillLevel)
-    {
-        double lootChanceItem1 = calculatePourcentage(skillLevel, 25.f);
-        double lootChanceItem2 = calculatePourcentage(skillLevel, 5.f);
-        double lootChanceItem3 = calculatePourcentage(skillLevel, 1.f);
-
-        if (roll_chance_i(lootChanceItem1))
-        {
-            LootStoreItem storeItem(70010, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
-        }
-
-        if (roll_chance_i(lootChanceItem2))
-        {
-            LootStoreItem storeItem(70011, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            AddRunicDustToLoot(1, 1, loot);
-        }
-
-        if (roll_chance_i(lootChanceItem3))
-        {
-            LootStoreItem storeItem(70012, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
-        }
-    }
-
-    void AddBonusRunicDust(Creature* creature, Player* player, Loot* loot) {
-
-        if (creature->getLevel() < player->getLevel())
-            return;
-
-        int valueFromEliteRareMin = sWorld->GetValue("CONFIG_DROP_ELITE_RARE_RUNIC_DUST_MIN");
-        int valueFromEliteRareMax = sWorld->GetValue("CONFIG_DROP_ELITE_RARE_RUNIC_DUST_MAX");
-
-        int valueFromEliteMin = sWorld->GetValue("CONFIG_DROP_ELITE_RUNIC_DUST_MIN");
-        int valueFromEliteMax = sWorld->GetValue("CONFIG_DROP_ELITE_RUNIC_DUST_MAX");
-
-        int dropChanceFromMonster = sWorld->GetValue("CONFIG_DROP_CHANCE_FROM_MONSTER_RUNIC_DUST");
-
-        int valueMinFromDungeonBoss = sWorld->GetValue("CONFIG_DUNGEON_BOSS_RUNIC_DUST_MIN");
-        int valueMaxFromDungeonBoss = sWorld->GetValue("CONFIG_DUNGEON_BOSS_RUNIC_DUST_MAX");
-
-        Map* map = creature->GetMap();
-
-        if (creature->isElite() && !map->IsDungeon())
-            AddRunicDustToLoot(valueFromEliteMin, valueFromEliteMax, loot);
-
-        if (roll_chance_i(dropChanceFromMonster) && !map->IsHeroic())
-            AddRunicDustToLoot(1, 1, loot);
-
-        if (roll_chance_i(dropChanceFromMonster) && map->IsHeroic())
-            AddRunicDustToLoot(2, 2, loot);
-
-        if (creature->GetCreatureTemplate()->rank == CREATURE_ELITE_RARE)
-            AddRunicDustToLoot(valueFromEliteRareMin, valueFromEliteRareMax, loot);
-
-        if (creature->IsDungeonBoss() && !map->IsHeroic()) 
-            AddRunicDustToLoot(valueMinFromDungeonBoss, valueMaxFromDungeonBoss, loot);
-
-        if (creature->IsDungeonBoss() && map->IsHeroic())
-            AddRunicDustToLoot(valueMinFromDungeonBoss * 2, valueMaxFromDungeonBoss * 2, loot);
-    }
-
-    void OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode, WorldObject* source)
-    {
-        if (!source)
-            return;
-
-        if (GameObject* go = source->ToGameObject())
-        {
-            uint32 lockId = go->GetGOInfo()->GetLockId();
-            LockEntry const* lock = sLockStore.LookupEntry(lockId);
-
-            for (int j = 0; j < MAX_LOCK_CASE; ++j)
-            {
-                switch (lock->Type[j])
-                {
-                    case LOCK_KEY_SKILL:
-                        uint32 skillId = SkillByLockType(LockType(lock->Index[j]));
-
-                        if (skillId == SKILL_HERBALISM || skillId == SKILL_MINING)
-                        {
-                            if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(skillId))
-                            {
-                                AddMetarial(loot, pureSkillValue);
-                                int valueFromMinningAndHerborsimMin = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MIN");
-                                int valueFromMinningAndHerborsimMax = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MAX");
-
-                                AddRunicDustToLoot(valueFromMinningAndHerborsimMin, valueFromMinningAndHerborsimMax, loot);
-                            }
-                        }
-                       break;
-                }
-            }
-        }
-
-        if (Creature* creature = source->ToCreature())
-        {
-            if (creature->GetCreatureTemplate()->SkinLootId > 0)
-            {
-                if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(SKILL_SKINNING) && creature->getLevel() >= lootOwner->getLevel())
-                {
-                    AddMetarial(loot, pureSkillValue);
-                    int valueFromSkinningMin = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MIN");
-                    int valueFromSkinningMax = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MAX");
-                    AddRunicDustToLoot(valueFromSkinningMin, valueFromSkinningMax, loot);
-                }
-            }
-            AddBonusRunicDust(creature, lootOwner, loot);
-        }
-    }
-};
-
-
 
 using namespace Acore::ChatCommands;
 
@@ -439,7 +280,6 @@ void AddSC_runesScripts()
     new Runes_WorldScript();
     new Runes_CommandsScript();
     new go_rune_upgrader();
-    new Runes_MiscScript();
     new npc_buying_rune();
     RegisterSpellScript(spell_activate_rune);
     RegisterSpellScript(spell_generate_random_rune);

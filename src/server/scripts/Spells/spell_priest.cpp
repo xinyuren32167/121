@@ -382,7 +382,7 @@ class spell_pri_divine_aegis : public AuraScript
 
         absorb = std::min(absorb, eventInfo.GetProcTarget()->getLevel() * 125);
 
-        GetTarget()->CastCustomSpell(SPELL_PRIEST_DIVINE_AEGIS, SPELLVALUE_BASE_POINT0, absorb, eventInfo.GetProcTarget(), true, nullptr, aurEff);
+        GetTarget()->CastCustomSpell(SPELL_PRIEST_DIVINE_AEGIS, SPELLVALUE_AURA_CHARGE, absorb, eventInfo.GetProcTarget(), true, nullptr, aurEff);
     }
 
     void Register() override
@@ -3123,10 +3123,13 @@ class spell_pri_holy_blossom : public SpellScript
                 if (Aura* damage = caster->GetAura(SPELL_PRIEST_HOLY_MIGHT))
                     damage->SetDuration(std::min<int32>(damage->GetDuration() + durationIncrease, damage->GetMaxDuration()));
 
-                if (player->GetGroup() && allyList.size() > 0)
+                if (player->GetGroup() && allyList.size() > 0) {
                     for (auto const& target : allyList)
                     {
                         Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                        if (!alliedPlayer)
+                            continue;
 
                         if (alliedPlayer->isDead())
                             continue;
@@ -3143,6 +3146,7 @@ class spell_pri_holy_blossom : public SpellScript
                         if (Aura* spirit = alliedPlayer->GetAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
                             spirit->SetDuration(std::min<int32>(spirit->GetDuration() + durationIncrease, spirit->GetMaxDuration()));
                     }
+                }
             }
         }
     }

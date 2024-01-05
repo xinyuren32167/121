@@ -146,8 +146,7 @@ public:
     static void RefundRune(Player* player, uint32 runeSpellId);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
     static void UpdateRunicDustCountOnLogin(Player* player);
-    static void IncreaseRunicDustAmount(Player* player, int32 amount);
-    static void DecreaseRunicDustAmount(Player* player, int32 amount);
+    static void UpdateRunicDustAmount(Player* player, int32 amount, bool increase);
     static void AddRuneToSlot(Player* player, Rune rune);
     static void RemoveRuneFromSlots(Player* player, Rune rune);
     static void RemoveRune(Player* player, Rune rune, int8 quantity);

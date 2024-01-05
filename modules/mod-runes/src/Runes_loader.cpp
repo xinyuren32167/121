@@ -4,6 +4,7 @@
 
 // From SC
 void AddSC_runesScripts();
+void AddSC_RunicDust_Scripts();
 
 // Add all
 // cf. the naming convention https://github.com/azerothcore/azerothcore-wotlk/blob/master/doc/changelog/master.md#how-to-upgrade-4
@@ -11,5 +12,6 @@ void AddSC_runesScripts();
 void Addmod_runesScripts()
 {
     AddSC_runesScripts();
+    AddSC_RunicDust_Scripts();
 }
 
