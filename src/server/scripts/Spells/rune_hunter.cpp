@@ -2356,6 +2356,9 @@ class rune_hunter_thunderslash : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!eventInfo.GetActor())
+            return;
+
         if (!eventInfo.GetDamageInfo())
             return false;
 

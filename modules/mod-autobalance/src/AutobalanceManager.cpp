@@ -147,7 +147,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (!creature->GetMap()->IsDungeon() && !creature->GetMap()->IsBattleground())
         return;
 
-    if (((creature->IsHunterPet() || creature->IsPet() || creature->IsSummon()) && creature->IsControlledByPlayer()))
+    if (((creature->IsHunterPet() || creature->IsPet() || creature->IsSummon()) && creature->IsControlledByPlayer() && creature->IsTotem()))
         return;
 
     if (!creature->IsAlive())
