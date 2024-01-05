@@ -798,19 +798,42 @@ class spell_true_rage : public AuraScript
 {
     PrepareAuraScript(spell_true_rage);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (GetCaster()->GetShapeshiftForm() != FORM_BERSERKERSTANCE)
             return;
 
-        if (GetCaster()->HasAura(200004))
+        if (Aura* mastery = GetCaster()->GetAura(200003))
         {
-            float remainingDuration = GetCaster()->GetAura(200004)->GetDuration();
-            GetCaster()->GetAura(200004)->SetDuration(remainingDuration + 4000);
-        }
-        else
-        {
-            GetCaster()->CastSpell(GetCaster(), 200004, TRIGGERED_FULL_MASK);
+            if (GetCaster()->HasAura(200004))
+            {
+                float remainingDuration = GetCaster()->GetAura(200004)->GetDuration();
+                GetCaster()->GetAura(200004)->SetDuration(remainingDuration + 4000);
+            }
+            else
+            {
+                int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+                int32 buff = 0;
+
+                if (Aura* runeAura = GetRuneAura(GetCaster()))
+                    AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+                if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                    buff = talent->GetAmount();
+
+                GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
+            }
         }
     }
 
