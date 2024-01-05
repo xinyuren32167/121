@@ -339,14 +339,33 @@ class spell_mastery_unshackled_fury : public AuraScript
 {
     PrepareAuraScript(spell_mastery_unshackled_fury);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Player* caster = GetCaster()->ToPlayer())
         {
             if (caster->IsAlive())
             {
-                int32 amount = aurEff->GetAmount() + caster->GetMastery();
-                caster->CastCustomSpell(200004, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+                int32 amount = aurEff->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
+                int32 buff = 0;
+
+                if (Aura* runeAura = GetRuneAura(GetCaster()))
+                    AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+                if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                    buff = talent->GetAmount();
+
+                GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
             }
         }
     }

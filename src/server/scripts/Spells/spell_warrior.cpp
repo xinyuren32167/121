@@ -1350,6 +1350,17 @@ class spell_berserker_rage : public SpellScript
 {
     PrepareSpellScript(spell_berserker_rage);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
@@ -1360,7 +1371,15 @@ class spell_berserker_rage : public SpellScript
         if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
         {
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            int32 buff = 0;
+
+            if (Aura* runeAura = GetRuneAura(GetCaster()))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                buff = talent->GetAmount();
+
+            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
@@ -1375,6 +1394,17 @@ class spell_rampage_proc_rage : public SpellScript
 {
     PrepareSpellScript(spell_rampage_proc_rage);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
@@ -1382,7 +1412,15 @@ class spell_rampage_proc_rage : public SpellScript
         if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
         {
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            int32 buff = 0;
+
+            if (Aura* runeAura = GetRuneAura(GetCaster()))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                buff = talent->GetAmount();
+
+            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
         }
 
         if (Aura* forthingBerserkerAura = caster->GetAura(TALENT_WARRIOR_FORTHING_BERSERKER))
@@ -1400,6 +1438,17 @@ class spell_bloodrage : public SpellScript
 {
     PrepareSpellScript(spell_bloodrage);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
@@ -1409,7 +1458,15 @@ class spell_bloodrage : public SpellScript
         if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
         {
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            int32 buff = 0;
+
+            if (Aura* runeAura = GetRuneAura(GetCaster()))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                buff = talent->GetAmount();
+
+            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
@@ -1424,6 +1481,17 @@ class spell_recklessness_enrage : public SpellScript
 {
     PrepareSpellScript(spell_recklessness_enrage);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
@@ -1431,7 +1499,15 @@ class spell_recklessness_enrage : public SpellScript
         if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
         {
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            int32 buff = 0;
+
+            if (Aura* runeAura = GetRuneAura(GetCaster()))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                buff = talent->GetAmount();
+
+            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
@@ -1446,6 +1522,17 @@ class spell_death_wish_enrage : public SpellScript
 {
     PrepareSpellScript(spell_death_wish_enrage);
 
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 200422; i < 200428; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc()
     {
         Unit* caster = GetCaster();
@@ -1453,7 +1540,15 @@ class spell_death_wish_enrage : public SpellScript
         if (Aura* mastery = caster->GetAura(MASTERY_WARRIOR_UNSHACKLED_FURY))
         {
             int32 amount = mastery->GetEffect(EFFECT_0)->GetAmount() + GetCaster()->ToPlayer()->GetMastery();
-            GetCaster()->CastCustomSpell(MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+            int32 buff = 0;
+
+            if (Aura* runeAura = GetRuneAura(GetCaster()))
+                AddPct(amount, runeAura->GetEffect(EFFECT_0)->GetAmount());
+
+            if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
+                buff = talent->GetAmount();
+
+            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
         }
     }
 

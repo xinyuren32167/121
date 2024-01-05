@@ -246,7 +246,13 @@ class rune_dk_shadow_disease : public AuraScript //Chilling decay
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         if (!eventInfo.GetActionTarget())
+            return false;
+
+        if (GetCaster()->GetGUID() == eventInfo.GetActionTarget()->GetGUID())
             return false;
 
         return eventInfo.GetDamageInfo();

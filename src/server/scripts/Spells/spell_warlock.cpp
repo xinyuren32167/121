@@ -1480,10 +1480,32 @@ class spell_warl_shadowburn : public AuraScript
     }
 };
 
-// 83000
+// 83000 Call Dreadstalkers
 class spell_warlock_summon_darkhound : public SpellScript
 {
     PrepareSpellScript(spell_warlock_summon_darkhound);
+
+    Aura* GetCarnivorousStalkersAura(Unit* caster)
+    {
+        for (size_t i = 800748; i < 800754; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetTheHoundmastersStratagemAura(Unit* caster)
+    {
+        for (size_t i = 800762; i < 800768; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void HandleCast()
     {
@@ -1504,12 +1526,59 @@ class spell_warlock_summon_darkhound : public SpellScript
             if (summon)
                 summon->SetPositionReset(WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
 
+            if (Aura* runeAura = GetCarnivorousStalkersAura(player))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                player->CastSpell(summon, procSpell, TRIGGERED_FULL_MASK);
+            }
+
+            if (Aura* runeAura = GetTheHoundmastersStratagemAura(player))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+                player->CastSpell(summon, procSpell, TRIGGERED_FULL_MASK);
+            }
         }
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_warlock_summon_darkhound::HandleCast);
+    }
+};
+
+// 83000 Call Dreadstalkers
+class spell_warlock_call_dreadstalkers_aura : public AuraScript
+{
+    PrepareAuraScript(spell_warlock_call_dreadstalkers_aura);
+
+    Aura* GetShadowsBiteAura(Unit* caster)
+    {
+        for (size_t i = 800736; i < 800742; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetShadowsBiteAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_warlock_call_dreadstalkers_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1922,6 +1991,17 @@ class spell_warlock_dark_pact : public SpellScript
 {
     PrepareSpellScript(spell_warlock_dark_pact);
 
+    Aura* GetIchorsofDevilsAura(Unit* caster)
+    {
+        for (size_t i = 800440; i < 800446; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     uint32 shieldAmount = 0;
 
     void HandleBeforeCast()
@@ -1930,6 +2010,12 @@ class spell_warlock_dark_pact : public SpellScript
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_DARK_PACT);
         int32 sacrificePct = CalculatePct(caster->GetHealth(), value->GetEffect(EFFECT_0).CalcValue(caster));
         shieldAmount = CalculatePct(sacrificePct, value->GetEffect(EFFECT_1).CalcValue(caster)) + CalculatePct(caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), value->GetEffect(EFFECT_2).CalcValue(caster));
+
+        if (Aura* runeAura = GetIchorsofDevilsAura(caster))
+        {
+            int32 reduction = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            sacrificePct -= reduction;
+        }
 
         caster->CastCustomSpell(SPELL_WARLOCK_DARK_PACT_DAMAGE, SPELLVALUE_BASE_POINT0, sacrificePct, caster, TRIGGERED_FULL_MASK);
     }
@@ -2589,13 +2675,14 @@ class spell_warl_ritual_of_ruin : public AuraScript
         if (Aura* stackAura = caster->GetAura(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK))
         {
             uint32 stackAmount = stackAura->GetStackAmount();
-            stackAura->ModStackAmount(powerCost);
 
             if (stackAmount >= maxStacks)
             {
                 caster->CastSpell(caster, TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF, TRIGGERED_FULL_MASK);
                 stackAura->ModStackAmount(-stackAmount);
             }
+            else
+                stackAura->ModStackAmount(powerCost);
         }
         else
             caster->CastCustomSpell(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK, SPELLVALUE_AURA_STACK, powerCost, caster, true, nullptr, aurEff);
@@ -3431,8 +3518,9 @@ void AddSC_warlock_spell_scripts()
     //RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warlock_summon_darkglare);
     RegisterSpellScript(spell_warlock_summon_darkhound);
+    RegisterSpellScript(spell_warlock_call_dreadstalkers_aura);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
-    RegisterSpellScript(spell_warlock_summon_felboar);
+    RegisterSpellScript(spell_warlock_summon_felboar); 
     RegisterSpellScript(spell_warlock_summon_felguard);
     RegisterSpellScript(spell_warlock_summon_demonic_tyrant);
     RegisterSpellScript(spell_warl_agony);

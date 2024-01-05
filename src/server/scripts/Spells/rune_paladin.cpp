@@ -95,6 +95,7 @@ enum PaladinSpells
     RUNE_PALADIN_LIGHT_GALE_HEAL = 401328,
     RUNE_PALADIN_SEARING_RADIANCE_DOT = 401352,
     RUNE_PALADIN_INQUISITORS_VENGEANCE_REPRIMAND = 401514,
+    RUNE_PLADIN_STEADY_INQUISITION_STACK = 401582,
 };
 
 class rune_pal_inner_grace : public AuraScript
@@ -2757,43 +2758,37 @@ class rune_pal_wrathblow : public AuraScript
     }
 };
 
-class rune_pal_steady_judgement : public AuraScript
+class rune_pal_steady_inquisition : public AuraScript
 {
-    PrepareAuraScript(rune_pal_steady_judgement);
+    PrepareAuraScript(rune_pal_steady_inquisition);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetSpellInfo();
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        return true;
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
         int32 procSpell = aurEff->GetAmount();
-        int32 procQte = GetEffect(EFFECT_1)->GetAmount();
 
-        if (eventInfo.GetSpellInfo()->Id == SPELL_PALADIN_INQUISITION)
+        if (Aura* stack = caster->GetAura(RUNE_PLADIN_STEADY_INQUISITION_STACK))
         {
-            if (procQte >= 100)
-            {
-                caster->AddAura(procSpell, caster);
-                GetEffect(EFFECT_1)->SetAmount(50);
-            }
-            else
-                GetEffect(EFFECT_1)->SetAmount(procQte * 2);
+            stack->Remove();
+
+            caster->AddAura(procSpell, caster);
         }
         else
-            GetEffect(EFFECT_1)->SetAmount(50);
+            caster->AddAura(RUNE_PLADIN_STEADY_INQUISITION_STACK, caster);
     }
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_pal_steady_judgement::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_pal_steady_judgement::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(rune_pal_steady_inquisition::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_pal_steady_inquisition::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3155,7 +3150,7 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_searing_radiance);
     RegisterSpellScript(rune_pal_holy_convergence);
     RegisterSpellScript(rune_pal_wrathblow);
-    RegisterSpellScript(rune_pal_steady_judgement);
+    RegisterSpellScript(rune_pal_steady_inquisition);
     RegisterSpellScript(rune_pal_righteous_Judgement);
     RegisterSpellScript(rune_pal_inquisitors_vengeance);
     RegisterSpellScript(rune_pal_avengers_will);
