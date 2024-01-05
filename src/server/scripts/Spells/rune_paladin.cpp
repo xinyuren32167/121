@@ -1867,6 +1867,9 @@ class rune_pal_inner_light_damage : public AuraScript
         Unit* victim = GetCaster();
         Unit* target = eventInfo.GetActor();
 
+        if (!target)
+            return;
+
         float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
         float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
         int32 amount = std::max<int32>(0, int32(ap + sp));
