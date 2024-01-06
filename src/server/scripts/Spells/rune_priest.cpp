@@ -1152,17 +1152,16 @@ class rune_pri_essence_devourer_proc : public AuraScript
 
             auto const& allyList = group->GetMemberSlots();
 
-            if (allyList.size() > 0)
-                for (auto const& target : allyList)
-                {
-                    Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+            for (auto const& target : allyList)
+            {
+                Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
-                    if (!alliedPlayer)
-                        continue;
+                if (!alliedPlayer)
+                    continue;
 
-                    caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
-                    return;
-                }
+                caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+                return;
+            }
         }
     }
 
@@ -2628,6 +2627,7 @@ class rune_pri_velens_blessing : public AuraScript
                 if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
                     caster->AddAura(procSpell, alliedPlayer);
             }
+        }
     }
 
     void Register()
