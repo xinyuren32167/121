@@ -805,6 +805,9 @@ class rune_pri_powerful_shadowfiend : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
+
         caster->AddAura(aurEff->GetAmount(), shadowFiend);
     }
 
@@ -990,10 +993,11 @@ class rune_pri_putrefying_claws : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
-        if(shadowFiend && shadowFiend->IsAlive())
-        {
-            caster->AddAura(aurEff->GetAmount(), shadowFiend);
-        }
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
+
+
+        caster->AddAura(aurEff->GetAmount(), shadowFiend);
 
     }
 
@@ -1006,13 +1010,12 @@ class rune_pri_putrefying_claws : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
-        if (shadowFiend && shadowFiend->IsAlive())
-        {
-            for (size_t i = 900582; i < 900588; i++)
-                if (shadowFiend->HasAura(i))
-                    shadowFiend->RemoveAura(i);
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
 
-        }
+        for (size_t i = 900582; i < 900588; i++)
+            if (shadowFiend->HasAura(i))
+                shadowFiend->RemoveAura(i);
     }
 
     void Register() override
@@ -1133,6 +1136,12 @@ class rune_pri_essence_devourer_proc : public AuraScript
 
         if (Player* player = caster->ToPlayer())
         {
+
+            Group* group = player->GetGroup();
+
+            if (!group)
+                return;
+
             int32 procSpell = aurEff->GetAmount();
 
             if (!player->GetGroup())
@@ -1141,12 +1150,15 @@ class rune_pri_essence_devourer_proc : public AuraScript
                 return;
             }
 
-            auto const& allyList = player->GetGroup()->GetMemberSlots();
+            auto const& allyList = group->GetMemberSlots();
 
             if (allyList.size() > 0)
                 for (auto const& target : allyList)
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+
+                    if (!alliedPlayer)
+                        continue;
 
                     caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
                     return;
@@ -1483,37 +1495,45 @@ class rune_pri_golden_apparitions : public AuraScript
         if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
             apparitionNbr = GetEffect(EFFECT_1)->GetAmount();
 
-        if (Player* player = caster->ToPlayer())
+
+        Player* player = caster->ToPlayer();
+
+            if (!player)
+                return;
+
+        Group* group = player->GetGroup();
+
+        if (!group)
+            return;
+
+        auto const& allyList = group->GetMemberSlots();
+
+        for (auto const& target : allyList)
         {
-            auto const& allyList = player->GetGroup()->GetMemberSlots();
+            Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
-            for (auto const& target : allyList)
+            if (!alliedPlayer || alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_RENEW))
+                continue;
+
+            int32 apparition = apparitionNbr;
+
+            while (apparition > 0)
             {
-                Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+                Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
+                SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+                Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, 30000, 0, properties);
 
-                if (!alliedPlayer || alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_RENEW))
+                if (!summon)
                     continue;
 
-                int32 apparition = apparitionNbr;
+                caster->AddAura(RUNE_PRIEST_GOLDEN_APPARITION_VISUAL, summon);
+                summon->SetOwnerGUID(caster->GetGUID());
+                summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                summon->SetReactState(REACT_PASSIVE);
+                summon->SetTarget(alliedPlayer->GetGUID());
 
-                while (apparition > 0)
-                {
-                    Position pos = caster->GetNearPosition(urand(1, 5), urand(1, 5));
-                    SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-                    Creature* summon = caster->SummonCreature(SUMMON_PRIEST_GOLDEN_APPARITION, pos, TEMPSUMMON_MANUAL_DESPAWN, 30000, 0, properties);
-
-                    if (!summon)
-                        continue;
-
-                    caster->AddAura(RUNE_PRIEST_GOLDEN_APPARITION_VISUAL, summon);
-                    summon->SetOwnerGUID(caster->GetGUID());
-                    summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                    summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    summon->SetReactState(REACT_PASSIVE);
-                    summon->SetTarget(alliedPlayer->GetGUID());
-
-                    apparition--;
-                }
+                apparition--;
             }
         }
     }
@@ -1703,22 +1723,23 @@ class rune_pri_contrition : public AuraScript
 
         if (Player* player = caster->ToPlayer())
         {
-            auto const& allyList = player->GetGroup()->GetMemberSlots();
+
+            Group* group = player->GetGroup();
+
+            if (!group)
+                return;
+
+            auto const& allyList = group->GetMemberSlots();
 
             if (caster->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
                 caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
 
-            if (!player->GetGroup())
-                return;
-
-            if (allyList.size() <= 0)
-                return;
 
             for (auto const& target : allyList)
             {
                 Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
-                if (alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                if (!alliedPlayer || alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
                     continue;
 
                 caster->CastSpell(alliedPlayer, procSpell, TRIGGERED_FULL_MASK);
@@ -1813,6 +1834,9 @@ class rune_pri_phyrinxs_embrace : public AuraScript
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(ally.guid);
 
+                    if (!alliedPlayer)
+                        continue;
+
                     if (alliedPlayer->GetGUID() == target->GetGUID())
                         continue;
 
@@ -1877,6 +1901,9 @@ class rune_pri_trail_of_light : public AuraScript
                 for (auto const& ally : allyList)
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(ally.guid);
+
+                    if (!alliedPlayer)
+                        continue;
 
                     if (alliedPlayer->HasAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER))
                         oldTarget = alliedPlayer;
@@ -2532,6 +2559,9 @@ class rune_pri_velens_apprentice_targeting : public SpellScript
         if (!target || target->isDead())
             return;
 
+        if (targets.empty())
+            return;
+
         targets.remove(target);
 
         if (!GetRuneAura(caster))
@@ -2569,32 +2599,35 @@ class rune_pri_velens_blessing : public AuraScript
 
         if (Player* player = caster->ToPlayer())
         {
-            auto const& allyList = player->GetGroup()->GetMemberSlots();
+            Group* group = player->GetGroup();
+
+            if (!group)
+                return;
+
+            auto const& allyList = group->GetMemberSlots();
 
             if (caster->HasAura(SPELL_PRIEST_HOLY_MIGHT))
                 caster->AddAura(procSpell, caster);
 
-            if (player->GetGroup() && allyList.size() > 0)
-                for (auto const& target : allyList)
-                {
-                    Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
+            for (auto const& target : allyList)
+            {
+                Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
-                    if (alliedPlayer->isDead())
-                        continue;
+                if (!alliedPlayer || alliedPlayer->isDead())
+                    continue;
 
-                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH))
-                        caster->AddAura(procSpell, alliedPlayer);
+                if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH))
+                    caster->AddAura(procSpell, alliedPlayer);
 
-                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY))
-                        caster->AddAura(procSpell, alliedPlayer);
+                if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY))
+                    caster->AddAura(procSpell, alliedPlayer);
 
-                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT))
-                        caster->AddAura(procSpell, alliedPlayer);
+                if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT))
+                    caster->AddAura(procSpell, alliedPlayer);
 
-                    if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
-                        caster->AddAura(procSpell, alliedPlayer);
-                }
-        }
+                if (alliedPlayer->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+                    caster->AddAura(procSpell, alliedPlayer);
+            }
     }
 
     void Register()

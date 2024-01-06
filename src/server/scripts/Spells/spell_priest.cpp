@@ -3169,9 +3169,15 @@ class spell_pri_holy_blossom : public SpellScript
 
         if (Player* player = caster->ToPlayer())
         {
+
+            Group* group = player->GetGroup();
+
+            if (!group)
+                return;
+
             if (Aura* runeAura = GetDreamofSpringAura(caster))
             {
-                auto const& allyList = player->GetGroup()->GetMemberSlots();
+                auto const& allyList = group->GetMemberSlots();
                 int32 durationIncrease = 1000;
 
                 if (Aura* damage = caster->GetAura(SPELL_PRIEST_HOLY_MIGHT))

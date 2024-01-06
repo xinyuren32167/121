@@ -107,7 +107,7 @@ public:
             LOG_ERROR("No Rune", "No rune found, error");
             return false;
         }
-        RunesManager::AddRunePlayer(player, rune);
+        RunesManager::AddRunesPlayer(player, { rune });
         return true;
     }
 
@@ -191,12 +191,46 @@ class spell_generate_random_rune : public SpellScript
             return;
         }
 
-        RunesManager::AddRunePlayer(player, rune);
+        RunesManager::AddRunesPlayer(player, { rune });
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_generate_random_rune::HandleProc);
+    }
+};
+
+class spell_generate_more_random_rune : public SpellScript
+{
+    PrepareSpellScript(spell_generate_more_random_rune);
+
+    void HandleProc()
+    {
+
+        Player* player = GetCaster()->ToPlayer();
+
+        std::vector<Rune> runes = {};
+
+        SpellValue const* value = GetSpellValue();
+        uint32 count = value->EffectBasePoints[EFFECT_0];
+
+        while (count > 0)
+        {
+            Rune rune = RunesManager::GetRandomRune(player, NORMAL_QUALITY);
+
+            if (!rune)
+                continue;
+
+            runes.push_back(rune);
+            count--;
+        }
+
+        RunesManager::AddRunesPlayer(player, runes);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_generate_more_random_rune::HandleProc);
     }
 };
 
@@ -216,7 +250,7 @@ class spell_upgrade_rune : public SpellScript
             return;
 
         RunesManager::RemoveNecessaryItemsForUpgrade(player, rune);
-        RunesManager::AddRunePlayer(player, rune);
+        RunesManager::AddRunesPlayer(player, { rune });
     }
 
     void Register() override
@@ -284,4 +318,5 @@ void AddSC_runesScripts()
     RegisterSpellScript(spell_activate_rune);
     RegisterSpellScript(spell_generate_random_rune);
     RegisterSpellScript(spell_upgrade_rune);
+    RegisterSpellScript(spell_generate_more_random_rune);
 }

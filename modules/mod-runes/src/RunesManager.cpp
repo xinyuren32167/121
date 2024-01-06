@@ -514,38 +514,40 @@ void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
     sEluna->RemoveRune(player, fmt.str());
 }
 
-void RunesManager::AddRunePlayer(Player* player, Rune rune)
+void RunesManager::AddRunesPlayer(Player* player, std::vector<Rune> runes)
 {
     uint32 accountId = player->GetSession()->GetAccountId();
     auto it = m_KnownRunes.find(accountId);
 
-    uint32 count = 1;
+    for (auto const& rune : runes) {
+        uint32 count = 1;
 
-    if (it != m_KnownRunes.end()) {
-        auto ij = std::find_if(it->second.begin(), it->second.end(),
-            [&](const KnownRune& accountRune) {
-            return accountRune.rune.quality == rune.quality && accountRune.rune.spellId == rune.spellId;
-        });
+        if (it != m_KnownRunes.end()) {
+            auto ij = std::find_if(it->second.begin(), it->second.end(),
+                [&](const KnownRune& accountRune) {
+                return accountRune.rune.quality == rune.quality && accountRune.rune.spellId == rune.spellId;
+            });
 
-        if (ij != it->second.end()) {
-            ij->count += 1;
-            count = ij->count;
+            if (ij != it->second.end()) {
+                ij->count += 1;
+                count = ij->count;
+            }
+            else {
+                KnownRune knownRune = { accountId, 0, rune, 1 };
+                it->second.push_back(knownRune);
+            }
         }
         else {
             KnownRune knownRune = { accountId, 0, rune, 1 };
-            it->second.push_back(knownRune);
+            m_KnownRunes[accountId].push_back(knownRune);
         }
-    }
-    else {
-        KnownRune knownRune = { accountId, 0, rune, 1 };
-        m_KnownRunes[accountId].push_back(knownRune);
-    }
 
-    CharacterDatabase.Execute("INSERT INTO account_know_runes (accountId, spellId) VALUES ({}, {}) ", accountId, rune.spellId);
+        CharacterDatabase.Execute("INSERT INTO account_know_runes (accountId, spellId) VALUES ({}, {}) ", accountId, rune.spellId);
 
-    std::string str = RuneForClient(player, rune, true, count);
-  
-    sEluna->PushRune(player, str);
+        std::string str = RuneForClient(player, rune, true, count);
+
+        sEluna->PushRune(player, str);
+    }
 }
 
 

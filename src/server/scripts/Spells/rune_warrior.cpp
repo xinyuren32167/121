@@ -103,7 +103,14 @@ class spell_cut_the_veins : public AuraScript
     {
         PreventDefaultAction();
 
-        if (!GetCaster() || GetCaster()->isDead())
+        Unit* caster = GetCaster();
+        Unit* actor = eventInfo.GetActor();
+        Unit* target = eventInfo.GetProcTarget();
+
+        if (!caster || !actor || !target)
+            return;
+
+        if (caster->isDead() || actor->isDead() || target->isDead())
             return;
 
         if (GetRuneAura())
@@ -121,13 +128,7 @@ class spell_cut_the_veins : public AuraScript
                 amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
 
-            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
-                return;
-
-            if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
-                return;
-
-            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+            target->CastDelayedSpellWithPeriodicAmount(actor, GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
     }
 

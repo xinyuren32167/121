@@ -3412,6 +3412,10 @@ class spell_sha_focus_thine_foe_elemental : public AuraScript
         if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
         {
             Unit* target = GetTarget();
+
+            if (!target)
+                return;
+
             uint32 damage = aurEff->GetAmount();
             uint32 damagePct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
 

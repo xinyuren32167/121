@@ -156,7 +156,7 @@ public:
     static std::vector<std::string> GetActivatedRunes(Player* player);
     static Rune GetRandomRune(Player* player, uint8 quality);
     static void RemoveNecessaryItemsForUpgrade(Player* player, Rune rune);
-    static void AddRunePlayer(Player* player, Rune rune);
+    static void AddRunesPlayer(Player* player, std::vector<Rune> runes);
     static uint32 CalculateGoldCostToBuyRune(Player* player);
     static void GiveAchievementReward(Player* player, uint32 achievementId);
     static void ApplyBuyingRuneWithGold(Player* player);
