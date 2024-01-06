@@ -272,14 +272,16 @@ class rune_warl_accrued_vitality : public AuraScript
             return;
 
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
-        int32 amount = CalculatePct(damage, aurEff->GetAmount()) / 10;
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
 
         if (Aura* healAura = caster->GetAura(RUNE_WARLOCK_ACCRUED_VITALITY_HEAL))
         {
-            int32 amountLeft = healAura->GetEffect(EFFECT_0)->GetAmount() * healAura->GetEffect(EFFECT_0)->GetRemaningTicks() / 10;
+            int32 amountLeft = healAura->GetEffect(EFFECT_0)->GetAmount() * healAura->GetEffect(EFFECT_0)->GetRemaningTicks();
             amount += amountLeft;
             healAura->Remove();
         }
+
+        amount /= 10;
 
         caster->CastCustomSpell(RUNE_WARLOCK_ACCRUED_VITALITY_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
