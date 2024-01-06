@@ -144,6 +144,26 @@ class rune_warl_inquisitors_gaze_damage : public AuraScript
     }
 };
 
+class rune_warl_soul_corruption_target : public SpellScript
+{
+    PrepareSpellScript(rune_warl_soul_corruption_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_warl_soul_corruption_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 class rune_warl_sacrolashs_dark_strike : public AuraScript
 {
     PrepareAuraScript(rune_warl_sacrolashs_dark_strike);
@@ -634,27 +654,16 @@ class rune_warl_pandemic_invocation : public AuraScript
 
         if (!target || target->isDead())
             return;
-
-        int32 spellID = eventInfo.GetSpellInfo()->Id;
-        int32 durationThreshold = GetEffect(EFFECT_1)->GetAmount();
-
-        if (Aura* dotAura = target->GetAura(spellID))
-        {
-            if (dotAura->GetDuration() > durationThreshold)
-                return;
-        }
-        else
-            return;
-            
-        int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).TriggerSpell;
-
-        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
-
+       
         int32 procChance = aurEff->GetAmount();
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
         int32 soulPower = GetEffect(EFFECT_2)->GetAmount();
-
+      
         if (roll_chance_i(procChance))
+        {
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
             caster->EnergizeBySpell(caster, GetSpellInfo()->Id, soulPower, POWER_ENERGY);
+        }          
     }
 
     void Register() override
@@ -760,7 +769,6 @@ class rune_warl_haunted_soul : public AuraScript
             return;
 
         auto const& enemyList = caster->getAttackers();
-        int32 hauntedEnemiesNbr = 0;
 
         for (auto const& enemy : enemyList)
         {
@@ -776,19 +784,17 @@ class rune_warl_haunted_soul : public AuraScript
                         continue;
 
                     SpellInfo const* auraInfo = aura->GetSpellInfo();
-                    LOG_ERROR("error", "id = {}", auraInfo->Id);
+
                     if (auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && auraInfo->SpellFamilyFlags[2] & 0x80000000)
-                    {
-                        aura->GetEffect(EFFECT_0)->CalculatePeriodic(caster);
-                        aura->GetEffect(EFFECT_0)->ResetTicks();
-                    }
+                        aura->GetEffect(EFFECT_0)->RecalculateAmount();
                 }
         }
     }
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectApplyFn(rune_warl_haunted_soul::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectApply += AuraEffectApplyFn(rune_warl_haunted_soul::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(rune_warl_haunted_soul::HandleApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -866,7 +872,7 @@ class rune_warl_area_of_affliction_target : public SpellScript
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
-        Unit* target = GetExplTargetUnit();
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
 
         if (!target || target->isDead())
             return;
@@ -932,7 +938,7 @@ class rune_warl_dread_touch : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetSpellInfo() && eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -947,13 +953,7 @@ class rune_warl_dread_touch : public AuraScript
         if (!target || target->isDead())
             return;
 
-        int32 spellID = eventInfo.GetSpellInfo()->Id;
-
-        if (spellID == SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE)
-            if (target->HasAura(SPELL_WARLOCK_UNSTABLE_AFFLICTION))
-                caster->CastSpell(target, RUNE_WARLOCK_DREAD_TOUCH_BUFF, TRIGGERED_FULL_MASK);
-
-        if (eventInfo.GetDamageInfo()->GetDamageType() != DOT || !target->HasAura(RUNE_WARLOCK_DREAD_TOUCH_BUFF))
+        if (!target->HasAura(RUNE_WARLOCK_DREAD_TOUCH_BUFF))
             return;
 
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
@@ -1115,7 +1115,7 @@ class rune_warl_immutable_hatred : public AuraScript
             if (!pet || pet->isDead())
                 return;
 
-            if (pet->GetDisplayId() == PET_WARLOCK_FELGUARD)
+            if (pet->GetEntry() == PET_WARLOCK_FELGUARD)
                 caster->CastSpell(pet, RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER, TRIGGERED_FULL_MASK);
         }
     }
@@ -1134,7 +1134,7 @@ class rune_warl_immutable_hatred : public AuraScript
             if (!pet || pet->isDead())
                 return;
 
-            if (pet->GetDisplayId() != PET_WARLOCK_FELGUARD)
+            if (pet->GetEntry() != PET_WARLOCK_FELGUARD)
                 return;
 
             if (pet->HasAura(RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER))
@@ -1232,7 +1232,7 @@ class rune_warl_immutable_hatred_proc : public AuraScript
                     if (listenerBuff->GetStackAmount() == maxStack)
                     {
                         listenerBuff->Remove();
-                        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+                        pet->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
                     }
             }
         }
@@ -1288,10 +1288,11 @@ void AddSC_warlock_perks_scripts()
 {
     RegisterSpellScript(rune_warl_inquisitors_gaze);
     RegisterSpellScript(rune_warl_inquisitors_gaze_damage);
+    RegisterSpellScript(rune_warl_soul_corruption_target);
     RegisterSpellScript(rune_warl_sacrolashs_dark_strike);
     RegisterSpellScript(rune_warl_kazaaks_final_curse);
     RegisterSpellScript(rune_warl_accrued_vitality);
-    RegisterSpellScript(rune_warl_claw_of_endereth);
+    RegisterSpellScript(rune_warl_claw_of_endereth); 
     RegisterSpellScript(rune_warl_funerary_ceremony);
     RegisterSpellScript(rune_warl_funerary_ceremony_apply);
     RegisterSpellScript(rune_warl_everlasting_shadows);

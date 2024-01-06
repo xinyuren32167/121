@@ -82,12 +82,6 @@ enum WarlockSpells
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
     SPELL_WARLOCK_SOUL_STRIKE = 83039,
     SPELL_WARLOCK_IMMOLATE = 47811,
-    TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
-    TALENT_WARLOCK_RITUAL_OF_RUIN_STACK = 83075,
-    TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF = 83076,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1 = 47383,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2 = 71162,
-    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3 = 71165,
     SPELL_WARLOCK_SHADOW_BOLT = 47809,
     SPELL_WARLOCK_SHADOW_BOLT_ENERGY = 83080,
     SPELL_WARLOCK_DRAIN_SOUL_ENERGY = 83081,
@@ -101,14 +95,13 @@ enum WarlockSpells
     SPELL_WARLOCK_SOUL_FIRE_ENERGY = 83088,
     SPELL_WARLOCK_IMMOLATION_AURA_ENERGY = 83089,
     SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY = 83188,
-    PET_SPELL_IMMOLATION_AURA_DAMAGE = 20153,
-    MASTERY_WARLOCK_MASTER_DEMONOLOGIST = 1100020,
+    PET_SPELL_IMMOLATION_AURA_DAMAGE = 20153,   
     SPELL_WARLOCK_SOUL_COLLECTOR = 83094,
     SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT = 83095,
     SPELL_WARLOCK_SOUL_COLLECTOR_DEMON_BUFF = 83096,
     SPELL_WARLOCK_SOUL_COLLECTOR_HEAL = 83097,
     SPELL_WARLOCK_SEARING_PAIN_ENERGY = 83100,
-    MASTERY_WARLOCK_FEL_BLOOD = 1100024,
+    SPELL_WARLOCK_FEL_ARMOR_HEAL = 47894,
     SPELL_WARLOCK_FRAILTY_HEAL = 83104,
     SPELL_WARLOCK_SOUL_BOMB = 83102,
     SPELL_WARLOCK_SOUL_BOMB_DAMAGE = 83105,
@@ -128,12 +121,23 @@ enum WarlockSpells
     SPELL_WARLOCK_FRACTURE_ENERGY = 83107,
     SPELL_WARLOCK_METAMORPHOSIS = 47241,
 
+    // Talents
+    TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
+    TALENT_WARLOCK_RITUAL_OF_RUIN_STACK = 83075,
+    TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF = 83076,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R1 = 47383,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R2 = 71162,
+    TALENT_WARLOCK_MOLTEN_HAND_BUFF_R3 = 71165,
     TALENT_WARLOCK_DEMON_SPIKES_DAMAGE = 83197,
     TALENT_WARLOCK_FORCED_ASCENSION_COOLDOWN = 83199,
     TALENT_WARLOCK_ARCHDEMON_DAMAGE = 83201,
     TALENT_WARLOCK_ARCHDEMON_MARK = 83202,
     TALENT_WARLOCK_ARCHDEMON_COOLDOWN = 83203,
     TALENT_WARLOCK_MOLTEN_HAND = 47245,
+
+    // Masteries  
+    MASTERY_WARLOCK_FEL_BLOOD = 1100024,
+    MASTERY_WARLOCK_MASTER_DEMONOLOGIST = 1100020,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE = 83055,
     SPELL_WARLOCK_GRIMOIRE_FELGUARD = 83031,
@@ -163,6 +167,7 @@ enum WarlockSpells
 
     // Runes
     RUNE_WARLOCK_SEIZED_VITALITY_DEBUFF = 800484,
+    RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
 };
 
 enum WarlockPets {
@@ -1593,7 +1598,7 @@ class spell_warlock_call_dreadstalkers_aura : public AuraScript
 
     void Register()
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_warlock_call_dreadstalkers_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warlock_call_dreadstalkers_aura::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2074,9 +2079,21 @@ class spell_warl_fel_armor : public AuraScript
         amount = CalculatePct(GetCaster()->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), amount);
     }
 
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->GetHealthPct() < 100)
+            caster->CastSpell(caster, SPELL_WARLOCK_FEL_ARMOR_HEAL, TRIGGERED_FULL_MASK);
+    }
+
     void Register() override
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_fel_armor::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_DONE);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_fel_armor::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -2509,6 +2526,17 @@ class spell_warl_malefic_rapture_damage : public SpellScript
         return nullptr;
     }
 
+    Aura* GetDreadTouchAura(Unit* caster)
+    {
+        for (size_t i = 800578; i < 800584; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleDamage(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
@@ -2530,6 +2558,11 @@ class spell_warl_malefic_rapture_damage : public SpellScript
                 int32 increase = runeAura->GetEffect(EFFECT_0)->GetAmount();
                 AddPct(damage, increase);
             }
+
+        // If target has Unstable Affliction apply the Dread Touch rune buff.
+        if (Aura* runeAura = GetDreadTouchAura(caster))
+            if (target->HasAura(SPELL_WARLOCK_UNSTABLE_AFFLICTION))
+                caster->CastSpell(target, RUNE_WARLOCK_DREAD_TOUCH_BUFF, TRIGGERED_FULL_MASK);
 
         SetHitDamage(damage);
     }
@@ -3417,7 +3450,7 @@ class spell_warl_corruption : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_warl_corruption::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_warl_corruption::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
 
@@ -3425,6 +3458,16 @@ class spell_warl_corruption : public AuraScript
 class spell_warl_drain_life : public AuraScript
 {
     PrepareAuraScript(spell_warl_drain_life);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        GetEffect(EFFECT_0)->RecalculateAmount();
+    }
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
@@ -3446,6 +3489,7 @@ class spell_warl_drain_life : public AuraScript
 
     void Register() override
     {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_drain_life::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_LEECH);
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_drain_life::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_LEECH, AURA_EFFECT_HANDLE_REAL);
     }
 };
