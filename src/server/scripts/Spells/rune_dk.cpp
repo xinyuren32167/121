@@ -693,7 +693,8 @@ class rune_dk_aura_of_decay_periodic : public AuraScript
 
     void PeriodicTick(AuraEffect const* aurEff)
     {
-        if (Unit* caster = GetCaster())
+        if (Unit* caster = GetCaster()) {
+
             if (caster->IsInCombat())
             {
                 caster->CastSpell(caster, RUNE_DK_AURA_OF_DECAY_DAMAGE, TRIGGERED_FULL_MASK);
@@ -710,6 +711,7 @@ class rune_dk_aura_of_decay_periodic : public AuraScript
                     caster->CastCustomSpell(caster, RUNE_DK_AURA_OF_DECAY_SANGUINE, &amount, &amount, nullptr, true, nullptr);
                 }
             }
+        }
     }
 
     void Register() override

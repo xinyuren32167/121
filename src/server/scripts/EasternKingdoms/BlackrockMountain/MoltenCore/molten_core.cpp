@@ -19,24 +19,31 @@
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
+#include "TaskScheduler.h"
 
 enum Texts
 {
-    EMOTE_SMOLDERING        = 0,
-    EMOTE_IGNITE            = 1,
+    EMOTE_SMOLDERING = 0,
+    EMOTE_IGNITE = 1,
 };
 
 enum Spells
 {
     // Ancient Core Hound
-    SPELL_SERRATED_BITE     = 19771,
-    SPELL_PLAY_DEAD         = 19822,
-    SPELL_FULL_HEALTH       = 17683,
-    SPELL_FIRE_NOVA_VISUAL  = 19823,
-    SPELL_PLAY_DEAD_PACIFY  = 19951,    // Server side spell
+    SPELL_SERRATED_BITE = 19771,
+    SPELL_PLAY_DEAD = 19822,
+    SPELL_FULL_HEALTH = 17683,
+    SPELL_FIRE_NOVA_VISUAL = 19823,
+    SPELL_PLAY_DEAD_PACIFY = 19951,    // Server side spell
+
+    // Lava Spawn
+    SPELL_FIREBALL = 19391,
+    SPELL_SPLIT_1 = 19569,
+    SPELL_SPLIT_2 = 19570,
+
+    TALK_0 = 0
 };
 
-// Serrated Bites timer may be wrong
 class npc_mc_core_hound : public CreatureScript
 {
 public:
@@ -108,7 +115,6 @@ public:
     }
 };
 
-// 19822 Play Dead
 class spell_mc_play_dead : public SpellScriptLoader
 {
 public:
@@ -207,11 +213,58 @@ public:
     }
 };
 
+struct npc_lava_spawn : public ScriptedAI
+{
+    npc_lava_spawn(Creature* creature) : ScriptedAI(creature)
+    {
+    }
+
+    void Reset() override
+    {
+        _scheduler.CancelAll();
+    }
+
+    void EnterCombat(Unit* /*who*/) override
+    {
+        _scheduler.Schedule(15s, [this](TaskContext context)
+        {
+            std::list<Creature*> lavaSpawns;
+            me->GetCreatureListWithEntryInGrid(lavaSpawns, me->GetEntry(), 100.f);
+            if (lavaSpawns.size() < 16)
+            {
+                Talk(TALK_0);
+
+                DoCastSelf(SPELL_SPLIT_1, true);
+                DoCastSelf(SPELL_SPLIT_2, true);
+
+                me->DespawnOrUnsummon();
+            }
+            else
+            {
+                context.Repeat(15s);
+            }
+        });
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        if (!UpdateVictim())
+        {
+            return;
+        }
+
+        _scheduler.Update(diff);
+
+        DoSpellAttackIfReady(SPELL_FIREBALL);
+    }
+
+private:
+    TaskScheduler _scheduler;
+};
+
 void AddSC_molten_core()
 {
-    // Creatures
     new npc_mc_core_hound();
-
-    // Spells
+    RegisterCreatureAI(npc_lava_spawn);
     new spell_mc_play_dead();
 }

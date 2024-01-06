@@ -1497,8 +1497,8 @@ class rune_pri_golden_apparitions : public AuraScript
 
         Player* player = caster->ToPlayer();
 
-            if (!player)
-                return;
+        if (!player)
+            return;
 
         Group* group = player->GetGroup();
 
