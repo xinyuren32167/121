@@ -1157,7 +1157,7 @@ class rune_pri_essence_devourer_proc : public AuraScript
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
-                    if (!alliedPlayer)
+                    if (!alliedPlayer || alliedPlayer->isDead())
                         continue;
 
                     caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
@@ -1834,7 +1834,7 @@ class rune_pri_phyrinxs_embrace : public AuraScript
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(ally.guid);
 
-                    if (!alliedPlayer)
+                    if (!alliedPlayer || alliedPlayer->isDead())
                         continue;
 
                     if (alliedPlayer->GetGUID() == target->GetGUID())
@@ -1843,7 +1843,7 @@ class rune_pri_phyrinxs_embrace : public AuraScript
                     if (alliedPlayer->GetGUID() == caster->GetGUID())
                         continue;
 
-                    if (alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_GUARDIAN_SPIRIT))
+                    if (!alliedPlayer->HasAura(SPELL_PRIEST_GUARDIAN_SPIRIT))
                         continue;
 
                     caster->CastCustomSpell(RUNE_PRIEST_PHYRINXS_EMBRACE_HEAL, SPELLVALUE_BASE_POINT0, amount, alliedPlayer, TRIGGERED_FULL_MASK);
@@ -1902,7 +1902,7 @@ class rune_pri_trail_of_light : public AuraScript
                 {
                     Player* alliedPlayer = ObjectAccessor::FindPlayer(ally.guid);
 
-                    if (!alliedPlayer)
+                    if (!alliedPlayer || alliedPlayer->isDead())
                         continue;
 
                     if (alliedPlayer->HasAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER))

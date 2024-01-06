@@ -2221,6 +2221,10 @@ class spell_rog_scimitar_rush_target_select : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
         targets.remove(target);
     }
 

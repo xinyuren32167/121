@@ -3130,6 +3130,10 @@ class spell_mage_death_blossom_target_select : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
         targets.remove(target);
     }
 
@@ -3997,6 +4001,10 @@ class spell_mage_ice_nova_target_select : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
         targets.remove(target);
     }
 
