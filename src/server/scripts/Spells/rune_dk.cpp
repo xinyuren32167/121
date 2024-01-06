@@ -693,9 +693,9 @@ class rune_dk_aura_of_decay_periodic : public AuraScript
 
     void PeriodicTick(AuraEffect const* aurEff)
     {
-        if (Unit* caster = GetCaster()) {
-
-            if (caster->IsInCombat())
+        if (Unit* caster = GetCaster())
+        {
+            if (caster->IsInCombat() && caster->IsAlive())
             {
                 caster->CastSpell(caster, RUNE_DK_AURA_OF_DECAY_DAMAGE, TRIGGERED_FULL_MASK);
 
