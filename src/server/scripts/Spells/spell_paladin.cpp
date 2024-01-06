@@ -134,7 +134,8 @@ class spell_pal_seal_of_command_aura : public AuraScript
         }
 
         Unit* target = eventInfo.GetActionTarget();
-        if (target->IsAlive())
+
+        if (target && target->IsAlive())
         {
             eventInfo.GetActor()->CastCustomSpell(aurEff->GetSpellInfo()->Effects[EFFECT_0].TriggerSpell, SPELLVALUE_MAX_TARGETS, targets, target, false, nullptr, aurEff);
         }
@@ -245,6 +246,9 @@ class spell_pal_sacred_shield_base : public AuraScript
         if (eventInfo.GetTypeMask() & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_POS)
         {
             Unit* caster = eventInfo.GetActor();
+
+            if (!caster || caster->isDead())
+                return;
 
             HealInfo* healinfo = eventInfo.GetHealInfo();
 
@@ -1580,15 +1584,15 @@ class spell_pal_execution_sentence : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* Victim = eventInfo.GetDamageInfo()->GetVictim();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
         if (!GetCaster() || !GetCaster()->IsAlive())
             return;
 
-        if (!Victim || !Victim->IsAlive())
+        if (!victim || !victim->IsAlive())
             return;
 
-        if (!Victim->HasAura(80064))
+        if (!victim->HasAura(80064))
             return;
 
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
@@ -2002,11 +2006,12 @@ class spell_pal_beacon_of_wrath : public AuraScript
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
 
         if (!damageInfo || !damageInfo->GetDamage() || damageInfo->GetDamage() == 0)
-        {
             return false;
-        }
 
-        return GetCaster()->IsAlive();
+        if (!GetCaster()|| GetCaster()->isDead())
+            return false;
+
+        return true;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

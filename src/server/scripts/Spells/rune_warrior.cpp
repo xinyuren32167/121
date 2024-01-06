@@ -120,6 +120,13 @@ class spell_cut_the_veins : public AuraScript
 
                 amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
+
+            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+                return;
+
+            if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
+                return;
+
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
     }
@@ -177,6 +184,9 @@ class spell_tide_of_blood : public AuraScript
         Aura* aura = GetAura();
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
 
         if (!target || GetCaster()->isDead())
             return;
@@ -264,6 +274,13 @@ class spell_vein_cutter : public AuraScript
 
                 amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
+
+            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+                return;
+
+            if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
+                return;
+
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
     }
@@ -875,6 +892,10 @@ class rune_relentless : public SpellScript
         if (Aura* runeAura = GetRuneAura())
         {
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 stackThreshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
             caster->CastSpell(caster, RUNE_WARR_RELENTLESS_STACK, TRIGGERED_FULL_MASK);
@@ -970,6 +991,9 @@ class spell_best_served_cold : public AuraScript
     {
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
+
+        if (!caster || caster->isDead())
+            return;
 
         if (!target || GetCaster()->isDead())
             return;
@@ -1552,6 +1576,12 @@ class spell_inspiring_wall_heal : public AuraScript
             if (amount <= 0)
                 return;
 
+            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+                return;
+
+            if (!GetCaster() || GetCaster()->isDead())
+                return;
+
             GetCaster()->CastCustomSpell(200686, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActor(), TRIGGERED_FULL_MASK);
         }
     }
@@ -1694,6 +1724,12 @@ class spell_block_spike : public AuraScript
         {
             uint32 damageAmount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
 
+            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+                return;
+
+            if (!GetCaster() || GetCaster()->isDead())
+                return;
+
             GetCaster()->CastCustomSpell(RUNE_WARR_BLOCK_SPIKE_PROC, SPELLVALUE_BASE_POINT0, damageAmount, eventInfo.GetActor(), TRIGGERED_FULL_MASK);
         }
     }
@@ -1824,6 +1860,10 @@ class rune_improved_execute : public SpellScript
     void OnAfterCast()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 currentRage = caster->GetPower(POWER_RAGE);
         uint32 leftRage = rageBeforeCast - currentRage;
 
@@ -1842,6 +1882,10 @@ class rune_improved_execute : public SpellScript
     void OnBeforeCast()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         rageBeforeCast = caster->GetPower(POWER_RAGE);
     }
 
@@ -1864,6 +1908,10 @@ class rune_devastator : public AuraScript
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 damage = int32(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
 
         caster->CastCustomSpell(RUNE_WARR_DEVASTATOR_PROC, SPELLVALUE_BASE_POINT0, damage, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
@@ -1892,6 +1940,10 @@ private:
     void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
         Unit* victim = GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         uint32 allowedHealth = victim->CountPctFromMaxHealth(30.f);
 
@@ -1993,6 +2045,10 @@ class rune_heavy_blocks : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* aura = caster->GetAura(SPELL_WARR_SHIELD_BLOCK))
         {
             caster->EnergizeBySpell(caster, SPELL_WARR_SHIELD_SLAM, aurEff->GetAmount(), POWER_RAGE);
@@ -2013,6 +2069,10 @@ class rune_impenetrable_shield : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->EnergizeBySpell(caster, SPELL_WARR_SHIELD_SLAM, aurEff->GetAmount(), POWER_RAGE);
         caster->ModifySpellCooldown(SPELL_WARR_SHIELD_WALL, aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
     }
@@ -2107,6 +2167,9 @@ class rune_rage_of_huln : public AuraScript
         {
             Player* caster = GetCaster()->ToPlayer();
 
+            if (!caster || caster->isDead())
+                return;
+
             int32 spellRage = spellInfo->CalcPowerCost(GetCaster(), SpellSchoolMask(spellInfo->SchoolMask));
             if (spellRage <= 0)
                 return;
@@ -2193,6 +2256,9 @@ class rune_depths_of_rage : public AuraScript
         {
             Player* caster = GetCaster()->ToPlayer();
 
+            if (!caster || caster->isDead())
+                return;
+
             int32 spellRage = spellInfo->CalcPowerCost(GetCaster(), SpellSchoolMask(spellInfo->SchoolMask));
             if (spellRage <= 0)
                 return;
@@ -2223,6 +2289,10 @@ class rune_reprisal : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 duration = aurEff->GetAmount();
         if (Aura* aura = caster->GetAura(SPELL_WARR_SHIELD_BLOCK))
         {
@@ -2297,9 +2367,17 @@ class rune_improved_heroic_throw : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* aura = caster->GetAura(MASTERY_WARR_DEEP_WOUNDS))
         {
             int32 damageAmount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aura->GetEffect(EFFECT_0)->GetAmount());
+
+            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+                return;
+
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), MASTERY_WARR_DEEP_WOUNDS_DAMAGE, SPELL_AURA_PERIODIC_DAMAGE, damageAmount);
 
             float vulnAmount = aura->GetEffect(EFFECT_1)->GetAmount() + caster->ToPlayer()->GetMastery();
@@ -2365,6 +2443,10 @@ class rune_brutal_vitality : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* aura = caster->GetAura(SPELL_WARR_IGNORE_PAIN))
         {
             int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
@@ -2528,6 +2610,10 @@ class rune_in_for_the_kill : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 normalProc = aurEff->GetAmount();
         int32 improvedProc = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         if (eventInfo.GetActionTarget()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
@@ -2754,6 +2840,10 @@ class rune_steel_resonance_revenge : public SpellScript
                 return;
 
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 damagePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
             int32 damageAmount = CalculatePct(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 20), damagePct);
 
@@ -2790,6 +2880,10 @@ class rune_steel_resonance_whirlwind : public SpellScript
                 return;
 
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 damagePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
             int32 damageAmount = CalculatePct(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 20), damagePct);
 
@@ -2810,6 +2904,10 @@ class rune_champions_bulwark : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->EnergizeBySpell(caster, SPELL_WARR_SHIELD_CHARGE, aurEff->GetAmount(), POWER_RAGE);
         caster->AddAura(SPELL_WARR_SHIELD_BLOCK, caster);
         caster->AddAura(SPELL_WARR_REVENGE_BUFF, caster);
@@ -2869,6 +2967,10 @@ class rune_masterful_swipe : public SpellScript
                 return;
 
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 damagePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
             int32 damageAmount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), damagePct);
 
@@ -2920,6 +3022,7 @@ class rune_gladiators_torment : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
         int32 damageAmount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
 
         caster->CastCustomSpell(RUNE_WARR_GLADIATORS_TORMENT_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);

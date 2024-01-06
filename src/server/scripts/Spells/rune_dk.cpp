@@ -67,7 +67,7 @@ class rune_dk_permafrost : public AuraScript
         if (damageInfo->GetDamage() < 0)
             return false;
 
-        return GetCaster()->IsAlive();
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -147,6 +147,9 @@ class rune_dk_blood_feast: public AuraScript
 
         Unit* caster = GetCaster();
 
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* aura = GetRuneBloodFeast(caster))
         {
             int32 healPct = aura->GetEffect(EFFECT_0)->GetAmount();
@@ -176,7 +179,7 @@ class rune_dk_blood_transfusion : public AuraScript
         if (damageInfo->GetDamage() < 0)
             return false;
 
-        return GetCaster()->IsAlive();
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -203,6 +206,9 @@ class rune_dk_blood_barrier : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         return eventInfo.GetHealInfo();
     }
 
@@ -249,7 +255,7 @@ class rune_dk_shadow_disease : public AuraScript //Chilling decay
         if (!GetCaster() || GetCaster()->isDead())
             return false;
 
-        if (!eventInfo.GetActionTarget())
+        if (!eventInfo.GetActionTarget() || eventInfo.GetActionTarget()->isDead())
             return false;
 
         if (GetCaster()->GetGUID() == eventInfo.GetActionTarget()->GetGUID())
@@ -293,7 +299,7 @@ class rune_dk_soul_drinker : public AuraScript
         if ((eventInfo.GetActionTarget()->GetMaxHealth() - eventInfo.GetActionTarget()->GetHealth()) > eventInfo.GetHealInfo()->GetHeal())
             return false;
 
-        return GetCaster()->IsAlive();
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -532,7 +538,7 @@ class rune_dk_extra_potent_diseases : public AuraScript
         if (!target || target->isDead())
             return false;
 
-        return GetCaster()->IsAlive();
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -687,24 +693,23 @@ class rune_dk_aura_of_decay_periodic : public AuraScript
 
     void PeriodicTick(AuraEffect const* aurEff)
     {
-        Unit* caster = GetCaster();
-
-        if (caster->IsInCombat())
-        {
-            caster->CastSpell(caster, RUNE_DK_AURA_OF_DECAY_DAMAGE, TRIGGERED_FULL_MASK);
-
-            if (caster->HasAura(TALENT_DK_DEATH_AND_RENEW))
-                caster->CastSpell(caster, RUNE_DK_AURA_OF_DECAY_HEAL, TRIGGERED_FULL_MASK);
-
-            if (Aura* phearomones = GetPhearomonesAura(caster))
-                caster->CastCustomSpell(RUNE_DK_AURA_OF_DECAY_HASTE, SPELLVALUE_BASE_POINT0, phearomones->GetEffect(EFFECT_1)->GetAmount(), caster, TRIGGERED_FULL_MASK);
-
-            if (Aura* sanguine = GetSanguineAura(caster))
+        if (Unit* caster = GetCaster())
+            if (caster->IsInCombat())
             {
-                int32 amount = sanguine->GetEffect(EFFECT_1)->GetAmount();
-                caster->CastCustomSpell(caster, RUNE_DK_AURA_OF_DECAY_SANGUINE, &amount, &amount, nullptr, true, nullptr);
-            } 
-        }
+                caster->CastSpell(caster, RUNE_DK_AURA_OF_DECAY_DAMAGE, TRIGGERED_FULL_MASK);
+
+                if (caster->HasAura(TALENT_DK_DEATH_AND_RENEW))
+                    caster->CastSpell(caster, RUNE_DK_AURA_OF_DECAY_HEAL, TRIGGERED_FULL_MASK);
+
+                if (Aura* phearomones = GetPhearomonesAura(caster))
+                    caster->CastCustomSpell(RUNE_DK_AURA_OF_DECAY_HASTE, SPELLVALUE_BASE_POINT0, phearomones->GetEffect(EFFECT_1)->GetAmount(), caster, TRIGGERED_FULL_MASK);
+
+                if (Aura* sanguine = GetSanguineAura(caster))
+                {
+                    int32 amount = sanguine->GetEffect(EFFECT_1)->GetAmount();
+                    caster->CastCustomSpell(caster, RUNE_DK_AURA_OF_DECAY_SANGUINE, &amount, &amount, nullptr, true, nullptr);
+                }
+            }
     }
 
     void Register() override
@@ -722,7 +727,7 @@ class rune_dk_grip_of_the_dead : public AuraScript
         if (!eventInfo.GetActionTarget())
             return false;
 
-        return GetCaster()->IsAlive();
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -752,7 +757,7 @@ class rune_dk_shackles_of_bryndaor : public AuraScript
         if (healInfo->GetHeal() < 0)
             return false;
 
-        return GetCaster()->IsAlive();
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -802,6 +807,13 @@ class rune_dk_endless_death : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+            return;
+
         uint32 chance = CalculatePct(caster->GetUnitParryChance(), aurEff->GetAmount());
 
         if (roll_chance_i(chance))
@@ -885,6 +897,10 @@ class rune_dk_coldthirst : public SpellScript
     void HandleProc()
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* aura = GetRuneAura(caster))
         {
             int32 runic = aura->GetEffect(EFFECT_0)->GetAmount();
@@ -997,6 +1013,10 @@ class rune_dk_draw_blood : public AuraScript
     void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
         Unit* victim = GetTarget();
+
+        if (!victim || victim->isDead())
+            return;
+
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         uint32 allowedHealth = victim->CountPctFromMaxHealth(30.f);
 
@@ -1089,6 +1109,10 @@ class rune_dk_insatiable_blade : public SpellScript
     void HandleProc()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* rune = GetRuneAura(caster))
         {
             if (Aura* aura = caster->GetAura(SPELL_DK_BONE_SHIELD))
@@ -1121,6 +1145,10 @@ class rune_dk_collective_hysteria : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
+
+        if (!caster)
+            return;
+
         if(Aura* aura = GetRuneAura(caster))
             if (GetAura()->GetOwner()->ToUnit() != caster)
             {
@@ -1420,6 +1448,10 @@ class rune_dk_relish_in_blood: public AuraScript
             if (Aura* rune = GetRuneAura())
             {
                 Unit* caster = GetCaster();
+
+                if (!caster || caster->isDead())
+                    return;
+
                 int32 heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), rune->GetEffect(EFFECT_0)->GetAmount());
                 heal *= boneShield->GetStackAmount();
                 caster->CastCustomSpell(RUNE_DK_RELISH_IN_BLOOD_HEAL, SPELLVALUE_BASE_POINT0, heal, caster, TRIGGERED_FULL_MASK);

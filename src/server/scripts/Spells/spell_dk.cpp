@@ -229,6 +229,10 @@ class spell_dk_breath_of_sindragosa : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
         uint32 cost = GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
 
         if (caster->GetPower(POWER_RUNIC_POWER) <= cost) {
@@ -269,6 +273,9 @@ class spell_dk_chill_streak : public AuraScript
     {
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
 
         if (!caster || caster->isDead())
             return;
@@ -329,6 +336,10 @@ public:
             if (timerLastSummonSpick >= 150) {
                 timerLastSummonSpick = 0;
                 Unit* owner = me->GetOwner();
+
+                if (!owner || owner->isDead())
+                    return;
+
                 GameObject* go = owner->SummonGameObject(188537, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), 0, 0, 0, 0, 0, 1000, false, GO_SUMMON_TIMED_DESPAWN);
                 go->DespawnOrUnsummon(150ms);
                 owner->CastSpell(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), SPELL_DK_GLACIAL_ADVANCE_DAMAGE, true);
@@ -421,6 +432,10 @@ class spell_dk_pillar_of_frost : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 runeSpent = 0;
 
         if (SpellInfo const* spell = eventInfo.GetSpellInfo())
@@ -875,6 +890,10 @@ class spell_dk_bone_shield : public AuraScript
         ModStackAmount(-1);
 
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster|| caster->isDead())
+            return;
+        
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BLOOD_TAP);
         uint32 reduction = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
@@ -1025,7 +1044,15 @@ class spell_dk_dancing_rune_weapon : public AuraScript
         PreventDefaultAction();
 
         Unit* player = eventInfo.GetActor();
+
+        if (!player || player->isDead())
+            return;
+
         Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return;
+
         Unit* dancingRuneWeapon = nullptr;
         for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
             if (int32((*itr)->GetEntry()) == GetSpellInfo()->Effects[EFFECT_0].MiscValue)
@@ -1893,9 +1920,17 @@ class spell_dk_pestilence : public SpellScript
     void HandleScriptEffect(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* hitUnit = GetHitUnit();
+
+        if (!hitUnit || hitUnit->isDead())
+            return;
+
         Unit* target = GetExplTargetUnit();
-        if (!target)
+        if (!target || target->isDead())
             return;
 
         if (target != hitUnit)
@@ -2503,6 +2538,10 @@ class spell_dk_sacrifical_pact : public SpellScript
     void HandleCast()
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         auto summonedUnits = caster->m_Controlled;
 
         for (auto const& unit : summonedUnits)
@@ -2530,6 +2569,7 @@ class spell_dk_dark_transformation : public SpellScript
     {
         // Check if we have valid targets, otherwise skip spell casting here
         Player* caster = GetCaster()->ToPlayer();
+
         Pet* pet = caster->GetPet();
 
         if (!pet)
@@ -2741,7 +2781,14 @@ class spell_dk_rune_of_apocalypse : public AuraScript
     {
         Unit* owner = GetCaster();
         Unit* pet = GetAura()->GetOwner()->ToUnit();
+
+        if (!pet || pet->isDead())
+            return;
+
         Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return;
 
         if (!owner->IsAlive())
             return;
@@ -3252,6 +3299,10 @@ class spell_dk_improved_bloodworms_health_low : public AuraScript
     void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
         Player* victim = GetTarget()->ToPlayer();
+
+        if (!victim || victim->isDead())
+            return;
+
         int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
         uint32 allowedHealth = victim->CountPctFromMaxHealth(20);
         if (remainingHealth < int32(allowedHealth))
@@ -3295,7 +3346,7 @@ class spell_dk_improved_bloodworms_death : public AuraScript
     {
         Unit* owner = GetCaster()->GetOwner();
 
-        if (!owner)
+        if (!owner || owner->isDead())
             return;
 
         Unit* bloodworm = GetCaster();
@@ -3329,6 +3380,10 @@ class spell_dk_contagions_periodic_tick : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Position position = caster->GetPosition();
         Creature* creature = caster->FindNearestCreature(NPC_CONTAGION_AREA, 10.f, true);
         float radius = GetSpellInfo()->Effects[EFFECT_0].CalcRadius(caster);
@@ -3345,7 +3400,6 @@ class spell_dk_contagions_periodic_tick : public AuraScript
         }
 
     }
-
 
     void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
@@ -3412,6 +3466,10 @@ class spell_dk_rime : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 damageAmount = aurEff->GetAmount();
 
         int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
@@ -3447,7 +3505,15 @@ class spell_dk_sensitization : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             Unit* target = eventInfo.GetActionTarget();
+
+            if (!target || target->isDead())
+                return;
+
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 amount = aurEff->GetAmount();
             SpellSchoolMask type = eventInfo.GetSpellInfo()->GetSchoolMask();
 
@@ -3509,7 +3575,13 @@ class spell_dk_infected_claws : public AuraScript
         Unit* pet = GetAura()->GetOwner()->ToUnit();
         Unit* target = eventInfo.GetActionTarget();
 
-        if (!owner->IsAlive())
+        if (!owner || owner->isDead())
+            return;
+
+        if (!pet || pet->isDead())
+            return;
+
+        if (!target || target->isDead())
             return;
 
         owner->CastSpell(target, SPELL_DK_FESTERING_WOUND, TRIGGERED_FULL_MASK);
@@ -3528,7 +3600,18 @@ class spell_dk_thassarian : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!eventInfo.GetSpellInfo())
+            return;
+
         int32 spellId = eventInfo.GetSpellInfo()->Id;
 
         if (spellId == SPELL_DK_DEATH_STRIKE)
@@ -3829,7 +3912,6 @@ class spell_dk_soul_barrier : public AuraScript
         {
             Unit* target = GetAura()->GetOwner()->ToUnit();
             target->CastSpell(target, SPELL_DK_SOUL_BARRIER_HEAL, TRIGGERED_FULL_MASK, nullptr, nullptr, GetCaster()->GetGUID());
-
         }
     }
 

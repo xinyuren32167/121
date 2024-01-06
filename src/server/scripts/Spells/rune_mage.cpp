@@ -887,7 +887,10 @@ class spell_powerful_water_elemental : public AuraScript
     {
         Unit* player = GetCaster()->GetCharmerOrOwner();
 
-        if (!player || !GetRuneAura(player))
+        if (!player || player->isDead() || !GetRuneAura(player))
+            return;
+
+        if (!GetCaster()|| GetCaster()->isDead())
             return;
 
         float crit = player->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + static_cast<uint8>(SPELL_SCHOOL_FROST));
@@ -1815,6 +1818,9 @@ class spell_burning_talons : public AuraScript
 
                 amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
             }
+
+            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+                return;
 
             eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
         }
@@ -3090,8 +3096,6 @@ class rune_mage_more_slashes : public AuraScript
         OnEffectProc += AuraEffectProcFn(rune_mage_more_slashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
-
 
 void AddSC_mage_perks_scripts()
 {

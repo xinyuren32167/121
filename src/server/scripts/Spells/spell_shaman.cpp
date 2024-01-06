@@ -1805,7 +1805,14 @@ class spell_sha_ancestral_guidance : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = eventInfo.GetProcTarget();
+
+        if (!target || target->isDead())
+            return;
 
         int32 amountPct = aurEff->GetAmount();
         int32 amount = 0;
@@ -2170,7 +2177,13 @@ class spell_sha_ascendance_water_proc : public AuraScript
         int32 healAmount = eventInfo.GetHealInfo()->GetHeal();
         int32 healPct = aurEff->GetAmount();
 
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
             return;
 
         int32 amount = CalculatePct(healAmount, healPct);
@@ -3294,7 +3307,15 @@ class spell_sha_focus_thine_foe : public AuraScript
     void OnPeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
         ShapeshiftForm form = caster->GetShapeshiftForm();
 
         if (caster->HasAura(SPELL_SHAMAN_PATH_OF_THE_ASCENDANT) && caster->HasAura(SPELL_SHAMAN_ASCENDANT_EARTH))
@@ -3415,6 +3436,10 @@ class spell_sha_focus_thine_foe_elemental : public AuraScript
     void OnPeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (caster->GetShapeshiftForm() == FORM_SPIRIT_OF_STORM)
             caster->CastSpell(GetTarget(), SPELL_SHAMAN_FOCUS_THINE_FOE_STORM, TRIGGERED_FULL_MASK);
     }
@@ -3460,6 +3485,12 @@ class spell_sha_fiery_stamp : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        if (!eventInfo.GetActor())
+            return false;
+
         if (eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID() && GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
             return true;
         return false;
@@ -3648,8 +3679,12 @@ class spell_sha_water_bending : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_WATER && eventInfo.GetActionTarget() == GetCaster())
             return true;
+
         return false;
     }
 
@@ -3676,6 +3711,9 @@ class spell_sha_fire_proficiency : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         if (GetCaster()->GetShapeshiftForm() == FORM_SPIRIT_OF_FIRE)
             return true;
         return false;
@@ -3734,6 +3772,10 @@ class spell_sha_regenerative_aura : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (caster->GetShapeshiftForm() == FORM_NONE)
             caster->CastSpell(caster, SPELL_SHAMAN_REGENERATIVE_AURA_HEAL, TRIGGERED_FULL_MASK);
     }
@@ -3751,6 +3793,10 @@ class spell_sha_accumulation : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
@@ -3820,7 +3866,7 @@ class spell_sha_stormbrand_totem : public AuraScript
     {
         Unit* caster = GetCaster();
 
-        if (caster->isDead() || !caster)
+        if (!caster || caster->isDead())
             return;
 
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
@@ -3869,6 +3915,13 @@ class spell_sha_spirit_weapons : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
+            if (!eventInfo.GetActionTarget() || eventInfo.GetActionTarget()->isDead())
+                return;
+
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
             int32 damagePct = aurEff->GetAmount();
             int32 damageAmount = CalculatePct(damage, damagePct);

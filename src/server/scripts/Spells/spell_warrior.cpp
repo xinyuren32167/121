@@ -1564,6 +1564,9 @@ class spell_healing_deep_wound : public AuraScript
 
     bool HandleCheck(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         return eventInfo.GetDamageInfo();
     }
 

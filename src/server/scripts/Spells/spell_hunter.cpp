@@ -778,11 +778,12 @@ class spell_hun_sniper_training : public AuraScript
         if (aurEff->GetAmount() <= 0)
         {
             if (!GetCaster() || !GetTarget())
-            {
                 return;
-            }
 
             Unit* target = GetTarget();
+
+            if (!target || target->isDead())
+                return;
 
             uint32 spellId = SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1 + GetId() - SPELL_HUNTER_SNIPER_TRAINING_R1;
             if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(spellId))
@@ -1281,6 +1282,10 @@ class spell_hun_lock_and_load : public AuraScript
         }
 
         Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->CastSpell(caster, SPELL_LOCK_AND_LOAD_TRIGGER, true);
     }
 
@@ -1367,7 +1372,14 @@ class spell_hun_predators_thirst : public AuraScript
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
             Unit* pet = GetCaster();
+
+            if (!pet|| pet->isDead())
+                return;
+
             Unit* master = GetCaster()->GetOwner();
+
+            if (!master || master->isDead())
+                return;
 
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
             Unit* target = eventInfo.GetDamageInfo()->GetAttacker()->IsPlayer() ? master : pet;
@@ -1942,7 +1954,7 @@ class spell_hun_survival_fittest : public AuraScript
         Player* player = GetCaster()->ToPlayer();
         Unit* pet = player->GetPet();
 
-        if (!pet)
+        if (!pet || pet->isDead())
             return;
 
         pet->RemoveAura(80162);
@@ -2066,7 +2078,7 @@ class spell_hun_barbed_shot : public SpellScript
         Player* player = GetCaster()->ToPlayer();
         Unit* pet = player->GetPet();
 
-        if (!pet)
+        if (!pet || pet->isDead())
             return;
 
         player->AddAura(80174, pet);
@@ -2132,7 +2144,6 @@ class spell_hun_bloodshed : public SpellScript
 
         if (!player)
             return;
-
 
         Unit* pet = player->GetPet();
         Unit* target = GetExplTargetUnit();
@@ -2628,6 +2639,9 @@ class spell_hun_aspect_mastery_crit : public AuraScript
     {
         Player* caster = GetCaster()->ToPlayer();
 
+        if (!caster || caster->isDead())
+            return;
+
         if (caster->HasAura(80213))
             caster->RemoveAura(80213);
     }
@@ -2654,6 +2668,9 @@ class spell_hun_aspect_mastery_ranged_damage : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
 
         if (caster->HasAura(80214))
             caster->RemoveAura(80214);
@@ -2879,6 +2896,9 @@ class spell_hun_arctic_bola : public AuraScript
             return;
 
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
 
         caster->CastSpell(target, 80227, true);
     }
@@ -3522,6 +3542,9 @@ class spell_hun_improved_blend : public AuraScript
     void HandleDummyTick(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         if (Aura* aura = caster->GetAura(SPELL_HUNTER_INVIS_ACTIVATOR))
         {

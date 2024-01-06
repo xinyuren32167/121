@@ -314,6 +314,9 @@ class rune_pri_burning_vehemence_target : public SpellScript
     {
         Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
 
+        if (!target || target->isDead())
+            return;
+
         targets.remove(target);
     }
 
@@ -814,6 +817,9 @@ class rune_pri_powerful_shadowfiend : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
+
         for (size_t i = 900550; i < 900556; i++)
             if (shadowFiend->HasAura(i))
                 shadowFiend->RemoveAura(i);
@@ -926,6 +932,9 @@ class rune_pri_rabid_shadows : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
+        if (!shadowFiend|| shadowFiend->isDead())
+            return;
+
         caster->AddAura(aurEff->GetAmount(), shadowFiend);
     }
 
@@ -937,6 +946,9 @@ class rune_pri_rabid_shadows : public AuraScript
             return;
 
         Unit* shadowFiend = GetShadowFiend(caster);
+
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
 
         for (size_t i = 900570; i < 900576; i++)
             if (shadowFiend->HasAura(i))
@@ -978,7 +990,8 @@ class rune_pri_putrefying_claws : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
-        if(shadowFiend) {
+        if(shadowFiend && shadowFiend->IsAlive())
+        {
             caster->AddAura(aurEff->GetAmount(), shadowFiend);
         }
 
@@ -993,7 +1006,8 @@ class rune_pri_putrefying_claws : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
-        if (shadowFiend) {
+        if (shadowFiend && shadowFiend->IsAlive())
+        {
             for (size_t i = 900582; i < 900588; i++)
                 if (shadowFiend->HasAura(i))
                     shadowFiend->RemoveAura(i);
@@ -1071,6 +1085,9 @@ class rune_pri_essence_devourer : public AuraScript
 
         Unit* shadowFiend = GetShadowFiend(caster);
 
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
+
         caster->AddAura(aurEff->GetAmount(), shadowFiend);
     }
 
@@ -1082,6 +1099,9 @@ class rune_pri_essence_devourer : public AuraScript
             return;
 
         Unit* shadowFiend = GetShadowFiend(caster);
+
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
 
         for (size_t i = 900596; i < 900602; i++)
             if (shadowFiend->HasAura(i))
@@ -1173,6 +1193,9 @@ class rune_pri_shadowflame_prism : public AuraScript
             return;
 
         Unit* shadowFiend = GetShadowFiend(caster);
+
+        if (!shadowFiend || shadowFiend->isDead())
+            return;
 
         caster->AddAura(aurEff->GetAmount(), shadowFiend);
     }
@@ -1451,6 +1474,10 @@ class rune_pri_golden_apparitions : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 apparitionNbr = aurEff->GetAmount();
 
         if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
@@ -1464,7 +1491,7 @@ class rune_pri_golden_apparitions : public AuraScript
             {
                 Player* alliedPlayer = ObjectAccessor::FindPlayer(target.guid);
 
-                if (alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_RENEW))
+                if (!alliedPlayer || alliedPlayer->isDead() || !alliedPlayer->HasAura(SPELL_PRIEST_RENEW))
                     continue;
 
                 int32 apparition = apparitionNbr;
@@ -2501,6 +2528,10 @@ class rune_pri_velens_apprentice_targeting : public SpellScript
             return;
 
         Unit* target = GetExplTargetUnit();
+
+        if (!target || target->isDead())
+            return;
+
         targets.remove(target);
 
         if (!GetRuneAura(caster))

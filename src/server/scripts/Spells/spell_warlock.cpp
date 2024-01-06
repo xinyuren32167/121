@@ -966,10 +966,21 @@ class spell_warl_havoc : public AuraScript
 
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo)
+            return;
+
         int32 damagePourcentage = aurEff->GetAmount();
         int32 totalDamage = CalculatePct(damageInfo->GetDamage(), damagePourcentage);
         Unit* havocTarget = FindTargetHavoc();
+
+        if (!havocTarget || havocTarget->isDead())
+            return;
+
         GetCaster()->CastCustomSpell(SPELL_WARLOCK_HAVOC_DAMAGE, SPELLVALUE_BASE_POINT0, totalDamage, havocTarget, true);
     }
 
@@ -1039,6 +1050,10 @@ class spell_warl_life_tap : public SpellScript
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Unit* target = GetHitUnit())
         {
             int32 damage = GetEffectValue() + LIFE_TAP_COEFFICIENT;
@@ -1918,9 +1933,11 @@ class spell_warl_nether_portal_proc : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost > 0;
     }
-
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -2170,6 +2187,10 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        if (!target || target->isDead())
+            return;
+
         Unit* caster = GetCaster();
         AuraEffect* effect1 = aurEff->GetBase()->GetEffect(EFFECT_1);
         int32 threshold = aurEff->GetAmount();
@@ -2413,6 +2434,10 @@ class spell_warl_burning_rush : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 healthPct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         uint32 damage = CalculatePct(caster->GetMaxHealth(), healthPct);
         caster->CastCustomSpell(SPELL_WARLOCK_BURNING_RUSH_DAMAGE, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
@@ -2622,6 +2647,9 @@ class spell_warl_xavians_teachings : public AuraScript
     {
         uint32 spell = aurEff->GetAmount();
 
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         GetCaster()->CastSpell(GetCaster()->ToPlayer()->GetSelectedUnit(), spell, TRIGGERED_FULL_MASK);
     }
 
@@ -2660,6 +2688,9 @@ class spell_warl_ritual_of_ruin : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost <= 0)
             return false;
         return true;
@@ -2701,6 +2732,9 @@ class spell_warl_molten_hand : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster())
+            return false;
+
         return GetCaster()->IsAlive() && GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself()->IsAlive();
     }
 
@@ -3074,9 +3108,6 @@ class spell_warl_frailty : public AuraScript
     }
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetCaster() || GetCaster()->isDead())
-            return;
-
         if (Unit* actor = eventInfo.GetActor()) {
             if (actor->GetGUID() == GetCaster()->GetGUID()) {
                 Unit* caster = GetCaster();

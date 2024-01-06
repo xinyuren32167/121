@@ -1074,6 +1074,10 @@ class spell_dru_survival_instincts_aura : public AuraScript
     void AfterApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
         int32 bp0 = target->CountPctFromMaxHealth(aurEff->GetAmount());
         target->CastCustomSpell(target, SPELL_DRUID_SURVIVAL_INSTINCTS, &bp0, nullptr, nullptr, true);
     }
@@ -1458,6 +1462,9 @@ class spell_dru_thorns : public AuraScript
 
         Unit* target = eventInfo.GetProcTarget();
 
+        if (!target || target->isDead())
+            return;
+
         GetCaster()->CastSpell(target, SPELL_DRUID_THORNS_SLOW, TRIGGERED_FULL_MASK, nullptr, aurEff, GetCasterGUID());
     }
 
@@ -1537,6 +1544,8 @@ class spell_dru_nature_balance : public AuraScript
         uint32 amount = aurEff->GetAmount() * 10;
         uint32 maxAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
 
+        if (!caster || caster->isDead())
+            return;
 
         if (caster->IsInCombat())
             caster->ModifyPower(POWER_RUNIC_POWER, amount, true);
@@ -1585,6 +1594,10 @@ class spell_dru_eclipse : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (caster->HasAura(SPELL_DRUID_CELESTIAL_ALIGNMENT))
             return;
 
@@ -1614,7 +1627,6 @@ class spell_dru_force_of_nature : public SpellScript
 
         if (!caster->HasAura(SPELL_DRUID_MOONKIN_FORM))
             return;
-
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DRUID_FORCE_OF_NATURE);
         uint32 astralPower = value->GetEffect(EFFECT_1).CalcValue(caster);
@@ -1830,7 +1842,7 @@ class spell_dru_wild_charge : public SpellScript
         Unit* target = GetExplTargetUnit();
         Position targetPos = GetExplTargetUnit()->GetPosition();
 
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        if (!caster || !caster->IsAlive())
             return;
 
         if (!target || !target->IsAlive())
@@ -2025,10 +2037,10 @@ class spell_dru_shooting_stars : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& procInfo)
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
-            return;
-
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         Unit* target = procInfo.GetActionTarget();
 
@@ -2563,6 +2575,10 @@ class spell_dru_cenarion_ward : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
         target->CastSpell(target, SPELL_DRUID_CENARION_WARD_HEAL, TRIGGERED_FULL_MASK);
     }
 
@@ -2648,6 +2664,9 @@ class spell_dru_efflorescence_trigger : public AuraScript
     void OnPeriodic(AuraEffect const* /*aurEff*/)
     {
         Unit* master = GetUnitOwner()->GetOwner();
+
+        if (!master || master->isDead())
+            return;
 
         master->CastSpell(GetCaster(), SPELL_DRUID_EFFLORESCENCE_HEAL, TRIGGERED_FULL_MASK);
     }
@@ -2744,6 +2763,10 @@ class spell_druid_yseras_gift : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 procPct = GetAura()->GetEffect(EFFECT_0)->GetAmount();
         int32 amount = int32(CalculatePct(caster->GetMaxHealth(), procPct));
 

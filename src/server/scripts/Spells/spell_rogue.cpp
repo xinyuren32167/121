@@ -95,6 +95,8 @@ enum RogueSpells
     SPELL_ROGUE_SPRINT = 11305,
     SPELL_ROGUE_STEALTH = 1784,
     SPELL_ROGUE_VANISH = 26889,
+    SPELL_ROGUE_SHADOWSTRIKE = 82016,
+    SPELL_ROGUE_SHADOW_TECHNIQUE = 82069,
 
     // Talent
     TALENT_ROGUE_AUDACITY_PROC = 82183,
@@ -616,6 +618,10 @@ class spell_rog_prey_on_the_weak : public AuraScript
     void HandleEffectPeriodic(AuraEffect const* /*aurEff*/)
     {
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
         Unit* victim = target->GetVictim();
         if (!victim && target->GetTypeId() == TYPEID_PLAYER)
             victim = target->ToPlayer()->GetSelectedUnit();
@@ -744,6 +750,10 @@ class spell_rog_tricks_of_the_trade : public AuraScript
         PreventDefaultAction();
 
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
         target->CastSpell(_redirectTarget, SPELL_ROGUE_TRICKS_OF_THE_TRADE_DMG_BOOST, true);
         target->CastSpell(target, SPELL_ROGUE_TRICKS_OF_THE_TRADE_PROC, true);
         Remove(AURA_REMOVE_BY_DEFAULT); // maybe handle by proc charges
@@ -1519,6 +1529,12 @@ class spell_rog_kingsbane : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
+        if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+            return false;
+
         return eventInfo.GetActor()->GetGUID() == GetCaster()->GetGUID();
     }
 
@@ -1568,6 +1584,9 @@ class spell_rog_flagellation : public AuraScript
     {
         if (Player* player = GetCaster()->ToPlayer())
         {
+            if (player->isDead())
+                return;
+
             uint32 comboPoints = player->GetComboPoints();
             int32 attackPowerPct = aurEff->GetAmount();
             int32 damage = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), comboPoints * attackPowerPct);
@@ -1581,6 +1600,9 @@ class spell_rog_flagellation : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         Aura* flagellationMastery = GetCaster()->GetAura(SPELL_ROGUE_FLAGELLATION_MASTERY);
         if (flagellationMastery)
         {
@@ -1735,7 +1757,7 @@ class spell_rog_secret_technique_AuraScript : public AuraScript
         uint32 duration = aurEff->GetAmount();
         Player* player = GetCaster()->ToPlayer();
 
-        if (!player)
+        if (!player || player->isDead())
             return;
 
         player->ModifySpellCooldown(SPELL_ROGUE_SECRET_TECHNIQUE, -duration * player->GetComboPoints());
@@ -1801,6 +1823,10 @@ class spell_rog_counterattack : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 parryChance = caster->GetUnitParryChance();
         caster->CastCustomSpell(SPELL_ROGUE_COUNTERATTACK_PROC, SPELLVALUE_BASE_POINT0, parryChance, caster, TRIGGERED_FULL_MASK);
     }
@@ -1892,6 +1918,33 @@ class spell_rog_secret_technique_teacher : public AuraScript
     }
 };
 
+class spell_rog_master_of_shadows : public AuraScript
+{
+    PrepareAuraScript(spell_rog_master_of_shadows);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->learnSpell(SPELL_ROGUE_SHADOWSTRIKE);
+        target->learnSpell(SPELL_ROGUE_SHADOW_TECHNIQUE);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_ROGUE_SHADOWSTRIKE, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_ROGUE_SHADOW_TECHNIQUE, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_master_of_shadows::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_master_of_shadows::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 class spell_rog_sinister_calling : public AuraScript
 {
     PrepareAuraScript(spell_rog_sinister_calling);
@@ -1906,7 +1959,10 @@ class spell_rog_sinister_calling : public AuraScript
         Unit* target = eventInfo.GetActionTarget();
         Unit* caster = GetCaster();
 
-        if (!target || caster->isDead())
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
             return;
 
         uint32 damageAmount = aurEff->GetAmount();
@@ -1951,6 +2007,10 @@ class spell_rog_retaliation : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 chance = CalculatePct(caster->GetUnitParryChance(), aurEff->GetAmount());
 
         if (Aura* runeAura = GetQuickRiposteAura(caster))
@@ -2003,7 +2063,6 @@ class spell_rog_amplifying_poison_replacer : public AuraScript
     void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Player* target = GetCaster()->ToPlayer();
-
 
         target->removeSpell(SPELL_ROGUE_AMPLIFYING_POISON, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_ROGUE_INSTANT_POISON);
@@ -2085,6 +2144,10 @@ class spell_rog_cut_to_the_chase : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (Aura* aura = caster->GetAura(SPELL_ROGUE_SLICE_AND_DICE))
         {
             uint32 comboPoints = caster->GetComboPoints();
@@ -2219,6 +2282,10 @@ class spell_rog_dreadblades : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 health = caster->CountPctFromCurHealth(aurEff->GetAmount());
         caster->CastCustomSpell(SPELL_ROGUE_DREADBLADES_SELF_DAMAGE, SPELLVALUE_BASE_POINT0, health, caster, TRIGGERED_FULL_MASK);
     }
@@ -2247,6 +2314,10 @@ class spell_rog_opportunity : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
 
         int32 procSpell = TALENT_ROGUE_OPPORTUNITY_BUFF;
@@ -2322,6 +2393,9 @@ class spell_rogue_sea_of_strikes : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
 
         if (!damageInfo || !damageInfo->GetDamage() || damageInfo->GetDamage() == 0)
@@ -2329,7 +2403,7 @@ class spell_rogue_sea_of_strikes : public AuraScript
             return false;
         }
 
-        return GetCaster()->IsAlive();
+        return true;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2441,6 +2515,10 @@ class spell_rog_roll_the_bones_skull_and_crossbones : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->CastSpell(eventInfo.GetActionTarget(), SPELL_ROGUE_SINISTER_STRIKE, TRIGGERED_FULL_MASK);
     }
 
@@ -2540,6 +2618,10 @@ class spell_rog_ruthless : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         uint32 chance = aurEff->GetAmount() * caster->GetComboPoints();
 
         if (roll_chance_i(chance))
@@ -2590,9 +2672,13 @@ class spell_rog_audacity : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         if (Aura* aura = GetCaster()->GetAura(TALENT_ROGUE_OPPORTUNITY))
         {
             Unit* caster = GetCaster();
+
             uint32 chance = aura->GetSpellInfo()->ProcChance;
 
             if (roll_chance_i(chance))
@@ -3149,8 +3235,6 @@ class spell_rog_pistol_shot : public SpellScript
     }
 };
 
-
-
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -3232,10 +3316,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_riposte);
     RegisterSpellScript(spell_rog_gloomblade);
     RegisterSpellScript(spell_rog_pistol_shot);
-
-
-
-
-
-
+    RegisterSpellScript(spell_rog_master_of_shadows);
 }

@@ -933,6 +933,9 @@ public:
     {
         Unit* target = GetTarget();
 
+        if (!target || target->isDead())
+            return;
+
         if (AuraEffect* talentAurEff = target->GetAuraEffectOfRankedSpell(SPELL_MAGE_INCANTERS_ABSORBTION_R1, EFFECT_0))
         {
             int32 bp = CalculatePct(absorbAmount, talentAurEff->GetAmount());
@@ -1146,7 +1149,10 @@ class spell_mage_barrier_absorb_aura : public spell_mage_incanters_absorbtion_ba
         Unit* caster = GetCaster();
         Unit* target = dmgInfo.GetAttacker();
 
-        if (!target || !caster)
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
             return;
 
         if (GetAura()->GetId() == SPELL_MAGE_ICE_BARRIER)
@@ -2385,6 +2391,9 @@ class spell_mage_flurry : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+        if (!target || target->isDead())
+            return;
+
         caster->CastSpell(target, SPELL_MAGE_FLURRY_DAMAGE, TRIGGERED_FULL_MASK);
     }
 
@@ -2492,6 +2501,10 @@ class spell_mage_fingers_of_frost : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 procChance = _procChance;
 
         if (eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FROSTBOLT)
@@ -2566,6 +2579,9 @@ class spell_mage_comet_storm : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+        if (!target || target->isDead())
+            return;
+
         Position targetPosition = target->GetPosition();
         //int32 rand = urand(0, GetAura()->GetEffect(EFFECT_1)->GetAmount());
         //Position position = targetPosition.GetPositionWithOffset(rand);
@@ -2588,6 +2604,9 @@ class spell_mage_ray_of_frost_fingers : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         caster->CastSpell(caster, SPELL_MAGE_FINGERS_OF_FROST_AURA, TRIGGERED_FULL_MASK);
     }
@@ -2655,7 +2674,15 @@ class spell_mage_nether_tempest_aoe : public AuraScript
     void OnPeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
         target->CastSpell(target, 81522, TRIGGERED_FULL_MASK, nullptr, nullptr, caster->GetGUID());
     }
 
@@ -3277,6 +3304,10 @@ class spell_mage_enchant_conduit : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 amount = CalculatePct(caster->GetMaxPower(POWER_MANA), 0.5);
             caster->CastCustomSpell(SPELL_MAGE_ENCHANT_CONDUIT_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
         }
@@ -3297,6 +3328,10 @@ class spell_mage_enchant_deflection : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
             if (Aura* shield = caster->GetAura(SPELL_MAGE_ENCHANT_DEFLECTION_PROC))
             {
@@ -3383,6 +3418,10 @@ class spell_mage_parry_ward : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
         caster->CastCustomSpell(SPELL_MAGE_TALENT_PARRY_WARD_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
     }
@@ -3402,6 +3441,10 @@ class spell_mage_arcanic_barrier : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
         {
             Unit* caster = GetCaster();
+
+            if (!caster || caster->isDead())
+                return;
+
             int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
             if (Aura* shield = caster->GetAura(SPELL_MAGE_TALENT_ARCANIC_BARRIER_PROC))
             {
@@ -3503,7 +3546,6 @@ class spell_mage_improved_death_blossom : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_mage_improved_death_blossom::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
 
 // 12051 Evocation - 300925 Evocation (Movement)
 class spell_mage_evocation : public AuraScript
@@ -3674,6 +3716,7 @@ class spell_mage_cone_of_cold : public SpellScript
 
         if (!caster || caster->isDead())
             return;
+
         Unit* target = GetHitUnit();
 
         if (!target || target->isDead())

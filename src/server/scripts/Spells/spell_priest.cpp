@@ -523,6 +523,10 @@ class spell_pri_guardian_spirit : public AuraScript
             return;
 
         Unit* target = GetTarget();
+
+        if (!target || caster->isDead())
+            return;
+
         if (dmgInfo.GetDamage() < target->GetHealth() || hasSavedTheTarget)
             return;
 
@@ -662,7 +666,14 @@ class spell_pri_lightwell_renew : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
 
         if (Aura* aura = caster->GetAura(SPELL_PRIEST_LIGHTWELL_CHARGE)) {
             if (aura->GetCharges() <= 0)
@@ -1114,6 +1125,9 @@ class spell_pri_power_word_shield_aura : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+        if (!target || target->isDead())
+            return;
+
         if (caster->HasAura(SPELL_PRIEST_AUTONEMENT))
         {
             caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
@@ -1357,9 +1371,13 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = eventInfo.GetProcTarget();
 
-        if (!target || !caster)
+        if (!target || target->isDead())
             return;
 
         if (GetDeathTapAura())
@@ -1435,7 +1453,15 @@ class spell_pri_vampiric_touch : public AuraScript
     void HandleProc(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetOwner()->ToUnit();
+
+        if (!target || target->isDead())
+            return;
+
         int32 damage = aurEff->GetAmount();
         int32 healPct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster);
 
@@ -1691,33 +1717,37 @@ class spell_pri_mass_resurrection : public SpellScript
 
     std::list <Unit*> FindTargets()
     {
-        Player* caster = GetCaster()->ToPlayer();
-        std::list <Unit*> targetAvailable;
-        auto const& allyList = caster->GetGroup()->GetMemberSlots();
-
-        for (auto const& target : allyList)
+        if (Player* caster = GetCaster()->ToPlayer())
         {
-            Player* player = ObjectAccessor::FindPlayer(target.guid);
-            if (player)
-                if (player->isDead())
-                {
-                    Unit* dummy = player->ToUnit();
-                    if (dummy)
-                        targetAvailable.push_back(dummy);
-                }
+            std::list <Unit*> targetAvailable;
+            auto const& allyList = caster->GetGroup()->GetMemberSlots();
+
+            for (auto const& target : allyList)
+            {
+                Player* player = ObjectAccessor::FindPlayer(target.guid);
+                if (player)
+                    if (player->isDead())
+                    {
+                        Unit* dummy = player->ToUnit();
+                        if (dummy)
+                            targetAvailable.push_back(dummy);
+                    }
+            }
+            return targetAvailable;
         }
-        return targetAvailable;
     }
 
     void HandleProc()
     {
-        Player* player = GetCaster()->ToPlayer();
-        if (!player->GetGroup())
-            return;
-
-        for (auto const& target : FindTargets())
+        if (Player* player = GetCaster()->ToPlayer())
         {
-            GetCaster()->CastSpell(target, SPELL_PRIEST_MASS_RESURRECTION, TRIGGERED_FULL_MASK);
+            if (!player->GetGroup())
+                return;
+
+            for (auto const& target : FindTargets())
+            {
+                GetCaster()->CastSpell(target, SPELL_PRIEST_MASS_RESURRECTION, TRIGGERED_FULL_MASK);
+            }
         }
     }
 
@@ -1823,13 +1853,18 @@ class spell_pri_power_word_life : public SpellScript
     void HandleHeal(SpellEffIndex effIndex)
     {
         Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 heal = GetEffectValue();
 
         ApplyPct(heal, GetCaster()->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_HOLY));
-
-        if (!target)
-            return;
 
         heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
         heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
@@ -1849,6 +1884,9 @@ class spell_pri_power_word_life : public SpellScript
     void HandleProc()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         if (!caster->HasAura(SPELL_PRIEST_POWER_WORD_LIFE_LISTENER))
             return;
@@ -2092,8 +2130,8 @@ class spell_pri_purge_the_wicked : public SpellScript
         {
             Unit* victim = object->ToUnit();
 
-            if (victim->isDead())
-                continue;
+            if (!victim || victim->isDead())
+                return;
             // if the target is already affected by Purge the Wicked switch it to the second list.
             if (victim->HasAura(SPELL_PRIEST_PURGE_THE_WICKED) && victim->GetAura(SPELL_PRIEST_PURGE_THE_WICKED)->GetDuration() > 5000)
             {
@@ -2140,9 +2178,8 @@ class spell_pri_rapture : public SpellScript
 
     void HandleProc()
     {
-        Player* player = GetCaster()->ToPlayer();
-
-        player->RemoveSpellCooldown(SPELL_PRIEST_POWER_WORD_SHIELD, true);
+        if (Player* player = GetCaster()->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PRIEST_POWER_WORD_SHIELD, true);
     }
 
     void Register() override
@@ -2433,9 +2470,8 @@ class spell_pri_empyreal_blaze : public SpellScript
 
     void HandleProc()
     {
-        Player* player = GetCaster()->ToPlayer();
-
-        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_FIRE, true);
+        if (Player* player = GetCaster()->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_FIRE, true);
     }
 
     void Register() override
@@ -2480,11 +2516,12 @@ class spell_pri_apotheosis : public SpellScript
 
     void HandleProc()
     {
-        Player* player = GetCaster()->ToPlayer();
-
-        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_CHASTISE, true);
-        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTIFY, true);
-        player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SERENITY, true);
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_CHASTISE, true);
+            player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SANCTIFY, true);
+            player->RemoveSpellCooldown(SPELL_PRIEST_HOLY_WORD_SERENITY, true);
+        }
     }
 
     void Register() override
@@ -2615,17 +2652,21 @@ class spell_pri_void_eruption_cooldown : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* player = GetCaster()->ToPlayer();
-        int32 cooldownChange = 6000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
-        player->SetSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            int32 cooldownChange = 6000 - player->GetSpellCooldownDelay(SPELL_PRIEST_VOID_ERUPTION);
+            player->SetSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, cooldownChange);
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* player = GetCaster()->ToPlayer();
-        player->RemoveSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, true);
-        player->AddSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 0, 120000);
-        player->SendSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 120000);
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            player->RemoveSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, true);
+            player->AddSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 0, 120000);
+            player->SendSpellCooldown(SPELL_PRIEST_VOID_ERUPTION, 120000);
+        }
     }
 
     void Register() override
@@ -2663,6 +2704,9 @@ class spell_pri_insanity_on_periodic : public AuraScript
     void HandleProc(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         int32 insanityAmount = aurEff->GetAmount();
 
@@ -2730,6 +2774,10 @@ class spell_pri_shadowy_apparitions : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = eventInfo.GetProcTarget();
 
         if (!target || !caster)
@@ -3013,7 +3061,6 @@ class spell_pri_prayer_of_mending : public AuraScript
         return nearMembers.front();
     }
 
-
     void CastMendingToNearestTarget(Unit* target, Unit* caster, uint32 charges)
     {
         caster->CastSpell(target, SPELL_PRIEST_PRAYER_OF_MENDING_HEAL);
@@ -3049,7 +3096,14 @@ class spell_pri_prayer_of_mending : public AuraScript
         PreventDefaultAction();
 
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
 
         if (eventInfo.GetHealInfo() && eventInfo.GetSpellInfo() && eventInfo.GetHealInfo()->GetHeal() > 0)
             if (Aura* runeAura = GetRenewTheFaithAura(caster))
@@ -3294,7 +3348,7 @@ class spell_pri_holy_might : public SpellScript
         for (auto const& object : targets)
         {
             Unit* target = object->ToUnit();
-            if (target->isDead())
+            if (!target || target->isDead())
                 continue;
 
             int32 targetSTR = target->GetStat(STAT_STRENGTH);
@@ -3445,7 +3499,7 @@ class spell_pri_wave_of_light_accumulation : public AuraScript
             return;
 
         Unit* eventTarget = eventInfo.GetActor();
-        if (!eventTarget || !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
+        if (!eventTarget || eventTarget->isDead() || !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_STRENGTH) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_AGILITY) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_INTELLECT) && !eventTarget->HasAura(SPELL_PRIEST_HOLY_MIGHT_SPIRIT))
             return;
 
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
@@ -3455,6 +3509,10 @@ class spell_pri_wave_of_light_accumulation : public AuraScript
                     return;
 
             Unit* target = GetUnitOwner();
+
+            if (!target || target->isDead())
+                return;
+
             int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
 
             if (Aura* runeAura = GetLightsWardAura(caster))
@@ -3522,6 +3580,9 @@ class spell_pri_surprise_burst : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster)
+            return;
         int32 holyFlameChance = aurEff->GetAmount();
         int32 holyStrikeChance = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
 

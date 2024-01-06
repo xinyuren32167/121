@@ -1306,6 +1306,10 @@ class rune_sha_stormflurry : public AuraScript
             return;
 
         Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return;
+
         int32 spellID = eventInfo.GetSpellInfo()->Id;
 
         if (spellID != SPELL_SHAMAN_STORMSTRIKE)
@@ -1446,6 +1450,10 @@ class rune_sha_stormblast : public AuraScript
             return;
 
         Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target|| target->isDead())
+            return;
+
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
 
         int32 amount = CalculatePct(damage, aurEff->GetAmount());

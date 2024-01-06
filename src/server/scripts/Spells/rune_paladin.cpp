@@ -1443,6 +1443,9 @@ class rune_pal_saved_by_the_light : public AuraScript
 
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
+        if (!victim || victim->isDead())
+            return false;
+
         if (!victim->HasAura(SPELL_PALADIN_BEACON_OF_LIGHT) && !victim->HasAura(SPELL_PALADIN_BEACON_OF_VIRTUE) && !victim->HasAura(SPELL_PALADIN_BEACON_OF_FAITH))
             return false;
 
@@ -1455,6 +1458,13 @@ class rune_pal_saved_by_the_light : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
+        if (!victim || victim->isDead())
+            return;
+
         int32 remainingHealth = victim->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
         int32 healhPct = aurEff->GetAmount();
 
@@ -1499,6 +1509,9 @@ class rune_pal_sign_of_faith : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
 
         float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
         float sp = int32(CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetAmount()));
@@ -1776,6 +1789,13 @@ class rune_pal_gift_of_the_golden_valkyr : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* victim = GetCaster();
+
+        if (!victim || victim->isDead())
+            return;
+
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         int32 remainingHealth = victim->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
         int32 healthThreshold = aurEff->GetAmount();
         int32 healPct = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
@@ -1867,7 +1887,10 @@ class rune_pal_inner_light_damage : public AuraScript
         Unit* victim = GetCaster();
         Unit* target = eventInfo.GetActor();
 
-        if (!target)
+        if (!victim || victim->isDead())
+            return;
+
+        if (!target || target->isDead())
             return;
 
         float ap = int32(CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
@@ -1905,6 +1928,9 @@ class rune_pal_divine_vindication : public AuraScript
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
         if (!victim || victim->isDead())
+            return;
+
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount()) / 4;
@@ -1975,6 +2001,9 @@ class rune_pal_tempest_of_the_lightbringer : public AuraScript
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         GetCaster()->CastCustomSpell(RUNE_PALADIN_TEMPEST_OF_THE_LIGHTBRINGER_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
 
@@ -1997,6 +2026,9 @@ class rune_pal_lights_decree : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         float ap = int32(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount()));
         float sp = int32(CalculatePct(caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY), aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()));
@@ -2037,6 +2069,9 @@ class rune_pal_tempars_vindication : public AuraScript
         float damage = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
+        if (!GetCaster() || GetCaster()->isDead())
+            return;
+
         GetCaster()->CastCustomSpell(RUNE_PALADIN_TEMPLARS_VINDICATION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
     }
 
@@ -2068,12 +2103,17 @@ class rune_pal_executioners_will : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!victim || victim->isDead())
+            return;
+
         Player* target = GetCaster()->ToPlayer();
+
+        if (!target || target->isDead())
+            return;
+
         int32 maxAmount = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         int32 increase = aurEff->GetAmount();
-
-        if (!victim || !target)
-            return;
 
         Aura* listener = target->GetAura(SPELL_PALADIN_EXECUTION_SENTENCE_LISTENER);
 
@@ -2369,9 +2409,12 @@ class rune_pal_executioners_wrath_listener : public AuraScript
         if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
             return;
 
-        Unit* Victim = eventInfo.GetDamageInfo()->GetVictim();
+        Unit* victim = eventInfo.GetDamageInfo()->GetVictim();
 
-        if (!Victim->HasAura(80064))
+        if (!victim || victim->isDead())
+            return;
+
+        if (!victim->HasAura(80064))
             return;
 
         int32 damagedealt = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
@@ -2421,7 +2464,7 @@ class rune_pal_ashes_to_dust : public AuraScript
 
         Player* caster = GetCaster()->ToPlayer();
 
-        if (!caster)
+        if (!caster || caster->isDead())
             return;
 
         if (!caster->HasSpellCooldown(SPELL_PALADIN_WAKE_OF_ASHES))
@@ -2776,6 +2819,10 @@ class rune_pal_steady_inquisition : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         int32 procSpell = aurEff->GetAmount();
 
         if (Aura* stack = caster->GetAura(RUNE_PLADIN_STEADY_INQUISITION_STACK))

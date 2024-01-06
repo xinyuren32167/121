@@ -485,6 +485,13 @@ class spell_echo_of_light : public AuraScript
 
             amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
         }
+
+        if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+            return;
+
+        if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
+            return;
+
         eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_HEAL, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
@@ -851,7 +858,7 @@ class spell_last_defender : public AuraScript
 
         Unit* caster = GetCaster();
 
-        if (!caster)
+        if (!caster || caster->isDead())
             return 0;
 
         auto const& threatlist = caster->getAttackers();
@@ -878,7 +885,7 @@ class spell_last_defender : public AuraScript
         uint32 spellId = aurEff->GetAmount();
         Unit* unit = GetCaster();
 
-        if (!unit)
+        if (!unit || unit->isDead())
             return;
 
         uint32 size = std::min<uint32>(findSizeThreath(), 10);
@@ -914,7 +921,7 @@ class spell_juggling_balance : public AuraScript
     {
         Unit* player = GetCaster();
 
-        if (!player)
+        if (!player || player->isDead())
             return;
 
         float playerPowerPct = player->GetPowerPct(player->getPowerType());
@@ -1051,6 +1058,9 @@ class rune_general_school_vampirism : public AuraScript
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
 
         int32 healPct = aurEff->GetAmount();
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();

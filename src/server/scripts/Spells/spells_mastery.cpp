@@ -312,6 +312,12 @@ class spell_mastery_deep_wounds : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
+        if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+            return;
+
+        if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
+            return;
+
         int32 amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
         eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), 200001, SPELL_AURA_PERIODIC_DAMAGE, amount);
     }
@@ -771,6 +777,10 @@ class spell_mastery_astral_invocation : public AuraScript
                     int32 natureDamageBonus = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
                     int32 arcaneDamageBonus = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
                     Unit* target = procInfo.GetActionTarget();
+
+                    if (!target || target->isDead())
+                        return;
+
                     int32 schoolMask = procInfo.GetSpellInfo()->GetSchoolMask();
 
                     if (schoolMask & SPELL_SCHOOL_MASK_NATURE && target->HasAura(80518))
@@ -1165,6 +1175,9 @@ class spell_mastery_pri_echo_of_light : public AuraScript
             {
                 Unit* target = eventInfo.GetHealInfo()->GetTarget();
 
+                if (!target || target->isDead())
+                    return;
+
                 if (Aura* hot = target->GetAura(MASTERY_PRIEST_ECHO_OF_LIGHT_HOT))
                 {
                     AuraEffect* hotEff = hot->GetEffect(EFFECT_0);
@@ -1211,6 +1224,10 @@ class spell_mastery_pri_shadow_weaving : public AuraScript
             if (caster->IsAlive())
             {
                 Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+                if (!target || target->isDead())
+                    return;
+
                 int32 damage = eventInfo.GetDamageInfo()->GetDamage();
                 int32 basePct = aurEff->GetAmount();
 
@@ -1268,6 +1285,9 @@ class spell_mastery_pri_absolutions_embrace : public AuraScript
             if (caster->IsAlive())
             {
                 Unit* target = eventInfo.GetActionTarget();
+
+                if (!target || target->isDead())
+                    return;
 
                 if (target->IsFriendlyTo(caster))
                 {
@@ -1330,6 +1350,10 @@ class spell_mastery_rog_main_gauche : public AuraScript
             if (caster->IsAlive())
             {
                 Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+                if (!target || target->isDead())
+                    return;
+
                 int32 damage = eventInfo.GetDamageInfo()->GetDamage();
                 int32 basePct = aurEff->GetAmount();
                 int32 pct = basePct + caster->GetMastery();
@@ -1434,6 +1458,10 @@ class spell_mastery_sha_elemental_overload : public AuraScript
                 return;
 
             Unit* target = eventInfo.GetActionTarget();
+
+            if (!target || target->isDead())
+                return;
+
             int32 spellID = eventInfo.GetSpellInfo()->Id;
             int32 procChance = aurEff->GetAmount() + player->GetMastery();
 
@@ -1685,6 +1713,10 @@ class spell_mastery_sha_deep_healing : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = eventInfo.GetHealInfo()->GetHealer();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = eventInfo.GetHealInfo()->GetTarget();
         int32 heal = eventInfo.GetHealInfo()->GetHeal();
         int32 maxPct = aurEff->GetAmount() + caster->ToPlayer()->GetMastery();
