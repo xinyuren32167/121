@@ -3307,7 +3307,7 @@ class spell_dk_improved_bloodworms_health_low : public AuraScript
         uint32 allowedHealth = victim->CountPctFromMaxHealth(20);
         if (remainingHealth < int32(allowedHealth))
         {
-            std::vector<Unit*> summonedUnits = victim->GetSummonedUnits();
+            auto summonedUnits = victim->m_Controlled;
             for (auto const& unit : summonedUnits)
             {
                 if (!unit || !unit->IsAlive())

@@ -2317,7 +2317,13 @@ class rune_druid_aetherial_kindling_listener : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!caster || caster->isDead())
             return;
@@ -2337,7 +2343,12 @@ class rune_druid_aetherial_kindling_listener : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -3381,7 +3392,13 @@ class rune_druid_rip_and_tear : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* victim = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* victim = owner->ToUnit();
 
         if (!caster || caster->isDead())
             return;
@@ -4263,7 +4280,16 @@ class rune_druid_scintillating_moonlight : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
+
+        if (!target || target->isDead())
+            return;
 
         if (!caster || caster->isDead())
             return;
@@ -4278,7 +4304,13 @@ class rune_druid_scintillating_moonlight : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -4827,7 +4859,13 @@ class rune_druid_rend_and_tear : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -4859,12 +4897,18 @@ class rune_druid_rend_and_tear : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* owner = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* caster = owner->ToUnit();
 
         for (size_t i = 701464; i < 701470; i++)
         {
-            if (owner->HasAura(i))
-                owner->RemoveAura(i);
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
         }
     }
 
@@ -4893,7 +4937,14 @@ class rune_druid_everlasting_encasement : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -4915,7 +4966,13 @@ class rune_druid_everlasting_encasement : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -5548,7 +5605,13 @@ class rune_druid_photosynthesis : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!caster || caster->isDead())
             return;
@@ -5569,15 +5632,20 @@ class rune_druid_photosynthesis : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* owner = GetAura()->GetOwner()->ToUnit();
+        WorldObject* owner = GetAura()->GetOwner();
 
-        if (!owner || owner->isDead())
+        if (!owner)
+            return;
+
+        Unit* caster = owner->ToUnit();
+
+        if (!caster || caster->isDead())
             return;
 
         for (size_t i = 701594; i < 701601; i++)
         {
-            if (owner->HasAura(i))
-                owner->RemoveAura(i);
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
         }
     }
 
@@ -5807,7 +5875,13 @@ class rune_druid_rampant_growth : public AuraScript
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!caster || caster->isDead())
             return;
@@ -6214,11 +6288,23 @@ class rune_druid_early_harvest : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* caster = GetAura()->GetCaster()->ToPlayer();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+
+        Unit* caster = GetAura()->GetCaster();
 
         if (!caster || caster->isDead())
             return;
+
+        Player* player = caster->ToPlayer();
+
+        if (!player)
+            return;
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -6231,7 +6317,7 @@ class rune_druid_early_harvest : public AuraScript
         if (healthPct == 100)
         {
             int32 amount = GetRuneAura(caster)->GetEffect(EFFECT_1)->GetAmount();
-            caster->ModifySpellCooldown(SPELL_INNERVATE, -amount);
+            player->ModifySpellCooldown(SPELL_INNERVATE, -amount);
         }
         else
         {
@@ -6266,11 +6352,17 @@ class rune_druid_natures_essence : public AuraScript
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Player* caster = GetAura()->GetCaster()->ToPlayer();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+        Unit* caster = GetAura()->GetCaster();
 
         if (!caster || caster->isDead())
             return;
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -6387,10 +6479,16 @@ class rune_druid_deep_rooted : public AuraScript
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
 
         if (!caster || caster->isDead())
             return;
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
 
         if (!target || target->isDead())
             return;
@@ -6559,7 +6657,7 @@ class rune_druid_regenerative_heartwood : public AuraScript
         if (!owner)
             return;
 
-        Unit* target = GetAura()->GetOwner()->ToUnit();
+        Unit* target = owner->ToUnit();
 
         if (!caster || caster->isDead())
             return;
@@ -6647,12 +6745,18 @@ class rune_druid_ironwood_thorns : public AuraScript
     void HandleProc(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetAura()->GetCaster();
-        Unit* target = GetAura()->GetOwner()->ToUnit();
-
-        if (!target || target->isDead())
-            return;
 
         if (!caster || caster->isDead())
+            return;
+
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* target = owner->ToUnit();
+
+        if (!target || target->isDead())
             return;
 
         if (!GetRuneAura(caster))
@@ -6695,10 +6799,15 @@ class rune_druid_ironwood_thorns_reflect : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Unit* owner = GetAura()->GetOwner()->ToUnit();
+        WorldObject* owner = GetAura()->GetOwner();
+
+        if (!owner)
+            return;
+
+        Unit* caster = caster->ToUnit();
         Unit* attacker = eventInfo.GetDamageInfo()->GetAttacker();
 
-        if (!owner || owner->isDead())
+        if (!caster || caster->isDead())
             return;
 
         if (!attacker || attacker->isDead())
@@ -6708,7 +6817,7 @@ class rune_druid_ironwood_thorns_reflect : public AuraScript
         int32 damagePct = aurEff->GetAmount();
         int32 amount = CalculatePct(damage, damagePct);
 
-        owner->CastCustomSpell(RUNE_DRUID_IRONWOOD_THORNS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, attacker, TRIGGERED_FULL_MASK);
+        caster->CastCustomSpell(RUNE_DRUID_IRONWOOD_THORNS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, attacker, TRIGGERED_FULL_MASK);
     }
 
     void Register()

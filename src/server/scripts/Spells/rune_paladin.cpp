@@ -1793,7 +1793,7 @@ class rune_pal_gift_of_the_golden_valkyr : public AuraScript
         if (!victim || victim->isDead())
             return;
 
-        if (!GetCaster() || GetCaster()->isDead())
+        if (!victim || victim->isDead())
             return;
 
         int32 remainingHealth = victim->GetHealth() - eventInfo.GetDamageInfo()->GetDamage();
@@ -1805,19 +1805,26 @@ class rune_pal_gift_of_the_golden_valkyr : public AuraScript
         if (remainingHealth > victim->CountPctFromMaxHealth(healthThreshold))
             return;
 
-        if (!GetCaster()->HasAura(SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS))
-        {
-            GetCaster()->AddAura(SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS, GetCaster());
-            GetCaster()->GetAura(SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS)->SetDuration(guardianDuration);
+        Aura* aura = victim->GetAura(SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS);
+
+        if (!aura) {
+            victim->AddAura(SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS, victim);
+            Aura* guardian = victim->GetAura(SPELL_PALADIN_GUARDIAN_OF_THE_ANCIENT_KINGS);
+            if (guardian) {
+                guardian->SetDuration(guardianDuration);
+            }
         }
-        else
-        {
+        else {
             int32 healAmount = int32(CalculatePct(victim->GetMaxHealth(), healPct));
-            GetCaster()->CastCustomSpell(RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, TRIGGERED_FULL_MASK);
+            victim->CastCustomSpell(RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, TRIGGERED_FULL_MASK);
         }
 
-        GetCaster()->AddAura(RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_DEBUFF, victim);
-        GetCaster()->GetAura(RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_DEBUFF)->SetDuration(debuffDuration);
+        victim->AddAura(RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_DEBUFF, victim);
+        Aura* gift = victim->GetAura(RUNE_PALADIN_GIFT_OF_THE_GOLDEN_VALKYR_DEBUFF);
+
+        if (gift) {
+            gift->SetDuration(debuffDuration);
+        }
     }
 
     void Register() override
