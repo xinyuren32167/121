@@ -2662,7 +2662,7 @@ class rune_bloodmark : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         Unit* target = eventInfo.GetActionTarget();
-        if (!target)
+        if (!target || target->isDead())
             return false;
 
         return target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT);
@@ -2670,7 +2670,10 @@ class rune_bloodmark : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->CastCustomSpell(RUNE_WARR_STRENGTH_OF_ARMS_PROC, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetCaster(), TRIGGERED_FULL_MASK);
+        if (Aura* rend = GetCaster()->GetAura(SPELL_WARR_REND))
+            rend->RefreshDuration();
+        else
+            GetCaster()->AddAura(SPELL_WARR_REND, eventInfo.GetActionTarget());
     }
 
     void Register() override
