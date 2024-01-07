@@ -2571,10 +2571,13 @@ class rune_hunter_double_trouble_aura : public AuraScript
 
     void SecondaryPetsDoubleTrouble(uint32 procSpell, bool remove) {
 
-        auto summonedUnits = GetCaster()->ToPlayer()->GetSummonedUnits();
+        Player* player = GetCaster()->ToPlayer();
 
-        if (summonedUnits.size() == 0)
+        if (!player)
             return;
+
+        auto summonedUnits = player->m_Controlled;
+
 
         for (const auto& unit : summonedUnits) {
             if (!remove && !unit->HasAura(procSpell) && unit->HasAura(80224))
@@ -2601,7 +2604,6 @@ class rune_hunter_double_trouble_aura : public AuraScript
             player->AddAura(procSpell, pet);
 
         SecondaryPetsDoubleTrouble(procSpell, false);
-        ;
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
