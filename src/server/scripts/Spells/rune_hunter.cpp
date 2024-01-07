@@ -2580,6 +2580,10 @@ class rune_hunter_double_trouble_aura : public AuraScript
 
 
         for (const auto& unit : summonedUnits) {
+
+            if (unit == nullptr)
+                continue;
+
             if (!remove && !unit->HasAura(procSpell) && unit->HasAura(80224))
                 unit->AddAura(procSpell, unit);
             if (remove && unit->HasAura(procSpell) && unit->HasAura(80224))
