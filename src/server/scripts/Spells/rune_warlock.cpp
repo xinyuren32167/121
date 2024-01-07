@@ -229,7 +229,7 @@ class rune_warl_kazaaks_final_curse : public AuraScript
             if (pet && pet->IsAlive())
                 targetNbr++;
 
-            std::vector<Unit*> summonedUnits = player->m_Controlled;
+            auto summonedUnits = player->m_Controlled;
             targetNbr += summonedUnits.size();
         }
 
