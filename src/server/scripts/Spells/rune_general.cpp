@@ -53,7 +53,7 @@ class spell_second_wind : public AuraScript
 
     void HandlePeriodic(AuraEffect const* aurEff)
     {
-        if (GetCaster()->GetHealth() < GetCaster()->GetMaxHealth() && !GetCaster()->HasAura(GetDamageCheckSpell()))
+        if (GetCaster()->GetHealth() < GetCaster()->GetMaxHealth() && !GetCaster()->HasAura(GetDamageCheckSpell()) && GetCaster()->IsAlive())
         {
             int32 amount = int32(CalculatePct(GetCaster()->GetMaxHealth(), GetProcPct()));
 
