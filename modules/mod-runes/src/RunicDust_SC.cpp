@@ -22,7 +22,8 @@
 #include "SpellInfo.h"
 
 enum Items {
-    ITEM_RUNIC_DUST =   70008
+    ITEM_RUNIC_DUST =   70008,
+    ITEM_SEALED_RUNE = 70002,
 };
 
  // Add player scripts
@@ -55,7 +56,7 @@ public:
 
     void OnBeforeBuyItemFromVendor(Player* player, ObjectGuid vendorguid, uint32 vendorslot, uint32& item, uint8 count, uint8 bag, uint8 slot)
     {
-        if (item != ITEM_RUNIC_DUST && count > 0)
+        if (item != ITEM_SEALED_RUNE || count <= 0)
             return;
 
         RunesManager::UpdateRunicDustAmount(player, 100 * count, false);
