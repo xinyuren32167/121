@@ -93,6 +93,13 @@ public:
 
         if (player->getClass() == CLASS_SHAMAN)
             InitializeElementalSpecialization(player);
+
+
+        if (player->getClass() == CLASS_HUNTER) {
+            player->SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + POWER_FOCUS, 5.0f);
+            player->SetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER + POWER_FOCUS, 5.0f);
+        }
+
     }
 
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid)

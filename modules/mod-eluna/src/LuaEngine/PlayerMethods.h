@@ -32,6 +32,24 @@ namespace LuaPlayer
         return 1;
     }
 
+    int GetRunesInspect(lua_State* L, Player* player)
+    {
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 counter = 1;
+        std::string name = Eluna::CHECKVAL<std::string>(L, 2);
+        auto runes = RunesManager::GetRunesByPlayerName(name);
+
+        for (const auto& rune : runes)
+        {
+            Eluna::Push(L, rune);
+            lua_rawseti(L, tbl, counter);
+            counter++;
+        }
+        lua_settop(L, tbl);
+        return 1;
+    }
+
     int GetUpgradableRunes(lua_State* L, Player* player)
     {
         lua_newtable(L);

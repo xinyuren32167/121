@@ -454,6 +454,31 @@ uint32 RunesManager::CalculateGoldCostToBuyRune(Player* player)
 }
 
 
+std::vector<std::string> RunesManager::GetRunesByPlayerName(std::string name)
+{
+    std::vector<std::string> elements = {};
+
+    Player* playerToInspect = ObjectAccessor::FindPlayerByName(name, true);
+
+    if (!playerToInspect)
+        return elements;
+
+    uint32 activeId = GetActiveLoadoutId(playerToInspect);
+
+    if (activeId <= 0)
+        return elements;
+
+    auto it = m_SlotRune.find(activeId);
+    if (it != m_SlotRune.end())
+        for (auto& slot : it->second)
+            if (slot.runeSpellId)
+                elements.push_back(std::to_string(slot.runeSpellId));
+
+
+    return elements;
+}
+
+
 void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
 {
     Rune previousRune = GetRuneByQuality(nextRune.groupId, nextRune.quality - 1);
@@ -1071,6 +1096,12 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
         return;
     }
 
+    if (RuneAlreadyActivated(player, runeSpellId))
+    {
+        SendPlayerMessage(player, "You cannot refund this rune, you have one or more of these runes activated.");
+        return;
+    }
+
     int multiplier = pow(3, rune.quality - 1);
     uint8 runicDust = 50 * multiplier;
 
@@ -1210,7 +1241,14 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune)
     stmt->SetData(2, slot.order);
     trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
-    player->AddAura(rune.spellId, player);
+
+    if (Aura* aura = player->GetAura(rune.spellId)) {
+        aura->ModStackAmount(aura->GetStackAmount() + 1);
+    }
+    else {
+        player->AddAura(rune.spellId, player);
+    }
+
     sEluna->RefreshSlotsRune(player);
 }
 

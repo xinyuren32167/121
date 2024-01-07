@@ -143,6 +143,7 @@ public:
     static void ApplyRunesOnLogin(Player* player);
     static void OnCastActivateLoadout(Player* player, uint64 loadoutId);
     static void DisableRune(Player* player, uint64 runeId);
+    static std::vector<std::string> GetRunesByPlayerName(std::string name);
     static void RefundRune(Player* player, uint32 runeSpellId);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
     static void UpdateRunicDustCountOnLogin(Player* player);

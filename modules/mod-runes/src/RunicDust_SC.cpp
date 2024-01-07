@@ -122,23 +122,33 @@ public:
 
         Map* map = creature->GetMap();
 
-        if (creature->isElite() && !map->IsDungeon())
-            AddRunicDustToLoot(valueFromEliteMin, valueFromEliteMax, loot);
 
-        if (roll_chance_i(dropChanceFromMonster) && !map->IsHeroic())
-            AddRunicDustToLoot(1, 1, loot);
+        const bool isNormalDungeonBoss = creature->IsDungeonBoss() && !map->IsHeroic();
+        const bool isHeroicDungeonBoss = creature->IsDungeonBoss() && map->IsHeroic();
+        const bool isMythicDungeonBoss = creature->IsDungeonBoss() && map->IsMythic();
+        const bool isNormalMobs = !creature->isElite() && roll_chance_i(dropChanceFromMonster);
+        const bool isCreatureEliteRare = creature->GetCreatureTemplate()->rank == CREATURE_ELITE_RARE;
 
-        if (roll_chance_i(dropChanceFromMonster) && map->IsHeroic())
-            AddRunicDustToLoot(2, 2, loot);
 
-        if (creature->GetCreatureTemplate()->rank == CREATURE_ELITE_RARE)
-            AddRunicDustToLoot(valueFromEliteRareMin, valueFromEliteRareMax, loot);
-
-        if (creature->IsDungeonBoss() && !map->IsHeroic())
+        if (isNormalDungeonBoss) {
             AddRunicDustToLoot(valueMinFromDungeonBoss, valueMaxFromDungeonBoss, loot);
+        }
 
-        if (creature->IsDungeonBoss() && map->IsHeroic())
+        if (isHeroicDungeonBoss) {
             AddRunicDustToLoot(valueMinFromDungeonBoss * 2, valueMaxFromDungeonBoss * 2, loot);
+        }
+
+        if (isMythicDungeonBoss) {
+            AddRunicDustToLoot(valueMinFromDungeonBoss * 3, valueMaxFromDungeonBoss * 3, loot);
+        }
+
+        if (isNormalMobs) {
+            AddRunicDustToLoot(1, 1, loot);
+        }
+
+        if (isCreatureEliteRare) {
+            AddRunicDustToLoot(valueFromEliteRareMin, valueFromEliteRareMax, loot);
+        }
     }
 
     void OnAfterLootTemplateProcess(Loot* loot, LootTemplate const* tab, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode, WorldObject* source)
