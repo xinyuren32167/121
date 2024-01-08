@@ -2350,7 +2350,7 @@ void WorldSession::HandleCharFactionOrRaceChangeCallback(std::shared_ptr<Charact
             Player::SavePositionInDB(loc, zoneId, factionChangeInfo->Guid, trans);
 
             // Achievement conversion
-            for (auto const& [achiev_alliance, achiev_horde] : sObjectMgr->FactionChangeAchievements)
+            /*for (auto const& [achiev_alliance, achiev_horde] : sObjectMgr->FactionChangeAchievements)
             {
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT_BY_ACHIEVEMENT);
                 stmt->SetData(0, uint16(newTeam == TEAM_ALLIANCE ? achiev_alliance : achiev_horde));
@@ -2362,7 +2362,7 @@ void WorldSession::HandleCharFactionOrRaceChangeCallback(std::shared_ptr<Charact
                 stmt->SetData(1, uint16(newTeam == TEAM_ALLIANCE ? achiev_horde : achiev_alliance));
                 stmt->SetData(2, GetPlayer()->GetSession()->GetAccountId());
                 trans->Append(stmt);
-            }
+            }*/
 
             // Item conversion
             for (auto const& [item_alliance, item_horde] : sObjectMgr->FactionChangeItems)
