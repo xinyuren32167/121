@@ -94,6 +94,7 @@ enum WarriorSpells
     SPELL_WARRIOR_COLOSSAL_THRUST = 84557,
     SPELL_WARRIOR_MIGHTY_THROW = 84558,
     SPELL_WARRIOR_SHIELD_SLAM = 47488,
+    SPELL_WARRIOR_OVERPOWER = 7384,
 
     //Talents
     TALENT_WARRIOR_FUELED_BY_VIOLENCE_HEAL = 80003,
@@ -105,6 +106,7 @@ enum WarriorSpells
     TALENT_WARRIOR_FIGHT_MANAGEMENT_HEALTH = 84589,
     TALENT_WARRIOR_INTOXICATING_SWIPE = 84638,
     TALENT_WARRIOR_EXECUTING_THRUST = 84650,
+    TALENT_WARRIOR_TASTE_FOR_BLOOD_COOLDOWN = 60503,
 
     //Masteries
     MASTERY_WARRIOR_DEEP_WOUNDS_DOT = 200001,
@@ -1589,24 +1591,19 @@ class spell_healing_deep_wound : public AuraScript
     }
 };
 
+// Taste for Blood
 class spell_reset_overpower : public AuraScript
 {
     PrepareAuraScript(spell_reset_overpower);
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 spellId = eventInfo.GetSpellInfo()->Id;
-
-        Player* player = GetCaster()->ToPlayer();
-
-        if (!player || !player->IsAlive())
-            return;
-
-        if (player->HasSpellCooldown(spellId))
-            return;
-
-        player->AddSpellCooldown(spellId, 0, 5500);
-        player->RemoveSpellCooldown(7384, true);
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player->IsAlive() && !player->HasSpellCooldown(TALENT_WARRIOR_TASTE_FOR_BLOOD_COOLDOWN))
+            {
+                player->RemoveSpellCooldown(SPELL_WARRIOR_OVERPOWER, true);
+                player->AddSpellCooldown(TALENT_WARRIOR_TASTE_FOR_BLOOD_COOLDOWN, 0, 6000);
+            }
     }
 
     void Register() override
@@ -1614,7 +1611,6 @@ class spell_reset_overpower : public AuraScript
         OnEffectProc += AuraEffectProcFn(spell_reset_overpower::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
-
 
 class spell_reset_shield_slam : public AuraScript
 {
