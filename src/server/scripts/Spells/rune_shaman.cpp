@@ -1826,26 +1826,34 @@ class rune_sha_primal_tide_core : public AuraScript
 {
     PrepareAuraScript(rune_sha_primal_tide_core);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
+            return false;
+
+        if (!eventInfo.GetActionTarget() || eventInfo.GetActionTarget()->isDead())
+            return;
+
+        return true;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = eventInfo.GetActor();
-
-        if (!caster || caster->isDead())
-            return;
-
         Unit* target = eventInfo.GetActionTarget();
 
-        if (!target || target->isDead())
-            return;
+        if (!caster->HasSpellCooldown(RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE))
+        {
+            caster->CastSpell(caster, RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER, TRIGGERED_FULL_MASK);
 
-        caster->CastSpell(caster, RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER, TRIGGERED_FULL_MASK);
+            if (caster->GetAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER)->GetStackAmount() < aurEff->GetAmount())
+                return;
 
-        if (caster->GetAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER)->GetStackAmount() < aurEff->GetAmount())
-            return;
+            caster->CastSpell(target, RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, TRIGGERED_FULL_MASK);
+            caster->AddSpellCooldown(RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, 0, 6000);
 
-        caster->CastSpell(target, RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, TRIGGERED_FULL_MASK);
-
-        caster->RemoveAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER);
+            caster->RemoveAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER);
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -1861,6 +1869,7 @@ class rune_sha_primal_tide_core : public AuraScript
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(rune_sha_primal_tide_core::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_sha_primal_tide_core::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         OnEffectRemove += AuraEffectRemoveFn(rune_sha_primal_tide_core::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
