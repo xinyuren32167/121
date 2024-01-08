@@ -2765,10 +2765,12 @@ class spell_warl_molten_hand : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (!GetCaster())
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
             return false;
 
-        return GetCaster()->IsAlive() && GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself()->IsAlive();
+        return caster->IsAlive() && caster->GetCharmerOrOwnerPlayerOrPlayerItself()->IsAlive();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

@@ -1832,7 +1832,7 @@ class rune_sha_primal_tide_core : public AuraScript
             return false;
 
         if (!eventInfo.GetActionTarget() || eventInfo.GetActionTarget()->isDead())
-            return;
+            return false;
 
         return true;
     }
