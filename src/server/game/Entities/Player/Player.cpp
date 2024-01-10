@@ -1905,6 +1905,7 @@ void Player::Regenerate(Powers power)
         case POWER_RUNE:
         case POWER_FOCUS:
             addvalue += 0.01f * m_regenTimer * sWorld->getRate(RATE_POWER_ENERGY);
+            break;
         case POWER_HAPPINESS:
             break;
         case POWER_HEALTH:

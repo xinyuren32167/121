@@ -23,7 +23,7 @@
 void PlayerTaxi::InitTaxiNodesForLevel(uint32 race, uint32 chrClass, uint8 level)
 {
     // class specific initial known nodes
-    switch (chrClass)
+    /*switch (chrClass)
     {
         case CLASS_DEATH_KNIGHT:
         {
@@ -31,7 +31,7 @@ void PlayerTaxi::InitTaxiNodesForLevel(uint32 race, uint32 chrClass, uint8 level
                 m_taximask[i] |= sOldContinentsNodesMask[i];
             break;
         }
-    }
+    }*/
 
     // race specific initial known nodes: capital and taxi hub masks
     switch (race)

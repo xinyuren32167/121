@@ -1520,7 +1520,7 @@ class rune_dk_master_blaster : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
-            GetCaster()->CastSpell(eventInfo.GetActionTarget(), RUNE_DK_MASTER_BLASTER_PROC, TRIGGERED_IGNORE_CASTER_AURAS);
+            GetCaster()->CastSpell(eventInfo.GetActionTarget(), RUNE_DK_MASTER_BLASTER_PROC, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override

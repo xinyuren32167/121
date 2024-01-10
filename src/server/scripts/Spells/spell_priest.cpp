@@ -3579,6 +3579,7 @@ class spell_pri_regenerative_barrier : public AuraScript
     }
 };
 
+// Holy Burst
 class spell_pri_surprise_burst : public AuraScript
 {
     PrepareAuraScript(spell_pri_surprise_burst);
@@ -3607,7 +3608,7 @@ class spell_pri_surprise_burst : public AuraScript
             if (roll_chance_i(holyFlameChance))
             {
                 caster->CastSpell(GetCaster(), TALENT_PRIEST_HOLY_BURST_PROC, TRIGGERED_FULL_MASK);
-                caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION);
+                caster->RemoveSpellCooldown(SPELL_PRIEST_HOLY_ERUPTION, true);
             }
         }
     }

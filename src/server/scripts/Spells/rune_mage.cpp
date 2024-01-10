@@ -140,7 +140,7 @@ enum MageSpells
     RUNE_MAGE_COLD_FRONT_LISTENER = 301484,
     RUNE_MAGE_COLD_FRONT_BUFF = 301485,
     RUNE_MAGE_MASTER_OF_ARCANA_DAMAGE = 301540,
-
+    RUNE_MAGE_DUPLICATIVE_INCINERATION_PROC = 301754,
 };
 
 class spell_tempest_barrier : public SpellScript
@@ -3097,6 +3097,40 @@ class rune_mage_more_slashes : public AuraScript
     }
 };
 
+class rune_mage_duplicative_incineration : public AuraScript
+{
+    PrepareAuraScript(rune_mage_duplicative_incineration);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == RUNE_MAGE_DUPLICATIVE_INCINERATION_PROC)
+            return false;
+
+        if (!target || target->isDead())
+            return false;
+
+        return (caster && caster->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->ToPlayer()->HasSpellCooldown(RUNE_MAGE_DUPLICATIVE_INCINERATION_PROC))
+        {
+            GetCaster()->CastSpell(eventInfo.GetActionTarget(), RUNE_MAGE_DUPLICATIVE_INCINERATION_PROC, TRIGGERED_IGNORE_AURA_SCALING);
+            GetCaster()->ToPlayer()->AddSpellCooldown(RUNE_MAGE_DUPLICATIVE_INCINERATION_PROC, 0, aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_mage_duplicative_incineration::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_mage_duplicative_incineration::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_mage_perks_scripts()
 {
     RegisterSpellScript(spell_tempest_barrier);
@@ -3173,10 +3207,5 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(rune_mage_arcane_momentum);
     RegisterSpellScript(rune_mage_arcanic_precision);
     RegisterSpellScript(rune_mage_more_slashes);
-
-
-
-
+    RegisterSpellScript(rune_mage_duplicative_incineration);
 }
-
-

@@ -3123,6 +3123,29 @@ class rune_pal_holy_grace : public AuraScript
     }
 };
 
+class rune_pal_glorious_purpose : public AuraScript
+{
+    PrepareAuraScript(rune_pal_glorious_purpose);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActor();
+        if (!target || !target->IsAlive())
+            return false;
+
+        Unit* caster = eventInfo.GetActionTarget();
+        if (!caster || !caster->IsAlive())
+            return false;
+
+        return target != caster;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_pal_glorious_purpose::CheckProc);
+    }
+};
+
 void AddSC_paladin_perks_scripts()
 {
     RegisterSpellScript(rune_pal_inner_grace);
@@ -3217,4 +3240,5 @@ void AddSC_paladin_perks_scripts()
     RegisterSpellScript(rune_pal_calling_the_lord);
     RegisterSpellScript(rune_pal_unerring_faith);
     RegisterSpellScript(rune_pal_holy_grace);
+    RegisterSpellScript(rune_pal_glorious_purpose);
 }
