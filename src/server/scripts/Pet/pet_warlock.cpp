@@ -33,27 +33,28 @@
 enum WarlockSpells
 {
     // Spells
-    SPELL_MINION_SCALING_DREAD_STALKER                   = 75001,
-    SPELL_MINION_SCALING_WILD_IMP                        = 75002,
-    SPELL_MINION_SCALING_DARKGLARE                       = 75003,
-    SPELL_MINION_SCALING_VILEFIEND                       = 75004,
-    SPELL_MINION_SCALING_DEMONIC_TYRANT                  = 75005,
-    SPELL_MINION_SCALING_BOMBER                          = 74999,
-    SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE              = 83031,
+    SPELL_WARLOCK_DEMONIC_CORE = 83027,
+    SPELL_WARLOCK_DEMONIC_CORE_BUFF = 83029,
+    SPELL_MINION_SCALING_DREAD_STALKER = 75001,
+    SPELL_MINION_SCALING_WILD_IMP = 75002,
+    SPELL_MINION_SCALING_DARKGLARE = 75003,
+    SPELL_MINION_SCALING_VILEFIEND = 75004,
+    SPELL_MINION_SCALING_DEMONIC_TYRANT = 75005,
+    SPELL_MINION_SCALING_BOMBER = 74999,
+    SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE = 83031,
 
     // Talents
-    TALENT_WARLOCK_MOLTEN_HAND                           = 47245,
-    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1               = 83077,
-    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2               = 83078,
-    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3               = 83079,
+    TALENT_WARLOCK_MOLTEN_HAND = 47245,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1 = 83077,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2 = 83078,
+    TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3 = 83079,
 
     // Pet Spells
-    SPELL_WILDIMP_FIREBOLT  = 83003,
-    SPELL_DEMONIC_CORE      = 83029,
-    SPELL_CHARGE_FELBOAR    = 83005,
-    SPELL_DEMONBOLT         = 83008,
-    SPELL_DARKGLARE_DAMAGE  = 83050,
-    SPELL_ACIDE_BOMBER      = 83058,
+    SPELL_WILDIMP_FIREBOLT = 83003,
+    SPELL_CHARGE_FELBOAR = 83005,
+    SPELL_DEMONBOLT = 83008,
+    SPELL_DARKGLARE_DAMAGE = 83050,
+    SPELL_ACIDE_BOMBER = 83058,
 
     // Runes
     RUNE_WARLOCK_INQUISITORS_GAZE_AURA = 800106,
@@ -114,7 +115,7 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
                     break;
                 }
         }
-       
+
         return isSummoned;
     }
 
@@ -162,15 +163,20 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
 
     void JustDespawned() override
     {
-        if (!roll_chance_i(10))
-            return;
-
         if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
-            if (Aura* aura = owner->GetAura(SPELL_DEMONIC_CORE))
+            int32 procChance = 0;
+
+            if (Aura* demonicCoreBuff = owner->GetAura(SPELL_WARLOCK_DEMONIC_CORE))
+                procChance += demonicCoreBuff->GetEffect(EFFECT_0)->GetAmount();
+
+            if (!roll_chance_i(procChance))
+                return;
+
+            if (Aura* aura = owner->GetAura(SPELL_WARLOCK_DEMONIC_CORE_BUFF))
                 aura->SetCharges(aura->GetCharges() + 1);
             else
-                owner->CastCustomSpell(SPELL_DEMONIC_CORE, SPELLVALUE_AURA_CHARGE, 1, owner, true);
+                owner->CastCustomSpell(SPELL_WARLOCK_DEMONIC_CORE_BUFF, SPELLVALUE_AURA_CHARGE, 1, owner, true);
         }
     }
 
@@ -256,7 +262,7 @@ private:
 };
 
 
-struct npc_pet_warlock_darkglare: public ScriptedAI
+struct npc_pet_warlock_darkglare : public ScriptedAI
 {
     npc_pet_warlock_darkglare(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
 
@@ -350,9 +356,9 @@ public:
             auto auras = victim->GetAuraEffectsByType(SPELL_AURA_PERIODIC_DAMAGE);
 
             auras.remove_if([&](AuraEffect const* effect) -> bool
-            {
-                return effect->GetCasterGUID() == GetCaster()->GetGUID();
-            });
+                {
+                    return effect->GetCasterGUID() == GetCaster()->GetGUID();
+                });
 
             return auras.size();
         }
@@ -473,7 +479,7 @@ struct npc_pet_warlock_felguard : public ScriptedAI
     void InitializeAI() override
     {
         _events.Reset();
-        me->CastSpell(me ,83031);
+        me->CastSpell(me, 83031);
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
     }
 
@@ -697,10 +703,10 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
     {
         if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
-            if (Aura* aura = owner->GetAura(SPELL_DEMONIC_CORE))
+            if (Aura* aura = owner->GetAura(SPELL_WARLOCK_DEMONIC_CORE_BUFF))
                 aura->SetCharges(aura->GetCharges() + 1);
             else
-                owner->CastCustomSpell(SPELL_DEMONIC_CORE, SPELLVALUE_AURA_CHARGE, 1, owner, true);
+                owner->CastCustomSpell(SPELL_WARLOCK_DEMONIC_CORE_BUFF, SPELLVALUE_AURA_CHARGE, 1, owner, true);
         }
     }
 

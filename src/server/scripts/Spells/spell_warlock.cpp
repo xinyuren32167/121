@@ -90,12 +90,13 @@ enum WarlockSpells
     SPELL_WARLOCK_SOUL_STRIKE_ENERGY = 83083,
     SPELL_WARLOCK_CONFLAGRATE_ENERGY = 83084,
     SPELL_WARLOCK_IMMOLATE_ENERGY = 83085,
+    SPELL_WARLOCK_INCINERATE = 47838,
     SPELL_WARLOCK_INCINERATE_ENERGY = 83086,
     SPELL_WARLOCK_SHADOWBURN_ENERGY = 83087,
     SPELL_WARLOCK_SOUL_FIRE_ENERGY = 83088,
     SPELL_WARLOCK_IMMOLATION_AURA_ENERGY = 83089,
     SPELL_WARLOCK_IMMOLATION_AURA_INITIAL_ENERGY = 83188,
-    PET_SPELL_IMMOLATION_AURA_DAMAGE = 20153,   
+    PET_SPELL_IMMOLATION_AURA_DAMAGE = 20153,
     SPELL_WARLOCK_SOUL_COLLECTOR = 83094,
     SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT = 83095,
     SPELL_WARLOCK_SOUL_COLLECTOR_DEMON_BUFF = 83096,
@@ -1479,27 +1480,6 @@ class spell_warl_drain_soul : public AuraScript
     }
 };
 
-// 29341 - Shadowburn
-class spell_warl_shadowburn : public AuraScript
-{
-    PrepareAuraScript(spell_warl_shadowburn);
-
-    void RemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-        Unit* target = GetTarget();
-        if (!(GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_DEATH && caster && target && caster->IsPlayer() && caster->ToPlayer()->isHonorOrXPTarget(target)))
-        {
-            PreventDefaultAction();
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectRemove += AuraEffectRemoveFn(spell_warl_shadowburn::RemoveEffect, EFFECT_0, SPELL_AURA_CHANNEL_DEATH_ITEM, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
 // 83000 Call Dreadstalkers
 class spell_warlock_summon_darkhound : public SpellScript
 {
@@ -1941,6 +1921,17 @@ class spell_warl_nether_portal_proc : public AuraScript
 {
     PrepareAuraScript(spell_warl_nether_portal_proc);
 
+    Aura* GetNerzhulsVolitionAura(Unit* caster)
+    {
+        for (size_t i = 800878; i < 800884; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         if (!GetCaster() || GetCaster()->isDead())
@@ -1958,11 +1949,22 @@ class spell_warl_nether_portal_proc : public AuraScript
 
         if ((soulPowerSpent + currentSoulPowerSpent) >= soulPowerThreshold)
         {
-            Player* player = GetCaster()->ToPlayer();
-            Unit* portal = player->FindNearestCreature(NPC_PORTAL_SUMMON, 40.f, true);
-            if (portal) {
-                player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+            if (Player* player = GetCaster()->ToPlayer())
+            {
+                Unit* portal = player->FindNearestCreature(NPC_PORTAL_SUMMON, 40.f, true);
+                if (portal) {
+                    player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+
+                    if (Aura* runeAura = GetNerzhulsVolitionAura(player))
+                    {
+                        int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                        if (roll_chance_i(procChance))
+                            player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                    }
+                }
             }
+
             aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(0);
         }
         else
@@ -2257,18 +2259,63 @@ class spell_warl_chaos_bolt : public SpellScript
 {
     PrepareSpellScript(spell_warl_chaos_bolt);
 
+    Aura* GetChaosIncarnateAura(Unit* caster)
+    {
+        for (size_t i = 800928; i < 800934; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetAshenRemainsAura(Unit* caster)
+    {
+        for (size_t i = 800972; i < 800978; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleHit(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-        int32 damageRatio = GetEffectValue();
-        int32 critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
-        int32 damage = CalculatePct(caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()), damageRatio);
-        damage = AddPct(damage, critChance);
 
-        if (Unit* target = GetHitUnit())
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Damage increased by an amount equal to your critical chances.
+        int32 critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+        AddPct(damage, critChance);
+
+        // increase damage by random amount.
+        if (Aura* runeAura = GetChaosIncarnateAura(caster))
         {
-            damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
-            damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+            int32 minAmount = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 maxAmount = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 increasePct = urand(minAmount, maxAmount);
+
+            AddPct(damage, increasePct);
+        }
+
+        // Increases damage if target has Immolate.
+        if (Aura* runeAura = GetAshenRemainsAura(caster))
+        {
+            int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (target->HasAura(SPELL_WARLOCK_IMMOLATE))
+                AddPct(damage, increasePct);
         }
 
         SetHitDamage(damage);
@@ -2323,19 +2370,182 @@ class spell_warl_immolate_energy : public AuraScript
     }
 };
 
+// 47838 - Incinerate
+class spell_warl_incinerate : public SpellScript
+{
+    PrepareSpellScript(spell_warl_incinerate);
+
+    Aura* GetAshenRemainsAura(Unit* caster)
+    {
+        for (size_t i = 800972; i < 800978; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Increases damage if target has Immolate.
+        if (Aura* runeAura = GetAshenRemainsAura(caster))
+        {
+            int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (target->HasAura(SPELL_WARLOCK_IMMOLATE))
+                AddPct(damage, increasePct);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove one stack of Burn to Ashes listener each cast.
+        for (size_t i = 801004; i < 801010; i++)
+        {
+            if (Aura* burnToAshesListener = caster->GetAura(i))
+                burnToAshesListener->ModStackAmount(-1);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_incinerate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_warl_incinerate::HandleAfterHit);
+    }
+};
+
 class spell_warl_incinerate_energy : public AuraScript
 {
     PrepareAuraScript(spell_warl_incinerate_energy);
 
+    Aura* GetDiabolicEmbersAura(Unit* caster)
+    {
+        for (size_t i = 800992; i < 800998; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (GetCaster() && GetCaster()->IsAlive())
-            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_INCINERATE_ENERGY, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 soulPower = sSpellMgr->AssertSpellInfo(SPELL_WARLOCK_INCINERATE)->GetEffect(EFFECT_1).CalcValue();
+
+        if (eventInfo.GetHitMask() == PROC_EX_CRITICAL_HIT)
+            soulPower *= 2;
+
+        // Chance to double Soul Power generated.
+        if (Aura* runeAura = GetDiabolicEmbersAura(caster))
+        {
+            int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 powerIncrease = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (roll_chance_i(procChance))
+                AddPct(soulPower, powerIncrease);
+        }
+
+        caster->EnergizeBySpell(caster, SPELL_WARLOCK_INCINERATE_ENERGY, soulPower, POWER_ENERGY);
     }
 
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_warl_incinerate_energy::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 47827 - Shadowburn
+class spell_warl_shadowburn : public SpellScript
+{
+    PrepareSpellScript(spell_warl_shadowburn);
+
+    Aura* GetChaosIncarnateAura(Unit* caster)
+    {
+        for (size_t i = 800928; i < 800934; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetAshenRemainsAura(Unit* caster)
+    {
+        for (size_t i = 800972; i < 800978; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // increase damage by random amount.
+        if (Aura* runeAura = GetChaosIncarnateAura(caster))
+        {
+            int32 minAmount = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 maxAmount = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 increasePct = urand(minAmount, maxAmount);
+
+            AddPct(damage, increasePct);
+        }
+
+        // Increases damage if target has Immolate.
+        if (Aura* runeAura = GetAshenRemainsAura(caster))
+        {
+            int32 increasePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (target->HasAura(SPELL_WARLOCK_IMMOLATE))
+                AddPct(damage, increasePct);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_shadowburn::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -3563,6 +3773,87 @@ class spell_warl_demonbolt : public SpellScript
     }
 };
 
+// 47820 - Rain of Fire
+class spell_warl_rain_of_fire : public SpellScript
+{
+    PrepareSpellScript(spell_warl_rain_of_fire);
+
+    Aura* GetMadnessoftheAzjAqirAura(Unit* caster)
+    {
+        for (size_t i = 800904; i < 800910; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Madness of the Azj'Aqir Buff.
+        if (Aura* runeAura = GetMadnessoftheAzjAqirAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_warl_rain_of_fire::HandleCast);
+    }
+};
+
+// 47818 - Rain of Fire (damage)
+class spell_warl_rain_of_fire_damage : public SpellScript
+{
+    PrepareSpellScript(spell_warl_rain_of_fire_damage);
+
+    Aura* GetChaosIncarnateAura(Unit* caster)
+    {
+        for (size_t i = 800928; i < 800934; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Aura* runeAura = GetChaosIncarnateAura(caster))
+        {
+            int32 minAmount = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            int32 maxAmount = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 increasePct = urand(minAmount, maxAmount);
+
+            AddPct(damage, increasePct);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_rain_of_fire_damage::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 
 
 void AddSC_warlock_spell_scripts()
@@ -3595,12 +3886,11 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_soulshatter);
     RegisterSpellScript(spell_warl_unstable_affliction);
     RegisterSpellScript(spell_warl_drain_soul);
-    //RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warlock_summon_darkglare);
     RegisterSpellScript(spell_warlock_summon_darkhound);
     RegisterSpellScript(spell_warlock_call_dreadstalkers_aura);
     RegisterSpellScript(spell_warlock_hand_of_guldan);
-    RegisterSpellScript(spell_warlock_summon_felboar); 
+    RegisterSpellScript(spell_warlock_summon_felboar);
     RegisterSpellScript(spell_warlock_summon_felguard);
     RegisterSpellScript(spell_warlock_summon_demonic_tyrant);
     RegisterSpellScript(spell_warl_agony);
@@ -3613,7 +3903,9 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_chaos_bolt);
     RegisterSpellScript(spell_warl_conflagrate_energy);
     RegisterSpellScript(spell_warl_immolate_energy);
+    RegisterSpellScript(spell_warl_incinerate);
     RegisterSpellScript(spell_warl_incinerate_energy);
+    RegisterSpellScript(spell_warl_shadowburn);
     RegisterSpellScript(spell_warl_shadowburn_death);
     RegisterSpellScript(spell_warl_soul_fire_energy);
     RegisterSpellScript(spell_warl_burning_rush);
@@ -3658,6 +3950,8 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_corruption);
     RegisterSpellScript(spell_warl_drain_life);
     RegisterSpellScript(spell_warl_demonbolt);
+    RegisterSpellScript(spell_warl_rain_of_fire);
+    RegisterSpellScript(spell_warl_rain_of_fire_damage);
 
 
     

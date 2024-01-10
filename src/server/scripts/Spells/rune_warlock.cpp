@@ -14,6 +14,8 @@ enum WarlockSpells
 {
     // Spells
     SPELL_WARLOCK_AGONY = 83010,
+    SPELL_WARLOCK_CHAOS_BOLT = 59172,
+    SPELL_WARLOCK_CONFLAGRATE = 17962,
     SPELL_WARLOCK_CORRUPTION = 47813,
     SPELL_WARLOCK_CURSE_OF_ELEMENTS = 47865,
     SPELL_WARLOCK_CURSE_OF_TONGUES = 11719,
@@ -22,10 +24,14 @@ enum WarlockSpells
     SPELL_WARLOCK_DOOM = 47867,
     SPELL_WARLOCK_DRAIN_LIFE = 47857,
     SPELL_WARLOCK_DRAIN_SOUL = 47855,
+    SPELL_WARLOCK_IMMOLATE = 47811,
     SPELL_WARLOCK_MALEFIC_RAPTURE = 83020,
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
+    SPELL_WARLOCK_RAIN_OF_FIRE = 47820,
     SPELL_WARLOCK_SHADOW_BOLT = 47809,
+    SPELL_WARLOCK_SHADOWBURN = 47827,
     SPELL_WARLOCK_SUMMON_DARK_GLARE = 83049,
+    SPELL_WARLOCK_SUMMON_DEMONIC_TYRANT = 83007,
     SPELL_WARLOCK_UNENDING_RESOLVE = 83016,
     SPELL_WARLOCK_UNSTABLE_AFFLICTION = 47843,
 
@@ -50,6 +56,10 @@ enum WarlockSpells
     RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER_BUFF = 800717,
     RUNE_WARLOCK_THE_HOUNDMASTERS_STRATAGEM_LISTENER = 800774,
     RUNE_WARLOCK_THE_HOUNDMASTERS_STRATAGEM_DAMAGE = 800775,
+    RUNE_WARLOCK_INTERNAL_COMBUSTION_DAMAGE = 800890,
+    RUNE_WARLOCK_ROARING_BLAZE_DEBUFF = 800952,
+    RUNE_WARLOCK_ROARING_BLAZE_DAMAGE = 800953,
+    RUNE_WARLOCK_FLAMES_AND_BRIMSTONE_DAMAGE = 800990,
 
     // Pet Scaling
     PET_SCALING_WARLOCK_DAMAGE_HASTE = 83205,
@@ -656,16 +666,16 @@ class rune_warl_pandemic_invocation : public AuraScript
 
         if (!target || target->isDead())
             return;
-       
+
         int32 procChance = aurEff->GetAmount();
         int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
         int32 soulPower = GetEffect(EFFECT_2)->GetAmount();
-      
+
         if (roll_chance_i(procChance))
         {
             caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
             caster->EnergizeBySpell(caster, GetSpellInfo()->Id, soulPower, POWER_ENERGY);
-        }          
+        }
     }
 
     void Register() override
@@ -1036,7 +1046,10 @@ class rune_warl_demonic_knowledge : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        caster->CastCustomSpell(SPELL_WARLOCK_DEMONIC_CORE_BUFF, SPELLVALUE_AURA_CHARGE, 1, caster, true);
+        if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONIC_CORE_BUFF))
+            aura->SetCharges(aura->GetCharges() + 1);
+        else
+            caster->CastCustomSpell(SPELL_WARLOCK_DEMONIC_CORE_BUFF, SPELLVALUE_AURA_CHARGE, 1, caster, true);
     }
 
     void Register() override
@@ -1284,6 +1297,351 @@ class rune_warl_the_houndmasters_stratagem : public AuraScript
     }
 };
 
+class rune_warl_grand_tyrants_design : public AuraScript
+{
+    PrepareAuraScript(rune_warl_grand_tyrants_design);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+            return;
+
+        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (spellSoulPower <= 0)
+            return;
+
+        int32 powerAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellSoulPower;
+        int32 powerThreshold = aurEff->GetAmount();
+        int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            while (powerAccumulated >= powerThreshold)
+            {
+                player->ModifySpellCooldown(SPELL_WARLOCK_SUMMON_DEMONIC_TYRANT, -cooldown);
+
+                powerAccumulated -= powerThreshold;
+            }
+        }
+
+        GetEffect(EFFECT_2)->SetAmount(powerAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_grand_tyrants_design::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_grand_tyrants_design::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_internal_combustion : public AuraScript
+{
+    PrepareAuraScript(rune_warl_internal_combustion);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* immolate = target->GetAura(SPELL_WARLOCK_IMMOLATE))
+        {
+            int32 consumedDuration = aurEff->GetAmount();
+            int32 amount = immolate->GetEffect(EFFECT_0)->GetAmount();
+            int32 ticks = immolate->GetEffect(EFFECT_0)->GetRemaningTicks();
+
+            if (immolate->GetDuration() > consumedDuration)
+            {
+                amount *= consumedDuration / immolate->GetEffect(EFFECT_0)->GetAmplitude();
+                immolate->SetDuration(immolate->GetDuration() - consumedDuration);
+            }
+            else
+            {
+                amount *= ticks;
+                immolate->Remove();
+            }
+
+            caster->CastCustomSpell(RUNE_WARLOCK_INTERNAL_COMBUSTION_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_internal_combustion::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_internal_combustion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_madness_of_azjaqir : public AuraScript
+{
+    PrepareAuraScript(rune_warl_madness_of_azjaqir);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 procSpell = 0;
+
+        if (spellID == SPELL_WARLOCK_CHAOS_BOLT)
+            procSpell = aurEff->GetAmount();
+
+        if (spellID == SPELL_WARLOCK_SHADOWBURN)
+            procSpell = GetEffect(EFFECT_2)->GetAmount();
+
+        if (procSpell == 0)
+            return;
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_madness_of_azjaqir::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_madness_of_azjaqir::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_roaring_blaze : public AuraScript
+{
+    PrepareAuraScript(rune_warl_roaring_blaze);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (target->HasAura(RUNE_WARLOCK_ROARING_BLAZE_DEBUFF))
+        {
+            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+            caster->CastCustomSpell(RUNE_WARLOCK_ROARING_BLAZE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (spellID != SPELL_WARLOCK_CONFLAGRATE)
+            return;
+
+        caster->CastSpell(target, RUNE_WARLOCK_ROARING_BLAZE_DEBUFF, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_roaring_blaze::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_roaring_blaze::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_flashpoint : public AuraScript
+{
+    PrepareAuraScript(rune_warl_flashpoint);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return false;
+
+        return target->GetHealthPct() > GetAura()->GetEffect(EFFECT_0)->GetAmount();
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_flashpoint::CheckProc);
+    }
+};
+
+class rune_warl_flames_and_brimstone : public AuraScript
+{
+    PrepareAuraScript(rune_warl_flames_and_brimstone);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+
+        caster->CastCustomSpell(RUNE_WARLOCK_FLAMES_AND_BRIMSTONE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_flames_and_brimstone::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_flames_and_brimstone::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_flames_and_brimstone_target : public SpellScript
+{
+    PrepareSpellScript(rune_warl_flames_and_brimstone_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_warl_flames_and_brimstone_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_warl_burn_to_ashes : public AuraScript
+{
+    PrepareAuraScript(rune_warl_burn_to_ashes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 amount = 0;
+
+        if (spellID == SPELL_WARLOCK_CHAOS_BOLT || spellID == SPELL_WARLOCK_RAIN_OF_FIRE)
+            amount = aurEff->GetAmount();
+
+        if (spellID == SPELL_WARLOCK_SHADOWBURN)
+            amount = GetEffect(EFFECT_1)->GetAmount();
+
+        if (amount == 0)
+            return;
+
+        int32 procSpell = GetEffect(EFFECT_2)->GetAmount();
+
+        while (amount > 0)
+        {
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            amount--;
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 801004; i < 801010; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_burn_to_ashes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_burn_to_ashes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_burn_to_ashes::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_warl_burn_to_ashes_stack_manager : public AuraScript
+{
+    PrepareAuraScript(rune_warl_burn_to_ashes_stack_manager);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = GetSpellInfo()->GetEffect(EFFECT_0).BasePoints;
+        caster->AddAura(procSpell, caster);
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        for (size_t i = 801010; i < 801016; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_warl_burn_to_ashes_stack_manager::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_burn_to_ashes_stack_manager::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 
 
 void AddSC_warlock_perks_scripts()
@@ -1294,7 +1652,7 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_sacrolashs_dark_strike);
     RegisterSpellScript(rune_warl_kazaaks_final_curse);
     RegisterSpellScript(rune_warl_accrued_vitality);
-    RegisterSpellScript(rune_warl_claw_of_endereth); 
+    RegisterSpellScript(rune_warl_claw_of_endereth);
     RegisterSpellScript(rune_warl_funerary_ceremony);
     RegisterSpellScript(rune_warl_funerary_ceremony_apply);
     RegisterSpellScript(rune_warl_everlasting_shadows);
@@ -1312,15 +1670,23 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_area_of_affliction);
     RegisterSpellScript(rune_warl_area_of_affliction_target);
     RegisterSpellScript(rune_warl_tourmented_crescendo);
-    RegisterSpellScript(rune_warl_dread_touch); 
+    RegisterSpellScript(rune_warl_dread_touch);
     RegisterSpellScript(rune_warl_grand_warlocks_design);
     RegisterSpellScript(rune_warl_demonic_knowledge);
     RegisterSpellScript(rune_warl_dread_calling);
     RegisterSpellScript(rune_warl_immutable_hatred);
     RegisterSpellScript(rune_warl_immutable_hatred_proc);
     RegisterSpellScript(rune_warl_the_houndmasters_stratagem);
+    RegisterSpellScript(rune_warl_grand_tyrants_design);
+    RegisterSpellScript(rune_warl_internal_combustion);
+    RegisterSpellScript(rune_warl_madness_of_azjaqir);
+    RegisterSpellScript(rune_warl_roaring_blaze);
+    RegisterSpellScript(rune_warl_flashpoint);
+    RegisterSpellScript(rune_warl_flames_and_brimstone);
+    RegisterSpellScript(rune_warl_flames_and_brimstone_target);
+    RegisterSpellScript(rune_warl_burn_to_ashes);
+    RegisterSpellScript(rune_warl_burn_to_ashes_stack_manager);
 
-    
 
 
     
