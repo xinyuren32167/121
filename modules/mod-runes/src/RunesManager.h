@@ -146,8 +146,6 @@ public:
     static std::vector<std::string> GetRunesByPlayerName(std::string name);
     static void RefundRune(Player* player, uint32 runeSpellId);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
-    static void UpdateRunicDustCountOnLogin(Player* player);
-    static void UpdateRunicDustAmount(Player* player, int32 amount, bool increase);
     static void AddRuneToSlot(Player* player, Rune rune);
     static uint8 GetCountRuneOfSameQuality(Player* player, uint32 spellId);
     static void RemoveRuneFromSlots(Player* player, Rune rune);

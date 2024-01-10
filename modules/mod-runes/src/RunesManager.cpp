@@ -1146,7 +1146,6 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     CharacterDatabase.Execute("DELETE FROM account_know_runes WHERE accountId = {} AND spellId = {} LIMIT 1", accountId, rune.spellId);
 
     player->AddItem(70008, runicDust);
-    UpdateRunicDustAmount(player, runicDust, true);
 
     if (RuneAlreadyActivated(player, rune.spellId))
     {
