@@ -1904,7 +1904,7 @@ void Player::Regenerate(Powers power)
             break;
         case POWER_RUNE:
         case POWER_FOCUS:
-            addvalue += 0.0025f * m_regenTimer * (sWorld->getRate(RATE_POWER_ENERGY));
+            addvalue += 0.01f * m_regenTimer * sWorld->getRate(RATE_POWER_ENERGY);
         case POWER_HAPPINESS:
             break;
         case POWER_HEALTH:
@@ -4214,14 +4214,6 @@ void Player::DeleteFromDB(ObjectGuid::LowType lowGuid, uint32 accountId, bool up
                 trans->Append(stmt);
 
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_PET_DECLINEDNAME_BY_OWNER);
-                stmt->SetData(0, lowGuid);
-                trans->Append(stmt);
-
-                stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENTS);
-                stmt->SetData(0, accountId);
-                trans->Append(stmt);
-
-                stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_ACHIEVEMENT_PROGRESS);
                 stmt->SetData(0, lowGuid);
                 trans->Append(stmt);
 

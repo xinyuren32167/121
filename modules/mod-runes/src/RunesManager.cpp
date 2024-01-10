@@ -909,6 +909,25 @@ bool RunesManager::HasEnoughToUpgrade(Player* player, uint32 spellId)
     return false;
 }
 
+uint8 RunesManager::GetCountRuneOfSameQuality(Player* player, uint32 spellId)
+{
+
+    uint8 count = 0;
+    auto it = m_KnownRunes.find(player->GetSession()->GetAccountId());
+
+    if (it != m_KnownRunes.end())
+    {
+        auto countIf = std::count_if(it->second.begin(), it->second.end(), [&](const KnownRune& account) {
+            return account.rune.spellId == spellId;
+        });
+
+        count = countIf;
+
+    }
+
+    return count;
+}
+
 uint32 RunesManager::GetCountActivatedRune(Player* player)
 {
     uint64 activeId = GetActiveLoadoutId(player);
@@ -974,6 +993,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
         SendPlayerMessage(player, "You cannot activate more of this rune.");
         return;
     }
+
 
     player->CastCustomSpell(79850, SPELLVALUE_BASE_POINT0, spellId, player, TRIGGERED_NONE);
 }
@@ -1133,47 +1153,6 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
         RemoveRuneFromSlots(player, rune);
         sEluna->RefreshSlotsRune(player);
         return;
-    }
-}
-
-
-void RunesManager::UpdateRunicDustCountOnLogin(Player* player)
-{
-    uint32 accountId = player->GetSession()->GetAccountId();
-
-    auto it = m_Progression.find(accountId);
-
-    if (it != m_Progression.end()) {
-
-        uint32 amount = it->second.dusts;
-
-        if (amount > 0) {
-            Item* item = player->GetItemByEntry(70008);
-
-            if (!item)
-            {
-                player->AddItem(70008, amount);
-                return;
-            }
-
-            if (item->GetCount() != amount)
-                item->SetCount(amount);
-        }
-    }
-}
-
-void RunesManager::UpdateRunicDustAmount(Player* player, int32 amount, bool increase)
-{
-    uint32 accountId = player->GetSession()->GetAccountId();
-
-    auto it = m_Progression.find(accountId);
-
-    if (it != m_Progression.end()) {
-        if (increase == true)
-            it->second.dusts += amount;
-        if (it->second.dusts > 0 && increase == false)
-            it->second.dusts -= amount;
-        CharacterDatabase.Execute("UPDATE character_rune_progression SET dusts = {} WHERE accountId = {}", it->second.dusts, accountId);
     }
 }
 

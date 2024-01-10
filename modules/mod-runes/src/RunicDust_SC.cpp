@@ -26,43 +26,6 @@ enum Items {
     ITEM_SEALED_RUNE = 70002,
 };
 
- // Add player scripts
-class RunicDust_PlayerScripts : public PlayerScript
-{
-public:
-    RunicDust_PlayerScripts() : PlayerScript("Runes_PlayerScripts") { }
-
-    void OnLogin(Player* player) override
-    {
-        RunesManager::UpdateRunicDustCountOnLogin(player);
-    }
-
-    void OnLootItem(Player* player, Item* item, uint32 count, ObjectGuid lootguid)
-    {
-        if (item->GetEntry() != ITEM_RUNIC_DUST)
-            return;
-
-        RunesManager::UpdateRunicDustAmount(player, count, true);
-    }
-
-    void OnQuestRewardItem(Player* player, Item* item, uint32 count)
-    {
-        if (item->GetEntry() != ITEM_RUNIC_DUST)
-            return;
-
-        RunesManager::UpdateRunicDustAmount(player, count, true);
-    }
-
-
-    void OnBeforeBuyItemFromVendor(Player* player, ObjectGuid vendorguid, uint32 vendorslot, uint32& item, uint8 count, uint8 bag, uint8 slot)
-    {
-        if (item != ITEM_SEALED_RUNE || count <= 0)
-            return;
-
-        RunesManager::UpdateRunicDustAmount(player, 100 * count, false);
-    };
-};
-
 class RunicDust_MiscScript : public MiscScript
 {
 public:
@@ -121,7 +84,6 @@ public:
         int valueMaxFromDungeonBoss = sWorld->GetValue("CONFIG_DUNGEON_BOSS_RUNIC_DUST_MAX");
 
         Map* map = creature->GetMap();
-
 
         const bool isNormalDungeonBoss = creature->IsDungeonBoss() && !map->IsHeroic();
         const bool isHeroicDungeonBoss = creature->IsDungeonBoss() && map->IsHeroic();
@@ -205,5 +167,4 @@ public:
 void AddSC_RunicDust_Scripts()
 {
     new RunicDust_MiscScript();
-    new RunicDust_PlayerScripts();
 }

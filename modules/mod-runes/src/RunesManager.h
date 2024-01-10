@@ -149,6 +149,7 @@ public:
     static void UpdateRunicDustCountOnLogin(Player* player);
     static void UpdateRunicDustAmount(Player* player, int32 amount, bool increase);
     static void AddRuneToSlot(Player* player, Rune rune);
+    static uint8 GetCountRuneOfSameQuality(Player* player, uint32 spellId);
     static void RemoveRuneFromSlots(Player* player, Rune rune);
     static void RemoveRune(Player* player, Rune rune, int8 quantity);
     static bool HasEnoughToUpgrade(Player* player, uint32 spellId);

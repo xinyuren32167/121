@@ -7357,6 +7357,11 @@ void Player::_SaveInventory(CharacterDatabaseTransaction trans)
             }
         }
 
+        ObjectGuid guid = item->GetGUID();
+
+        if (!guid)
+            continue;
+
         switch (item->GetState())
         {
             case ITEM_NEW:

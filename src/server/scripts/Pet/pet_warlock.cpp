@@ -419,7 +419,7 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
             {
                 if (Unit* target = owner->GetSelectedUnit())
                 {
-                    if (me->CanCreatureAttack(target))
+                    if (me->CanCreatureAttack(target) && owner->IsInCombat())
                     {
                         AttackTarget(target);
                         _initAttack = false;
@@ -440,7 +440,7 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
                     if (Unit* newTarget = owner->GetSelectedUnit())
                     {
                         if (Unit* victim = me->GetVictim()) {
-                            if (victim->GetGUID() != newTarget->GetGUID())
+                            if (victim->GetGUID() != newTarget->GetGUID() && owner->IsInCombat())
                             {
                                 if (me->CanCreatureAttack(newTarget))
                                     AttackTarget(newTarget);
@@ -509,7 +509,7 @@ struct npc_pet_warlock_felguard : public ScriptedAI
             {
                 if (Unit* target = owner->GetSelectedUnit())
                 {
-                    if (me->CanCreatureAttack(target))
+                    if (me->CanCreatureAttack(target) && owner->IsInCombat())
                     {
                         AttackTarget(target);
                         _initAttack = false;
@@ -530,7 +530,7 @@ struct npc_pet_warlock_felguard : public ScriptedAI
                     if (Unit* newTarget = owner->GetSelectedUnit())
                     {
                         if (Unit* victim = me->GetVictim()) {
-                            if (victim->GetGUID() != newTarget->GetGUID())
+                            if (victim->GetGUID() != newTarget->GetGUID() && owner->IsInCombat())
                             {
                                 if (me->CanCreatureAttack(newTarget))
                                     AttackTarget(newTarget);
@@ -593,9 +593,11 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
             {
             case 1:
                 if (Unit* target = owner->GetSelectedUnit()) {
-                    int32 spellDamage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.53625f);
-                    me->CastCustomSpell(SPELL_DEMONBOLT, SPELLVALUE_BASE_POINT0, spellDamage, target);
-                    _events.ScheduleEvent(1, 2000);
+                    if (owner->IsInCombat()) {
+                        int32 spellDamage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.53625f);
+                        me->CastCustomSpell(SPELL_DEMONBOLT, SPELLVALUE_BASE_POINT0, spellDamage, target);
+                        _events.ScheduleEvent(1, 2000);
+                    }
                 }
                 break;
             }
@@ -651,7 +653,7 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
             {
                 if (Unit* target = owner->GetSelectedUnit())
                 {
-                    if (me->CanCreatureAttack(target))
+                    if (me->CanCreatureAttack(target) && owner->IsInCombat())
                     {
                         AttackTarget(target);
                         _initAttack = false;
@@ -672,7 +674,7 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
                     if (Unit* newTarget = owner->GetSelectedUnit())
                     {
                         if (Unit* victim = me->GetVictim()) {
-                            if (victim->GetGUID() != newTarget->GetGUID())
+                            if (victim->GetGUID() != newTarget->GetGUID() && owner->IsInCombat())
                             {
                                 if (me->CanCreatureAttack(newTarget))
                                     AttackTarget(newTarget);

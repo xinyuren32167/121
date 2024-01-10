@@ -1738,15 +1738,20 @@ class spell_warlock_implosion : public SpellScript
 
     void HandleCast()
     {
-        Player* player = GetCaster()->ToPlayer();
+        Unit* caster = GetCaster();
+
+        Player* player = caster->ToPlayer();
+
+        Unit* target = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
+
         for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
         {
             if (Unit* pet = *itr)
             {
                 if (pet->GetEntry() == PET_WILDIMP)
                 {
-                    pet->JumpTo(GetExplTargetUnit(), 0.5f);
-                    pet->CastSpell(GetExplTargetUnit(), SPELL_WARLOCK_IMPLOSSION, true, nullptr, nullptr, player->GetGUID());
+                    pet->JumpTo(target, 0.5f);
+                    pet->CastSpell(target, SPELL_WARLOCK_IMPLOSSION, true, nullptr, nullptr, player->GetGUID());
                     pet->ToTempSummon()->DespawnOrUnsummon();
                 }
             }
@@ -2411,27 +2416,25 @@ class spell_warl_power_siphon : public SpellScript
             return;
 
         auto summonedUnits = player->m_Controlled;
+
         for (auto const& unit : summonedUnits)
         {
-            if (!unit || !unit->isDead())
+            if (!unit || unit->isDead())
                 return;
-
-            if (Unit* pet = unit)
+           
+            if (unit->GetEntry() == PET_WILDIMP)
             {
-                if (pet->GetOwnerGUID() == player->GetGUID() && pet->GetEntry() == PET_WILDIMP && pet->IsWithinDist(player, 100.0f, false))
+
+                if (totalSacrifice >= maxSacrifice)
+                    return;
+
+                if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONBOLT_EMPOREWED))
+                    aura->SetCharges(aura->GetCharges() + 1);
+                else
                 {
-                    if (totalSacrifice >= maxSacrifice)
-                        return;
-                    else {
-                        if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONBOLT_EMPOREWED))
-                            aura->SetCharges(aura->GetCharges() + 1);
-                        else
-                        {
-                            pet->ToTempSummon()->UnSummon();
-                            caster->CastCustomSpell(SPELL_WARLOCK_DEMONBOLT_EMPOREWED, SPELLVALUE_AURA_CHARGE, 1, caster, true);
-                            totalSacrifice++;
-                        }
-                    }
+                    caster->CastCustomSpell(SPELL_WARLOCK_DEMONBOLT_EMPOREWED, SPELLVALUE_AURA_CHARGE, 1, caster, true);
+                    unit->ToTempSummon()->UnSummon();
+                    totalSacrifice++;
                 }
             }
         }
