@@ -3239,6 +3239,47 @@ class spell_rog_pistol_shot : public SpellScript
     }
 };
 
+class spell_rog_deadly_poison_deactivator : public AuraScript
+{
+    PrepareAuraScript(spell_rog_deadly_poison_deactivator);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        Item* itemMain = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (uint32 mainEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (mainEnchantID == SPELL_ROGUE_DEADLY_POISON_PROC)
+                itemMain->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+
+        Item* itemOff = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (offEnchantID == SPELL_ROGUE_DEADLY_POISON_PROC)
+                itemOff->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        Item* itemMain = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (uint32 mainEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (mainEnchantID == SPELL_ROGUE_AMPLIFYING_POISON_PROC)
+                itemMain->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+
+        Item* itemOff = target->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (uint32 offEnchantID = target->GetItemEnchant(EQUIPMENT_SLOT_OFFHAND, SPELLFAMILY_ROGUE, DISPEL_POISON))
+            if (offEnchantID == SPELL_ROGUE_AMPLIFYING_POISON_PROC)
+                itemOff->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_rog_deadly_poison_deactivator::HandleLearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_rog_deadly_poison_deactivator::HandleUnlearn, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_rogue_spell_scripts()
 {
     RegisterSpellScript(spell_rog_savage_combat);
@@ -3321,4 +3362,5 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_gloomblade);
     RegisterSpellScript(spell_rog_pistol_shot);
     RegisterSpellScript(spell_rog_master_of_shadows);
+    RegisterSpellScript(spell_rog_deadly_poison_deactivator);
 }
