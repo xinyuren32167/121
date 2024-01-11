@@ -170,6 +170,7 @@ enum WarlockSpells
     // Runes
     RUNE_WARLOCK_SEIZED_VITALITY_DEBUFF = 800484,
     RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
+    RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF = 801264,
 };
 
 enum WarlockPets {
@@ -569,6 +570,28 @@ class spell_warl_infernal_scaling : public AuraScript
 {
     PrepareAuraScript(spell_warl_infernal_scaling);
 
+    Aura* GetPrimordialInfernalAura(Unit* caster)
+    {
+        for (size_t i = 801136; i < 801142; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetInfernalBrandAura(Unit* caster)
+    {
+        for (size_t i = 801148; i < 801154; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         // xinef: pet inherits 40% of resistance from owner and 35% of armor
@@ -621,11 +644,37 @@ class spell_warl_infernal_scaling : public AuraScript
 
     void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
-        GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, aurEff->GetAuraType(), true, SPELL_BLOCK_TYPE_POSITIVE);
+        Unit* infernal = GetUnitOwner();
+
+        if (!infernal || infernal->isDead())
+            return;
+
+        infernal->ApplySpellImmune(0, IMMUNITY_STATE, aurEff->GetAuraType(), true, SPELL_BLOCK_TYPE_POSITIVE);
         if (aurEff->GetAuraType() == SPELL_AURA_MOD_ATTACK_POWER)
-            GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ATTACK_POWER_PCT, true, SPELL_BLOCK_TYPE_POSITIVE);
+            infernal->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ATTACK_POWER_PCT, true, SPELL_BLOCK_TYPE_POSITIVE);
         else if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT)
-            GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
+            infernal->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
+
+        Unit* caster = infernal->GetOwner();
+
+        if (!caster)
+            return;
+
+        // Add damage increase from Primordial Infernal rune.
+        if (Aura* runeAura = GetPrimordialInfernalAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_2)->GetAmount();
+
+            caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        // Add buff from Infernal Brand rune.
+        if (Aura* runeAura = GetInfernalBrandAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -2295,6 +2344,7 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
     }
 };
 
+// 59172 - Chaos Bolt
 class spell_warl_chaos_bolt : public SpellScript
 {
     PrepareSpellScript(spell_warl_chaos_bolt);
@@ -2361,9 +2411,23 @@ class spell_warl_chaos_bolt : public SpellScript
         SetHitDamage(damage);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove one stack of Crashing Chaos listener each cast.
+        for (size_t i = 801178; i < 801184; i++)
+            if (Aura* crashingChaosListener = caster->GetAura(i))
+                crashingChaosListener->ModStackAmount(-1);
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warl_chaos_bolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_warl_chaos_bolt::HandleAfterHit);
     }
 };
 
@@ -2703,7 +2767,7 @@ class spell_warl_power_siphon : public SpellScript
         {
             if (!unit || unit->isDead())
                 return;
-           
+
             if (unit->GetEntry() == PET_WILDIMP)
             {
 
@@ -3518,6 +3582,17 @@ class spell_warl_demonic_protection_mastery : public AuraScript
 {
     PrepareAuraScript(spell_warl_demonic_protection_mastery);
 
+    Aura* GetCalcifiedShieldAura(Unit* caster)
+    {
+        for (size_t i = 801258; i < 801264; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -3531,6 +3606,18 @@ class spell_warl_demonic_protection_mastery : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Calcified Shield rune damage reduction.
+        if (Aura* runeAura = GetCalcifiedShieldAura(caster))
+        {
+            int32 stacks = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastCustomSpell(RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+        }
+
         if (Aura* aura = GetCaster()->GetAura(SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF))
             aura->Remove();
     }
@@ -3846,9 +3933,9 @@ class spell_warl_demonbolt : public SpellScript
 };
 
 // 47820 - Rain of Fire
-class spell_warl_rain_of_fire : public SpellScript
+class spell_warl_rain_of_fire : public AuraScript
 {
-    PrepareSpellScript(spell_warl_rain_of_fire);
+    PrepareAuraScript(spell_warl_rain_of_fire);
 
     Aura* GetMadnessoftheAzjAqirAura(Unit* caster)
     {
@@ -3861,7 +3948,7 @@ class spell_warl_rain_of_fire : public SpellScript
         return nullptr;
     }
 
-    void HandleCast()
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
 
@@ -3877,9 +3964,23 @@ class spell_warl_rain_of_fire : public SpellScript
         }
     }
 
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove one stack of Crashing Fire listener when it ends.
+        for (size_t i = 801196; i < 801202; i++)
+            if (Aura* crashingChaosListener = caster->GetAura(i))
+                crashingChaosListener->ModStackAmount(-1);
+    }
+
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warl_rain_of_fire::HandleCast);
+        OnEffectApply += AuraEffectApplyFn(spell_warl_rain_of_fire::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_rain_of_fire::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3958,6 +4059,47 @@ class spell_warl_demonic_strength : public SpellScript
         OnCheckCast += SpellCheckCastFn(spell_warl_demonic_strength::CheckCast);
     }
 };
+
+// 83112 - Demonic Devastation
+class spell_warl_demonic_devastation : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonic_devastation);
+
+    Aura* GetDiabolicalAura(Unit* caster)
+    {
+        for (size_t i = 801246; i < 801252; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Demonic Ascension if not already under it's effect and give custom duration.
+        if (Aura* runeAura = GetDiabolicalAura(caster))
+            if (!caster->HasAura(SPELL_WARLOCK_DEMONIC_ASCENSION))
+                if (Aura* ascension = caster->AddAura(SPELL_WARLOCK_DEMONIC_ASCENSION, caster))
+                {
+                    int32 duration = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                    ascension->SetDuration(duration);
+                }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonic_devastation::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 
 void AddSC_warlock_spell_scripts()
 {
@@ -4056,6 +4198,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_rain_of_fire);
     RegisterSpellScript(spell_warl_rain_of_fire_damage);
     RegisterSpellScript(spell_warl_demonic_strength);
+    RegisterSpellScript(spell_warl_demonic_devastation);
 
 
 
