@@ -3854,7 +3854,38 @@ class spell_warl_rain_of_fire_damage : public SpellScript
     }
 };
 
+class spell_warl_demonic_strength : public SpellScript
+{
+    PrepareSpellScript(spell_warl_demonic_strength);
 
+    Unit* GetPet()
+    {
+        Unit* controlledUnit = nullptr;
+        if (Player* player = GetCaster()->ToPlayer())
+            for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = (*itr))
+                    if (pet->IsAlive() &&
+                        pet->GetOwnerGUID() == player->GetGUID() &&
+                        pet->GetEntry() == PET_FELGUARD &&
+                        pet->IsWithinDist(player, 100.0f, false))
+                        controlledUnit = pet;
+
+        return controlledUnit;
+    }
+
+    SpellCastResult CheckCast()
+    {
+        if (Unit* pet = GetPet())
+            return SPELL_CAST_OK;
+
+        return SPELL_FAILED_NO_PET;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_warl_demonic_strength::CheckCast);
+    }
+};
 
 void AddSC_warlock_spell_scripts()
 {
@@ -3952,9 +3983,5 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_demonbolt);
     RegisterSpellScript(spell_warl_rain_of_fire);
     RegisterSpellScript(spell_warl_rain_of_fire_damage);
-
-
-    
-
-
+    RegisterSpellScript(spell_warl_demonic_strength);
 }
