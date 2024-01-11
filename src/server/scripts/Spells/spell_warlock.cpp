@@ -68,6 +68,7 @@ enum WarlockSpells
     //OURS
     SPELL_FELBOAR_CHARGE = 83005,
     SPELL_WARLOCK_AGONY = 83010,
+    SPELL_WARLOCK_CHAOS_BOLT = 59172,
     SPELL_WARLOCK_DARK_PACT = 59092,
     SPELL_WARLOCK_DARK_PACT_DAMAGE = 83011,
     SPELL_WARLOCK_DARK_PACT_SHIELD = 83012,
@@ -942,6 +943,28 @@ class spell_warl_havoc : public AuraScript
 {
     PrepareAuraScript(spell_warl_havoc);
 
+    Aura* GetCryHavocAura(Unit* caster)
+    {
+        for (size_t i = 801052; i < 801058; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetRollingHavocAura(Unit* caster)
+    {
+        for (size_t i = 801064; i < 801070; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
@@ -972,7 +995,9 @@ class spell_warl_havoc : public AuraScript
 
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (!GetCaster() || GetCaster()->isDead())
+        Unit* caster = GetCaster();
+
+        if (caster || caster->isDead())
             return;
 
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
@@ -987,7 +1012,22 @@ class spell_warl_havoc : public AuraScript
         if (!havocTarget || havocTarget->isDead())
             return;
 
-        GetCaster()->CastCustomSpell(SPELL_WARLOCK_HAVOC_DAMAGE, SPELLVALUE_BASE_POINT0, totalDamage, havocTarget, true);
+        caster->CastCustomSpell(SPELL_WARLOCK_HAVOC_DAMAGE, SPELLVALUE_BASE_POINT0, totalDamage, havocTarget, true);
+
+        // Deal aoe damage around target hit by Chaos Bolt through Havoc
+        if (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_CHAOS_BOLT)
+            if (Aura* runeAura = GetCryHavocAura(caster))
+            {
+                int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                caster->CastSpell(havocTarget, procSpell, TRIGGERED_FULL_MASK);
+            }
+
+        // increase damage when you hit a Havoc target.
+        if (Aura* runeAura = GetRollingHavocAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -2327,19 +2367,42 @@ class spell_warl_chaos_bolt : public SpellScript
     }
 };
 
-class spell_warl_conflagrate_energy : public SpellScript
+class spell_warl_conflagrate : public SpellScript
 {
-    PrepareSpellScript(spell_warl_conflagrate_energy);
+    PrepareSpellScript(spell_warl_conflagrate);
 
     void HandleHit(SpellEffIndex /*effIndex*/)
     {
-        if (GetCaster() && GetCaster()->IsAlive())
-            GetCaster()->CastSpell(GetCaster(), SPELL_WARLOCK_CONFLAGRATE_ENERGY, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Apply damage increase of Conflagration of Chaos if you have the buff.
+        for (size_t i = 801028; i < 801034; i++)
+            if (Aura* buff = caster->GetAura(i))
+            {
+                int32 increasePct = buff->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, increasePct);
+                buff->Remove();
+            }
+
+        SetHitDamage(damage);
+
+        // Energize
+        caster->CastSpell(caster, SPELL_WARLOCK_CONFLAGRATE_ENERGY, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_warl_conflagrate_energy::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_warl_conflagrate::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -2539,6 +2602,15 @@ class spell_warl_shadowburn : public SpellScript
             if (target->HasAura(SPELL_WARLOCK_IMMOLATE))
                 AddPct(damage, increasePct);
         }
+
+        // Apply damage increase of Conflagration of Chaos if you have the buff.
+        for (size_t i = 801034; i < 801040; i++)
+            if (Aura* buff = caster->GetAura(i))
+            {
+                int32 increasePct = buff->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, increasePct);
+                buff->Remove();
+            }
 
         SetHitDamage(damage);
     }
@@ -3932,7 +4004,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_haunt);
     RegisterSpellScript(spell_warl_seed_of_corruption_handler);
     RegisterSpellScript(spell_warl_chaos_bolt);
-    RegisterSpellScript(spell_warl_conflagrate_energy);
+    RegisterSpellScript(spell_warl_conflagrate);
     RegisterSpellScript(spell_warl_immolate_energy);
     RegisterSpellScript(spell_warl_incinerate);
     RegisterSpellScript(spell_warl_incinerate_energy);
@@ -3984,4 +4056,9 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_rain_of_fire);
     RegisterSpellScript(spell_warl_rain_of_fire_damage);
     RegisterSpellScript(spell_warl_demonic_strength);
+
+
+
+
+
 }

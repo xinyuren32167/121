@@ -24,12 +24,14 @@ enum WarlockSpells
     SPELL_WARLOCK_DOOM = 47867,
     SPELL_WARLOCK_DRAIN_LIFE = 47857,
     SPELL_WARLOCK_DRAIN_SOUL = 47855,
+    SPELL_WARLOCK_HAVOC_AURA = 83062,
     SPELL_WARLOCK_IMMOLATE = 47811,
     SPELL_WARLOCK_MALEFIC_RAPTURE = 83020,
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
     SPELL_WARLOCK_RAIN_OF_FIRE = 47820,
     SPELL_WARLOCK_SHADOW_BOLT = 47809,
     SPELL_WARLOCK_SHADOWBURN = 47827,
+    SPELL_WARLOCK_SOUL_FIRE = 47825,
     SPELL_WARLOCK_SUMMON_DARK_GLARE = 83049,
     SPELL_WARLOCK_SUMMON_DEMONIC_TYRANT = 83007,
     SPELL_WARLOCK_UNENDING_RESOLVE = 83016,
@@ -1642,6 +1644,101 @@ class rune_warl_burn_to_ashes_stack_manager : public AuraScript
     }
 };
 
+class rune_warl_conflagration_of_chaos : public AuraScript
+{
+    PrepareAuraScript(rune_warl_conflagration_of_chaos);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 procSpell = 0;
+
+        if (spellID == SPELL_WARLOCK_CONFLAGRATE)
+            procSpell = aurEff->GetAmount();
+
+        if (spellID == SPELL_WARLOCK_SHADOWBURN)
+            procSpell = GetEffect(EFFECT_1)->GetAmount();
+
+        if (procSpell == 0)
+            return;
+
+        caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_conflagration_of_chaos::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_conflagration_of_chaos::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_cry_havoc_target : public SpellScript
+{
+    PrepareSpellScript(rune_warl_cry_havoc_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_warl_cry_havoc_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+class rune_warl_decimation : public AuraScript
+{
+    PrepareAuraScript(rune_warl_decimation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (target->GetHealthPct() > aurEff->GetAmount())
+            return;
+
+        int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(SPELL_WARLOCK_SOUL_FIRE, -cooldown);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_decimation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_decimation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_warlock_perks_scripts()
@@ -1686,8 +1783,11 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_flames_and_brimstone_target);
     RegisterSpellScript(rune_warl_burn_to_ashes);
     RegisterSpellScript(rune_warl_burn_to_ashes_stack_manager);
+    RegisterSpellScript(rune_warl_conflagration_of_chaos);
+    RegisterSpellScript(rune_warl_cry_havoc_target);
+    RegisterSpellScript(rune_warl_decimation);
 
 
-
+    
     
 }
