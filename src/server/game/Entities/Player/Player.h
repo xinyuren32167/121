@@ -2726,6 +2726,7 @@ public:
     void _SaveSpells(CharacterDatabaseTransaction trans);
     void _SaveEquipmentSets(CharacterDatabaseTransaction trans);
     void _SaveEntryPoint(CharacterDatabaseTransaction trans);
+    void _SaveTaximask(CharacterDatabaseTransaction trans);
     void _SaveGlyphs(CharacterDatabaseTransaction trans);
     void _SaveTalents(CharacterDatabaseTransaction trans);
     void _SaveStats(CharacterDatabaseTransaction trans);
