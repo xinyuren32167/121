@@ -1904,7 +1904,7 @@ void Player::Regenerate(Powers power)
             break;
         case POWER_RUNE:
         case POWER_FOCUS:
-            addvalue += 0.01f * m_regenTimer * sWorld->getRate(RATE_POWER_ENERGY);
+            addvalue += 0.005f * m_regenTimer;
         case POWER_HAPPINESS:
             break;
         case POWER_HEALTH:
@@ -14381,6 +14381,21 @@ void Player::_SaveEquipmentSets(CharacterDatabaseTransaction trans)
                 break;
         }
     }
+}
+
+
+void Player::_SaveTaximask(CharacterDatabaseTransaction trans)
+{
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(ACCOUNT_DEL_TAXI_MASK);
+    stmt->SetData(0, GetSession()->GetAccountId());
+    trans->Append(stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(ACCOUNT_INS_TAXI_MASK);
+    stmt->SetData(0, GetSession()->GetAccountId());
+    std::ostringstream ss;
+    ss << m_taxi;
+    stmt->SetData(1, ss.str());
+    trans->Append(stmt);
 }
 
 void Player::_SaveEntryPoint(CharacterDatabaseTransaction trans)

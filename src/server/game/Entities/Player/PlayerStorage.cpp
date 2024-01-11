@@ -5347,7 +5347,14 @@ bool Player::LoadFromDB(ObjectGuid playerGuid, CharacterDatabaseQueryHolder cons
     m_resetTalentsCost = fields[29].Get<uint32>();
     m_resetTalentsTime = time_t(fields[30].Get<uint32>());
 
-    m_taxi.LoadTaxiMask(fields[22].Get<std::string_view>());            // must be before InitTaxiNodesForLevel
+    QueryResult resultTaxiMask = CharacterDatabase.Query("SELECT taximask FROM account_taximask WHERE accountId = {}", GetSession()->GetAccountId());
+
+    if (resultTaxiMask)
+    {
+        Field* newFields = resultTaxiMask->Fetch();
+        LOG_ERROR("newFields[0].Get<std::string_view>()", "{}", newFields[0].Get<std::string_view>());
+        m_taxi.LoadTaxiMask(newFields[0].Get<std::string_view>());            // must be before InitTaxiNodesForLevel
+    }
 
     uint32 extraflags = fields[36].Get<uint16>();
 
@@ -7106,6 +7113,10 @@ void Player::SaveToDB(CharacterDatabaseTransaction trans, bool create, bool logo
     _SaveGlyphs(trans);
     _SaveInstanceTimeRestrictions(trans);
     _SavePlayerSettings(trans);
+
+    if (!create) {
+        _SaveTaximask(trans);
+    }
 
     // check if stats should only be saved on logout
     // save stats can be out of transaction
