@@ -26,8 +26,11 @@ enum WarlockSpells
     SPELL_WARLOCK_DOOM = 47867,
     SPELL_WARLOCK_DRAIN_LIFE = 47857,
     SPELL_WARLOCK_DRAIN_SOUL = 47855,
+    SPELL_WARLOCK_FIERY_SYMBOL = 83108,
+    SPELL_WARLOCK_FRAILTY = 83103,
     SPELL_WARLOCK_HAVOC_AURA = 83062,
     SPELL_WARLOCK_IMMOLATE = 47811,
+    SPELL_WARLOCK_IMMOLATION_AURA = 50589,
     SPELL_WARLOCK_MALEFIC_RAPTURE = 83020,
     SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE = 83021,
     SPELL_WARLOCK_RAIN_OF_FIRE = 47820,
@@ -68,6 +71,8 @@ enum WarlockSpells
     RUNE_WARLOCK_RUINOUS_BULWARK_SHIELD = 801232,
     RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF = 801264,
     RUNE_WARLOCK_CALCIFIED_SHIELD_LISTENER = 801265,
+    RUNE_WARLOCK_VOLATILE_FLAMEBLOOD_DEBUFF = 801370,
+    RUNE_WARLOCK_SOULMONGER_SHIELD = 801468,
 
     // Pet Scaling
     PET_SCALING_WARLOCK_DAMAGE_HASTE = 83205,
@@ -2126,6 +2131,266 @@ class rune_warl_soul_feeding : public AuraScript
     }
 };
 
+class rune_warl_revel_in_pain : public AuraScript
+{
+    PrepareAuraScript(rune_warl_revel_in_pain);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_WARLOCK_FIERY_SYMBOL))
+            return;
+
+        int32 amount = eventInfo.GetDamageInfo()->GetDamage();
+        amount += GetEffect(EFFECT_2)->GetAmount();
+
+        GetEffect(EFFECT_2)->SetAmount(amount);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_revel_in_pain::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_revel_in_pain::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_charred_flesh : public AuraScript
+{
+    PrepareAuraScript(rune_warl_charred_flesh);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* fierySymbol = target->GetAura(SPELL_WARLOCK_FIERY_SYMBOL))
+        {
+            int32 duration = fierySymbol->GetDuration() + aurEff->GetAmount();
+            duration = std::min<int32>(duration, fierySymbol->GetMaxDuration());
+            fierySymbol->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_charred_flesh::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_charred_flesh::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_charred_fracture : public AuraScript
+{
+    PrepareAuraScript(rune_warl_charred_fracture);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* immolationAura = caster->GetAura(SPELL_WARLOCK_IMMOLATION_AURA))
+        {
+            int32 duration = immolationAura->GetDuration() + aurEff->GetAmount();
+            duration = std::min<int32>(duration, immolationAura->GetMaxDuration());
+            immolationAura->SetDuration(duration);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_charred_fracture::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_charred_fracture::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_void_reaver : public AuraScript
+{
+    PrepareAuraScript(rune_warl_void_reaver);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        // Set absorbtion amount to unlimited
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = dmgInfo.GetAttacker();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_WARLOCK_FRAILTY))
+            absorbAmount = 0;
+        else
+        {
+            int32 absorbPct = GetEffect(EFFECT_2)->GetAmount();
+
+            ApplyPct(absorbAmount, absorbPct);
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(rune_warl_void_reaver::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(rune_warl_void_reaver::Absorb, EFFECT_1);
+    }
+};
+
+class rune_warl_volatile_flameblood : public AuraScript
+{
+    PrepareAuraScript(rune_warl_volatile_flameblood);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_WARLOCK_VOLATILE_FLAMEBLOOD_DEBUFF))
+            return;
+
+        caster->EnergizeBySpell(caster, GetSpellInfo()->Id, aurEff->GetAmount(), POWER_ENERGY);
+        caster->AddAura(RUNE_WARLOCK_VOLATILE_FLAMEBLOOD_DEBUFF, caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_volatile_flameblood::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_volatile_flameblood::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_soul_furnace : public AuraScript
+{
+    PrepareAuraScript(rune_warl_soul_furnace);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+            return;
+
+        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (spellSoulPower <= 0)
+            return;
+
+        int32 powerAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellSoulPower;
+        int32 powerThreshold = aurEff->GetAmount();
+        int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
+
+        while (powerAccumulated >= powerThreshold)
+        {
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+
+            powerAccumulated -= powerThreshold;
+        }
+
+        GetEffect(EFFECT_2)->SetAmount(powerAccumulated);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_soul_furnace::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_soul_furnace::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_soulmonger : public AuraScript
+{
+    PrepareAuraScript(rune_warl_soulmonger);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 heal = eventInfo.GetHealInfo()->GetHeal();
+
+        if (!caster->HealthAbovePctHealed(100, heal))
+            return;
+
+        int32 missingHealth = caster->GetMaxHealth() - caster->GetHealth();
+        int32 amount = heal - missingHealth;
+
+        if (Aura* shield = caster->GetAura(RUNE_WARLOCK_SOULMONGER_SHIELD))
+        {
+            amount += shield->GetEffect(EFFECT_0)->GetAmount();
+            shield->Remove();
+        }
+
+        int32 maxShield = aurEff->GetAmount();
+        amount = std::min<int32>(amount, caster->CountPctFromMaxHealth(maxShield));
+
+        caster->CastCustomSpell(RUNE_WARLOCK_SOULMONGER_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_soulmonger::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_soulmonger::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_warlock_perks_scripts()
@@ -2183,8 +2448,15 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_calcified_shield_listener);
     RegisterSpellScript(rune_warl_calcified_shield_stack_manager);
     RegisterSpellScript(rune_warl_soul_feeding);
+    RegisterSpellScript(rune_warl_revel_in_pain);
+    RegisterSpellScript(rune_warl_charred_flesh);
+    RegisterSpellScript(rune_warl_charred_fracture);
+    RegisterSpellScript(rune_warl_void_reaver);
+    RegisterSpellScript(rune_warl_volatile_flameblood);
+    RegisterSpellScript(rune_warl_soul_furnace);
+    RegisterSpellScript(rune_warl_soulmonger);
 
 
     
-    
+
 }
