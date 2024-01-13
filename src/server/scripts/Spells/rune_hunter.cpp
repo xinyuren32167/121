@@ -4483,7 +4483,28 @@ class rune_hunter_blood_moon_heal : public SpellScript
     }
 };
 
+class rune_hunter_soul_reaper : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_soul_reaper);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target || !target->IsAlive())
+            return false;
+
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsAlive())
+            return false;
+
+        return target != caster;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_soul_reaper::CheckProc);
+    }
+};
 
 void AddSC_hunter_perks_scripts()
 {
@@ -4606,8 +4627,5 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_eternal_night);
     RegisterSpellScript(rune_hunter_blood_moon);
     RegisterSpellScript(rune_hunter_blood_moon_heal);
-
-
-
-    
+    RegisterSpellScript(rune_hunter_soul_reaper);
 }
