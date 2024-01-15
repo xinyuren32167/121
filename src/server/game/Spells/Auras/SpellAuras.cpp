@@ -1692,7 +1692,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         // Remove the IGNORE_AURASTATE aura
                         target->RemoveAurasDueToSpell(44544);
                         break;
-                    case 44401: // Missile Barrage
+                    //case 44401: // Missile Barrage
                     case 48108: // Hot Streak
                     case 57761: // Fireball!
                         if (removeMode != AURA_REMOVE_BY_EXPIRE || aurApp->GetBase()->IsExpired())
