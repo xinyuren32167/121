@@ -170,6 +170,8 @@ enum WarlockSpells
     // Runes
     RUNE_WARLOCK_SEIZED_VITALITY_DEBUFF = 800484,
     RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
+    RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF = 801264,
+    RUNE_WARLOCK_REVEL_IN_PAIN_SHIELD = 801302,
 };
 
 enum WarlockPets {
@@ -569,6 +571,28 @@ class spell_warl_infernal_scaling : public AuraScript
 {
     PrepareAuraScript(spell_warl_infernal_scaling);
 
+    Aura* GetPrimordialInfernalAura(Unit* caster)
+    {
+        for (size_t i = 801136; i < 801142; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetInfernalBrandAura(Unit* caster)
+    {
+        for (size_t i = 801148; i < 801154; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         // xinef: pet inherits 40% of resistance from owner and 35% of armor
@@ -621,11 +645,37 @@ class spell_warl_infernal_scaling : public AuraScript
 
     void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
-        GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, aurEff->GetAuraType(), true, SPELL_BLOCK_TYPE_POSITIVE);
+        Unit* infernal = GetUnitOwner();
+
+        if (!infernal || infernal->isDead())
+            return;
+
+        infernal->ApplySpellImmune(0, IMMUNITY_STATE, aurEff->GetAuraType(), true, SPELL_BLOCK_TYPE_POSITIVE);
         if (aurEff->GetAuraType() == SPELL_AURA_MOD_ATTACK_POWER)
-            GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ATTACK_POWER_PCT, true, SPELL_BLOCK_TYPE_POSITIVE);
+            infernal->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ATTACK_POWER_PCT, true, SPELL_BLOCK_TYPE_POSITIVE);
         else if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT)
-            GetUnitOwner()->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
+            infernal->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
+
+        Unit* caster = infernal->GetOwner();
+
+        if (!caster)
+            return;
+
+        // Add damage increase from Primordial Infernal rune.
+        if (Aura* runeAura = GetPrimordialInfernalAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_2)->GetAmount();
+
+            caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        // Add buff from Infernal Brand rune.
+        if (Aura* runeAura = GetInfernalBrandAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -2295,6 +2345,7 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
     }
 };
 
+// 59172 - Chaos Bolt
 class spell_warl_chaos_bolt : public SpellScript
 {
     PrepareSpellScript(spell_warl_chaos_bolt);
@@ -2361,9 +2412,23 @@ class spell_warl_chaos_bolt : public SpellScript
         SetHitDamage(damage);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove one stack of Crashing Chaos listener each cast.
+        for (size_t i = 801178; i < 801184; i++)
+            if (Aura* crashingChaosListener = caster->GetAura(i))
+                crashingChaosListener->ModStackAmount(-1);
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warl_chaos_bolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_warl_chaos_bolt::HandleAfterHit);
     }
 };
 
@@ -2703,7 +2768,7 @@ class spell_warl_power_siphon : public SpellScript
         {
             if (!unit || unit->isDead())
                 return;
-           
+
             if (unit->GetEntry() == PET_WILDIMP)
             {
 
@@ -3324,37 +3389,56 @@ class spell_warl_demonic_barrier : public AuraScript
 {
     PrepareAuraScript(spell_warl_demonic_barrier);
 
+    Aura* GetWillPoweredAura(Unit* caster)
+    {
+        for (size_t i = 801450; i < 801456; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void ApplyEffect(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
+        int32 healthPct = caster->GetHealthPct();
         int32 baseRatio = aurEff->GetAmount();
-        int32 baseShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), baseRatio);
-        int32 fragmentShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), (baseRatio / 6));
+        int32 minimumThreshold = 20;
+        float effectiveness;
 
+        // Calculate the effectiveness of the shield depending on current health
+        if (healthPct <= minimumThreshold)
+            effectiveness = 100;
+        if (healthPct > minimumThreshold)
+            effectiveness = 100 * (100 - healthPct) / (100 - minimumThreshold);
+
+        int32 shieldRatio = CalculatePct(baseRatio, effectiveness);
+        int32 baseShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), shieldRatio);
+
+        // Consume faragments to increase shield
         if (Aura* soulFragment = caster->GetAura(SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT))
         {
-            int32 fragmentAmount = soulFragment->GetStackAmount();
-            baseShield += fragmentAmount * fragmentShield;
-            soulFragment->Remove();
+            int32 fragmentShieldPct = GetEffect(EFFECT_1)->GetAmount();
+            int32 fragmentShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), fragmentShieldPct);
+            int32 fragmentAmount = soulFragment->GetStackAmount() * fragmentShield;
+            baseShield += fragmentAmount;
 
-            for (int i = 0; i < fragmentAmount; ++i)
+            // Chance to not consume fragments.
+            if (Aura* runeAura = GetWillPoweredAura(caster))
             {
-                caster->CastSpell(caster, SPELL_WARLOCK_SOUL_COLLECTOR_HEAL, TRIGGERED_FULL_MASK);
+                int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                if (!roll_chance_i(procChance))
+                    soulFragment->Remove();
             }
+            else
+                soulFragment->Remove();
         }
 
-        int32 healMulti = 100;
-        int32 currHP = caster->GetHealth();
-        int32 maxHP = caster->GetMaxHealth();
-
-        if (currHP <= maxHP / 5)
-            healMulti = 100;
-        else
-            healMulti = std::max(20, (healMulti - 100 * (currHP / maxHP)));
-
-        ApplyPct(baseShield, healMulti);
-
-        aurEff->GetBase()->GetEffect(EFFECT_0)->ChangeAmount(baseShield);
+        // Grants the right amount to the shield
+        GetEffect(EFFECT_0)->ChangeAmount(baseShield);
     }
 
     void Register() override
@@ -3406,6 +3490,30 @@ class spell_warl_soul_bomb : public SpellScript
     {
         OnCheckCast += SpellCheckCastFn(spell_warl_soul_bomb::CheckCast);
         OnCast += SpellCastFn(spell_warl_soul_bomb::HandleCast);
+    }
+};
+
+// 83105 - Soul Bomb (damage)
+class spell_warl_soul_bomb_damage : public SpellScript
+{
+    PrepareSpellScript(spell_warl_soul_bomb_damage);
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Soul Furnace buff.
+        for (size_t i = 801432; i < 801438; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_warl_soul_bomb_damage::HandleCast);
     }
 };
 
@@ -3518,6 +3626,17 @@ class spell_warl_demonic_protection_mastery : public AuraScript
 {
     PrepareAuraScript(spell_warl_demonic_protection_mastery);
 
+    Aura* GetCalcifiedShieldAura(Unit* caster)
+    {
+        for (size_t i = 801258; i < 801264; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -3531,6 +3650,18 @@ class spell_warl_demonic_protection_mastery : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Calcified Shield rune damage reduction.
+        if (Aura* runeAura = GetCalcifiedShieldAura(caster))
+        {
+            int32 stacks = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            caster->CastCustomSpell(RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+        }
+
         if (Aura* aura = GetCaster()->GetAura(SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF))
             aura->Remove();
     }
@@ -3846,9 +3977,9 @@ class spell_warl_demonbolt : public SpellScript
 };
 
 // 47820 - Rain of Fire
-class spell_warl_rain_of_fire : public SpellScript
+class spell_warl_rain_of_fire : public AuraScript
 {
-    PrepareSpellScript(spell_warl_rain_of_fire);
+    PrepareAuraScript(spell_warl_rain_of_fire);
 
     Aura* GetMadnessoftheAzjAqirAura(Unit* caster)
     {
@@ -3861,7 +3992,7 @@ class spell_warl_rain_of_fire : public SpellScript
         return nullptr;
     }
 
-    void HandleCast()
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
 
@@ -3877,9 +4008,23 @@ class spell_warl_rain_of_fire : public SpellScript
         }
     }
 
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove one stack of Crashing Fire listener when it ends.
+        for (size_t i = 801196; i < 801202; i++)
+            if (Aura* crashingChaosListener = caster->GetAura(i))
+                crashingChaosListener->ModStackAmount(-1);
+    }
+
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warl_rain_of_fire::HandleCast);
+        OnEffectApply += AuraEffectApplyFn(spell_warl_rain_of_fire::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_rain_of_fire::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3958,6 +4103,299 @@ class spell_warl_demonic_strength : public SpellScript
         OnCheckCast += SpellCheckCastFn(spell_warl_demonic_strength::CheckCast);
     }
 };
+
+// 83112 - Demonic Devastation
+class spell_warl_demonic_devastation : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonic_devastation);
+
+    Aura* GetDiabolicalAura(Unit* caster)
+    {
+        for (size_t i = 801246; i < 801252; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Demonic Ascension if not already under it's effect and give custom duration.
+        if (Aura* runeAura = GetDiabolicalAura(caster))
+            if (!caster->HasAura(SPELL_WARLOCK_DEMONIC_ASCENSION))
+                if (Aura* ascension = caster->AddAura(SPELL_WARLOCK_DEMONIC_ASCENSION, caster))
+                {
+                    int32 duration = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                    ascension->SetDuration(duration);
+                }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonic_devastation::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 83110 - Demonic Ascension
+class spell_warl_demonic_ascension : public AuraScript
+{
+    PrepareAuraScript(spell_warl_demonic_ascension);
+
+    Aura* GetIllidansDynastyAura(Unit* caster)
+    {
+        for (size_t i = 801284; i < 801290; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Illidan's Dynasty Buff.
+        if (Aura* runeAura = GetIllidansDynastyAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Illidan's Dynasty buff.
+        for (size_t i = 801290; i < 801296; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_demonic_ascension::HandleApply, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_demonic_ascension::HandleRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 83108 - Fiery Symbol
+class spell_warl_fiery_symbol : public AuraScript
+{
+    PrepareAuraScript(spell_warl_fiery_symbol);
+
+    Aura* GetRevelinPainAura(Unit* caster)
+    {
+        for (size_t i = 801296; i < 801302; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetFieryDemiseAura(Unit* caster)
+    {
+        for (size_t i = 801304; i < 801310; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Cast Fiery Demise Buff.
+        if (Aura* runeAura = GetFieryDemiseAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // Cast Revel in Pain Shield.
+        if (Aura* runeAura = GetRevelinPainAura(caster))
+        {
+            int32 amount = runeAura->GetEffect(EFFECT_2)->GetAmount();
+            int32 maxShield = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), runeAura->GetEffect(EFFECT_1)->GetAmount());
+            amount = std::min<int32>(amount, maxShield);
+
+            caster->CastCustomSpell(RUNE_WARLOCK_REVEL_IN_PAIN_SHIELD, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        }
+
+        // remove Fiery Demise buff.
+        for (size_t i = 801310; i < 801316; i++)
+            if (target->HasAura(i))
+                target->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_fiery_symbol::HandleApply, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_fiery_symbol::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 50589 - Immolation Aura
+class spell_warl_immolation_aura : public AuraScript
+{
+    PrepareAuraScript(spell_warl_immolation_aura);
+
+    Aura* GetInfernalArmorAura(Unit* caster)
+    {
+        for (size_t i = 801372; i < 801378; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Cast Infernal Armor Buff.
+        if (Aura* runeAura = GetInfernalArmorAura(caster))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Infernal Armor buff.
+        for (size_t i = 801378; i < 801384; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_immolation_aura::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_immolation_aura::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 50581 - Shadow Cleave
+class spell_warlock_shadow_cleave : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_shadow_cleave);
+
+    Aura* GetFocusedCleaveAura(Unit* caster)
+    {
+        for (size_t i = 801438; i < 801444; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Increase damage on main target.
+        if (Aura* runeAura = GetFocusedCleaveAura(caster))
+        {
+            Unit* mainTarget = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
+
+            if (mainTarget && target == mainTarget)
+            {
+                int32 damageIncrease = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, damageIncrease);
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove Soul Furnace buff.
+        for (size_t i = 801432; i < 801438; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_warlock_shadow_cleave::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_warlock_shadow_cleave::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+
 
 void AddSC_warlock_spell_scripts()
 {
@@ -4038,6 +4476,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_demonic_barrier);
     RegisterSpellScript(spell_warl_soul_collector_fragment);
     RegisterSpellScript(spell_warl_soul_bomb);
+    RegisterSpellScript(spell_warl_soul_bomb_damage);
     RegisterSpellScript(spell_warl_frailty);
     RegisterSpellScript(spell_warl_fracture_fragment);
     RegisterSpellScript(spell_warl_demonkin);
@@ -4056,6 +4495,11 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_rain_of_fire);
     RegisterSpellScript(spell_warl_rain_of_fire_damage);
     RegisterSpellScript(spell_warl_demonic_strength);
+    RegisterSpellScript(spell_warl_demonic_devastation);
+    RegisterSpellScript(spell_warl_demonic_ascension);
+    RegisterSpellScript(spell_warl_fiery_symbol);
+    RegisterSpellScript(spell_warl_immolation_aura);
+    RegisterSpellScript(spell_warlock_shadow_cleave);
 
 
 
