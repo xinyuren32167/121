@@ -2220,15 +2220,14 @@ class rune_warl_void_reaver : public AuraScript
 
         if (!target || target->isDead())
             return;
-        LOG_ERROR("error", "target = {}", target->GetName());
+
         if (!target->HasAura(SPELL_WARLOCK_FRAILTY))
             absorbAmount = 0;
         else
         {
             int32 absorbPct = GetEffect(EFFECT_2)->GetAmount();
-            LOG_ERROR("error", "absorbAmount = {}", absorbAmount);
-            ApplyPct(absorbAmount, absorbPct);
-            LOG_ERROR("error", "absorbAmount = {}", absorbAmount);
+            int32 absorb = CalculatePct(dmgInfo.GetDamage(), absorbPct);
+            absorbAmount = absorb;
         }
     }
 
@@ -2288,17 +2287,23 @@ class rune_warl_soul_furnace : public AuraScript
         if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
             return;
 
-        int32 fragments = GetEffect(EFFECT_2)->GetAmount() + 1;
-        int32 fragmentThreshold = aurEff->GetAmount();
+        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
+
+        if (spellSoulPower <= 0)
+            return;
+
+        int32 powerAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellSoulPower;
+        int32 powerThreshold = aurEff->GetAmount();
         int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
 
-        if (fragments >= fragmentThreshold)
+        while (powerAccumulated >= powerThreshold)
         {
             caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
-            GetEffect(EFFECT_2)->SetAmount(0);
+
+            powerAccumulated -= powerThreshold;
         }
-        else
-            GetEffect(EFFECT_2)->SetAmount(fragments);       
+
+        GetEffect(EFFECT_2)->SetAmount(powerAccumulated);
     }
 
     void Register() override
