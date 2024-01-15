@@ -137,9 +137,6 @@ enum WarlockSpells
     TALENT_WARLOCK_ARCHDEMON_COOLDOWN = 83203,
     TALENT_WARLOCK_MOLTEN_HAND = 47245,
 
-    // Passives
-    PASSIVE_GENERAL_PARRY = 3127,
-
     // Masteries  
     MASTERY_WARLOCK_FEL_BLOOD = 1100024,
     MASTERY_WARLOCK_MASTER_DEMONOLOGIST = 1100020,
@@ -3616,7 +3613,6 @@ class spell_warl_demonkin : public AuraScript
         target->learnSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS);
         target->learnSpell(SPELL_WARLOCK_SOUL_BOMB);
         target->learnSpell(SPELL_WARLOCK_METAMORPHOSIS);
-        target->learnSpell(PASSIVE_GENERAL_PARRY);
         
         target->UnsummonPetTemporaryIfAny();
     }
@@ -3631,7 +3627,6 @@ class spell_warl_demonkin : public AuraScript
         target->removeSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_SOUL_BOMB, SPEC_MASK_ALL, false);
         target->removeSpell(SPELL_WARLOCK_METAMORPHOSIS, SPEC_MASK_ALL, false);
-        target->removeSpell(PASSIVE_GENERAL_PARRY, SPEC_MASK_ALL, false);
         target->learnSpell(SPELL_WARLOCK_SUMMON_FELGUARD);
         target->learnSpell(SPELL_WARLOCK_SUMMON_FELHUNTER);
         target->learnSpell(SPELL_WARLOCK_SUMMON_IMP);
