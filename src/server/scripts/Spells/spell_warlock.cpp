@@ -656,26 +656,26 @@ class spell_warl_infernal_scaling : public AuraScript
         else if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT)
             infernal->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE, true, SPELL_BLOCK_TYPE_POSITIVE);
 
-        Unit* caster = infernal->GetOwner();
+        //Unit* caster = infernal->GetOwner();
 
-        if (!caster)
-            return;
+        //if (!caster)
+        //    return;
 
-        // Add damage increase from Primordial Infernal rune.
-        if (Aura* runeAura = GetPrimordialInfernalAura(caster))
-        {
-            int32 procSpell = runeAura->GetEffect(EFFECT_2)->GetAmount();
+        //// Add damage increase from Primordial Infernal rune.
+        //if (Aura* runeAura = GetPrimordialInfernalAura(caster))
+        //{
+        //    int32 procSpell = runeAura->GetEffect(EFFECT_2)->GetAmount();
 
-            caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
-        }
+        //    caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
+        //}
 
-        // Add buff from Infernal Brand rune.
-        if (Aura* runeAura = GetInfernalBrandAura(caster))
-        {
-            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+        //// Add buff from Infernal Brand rune.
+        //if (Aura* runeAura = GetInfernalBrandAura(caster))
+        //{
+        //    int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
-            caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
-        }
+        //    caster->CastSpell(infernal, procSpell, TRIGGERED_FULL_MASK);
+        //}
     }
 
     void Register() override
@@ -1020,12 +1020,7 @@ class spell_warl_havoc : public AuraScript
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
         SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
 
-        if (!spellInfo || !damageInfo || !damageInfo->GetDamage() || spellInfo->Id == SPELL_WARLOCK_HAVOC_DAMAGE)
-        {
-            return false;
-        }
-
-        return true;
+        return (spellInfo && damageInfo && damageInfo->GetDamage() && spellInfo->Id != SPELL_WARLOCK_HAVOC_DAMAGE);
     }
 
     Unit* FindTargetHavoc()
@@ -1047,7 +1042,7 @@ class spell_warl_havoc : public AuraScript
     {
         Unit* caster = GetCaster();
 
-        if (caster || caster->isDead())
+        if (!caster || caster->isDead())
             return;
 
         DamageInfo* damageInfo = eventInfo.GetDamageInfo();
@@ -1062,7 +1057,15 @@ class spell_warl_havoc : public AuraScript
         if (!havocTarget || havocTarget->isDead())
             return;
 
-        caster->CastCustomSpell(SPELL_WARLOCK_HAVOC_DAMAGE, SPELLVALUE_BASE_POINT0, totalDamage, havocTarget, true);
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (havocTarget == target)
+            return;
+
+        caster->CastCustomSpell(SPELL_WARLOCK_HAVOC_DAMAGE, SPELLVALUE_BASE_POINT0, totalDamage, havocTarget, TRIGGERED_FULL_MASK);
 
         // Deal aoe damage around target hit by Chaos Bolt through Havoc
         if (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_CHAOS_BOLT)
@@ -2379,6 +2382,10 @@ class spell_warl_chaos_bolt : public SpellScript
         if (!caster || caster->isDead())
             return;
 
+        // remove Ritual of Ruin buff.
+        if (caster->HasAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF))
+            caster->RemoveAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF);
+
         Unit* target = GetHitUnit();
 
         if (!target || target->isDead())
@@ -2422,7 +2429,7 @@ class spell_warl_chaos_bolt : public SpellScript
         // remove one stack of Crashing Chaos listener each cast.
         for (size_t i = 801178; i < 801184; i++)
             if (Aura* crashingChaosListener = caster->GetAura(i))
-                crashingChaosListener->ModStackAmount(-1);
+                crashingChaosListener->ModStackAmount(-1);       
     }
 
     void Register() override
@@ -2454,7 +2461,9 @@ class spell_warl_conflagrate : public SpellScript
         for (size_t i = 801028; i < 801034; i++)
             if (Aura* buff = caster->GetAura(i))
             {
-                int32 increasePct = buff->GetEffect(EFFECT_0)->GetAmount();
+                int32 critChance = caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+                int32 critPct = buff->GetEffect(EFFECT_0)->GetAmount();
+                int32 increasePct = CalculatePct(critChance, critPct);
                 AddPct(damage, increasePct);
                 buff->Remove();
             }
@@ -2672,7 +2681,10 @@ class spell_warl_shadowburn : public SpellScript
         for (size_t i = 801034; i < 801040; i++)
             if (Aura* buff = caster->GetAura(i))
             {
-                int32 increasePct = buff->GetEffect(EFFECT_0)->GetAmount();
+                int32 critChance = std::max<int32>(caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE),
+                    caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_SHADOW));
+                int32 critPct = buff->GetEffect(EFFECT_0)->GetAmount();
+                int32 increasePct = CalculatePct(critChance, critPct);
                 AddPct(damage, increasePct);
                 buff->Remove();
             }
@@ -3074,26 +3086,32 @@ class spell_warl_ritual_of_ruin : public AuraScript
         if (!GetCaster() || GetCaster()->isDead())
             return false;
 
-        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost <= 0)
-            return false;
-        return true;
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 powerCost = eventInfo.GetSpellInfo()->ManaCost;
         Unit* caster = GetCaster();
 
-        uint32 maxStacks = aurEff->GetAmount();
+        if (!caster || caster->isDead())
+            return;
+
+        int32 powerCost = eventInfo.GetSpellInfo()->ManaCost;
+        int32 maxStacks = aurEff->GetAmount();
 
         if (Aura* stackAura = caster->GetAura(TALENT_WARLOCK_RITUAL_OF_RUIN_STACK))
         {
-            uint32 stackAmount = stackAura->GetStackAmount();
+            uint32 stackAmount = stackAura->GetStackAmount() + powerCost;
 
             if (stackAmount >= maxStacks)
             {
+                stackAmount -= maxStacks;
                 caster->CastSpell(caster, TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF, TRIGGERED_FULL_MASK);
-                stackAura->ModStackAmount(-stackAmount);
+
+                if (stackAmount == 0)
+                    stackAura->Remove();
+                else
+                    stackAura->SetStackAmount(stackAmount);
             }
             else
                 stackAura->ModStackAmount(powerCost);
@@ -4006,6 +4024,10 @@ class spell_warl_rain_of_fire : public AuraScript
 
             caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
         }
+
+        // remove Ritual of Ruin buff.
+            if (caster->HasAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF))
+                caster->RemoveAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF);
     }
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)

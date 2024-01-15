@@ -1750,41 +1750,6 @@ class rune_warl_decimation : public AuraScript
     }
 };
 
-class rune_warl_raging_demonfire : public AuraScript
-{
-    PrepareAuraScript(rune_warl_raging_demonfire);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
-
-        if (!target || target->isDead())
-            return;
-
-        if (Aura* immolate = target->GetAura(SPELL_WARLOCK_IMMOLATE))
-        {
-            int32 duration = std::min<int32>(immolate->GetDuration() + aurEff->GetAmount(), immolate->GetMaxDuration());
-            immolate->SetDuration(duration);
-        }
-    }
-
-    void Register() override
-    {
-        DoCheckProc += AuraCheckProcFn(rune_warl_raging_demonfire::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_warl_raging_demonfire::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
 class rune_warl_grand_infernals_design : public AuraScript
 {
     PrepareAuraScript(rune_warl_grand_infernals_design);
@@ -2255,14 +2220,15 @@ class rune_warl_void_reaver : public AuraScript
 
         if (!target || target->isDead())
             return;
-
+        LOG_ERROR("error", "target = {}", target->GetName());
         if (!target->HasAura(SPELL_WARLOCK_FRAILTY))
             absorbAmount = 0;
         else
         {
             int32 absorbPct = GetEffect(EFFECT_2)->GetAmount();
-
+            LOG_ERROR("error", "absorbAmount = {}", absorbAmount);
             ApplyPct(absorbAmount, absorbPct);
+            LOG_ERROR("error", "absorbAmount = {}", absorbAmount);
         }
     }
 
@@ -2322,23 +2288,17 @@ class rune_warl_soul_furnace : public AuraScript
         if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
             return;
 
-        int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask());
-
-        if (spellSoulPower <= 0)
-            return;
-
-        int32 powerAccumulated = GetEffect(EFFECT_2)->GetAmount() + spellSoulPower;
-        int32 powerThreshold = aurEff->GetAmount();
+        int32 fragments = GetEffect(EFFECT_2)->GetAmount() + 1;
+        int32 fragmentThreshold = aurEff->GetAmount();
         int32 procSpell = GetEffect(EFFECT_1)->GetAmount();
 
-        while (powerAccumulated >= powerThreshold)
+        if (fragments >= fragmentThreshold)
         {
             caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
-
-            powerAccumulated -= powerThreshold;
+            GetEffect(EFFECT_2)->SetAmount(0);
         }
-
-        GetEffect(EFFECT_2)->SetAmount(powerAccumulated);
+        else
+            GetEffect(EFFECT_2)->SetAmount(fragments);       
     }
 
     void Register() override
@@ -2438,7 +2398,6 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_conflagration_of_chaos);
     RegisterSpellScript(rune_warl_cry_havoc_target);
     RegisterSpellScript(rune_warl_decimation);
-    RegisterSpellScript(rune_warl_raging_demonfire);
     RegisterSpellScript(rune_warl_grand_infernals_design);
     RegisterSpellScript(rune_warl_crashing_chaos);
     RegisterSpellScript(rune_warl_crashing_chaos_stack_manager);
