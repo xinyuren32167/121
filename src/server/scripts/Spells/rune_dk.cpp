@@ -1581,30 +1581,24 @@ class rune_dk_echoing_howl : public AuraScript
         return nullptr;
     }
 
-    bool CheckProc(ProcEventInfo& eventInfo)
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
 
         if (!caster || caster->isDead())
-            return false;
+            return;
 
-        return true;
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
         if (Aura* rune = GetRuneAura())
         {
             Unit* caster = GetCaster();
-            int32 amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
+            int32 amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), rune->GetEffect(EFFECT_0)->GetAmount());
             caster->CastCustomSpell(RUNE_DK_ECHOING_HOWL_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
         }
     }
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(rune_dk_echoing_howl::CheckProc);
-        OnEffectProc += AuraEffectProcFn(rune_dk_echoing_howl::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_echoing_howl::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
