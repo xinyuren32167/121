@@ -311,6 +311,7 @@ public:
         }
     };
 
+
     SpellScript* GetSpellScript() const override
     {
         return new spell_ruby_sanctum_rallying_shout_SpellScript();

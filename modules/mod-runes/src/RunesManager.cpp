@@ -15,6 +15,7 @@ std::map<uint32 /* achievementId */, RewardAchievement> RunesManager::m_RewardAc
 
 std::vector<SpellRuneConversion> RunesManager::m_SpellRuneConversion = {};
 std::map<uint64, int8> RunesManager::m_CharacterRuneDraw = {};
+std::map<uint64, std::vector<uint32>> RunesManager::m_CharacterAutoRefundRune = {};
 
 RuneConfig RunesManager::config = {};
 
@@ -46,7 +47,7 @@ void RunesManager::LoadAllRunes()
 {
     RunesManager::m_Runes = {};
 
-    QueryResult result = WorldDatabase.Query("SELECT * FROM runes");
+    QueryResult result = WorldDatabase.Query("SELECT id, groupId, allowableClass, allowableRace, quality, maxStack, keywords, specMask FROM runes");
 
     if (!result)
         return;
@@ -59,10 +60,9 @@ void RunesManager::LoadAllRunes()
         int32 allowableRace = fields[3].Get<int32>();
         int8 quality = fields[4].Get<int8>();
         int8 maxStacks = fields[5].Get<int8>();
-        uint32 refundItemId = fields[6].Get<uint32>();
-        uint32 refundDusts = fields[7].Get<uint32>();
-        std::string keywords = fields[8].Get<std::string>();
-        Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, refundItemId, refundDusts, keywords };
+        std::string keywords = fields[6].Get<std::string>();
+        uint32 specMask = fields[7].Get<uint32>();
+        Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, keywords, specMask };
         m_Runes.insert(std::make_pair(id, rune));
         m_unorderedRunes.insert(std::make_pair(groupId, rune));
     } while (result->NextRow());
@@ -281,6 +281,17 @@ void RunesManager::CreateDefaultCharacter(Player* player)
         AccountProgression progression = { 0, 0, config.defaultSlot };
         m_Progression[accountId] = { progression };
     }
+
+}
+
+
+void RunesManager::AutoRefund(Player* player, uint32 runeSpellId, bool enable)
+{
+
+}
+
+void RunesManager::FavoriteRune(Player* player, uint32 runeSpellId, bool enable)
+{
 
 }
 
@@ -578,6 +589,9 @@ void RunesManager::AddRunesPlayer(Player* player, std::vector<Rune> runes)
 
 std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, uint32 count)
 {
+    // 1;2;3;4;5;6;7;8
+    // SpellId;Quality;MaxStack;Keywords;AllowableClass;Count;Known;SpecId
+
     std::string fmt =
             std::to_string(rune.spellId)
         + ";" + std::to_string(rune.quality)
@@ -585,7 +599,8 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, u
         + ";" + rune.keywords
         + ";" + std::to_string(rune.allowableClass)
         + ";" + std::to_string(config.debug ? 1 : count)
-        + ";" + std::to_string(config.debug ? true : known);
+        + ";" + std::to_string(config.debug ? true : known)
+        + ";" + std::to_string(rune.specMask);
 
     return fmt;
 }

@@ -2,6 +2,24 @@
 #include "Player/Player.h"
 #include "DatabaseEnv.h"
 
+
+
+/*
+
+    Warrior, ClassMask 1
+    --------------
+        Warrior - Arms : 1
+        Warrior - Fury : 2
+        Warrior - Protection : 4
+        Warrior - Hoplite : 8
+    --------------
+
+    --------------
+    --------------
+
+
+*/
+
 struct Rune {
     uint32 spellId;
     uint32 groupId;
@@ -9,9 +27,8 @@ struct Rune {
     int32 allowableRaces;
     int8 quality;
     int8 maxStack;
-    uint32 refundItemId;
-    uint32 refundDusts;
     std::string keywords;
+    uint32 specMask;
 
     bool operator !()
     {
@@ -104,6 +121,8 @@ private:
     static std::map<uint32 /* accountId */, AccountProgression> m_Progression;
     static std::map<uint32 /* achievementId */, RewardAchievement> m_RewardAchievement;
     static std::vector<SpellRuneConversion> m_SpellRuneConversion;
+    static std::map<uint64, std::vector<uint32>> m_CharacterAutoRefundRunes;
+    static std::map<uint64, uint32[3]> m_CharacterLuckyRunes;
     static std::map<uint64, int8> m_CharacterRuneDraw;
     static RuneConfig config;
     static uint32 GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p);
@@ -145,6 +164,8 @@ public:
     static void DisableRune(Player* player, uint64 runeId);
     static std::vector<std::string> GetRunesByPlayerName(std::string name);
     static void RefundRune(Player* player, uint32 runeSpellId);
+    static void LuckyRune(Player* player, uint32 runeSpellId, bool enable);
+    static void AutoRefund(Player* player, uint32 runeSpellId, bool enable);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
     static void AddRuneToSlot(Player* player, Rune rune);
     static uint8 GetCountRuneOfSameQuality(Player* player, uint32 spellId);
