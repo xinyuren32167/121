@@ -122,7 +122,7 @@ private:
     static std::map<uint32 /* achievementId */, RewardAchievement> m_RewardAchievement;
     static std::vector<SpellRuneConversion> m_SpellRuneConversion;
     static std::map<uint64, std::vector<uint32>> m_CharacterAutoRefundRunes;
-    static std::map<uint64, uint32[3]> m_CharacterLuckyRunes;
+    static std::map<uint64, uint32[3]> m_CharacterLuckyCards;
     static std::map<uint64, int8> m_CharacterRuneDraw;
     static RuneConfig config;
     static uint32 GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p);

@@ -15,7 +15,7 @@ std::map<uint32 /* achievementId */, RewardAchievement> RunesManager::m_RewardAc
 
 std::vector<SpellRuneConversion> RunesManager::m_SpellRuneConversion = {};
 std::map<uint64, int8> RunesManager::m_CharacterRuneDraw = {};
-std::map<uint64, std::vector<uint32>> RunesManager::m_CharacterAutoRefundRune = {};
+std::map<uint64, uint32[3]> RunesManager::m_CharacterLuckyCards = {};
 
 RuneConfig RunesManager::config = {};
 
@@ -286,11 +286,6 @@ void RunesManager::CreateDefaultCharacter(Player* player)
 
 
 void RunesManager::AutoRefund(Player* player, uint32 runeSpellId, bool enable)
-{
-
-}
-
-void RunesManager::FavoriteRune(Player* player, uint32 runeSpellId, bool enable)
 {
 
 }
