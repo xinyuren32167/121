@@ -81,6 +81,8 @@ enum MageSpells
     SPELL_MAGE_UNSTABLE_ANOMALY_COOLDOWN = 81567,
     SPELL_MAGE_WAVE_OF_FORCE = 81568,
     SPELL_MAGE_WINTERS_CHILL = 81535,
+    SPELL_MAGE_ARCANE_MISSILES = 42843,
+    SPELL_MAGE_EVOCATION = 12051,
 
     // Masteries
     MASTERY_MAGE_SAVANT = 300111,
@@ -141,6 +143,8 @@ enum MageSpells
     RUNE_MAGE_COLD_FRONT_BUFF = 301485,
     RUNE_MAGE_MASTER_OF_ARCANA_DAMAGE = 301540,
     RUNE_MAGE_DUPLICATIVE_INCINERATION_PROC = 301754,
+    RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM = 300924,
+    RUNE_MAGE_EVOCATION_SLIPSTREAM = 300925,
 };
 
 class spell_tempest_barrier : public SpellScript
@@ -3131,6 +3135,37 @@ class rune_mage_duplicative_incineration : public AuraScript
     }
 };
 
+class rune_mage_slipstream : public AuraScript
+{
+    PrepareAuraScript(rune_mage_slipstream);
+
+    void HandleLearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(SPELL_MAGE_ARCANE_MISSILES, SPEC_MASK_ALL, false);
+        target->removeSpell(SPELL_MAGE_EVOCATION, SPEC_MASK_ALL, false);
+        target->learnSpell(RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM);
+        target->learnSpell(RUNE_MAGE_EVOCATION_SLIPSTREAM);
+    }
+
+    void HandleUnlearn(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Player* target = GetCaster()->ToPlayer();
+
+        target->removeSpell(RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM, SPEC_MASK_ALL, false);
+        target->removeSpell(RUNE_MAGE_EVOCATION_SLIPSTREAM, SPEC_MASK_ALL, false);
+        target->learnSpell(SPELL_MAGE_ARCANE_MISSILES);
+        target->learnSpell(SPELL_MAGE_EVOCATION);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_mage_slipstream::HandleLearn, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_mage_slipstream::HandleUnlearn, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_mage_perks_scripts()
 {
     RegisterSpellScript(spell_tempest_barrier);
@@ -3208,4 +3243,5 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(rune_mage_arcanic_precision);
     RegisterSpellScript(rune_mage_more_slashes);
     RegisterSpellScript(rune_mage_duplicative_incineration);
+    RegisterSpellScript(rune_mage_slipstream);
 }

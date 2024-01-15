@@ -3,13 +3,14 @@
 std::map<uint32, std::vector<LearningSpell>> LearningSpellsManager::m_Spells;
 
 
-enum SpellWarrior {
+enum WarriorSpells
+{
     SPELL_WARRIOR_VICTORY_RUSH = 34428,
     SPELL_WARRIOR_IMPEDING_VICTORY = 84515,
 };
 
-
-enum SpellHunter {
+enum HunterSpells
+{
     SPELL_HUNTER_BEAST_LORE = 1462,
     SPELL_HUNTER_CALL_PET = 883,
     SPELL_HUNTER_CALL_STABLED_PET = 62757,
@@ -34,6 +35,13 @@ enum WarlockSpells
     SPELL_WARLOCK_MASTERY_FEL_BLOOD = 1100024,
 };
 
+enum MageSpells
+{
+    SPELL_MAGE_ARCANE_MISSILES = 42843,
+    SPELL_MAGE_EVOCATION = 12051,
+    RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM = 300924,
+    RUNE_MAGE_EVOCATION_SLIPSTREAM = 300925,
+};
 
 void LearningSpellsManager::PreloadAllSpells()
 {
@@ -57,10 +65,12 @@ void LearningSpellsManager::PreloadAllSpells()
 
 bool LearningSpellsManager::Exception(Player* player, uint32 spellId)
 {
+    // Warrior
     if (spellId == SPELL_WARRIOR_VICTORY_RUSH && player->HasSpell(SPELL_WARRIOR_IMPEDING_VICTORY))
         return false;
 
-    if ((spellId == SPELL_WARLOCK_SUMMON_FELGUARD
+    // Hunter
+    if ((spellId == SPELL_HUNTER_BEAST_LORE
         || spellId == SPELL_HUNTER_CALL_PET
         || spellId == SPELL_HUNTER_CALL_STABLED_PET
         || spellId == SPELL_HUNTER_DISMISS_PET
@@ -72,8 +82,8 @@ bool LearningSpellsManager::Exception(Player* player, uint32 spellId)
         || spellId == SPELL_HUNTER_ARCANE_SHOT) && player->HasSpell(SPELL_HUNTER_MASTERY_FROM_THE_SHADOW))
             return false;
 
-
-    if ((spellId == SPELL_HUNTER_BEAST_LORE
+    // Warlock
+    if ((spellId == SPELL_WARLOCK_SUMMON_FELGUARD
         || spellId == SPELL_WARLOCK_SUMMON_FELHUNTER
         || spellId == SPELL_WARLOCK_SUMMON_IMP
         || spellId == SPELL_WARLOCK_SUMMON_SUCCUBUS
@@ -81,6 +91,9 @@ bool LearningSpellsManager::Exception(Player* player, uint32 spellId)
         || spellId == SPELL_WARLOCK_SUMMON_EYE_OF_KILLROG) && player->HasSpell(SPELL_WARLOCK_MASTERY_FEL_BLOOD))
         return false;
 
+    // Mage
+    if (spellId == SPELL_MAGE_ARCANE_MISSILES || spellId == SPELL_MAGE_EVOCATION && (player->HasSpell(RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM) || player->HasSpell(RUNE_MAGE_EVOCATION_SLIPSTREAM)))
+        return false;
 
     return true;
 }

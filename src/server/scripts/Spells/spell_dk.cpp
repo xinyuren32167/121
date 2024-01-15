@@ -3471,23 +3471,16 @@ class spell_dk_rime : public AuraScript
             return;
 
         int32 damageAmount = aurEff->GetAmount();
+        int32 cost = -1000;
 
         int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
 
         if (procSpell == SPELL_DK_FROSTSCYTHE)
-        {
             if (roll_chance_i(22))
-            {
-                caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
-            }
-        }
+                caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
         else
-        {
-            if (roll_chance_i(45))
-            {
-                caster->CastCustomSpell(SPELL_DK_RIME_PROC, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
-            }
-        }
+                if (roll_chance_i(45))
+                    caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
     }
 
     void Register() override
