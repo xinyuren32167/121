@@ -1381,7 +1381,7 @@ class spell_berserker_rage : public SpellScript
             if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
                 buff = talent->GetAmount();
 
-            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
+            GetCaster()->CastCustomSpell(GetCaster(), MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
@@ -1422,7 +1422,7 @@ class spell_rampage_proc_rage : public SpellScript
             if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
                 buff = talent->GetAmount();
 
-            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
+            GetCaster()->CastCustomSpell(GetCaster(), MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, &amount, &buff, nullptr, true, nullptr);
         }
 
         if (Aura* forthingBerserkerAura = caster->GetAura(TALENT_WARRIOR_FORTHING_BERSERKER))
@@ -1468,7 +1468,7 @@ class spell_bloodrage : public SpellScript
             if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
                 buff = talent->GetAmount();
 
-            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
+            GetCaster()->CastCustomSpell(GetCaster(), MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
@@ -1509,7 +1509,7 @@ class spell_recklessness_enrage : public SpellScript
             if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
                 buff = talent->GetAmount();
 
-            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
+            GetCaster()->CastCustomSpell(GetCaster(), MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
@@ -1550,7 +1550,7 @@ class spell_death_wish_enrage : public SpellScript
             if (AuraEffect* talent = GetCaster()->GetAuraEffectOfRankedSpell(12317, EFFECT_0))
                 buff = talent->GetAmount();
 
-            GetCaster()->CastCustomSpell(GetCaster(), 200004, &amount, &buff, nullptr, true, nullptr);
+            GetCaster()->CastCustomSpell(GetCaster(), MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF, &amount, &buff, nullptr, true, nullptr);
         }
     }
 
