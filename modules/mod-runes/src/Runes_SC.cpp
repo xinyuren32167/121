@@ -193,6 +193,13 @@ class spell_generate_random_rune : public SpellScript
             return;
         }
 
+        bool isAutoRefund = RunesManager::IsSpellIdAutoRefund(player, rune.spellId);
+
+        if (isAutoRefund) {
+            RunesManager::AutomaticalyRefundRune(player, rune);
+            return;
+        }
+
         RunesManager::AddRunesPlayer(player, { rune });
     }
 
@@ -223,8 +230,16 @@ class spell_generate_more_random_rune : public SpellScript
             if (!rune)
                 continue;
 
-            runes.push_back(rune);
-            count--;
+            bool isAutoRefund = RunesManager::IsSpellIdAutoRefund(player, rune.spellId);
+
+            if (isAutoRefund) {
+                RunesManager::AutomaticalyRefundRune(player, rune);
+                count--;
+            }
+            else {
+                runes.push_back(rune);
+                count--;
+            }
         }
 
         RunesManager::AddRunesPlayer(player, runes);

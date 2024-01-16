@@ -469,6 +469,9 @@ ElunaRegister<Player> PlayerMethods[] =
 
     { "GetMythicData", &LuaPlayer::GetMythicData },
     { "StartMythicDungeon", &LuaPlayer::StartMythicDungeon },
+    { "EnableOrDisableAutorefund", &LuaPlayer::EnableOrDisableAutorefund },
+    { "EnableOrDisableLuckyRunes", &LuaPlayer::EnableOrDisableLuckyRunes },
+
 
     { "GetSelection", &LuaPlayer::GetSelection },
     { "GetGMRank", &LuaPlayer::GetGMRank },

@@ -156,6 +156,8 @@ public:
     static void LoadSpellsConversion();
     static void LoadRewardsAchievement();
     static void CreateDefaultCharacter(Player* player);
+    static bool IsSpellIdLuckyRune(Player* player, uint32 spellId);
+    static bool IsSpellIdAutoRefund(Player* player, uint32 spellId);
     static std::vector<std::string> KnownRuneForClient(Player* player);
     static std::string RuneForClient(Player* player, Rune rune, bool known, uint32 count);
     static std::vector<std::string> RunesForClient(Player* player);
@@ -167,6 +169,7 @@ public:
     static bool IsRuneUpgradable(Player* player, Rune rune, uint32 countRune);
     static Rune GetRuneBySpellId(uint32 spellId);
     static bool KnowRuneId(Player* player, uint64 runeId);
+    static void AutomaticalyRefundRune(Player* player, Rune rune);
     static bool RuneAlreadyActivated(Player* player, uint64 runeId);
     static uint64 GetActiveLoadoutId(Player* player);
     static uint32 GetCoutSameGroupRune(Player* player, uint32 spellId);

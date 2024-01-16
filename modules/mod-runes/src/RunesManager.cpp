@@ -334,6 +334,22 @@ void RunesManager::CreateDefaultCharacter(Player* player)
 
 void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
 {
+    Rune rune = GetRuneBySpellId(runeSpellId);
+
+    const SpellInfo* spell = sSpellMgr->GetSpellInfo(runeSpellId);
+
+    if (!spell)
+        return;
+
+    std::string spellName = spell->SpellName[0];
+
+
+    if (rune.quality > 1)
+    {
+        SendChat(player, "|cffff0000 You can only activate auto-refund for Common Quality Rune!");
+        return;
+    }
+
     uint32 guid = player->GetGUID().GetCounter();
     auto match = m_CharacterAutoRefundRunes.find(guid);
 
@@ -341,6 +357,7 @@ void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
     {
         CharacterDatabase.Query("INSERT INTO character_autorefund_runes (guid, spellId) VALUES ({}, {}) ", guid, runeSpellId);
         m_CharacterAutoRefundRunes[guid].push_back(runeSpellId);
+        SendChat(player, "|cff11ff00 You have enabled auto-recycle on [" + spellName + "]");
     }
     else {
         auto ij = std::find_if(match->second.begin(), match->second.end(),
@@ -351,27 +368,99 @@ void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
         if (ij != match->second.end()) {
             CharacterDatabase.Query("DELETE FROM character_autorefund_runes WHERE guid = {} AND spellId = {} LIMIT 1", guid, runeSpellId);
             match->second.erase(ij);
+            SendChat(player, "|cff11ff00 You have disabled auto-recycle on [" + spellName + "]");
         }
         else {
             match->second.push_back(runeSpellId);
             CharacterDatabase.Query("INSERT INTO character_autorefund_runes (guid, spellId) VALUES ({}, {}) ", guid, runeSpellId);
+            SendChat(player, "|cff11ff00 You have enabled auto-recycle on [" + spellName + "]");
         }
     }
+
+   
 }
+
+
+bool RunesManager::IsSpellIdLuckyRune(Player* player, uint32 spellId)
+{
+    uint32 guid = player->GetGUID().GetCounter();
+    auto match = m_CharacterLuckyRunes.find(guid);
+
+    if (match == m_CharacterLuckyRunes.end())
+        return false;
+
+    if (match->second.runeSpellId1 == spellId)
+        return true;
+
+    if (match->second.runeSpellId2 == spellId)
+        return true;
+
+    if (match->second.runeSpellId3 == spellId)
+        return true;
+
+    return false;
+}
+
+void RunesManager::AutomaticalyRefundRune(Player* player, Rune rune)
+{
+
+    int multiplier = pow(3, rune.quality - 1);
+    uint8 runicDust = 50 * multiplier;
+    player->AddItem(70008, runicDust);
+
+    const SpellInfo* spell = sSpellMgr->GetSpellInfo(rune.spellId);
+
+    if (spell)
+    {
+        std::string name = spell->SpellName[0];
+        SendChat(player, "|cffd000ff The rune " + name + " is automaticaly refunded.");
+    }
+}
+
+bool RunesManager::IsSpellIdAutoRefund(Player* player, uint32 spellId)
+{
+    uint32 guid = player->GetGUID().GetCounter();
+    auto match = m_CharacterAutoRefundRunes.find(guid);
+
+    if (match == m_CharacterAutoRefundRunes.end())
+        return false;
+
+    auto ij = std::find_if(match->second.begin(), match->second.end(),
+        [&](const uint32& spellIdToFind) {
+        return spellIdToFind == spellId;
+    });
+
+    if (ij != match->second.end())
+        return true;
+
+    return false;
+}
+
 
 void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
 {
     uint32 guid = player->GetGUID().GetCounter();
     auto match = m_CharacterLuckyRunes.find(guid);
 
+    Rune rune = GetRuneBySpellId(runeSpellId);
+
+    if (rune.quality > 1)
+    {
+        SendChat(player, "|cffff0000 You can only activate rune from Common Quality!");
+        return;
+    }
 
     if (match == m_CharacterLuckyRunes.end())
     {
         LuckyRunes runes = { runeSpellId, 0, 0 };
         m_CharacterLuckyRunes[guid] = runes;
         CharacterDatabase.Query("INSERT INTO character_lucky_runes (guid, lucky1, lucky2, lucky3) VALUES ({}, {}, 0, 0) ", guid, runeSpellId);
+        SendChat(player, "|cff11ff00 You have activate 1 lucky rune, you need 2 more lucky runes to fully benefit from the lucky runes.");
     }
     else {
+        uint32 count = 0;
+
+
         uint32* runeSpellIds[] = {
             &match->second.runeSpellId1,
             &match->second.runeSpellId2,
@@ -379,30 +468,42 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
         };
 
         for (int i = 0; i < 3; ++i) {
-            if (*runeSpellIds[i] == 0) {
-                *runeSpellIds[i] = runeSpellId;
-                break;
+            if (*runeSpellIds[i] > 0) {
+                count++;
             }
         }
 
+        if (count == 3) {
+            SendChat(player, "|cff11ff00 You already have 3 lucky Runes activated, please remove one before adding a new one.");
+            return;
+        }
+
         for (int i = 0; i < 3; ++i) {
-            if (*runeSpellIds[i] == runeSpellId) {
+            if (*runeSpellIds[i] == 0) {
+                *runeSpellIds[i] = runeSpellId;
+                break;
+            } else if (*runeSpellIds[i] == runeSpellId) {
                 *runeSpellIds[i] = 0;
                 break;
             }
         }
 
-        CharacterDatabase.Query("UPDATE INTO character_lucky_runes (guid, lucky1, lucky2, lucky3) VALUES ({}, {}, {}, {}) ", guid, *runeSpellIds[0], *runeSpellIds[1], *runeSpellIds[2]);
+        CharacterDatabase.Query("UPDATE character_lucky_runes SET lucky1 = {}, lucky2 = {}, lucky3 = {} WHERE guid = {}", *runeSpellIds[0], *runeSpellIds[1], *runeSpellIds[2], guid);
 
-        uint32 count = 0;
+        count = 0;
+
         for (int i = 0; i < 3; ++i) {
             if (*runeSpellIds[i] > 0) {
                 count++;
             }
         }
 
-        if (count < 3)
-            SendChat(player, "|cff11ff00 You have activated " + std::to_string(count) + " lucky rune(s), and you have " + std::to_string(3 - count) + " lucky runes remaining to fully benefit from the lucky runes.");
+        if (count < 3) {
+            SendChat(player, "|cff11ff00 You have activated " + std::to_string(count) + " lucky rune(s), you need " + std::to_string(3 - count) + " more lucky runes to fully benefit from the lucky runes.");
+        }
+        else {
+            SendChat(player, "|cff11ff00 You have 3 lucky runes activated. Open cards to get your lucky runes!");
+        }
     }
 }
 
@@ -764,8 +865,8 @@ void RunesManager::AddRunesPlayer(Player* player, std::vector<Rune> runes)
 
 std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, uint32 count)
 {
-    // 1;2;3;4;5;6;7;8
-    // SpellId;Quality;MaxStack;Keywords;AllowableClass;Count;Known;SpecId;IsLuckyEnabled;AutoRefundEnabled
+    rune.isLucky = rune.isLucky ? true: IsSpellIdLuckyRune(player, rune.spellId);
+    rune.isAutorefund = IsSpellIdAutoRefund(player, rune.spellId);
 
     std::string fmt =
             std::to_string(rune.spellId)
@@ -778,7 +879,6 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, u
         + ";" + std::to_string(rune.specMask)
         + ";" + std::to_string(rune.isLucky)
         + ";" + std::to_string(rune.isAutorefund);
-
 
     return fmt;
 }
