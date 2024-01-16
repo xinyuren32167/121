@@ -152,6 +152,19 @@ namespace LuaPlayer
         return 0;
     }
 
+    int EnableOrDisableAutorefund(lua_State* L, Player* player)
+    {
+        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
+        RunesManager::ApplyAutorefund(player, spellId);
+        return 0;
+    }
+
+    int EnableOrDisableLuckyRunes(lua_State* L, Player* player)
+    {
+        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
+        RunesManager::ApplyLuckyRune(player, spellId);
+        return 0;
+    }
 
     int ActivateRune(lua_State* L, Player* player)
     {

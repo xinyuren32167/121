@@ -203,6 +203,59 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
     return elements;
 }
 
+uint32 PlayerSpecialization::GetSpecMask(Player* player) {
+
+    uint32 currentSpec = PlayerSpecialization::GetCurrentSpecId(player);
+
+    if (!currentSpec)
+        return -1;
+
+    switch (currentSpec) {
+    case WARRIOR_ARMS: return 1;
+    case WARRIOR_FURY: return 2;
+    case WARRIOR_PROTECTION: return 4;
+    case WARRIOR_HOPLITE: return 8;
+    case MAGE_ARCANE: return 1;
+    case MAGE_FIRE: return 2;
+    case MAGE_FROST: return 4;
+    case MAGE_SPELLBLADE: return 8;
+    case DK_BLOOD: return 1;
+    case DK_FROST: return 2;
+    case DK_UNHOLY: return 4;
+    case DK_SOULWEAVER: return 8;
+    case DRUID_BALANCE: return 1;
+    case DRUID_FERAL: return 2;
+    case DRUID_RESTO: return 4;
+    case DRUID_GUARDIAN: return 8;
+    case HUNTER_BEAST: return 1;
+    case HUNTER_MARSKMANSHIP: return 2;
+    case HUNTER_SURVIVAL: return 4;
+    case HUNTER_DARK_RANGER: return 8;
+    case PALADIN_HOLY: return 1;
+    case PALADIN_PROTECTION: return 2;
+    case PALADIN_RETRIBUTION: return 4;
+    case PALADIN_INQUISITOR: return 8;
+    case ROGUE_ASSASSINATION: return 1;
+    case ROGUE_COMBAT: return 2;
+    case ROGUE_SUBTLETY: return 4;
+    case ROGUE_OUTLAW: return 8;
+    case SHAMAN_ELEMENTAL: return 1;
+    case SHAMAN_ENCHANCEMENT: return 2;
+    case SHAMAN_RESTORATION: return 4;
+    case SHAMAN_SPIRIT_MASTER: return 8;
+    case WARLOCK_AFFLICTION: return 1;
+    case WARLOCK_DEMONOLOGY: return 2;
+    case WARLOCK_DESTRUCTION: return 4;
+    case WARLOCK_DEMONBOUND: return 8;
+    case PRIEST_DISCI: return 1;
+    case PRIEST_HOLY: return 2;
+    case PRIEST_SHADOW: return 4;
+    case PRIEST_ABSOLUTION: return 8;
+    }
+    return -1;
+}
+
+
 uint32 PlayerSpecialization::GetCurrentSpecId(Player* player)
 {
     uint32 specId = 0;

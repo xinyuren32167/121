@@ -1,7 +1,7 @@
 #pragma once
 #include "Player/Player.h"
 #include "DatabaseEnv.h"
-
+#include "PlayerSpecialization.h"
 
 
 /*
@@ -29,6 +29,8 @@ struct Rune {
     int8 maxStack;
     std::string keywords;
     uint32 specMask;
+    bool isLucky;
+    bool isAutorefund;
 
     bool operator !()
     {
@@ -84,6 +86,19 @@ struct SlotRune {
     }
 };
 
+struct LuckyRunes {
+    uint32 runeSpellId1;
+    uint32 runeSpellId2;
+    uint32 runeSpellId3;
+};
+
+struct Draw {
+    float luckyDrawChanceCommon;
+    float luckyDrawChanceUncommon;
+    float luckyDrawChanceRare;
+    float luckyDrawChanceEpic;
+};
+
 struct AccountProgression {
     uint32 dusts;
     uint32 unlockedLoadoutCount;
@@ -122,14 +137,16 @@ private:
     static std::map<uint32 /* achievementId */, RewardAchievement> m_RewardAchievement;
     static std::vector<SpellRuneConversion> m_SpellRuneConversion;
     static std::map<uint64, std::vector<uint32>> m_CharacterAutoRefundRunes;
-    static std::map<uint64, uint32[3]> m_CharacterLuckyCards;
-    static std::map<uint64, int8> m_CharacterRuneDraw;
+    static std::map<uint64, LuckyRunes> m_CharacterLuckyRunes;
+    static std::map<uint64, Draw> m_CharacterRuneDraw;
     static RuneConfig config;
     static uint32 GetMissingSlotNumber(std::vector<SlotRune> slots, Player* p);
 public:
 
     static bool IsDebugEnabled() { return config.debug; };
     static void SetupConfig();
+    static void LoadAllLuckyRunes();
+    static void LoadAllAutoRefund();
     static void LoadAllRunes();
     static void LoadAccountsRunes();
     static void LoadAllLoadout();
@@ -164,8 +181,8 @@ public:
     static void DisableRune(Player* player, uint64 runeId);
     static std::vector<std::string> GetRunesByPlayerName(std::string name);
     static void RefundRune(Player* player, uint32 runeSpellId);
-    static void LuckyRune(Player* player, uint32 runeSpellId, bool enable);
-    static void AutoRefund(Player* player, uint32 runeSpellId, bool enable);
+    static void ApplyLuckyRune(Player* player, uint32 runeSpellId);
+    static void ApplyAutorefund(Player* player, uint32 runeSpellId);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
     static void AddRuneToSlot(Player* player, Rune rune);
     static uint8 GetCountRuneOfSameQuality(Player* player, uint32 spellId);
@@ -182,4 +199,5 @@ public:
     static void GiveAchievementReward(Player* player, uint32 achievementId);
     static void ApplyBuyingRuneWithGold(Player* player);
     static int GetPreviousWeekFromBuyingRuneWithGold(Player* player);
+    static void SendChat(Player* player, std::string msg);
 };

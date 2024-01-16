@@ -14,8 +14,9 @@ std::map<uint32 /* accountId */, AccountProgression> RunesManager::m_Progression
 std::map<uint32 /* achievementId */, RewardAchievement> RunesManager::m_RewardAchievement = {};
 
 std::vector<SpellRuneConversion> RunesManager::m_SpellRuneConversion = {};
-std::map<uint64, int8> RunesManager::m_CharacterRuneDraw = {};
-std::map<uint64, uint32[3]> RunesManager::m_CharacterLuckyCards = {};
+std::map<uint64, Draw> RunesManager::m_CharacterRuneDraw = {};
+std::map<uint64, std::vector<uint32>> RunesManager::m_CharacterAutoRefundRunes = {};
+std::map<uint64, LuckyRunes> RunesManager::m_CharacterLuckyRunes = {};
 
 RuneConfig RunesManager::config = {};
 
@@ -23,8 +24,8 @@ void RunesManager::SetupConfig()
 {
     config.enabled = sConfigMgr->GetOption<bool>("RuneManager.enabled", true);
     config.debug = true;
-    config.maxSlots = 10;
-    config.defaultSlot = 10;
+    config.maxSlots = 14;
+    config.defaultSlot = 14;
 
     config.upgradeCostRunicEssence.insert(std::make_pair(RARE_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_RARE")));
     config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_EPIC")));
@@ -118,6 +119,48 @@ void RunesManager::LoadRewardsAchievement()
     } while (result->NextRow());
 }
 
+void RunesManager::LoadAllLuckyRunes()
+{
+    m_CharacterLuckyRunes = {};
+
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM  character_lucky_runes");
+
+    if (!result)
+        return;
+
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 guid = fields[0].Get<uint32>();
+        uint32 luckyRune1 = fields[1].Get<uint32>();
+        uint32 luckyRune2 = fields[2].Get<uint32>();
+        uint32 luckyRune3 = fields[3].Get<uint32>();
+        m_CharacterLuckyRunes[guid].runeSpellId1 = luckyRune1;
+        m_CharacterLuckyRunes[guid].runeSpellId2 = luckyRune2;
+        m_CharacterLuckyRunes[guid].runeSpellId3 = luckyRune3;
+    } while (result->NextRow());
+
+}
+
+void RunesManager::LoadAllAutoRefund()
+{
+    m_CharacterAutoRefundRunes = {};
+
+    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_autorefund_runes");
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 guid = fields[0].Get<uint32>();
+        uint32 runeSpellId = fields[1].Get<uint32>();
+        m_CharacterAutoRefundRunes[guid].push_back(runeSpellId);
+    } while (result->NextRow());
+}
+
 void RunesManager::LoadAccountsRunes()
 {
     RunesManager::m_KnownRunes = {};
@@ -145,8 +188,8 @@ void RunesManager::LoadAccountsRunes()
 
         for (const auto& accountRune : accountRunes.second)
         {
-            uint32 spellIdToFind = accountRune.rune.spellId; // ID du spell à rechercher
-            int8 qualityToFind = accountRune.rune.quality;  // Qualité à rechercher
+            uint32 spellIdToFind = accountRune.rune.spellId;
+            int8 qualityToFind = accountRune.rune.quality;
 
             auto ij = std::find_if(newRunesForAccount.begin(), newRunesForAccount.end(),
                 [&](const KnownRune& accountRune) {
@@ -196,8 +239,13 @@ void RunesManager::LoadCharacterDraws()
     {
         Field* fields = result->Fetch();
         uint64 guid = fields[0].Get<uint64>();
-        int8 count = fields[1].Get<int8>();
-        m_CharacterRuneDraw.insert(std::make_pair(guid, count));
+        float chanceLuckyDrawCommon = fields[1].Get<float>();
+        float chanceLuckyDrawUnCommon = fields[2].Get<float>();
+        float chanceLuckyDrawRare = fields[3].Get<float>();
+        float chanceLuckyDrawEpic = fields[4].Get<float>();
+
+        Draw draw = { chanceLuckyDrawCommon, chanceLuckyDrawUnCommon, chanceLuckyDrawRare, chanceLuckyDrawEpic };
+        m_CharacterRuneDraw.insert(std::make_pair(guid, draw));
     } while (result->NextRow());
 }
 
@@ -271,7 +319,7 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     m_Loadout[guid].push_back(loadout);
 
     CharacterDatabase.Query("INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES ({}, 0, 0, {}) ", accountId, config.defaultSlot);
-    CharacterDatabase.Query("INSERT INTO character_draw (guid, totalDraw) VALUES ({}, 0) ", guid);
+    CharacterDatabase.Query("INSERT INTO character_draw (guid, luckyDrawChanceCommon, luckyDrawChanceUnCommon, luckyDrawChanceRare, luckyDrawChanceEpic) VALUES ({}, 0, 0, 0, 0) ", guid);
 
     m_CharacterRuneDraw.insert(std::make_pair(guid, 0));
 
@@ -284,10 +332,78 @@ void RunesManager::CreateDefaultCharacter(Player* player)
 
 }
 
-
-void RunesManager::AutoRefund(Player* player, uint32 runeSpellId, bool enable)
+void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
 {
+    uint32 guid = player->GetGUID().GetCounter();
+    auto match = m_CharacterAutoRefundRunes.find(guid);
 
+    if (match == m_CharacterAutoRefundRunes.end())
+    {
+        CharacterDatabase.Query("INSERT INTO character_autorefund_runes (guid, spellId) VALUES ({}, {}) ", guid, runeSpellId);
+        m_CharacterAutoRefundRunes[guid].push_back(runeSpellId);
+    }
+    else {
+        auto ij = std::find_if(match->second.begin(), match->second.end(),
+            [&](const uint32& runeSpellIdToFind) {
+            return runeSpellIdToFind == runeSpellId;
+        });
+
+        if (ij != match->second.end()) {
+            CharacterDatabase.Query("DELETE FROM character_autorefund_runes WHERE guid = {} AND spellId = {} LIMIT 1", guid, runeSpellId);
+            match->second.erase(ij);
+        }
+        else {
+            match->second.push_back(runeSpellId);
+            CharacterDatabase.Query("INSERT INTO character_autorefund_runes (guid, spellId) VALUES ({}, {}) ", guid, runeSpellId);
+        }
+    }
+}
+
+void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
+{
+    uint32 guid = player->GetGUID().GetCounter();
+    auto match = m_CharacterLuckyRunes.find(guid);
+
+
+    if (match == m_CharacterLuckyRunes.end())
+    {
+        LuckyRunes runes = { runeSpellId, 0, 0 };
+        m_CharacterLuckyRunes[guid] = runes;
+        CharacterDatabase.Query("INSERT INTO character_lucky_runes (guid, lucky1, lucky2, lucky3) VALUES ({}, {}, 0, 0) ", guid, runeSpellId);
+    }
+    else {
+        uint32* runeSpellIds[] = {
+            &match->second.runeSpellId1,
+            &match->second.runeSpellId2,
+            &match->second.runeSpellId3
+        };
+
+        for (int i = 0; i < 3; ++i) {
+            if (*runeSpellIds[i] == 0) {
+                *runeSpellIds[i] = runeSpellId;
+                break;
+            }
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            if (*runeSpellIds[i] == runeSpellId) {
+                *runeSpellIds[i] = 0;
+                break;
+            }
+        }
+
+        CharacterDatabase.Query("UPDATE INTO character_lucky_runes (guid, lucky1, lucky2, lucky3) VALUES ({}, {}, {}, {}) ", guid, *runeSpellIds[0], *runeSpellIds[1], *runeSpellIds[2]);
+
+        uint32 count = 0;
+        for (int i = 0; i < 3; ++i) {
+            if (*runeSpellIds[i] > 0) {
+                count++;
+            }
+        }
+
+        if (count < 3)
+            SendChat(player, "|cff11ff00 You have activated " + std::to_string(count) + " lucky rune(s), and you have " + std::to_string(3 - count) + " lucky runes remaining to fully benefit from the lucky runes.");
+    }
 }
 
 void RunesManager::SpellConversion(uint32 runeId, Player* player, bool apply)
@@ -324,6 +440,14 @@ std::vector<std::string> RunesManager::GetActivatedRunes(Player* player)
     return ids;
 }
 
+void RunesManager::SendChat(Player* player, std::string msg)
+{
+    WorldPacket data;
+    char const* text = msg.c_str();
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, nullptr, nullptr, text);
+    player->GetSession()->SendPacket(&data);
+}
+
 void RunesManager::SendPlayerMessage(Player* player, std::string msg)
 {
     player->GetSession()->SendAreaTriggerMessage(msg.c_str());
@@ -340,26 +464,82 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
         return {};
     }
 
+    auto matchJ = m_CharacterLuckyRunes.find(guid);
+
     if (quality == NORMAL_QUALITY) {
-
         bool isUpgradedThroughLuck = roll_chance_i(10);
-        int8 totalNormalDraw = match->second;
-
         if (isUpgradedThroughLuck)
             quality = UNCOMMON_QUALITY;
+    }
+    
+    if (matchJ != m_CharacterLuckyRunes.end())
+    {
+        const bool canUseLuckyCard =
+            matchJ->second.runeSpellId1 > 0 &&
+            matchJ->second.runeSpellId2 > 0 &&
+            matchJ->second.runeSpellId3 > 0;
 
-        if (totalNormalDraw >= 10) {
-            quality = UNCOMMON_QUALITY;
-            match->second = 0;
+        float chance = 0.f;
+
+        if (canUseLuckyCard)
+        {
+            switch (quality)
+            {
+                case NORMAL_QUALITY:
+                    match->second.luckyDrawChanceCommon += 5.f;
+                    chance = match->second.luckyDrawChanceCommon;
+                    break;
+                case UNCOMMON_QUALITY:
+                    match->second.luckyDrawChanceUncommon += 5.f;
+                    chance = match->second.luckyDrawChanceUncommon;
+                    break;
+                case RARE_QUALITY:
+                    match->second.luckyDrawChanceRare += 5.f;
+                    chance = match->second.luckyDrawChanceRare;
+                    break;
+                case EPIC_QUALITY:
+                    match->second.luckyDrawChanceEpic += 5.f;
+                    chance = match->second.luckyDrawChanceEpic;
+                    break;
+            }
+
+            if (roll_chance_i(chance))
+            {
+                const uint32 rand = urand(0, 2);
+
+                std::vector<uint32> runes = { matchJ->second.runeSpellId1, matchJ->second.runeSpellId2, matchJ->second.runeSpellId3 };
+
+                uint32 spellId = runes[rand];
+                Rune oldRune = GetRuneBySpellId(spellId);
+                Rune rune = GetRuneByQuality(oldRune.groupId, quality);
+
+                switch (quality)
+                {
+                case NORMAL_QUALITY:
+                    match->second.luckyDrawChanceCommon = 0.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceCommon = {} WHERE guid = {}", match->second.luckyDrawChanceCommon, guid);
+                    break;
+                case UNCOMMON_QUALITY:
+                    match->second.luckyDrawChanceUncommon = 0.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceUncommon = {} WHERE guid = {}", match->second.luckyDrawChanceUncommon, guid);
+                    break;
+                case RARE_QUALITY:
+                    match->second.luckyDrawChanceRare = 0.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceRare = {} WHERE guid = {}", match->second.luckyDrawChanceRare, guid);
+                    break;
+                case EPIC_QUALITY:
+                    match->second.luckyDrawChanceEpic = 0.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceEpic = {} WHERE guid = {}", match->second.luckyDrawChanceEpic, guid);
+                    break;
+                }
+                rune.isLucky = true;
+                return rune;
+            }
         }
-        else
-            match->second += 1;
-
-        CharacterDatabase.Execute("UPDATE character_draw SET totalDraw = {} WHERE guid = {}", match->second, guid);
     }
 
     for (const auto& pair : m_Runes)
-        if (pair.second.quality == quality && (pair.second.allowableClass & player->getClassMask()))
+        if (pair.second.quality == quality && (pair.second.allowableClass & player->getClassMask() && (pair.second.specMask & PlayerSpecialization::GetSpecMask(player))))
             possibleRunes.push_back(pair.second);
 
     if (possibleRunes.empty())
@@ -585,7 +765,7 @@ void RunesManager::AddRunesPlayer(Player* player, std::vector<Rune> runes)
 std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, uint32 count)
 {
     // 1;2;3;4;5;6;7;8
-    // SpellId;Quality;MaxStack;Keywords;AllowableClass;Count;Known;SpecId
+    // SpellId;Quality;MaxStack;Keywords;AllowableClass;Count;Known;SpecId;IsLuckyEnabled;AutoRefundEnabled
 
     std::string fmt =
             std::to_string(rune.spellId)
@@ -595,7 +775,10 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, u
         + ";" + std::to_string(rune.allowableClass)
         + ";" + std::to_string(config.debug ? 1 : count)
         + ";" + std::to_string(config.debug ? true : known)
-        + ";" + std::to_string(rune.specMask);
+        + ";" + std::to_string(rune.specMask)
+        + ";" + std::to_string(rune.isLucky)
+        + ";" + std::to_string(rune.isAutorefund);
+
 
     return fmt;
 }
@@ -849,6 +1032,7 @@ void RunesManager::ApplyRunesOnLogin(Player* player)
             if (!player->HasAura(slot.runeSpellId) && slot.id)
                 player->AddAura(slot.runeSpellId, player);
 }
+
 
 bool RunesManager::RuneAlreadyActivated(Player* player, uint64 runeId)
 {

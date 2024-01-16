@@ -164,6 +164,8 @@ public:
         RunesManager::LoadSpellsConversion();
         RunesManager::LoadCharacterDraws();
         RunesManager::LoadRewardsAchievement();
+        RunesManager::LoadAllAutoRefund();
+        RunesManager::LoadAllLuckyRunes();
     }
 };
 

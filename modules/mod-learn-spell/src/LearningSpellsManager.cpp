@@ -3,13 +3,13 @@
 std::map<uint32, std::vector<LearningSpell>> LearningSpellsManager::m_Spells;
 
 
-enum WarriorSpells
+enum SpecWarriorSpells
 {
     SPELL_WARRIOR_VICTORY_RUSH = 34428,
     SPELL_WARRIOR_IMPEDING_VICTORY = 84515,
 };
 
-enum HunterSpells
+enum SpecHunterSpells
 {
     SPELL_HUNTER_BEAST_LORE = 1462,
     SPELL_HUNTER_CALL_PET = 883,
@@ -24,7 +24,7 @@ enum HunterSpells
     SPELL_HUNTER_MASTERY_FROM_THE_SHADOW = 499996,
 };
 
-enum WarlockSpells
+enum SpecWarlockSpells
 {
     SPELL_WARLOCK_SUMMON_FELGUARD = 30146,
     SPELL_WARLOCK_SUMMON_FELHUNTER = 691,
@@ -35,7 +35,7 @@ enum WarlockSpells
     SPELL_WARLOCK_MASTERY_FEL_BLOOD = 1100024,
 };
 
-enum MageSpells
+enum SpecMageSpells
 {
     SPELL_MAGE_ARCANE_MISSILES = 42843,
     SPELL_MAGE_EVOCATION = 12051,
