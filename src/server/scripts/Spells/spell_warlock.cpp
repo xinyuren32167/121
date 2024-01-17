@@ -193,6 +193,27 @@ enum WarlockPets {
     NPC_PORTAL_SUMMON = 600606,
 };
 
+enum WarlockScalingSpells {
+
+    FELGUARD_SCALING_STAMINA_AP_SP = 83500,
+    FELHUNTER_SCALING_STAMINA_AP_SP = 83503,
+    IMP_SCALING_STAMINA_AP_SP = 83506,
+    SUCCUBUS_SCALING_STAMINA_AP_SP = 83509,
+    VOIDWAKLER_SCALING_STAMINA_AP_SP = 83512,
+
+    FELGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83501,
+    FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83504,
+    IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83507,
+    SUCCUBUS_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83510,
+    VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83513,
+
+    FELGUARD_SCALING_HASTE = 83502,
+    FELHUNTER_SCALING_HASTE = 83505,
+    IMP_SCALING_HASTE = 83508,
+    SUCCUBUS_SCALING_HASTE = 83511,
+    VOIDWAKLER_SCALING_HASTE = 83514,
+};
+
 enum WarlockSpellIcons
 {
     WARLOCK_ICON_ID_IMPROVED_LIFE_TAP = 208,
@@ -463,51 +484,84 @@ class spell_warl_all_minion_scaling : public AuraScript
 
 class spell_warl_generic_scaling : public AuraScript
 {
+    struct PetStats {
+        float stamina;
+        float sp_to_ap;
+        float sp_to_sp;
+    };
+
     PrepareAuraScript(spell_warl_generic_scaling);
 
     void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
-        // xinef: pet inherits 40% of resistance from owner and 35% of armor
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            SpellSchoolMask schoolMask = SpellSchoolMask(aurEff->GetSpellInfo()->Effects[aurEff->GetEffIndex()].MiscValue);
-            int32 modifier = schoolMask == SPELL_SCHOOL_MASK_NORMAL ? 35 : 40;
-            amount = CalculatePct(std::max<int32>(0, owner->GetResistance(schoolMask)), modifier);
+            float scaling = GetArmorScaling(m_scriptSpellId);
+            amount = CalculatePct(std::max<int32>(0, owner->GetResistance(SPELL_SCHOOL_MASK_NORMAL)), scaling);
+        }
+    }
+
+    void CalculateMeleeCriticalChance(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            int32 critChanceFire = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+            int32 critChanceShadow = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_SHADOW);
+            int32 maximum = (critChanceFire > critChanceShadow) ? critChanceFire : critChanceShadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), 100.f);
+        }
+    }
+
+    void CalculateSpellCriticalChance(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            int32 critChanceFire = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+            int32 critChanceShadow = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_SHADOW);
+            int32 maximum = (critChanceFire > critChanceShadow) ? critChanceFire : critChanceShadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), 100.f);
+        }
+    }
+
+    void CalculateHasteAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float speed = owner->GetFloatValue(UNIT_MOD_CAST_SPEED);
+            amount = std::max<int32>(0, speed);
         }
     }
 
     void CalculateStatAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
-        // xinef: by default warlock pet inherits 75% of stamina and 30% of intellect
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            Stats stat = Stats(aurEff->GetSpellInfo()->Effects[aurEff->GetEffIndex()].MiscValue);
-            int32 modifier = stat == STAT_STAMINA ? 75 : 30;
-            amount = CalculatePct(std::max<int32>(0, owner->GetStat(stat)), modifier);
+            PetStats stat = GetSpApStamina(m_scriptSpellId);
+            amount = CalculatePct(std::max<int32>(0, owner->GetStat(STAT_STAMINA)), stat.stamina);
         }
     }
 
     void CalculateAPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
-        // xinef: by default warlock pet inherits 57% of max(SP FIRE, SP SHADOW) as AP
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
+            PetStats stat = GetSpApStamina(m_scriptSpellId);
             int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
             int32 maximum = (fire > shadow) ? fire : shadow;
-            amount = CalculatePct(std::max<int32>(0, maximum), 57);
+            amount = CalculatePct(std::max<int32>(0, maximum), stat.sp_to_ap);
         }
     }
 
     void CalculateSPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
-        // xinef: by default warlock pet inherits 15% of max(SP FIRE, SP SHADOW) as SP
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
+            PetStats stat = GetSpApStamina(m_scriptSpellId);
             int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
             int32 maximum = (fire > shadow) ? fire : shadow;
-            amount = CalculatePct(std::max<int32>(0, maximum), 15);
+            amount = CalculatePct(std::max<int32>(0, maximum), stat.sp_to_ap);
 
             // xinef: Update appropriate player field
             if (owner->GetTypeId() == TYPEID_PLAYER)
@@ -524,7 +578,7 @@ class spell_warl_generic_scaling : public AuraScript
     void HandlePeriodic(AuraEffect const* aurEff)
     {
         PreventDefaultAction();
-        if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT && (aurEff->GetMiscValue() == STAT_STAMINA || aurEff->GetMiscValue() == STAT_INTELLECT))
+        if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT && (aurEff->GetMiscValue() == STAT_STAMINA))
         {
             int32 currentAmount = aurEff->GetAmount();
             int32 newAmount = GetEffect(aurEff->GetEffIndex())->CalculateAmount(GetCaster());
@@ -550,20 +604,69 @@ class spell_warl_generic_scaling : public AuraScript
 
     void Register() override
     {
-        if (m_scriptSpellId != 34947)
-            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateResistanceAmount, EFFECT_ALL, SPELL_AURA_MOD_RESISTANCE);
-
-        if (m_scriptSpellId == 34947 || m_scriptSpellId == 34956)
-            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateStatAmount, EFFECT_ALL, SPELL_AURA_MOD_STAT);
-
-        if (m_scriptSpellId == 34947)
+        if (
+            m_scriptSpellId == FELGUARD_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == IMP_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == FELHUNTER_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == SUCCUBUS_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == VOIDWAKLER_SCALING_STAMINA_AP_SP)
         {
-            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateAPAmount, EFFECT_ALL, SPELL_AURA_MOD_ATTACK_POWER);
-            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateSPAmount, EFFECT_ALL, SPELL_AURA_MOD_DAMAGE_DONE);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateStatAmount, EFFECT_0, SPELL_AURA_MOD_STAT);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateAPAmount, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateSPAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_DONE);
+        }
+
+        if (
+            m_scriptSpellId == FELGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == SUCCUBUS_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT)
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateResistanceAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateMeleeCriticalChance, EFFECT_1, SPELL_AURA_MOD_WEAPON_CRIT_PERCENT);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateSpellCriticalChance, EFFECT_2, SPELL_AURA_MOD_SPELL_CRIT_CHANCE);
+        }
+
+        if (
+            m_scriptSpellId == FELGUARD_SCALING_HASTE
+            || m_scriptSpellId == IMP_SCALING_HASTE
+            || m_scriptSpellId == FELHUNTER_SCALING_HASTE
+            || m_scriptSpellId == SUCCUBUS_SCALING_HASTE
+            || m_scriptSpellId == VOIDWAKLER_SCALING_HASTE)
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateHasteAmount, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE);
         }
 
         DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_warl_generic_scaling::CalcPeriodic, EFFECT_ALL, SPELL_AURA_ANY);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_generic_scaling::HandlePeriodic, EFFECT_ALL, SPELL_AURA_ANY);
+    }
+
+private:
+    std::map<uint32, PetStats> spellsStaminaApSp;
+    std::map<uint32, float> spellsArmor;
+
+
+    PetStats GetSpApStamina(uint32 spellId) {
+
+        spellsStaminaApSp[FELGUARD_SCALING_STAMINA_AP_SP] = { 85, 87, 45 };
+        spellsStaminaApSp[FELHUNTER_SCALING_STAMINA_AP_SP] = { 75, 35, 75 };
+        spellsStaminaApSp[IMP_SCALING_STAMINA_AP_SP] = { 75, 20, 75 };
+        spellsStaminaApSp[SUCCUBUS_SCALING_STAMINA_AP_SP] = { 60, 35, 75 };
+        spellsStaminaApSp[VOIDWAKLER_SCALING_STAMINA_AP_SP] = { 100, 35, 55 };
+
+        return spellsStaminaApSp[spellId];
+    }
+
+    float GetArmorScaling(uint32 spellId) {
+
+        spellsArmor[FELGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 80.f;
+        spellsArmor[FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60;
+        spellsArmor[IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60;
+        spellsArmor[SUCCUBUS_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 75.f;
+        spellsArmor[VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 100.f;
+
+        return spellsArmor[spellId];
     }
 };
 
