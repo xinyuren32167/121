@@ -3476,10 +3476,10 @@ class spell_dk_rime : public AuraScript
         int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
 
         if (procSpell == SPELL_DK_FROSTSCYTHE)
-            if (roll_chance_i(22))
+            if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount()))
                 caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
         else
-                if (roll_chance_i(45))
+                if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()))
                     caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
     }
 

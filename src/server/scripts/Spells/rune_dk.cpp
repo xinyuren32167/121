@@ -42,6 +42,8 @@ enum DeathKnightSpells
     RUNE_DK_MASTER_BLASTER_PROC = 600735,
     RUNE_DK_HAMMER_OF_THE_DAMNED_PROC = 600087,
     RUNE_DK_ECHOING_HOWL_PROC = 600742,
+    RUNE_DK_INEXORABLE_ASSAULT_PROC = 600780,
+    RUNE_DK_FROSTED_BLADE_PROC = 600794,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -54,6 +56,7 @@ enum DeathKnightSpells
     SPELL_DK_HYSTERIA = 49016,
     SPELL_DK_VAMPIRIC_BLOOD = 55233,
     SPELL_DK_BONESTORM = 80367,
+    SPELL_DK_OBLITERATE = 51425,
 };
 
 class rune_dk_permafrost : public AuraScript
@@ -1602,6 +1605,105 @@ class rune_dk_echoing_howl : public AuraScript
     }
 };
 
+class rune_dk_cold_demons_gaze : public AuraScript
+{
+    PrepareAuraScript(rune_dk_cold_demons_gaze);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 hasteBuff = aurEff->GetAmount();
+        int32 critBuff = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+
+        int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+
+        if (procSpell == SPELL_DK_OBLITERATE)
+            caster->CastSpell(caster, hasteBuff, TRIGGERED_FULL_MASK);
+        else
+            caster->CastSpell(caster, critBuff, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_dk_cold_demons_gaze::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_inexorable_assault : public AuraScript
+{
+    PrepareAuraScript(rune_dk_inexorable_assault);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 600773; i < 600779; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (caster && caster->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* rune = GetRuneAura())
+        {
+            Unit* caster = GetCaster();
+            int32 amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), rune->GetEffect(EFFECT_0)->GetAmount());
+            caster->CastCustomSpell(RUNE_DK_INEXORABLE_ASSAULT_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+
+            aurEff->GetBase()->SetStackAmount(aurEff->GetBase()->GetStackAmount() - 1);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_inexorable_assault::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_inexorable_assault::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_frosted_blade : public AuraScript
+{
+    PrepareAuraScript(rune_dk_frosted_blade);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        return caster && caster->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 damage = (CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()) / 8);
+            GetCaster()->CastCustomSpell(RUNE_DK_FROSTED_BLADE_PROC, SPELLVALUE_BASE_POINT0, damage, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_frosted_blade::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_frosted_blade::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     RegisterSpellScript(rune_dk_permafrost);
@@ -1654,4 +1756,7 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_master_blaster);
     RegisterSpellScript(rune_dk_hammer_of_the_damned);
     RegisterSpellScript(rune_dk_echoing_howl);
+    RegisterSpellScript(rune_dk_cold_demons_gaze);
+    RegisterSpellScript(rune_dk_inexorable_assault);
+    RegisterSpellScript(rune_dk_frosted_blade);
 }

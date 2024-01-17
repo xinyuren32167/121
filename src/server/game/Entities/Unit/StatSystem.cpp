@@ -825,13 +825,13 @@ void Player::UpdateParryPercentage()
 {
     const float parry_cap[MAX_CLASSES] =
     {
-        147.003525f,     // Warrior
-        147.003525f,     // Paladin
+        70.129021f,     // Warrior
+        70.129021f,     // Paladin
         145.560408f,    // Hunter
         145.560408f,    // Rogue
         0.0f,           // Priest
-        147.003525f,     // DK
-        145.560408f,    // Shaman
+        85.129021f,     // DK
+        70.129021f,    // Shaman
         145.560408f,    // Mage
         0.0f,           // Warlock
         0.0f,           // ??
@@ -878,17 +878,17 @@ void Player::UpdateDodgePercentage()
 {
     const float dodge_cap[MAX_CLASSES] =
     {
-        88.129021f,     // Warrior
-        88.129021f,     // Paladin
+        70.129021f,     // Warrior
+        70.129021f,     // Paladin
         145.560408f,    // Hunter
         145.560408f,    // Rogue
         150.375940f,    // Priest
-        88.129021f,     // DK
-        145.560408f,    // Shaman
+        70.129021f,     // DK
+        70.129021f,    // Shaman
         150.375940f,    // Mage
-        150.375940f,    // Warlock
+        85.129021f,    // Warlock
         0.0f,           // ??
-        116.890707f     // Druid
+        85.129021f     // Druid
     };
 
     float diminishing = 0.0f, nondiminishing = 0.0f;
