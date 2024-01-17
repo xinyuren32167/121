@@ -62,7 +62,7 @@ void RunesManager::LoadAllRunes()
         int8 quality = fields[4].Get<int8>();
         int8 maxStacks = fields[5].Get<int8>();
         std::string keywords = fields[6].Get<std::string>();
-        uint32 specMask = fields[7].Get<uint32>();
+        int32 specMask = fields[7].Get<int32>();
         Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, keywords, specMask };
         m_Runes.insert(std::make_pair(id, rune));
         m_unorderedRunes.insert(std::make_pair(groupId, rune));
@@ -321,7 +321,9 @@ void RunesManager::CreateDefaultCharacter(Player* player)
     CharacterDatabase.Query("INSERT INTO character_rune_progression (accountId, dusts, loadoutUnlocked, slotsUnlocked) VALUES ({}, 0, 0, {}) ", accountId, config.defaultSlot);
     CharacterDatabase.Query("INSERT INTO character_draw (guid, luckyDrawChanceCommon, luckyDrawChanceUnCommon, luckyDrawChanceRare, luckyDrawChanceEpic) VALUES ({}, 0, 0, 0, 0) ", guid);
 
-    m_CharacterRuneDraw.insert(std::make_pair(guid, 0));
+    Draw draw = { 0,0,0,0 };
+
+    m_CharacterRuneDraw.insert(std::make_pair(guid, draw));
 
     auto progression = m_Progression.find(player->GetSession()->GetAccountId());
 
@@ -452,8 +454,8 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
 
     if (match == m_CharacterLuckyRunes.end())
     {
-        LuckyRunes runes = { runeSpellId, 0, 0 };
-        m_CharacterLuckyRunes[guid] = runes;
+        LuckyRunes luckyRune = { runeSpellId, 0, 0 };
+        m_CharacterLuckyRunes[guid] = luckyRune;
         CharacterDatabase.Query("INSERT INTO character_lucky_runes (guid, lucky1, lucky2, lucky3) VALUES ({}, {}, 0, 0) ", guid, runeSpellId);
         SendChat(player, "|cff11ff00 You have activate 1 lucky rune, you need 2 more lucky runes to fully benefit from the lucky runes.");
     }
@@ -468,7 +470,7 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
         };
 
         for (int i = 0; i < 3; ++i) {
-            if (*runeSpellIds[i] > 0) {
+            if (*runeSpellIds[i] > 0 && *runeSpellIds[i] != runeSpellId) {
                 count++;
             }
         }
@@ -562,6 +564,7 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
     auto match = m_CharacterRuneDraw.find(guid);
 
     if (match == m_CharacterRuneDraw.end()) {
+        LOG_ERROR("SpecMask", "m_CharacterRuneDraw not found");
         return {};
     }
 
@@ -588,18 +591,22 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
             {
                 case NORMAL_QUALITY:
                     match->second.luckyDrawChanceCommon += 5.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceCommon = {} WHERE guid = {}", match->second.luckyDrawChanceCommon, guid);
                     chance = match->second.luckyDrawChanceCommon;
                     break;
                 case UNCOMMON_QUALITY:
                     match->second.luckyDrawChanceUncommon += 5.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceUncommon = {} WHERE guid = {}", match->second.luckyDrawChanceUncommon, guid);
                     chance = match->second.luckyDrawChanceUncommon;
                     break;
                 case RARE_QUALITY:
                     match->second.luckyDrawChanceRare += 5.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceRare = {} WHERE guid = {}", match->second.luckyDrawChanceRare, guid);
                     chance = match->second.luckyDrawChanceRare;
                     break;
                 case EPIC_QUALITY:
                     match->second.luckyDrawChanceEpic += 5.f;
+                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceEpic = {} WHERE guid = {}", match->second.luckyDrawChanceEpic, guid);
                     chance = match->second.luckyDrawChanceEpic;
                     break;
             }
@@ -616,22 +623,18 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
 
                 switch (quality)
                 {
-                case NORMAL_QUALITY:
-                    match->second.luckyDrawChanceCommon = 0.f;
-                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceCommon = {} WHERE guid = {}", match->second.luckyDrawChanceCommon, guid);
-                    break;
-                case UNCOMMON_QUALITY:
-                    match->second.luckyDrawChanceUncommon = 0.f;
-                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceUncommon = {} WHERE guid = {}", match->second.luckyDrawChanceUncommon, guid);
-                    break;
-                case RARE_QUALITY:
-                    match->second.luckyDrawChanceRare = 0.f;
-                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceRare = {} WHERE guid = {}", match->second.luckyDrawChanceRare, guid);
-                    break;
-                case EPIC_QUALITY:
-                    match->second.luckyDrawChanceEpic = 0.f;
-                    CharacterDatabase.Execute("UPDATE character_draw SET luckyDrawChanceEpic = {} WHERE guid = {}", match->second.luckyDrawChanceEpic, guid);
-                    break;
+                    case NORMAL_QUALITY:
+                        match->second.luckyDrawChanceCommon = 0.f;
+                        break;
+                    case UNCOMMON_QUALITY:
+                        match->second.luckyDrawChanceUncommon = 0.f;
+                        break;
+                    case RARE_QUALITY:
+                        match->second.luckyDrawChanceRare = 0.f;
+                        break;
+                    case EPIC_QUALITY:
+                        match->second.luckyDrawChanceEpic = 0.f;
+                        break;
                 }
                 rune.isLucky = true;
                 return rune;
@@ -640,7 +643,7 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
     }
 
     for (const auto& pair : m_Runes)
-        if (pair.second.quality == quality && (pair.second.allowableClass & player->getClassMask() && (pair.second.specMask & PlayerSpecialization::GetSpecMask(player))))
+        if (pair.second.quality == quality && (pair.second.allowableClass & player->getClassMask()) && (pair.second.specMask & PlayerSpecialization::GetSpecMask(player)))
             possibleRunes.push_back(pair.second);
 
     if (possibleRunes.empty())

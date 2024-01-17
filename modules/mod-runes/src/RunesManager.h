@@ -28,7 +28,7 @@ struct Rune {
     int8 quality;
     int8 maxStack;
     std::string keywords;
-    uint32 specMask;
+    int32 specMask;
     bool isLucky;
     bool isAutorefund;
 
