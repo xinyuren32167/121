@@ -187,6 +187,10 @@ enum WarlockPets {
     PET_GARGOYLE = 600607,
 
     PET_FELGUARD = 17252,
+    PET_FELHUNTER = 417,
+    PET_IMP = 416,
+    PET_SUCCUBUS = 1863,
+    PET_VOIDWALKER = 1860,
 
     // Greater
     PET_DEMONIC_TYRAN = 600603,
