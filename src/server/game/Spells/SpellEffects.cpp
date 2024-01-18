@@ -2648,7 +2648,7 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
     if (m_spellInfo->GetCategory() == SPELLCATEGORY_DEVOUR_MAGIC)
     {
         if (m_spellInfo->SpellFamilyName == SPELLFAMILY_WARLOCK_PET)
-            m_caster->CastSpell(m_caster, 48011, TRIGGERED_FULL_MASK);
+            m_caster->CastSpell(m_caster, 48010, TRIGGERED_FULL_MASK);
         else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
         {
             int32 heal_amount = m_spellInfo->Effects[EFFECT_1].CalcValue();
