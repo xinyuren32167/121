@@ -11535,9 +11535,19 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
             }
                 
             // Shadow Bite (15% increase from each dot)
-            if (spellProto->SpellFamilyFlags[1] & 0x00400000 && IsPet())
+            /*if (spellProto->SpellFamilyFlags[1] & 0x00400000 && IsPet())
                 if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
-                    AddPct(DoneTotalMod, 15 * count);
+                    AddPct(DoneTotalMod, 15 * count);*/
+            break;
+        case SPELLFAMILY_WARLOCK_PET:
+            // Shadow Bite (15% increase from each dot)
+            if (spellProto->Id == 54053 && IsPet())
+                if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
+                {
+                    int32 increasePct = spellProto->GetEffect(EFFECT_2).CalcValue(this);
+                    AddPct(DoneTotalMod, increasePct * count);
+                }
+                    
             break;
         case SPELLFAMILY_HUNTER:
             // Steady Shot

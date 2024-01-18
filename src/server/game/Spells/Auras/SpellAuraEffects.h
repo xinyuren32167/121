@@ -395,10 +395,10 @@ namespace Acore
                 return false;
 
             // Sacrifice
-            if ((spellProtoA->SpellFamilyName == SPELLFAMILY_WARLOCK) &&
+            if ((spellProtoA->SpellFamilyName == SPELLFAMILY_WARLOCK_PET) &&
                     (spellProtoA->SpellIconID == 693))
                 return true;
-            if ((spellProtoB->SpellFamilyName == SPELLFAMILY_WARLOCK) &&
+            if ((spellProtoB->SpellFamilyName == SPELLFAMILY_WARLOCK_PET) &&
                     (spellProtoB->SpellIconID == 693))
                 return false;
 

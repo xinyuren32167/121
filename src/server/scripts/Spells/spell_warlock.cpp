@@ -654,9 +654,9 @@ private:
     PetStats GetSpApStamina(uint32 spellId) {
 
         spellsStaminaApSp[FELGUARD_SCALING_STAMINA_AP_SP] = { 85, 87, 45 };
-        spellsStaminaApSp[FELHUNTER_SCALING_STAMINA_AP_SP] = { 75, 35, 75 };
+        spellsStaminaApSp[FELHUNTER_SCALING_STAMINA_AP_SP] = { 75, 65, 65 };
         spellsStaminaApSp[IMP_SCALING_STAMINA_AP_SP] = { 75, 20, 75 };
-        spellsStaminaApSp[SUCCUBUS_SCALING_STAMINA_AP_SP] = { 60, 35, 75 };
+        spellsStaminaApSp[SUCCUBUS_SCALING_STAMINA_AP_SP] = { 75, 35, 75 };
         spellsStaminaApSp[VOIDWAKLER_SCALING_STAMINA_AP_SP] = { 100, 35, 55 };
 
         return spellsStaminaApSp[spellId];
@@ -4526,6 +4526,32 @@ class spell_warlock_shadow_cleave : public SpellScript
     }
 };
 
+class spell_warlock_voidwalker_sacrifice_shield : public AuraScript
+{
+    PrepareAuraScript(spell_warlock_voidwalker_sacrifice_shield);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+        
+        canBeRecalculated = false;
+        SpellSchoolMask schoolMask = GetSpellInfo()->GetSchoolMask();
+        float newAmount = CalculatePct(caster->SpellBaseDamageBonusDone(schoolMask), aurEff->GetAmount());
+
+        newAmount *= caster->SpellBaseHealingBonusDone(schoolMask);
+
+        amount = newAmount;
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warlock_voidwalker_sacrifice_shield::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+    }
+};
+
 
 
 void AddSC_warlock_spell_scripts()
@@ -4631,9 +4657,10 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_fiery_symbol);
     RegisterSpellScript(spell_warl_immolation_aura);
     RegisterSpellScript(spell_warlock_shadow_cleave);
+    RegisterSpellScript(spell_warlock_voidwalker_sacrifice_shield);
 
 
 
 
-
+    
 }
