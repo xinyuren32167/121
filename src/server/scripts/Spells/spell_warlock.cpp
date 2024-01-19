@@ -3374,11 +3374,12 @@ class spell_warl_shadow_bolt : public SpellScript
     }
 };
 
+// 83213 - Infernal - Fel Fire
 class spell_warl_infernal_immolation_aura_energy : public AuraScript
 {
     PrepareAuraScript(spell_warl_infernal_immolation_aura_energy);
 
-    void HandleDamage(AuraEffect const* aurEff)
+    /*void HandleDamage(AuraEffect const* aurEff)
     {
         Unit* infernal = GetAura()->GetOwner()->ToUnit();
         if (Unit* caster = infernal->GetOwner())
@@ -3386,19 +3387,19 @@ class spell_warl_infernal_immolation_aura_energy : public AuraScript
             int32 spellDamage = caster->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.4972f);
             infernal->CastCustomSpell(PET_SPELL_IMMOLATION_AURA_DAMAGE, SPELLVALUE_BASE_POINT0, spellDamage, infernal);
         }
-    }
+    }*/
 
     void HandleEnergy(AuraEffect const* aurEff)
     {
         Unit* infernal = GetAura()->GetOwner()->ToUnit();
         if (Unit* caster = infernal->GetOwner())
             if (caster && caster->IsAlive())
-                caster->CastSpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY, TRIGGERED_FULL_MASK);
+                caster->EnergizeBySpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY,aurEff->GetAmount(), POWER_ENERGY);
     }
 
     void Register() override
     {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_infernal_immolation_aura_energy::HandleDamage, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        /*OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_infernal_immolation_aura_energy::HandleDamage, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);*/
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_infernal_immolation_aura_energy::HandleEnergy, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
     }
 };

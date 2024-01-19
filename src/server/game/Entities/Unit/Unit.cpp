@@ -11547,7 +11547,24 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     int32 increasePct = spellProto->GetEffect(EFFECT_2).CalcValue(this);
                     AddPct(DoneTotalMod, increasePct * count);
                 }
-                    
+
+            // Shadow Blast (25% increase from each dot)
+            if (spellProto->Id == 83208 && IsPet())
+                if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
+                {
+                    int32 increasePct = spellProto->GetEffect(EFFECT_1).CalcValue(this);
+                    AddPct(DoneTotalMod, increasePct * count);
+                }
+
+            // Doom Bolt (20% increase on target under 20% health)
+            if (spellProto->Id == 83211 && IsPet())
+                {
+                    int32 increasePct = spellProto->GetEffect(EFFECT_1).CalcValue(this);
+                    int32 healthThreshold = spellProto->GetEffect(EFFECT_2).CalcValue(this);
+
+                    if (victim->GetHealthPct() <= healthThreshold)
+                         AddPct(DoneTotalMod, increasePct);
+                }
             break;
         case SPELLFAMILY_HUNTER:
             // Steady Shot
