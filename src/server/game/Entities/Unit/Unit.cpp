@@ -11340,7 +11340,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     // Merciless Combat
                     if ((*i)->GetSpellInfo()->Id == 49024 || (*i)->GetSpellInfo()->Id == 49538)
                     {
-                        if( (spellProto && spellProto->SpellFamilyFlags[0] & 0x2) || spellProto->SpellFamilyFlags[1] & 0x2 )
+                        if(spellProto && spellProto->Id == 49909 || spellProto && spellProto->Id == 80321 || spellProto && spellProto->Id == 51425 || spellProto && spellProto->Id == 80302 || spellProto && spellProto->Id == 55268)
                             if (!victim->HealthAbovePct(35))
                                 AddPct(DoneTotalMod, (*i)->GetAmount());
                     }
@@ -11524,7 +11524,6 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                             break;
                         }
                 }
-
             // Drain Soul - increased damage for targets under  X% HP
             if (spellProto->Id == 47855)
             {
@@ -11532,8 +11531,7 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
 
                 if (!victim->HealthAbovePct(healthThreshold))
                     DoneTotalMod *= 2;
-            }
-                
+            }        
             // Shadow Bite (15% increase from each dot)
             /*if (spellProto->SpellFamilyFlags[1] & 0x00400000 && IsPet())
                 if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
@@ -11547,7 +11545,6 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     int32 increasePct = spellProto->GetEffect(EFFECT_2).CalcValue(this);
                     AddPct(DoneTotalMod, increasePct * count);
                 }
-
             // Shadow Blast (25% increase from each dot)
             if (spellProto->Id == 83208 && IsPet())
                 if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
@@ -11555,16 +11552,15 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                     int32 increasePct = spellProto->GetEffect(EFFECT_1).CalcValue(this);
                     AddPct(DoneTotalMod, increasePct * count);
                 }
-
             // Doom Bolt (20% increase on target under 20% health)
             if (spellProto->Id == 83211 && IsPet())
-                {
+            {
                     int32 increasePct = spellProto->GetEffect(EFFECT_1).CalcValue(this);
                     int32 healthThreshold = spellProto->GetEffect(EFFECT_2).CalcValue(this);
 
                     if (victim->GetHealthPct() <= healthThreshold)
                          AddPct(DoneTotalMod, increasePct);
-                }
+            }
             break;
         case SPELLFAMILY_HUNTER:
             // Steady Shot
@@ -11578,7 +11574,6 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
             if (spellProto->SpellFamilyFlags[0] & 0x2)
                 if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 2721, 0))
                     AddPct(DoneTotalMod, aurEff->GetAmount());
-
             // Glacier Rot
             if (spellProto->SpellFamilyFlags[0] & 0x2 || spellProto->SpellFamilyFlags[1] & 0x6)
                 if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 196, 0))
@@ -11960,9 +11955,6 @@ int32 Unit::SpellBaseDamageBonusTaken(SpellSchoolMask schoolMask, bool isDoT)
 
     return TakenAdvertisedBenefit;
 }
-
-
-
 
 float Unit::SpellDoneCritChance(Unit const* /*victim*/, SpellInfo const* spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType, bool skipEffectCheck) const
 {
@@ -12346,9 +12338,6 @@ uint32 Unit::SpellCriticalHealingBonus(Unit const* caster, SpellInfo const* spel
 
     return damage;
 }
-
-
-
 
 float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, DamageEffectType damagetype)
 {

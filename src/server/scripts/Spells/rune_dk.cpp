@@ -44,6 +44,8 @@ enum DeathKnightSpells
     RUNE_DK_ECHOING_HOWL_PROC = 600742,
     RUNE_DK_INEXORABLE_ASSAULT_PROC = 600780,
     RUNE_DK_FROSTED_BLADE_PROC = 600794,
+    RUNE_DK_OBLITERATION_PROC = 600826,
+    RUNE_DK_ICE_HARVEST_PROC = 600845,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -57,6 +59,8 @@ enum DeathKnightSpells
     SPELL_DK_VAMPIRIC_BLOOD = 55233,
     SPELL_DK_BONESTORM = 80367,
     SPELL_DK_OBLITERATE = 51425,
+    SPELL_DK_PILLAR_OF_FROST = 80303,
+    TALENT_DK_KILLING_MACHINE = 51124,
 };
 
 class rune_dk_permafrost : public AuraScript
@@ -190,9 +194,6 @@ class rune_dk_blood_transfusion : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
-            return;
-
         Unit* caster = GetCaster();
 
         int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
@@ -1704,6 +1705,119 @@ class rune_dk_frosted_blade : public AuraScript
     }
 };
 
+class rune_dk_obliteration : public AuraScript
+{
+    PrepareAuraScript(rune_dk_obliteration);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasAura(SPELL_DK_PILLAR_OF_FROST))
+            return false;
+
+        return caster && caster->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetCaster(), TALENT_DK_KILLING_MACHINE, TRIGGERED_FULL_MASK);
+
+        if (roll_chance_i(aurEff->GetAmount()))
+            GetCaster()->CastSpell(GetCaster(), RUNE_DK_OBLITERATION_PROC, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_obliteration::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_obliteration::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_eternal_pillar : public AuraScript
+{
+    PrepareAuraScript(rune_dk_eternal_pillar);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        return caster && caster->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* aura = GetCaster()->GetAura(SPELL_DK_PILLAR_OF_FROST))
+        {
+            aura->SetDuration(aura->GetDuration() + aurEff->GetAmount());
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_eternal_pillar::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_eternal_pillar::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_icecap : public AuraScript
+{
+    PrepareAuraScript(rune_dk_icecap);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster->HasSpell(SPELL_DK_PILLAR_OF_FROST))
+            return false;
+
+        return caster && caster->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_PILLAR_OF_FROST, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_icecap::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_icecap::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_ice_harvest : public AuraScript
+{
+    PrepareAuraScript(rune_dk_ice_harvest);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        caster->CastCustomSpell(RUNE_DK_ICE_HARVEST_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_ice_harvest::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_ice_harvest::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     RegisterSpellScript(rune_dk_permafrost);
@@ -1759,4 +1873,8 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_cold_demons_gaze);
     RegisterSpellScript(rune_dk_inexorable_assault);
     RegisterSpellScript(rune_dk_frosted_blade);
+    RegisterSpellScript(rune_dk_obliteration);
+    RegisterSpellScript(rune_dk_eternal_pillar);
+    RegisterSpellScript(rune_dk_icecap);
+    RegisterSpellScript(rune_dk_ice_harvest);
 }
