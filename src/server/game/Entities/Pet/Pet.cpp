@@ -1153,12 +1153,79 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
         case NPC_FELGUARD_SUMMONED:
         case NPC_FELGUARD:
         {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_FELGUARD_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_FELGUARD_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_FELGUARD_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_FELGUARD_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_FELGUARD_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_FELGUARD_PET_PASSIVE_03, this);
+
             // xinef: Glyph of Felguard, so ugly im crying... no appropriate spell
-            if (AuraEffect* aurEff = owner->GetAuraEffectDummy(SPELL_GLYPH_OF_FELGUARD))
+            /*if (AuraEffect* aurEff = owner->GetAuraEffectDummy(SPELL_GLYPH_OF_FELGUARD))
             {
                 HandleStatModifier(UNIT_MOD_ATTACK_POWER, TOTAL_PCT, aurEff->GetAmount(), true);
-            }
+            }*/
 
+            break;
+        }
+        case NPC_FELHUNTER:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_FELHUNTER_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_FELHUNTER_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_FELHUNTER_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_FELHUNTER_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_FELHUNTER_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_FELHUNTER_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_IMP:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_IMP_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_IMP_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_IMP_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_IMP_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_IMP_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_IMP_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_SUCCUBUS:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_SUCCUBUS_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_SUCCUBUS_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_SUCCUBUS_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_SUCCUBUS_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_SUCCUBUS_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_SUCCUBUS_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_VOIDWALKER:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_PET_PASSIVE_03, this);
             break;
         }
         case NPC_WATER_ELEMENTAL_PERM:
@@ -1234,12 +1301,17 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, highAmt * highAmt * highAmt);
 
             AddAura(SPELL_PET_AVOIDANCE, this);
-            AddAura(SPELL_WARLOCK_PET_SCALING_05, this);
-            AddAura(SPELL_INFERNAL_SCALING_01, this);
-            AddAura(SPELL_INFERNAL_SCALING_02, this);
-            AddAura(SPELL_INFERNAL_SCALING_03, this);
-            AddAura(SPELL_INFERNAL_SCALING_04, this);
-            AddAura(SPELL_INFERNAL_AOE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_FEL_FIRE, this);
+            AddAura(SPELL_WARLOCK_INFERNAL_PET_FEL_ATTACKS, this);
             break;
         }
         case NPC_DOOMGUARD:
@@ -1250,11 +1322,100 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, highAmt * highAmt * highAmt);
 
             AddAura(SPELL_PET_AVOIDANCE, this);
-            AddAura(SPELL_WARLOCK_PET_SCALING_01, this);
-            AddAura(SPELL_WARLOCK_PET_SCALING_02, this);
-            AddAura(SPELL_WARLOCK_PET_SCALING_03, this);
-            AddAura(SPELL_WARLOCK_PET_SCALING_04, this);
-            AddAura(SPELL_WARLOCK_PET_SCALING_05, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_DOOMGUARD_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_DOOMGUARD_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_DOOMGUARD_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_DOOMGUARD_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_DOOMGUARD_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_DOOMGUARD_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_DARKGLARE:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_DARKGLARE_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_DARKGLARE_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_DARKGLARE_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_DARKGLARE_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_DARKGLARE_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_DARKGLARE_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_DEMONIC_TYRANT:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_DEMONIC_TYRANT_PET_FLAME_NOURISH, this);
+            break;
+        }
+        case NPC_DREADSTALKER:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_DREADSTALKER_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_DREADSTALKER_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_DREADSTALKER_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_DREADSTALKER_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_DREADSTALKER_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_DREADSTALKER_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_BILESCOURGE:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_BILESCOURGE_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_BILESCOURGE_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_BILESCOURGE_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_BILESCOURGE_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_BILESCOURGE_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_BILESCOURGE_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_VILEFIEND:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_VILEFIEND_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_VILEFIEND_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_VILEFIEND_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_VILEFIEND_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_VILEFIEND_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_VILEFIEND_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_WILD_IMP:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_WILD_IMP_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_WILD_IMP_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_WILD_IMP_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_WILD_IMP_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_WILD_IMP_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_WILD_IMP_PET_PASSIVE_03, this);
             break;
         }
         case NPC_WATER_ELEMENTAL_TEMP:
