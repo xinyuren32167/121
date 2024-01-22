@@ -170,6 +170,8 @@ enum WarlockSpells
     // Runes
     RUNE_WARLOCK_SEIZED_VITALITY_DEBUFF = 800484,
     RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
+    RUNE_WARLOCK_STOLEN_POWER_BUFF = 800825,
+    RUNE_WARLOCK_DEMONIC_SERVITUDE = 800856,
     RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF = 801264,
     RUNE_WARLOCK_REVEL_IN_PAIN_SHIELD = 801302,
 };
@@ -2012,34 +2014,54 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
 {
     PrepareSpellScript(spell_warlock_summon_demonic_tyrant);
 
+    Aura* GetReignofTyrannyAura(Unit* caster)
+    {
+        for (size_t i = 800844; i < 800850; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void HandleCast()
     {
-        Player* player = GetCaster()->ToPlayer();
+        if (Player* player = GetCaster()->ToPlayer())
+        {
+            int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
 
-        int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
+            int32 duration = GetSpellInfo()->GetDuration();
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration, WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
 
-        int32 duration = GetSpellInfo()->GetDuration();
-        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration, WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
+            if (summon)
+                summon->SetPositionReset(WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
 
-        if (summon)
-            summon->SetPositionReset(WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
-
-        for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-            if (Unit* pet = *itr)
-                if (TempSummon* summon = pet->ToTempSummon())
+            // Give damage increased based on the amount of Demonic Servitude stacks
+            if (Aura* runeAura = GetReignofTyrannyAura(player))
+                if (Aura* demonicServitude = player->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
                 {
-                    if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
-                        summon->SetTimer(summon->GetTimer() + timerIncrease);
+                    int32 stacks = demonicServitude->GetStackAmount();
+                    int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
-                    if (summon->GetEntry() == PET_FELGUARD_SUMMON || summon->GetEntry() == NPC_IMP
-                        || summon->GetEntry() == NPC_FELHUNTER || summon->GetEntry() == NPC_FELGUARD
-                        || summon->GetEntry() == NPC_VOIDWALKER || summon->GetEntry() == NPC_SUCCUBUS)
-                    {
-                        player->CastSpell(summon, SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE);
-                    }
+                    player->CastCustomSpell(procSpell, SPELLVALUE_AURA_STACK, stacks, summon, TRIGGERED_FULL_MASK);
                 }
 
+            for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                if (Unit* pet = *itr)
+                    if (TempSummon* summon = pet->ToTempSummon())
+                    {
+                        if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
+                            summon->SetTimer(summon->GetTimer() + timerIncrease);
 
+                        if (summon->GetEntry() == PET_FELGUARD_SUMMON || summon->GetEntry() == NPC_IMP
+                            || summon->GetEntry() == NPC_FELHUNTER || summon->GetEntry() == NPC_FELGUARD
+                            || summon->GetEntry() == NPC_VOIDWALKER || summon->GetEntry() == NPC_SUCCUBUS)
+                        {
+                            player->CastSpell(summon, SPELL_WARLOCK_DEMONIC_TYRANT_DAMAGE_INCREASE);
+                        }
+                    }
+        }
     }
 
     void Register() override
@@ -3368,9 +3390,22 @@ class spell_warl_shadow_bolt : public SpellScript
             caster->CastSpell(caster, SPELL_WARLOCK_SHADOW_BOLT_ENERGY, TRIGGERED_FULL_MASK);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Stolen Power buff.
+        if (caster->HasAura(RUNE_WARLOCK_STOLEN_POWER_BUFF))
+            caster->RemoveAura(RUNE_WARLOCK_STOLEN_POWER_BUFF);
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warl_shadow_bolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_warl_shadow_bolt::HandleAfterHit);
     }
 };
 
@@ -4098,9 +4133,22 @@ class spell_warl_demonbolt : public SpellScript
         SetHitDamage(damage);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove Stolen Power buff.
+        if (caster->HasAura(RUNE_WARLOCK_STOLEN_POWER_BUFF))
+            caster->RemoveAura(RUNE_WARLOCK_STOLEN_POWER_BUFF);
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warl_demonbolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_warl_demonbolt::HandleAfterHit);
     }
 };
 
@@ -4785,6 +4833,6 @@ void AddSC_warlock_spell_scripts()
 
 
 
-    
+
 
 }

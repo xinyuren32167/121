@@ -65,6 +65,10 @@ enum WarlockSpells
     RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER_BUFF = 800717,
     RUNE_WARLOCK_THE_HOUNDMASTERS_STRATAGEM_LISTENER = 800774,
     RUNE_WARLOCK_THE_HOUNDMASTERS_STRATAGEM_DAMAGE = 800775,
+    RUNE_WARLOCK_STOLEN_POWER_LISTENER = 800824,
+    RUNE_WARLOCK_STOLEN_POWER_BUFF = 800825,
+    RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER = 800877,
+    RUNE_WARLOCK_DEMONIC_SERVITUDE = 800856,
     RUNE_WARLOCK_INTERNAL_COMBUSTION_DAMAGE = 800890,
     RUNE_WARLOCK_ROARING_BLAZE_DEBUFF = 800952,
     RUNE_WARLOCK_ROARING_BLAZE_DAMAGE = 800953,
@@ -80,15 +84,31 @@ enum WarlockSpells
     PET_SCALING_WARLOCK_STAMINA_DAMAGEREDUC_ARMOR = 83206,
     PET_SCALING_WARLOCK_INTELLECT_ALLRES = 83207,
 
-
 };
 
-enum WarlockPets
-{
-    PET_WARLOCK_FELGUARD = 17252,
+enum WarlockPets {
 
+    // Pet
+    PET_WARLOCK_FELGUARD = 17252,
+    PET_WARLOCK_FELHUNTER = 417,
+    PET_WARLOCK_IMP = 416,
+    PET_WARLOCK_SUCCUBUS = 1863,
+    PET_WARLOCK_VOIDWALKER = 1860,
+
+    // Guardians
+    GUARDIAN_WARLOCK_BILESCOURGE = 600607,
+    GUARDIAN_WARLOCK_DARKGLARE = 600604,
+    GUARDIAN_WARLOCK_DEMONIC_TYRAN = 600603,
+    GUARDIAN_WARLOCK_DOOMGUARD = 11859,
+    GUARDIAN_WARLOCK_DREADSTALKER = 600600,
+    GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE = 600605,
+    GUARDIAN_WARLOCK_INFERNAL = 89,
+    GUARDIAN_WARLOCK_PORTAL_SUMMON = 600606,
+    GUARDIAN_WARLOCK_VILEFIEND = 600602,
+    GUARDIAN_WARLOCK_WILD_IMP = 600601,
+    
     // Runes
-    PET_WARLOCK_INQUISITORS_EYE = 800000,
+    RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE = 800000,
 };
 
 class rune_warl_inquisitors_gaze : public AuraScript
@@ -117,7 +137,7 @@ class rune_warl_inquisitors_gaze : public AuraScript
 
         Position pos = caster->GetNearPosition(urand(1, 8), urand(1, 8));
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-        Creature* summon = caster->SummonCreature(PET_WARLOCK_INQUISITORS_EYE, pos, TEMPSUMMON_TIMED_DESPAWN, aurEff->GetAmount(), 0, properties);
+        Creature* summon = caster->SummonCreature(RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE, pos, TEMPSUMMON_TIMED_DESPAWN, aurEff->GetAmount(), 0, properties);
 
         if (!summon)
             return;
@@ -1200,7 +1220,7 @@ class rune_warl_antoran_armaments_proc : public AuraScript
         if (!target || target->isDead())
             return;
 
-        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff);
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
 
         caster->CastCustomSpell(RUNE_WARLOCK_ANTORAN_ARMAMENTS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
@@ -1448,6 +1468,239 @@ class rune_warl_the_houndmasters_stratagem : public AuraScript
     {
         DoCheckProc += AuraCheckProcFn(rune_warl_the_houndmasters_stratagem::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_warl_the_houndmasters_stratagem::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_inner_demons : public AuraScript
+{
+    PrepareAuraScript(rune_warl_inner_demons);
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_WILD_IMP, player, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+            if (summon)
+                summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+
+            if (!player->IsInCombat())
+                return;
+
+            int32 procChance = aurEff->GetAmount();
+
+            if (!roll_chance_i(procChance))
+                return;
+
+            int32 duration = GetEffect(EFFECT_1)->GetAmount();
+
+            TempSummon* secondSummon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_WILD_IMP, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + 1);
+            if (secondSummon)
+                secondSummon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + 1);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_warl_inner_demons::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_warl_stolen_power : public AuraScript
+{
+    PrepareAuraScript(rune_warl_stolen_power);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            auto summonedUnits = player->m_Controlled;
+
+            for (auto const& unit : summonedUnits)
+            {
+                if (!unit || unit->isDead())
+                    continue;
+
+                if (unit->GetEntry() != GUARDIAN_WARLOCK_WILD_IMP)
+                    continue;
+
+                player->CastSpell(unit, RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_WARLOCK_STOLEN_POWER_LISTENER))
+            caster->RemoveAura(RUNE_WARLOCK_STOLEN_POWER_LISTENER);
+
+        if (Player* player = caster->ToPlayer())
+        {
+            auto summonedUnits = player->m_Controlled;
+
+            for (auto const& unit : summonedUnits)
+            {
+                if (!unit || unit->isDead())
+                    continue;
+
+                if (unit->HasAura(RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER))
+                    unit->RemoveAura(RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER);
+            }
+        }
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_warl_stolen_power::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_stolen_power::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_warl_stolen_power_proc : public AuraScript
+{
+    PrepareAuraScript(rune_warl_stolen_power_proc);
+
+    Aura* GetStolenPowerAura(Unit* caster)
+    {
+        for (size_t i = 800818; i < 800824; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* pet = GetUnitOwner();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* runeAura = GetStolenPowerAura(caster))
+        {
+            int32 maxStack = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+            if (Aura* listener = caster->GetAura(RUNE_WARLOCK_STOLEN_POWER_LISTENER))
+            {
+                listener->ModStackAmount(1);
+
+                int32 stacks = listener->GetStackAmount();
+
+                if (stacks >= maxStack)
+                {
+                    caster->AddAura(RUNE_WARLOCK_STOLEN_POWER_BUFF, caster);
+                    listener->Remove();
+                }
+            }
+            else
+                caster->AddAura(RUNE_WARLOCK_STOLEN_POWER_LISTENER, caster);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_stolen_power_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_stolen_power_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_warl_reign_of_tyranny : public AuraScript
+{
+    PrepareAuraScript(rune_warl_reign_of_tyranny);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 stackAmount = 0;
+            int32 stackPerDemon = GetEffect(EFFECT_1)->GetAmount();
+            auto summonedUnits = player->m_Controlled;
+
+            for (auto const& unit : summonedUnits)
+            {
+                if (!unit || unit->isDead())
+                    continue;
+
+                // Lesser demons
+                if (unit->GetEntry() == GUARDIAN_WARLOCK_DREADSTALKER ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_VILEFIEND ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_WILD_IMP ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_BILESCOURGE ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_PORTAL_SUMMON ||
+                    unit->GetEntry() == RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE)
+                {
+                    stackAmount += stackPerDemon;
+                }
+
+                // Greater demons
+                if (unit->GetEntry() == PET_WARLOCK_FELGUARD ||
+                    unit->GetEntry() == PET_WARLOCK_FELHUNTER ||
+                    unit->GetEntry() == PET_WARLOCK_IMP ||
+                    unit->GetEntry() == PET_WARLOCK_SUCCUBUS ||
+                    unit->GetEntry() == PET_WARLOCK_VOIDWALKER ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_DARKGLARE ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_DEMONIC_TYRAN ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_DOOMGUARD ||
+                    unit->GetEntry() == GUARDIAN_WARLOCK_INFERNAL)
+                {
+                    stackAmount += stackPerDemon * 3;
+                }
+            }
+
+            if (stackAmount == 0)
+                return;
+
+            caster->CastCustomSpell(RUNE_WARLOCK_DEMONIC_SERVITUDE, SPELLVALUE_AURA_STACK, stackAmount, caster, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
+            caster->RemoveAura(RUNE_WARLOCK_DEMONIC_SERVITUDE);
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_warl_reign_of_tyranny::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_reign_of_tyranny::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -2534,8 +2787,11 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_immutable_hatred);
     RegisterSpellScript(rune_warl_immutable_hatred_proc);
     RegisterSpellScript(rune_warl_infernal_command);
-    RegisterSpellScript(rune_warl_the_houndmasters_stratagem); 
-    RegisterSpellScript(rune_warl_grand_tyrants_design); 
+    RegisterSpellScript(rune_warl_the_houndmasters_stratagem);
+    RegisterSpellScript(rune_warl_inner_demons);
+    RegisterSpellScript(rune_warl_stolen_power);
+    RegisterSpellScript(rune_warl_stolen_power_proc);
+    RegisterSpellScript(rune_warl_grand_tyrants_design);
     RegisterSpellScript(rune_warl_internal_combustion);
     RegisterSpellScript(rune_warl_madness_of_azjaqir);
     RegisterSpellScript(rune_warl_roaring_blaze);
@@ -2565,6 +2821,6 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_soulmonger);
 
 
-    
+
 
 }
