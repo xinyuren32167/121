@@ -60,6 +60,7 @@ enum WarlockSpells
     RUNE_WARLOCK_TORMENTED_CRESCENDO_BUFF = 800572,
     RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
     RUNE_WARLOCK_DREAD_TOUCH_DAMAGE = 800585,
+    RUNE_WARLOCK_ANTORAN_ARMAMENTS_DAMAGE = 800702,
     RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER = 800716,
     RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER_BUFF = 800717,
     RUNE_WARLOCK_THE_HOUNDMASTERS_STRATAGEM_LISTENER = 800774,
@@ -1125,6 +1126,92 @@ class rune_warl_dread_calling : public AuraScript
     }
 };
 
+class rune_warl_antoran_armaments : public AuraScript
+{
+    PrepareAuraScript(rune_warl_antoran_armaments);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+
+            if (!pet || pet->isDead())
+                return;
+
+            if (pet->GetEntry() == PET_WARLOCK_FELGUARD)
+                pet->AddAura(procSpell, pet);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+
+            if (!pet || pet->isDead())
+                return;
+
+            if (pet->HasAura(procSpell))
+                pet->RemoveAura(procSpell);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_warl_antoran_armaments::HandleApply, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_antoran_armaments::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_warl_antoran_armaments_proc : public AuraScript
+{
+    PrepareAuraScript(rune_warl_antoran_armaments_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetDamageInfo()->GetAttacker();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff);
+
+        caster->CastCustomSpell(RUNE_WARLOCK_ANTORAN_ARMAMENTS_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_warl_antoran_armaments_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_warl_antoran_armaments_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 class rune_warl_immutable_hatred : public AuraScript
 {
     PrepareAuraScript(rune_warl_immutable_hatred);
@@ -1145,30 +1232,6 @@ class rune_warl_immutable_hatred : public AuraScript
 
             if (pet->GetEntry() == PET_WARLOCK_FELGUARD)
                 caster->CastSpell(pet, RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER, TRIGGERED_FULL_MASK);
-        }
-    }
-
-    void HandlePeriodic(AuraEffect const* aurEff)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (Player* player = caster->ToPlayer())
-        {
-            Pet* pet = player->GetPet();
-
-            if (!pet || pet->isDead())
-                return;
-
-            if (pet->GetEntry() != PET_WARLOCK_FELGUARD)
-                return;
-
-            if (pet->HasAura(RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER))
-                return;
-
-            caster->CastSpell(pet, RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1193,9 +1256,8 @@ class rune_warl_immutable_hatred : public AuraScript
 
     void Register()
     {
-        OnEffectApply += AuraEffectApplyFn(rune_warl_immutable_hatred::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
-        OnEffectPeriodic += AuraEffectPeriodicFn(rune_warl_immutable_hatred::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
-        OnEffectRemove += AuraEffectRemoveFn(rune_warl_immutable_hatred::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(rune_warl_immutable_hatred::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_immutable_hatred::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1273,6 +1335,85 @@ class rune_warl_immutable_hatred_proc : public AuraScript
     }
 private:
     Unit* oldTarget;
+};
+
+class rune_warl_infernal_command : public AuraScript
+{
+    PrepareAuraScript(rune_warl_infernal_command);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+
+            if (!pet || pet->isDead())
+                return;
+
+            if (pet->GetEntry() == PET_WARLOCK_FELGUARD)
+            {
+                if (!caster->HasAura(procSpell))
+                    caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+            else
+                if (caster->HasAura(procSpell))
+                    caster->RemoveAura(procSpell);
+        }
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+
+            if (!pet || pet->isDead())
+                return;
+
+            if (pet->GetEntry() == PET_WARLOCK_FELGUARD)
+            {
+                if (!caster->HasAura(procSpell))
+                    caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
+            }
+            else
+                if (caster->HasAura(procSpell))
+                    caster->RemoveAura(procSpell);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (caster->HasAura(procSpell))
+            caster->RemoveAura(procSpell);
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_warl_infernal_command::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_warl_infernal_command::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        OnEffectRemove += AuraEffectRemoveFn(rune_warl_infernal_command::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
 };
 
 class rune_warl_the_houndmasters_stratagem : public AuraScript
@@ -2388,10 +2529,13 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_grand_warlocks_design);
     RegisterSpellScript(rune_warl_demonic_knowledge);
     RegisterSpellScript(rune_warl_dread_calling);
+    RegisterSpellScript(rune_warl_antoran_armaments);
+    RegisterSpellScript(rune_warl_antoran_armaments_proc);
     RegisterSpellScript(rune_warl_immutable_hatred);
     RegisterSpellScript(rune_warl_immutable_hatred_proc);
-    RegisterSpellScript(rune_warl_the_houndmasters_stratagem);
-    RegisterSpellScript(rune_warl_grand_tyrants_design);
+    RegisterSpellScript(rune_warl_infernal_command);
+    RegisterSpellScript(rune_warl_the_houndmasters_stratagem); 
+    RegisterSpellScript(rune_warl_grand_tyrants_design); 
     RegisterSpellScript(rune_warl_internal_combustion);
     RegisterSpellScript(rune_warl_madness_of_azjaqir);
     RegisterSpellScript(rune_warl_roaring_blaze);

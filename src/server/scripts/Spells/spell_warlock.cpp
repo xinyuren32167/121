@@ -2536,7 +2536,7 @@ class spell_warl_chaos_bolt : public SpellScript
         // remove one stack of Crashing Chaos listener each cast.
         for (size_t i = 801178; i < 801184; i++)
             if (Aura* crashingChaosListener = caster->GetAura(i))
-                crashingChaosListener->ModStackAmount(-1);       
+                crashingChaosListener->ModStackAmount(-1);
     }
 
     void Register() override
@@ -3394,7 +3394,7 @@ class spell_warl_infernal_immolation_aura_energy : public AuraScript
         Unit* infernal = GetAura()->GetOwner()->ToUnit();
         if (Unit* caster = infernal->GetOwner())
             if (caster && caster->IsAlive())
-                caster->EnergizeBySpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY,aurEff->GetAmount(), POWER_ENERGY);
+                caster->EnergizeBySpell(caster, SPELL_WARLOCK_IMMOLATION_AURA_ENERGY, aurEff->GetAmount(), POWER_ENERGY);
     }
 
     void Register() override
@@ -3721,7 +3721,7 @@ class spell_warl_demonkin : public AuraScript
         target->learnSpell(SPELL_WARLOCK_SHROUD_OF_DARKNESS);
         target->learnSpell(SPELL_WARLOCK_SOUL_BOMB);
         target->learnSpell(SPELL_WARLOCK_METAMORPHOSIS);
-        
+
         target->UnsummonPetTemporaryIfAny();
     }
 
@@ -4136,8 +4136,8 @@ class spell_warl_rain_of_fire : public AuraScript
         }
 
         // remove Ritual of Ruin buff.
-            if (caster->HasAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF))
-                caster->RemoveAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF);
+        if (caster->HasAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF))
+            caster->RemoveAura(TALENT_WARLOCK_RITUAL_OF_RUIN_BUFF);
     }
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -4537,7 +4537,7 @@ class spell_warlock_voidwalker_sacrifice_shield : public AuraScript
 
         if (!caster || caster->isDead())
             return;
-        
+
         canBeRecalculated = false;
         SpellSchoolMask schoolMask = GetSpellInfo()->GetSchoolMask();
         float newAmount = CalculatePct(caster->SpellBaseDamageBonusDone(schoolMask), aurEff->GetAmount());
@@ -4550,6 +4550,126 @@ class spell_warlock_voidwalker_sacrifice_shield : public AuraScript
     void Register() override
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warlock_voidwalker_sacrifice_shield::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+    }
+};
+
+// 83208 - Shadow Blast
+class spell_warlock_darkglare_shadow_blast : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_darkglare_shadow_blast);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* owner = pet->GetOwner();
+
+        if (!owner || owner->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // 25% damage increase for each dot on the target
+        if (uint8 count = target->GetDoTsByCaster(owner->GetGUID()))
+        {
+            int32 increasePct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(owner);
+            AddPct(damage, increasePct * count);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warlock_darkglare_shadow_blast::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 83211 - Doom Bolt
+class spell_warlock_doomguard_doom_bolt : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_doomguard_doom_bolt);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* owner = pet->GetOwner();
+
+        if (!owner || owner->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // 20% damage increase on target under 20% health
+        int32 increasePct = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(owner);
+        int32 healthThreshold = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(owner);
+
+        if (target->GetHealthPct() <= healthThreshold)
+            AddPct(damage, increasePct);
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warlock_doomguard_doom_bolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 54053 - Shadow Bite
+class spell_warlock_felhunter_shadow_bite : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_felhunter_shadow_bite);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* owner = pet->GetOwner();
+
+        if (!owner || owner->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // 15% damage increase for each dot on the target
+        if (uint8 count = target->GetDoTsByCaster(owner->GetGUID()))
+        {
+            int32 increasePct = GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(owner);
+            AddPct(damage, increasePct * count);
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warlock_felhunter_shadow_bite::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
@@ -4659,9 +4779,12 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_immolation_aura);
     RegisterSpellScript(spell_warlock_shadow_cleave);
     RegisterSpellScript(spell_warlock_voidwalker_sacrifice_shield);
-
+    RegisterSpellScript(spell_warlock_darkglare_shadow_blast);
+    RegisterSpellScript(spell_warlock_doomguard_doom_bolt);
+    RegisterSpellScript(spell_warlock_felhunter_shadow_bite);
 
 
 
     
+
 }

@@ -58,6 +58,7 @@ enum WarlockSpells
 
     // Runes
     RUNE_WARLOCK_INQUISITORS_GAZE_AURA = 800106,
+    RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER = 800716,
 };
 
 enum PET_WARLOCKS {
@@ -261,6 +262,50 @@ private:
     uint32 attackCount;
 };
 
+// 17252 - Main Felguard - PET
+struct npc_pet_warlock_felguard : public ScriptedAI
+{
+    npc_pet_warlock_felguard(Creature* creature) : ScriptedAI(creature) { }
+
+    Aura* GetAntoranArmamentsAura(Unit* caster)
+    {
+        for (size_t i = 800696; i < 800702; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetImmutableHatredAura(Unit* caster)
+    {
+        for (size_t i = 800704; i < 800710; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void InitializeAI() override
+    {
+        Unit* owner = me->GetOwner();
+
+        if (!owner)
+            return;
+
+        if (Aura* runeAura = GetAntoranArmamentsAura(owner))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            me->AddAura(procSpell, me);
+        }
+
+        if (Aura* runeAura = GetImmutableHatredAura(owner))
+            me->AddAura(RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER, me);
+    }
+};
 
 struct npc_pet_warlock_darkglare : public ScriptedAI
 {
@@ -472,9 +517,20 @@ private:
     int32 shadow;
 };
 
-struct npc_pet_warlock_felguard : public ScriptedAI
+struct npc_pet_warlock_felguard_grimoire : public ScriptedAI
 {
-    npc_pet_warlock_felguard(Creature* creature) : ScriptedAI(creature), _initAttack(true), _didCharge(false) { }
+    npc_pet_warlock_felguard_grimoire(Creature* creature) : ScriptedAI(creature), _initAttack(true), _didCharge(false) { }
+
+    Aura* GetUnbeautifulAura(Unit* caster)
+    {
+        for (size_t i = 600464; i < 600470; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
 
     void InitializeAI() override
     {
@@ -792,6 +848,7 @@ void AddSC_warlock_pet_scripts()
 {
     RegisterCreatureAI(npc_pet_warlock_bomber);
     RegisterCreatureAI(npc_pet_warlock_felguard);
+    RegisterCreatureAI(npc_pet_warlock_felguard_grimoire);
     RegisterCreatureAI(npc_pet_warlock_darkglare);
     RegisterCreatureAI(npc_pet_warlock_wildimp);
     RegisterCreatureAI(npc_pet_warlock_dreadstalker);
