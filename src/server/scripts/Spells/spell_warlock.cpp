@@ -201,6 +201,7 @@ enum WarlockPets {
 
 enum WarlockScalingSpells {
 
+    // Pets
     FELGUARD_SCALING_STAMINA_AP_SP = 83500,
     FELHUNTER_SCALING_STAMINA_AP_SP = 83503,
     IMP_SCALING_STAMINA_AP_SP = 83506,
@@ -218,6 +219,34 @@ enum WarlockScalingSpells {
     IMP_SCALING_HASTE = 83508,
     SUCCUBUS_SCALING_HASTE = 83511,
     VOIDWAKLER_SCALING_HASTE = 83514,
+
+    // Guardians
+    DARKGLARE_SCALING_STAMINA_AP_SP = 83515,
+    DEMONIC_TYRANT_SCALING_STAMINA_AP_SP = 83518,
+    DOOMGUARD_SCALING_STAMINA_AP_SP = 83521,
+    DREADSTALKER_SCALING_STAMINA_AP_SP = 83524,
+    BILESCOURGE_SCALING_STAMINA_AP_SP = 83527,
+    INFERNAL_SCALING_STAMINA_AP_SP = 83530,
+    VILEFIEND_SCALING_STAMINA_AP_SP = 83533,
+    WILD_IMP_SCALING_STAMINA_AP_SP = 83536,
+
+    DARKGLARE_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83516,
+    DEMONIC_TYRANT_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83519,
+    DOOMGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83522,
+    DREADSTALKER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83525,
+    BILESCOURGE_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83528,
+    INFERNAL_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83531,
+    VILEFIEND_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83534,
+    WILD_IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83537,
+
+    DARKGLARE_SCALING_HASTE = 83517,
+    DEMONIC_TYRANT_SCALING_HASTE = 83520,
+    DOOMGUARD_SCALING_HASTE = 83523,
+    DREADSTALKER_SCALING_HASTE = 83526,
+    BILESCOURGE_SCALING_HASTE = 83529,
+    INFERNAL_SCALING_HASTE = 83532,
+    VILEFIEND_SCALING_HASTE = 83535,
+    WILD_IMP_SCALING_HASTE = 83538,
 };
 
 enum WarlockSpellIcons
@@ -427,66 +456,65 @@ class spell_warl_demonic_knowledge : public AuraScript
     }
 };
 
-
-class spell_warl_all_minion_scaling : public AuraScript
-{
-    PrepareAuraScript(spell_warl_all_minion_scaling);
-
-    void CalculateAPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
-    {
-        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
-        {
-            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
-            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum = (fire > shadow) ? fire : shadow;
-            amount = CalculatePct(std::max<int32>(0, maximum), 57);
-        }
-    }
-
-    void CalculateSPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
-    {
-        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
-        {
-            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
-            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum = (fire > shadow) ? fire : shadow;
-            amount = maximum;
-        }
-    }
-
-    void CalculateDamageAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
-    {
-        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
-        {
-            int32 newAmount = 0;
-
-            if (m_scriptSpellId == SPELL_MINION_STAT_DREAD_STALKER)
-                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DREAD_STALKER)->GetEffect(EFFECT_0)->GetAmount();
-            if (m_scriptSpellId == SPELL_MINION_STAT_WILD_IMP)
-                newAmount = owner->GetAura(SPELL_MINION_INCREASE_WILD_IMP)->GetEffect(EFFECT_0)->GetAmount();
-            if (m_scriptSpellId == SPELL_MINION_STAT_DARKGLARE)
-                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DARKGLARE)->GetEffect(EFFECT_0)->GetAmount();
-            if (m_scriptSpellId == SPELL_MINION_STAT_VILEFIEND)
-                newAmount = owner->GetAura(SPELL_MINION_INCREASE_VILEFIEND)->GetEffect(EFFECT_0)->GetAmount();
-            if (m_scriptSpellId == SPELL_MINION_STAT_DEMONIC_TYRANT)
-                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DEMONIC_TYRANT)->GetEffect(EFFECT_0)->GetAmount();
-            if (m_scriptSpellId == SPELL_MINION_STAT_BOMBER)
-                newAmount = owner->GetAura(SPELL_MINION_INCREASE_BOMBER)->GetEffect(EFFECT_0)->GetAmount();
-
-            if (newAmount > 0) {
-                amount = newAmount;
-            }
-        }
-    }
-
-
-    void Register() override
-    {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateDamageAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateAPAmount, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER);
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateSPAmount, EFFECT_0, SPELL_AURA_MOD_DAMAGE_DONE);
-    }
-};
+//class spell_warl_all_minion_scaling : public AuraScript
+//{
+//    PrepareAuraScript(spell_warl_all_minion_scaling);
+//
+//    void CalculateAPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+//    {
+//        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
+//        {
+//            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+//            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+//            int32 maximum = (fire > shadow) ? fire : shadow;
+//            amount = CalculatePct(std::max<int32>(0, maximum), 57);
+//        }
+//    }
+//
+//    void CalculateSPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+//    {
+//        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
+//        {
+//            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+//            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+//            int32 maximum = (fire > shadow) ? fire : shadow;
+//            amount = maximum;
+//        }
+//    }
+//
+//    void CalculateDamageAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+//    {
+//        if (Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself())
+//        {
+//            int32 newAmount = 0;
+//
+//            if (m_scriptSpellId == SPELL_MINION_STAT_DREAD_STALKER)
+//                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DREAD_STALKER)->GetEffect(EFFECT_0)->GetAmount();
+//            if (m_scriptSpellId == SPELL_MINION_STAT_WILD_IMP)
+//                newAmount = owner->GetAura(SPELL_MINION_INCREASE_WILD_IMP)->GetEffect(EFFECT_0)->GetAmount();
+//            if (m_scriptSpellId == SPELL_MINION_STAT_DARKGLARE)
+//                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DARKGLARE)->GetEffect(EFFECT_0)->GetAmount();
+//            if (m_scriptSpellId == SPELL_MINION_STAT_VILEFIEND)
+//                newAmount = owner->GetAura(SPELL_MINION_INCREASE_VILEFIEND)->GetEffect(EFFECT_0)->GetAmount();
+//            if (m_scriptSpellId == SPELL_MINION_STAT_DEMONIC_TYRANT)
+//                newAmount = owner->GetAura(SPELL_MINION_INCREASE_DEMONIC_TYRANT)->GetEffect(EFFECT_0)->GetAmount();
+//            if (m_scriptSpellId == SPELL_MINION_STAT_BOMBER)
+//                newAmount = owner->GetAura(SPELL_MINION_INCREASE_BOMBER)->GetEffect(EFFECT_0)->GetAmount();
+//
+//            if (newAmount > 0) {
+//                amount = newAmount;
+//            }
+//        }
+//    }
+//
+//
+//    void Register() override
+//    {
+//        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateDamageAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+//        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateAPAmount, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER);
+//        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_all_minion_scaling::CalculateSPAmount, EFFECT_0, SPELL_AURA_MOD_DAMAGE_DONE);
+//    }
+//};
 
 class spell_warl_generic_scaling : public AuraScript
 {
@@ -533,7 +561,7 @@ class spell_warl_generic_scaling : public AuraScript
     {
         if (Unit* owner = GetUnitOwner()->GetOwner())
         {
-            float speed = owner->GetFloatValue(UNIT_MOD_CAST_SPEED);
+            float speed = owner->GetFloatValue(UNIT_MOD_CAST_SPEED) * 10;
             amount = std::max<int32>(0, speed);
         }
     }
@@ -615,7 +643,15 @@ class spell_warl_generic_scaling : public AuraScript
             || m_scriptSpellId == IMP_SCALING_STAMINA_AP_SP
             || m_scriptSpellId == FELHUNTER_SCALING_STAMINA_AP_SP
             || m_scriptSpellId == SUCCUBUS_SCALING_STAMINA_AP_SP
-            || m_scriptSpellId == VOIDWAKLER_SCALING_STAMINA_AP_SP)
+            || m_scriptSpellId == VOIDWAKLER_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == DARKGLARE_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == DEMONIC_TYRANT_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == DOOMGUARD_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == DREADSTALKER_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == BILESCOURGE_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == INFERNAL_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == VILEFIEND_SCALING_STAMINA_AP_SP
+            || m_scriptSpellId == WILD_IMP_SCALING_STAMINA_AP_SP)
         {
             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateStatAmount, EFFECT_0, SPELL_AURA_MOD_STAT);
             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateAPAmount, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER);
@@ -627,7 +663,15 @@ class spell_warl_generic_scaling : public AuraScript
             || m_scriptSpellId == IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
             || m_scriptSpellId == FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
             || m_scriptSpellId == SUCCUBUS_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
-            || m_scriptSpellId == VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT)
+            || m_scriptSpellId == VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == DARKGLARE_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == DEMONIC_TYRANT_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == DOOMGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == DREADSTALKER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == BILESCOURGE_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == INFERNAL_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == VILEFIEND_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT
+            || m_scriptSpellId == WILD_IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT)
         {
             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateResistanceAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateMeleeCriticalChance, EFFECT_1, SPELL_AURA_MOD_WEAPON_CRIT_PERCENT);
@@ -639,7 +683,15 @@ class spell_warl_generic_scaling : public AuraScript
             || m_scriptSpellId == IMP_SCALING_HASTE
             || m_scriptSpellId == FELHUNTER_SCALING_HASTE
             || m_scriptSpellId == SUCCUBUS_SCALING_HASTE
-            || m_scriptSpellId == VOIDWAKLER_SCALING_HASTE)
+            || m_scriptSpellId == VOIDWAKLER_SCALING_HASTE
+            || m_scriptSpellId == DARKGLARE_SCALING_HASTE
+            || m_scriptSpellId == DEMONIC_TYRANT_SCALING_HASTE
+            || m_scriptSpellId == DOOMGUARD_SCALING_HASTE
+            || m_scriptSpellId == DREADSTALKER_SCALING_HASTE
+            || m_scriptSpellId == BILESCOURGE_SCALING_HASTE
+            || m_scriptSpellId == INFERNAL_SCALING_HASTE
+            || m_scriptSpellId == VILEFIEND_SCALING_HASTE
+            || m_scriptSpellId == WILD_IMP_SCALING_HASTE)
         {
             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_generic_scaling::CalculateHasteAmount, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE);
         }
@@ -660,6 +712,14 @@ private:
         spellsStaminaApSp[IMP_SCALING_STAMINA_AP_SP] = { 75, 20, 75 };
         spellsStaminaApSp[SUCCUBUS_SCALING_STAMINA_AP_SP] = { 75, 35, 75 };
         spellsStaminaApSp[VOIDWAKLER_SCALING_STAMINA_AP_SP] = { 100, 35, 55 };
+        spellsStaminaApSp[DARKGLARE_SCALING_STAMINA_AP_SP] = { 60, 35, 65 };
+        spellsStaminaApSp[DEMONIC_TYRANT_SCALING_STAMINA_AP_SP] = { 60, 35, 75 };
+        spellsStaminaApSp[DOOMGUARD_SCALING_STAMINA_AP_SP] = { 85, 45, 87 };
+        spellsStaminaApSp[DREADSTALKER_SCALING_STAMINA_AP_SP] = { 50, 45, 25 };
+        spellsStaminaApSp[BILESCOURGE_SCALING_STAMINA_AP_SP] = { 60, 35, 65 };
+        spellsStaminaApSp[INFERNAL_SCALING_STAMINA_AP_SP] = { 85, 35, 65 };
+        spellsStaminaApSp[VILEFIEND_SCALING_STAMINA_AP_SP] = { 60, 65, 35 };
+        spellsStaminaApSp[WILD_IMP_SCALING_STAMINA_AP_SP] = { 40, 20, 60 };
 
         return spellsStaminaApSp[spellId];
     }
@@ -667,10 +727,18 @@ private:
     float GetArmorScaling(uint32 spellId) {
 
         spellsArmor[FELGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 80.f;
-        spellsArmor[FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60;
-        spellsArmor[IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60;
+        spellsArmor[FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
         spellsArmor[SUCCUBUS_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 75.f;
         spellsArmor[VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 100.f;
+        spellsArmor[DARKGLARE_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[DEMONIC_TYRANT_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[DOOMGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 80.f;
+        spellsArmor[DREADSTALKER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[BILESCOURGE_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[INFERNAL_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 75.f;
+        spellsArmor[VILEFIEND_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[WILD_IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
 
         return spellsArmor[spellId];
     }
@@ -4794,7 +4862,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_agonizing_corruption);
     RegisterSpellScript(spell_warl_ritual_of_ruin);
     RegisterSpellScript(spell_warl_molten_hand);
-    RegisterSpellScript(spell_warl_all_minion_scaling);
+    //RegisterSpellScript(spell_warl_all_minion_scaling);
     RegisterSpellScript(spell_warl_shadow_bolt);
     RegisterSpellScript(spell_warl_infernal_immolation_aura_energy);
     RegisterSpellScript(spell_warl_soul_collector);
