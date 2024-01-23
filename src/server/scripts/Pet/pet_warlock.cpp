@@ -419,16 +419,6 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
 
     void InitializeAI() override
     {
-        //// Scaling Spells
-        //me->CastSpell(me, SCALING_WARLOCK_WILD_IMP_01);
-        //me->CastSpell(me, SCALING_WARLOCK_WILD_IMP_02);
-        //me->CastSpell(me, SCALING_WARLOCK_WILD_IMP_03);
-
-        //// Passive Spells
-        //me->CastSpell(me, PASSIVE_WARLOCK_WILD_IMP_01);
-        //me->CastSpell(me, PASSIVE_WARLOCK_WILD_IMP_02);
-        //me->CastSpell(me, PASSIVE_WARLOCK_WILD_IMP_03);
-
         if (Player* player = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
             AuraEffect* aura = player->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0);
