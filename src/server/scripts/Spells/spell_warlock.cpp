@@ -124,8 +124,6 @@ enum WarlockSpells
     SPELL_WARLOCK_FRACTURE_ENERGY = 83107,
     SPELL_WARLOCK_METAMORPHOSIS = 47241,
     SPELL_WARLOCK_DEMONIC_CORE_BUFF = 83029,
-    SPELL_WARLOCK_HAND_OF_GULDAN_COST = 83219,
-
 
     // Talents
     TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
@@ -2148,6 +2146,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
     void HandleHitTarget(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
+        Player* player = caster->ToPlayer();
 
         if (!caster || caster->isDead())
             return;
@@ -2164,17 +2163,6 @@ class spell_warlock_hand_of_guldan : public SpellScript
         else
             maxSummon = 1;
 
-        Player* player = caster->ToPlayer();
-
-        if (maxSummon > 1) {
-            uint8 it = maxSummon;
-            while (it > 0)
-            {
-                GetCaster()->CastCustomSpell(SPELL_WARLOCK_HAND_OF_GULDAN_COST, SPELLVALUE_BASE_POINT0, 1, GetCaster(), TRIGGERED_FULL_MASK);
-                it--;
-            }
-        }
-
 
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
@@ -2183,9 +2171,9 @@ class spell_warlock_hand_of_guldan : public SpellScript
                 if (summon)
                     summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
+
             for (size_t i = 1; i < maxSummon; i++)
                 caster->CastSpell(caster, SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST);
-            
         }
     }
 
