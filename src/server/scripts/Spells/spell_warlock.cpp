@@ -2163,6 +2163,8 @@ class spell_warlock_hand_of_guldan : public SpellScript
         else
             maxSummon = 1;
 
+        for (size_t i = 1; i < maxSummon; i++)
+            caster->CastSpell(caster, SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST);
 
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
@@ -2171,9 +2173,6 @@ class spell_warlock_hand_of_guldan : public SpellScript
                 if (summon)
                     summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
-
-            for (size_t i = 1; i < maxSummon; i++)
-                caster->CastSpell(caster, SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST);
         }
     }
 
