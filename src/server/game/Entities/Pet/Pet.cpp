@@ -1151,13 +1151,6 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
         switch (GetEntry())
         {
         case NPC_FELGUARD_SUMMONED:
-        {
-            AddAura(SPELL_PET_AVOIDANCE, this);
-            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
-            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
-            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
-            break;
-        }
         case NPC_FELGUARD:
         {
             AddAura(SPELL_PET_AVOIDANCE, this);

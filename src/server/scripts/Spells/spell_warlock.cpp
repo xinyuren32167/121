@@ -2212,12 +2212,8 @@ class spell_warlock_summon_nether_portal : public SpellScript
         int32 duration = GetSpellInfo()->GetDuration();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
         Position pos = GetCaster()->GetNearPosition(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-<<<<<<< Updated upstream
-        TempSummon* summon = GetCaster()->GetMap()->SummonCreature(NPC_PORTAL_SUMMON, pos, properties, duration, GetCaster(), GetSpellInfo()->Id);
-
-=======
         TempSummon* summon = GetCaster()->GetMap()->SummonCreature(GUARDIAN_WARLOCK_PORTAL_SUMMON, pos, properties, duration, GetCaster(), GetSpellInfo()->Id);
->>>>>>> Stashed changes
+
         summon->AddAura(40280, summon);
     }
 
