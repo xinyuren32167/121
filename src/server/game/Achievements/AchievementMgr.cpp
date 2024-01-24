@@ -364,7 +364,7 @@ bool AchievementCriteriaData::Meets(uint32 criteria_id, Player const* source, Un
             AchievementCriteriaEntry const* criteria = sAchievementCriteriaStore.LookupEntry(criteria_id);
             uint8 spawnMode = source->GetMap()->GetSpawnMode();
             // Dungeons completed on heroic mode count towards both in general achievement, but not in statistics.
-            return sAchievementMgr->IsStatisticCriteria(criteria) ? spawnMode == difficulty.difficulty : spawnMode >= difficulty.difficulty;
+            return sAchievementMgr->IsStatisticCriteria(criteria) ? spawnMode == difficulty.difficulty : spawnMode == difficulty.difficulty;
         }
         case ACHIEVEMENT_CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT:
             return source->GetMap()->GetPlayersCountExceptGMs() <= map_players.maxcount;
@@ -788,9 +788,6 @@ static const uint32 achievIdForDungeon[][4] =
  */
 void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, uint32 miscValue1 /*= 0*/, uint32 miscValue2 /*= 0*/, Unit* unit /*= nullptr*/)
 {
-    // disable for gamemasters with GM-mode enabled
-    if (m_player->IsGameMaster())
-        return;
 
     if (type >= ACHIEVEMENT_CRITERIA_TYPE_TOTAL)
     {
@@ -957,11 +954,13 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     // AchievementMgr::UpdateAchievementCriteria might also be called on login - skip in this case
                     if (!miscValue1)
                         continue;
+
                     if (achievementCriteria->kill_creature.creatureID != miscValue1)
                         continue;
 
                     // those requirements couldn't be found in the dbc
                     AchievementCriteriaDataSet const* data = sAchievementMgr->GetCriteriaDataSet(achievementCriteria);
+
                     if (!data || !data->Meets(GetPlayer(), unit))
                         continue;
 
@@ -2192,14 +2191,6 @@ void AchievementMgr::RemoveTimedAchievement(AchievementCriteriaTimedTypes type, 
 
 void AchievementMgr::CompletedAchievement(AchievementEntry const* achievement)
 {
-    // disable for gamemasters with GM-mode enabled
-    if (m_player->IsGameMaster())
-    {
-        LOG_INFO("achievement", "Not available in GM mode.");
-        ChatHandler(m_player->GetSession()).PSendSysMessage("Not available in GM mode");
-        return;
-    }
-
     if (!sScriptMgr->OnBeforeAchievementComplete(GetPlayer(), achievement))
     {
         return;

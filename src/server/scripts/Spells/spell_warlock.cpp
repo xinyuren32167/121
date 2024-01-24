@@ -122,6 +122,9 @@ enum WarlockSpells
     SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF = 83116,
     SPELL_WARLOCK_FRACTURE_ENERGY = 83107,
     SPELL_WARLOCK_METAMORPHOSIS = 47241,
+    SPELL_WARLOCK_DEMONIC_CORE_BUFF = 83029,
+    SPELL_WARLOCK_HAND_OF_GULDAN_COST = 83219,
+
 
     // Talents
     TALENT_WARLOCK_RITUAL_OF_RUIN = 83074,
@@ -667,8 +670,8 @@ private:
     float GetArmorScaling(uint32 spellId) {
 
         spellsArmor[FELGUARD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 80.f;
-        spellsArmor[FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60;
-        spellsArmor[IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60;
+        spellsArmor[FELHUNTER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
+        spellsArmor[IMP_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 60.f;
         spellsArmor[SUCCUBUS_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 75.f;
         spellsArmor[VOIDWAKLER_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT] = 100.f;
 
@@ -1923,7 +1926,6 @@ class spell_warlock_implosion : public SpellScript
         Unit* caster = GetCaster();
 
         Player* player = caster->ToPlayer();
-
         Unit* target = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
 
         for (auto itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
@@ -1932,7 +1934,6 @@ class spell_warlock_implosion : public SpellScript
             {
                 if (pet->GetEntry() == PET_WILDIMP)
                 {
-                    pet->JumpTo(target, 0.5f);
                     pet->CastSpell(target, SPELL_WARLOCK_IMPLOSSION, true, nullptr, nullptr, player->GetGUID());
                     pet->ToTempSummon()->DespawnOrUnsummon();
                 }
@@ -2091,7 +2092,15 @@ class spell_warlock_hand_of_guldan : public SpellScript
 
         Player* player = GetCaster()->ToPlayer();
 
-        player->ModifyPower(POWER_ENERGY, -cost);
+        if (maxSummon > 1) {
+            uint8 it = maxSummon;
+            while (it > 0)
+            {
+                GetCaster()->CastCustomSpell(SPELL_WARLOCK_HAND_OF_GULDAN_COST, SPELLVALUE_BASE_POINT0, 1, GetCaster(), TRIGGERED_FULL_MASK);
+                it--;
+            }
+        }
+
 
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
@@ -2130,6 +2139,7 @@ class spell_warlock_summon_nether_portal : public SpellScript
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
         Position pos = GetCaster()->GetNearPosition(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
         TempSummon* summon = GetCaster()->GetMap()->SummonCreature(NPC_PORTAL_SUMMON, pos, properties, duration, GetCaster(), GetSpellInfo()->Id);
+
         summon->AddAura(40280, summon);
     }
 
@@ -4104,6 +4114,10 @@ class spell_warl_demonbolt : public SpellScript
             return;
 
         int32 damage = GetHitDamage();
+
+
+        if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONIC_CORE_BUFF))
+            aura->ModCharges(-1);
 
         if (Player* player = caster->ToPlayer())
         {

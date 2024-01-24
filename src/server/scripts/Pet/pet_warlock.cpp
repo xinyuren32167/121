@@ -533,7 +533,7 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
     {
         if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
-            int32 procChance = 0;
+            int32 procChance = 10.f;
 
             if (Aura* demonicCoreBuff = owner->GetAura(SPELL_WARLOCK_DEMONIC_CORE))
             {

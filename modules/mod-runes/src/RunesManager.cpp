@@ -415,7 +415,7 @@ void RunesManager::AutomaticalyRefundRune(Player* player, Rune rune)
     if (spell)
     {
         std::string name = spell->SpellName[0];
-        SendChat(player, "|cffd000ff The rune " + name + " is automaticaly recycle.");
+        SendChat(player, "|cffd000ff The rune " + name + " is automaticaly recycled.");
     }
 }
 
