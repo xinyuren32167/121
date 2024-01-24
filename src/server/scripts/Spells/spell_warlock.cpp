@@ -72,6 +72,7 @@ enum WarlockSpells
     SPELL_WARLOCK_DARK_PACT = 59092,
     SPELL_WARLOCK_DARK_PACT_DAMAGE = 83011,
     SPELL_WARLOCK_DARK_PACT_SHIELD = 83012,
+    SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST = 83219,
     SPELL_WARLOCK_HAUNT = 59164,
     SPELL_WARLOCK_SEED_OF_CORRUPTION = 47836,
     SPELL_WARLOCK_SEED_OF_CORRUPTION_DETONATION = 47834,
@@ -2145,7 +2146,12 @@ class spell_warlock_hand_of_guldan : public SpellScript
 
     void HandleHitTarget(SpellEffIndex /*effIndex*/)
     {
-        int32 runicPower = GetCaster()->GetPower(POWER_ENERGY);
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 runicPower = caster->GetPower(POWER_ENERGY);
         uint8 cost = runicPower > 15 ? 15 : runicPower;
 
         uint8 maxSummon = 0;
@@ -2157,7 +2163,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
         else
             maxSummon = 1;
 
-        Player* player = GetCaster()->ToPlayer();
+        Player* player = caster->ToPlayer();
 
         player->ModifyPower(POWER_ENERGY, -cost);
 
@@ -2168,6 +2174,9 @@ class spell_warlock_hand_of_guldan : public SpellScript
                 if (summon)
                     summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
+            for (size_t i = 1; i < maxSummon; i++)
+                caster->CastSpell(caster, SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST);
+            
         }
     }
 
@@ -2211,6 +2220,17 @@ class spell_warl_nether_portal_proc : public AuraScript
 {
     PrepareAuraScript(spell_warl_nether_portal_proc);
 
+    Aura* GetGuldansAmbitionAura(Unit* caster)
+    {
+        for (size_t i = 800870; i < 800876; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     Aura* GetNerzhulsVolitionAura(Unit* caster)
     {
         for (size_t i = 800878; i < 800884; i++)
@@ -2224,26 +2244,35 @@ class spell_warl_nether_portal_proc : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (!GetCaster() || GetCaster()->isDead())
-            return false;
-
-        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->ManaCost > 0;
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->PowerType == POWER_ENERGY && eventInfo.GetSpellInfo()->ManaCost > 0;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        uint32 soulPowerSpent = eventInfo.GetSpellInfo()->ManaCost;
+        Unit* caster = GetCaster();
 
-        int32 currentSoulPowerSpent = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+        if (!caster || caster->isDead())
+            return;
+
+        const SpellInfo* spellInfo = eventInfo.GetSpellInfo();
+        uint32 soulPowerSpent = spellInfo->CalcPowerCost(caster, spellInfo->GetSchoolMask());
         int32 soulPowerThreshold = aurEff->GetAmount();
 
-        if ((soulPowerSpent + currentSoulPowerSpent) >= soulPowerThreshold)
+        if (soulPowerSpent >= soulPowerThreshold)
         {
-            if (Player* player = GetCaster()->ToPlayer())
+            if (Player* player = caster->ToPlayer())
             {
                 Unit* portal = player->FindNearestCreature(NPC_PORTAL_SUMMON, 40.f, true);
                 if (portal) {
                     player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+
+                    if (Aura* runeAura = GetGuldansAmbitionAura(player))
+                    {
+                        int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+
+                        if (roll_chance_i(procChance))
+                            player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                    }
 
                     if (Aura* runeAura = GetNerzhulsVolitionAura(player))
                     {
@@ -2254,18 +2283,25 @@ class spell_warl_nether_portal_proc : public AuraScript
                     }
                 }
             }
-
-            aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(0);
         }
-        else
-            aurEff->GetBase()->GetEffect(EFFECT_0)->SetAmount(currentSoulPowerSpent + soulPowerSpent);
+    }
 
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+
+        
     }
 
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_warl_nether_portal_proc::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_warl_nether_portal_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_warl_nether_portal_proc::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
