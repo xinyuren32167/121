@@ -67,7 +67,7 @@ enum WarlockSpells
     RUNE_WARLOCK_THE_HOUNDMASTERS_STRATAGEM_DAMAGE = 800775,
     RUNE_WARLOCK_STOLEN_POWER_LISTENER = 800824,
     RUNE_WARLOCK_STOLEN_POWER_BUFF = 800825,
-    RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER = 800877,
+    RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER = 800891,
     RUNE_WARLOCK_DEMONIC_SERVITUDE = 800856,
     RUNE_WARLOCK_INTERNAL_COMBUSTION_DAMAGE = 800890,
     RUNE_WARLOCK_ROARING_BLAZE_DEBUFF = 800952,
@@ -106,7 +106,7 @@ enum WarlockPets {
     GUARDIAN_WARLOCK_PORTAL_SUMMON = 600606,
     GUARDIAN_WARLOCK_VILEFIEND = 600602,
     GUARDIAN_WARLOCK_WILD_IMP = 600601,
-    
+
     // Runes
     RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE = 800000,
 };
@@ -1232,6 +1232,26 @@ class rune_warl_antoran_armaments_proc : public AuraScript
     }
 };
 
+class rune_warl_antoran_armaments_target : public SpellScript
+{
+    PrepareSpellScript(rune_warl_antoran_armaments_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(rune_warl_antoran_armaments_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 class rune_warl_immutable_hatred : public AuraScript
 {
     PrepareAuraScript(rune_warl_immutable_hatred);
@@ -1401,17 +1421,15 @@ class rune_warl_infernal_command : public AuraScript
         {
             Pet* pet = player->GetPet();
 
-            if (!pet || pet->isDead())
-                return;
-
-            if (pet->GetEntry() == PET_WARLOCK_FELGUARD)
+            if (pet && pet->IsAlive() && pet->GetEntry() == PET_WARLOCK_FELGUARD)
             {
                 if (!caster->HasAura(procSpell))
                     caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
             }
             else
-                if (caster->HasAura(procSpell))
-                    caster->RemoveAura(procSpell);
+                for (size_t i = 800724; i < 800730; i++)
+                    if (caster->HasAura(i))
+                        caster->RemoveAura(i);
         }
     }
 
@@ -1422,10 +1440,9 @@ class rune_warl_infernal_command : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        int32 procSpell = aurEff->GetAmount();
-
-        if (caster->HasAura(procSpell))
-            caster->RemoveAura(procSpell);
+        for (size_t i = 800724; i < 800730; i++)
+            if (caster->HasAura(i))
+                caster->RemoveAura(i);
     }
 
     void Register()
@@ -2784,6 +2801,7 @@ void AddSC_warlock_perks_scripts()
     RegisterSpellScript(rune_warl_dread_calling);
     RegisterSpellScript(rune_warl_antoran_armaments);
     RegisterSpellScript(rune_warl_antoran_armaments_proc);
+    RegisterSpellScript(rune_warl_antoran_armaments_target);
     RegisterSpellScript(rune_warl_immutable_hatred);
     RegisterSpellScript(rune_warl_immutable_hatred_proc);
     RegisterSpellScript(rune_warl_infernal_command);

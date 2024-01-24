@@ -35,12 +35,6 @@ enum WarlockSpells
     // Spells
     SPELL_WARLOCK_DEMONIC_CORE = 83027,
     SPELL_WARLOCK_DEMONIC_CORE_BUFF = 83029,
-    SPELL_MINION_SCALING_DREAD_STALKER = 75001,
-    SPELL_MINION_SCALING_WILD_IMP = 75002,
-    SPELL_MINION_SCALING_DARKGLARE = 75003,
-    SPELL_MINION_SCALING_VILEFIEND = 75004,
-    SPELL_MINION_SCALING_DEMONIC_TYRANT = 75005,
-    SPELL_MINION_SCALING_BOMBER = 74999,
     SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE = 83031,
 
     // Talents
@@ -425,8 +419,6 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->CastSpell(me, SPELL_MINION_SCALING_WILD_IMP);
-
         if (Player* player = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
             AuraEffect* aura = player->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_0);
@@ -611,8 +603,6 @@ struct npc_pet_warlock_bomber : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->CastSpell(me, SPELL_MINION_SCALING_BOMBER);
-
         if (Player* player = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
             // Add a Stack of Demonic Servitude from Reign of Tyranny
@@ -726,8 +716,6 @@ struct npc_pet_warlock_darkglare : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->CastSpell(me, SPELL_MINION_SCALING_DARKGLARE);
-
         Unit* owner = me->GetOwner();
 
         if (!owner)
@@ -893,7 +881,6 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
-        me->CastSpell(me, SPELL_MINION_SCALING_VILEFIEND);
 
         Unit* owner = me->GetOwner();
 
@@ -1155,7 +1142,6 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
         _events.Reset();
         _events.ScheduleEvent(1, 2000);
         owner = me->GetCharmerOrOwnerPlayerOrPlayerItself();
-        me->CastSpell(me, SPELL_MINION_SCALING_DEMONIC_TYRANT);
 
         if (!owner)
             return;
@@ -1251,7 +1237,6 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
-        me->CastSpell(me, SPELL_MINION_SCALING_DREAD_STALKER);
 
         Unit* owner = me->GetOwner();
 
