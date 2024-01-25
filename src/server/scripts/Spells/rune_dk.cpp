@@ -49,6 +49,7 @@ enum DeathKnightSpells
     RUNE_DK_UNHOLY_REAPER_PROC = 600930,
     RUNE_DK_KORPSKRIEG_DAMAGE = 600956,
     RUNE_DK_VIRAL_LOAD_PROC = 601043,
+    RUNE_DK_HIGH_METABOLISM_PROC = 601116,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -69,6 +70,7 @@ enum DeathKnightSpells
     SPELL_DK_ARMY_OF_THE_DEAD_BASE = 42650,
     SPELL_DK_APOCALYPSE = 80406,
     SPELL_DK_EPIDEMIC = 80375,
+    SPELL_DK_UNHOLY_ASSAULT = 80379,
 };
 
 class rune_dk_permafrost : public AuraScript
@@ -1976,17 +1978,18 @@ class rune_dk_korpskrieg : public SpellScript
 
     void HandleCast()
     {
-        if (Player* player = GetCaster()->ToPlayer())
-            if (player && player->IsAlive())
-                if (Aura* runeAura = GetRuneAura(player))
-                    for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-                        if (Unit* undeadPet = (*itr))
-                            if (undeadPet->IsAlive() && undeadPet->GetOwnerGUID() == player->GetGUID() && undeadPet->GetEntry() == 24207 && undeadPet->IsWithinDist(player, 100.0f, false))
-                            {
-                                int32 damage = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), runeAura->GetEffect(EFFECT_0)->GetAmount());
-                                undeadPet->CastCustomSpell(RUNE_DK_KORPSKRIEG_DAMAGE, SPELLVALUE_BASE_POINT0, damage, undeadPet, TRIGGERED_FULL_MASK, nullptr, nullptr, player->GetGUID());
-                                return;
-                            }
+        if (GetCaster())
+            if (Player* player = GetCaster()->ToPlayer())
+                if (player && player->IsAlive())
+                    if (Aura* runeAura = GetRuneAura(player))
+                        for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                            if (Unit* undeadPet = (*itr))
+                                if (undeadPet->IsAlive() && undeadPet->GetOwnerGUID() == player->GetGUID() && undeadPet->GetEntry() == 24207 && undeadPet->IsWithinDist(player, 100.0f, false))
+                                {
+                                    int32 damage = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), runeAura->GetEffect(EFFECT_0)->GetAmount());
+                                    undeadPet->CastCustomSpell(RUNE_DK_KORPSKRIEG_DAMAGE, SPELLVALUE_BASE_POINT0, damage, undeadPet, TRIGGERED_FULL_MASK, nullptr, nullptr, player->GetGUID());
+                                    return;
+                                }
     }
 
     void Register() override
@@ -2033,7 +2036,7 @@ class rune_dk_viral_load : public AuraScript
         if (Player* player = GetCaster()->ToPlayer())
             if (player && player->IsAlive())
             {
-                player->RemoveSpellCooldown(SPELL_DK_EPIDEMIC);
+                player->RemoveSpellCooldown(SPELL_DK_EPIDEMIC, true);
                 player->CastSpell(player, RUNE_DK_VIRAL_LOAD_PROC, TRIGGERED_FULL_MASK);
             }
     }
@@ -2041,6 +2044,159 @@ class rune_dk_viral_load : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(rune_dk_viral_load::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_army_of_the_apocalypse : public SpellScript
+{
+    PrepareSpellScript(rune_dk_army_of_the_apocalypse);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 601080; i < 601086; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player && player->IsAlive())
+                if (Aura* rune = GetRuneAura(player))
+                {
+                    player->RemoveSpellCooldown(SPELL_DK_APOCALYPSE, true);
+                    player->CastSpell(player, rune->GetEffect(EFFECT_0)->GetAmount(), TRIGGERED_FULL_MASK);
+                }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_dk_army_of_the_apocalypse::HandleCast);
+    }
+};
+
+class rune_dk_inevitability : public AuraScript
+{
+    PrepareAuraScript(rune_dk_inevitability);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_APOCALYPSE, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_inevitability::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_inevitability::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_inhuman_assault : public AuraScript
+{
+    PrepareAuraScript(rune_dk_inhuman_assault);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Aura* aura = GetCaster()->GetAura(SPELL_DK_UNHOLY_ASSAULT))
+            aura->SetDuration(aura->GetDuration() + aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_inhuman_assault::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_inhuman_assault::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_high_metabolism : public AuraScript
+{
+    PrepareAuraScript(rune_dk_high_metabolism);
+
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 601110; i < 601116; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Unit* caster = GetCaster())
+            if (caster && caster->IsAlive())
+                if (Aura* runeAura = GetRuneAura())
+                {
+                    int32 amount = caster->CountPctFromMaxHealth(runeAura->GetEffect(EFFECT_0)->GetAmount());
+                    caster->CastCustomSpell(RUNE_DK_HIGH_METABOLISM_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_IGNORE_AURA_SCALING);
+                }
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Unit* caster = GetCaster())
+            if (caster && caster->IsAlive())
+                if (Aura* runeAura = GetRuneAura())
+                    if (Aura* highMetabolism = caster->GetAura(RUNE_DK_HIGH_METABOLISM_PROC))
+                        highMetabolism->Remove();
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(rune_dk_high_metabolism::HandleApply, EFFECT_2, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_high_metabolism::HandleRemove, EFFECT_2, SPELL_AURA_MOD_MELEE_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_dk_high_metabolism_health_check : public AuraScript
+{
+    PrepareAuraScript(rune_dk_high_metabolism_health_check);
+
+    void OnPeriodic(AuraEffect const* /*aurEff*/)
+    {
+        if (Unit* caster = GetCaster())
+            if (caster && caster->GetHealthPct() <= 20)
+            {
+                PreventDefaultAction();
+
+                GetAura()->Remove();
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_dk_high_metabolism_health_check::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
     }
 };
 
@@ -2111,4 +2267,9 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_korpskrieg);
     RegisterSpellScript(rune_dk_convocation_of_the_dead);
     RegisterSpellScript(rune_dk_viral_load);
+    RegisterSpellScript(rune_dk_army_of_the_apocalypse);
+    RegisterSpellScript(rune_dk_inevitability);
+    RegisterSpellScript(rune_dk_inhuman_assault);
+    RegisterSpellScript(rune_dk_high_metabolism);
+    RegisterSpellScript(rune_dk_high_metabolism_health_check);
 }
