@@ -190,6 +190,7 @@ enum DeathKnightSpells
 
     //RUNE
     RUNE_DK_SPLINTERING_SHIELD_PROC             = 600572,
+    RUNE_DK_LIGHT_AND_DARK_VALKYR               = 600943,
 };
 
 enum DeathKnightSpellIcons
@@ -618,7 +619,7 @@ class spell_dk_raise_ally : public SpellScript
                 }
 
                 // Attack Power
-                ghoul->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, 589 + ghoul->GetStat(STAT_STRENGTH) + ghoul->GetStat(STAT_AGILITY));
+                ghoul->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, 600 + ghoul->GetStat(STAT_STRENGTH) + ghoul->GetStat(STAT_AGILITY));
                 ghoul->SetInt32Value(UNIT_FIELD_ATTACK_POWER, (int32)ghoul->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE) * ghoul->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT));
                 ghoul->SetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, (int32)ghoul->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE));
                 ghoul->SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, ghoul->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT) - 1.0f);
@@ -1141,6 +1142,26 @@ class spell_dk_pet_scaling : public AuraScript
 {
     PrepareAuraScript(spell_dk_pet_scaling);
 
+    Aura* GetUndeadMastery(Unit* caster)
+    {
+        for (size_t i = 600957; i < 600963; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    Aura* GetEternalHunger(Unit* caster)
+    {
+        for (size_t i = 601025; i < 601031; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
     void CalculateStatAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
         Stats stat = Stats(aurEff->GetSpellInfo()->Effects[aurEff->GetEffIndex()].MiscValue);
@@ -1187,6 +1208,12 @@ class spell_dk_pet_scaling : public AuraScript
             // xinef: impurity
             /*if (owner->GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 1986, 0))
                 modifier = 40;*/
+
+            if (Aura* undeadMastery = GetUndeadMastery(GetCaster()))
+                ApplyPct(modifier, undeadMastery->GetEffect(EFFECT_0)->GetAmount());
+
+            if (Aura* eternalHunger = GetEternalHunger(GetCaster()))
+                ApplyPct(modifier, eternalHunger->GetEffect(EFFECT_0)->GetAmount());
 
             amount = CalculatePct(std::max<int32>(0, owner->GetTotalAttackPowerValue(BASE_ATTACK)), modifier);
 
@@ -2438,11 +2465,28 @@ class spell_dk_summon_gargoyle_energy : public SpellScript
 {
     PrepareSpellScript(spell_dk_summon_gargoyle_energy);
 
+    Aura* GetRuneAura()
+    {
+        for (size_t i = 600937; i < 600943; i++)
+        {
+            if (GetCaster()->HasAura(i))
+                return GetCaster()->GetAura(i);
+        }
+        return nullptr;
+    }
+
     void HandleCast()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         caster->CastSpell(caster, SPELL_DK_SUMMON_GARGOYLE_ENERGY, TRIGGERED_FULL_MASK);
         caster->CastSpell(caster, SPELL_DK_SUMMON_GARGOYLE_LISTENER, TRIGGERED_FULL_MASK);
+
+        if(Aura* rune = GetRuneAura())
+            caster->CastSpell(caster, RUNE_DK_LIGHT_AND_DARK_VALKYR, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -2595,7 +2639,7 @@ class spell_dk_dark_transformation : public SpellScript
         if (pet->GetEntry() == NPC_DK_GHOUL)
         {
             caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_DAMAGE, TRIGGERED_FULL_MASK, nullptr, nullptr, GetCaster()->GetGUID());
-            caster->AddAura(SPELL_DK_DARK_TRANSFORMATION_POWERUP, pet);
+            caster->CastSpell(pet, SPELL_DK_DARK_TRANSFORMATION_POWERUP, TRIGGERED_FULL_MASK);
             pet->unlearnSpell(47468, false, true, false);
             pet->learnSpell(80403, false);
             pet->SetDisplayId(1693);

@@ -339,6 +339,8 @@ public:
             if (!owner)
                 return;
 
+            owner->AddAura(SPELL_DK_PET_SCALING_04, me);
+
             if (owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
                 owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
 

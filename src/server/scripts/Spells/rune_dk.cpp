@@ -46,6 +46,9 @@ enum DeathKnightSpells
     RUNE_DK_FROSTED_BLADE_PROC = 600794,
     RUNE_DK_OBLITERATION_PROC = 600826,
     RUNE_DK_ICE_HARVEST_PROC = 600845,
+    RUNE_DK_UNHOLY_REAPER_PROC = 600930,
+    RUNE_DK_KORPSKRIEG_DAMAGE = 600956,
+    RUNE_DK_VIRAL_LOAD_PROC = 601043,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -61,6 +64,11 @@ enum DeathKnightSpells
     SPELL_DK_OBLITERATE = 51425,
     SPELL_DK_PILLAR_OF_FROST = 80303,
     TALENT_DK_KILLING_MACHINE = 51124,
+    SPELL_DK_BREATH_OF_SINDRAGOSA = 80314,
+    SPELL_DK_ARMY_OF_THE_DEAD = 42651,
+    SPELL_DK_ARMY_OF_THE_DEAD_BASE = 42650,
+    SPELL_DK_APOCALYPSE = 80406,
+    SPELL_DK_EPIDEMIC = 80375,
 };
 
 class rune_dk_permafrost : public AuraScript
@@ -1818,6 +1826,224 @@ class rune_dk_ice_harvest : public AuraScript
     }
 };
 
+class rune_dk_chilling_breath : public AuraScript
+{
+    PrepareAuraScript(rune_dk_chilling_breath);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_BREATH_OF_SINDRAGOSA, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_chilling_breath::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_chilling_breath::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_harvest_time : public AuraScript
+{
+    PrepareAuraScript(rune_dk_harvest_time);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastCustomSpell(SPELL_DK_ARMY_OF_THE_DEAD, SPELLVALUE_AURA_DURATION, aurEff->GetAmount(), GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_harvest_time::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_harvest_time::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_unholy_reaper : public AuraScript
+{
+    PrepareAuraScript(rune_dk_unholy_reaper);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        if (!eventInfo.GetActionTarget() || eventInfo.GetActionTarget()->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive() && eventInfo.GetActionTarget()->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT));
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        caster->CastCustomSpell(RUNE_DK_UNHOLY_REAPER_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_unholy_reaper::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_unholy_reaper::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_deaths_ally : public AuraScript
+{
+    PrepareAuraScript(rune_dk_deaths_ally);
+
+    void PeriodicTick(AuraEffect const* aurEff)
+    {
+        if (Unit* caster = GetCaster())
+        {
+            if (caster->IsInCombat() && caster->IsAlive())
+            {
+                caster->CastSpell(caster, SPELL_DK_ARMY_OF_THE_DEAD, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(rune_dk_deaths_ally::PeriodicTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+class rune_dk_deaths_ally_checkcast : public SpellScript
+{
+    PrepareSpellScript(rune_dk_deaths_ally_checkcast);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 600944; i < 600950; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    SpellCastResult CheckCast()
+    {
+        if (Unit* caster = GetCaster())
+            if (Aura* rune = GetRuneAura(caster))
+                return SPELL_FAILED_SPELL_UNAVAILABLE;
+
+        return SPELL_CAST_OK;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(rune_dk_deaths_ally_checkcast::CheckCast);
+    }
+};
+
+class rune_dk_korpskrieg : public SpellScript
+{
+    PrepareSpellScript(rune_dk_korpskrieg);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 600950; i < 600956; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player && player->IsAlive())
+                if (Aura* runeAura = GetRuneAura(player))
+                    for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+                        if (Unit* undeadPet = (*itr))
+                            if (undeadPet->IsAlive() && undeadPet->GetOwnerGUID() == player->GetGUID() && undeadPet->GetEntry() == 24207 && undeadPet->IsWithinDist(player, 100.0f, false))
+                            {
+                                int32 damage = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), runeAura->GetEffect(EFFECT_0)->GetAmount());
+                                undeadPet->CastCustomSpell(RUNE_DK_KORPSKRIEG_DAMAGE, SPELLVALUE_BASE_POINT0, damage, undeadPet, TRIGGERED_FULL_MASK, nullptr, nullptr, player->GetGUID());
+                                return;
+                            }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_dk_korpskrieg::HandleCast);
+    }
+};
+
+class rune_dk_convocation_of_the_dead : public AuraScript
+{
+    PrepareAuraScript(rune_dk_convocation_of_the_dead);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_APOCALYPSE, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_convocation_of_the_dead::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_convocation_of_the_dead::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_viral_load : public AuraScript
+{
+    PrepareAuraScript(rune_dk_viral_load);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player && player->IsAlive())
+            {
+                player->RemoveSpellCooldown(SPELL_DK_EPIDEMIC);
+                player->CastSpell(player, RUNE_DK_VIRAL_LOAD_PROC, TRIGGERED_FULL_MASK);
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_dk_viral_load::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     RegisterSpellScript(rune_dk_permafrost);
@@ -1877,4 +2103,12 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_eternal_pillar);
     RegisterSpellScript(rune_dk_icecap);
     RegisterSpellScript(rune_dk_ice_harvest);
+    RegisterSpellScript(rune_dk_chilling_breath);
+    RegisterSpellScript(rune_dk_harvest_time);
+    RegisterSpellScript(rune_dk_unholy_reaper);
+    RegisterSpellScript(rune_dk_deaths_ally);
+    RegisterSpellScript(rune_dk_deaths_ally_checkcast);
+    RegisterSpellScript(rune_dk_korpskrieg);
+    RegisterSpellScript(rune_dk_convocation_of_the_dead);
+    RegisterSpellScript(rune_dk_viral_load);
 }

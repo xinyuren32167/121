@@ -94,10 +94,10 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[ROGUE_SUBTLETY] = { 22, 82016 , "Subtlety", 4, 1100005, 14.28, true, 1100006, POWER_ALL };
     m_Specializations[ROGUE_OUTLAW] = { 38, 82082, "Outlaw", 4, 1099999, 17.50, true, 1099998, POWER_ALL };
 
-    m_Specializations[WARLOCK_AFFLICTION] = { 26, 57993, "Affliction", 9, 1100018, 14.00, true, 1100021, POWER_ALL };
-    m_Specializations[WARLOCK_DEMONOLOGY] = { 27, 51690, "Demonology", 9, 1100020, 24.00, true, 1100023, POWER_ALL };
-    m_Specializations[WARLOCK_DESTRUCTION] = { 28, 82016 , "Destruction", 9, 1100019, 48.00, true, 1100022, POWER_ALL };
-    m_Specializations[WARLOCK_DEMONBOUND] = { 40, 83115, "Demonbound", 9, 1100024, 35.00, true, 1100025, POWER_ALL };
+    m_Specializations[WARLOCK_AFFLICTION] = { 26, 83051, "Affliction", 9, 1100018, 14.00, true, 1100021, POWER_ALL };
+    m_Specializations[WARLOCK_DEMONOLOGY] = { 27, 83031, "Demonology", 9, 1100020, 24.00, true, 1100023, POWER_ALL };
+    m_Specializations[WARLOCK_DESTRUCTION] = { 28, 47820 , "Destruction", 9, 1100019, 48.00, true, 1100022, POWER_ALL };
+    m_Specializations[WARLOCK_DEMONBOUND] = { 40, 61610, "Demonbound", 9, 1100024, 35.00, true, 1100025, POWER_ALL };
 }
     
 void PlayerSpecialization::ActivateSpecialization(Player* player, uint32 newSpecId)
@@ -177,7 +177,6 @@ void PlayerSpecialization::RemoveSpellsAndAuras(Player* player)
     }
 }
 
-
 std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player)
 {
     std::vector<std::string> elements = {};
@@ -255,7 +254,6 @@ int32 PlayerSpecialization::GetSpecMask(Player* player) {
 
     return -1;
 }
-
 
 uint32 PlayerSpecialization::GetCurrentSpecId(Player* player)
 {

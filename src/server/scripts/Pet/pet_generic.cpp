@@ -491,8 +491,31 @@ class spell_pet_gen_valkyr_guardian_smite : public SpellScript
 {
     PrepareSpellScript(spell_pet_gen_valkyr_guardian_smite);
 
+    void HandleDamage(SpellEffIndex effIndex)
+    {
+        if (!GetCaster()->GetCharmerOrOwner() || GetCaster()->GetCharmerOrOwner()->isDead())
+            return;
+
+        int32 damage = CalculatePct(GetCaster()->GetCharmerOrOwner()->GetTotalAttackPowerValue(BASE_ATTACK), 25);
+
+        if (Unit* target = GetHitUnit())
+        {
+            if (target != GetCaster())
+            {
+                damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+                damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    /*
     void RecalculateDamage()
     {
+        if (!GetCaster()->GetCharmerOrOwner() || GetCaster()->GetCharmerOrOwner()->isDead())
+            return;
+
         if (GetHitUnit() != GetCaster())
         {
             std::list<TargetInfo>* targetsInfo = GetSpell()->GetUniqueTargetInfo();
@@ -501,10 +524,12 @@ class spell_pet_gen_valkyr_guardian_smite : public SpellScript
                     ihit->damage = -int32(GetHitDamage() * 0.25f);
         }
     }
+    */
 
     void Register() override
     {
-        OnHit += SpellHitFn(spell_pet_gen_valkyr_guardian_smite::RecalculateDamage);
+        //OnHit += SpellHitFn(spell_pet_gen_valkyr_guardian_smite::RecalculateDamage);
+        OnEffectHitTarget += SpellEffectFn(spell_pet_gen_valkyr_guardian_smite::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 
