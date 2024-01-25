@@ -102,7 +102,6 @@ public:
     }
 };
 
-
 using namespace Acore::ChatCommands;
 
 class SpecChoice_CommandsScript : public CommandScript
@@ -204,8 +203,6 @@ class spell_activate_specialization : public SpellScript
     }
 };
 
-
-
 class SpecChoice_WorldScript : public WorldScript
 {
 public:
@@ -218,7 +215,6 @@ public:
         PlayerSpecialization::InitializeSpecializations();
     }
 };
-
 
 // Add all scripts in one
 void AddSC_SpecChoices()

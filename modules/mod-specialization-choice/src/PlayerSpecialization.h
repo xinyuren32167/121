@@ -99,8 +99,6 @@ enum DruidSpells
     SPELL_DRUID_BERSERK_BEAR = 80566,
 };
 
-
-
 class PlayerSpecialization {
 public:
     static std::map<uint64 /* guid */, uint32 /* specId */> m_PlayersSpecialization;

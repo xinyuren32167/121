@@ -174,35 +174,40 @@ enum WarlockSpells
     RUNE_WARLOCK_DREAD_TOUCH_BUFF = 800584,
     RUNE_WARLOCK_STOLEN_POWER_BUFF = 800825,
     RUNE_WARLOCK_DEMONIC_SERVITUDE = 800856,
+    RUNE_WARLOCK_GULDANS_AMBITION_LISTENER = 800876,
+    RUNE_WARLOCK_GULDANS_AMBITION_BUFF = 800877,
     RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF = 801264,
     RUNE_WARLOCK_REVEL_IN_PAIN_SHIELD = 801302,
 };
 
-enum WarlockPets {
+enum WarlockPets
+{
+    // Pet
+    PET_WARLOCK_FELGUARD = 17252,
+    PET_WARLOCK_FELHUNTER = 417,
+    PET_WARLOCK_IMP = 416,
+    PET_WARLOCK_SUCCUBUS = 1863,
+    PET_WARLOCK_VOIDWALKER = 1860,
 
-    PET_DARKGLARE = 600604,
+    // Guardians
+    GUARDIAN_WARLOCK_BILESCOURGE = 600607,
+    GUARDIAN_WARLOCK_DARKGLARE = 600604,
+    GUARDIAN_WARLOCK_DEMONIC_TYRAN = 600603,
+    GUARDIAN_WARLOCK_DOOMGUARD = 11859,
+    GUARDIAN_WARLOCK_DREADSTALKER = 600600,
+    GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE = 600605,
+    GUARDIAN_WARLOCK_INFERNAL = 89,
+    GUARDIAN_WARLOCK_PORTAL_SUMMON = 600606,
+    GUARDIAN_WARLOCK_VILEFIEND = 600602,
+    GUARDIAN_WARLOCK_WILD_IMP = 600601,
 
-    // Lesser
-    PET_DARKHOUND = 600600,
-    PET_FELBOAR = 600602,
-    PET_WILDIMP = 600601,
-
-    PET_FELGUARD_SUMMON = 600605,
-    PET_GARGOYLE = 600607,
-
-    PET_FELGUARD = 17252,
-    PET_FELHUNTER = 417,
-    PET_IMP = 416,
-    PET_SUCCUBUS = 1863,
-    PET_VOIDWALKER = 1860,
-
-    // Greater
-    PET_DEMONIC_TYRAN = 600603,
-    NPC_PORTAL_SUMMON = 600606,
+    // Runes
+    RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE = 800000,
+    RUNE_GUARDIAN_WARLOCK_PIT_LORD = 800001,
 };
 
-enum WarlockScalingSpells {
-
+enum WarlockScalingSpells
+{
     // Pets
     FELGUARD_SCALING_STAMINA_AP_SP = 83500,
     FELHUNTER_SCALING_STAMINA_AP_SP = 83503,
@@ -249,6 +254,11 @@ enum WarlockScalingSpells {
     INFERNAL_SCALING_HASTE = 83532,
     VILEFIEND_SCALING_HASTE = 83535,
     WILD_IMP_SCALING_HASTE = 83538,
+
+    // Runes
+    PIT_LORD_SCALING_STAMINA_AP_SP = 83582,
+    PIT_LORD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT = 83583,
+    PIT_LORD_SCALING_HASTE = 83584,
 };
 
 enum WarlockSpellIcons
@@ -1793,10 +1803,10 @@ class spell_warlock_summon_darkhound : public SpellScript
             if (AuraEffect* talent = player->GetAuraEffectOfRankedSpell(TALENT_WARLOCK_MOLTEN_HAND, EFFECT_1))
                 duration += talent->GetAmount();
 
-            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKHOUND, player, player, duration, WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_DREADSTALKER, player, player, duration, GUARDIAN_WARLOCK_DREADSTALKER_DIST + i, PET_FOLLOW_ANGLE);
 
             if (summon)
-                summon->SetPositionReset(WARLOCK_PET_DARK_HOUND_DIST + i, PET_FOLLOW_ANGLE);
+                summon->SetPositionReset(GUARDIAN_WARLOCK_DREADSTALKER_DIST + i, PET_FOLLOW_ANGLE);
 
             if (Aura* runeAura = GetCarnivorousStalkersAura(player))
             {
@@ -1872,7 +1882,7 @@ class spell_warlock_summon_gargoyle : public SpellScript
         Player* player = GetCaster()->ToPlayer();
 
         int32 duration = GetSpellInfo()->GetDuration();
-        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_GARGOYLE, player->GetSelectedUnit(), player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_BILESCOURGE, player->GetSelectedUnit(), player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
         if (summon)
             summon->AI()->AttackStart(player->GetSelectedUnit());
 
@@ -1897,7 +1907,7 @@ class spell_warlock_soul_strike : public SpellScript
                 if (Unit* pet = (*itr))
                     if (pet->IsAlive() &&
                         pet->GetOwnerGUID() == player->GetGUID() &&
-                        pet->GetEntry() == PET_FELGUARD &&
+                        pet->GetEntry() == PET_WARLOCK_FELGUARD &&
                         pet->IsWithinDist(player, 100.0f, false))
                         controlledUnit = pet;
 
@@ -1948,10 +1958,10 @@ class spell_warlock_summon_felboar : public SpellScript
         for (size_t i = 0; i < totalSummons; i++)
         {
             int32 duration = GetSpellInfo()->GetDuration();
-            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELBOAR, player, player, duration, WARLOCK_PET_FELBOAR + i, PET_FOLLOW_ANGLE);
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_VILEFIEND, player, player, duration, GUARDIAN_WARLOCK_VILEFIEND_DIST + i, PET_FOLLOW_ANGLE);
 
             if (summon)
-                summon->SetPositionReset(WARLOCK_PET_FELBOAR + i, PET_FOLLOW_ANGLE);
+                summon->SetPositionReset(GUARDIAN_WARLOCK_VILEFIEND_DIST + i, PET_FOLLOW_ANGLE);
 
         }
     }
@@ -1971,7 +1981,7 @@ class spell_warlock_summon_felguard : public SpellScript
         Player* player = GetCaster()->ToPlayer();
 
         int32 duration = GetSpellInfo()->GetDuration();
-        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_FELGUARD_SUMMON, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
 
         if (summon)
             summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
@@ -1999,7 +2009,7 @@ class spell_warlock_implosion : public SpellScript
         {
             if (Unit* pet = *itr)
             {
-                if (pet->GetEntry() == PET_WILDIMP)
+                if (pet->GetEntry() == GUARDIAN_WARLOCK_WILD_IMP)
                 {
                     pet->CastSpell(target, SPELL_WARLOCK_IMPLOSSION, true, nullptr, nullptr, player->GetGUID());
                     pet->ToTempSummon()->DespawnOrUnsummon();
@@ -2024,7 +2034,7 @@ class spell_warlock_summon_darkglare : public SpellScript
         Unit* target = GetExplTargetUnit();
 
         int32 duration = GetSpellInfo()->GetDuration();
-        TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DARKGLARE, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_DARKGLARE, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
 
         if (summon)
             summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
@@ -2100,10 +2110,10 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
             int32 timerIncrease = GetSpellInfo()->GetEffect(EFFECT_0).CalcValue(player);
 
             int32 duration = GetSpellInfo()->GetDuration();
-            TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_DEMONIC_TYRAN, player, player, duration, WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
+            TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_DEMONIC_TYRAN, player, player, duration, GUARDIAN_WARLOCK_DEMONIC_TYRAN_DIST, PET_FOLLOW_ANGLE);
 
             if (summon)
-                summon->SetPositionReset(WARLOCK_PET_TYRANT, PET_FOLLOW_ANGLE);
+                summon->SetPositionReset(GUARDIAN_WARLOCK_DEMONIC_TYRAN_DIST, PET_FOLLOW_ANGLE);
 
             // Give damage increased based on the amount of Demonic Servitude stacks
             if (Aura* runeAura = GetReignofTyrannyAura(player))
@@ -2119,10 +2129,10 @@ class spell_warlock_summon_demonic_tyrant : public SpellScript
                 if (Unit* pet = *itr)
                     if (TempSummon* summon = pet->ToTempSummon())
                     {
-                        if (summon->GetEntry() == PET_FELBOAR || summon->GetEntry() == PET_DARKHOUND)
+                        if (summon->GetEntry() == GUARDIAN_WARLOCK_VILEFIEND || summon->GetEntry() == GUARDIAN_WARLOCK_DREADSTALKER)
                             summon->SetTimer(summon->GetTimer() + timerIncrease);
 
-                        if (summon->GetEntry() == PET_FELGUARD_SUMMON || summon->GetEntry() == NPC_IMP
+                        if (summon->GetEntry() == GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE || summon->GetEntry() == NPC_IMP
                             || summon->GetEntry() == NPC_FELHUNTER || summon->GetEntry() == NPC_FELGUARD
                             || summon->GetEntry() == NPC_VOIDWALKER || summon->GetEntry() == NPC_SUCCUBUS)
                         {
@@ -2169,7 +2179,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
             {
-                TempSummon* summon = GetCaster()->SummonCreatureGuardian(PET_WILDIMP, target, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
+                TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_WILD_IMP, target, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
                 if (summon)
                     summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
@@ -2202,7 +2212,7 @@ class spell_warlock_summon_nether_portal : public SpellScript
         int32 duration = GetSpellInfo()->GetDuration();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(83);
         Position pos = GetCaster()->GetNearPosition(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-        TempSummon* summon = GetCaster()->GetMap()->SummonCreature(NPC_PORTAL_SUMMON, pos, properties, duration, GetCaster(), GetSpellInfo()->Id);
+        TempSummon* summon = GetCaster()->GetMap()->SummonCreature(GUARDIAN_WARLOCK_PORTAL_SUMMON, pos, properties, duration, GetCaster(), GetSpellInfo()->Id);
 
         summon->AddAura(40280, summon);
     }
@@ -2241,7 +2251,10 @@ class spell_warl_nether_portal_proc : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->PowerType == POWER_ENERGY && eventInfo.GetSpellInfo()->ManaCost > 0;
+        if (!eventInfo.GetSpellInfo() || eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+            return false;
+
+        return eventInfo.GetSpellInfo()->ManaCost > 0 && eventInfo.GetSpellInfo()->Id != SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -2259,16 +2272,23 @@ class spell_warl_nether_portal_proc : public AuraScript
         {
             if (Player* player = caster->ToPlayer())
             {
-                Unit* portal = player->FindNearestCreature(NPC_PORTAL_SUMMON, 40.f, true);
+                Unit* portal = player->FindNearestCreature(GUARDIAN_WARLOCK_PORTAL_SUMMON, 40.f, true);
                 if (portal) {
-                    player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                    int32 positionBias = urand(1, 5);
+                    player->SummonCreatureGuardian(GUARDIAN_WARLOCK_WILD_IMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + positionBias);
 
+                    int32 guldanMaxStacks = 0;
                     if (Aura* runeAura = GetGuldansAmbitionAura(player))
                     {
-                        int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
+                        guldanMaxStacks = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
-                        if (roll_chance_i(procChance))
-                            player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                        if (Aura* guldanListener = caster->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_LISTENER))
+                        {
+                            if (guldanListener->GetStackAmount() < guldanMaxStacks)
+                                guldanListener->ModStackAmount(1);                           
+                        }
+                        else
+                            caster->CastSpell(caster, RUNE_WARLOCK_GULDANS_AMBITION_LISTENER, TRIGGERED_FULL_MASK);
                     }
 
                     if (Aura* runeAura = GetNerzhulsVolitionAura(player))
@@ -2276,7 +2296,22 @@ class spell_warl_nether_portal_proc : public AuraScript
                         int32 procChance = runeAura->GetEffect(EFFECT_0)->GetAmount();
 
                         if (roll_chance_i(procChance))
-                            player->SummonCreatureGuardian(PET_WILDIMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                        {
+                            int32 secondPositionBias = urand(1, 5);
+
+                            while (secondPositionBias == positionBias)
+                                secondPositionBias = urand(1, 5);
+
+                            player->SummonCreatureGuardian(GUARDIAN_WARLOCK_WILD_IMP, portal, player, 30000, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+
+                            if (guldanMaxStacks > 0)
+                                if (Aura* guldanListener = caster->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_LISTENER))
+                                {
+                                    if (guldanListener->GetStackAmount() < guldanMaxStacks)
+                                        guldanListener->ModStackAmount(1);
+                                }
+                        }
+
                     }
                 }
             }
@@ -2290,8 +2325,15 @@ class spell_warl_nether_portal_proc : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-
-        
+        if (Player* player = caster->ToPlayer())
+        {
+            if (Aura* runeAura = GetGuldansAmbitionAura(player))
+                if (Aura* guldanListener = player->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_LISTENER))
+                {
+                    int32 duration = runeAura->GetEffect(EFFECT_1)->GetAmount();
+                    player->SummonCreatureGuardian(RUNE_GUARDIAN_WARLOCK_PIT_LORD, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
+                }                   
+        }    
     }
 
     void Register() override
@@ -2299,6 +2341,176 @@ class spell_warl_nether_portal_proc : public AuraScript
         DoCheckProc += AuraCheckProcFn(spell_warl_nether_portal_proc::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_warl_nether_portal_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         AfterEffectRemove += AuraEffectRemoveFn(spell_warl_nether_portal_proc::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_warl_pit_lord_scaling : public AuraScript
+{
+    struct PetStats {
+        float stamina;
+        float sp_to_ap;
+        float sp_to_sp;
+    };
+
+    PrepareAuraScript(spell_warl_pit_lord_scaling);
+
+    void CalculateResistanceAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 15;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            amount = CalculatePct(std::max<int32>(0, owner->GetResistance(SPELL_SCHOOL_MASK_NORMAL)), scaling);
+        }
+    }
+
+    void CalculateMeleeCriticalChance(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 10;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            int32 critChanceFire = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+            int32 critChanceShadow = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_SHADOW);
+            int32 maximum = (critChanceFire > critChanceShadow) ? critChanceFire : critChanceShadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), scaling);
+        }
+    }
+
+    void CalculateSpellCriticalChance(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 10;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            int32 critChanceFire = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FIRE);
+            int32 critChanceShadow = owner->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_SHADOW);
+            int32 maximum = (critChanceFire > critChanceShadow) ? critChanceFire : critChanceShadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), scaling);
+        }
+    }
+
+    void CalculateHasteAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 10;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            float speed = owner->GetFloatValue(UNIT_MOD_CAST_SPEED) * 10;
+            amount = CalculatePct(std::max<int32>(0, speed), scaling);
+        }
+    }
+
+    void CalculateStatAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 15;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            amount = CalculatePct(std::max<int32>(0, owner->GetStat(STAT_STAMINA)), scaling);
+        }
+    }
+
+    void CalculateAPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 10;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+            int32 maximum = (fire > shadow) ? fire : shadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), scaling);
+        }
+    }
+
+    void CalculateSPAmount(AuraEffect const*  /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (Unit* owner = GetUnitOwner()->GetOwner())
+        {
+            float scaling = 12;
+            if (Aura* guldanListener = GetUnitOwner()->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_BUFF))
+                scaling *= guldanListener->GetStackAmount();
+
+            int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+            int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+            int32 maximum = (fire > shadow) ? fire : shadow;
+            amount = CalculatePct(std::max<int32>(0, maximum), scaling);
+
+            // xinef: Update appropriate player field
+            if (owner->GetTypeId() == TYPEID_PLAYER)
+                owner->SetUInt32Value(PLAYER_PET_SPELL_POWER, (uint32)amount);
+        }
+    }
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        PreventDefaultAction();
+        if (aurEff->GetAuraType() == SPELL_AURA_MOD_STAT && (aurEff->GetMiscValue() == STAT_STAMINA))
+        {
+            int32 currentAmount = aurEff->GetAmount();
+            int32 newAmount = GetEffect(aurEff->GetEffIndex())->CalculateAmount(GetCaster());
+            if (newAmount != currentAmount)
+            {
+                if (aurEff->GetMiscValue() == STAT_STAMINA)
+                {
+                    uint32 actStat = GetUnitOwner()->GetHealth();
+                    GetEffect(aurEff->GetEffIndex())->ChangeAmount(newAmount, false);
+                    GetUnitOwner()->SetHealth(std::min<uint32>(GetUnitOwner()->GetMaxHealth(), actStat));
+                }
+                else
+                {
+                    uint32 actStat = GetUnitOwner()->GetPower(POWER_MANA);
+                    GetEffect(aurEff->GetEffIndex())->ChangeAmount(newAmount, false);
+                    GetUnitOwner()->SetPower(POWER_MANA, std::min<uint32>(GetUnitOwner()->GetMaxPower(POWER_MANA), actStat));
+                }
+            }
+        }
+        else
+            GetEffect(aurEff->GetEffIndex())->RecalculateAmount();
+    }
+
+    void Register() override
+    {
+        if (m_scriptSpellId == PIT_LORD_SCALING_STAMINA_AP_SP)
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateStatAmount, EFFECT_0, SPELL_AURA_MOD_STAT);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateAPAmount, EFFECT_1, SPELL_AURA_MOD_ATTACK_POWER);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateSPAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_DONE);
+        }
+
+        if (m_scriptSpellId == PIT_LORD_SCALING_ARMOR_MEELE_CRIT_SPELL_CRIT)
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateResistanceAmount, EFFECT_0, SPELL_AURA_MOD_RESISTANCE);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateMeleeCriticalChance, EFFECT_1, SPELL_AURA_MOD_WEAPON_CRIT_PERCENT);
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateSpellCriticalChance, EFFECT_2, SPELL_AURA_MOD_SPELL_CRIT_CHANCE);
+        }
+
+        if (m_scriptSpellId == PIT_LORD_SCALING_HASTE)
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_pit_lord_scaling::CalculateHasteAmount, EFFECT_0, SPELL_AURA_MOD_MELEE_RANGED_HASTE);
+        }
+
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_warl_pit_lord_scaling::CalcPeriodic, EFFECT_ALL, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_pit_lord_scaling::HandlePeriodic, EFFECT_ALL, SPELL_AURA_ANY);
     }
 };
 
@@ -2977,7 +3189,7 @@ class spell_warl_power_siphon : public SpellScript
                 if (Unit* pet = (*itr))
                     if (pet->IsAlive() &&
                         pet->GetOwnerGUID() == player->GetGUID() &&
-                        pet->GetEntry() == PET_WILDIMP &&
+                        pet->GetEntry() == GUARDIAN_WARLOCK_WILD_IMP &&
                         pet->IsWithinDist(player, 100.0f, false))
                         controlledUnit = pet;
 
@@ -3011,7 +3223,7 @@ class spell_warl_power_siphon : public SpellScript
             if (!unit || unit->isDead())
                 return;
 
-            if (unit->GetEntry() == PET_WILDIMP)
+            if (unit->GetEntry() == GUARDIAN_WARLOCK_WILD_IMP)
             {
 
                 if (totalSacrifice >= maxSacrifice)
@@ -4309,7 +4521,7 @@ class spell_warl_rain_of_fire : public AuraScript
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_warl_rain_of_fire::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_warl_rain_of_fire::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_rain_of_fire::HandleRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -4368,7 +4580,7 @@ class spell_warl_demonic_strength : public SpellScript
                 if (Unit* pet = (*itr))
                     if (pet->IsAlive() &&
                         pet->GetOwnerGUID() == player->GetGUID() &&
-                        pet->GetEntry() == PET_FELGUARD &&
+                        pet->GetEntry() == PET_WARLOCK_FELGUARD &&
                         pet->IsWithinDist(player, 100.0f, false))
                         controlledUnit = pet;
 
@@ -4888,8 +5100,9 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_soul_strike);
     RegisterSpellScript(spell_warl_nether_portal_proc);
     RegisterSpellScript(spell_warlock_summon_nether_portal);
+    RegisterSpellScript(spell_warl_pit_lord_scaling);
     RegisterSpellScript(spell_warlock_implosion);
-    RegisterSpellScript(spell_warl_power_siphon);
+    RegisterSpellScript(spell_warl_power_siphon); 
     RegisterSpellScript(spell_warlock_summon_gargoyle);
     RegisterSpellScript(spell_warl_havoc);
     RegisterSpellScript(spell_warl_soul_power);

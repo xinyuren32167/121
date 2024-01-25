@@ -1418,6 +1418,28 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_WARLOCK_WILD_IMP_PET_PASSIVE_03, this);
             break;
         }
+        case NPC_INQUISITORS_GAZE:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            break;
+        }
+        case NPC_PIT_LORD:
+        {
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_GENERAL_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_PIT_LORD_PET_SCALING_01, this);
+            AddAura(SPELL_WARLOCK_PIT_LORD_PET_SCALING_02, this);
+            AddAura(SPELL_WARLOCK_PIT_LORD_PET_SCALING_03, this);
+            AddAura(SPELL_WARLOCK_PIT_LORD_PET_PASSIVE_01, this);
+            AddAura(SPELL_WARLOCK_PIT_LORD_PET_PASSIVE_02, this);
+            AddAura(SPELL_WARLOCK_PIT_LORD_PET_PASSIVE_03, this);
+            break;
+        }
         case NPC_WATER_ELEMENTAL_TEMP:
         {
             AddAura(SPELL_PET_AVOIDANCE, this);

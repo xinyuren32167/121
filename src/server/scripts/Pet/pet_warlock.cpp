@@ -45,17 +45,22 @@ enum WarlockSpells
 
     // Pet Spells
     SPELL_WILDIMP_FIREBOLT = 83003,
-    SPELL_CHARGE_FELBOAR = 83005,
-    SPELL_DEMONBOLT = 83008,
-    SPELL_DARKGLARE_DAMAGE = 83050,
-    SPELL_ACIDE_BOMBER = 83058,
+    SPELL_DREADBITE = 83212,
+    SPELL_HEADBUTT = 83216,
+    SPELL_VILE_SPIT = 83218,
+    SPELL_DEMONFIRE = 83210,
+    SPELL_SHADOW_BLAST = 83208,
+    SPELL_ACIDE_BOMB = 83058,
+    SPELL_FEL_FLAME_BREATH = 83220,
 
     // Runes
     RUNE_WARLOCK_INQUISITORS_GAZE_AURA = 800106,
     RUNE_WARLOCK_IMMUTABLE_HATRED_LISTENER = 800716,
     RUNE_WARLOCK_IMP_GANG_BOSS_BUFF = 800857,
-    RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER = 800877,
+    RUNE_WARLOCK_STOLEN_POWER_PET_LISTENER = 800891,
     RUNE_WARLOCK_DEMONIC_SERVITUDE = 800856,
+    RUNE_WARLOCK_GULDANS_AMBITION_LISTENER = 800876,
+    RUNE_WARLOCK_GULDANS_AMBITION_BUFF = 800877,
 };
 
 enum PET_WARLOCKS {
@@ -648,7 +653,7 @@ struct npc_pet_warlock_bomber : public ScriptedAI
             {
                 if (me->CanCreatureAttack(target))
                 {
-                    me->CastSpell(target, SPELL_ACIDE_BOMBER);
+                    me->CastSpell(target, SPELL_ACIDE_BOMB);
                     AttackStart(target);
                 }
             }
@@ -783,7 +788,7 @@ struct npc_pet_warlock_darkglare : public ScriptedAI
             case 1:
                 if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
                 {
-                    me->CastSpell(me->GetVictim(), SPELL_DARKGLARE_DAMAGE);
+                    me->CastSpell(me->GetVictim(), SPELL_SHADOW_BLAST);
                 }
                 _events.ScheduleEvent(1, 2000);
                 break;
@@ -957,6 +962,19 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
                     }
                 }
                 _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
+                break;
+            case EVENT_WARLOCK_CAST_SPELL:
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                {
+                    if (Unit* target = owner->GetSelectedUnit())
+                    {
+                        if (me->CanCreatureAttack(target))
+                        {
+                            me->CastSpell(target, SPELL_VILE_SPIT);
+                        }
+                    }
+                }
+                _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 4500);
                 break;
             }
         }
@@ -1183,8 +1201,8 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
             case 1:
                 if (Unit* target = owner->GetSelectedUnit()) {
                     if (owner->IsInCombat()) {
-                        int32 spellDamage = owner->CalculateSpellDamageWithRatio(SPELL_SCHOOL_MASK_SHADOW, 0.53625f);
-                        me->CastCustomSpell(SPELL_DEMONBOLT, SPELLVALUE_BASE_POINT0, spellDamage, target);
+                        me->CastSpell(target, SPELL_DEMONFIRE);
+                        _events.ScheduleEvent(1, 2000);
                     }
                 }
                 _events.ScheduleEvent(1, 2000);
@@ -1237,6 +1255,7 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
+        _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 500);
 
         Unit* owner = me->GetOwner();
 
@@ -1313,6 +1332,19 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
                     }
                 }
                 _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
+                break;
+            case EVENT_WARLOCK_CAST_SPELL:
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                {
+                    if (Unit* target = owner->GetSelectedUnit())
+                    {
+                        if (me->CanCreatureAttack(target))
+                        {
+                            me->CastSpell(target, SPELL_DREADBITE);
+                        }
+                    }
+                }
+                _events.ScheduleEvent(1, 4000);
                 break;
             }
         }
@@ -1417,6 +1449,28 @@ struct npc_pet_warlock_infernal : public ScriptedAI
         return nullptr;
     }
 
+    Aura* GetPrimordialInfernalAura(Unit* caster)
+    {
+        for (size_t i = 801136; i < 801142; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    Aura* GetInfernalBrandAura(Unit* caster)
+    {
+        for (size_t i = 801148; i < 801154; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
     void InitializeAI() override
     {
         Unit* owner = me->GetOwner();
@@ -1433,6 +1487,20 @@ struct npc_pet_warlock_infernal : public ScriptedAI
                 demonicServitude->ModStackAmount(stackIncrease);
             else
                 owner->CastCustomSpell(RUNE_WARLOCK_DEMONIC_SERVITUDE, SPELLVALUE_AURA_STACK, stackIncrease, owner, TRIGGERED_FULL_MASK);
+        }
+
+        // Add a Primordial Infernal buff
+        if (Aura* runeAura = GetPrimordialInfernalAura(owner))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_2)->GetAmount();
+            owner->CastSpell(me, procSpell, TRIGGERED_FULL_MASK);
+        }
+
+        // Add a Infernal Brand listener on the infernal
+        if (Aura* runeAura = GetInfernalBrandAura(owner))
+        {
+            int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
+            owner->CastSpell(me, procSpell, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1564,6 +1632,121 @@ private:
     bool _initAttack;
 };
 
+// 800001 - Pit Lord
+struct npc_pet_warlock_pit_lord : public ScriptedAI
+{
+    npc_pet_warlock_pit_lord(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }
+
+    Aura* GetReignofTyrannyAura(Unit* caster)
+    {
+        for (size_t i = 800844; i < 800850; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    void InitializeAI() override
+    {
+        Unit* owner = me->GetOwner();
+
+        if (!owner)
+            return;
+
+        if (Aura* guldanListener = owner->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_LISTENER))
+        {
+            int32 stacks = guldanListener->GetStackAmount();
+            me->CastCustomSpell(RUNE_WARLOCK_GULDANS_AMBITION_BUFF, SPELLVALUE_AURA_STACK, stacks, me, TRIGGERED_FULL_MASK);
+            guldanListener->Remove();
+        }
+            
+
+        // Add a Stack of Demonic Servitude from Reign of Tyranny
+        if (Aura* runeAura = GetReignofTyrannyAura(owner))
+        {
+            int32 stackIncrease = runeAura->GetEffect(EFFECT_1)->GetAmount();
+
+            if (Aura* demonicServitude = owner->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
+                demonicServitude->ModStackAmount(stackIncrease);
+            else
+                owner->CastCustomSpell(RUNE_WARLOCK_DEMONIC_SERVITUDE, SPELLVALUE_AURA_STACK, stackIncrease, owner, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void EnterCombat(Unit*) override
+    {
+        _events.Reset();
+        _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 0);
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        Unit* mainTarget = ObjectAccessor::GetUnit(*me, me->GetTarget());
+
+        if (_initAttack)
+        {
+            if (!me->IsInCombat())
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = mainTarget)
+                        if (me->CanCreatureAttack(target))
+                            AttackStart(target);
+
+            _initAttack = false;
+        }
+
+        if (!UpdateVictim())
+            return;
+
+        _events.Update(diff);
+
+        if (_events.ExecuteEvent() == EVENT_WARLOCK_CAST_SPELL)
+        {
+            if (mainTarget && mainTarget->IsAlive())
+            {
+                if (me->HasSpellCooldown(SPELL_FEL_FLAME_BREATH))
+                    _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 1000);
+                else
+                {
+                    me->CastSpell(mainTarget, SPELL_FEL_FLAME_BREATH);
+                    _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 4000);
+                    DoMeleeAttackIfReady();
+                }
+            }
+            else
+            {
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    if (Unit* target = owner->GetSelectedUnit())
+                        mainTarget = target;
+
+                _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 500);
+            }
+        }
+
+        DoMeleeAttackIfReady();
+    }
+
+    void JustDespawned() override
+    {
+        if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+        {
+            // Remove a Stack of Demonic Servitude from Reign of Tyranny
+            if (Aura* runeAura = GetReignofTyrannyAura(owner))
+            {
+                int32 stackDecrease = runeAura->GetEffect(EFFECT_1)->GetAmount() * 3;
+
+                if (Aura* demonicServitude = owner->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
+                    demonicServitude->ModStackAmount(-stackDecrease);
+            }
+        }
+    }
+
+private:
+    EventMap _events;
+    bool _initAttack;
+};
+
 
 
 void AddSC_warlock_pet_scripts()
@@ -1583,6 +1766,7 @@ void AddSC_warlock_pet_scripts()
     RegisterCreatureAI(npc_pet_warlock_doomguard);
     RegisterCreatureAI(npc_pet_warlock_infernal);
     RegisterCreatureAI(npc_pet_warlock_inquisitors_eye);
+    RegisterCreatureAI(npc_pet_warlock_pit_lord);
 
 
     
