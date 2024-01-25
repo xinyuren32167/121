@@ -1981,23 +1981,18 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
 
 uint32 Unit::UpgradeDamage(Unit* attacker, Unit* victim, uint32 damage)
 {
-
     if (!attacker)
         return 0;
 
     if (!victim)
         return 0;
 
-    uint32 tpDamage = damage;
-
-    if (attacker->GetTypeId() != TYPEID_PLAYER)
-        return tpDamage;
-
+    uint32 tempDamage = damage;
     int32 damageIncrease = 0;
 
-    auto auras = victim->GetAuraEffectsByType(SPELL_AURA_DAMAGE_INCREASE_BY_PLAYER);
+    auto auraIncreaseDamageByPlayer = victim->GetAuraEffectsByType(SPELL_AURA_DAMAGE_INCREASE_BY_PLAYER);
 
-    for (AuraEffectList::const_iterator aura = auras.begin(); aura != auras.end(); ++aura) {
+    for (AuraEffectList::const_iterator aura = auraIncreaseDamageByPlayer.begin(); aura != auraIncreaseDamageByPlayer.end(); ++aura) {
         uint64 casterGUID = (*aura)->GetCasterGUID().GetCounter();
         uint64 attackerGUID = attacker->GetGUID().GetCounter();
         int32 amount = (*aura)->GetAmount();
@@ -2006,9 +2001,9 @@ uint32 Unit::UpgradeDamage(Unit* attacker, Unit* victim, uint32 damage)
     }
 
     if (damageIncrease > 0)
-        AddPct(tpDamage, damageIncrease);
+        AddPct(tempDamage, damageIncrease);
 
-    return tpDamage;
+    return tempDamage;
 }
 
 void Unit::HandleEmoteCommand(uint32 emoteId)

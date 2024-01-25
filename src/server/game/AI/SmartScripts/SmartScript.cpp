@@ -4205,6 +4205,9 @@ void SmartScript::FillScript(SmartAIEventList e, WorldObject* obj, AreaTrigger c
 {
     (void)at; // ensure that the variable is referenced even if extra logs are disabled in order to pass compiler checks
 
+    if (!mEvents.empty())
+        mEvents.clear();
+
     if (e.empty())
     {
         if (obj)
@@ -4238,6 +4241,7 @@ void SmartScript::FillScript(SmartAIEventList e, WorldObject* obj, AreaTrigger c
 
 void SmartScript::GetScript()
 {
+
     SmartAIEventList e;
     if (me)
     {

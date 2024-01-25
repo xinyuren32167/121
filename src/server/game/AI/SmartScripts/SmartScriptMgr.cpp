@@ -129,8 +129,8 @@ void SmartAIMgr::LoadSmartAIFromDB()
 {
     uint32 oldMSTime = getMSTime();
 
-    for (uint8 i = 0; i < SMART_SCRIPT_TYPE_MAX; i++)
-        mEventMap[i].clear();  //Drop Existing SmartAI List
+    for (SmartAIEventMap& eventmap : mEventMap)
+        eventmap.clear();
 
     WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_SMART_SCRIPTS);
     PreparedQueryResult result = WorldDatabase.Query(stmt);
@@ -302,11 +302,14 @@ void SmartAIMgr::LoadSmartAIFromDB()
         }
         // store the new event
         mEventMap[source_type][temp.entryOrGuid].push_back(temp);
-    } while (result->NextRow());
+    }
+    while (result->NextRow());
+
 
     LOG_INFO("server.loading", ">> Loaded {} SmartAI scripts in {} ms", count, GetMSTimeDiffToNow(oldMSTime));
     LOG_INFO("server.loading", " ");
 }
+
 
 /*static*/ bool SmartAIMgr::EventHasInvoker(SMART_EVENT event)
 {

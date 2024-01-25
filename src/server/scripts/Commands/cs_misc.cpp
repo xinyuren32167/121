@@ -2349,6 +2349,7 @@ public:
             if (target->isDead())
             {
                 target->ToCreature()->Respawn();
+                target->ToCreature()->AI()->InitializeAI();
             }
             return true;
         }
