@@ -10659,7 +10659,13 @@ void Unit::SetMinion(Minion* minion, bool apply)
                 minion->SetSpeed(UnitMoveType(i), m_speed_rate[i], true);
 
         // Ghoul pets have energy instead of mana (is anywhere better place for this code?)
-        if (minion->IsPetGhoul() || minion->GetEntry() == 24207 /*ENTRY_ARMY_OF_THE_DEAD*/ || minion->GetEntry() == 17252  /*FELGUARD*/)
+        if (minion->IsPetGhoul() || minion->GetEntry() == 24207 /*ENTRY_ARMY_OF_THE_DEAD*/
+                                 || minion->GetEntry() == 17252  /*FELGUARD*/
+                                 || minion->GetEntry() == 417  /*FELHUNTER*/
+                                 || minion->GetEntry() == 416  /*IMP*/
+                                 || minion->GetEntry() == 1863  /*SUCCUBUS*/
+                                 || minion->GetEntry() == 1860  /*VOIDWALKER*/
+                                 || minion->GetEntry() == 11859  /*DOOMGUARD*/)
             minion->setPowerType(POWER_ENERGY);
 
         if (GetTypeId() == TYPEID_PLAYER)
