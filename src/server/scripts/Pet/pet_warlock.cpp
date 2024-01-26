@@ -42,6 +42,9 @@ enum WarlockSpells
     TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R1 = 83077,
     TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R2 = 83078,
     TALENT_WARLOCK_MOLTEN_HAND_LISTENER_R3 = 83079,
+    TALENT_WARLOCK_IMPROVED_FELHUNTER_R1 = 54037,
+    TALENT_WARLOCK_IMPROVED_FELHUNTER_R2 = 54038,
+    TALENT_WARLOCK_IMPROVED_FELHUNTER_LISTENER = 54425,
 
     // Pet Spells
     SPELL_WILDIMP_FIREBOLT = 83003,
@@ -164,6 +167,17 @@ struct npc_pet_warlock_felhunter : public ScriptedAI
 {
     npc_pet_warlock_felhunter(Creature* creature) : ScriptedAI(creature) { }
 
+    Aura* GetImprovedFelhunterAura(Unit* caster)
+    {
+        if (caster->HasAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R1))
+            return caster->GetAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R1);
+
+        if (caster->HasAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R2))
+            return caster->GetAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R2);
+
+        return nullptr;
+    }
+
     Aura* GetReignofTyrannyAura(Unit* caster)
     {
         for (size_t i = 800844; i < 800850; i++)
@@ -181,6 +195,10 @@ struct npc_pet_warlock_felhunter : public ScriptedAI
 
         if (!owner)
             return;
+
+        // Add Improved Felhunter listener
+        if (GetImprovedFelhunterAura(owner))
+            me->AddAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_LISTENER, me);
 
         // Add a Stack of Demonic Servitude from Reign of Tyranny
         if (Aura* runeAura = GetReignofTyrannyAura(owner))
@@ -890,7 +908,7 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
         hasCharged = false;
 
         Unit* owner = me->GetOwner();
-        
+
         if (!owner)
             return;
 
@@ -1646,7 +1664,7 @@ struct npc_pet_warlock_pit_lord : public ScriptedAI
             me->CastCustomSpell(RUNE_WARLOCK_GULDANS_AMBITION_BUFF, SPELLVALUE_AURA_STACK, stacks, me, TRIGGERED_FULL_MASK);
             guldanListener->Remove();
         }
-            
+
 
         // Add a Stack of Demonic Servitude from Reign of Tyranny
         if (Aura* runeAura = GetReignofTyrannyAura(owner))
@@ -1754,7 +1772,7 @@ void AddSC_warlock_pet_scripts()
     RegisterCreatureAI(npc_pet_warlock_pit_lord);
 
 
-    
+
 
     new spell_warl_darkglare_spell();
 }

@@ -138,6 +138,9 @@ enum WarlockSpells
     TALENT_WARLOCK_ARCHDEMON_MARK = 83202,
     TALENT_WARLOCK_ARCHDEMON_COOLDOWN = 83203,
     TALENT_WARLOCK_MOLTEN_HAND = 47245,
+    TALENT_WARLOCK_IMPROVED_FELHUNTER_R1 = 54037,
+    TALENT_WARLOCK_IMPROVED_FELHUNTER_R2 = 54038,
+    TALENT_WARLOCK_IMPROVED_FELHUNTER_LISTENER = 54425,
 
     // Masteries  
     MASTERY_WARLOCK_FEL_BLOOD = 1100024,
@@ -369,22 +372,22 @@ class spell_warl_improved_demonic_tactics : public AuraScript
 
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool&  /*canBeRecalculated*/)
     {
-        if (aurEff->GetEffIndex() == EFFECT_0)
-            amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + static_cast<uint8>(SPELL_SCHOOL_FROST)), GetSpellInfo()->Effects[EFFECT_0].CalcValue());
-        else
-            amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_CRIT_PERCENTAGE), GetSpellInfo()->Effects[EFFECT_0].CalcValue());
+        /*if (aurEff->GetEffIndex() == EFFECT_0)*/
+            amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + static_cast<uint8>(SPELL_SCHOOL_SHADOW)), GetSpellInfo()->Effects[EFFECT_0].CalcValue());
+        /*else
+            amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_CRIT_PERCENTAGE), GetSpellInfo()->Effects[EFFECT_0].CalcValue());*/
     }
 
     void HandleEffectCalcSpellMod(AuraEffect const* aurEff, SpellModifier*& spellMod)
     {
-        if (!spellMod)
-        {
-            spellMod = new SpellModifier(aurEff->GetBase());
-            spellMod->op = SpellModOp(aurEff->GetMiscValue());
-            spellMod->type = SPELLMOD_FLAT;
-            spellMod->spellId = GetId();
-            spellMod->mask = flag96(0x0, 0x2000, 0x0); // Pet Passive
-        }
+        //if (!spellMod)
+        //{
+        //    spellMod = new SpellModifier(aurEff->GetBase());
+        //    spellMod->op = SpellModOp(aurEff->GetMiscValue());
+        //    spellMod->type = SPELLMOD_FLAT;
+        //    spellMod->spellId = GetId();
+        //    spellMod->mask = flag96(0x0, 0x2000, 0x0); // Pet Passive
+        //}
 
         spellMod->value = aurEff->GetAmount();
     }
@@ -397,10 +400,10 @@ class spell_warl_improved_demonic_tactics : public AuraScript
 
     void Register() override
     {
-        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_warl_improved_demonic_tactics::CalcPeriodic, EFFECT_ALL, SPELL_AURA_DUMMY);
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_improved_demonic_tactics::CalculateAmount, EFFECT_ALL, SPELL_AURA_DUMMY);
-        DoEffectCalcSpellMod += AuraEffectCalcSpellModFn(spell_warl_improved_demonic_tactics::HandleEffectCalcSpellMod, EFFECT_ALL, SPELL_AURA_DUMMY);
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_improved_demonic_tactics::HandlePeriodic, EFFECT_ALL, SPELL_AURA_DUMMY);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_warl_improved_demonic_tactics::CalcPeriodic, EFFECT_ALL, SPELL_AURA_ADD_FLAT_MODIFIER);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_improved_demonic_tactics::CalculateAmount, EFFECT_ALL, SPELL_AURA_ADD_FLAT_MODIFIER);
+        DoEffectCalcSpellMod += AuraEffectCalcSpellModFn(spell_warl_improved_demonic_tactics::HandleEffectCalcSpellMod, EFFECT_ALL, SPELL_AURA_ADD_FLAT_MODIFIER);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_improved_demonic_tactics::HandlePeriodic, EFFECT_ALL, SPELL_AURA_ADD_FLAT_MODIFIER);
     }
 };
 
@@ -5038,6 +5041,105 @@ class spell_warlock_felhunter_shadow_bite : public SpellScript
     }
 };
 
+// 54037 - 54038 - Improved Felhunter
+class spell_warlock_improved_felhunter : public AuraScript
+{
+    PrepareAuraScript(spell_warlock_improved_felhunter);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+
+            if (!pet || pet->isDead())
+                return;
+
+            if (pet->GetEntry() == PET_WARLOCK_FELHUNTER)
+                pet->AddAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_LISTENER, pet);
+        }
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Pet* pet = player->GetPet();
+
+            if (!pet || pet->isDead())
+                return;
+
+            if (pet->HasAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_LISTENER))
+                pet->RemoveAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_LISTENER);
+        }
+    }
+
+    void Register()
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warlock_improved_felhunter::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warlock_improved_felhunter::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 54425 - Improved Felhunter proc
+class spell_warlock_improved_felhunter_proc : public AuraScript
+{
+    PrepareAuraScript(spell_warlock_improved_felhunter_proc);
+
+    Aura* GetImprovedFelhunterAura(Unit* caster)
+    {
+        if (caster->HasAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R1))
+            return caster->GetAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R1);
+
+        if (caster->HasAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R2))
+            return caster->GetAura(TALENT_WARLOCK_IMPROVED_FELHUNTER_R2);
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* pet = GetUnitOwner();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* talentAura = GetImprovedFelhunterAura(caster))
+        {
+            int32 amount = talentAura->GetEffect(EFFECT_0)->GetAmount();
+            pet->EnergizeBySpell(pet, GetSpellInfo()->Id, amount, POWER_ENERGY);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warlock_improved_felhunter_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_warlock_improved_felhunter_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_warlock_spell_scripts()
@@ -5148,9 +5250,11 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_darkglare_shadow_blast);
     RegisterSpellScript(spell_warlock_doomguard_doom_bolt);
     RegisterSpellScript(spell_warlock_felhunter_shadow_bite);
+    RegisterSpellScript(spell_warlock_improved_felhunter);
+    RegisterSpellScript(spell_warlock_improved_felhunter_proc);
 
 
 
-
+    
 
 }

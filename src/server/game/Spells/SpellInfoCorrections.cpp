@@ -1022,14 +1022,14 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Improved Demonic Tactics
-    ApplySpellFix({ 54347, 54348, 54349 }, [](SpellInfo* spellInfo)
+    /*ApplySpellFix({ 54347, 54348, 54349 }, [](SpellInfo* spellInfo)
     {
         spellInfo->Effects[EFFECT_1].Effect = spellInfo->Effects[EFFECT_0].Effect;
         spellInfo->Effects[EFFECT_1].ApplyAuraName = spellInfo->Effects[EFFECT_0].ApplyAuraName;
         spellInfo->Effects[EFFECT_1].TargetA = spellInfo->Effects[EFFECT_0].TargetA;
         spellInfo->Effects[EFFECT_0].MiscValue = SPELLMOD_EFFECT1;
         spellInfo->Effects[EFFECT_1].MiscValue = SPELLMOD_EFFECT2;
-    });
+    });*/
 
     // Rain of Fire (Doomguard)
     ApplySpellFix({ 42227 }, [](SpellInfo* spellInfo)
