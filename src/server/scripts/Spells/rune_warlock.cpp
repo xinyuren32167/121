@@ -109,6 +109,7 @@ enum WarlockPets {
 
     // Runes
     RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE = 800000,
+    RUNE_GUARDIAN_WARLOCK_PIT_LORD = 800001,
 };
 
 class rune_warl_inquisitors_gaze : public AuraScript
@@ -1674,28 +1675,28 @@ class rune_warl_reign_of_tyranny : public AuraScript
                     unit->GetEntry() == GUARDIAN_WARLOCK_VILEFIEND ||
                     unit->GetEntry() == GUARDIAN_WARLOCK_WILD_IMP ||
                     unit->GetEntry() == GUARDIAN_WARLOCK_BILESCOURGE ||
-                    unit->GetEntry() == GUARDIAN_WARLOCK_PORTAL_SUMMON ||
                     unit->GetEntry() == RUNE_GUARDIAN_WARLOCK_INQUISITORS_EYE)
                 {
                     stackAmount += stackPerDemon;
                 }
 
                 // Greater demons
-                if (unit->GetEntry() == PET_WARLOCK_FELGUARD ||
-                    unit->GetEntry() == PET_WARLOCK_FELHUNTER ||
-                    unit->GetEntry() == PET_WARLOCK_IMP ||
-                    unit->GetEntry() == PET_WARLOCK_SUCCUBUS ||
-                    unit->GetEntry() == PET_WARLOCK_VOIDWALKER ||
-                    unit->GetEntry() == GUARDIAN_WARLOCK_DARKGLARE ||
+                if (unit->GetEntry() == GUARDIAN_WARLOCK_DARKGLARE ||
                     unit->GetEntry() == GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE ||
-                    unit->GetEntry() == GUARDIAN_WARLOCK_DEMONIC_TYRAN ||
                     unit->GetEntry() == GUARDIAN_WARLOCK_DOOMGUARD ||
-                    unit->GetEntry() == GUARDIAN_WARLOCK_INFERNAL)
+                    unit->GetEntry() == GUARDIAN_WARLOCK_INFERNAL ||
+                    unit->GetEntry() == RUNE_GUARDIAN_WARLOCK_PIT_LORD)
                 {
                     stackAmount += stackPerDemon * 3;
                 }
+                LOG_ERROR("error", "stackAmount = {}", stackAmount);
             }
 
+            Pet* pet = player->GetPet();
+
+            if (pet)
+                stackAmount += stackPerDemon * 3;
+            LOG_ERROR("error", "stackAmount = {}", stackAmount);
             if (stackAmount == 0)
                 return;
 

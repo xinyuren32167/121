@@ -886,9 +886,11 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
+        _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 2000);
+        hasCharged = false;
 
         Unit* owner = me->GetOwner();
-
+        
         if (!owner)
             return;
 
@@ -906,8 +908,17 @@ struct npc_pet_warlock_vilefiend : public ScriptedAI
 
     void AttackTarget(Unit* target)
     {
-        me->JumpTo(target, 9.375f);
-        AttackStart(target);
+        if (hasCharged == false)
+        {
+            me->CastSpell(target, SPELL_HEADBUTT);
+            hasCharged = true;
+            AttackStart(target);
+        }
+        else
+        {
+            me->JumpTo(target, 9.375f);
+            AttackStart(target);
+        }
     }
 
     void Reset() override
@@ -1005,6 +1016,7 @@ private:
     bool _initAttack;
     Player* owner;
     int32 shadow;
+    bool hasCharged;
 };
 
 struct npc_pet_warlock_felguard_grimoire : public ScriptedAI
@@ -1163,17 +1175,6 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
 
         if (!owner)
             return;
-
-        // Add a Stack of Demonic Servitude from Reign of Tyranny
-        if (Aura* runeAura = GetReignofTyrannyAura(owner))
-        {
-            int32 stackIncrease = runeAura->GetEffect(EFFECT_1)->GetAmount() * 3;
-
-            if (Aura* demonicServitude = owner->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
-                demonicServitude->ModStackAmount(stackIncrease);
-            else
-                owner->CastCustomSpell(RUNE_WARLOCK_DEMONIC_SERVITUDE, SPELLVALUE_AURA_STACK, stackIncrease, owner, TRIGGERED_FULL_MASK);
-        }
     }
 
     void Reset() override
@@ -1220,21 +1221,6 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
         DoMeleeAttackIfReady();
     }
 
-    void JustDespawned() override
-    {
-        if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
-        {
-            // Remove a Stack of Demonic Servitude from Reign of Tyranny
-            if (Aura* runeAura = GetReignofTyrannyAura(owner))
-            {
-                int32 stackDecrease = runeAura->GetEffect(EFFECT_1)->GetAmount() * 3;
-
-                if (Aura* demonicServitude = owner->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
-                    demonicServitude->ModStackAmount(-stackDecrease);
-            }
-        }
-    }
-
 private:
     EventMap _events;
     Player* owner;
@@ -1262,7 +1248,7 @@ struct npc_pet_warlock_dreadstalker : public ScriptedAI
     {
         _events.Reset();
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
-        _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 500);
+        _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 2000);
 
         Unit* owner = me->GetOwner();
 
@@ -1673,7 +1659,7 @@ struct npc_pet_warlock_pit_lord : public ScriptedAI
         // Add a Stack of Demonic Servitude from Reign of Tyranny
         if (Aura* runeAura = GetReignofTyrannyAura(owner))
         {
-            int32 stackIncrease = runeAura->GetEffect(EFFECT_1)->GetAmount();
+            int32 stackIncrease = runeAura->GetEffect(EFFECT_1)->GetAmount() * 3;
 
             if (Aura* demonicServitude = owner->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
                 demonicServitude->ModStackAmount(stackIncrease);

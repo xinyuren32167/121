@@ -594,7 +594,7 @@ class spell_warl_generic_scaling : public AuraScript
             PetStats stat = GetSpApStamina(m_scriptSpellId);
             int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum = (fire > shadow) ? fire : shadow;
+            int32 maximum = (fire > shadow) ? fire : shadow;           
             amount = CalculatePct(std::max<int32>(0, maximum), stat.sp_to_ap);
         }
     }
@@ -607,7 +607,7 @@ class spell_warl_generic_scaling : public AuraScript
             int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
             int32 maximum = (fire > shadow) ? fire : shadow;
-            amount = CalculatePct(std::max<int32>(0, maximum), stat.sp_to_ap);
+            amount = CalculatePct(std::max<int32>(0, maximum), stat.sp_to_sp);
 
             // xinef: Update appropriate player field
             if (owner->GetTypeId() == TYPEID_PLAYER)
