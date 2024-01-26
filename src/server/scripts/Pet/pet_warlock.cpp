@@ -1218,9 +1218,17 @@ struct npc_pet_warlock_demonic_tyrant : public ScriptedAI
             switch (eventId)
             {
             case 1:
-                if (Unit* target = owner->GetSelectedUnit()) {
-                    if (owner->IsInCombat()) {
-                        me->CastSpell(target, SPELL_DEMONFIRE);
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                {
+                    if (Unit* newTarget = owner->GetSelectedUnit())
+                    {
+                        if (Unit* victim = me->GetVictim()) {
+                            if (victim->GetGUID() != newTarget->GetGUID() && owner->IsInCombatWith(victim))
+                            {
+                                if (me->CanCreatureAttack(newTarget))
+                                    me->CastSpell(newTarget, SPELL_DEMONFIRE);
+                            }
+                        }
                     }
                 }
                 _events.ScheduleEvent(1, 2000);
