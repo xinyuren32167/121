@@ -15921,6 +15921,7 @@ bool Player::HasTankSpec()
         case TALENT_TREE_DEATH_KNIGHT_BLOOD:
         case TALENT_TREE_SHAMAN_SPIRIT_MASTER:
         case TALENT_TREE_DRUID_GUARDIAN:
+        case TALENT_TREE_WARLOCK_DEMONBOUND:
             return true;
         default:
             break;
@@ -15934,14 +15935,17 @@ bool Player::HasMeleeSpec()
     {
         case TALENT_TREE_WARRIOR_ARMS:
         case TALENT_TREE_WARRIOR_FURY:
+        case TALENT_TREE_WARRIOR_HOPLITE:
         case TALENT_TREE_PALADIN_RETRIBUTION:
         case TALENT_TREE_ROGUE_ASSASSINATION:
         case TALENT_TREE_ROGUE_COMBAT:
         case TALENT_TREE_ROGUE_SUBTLETY:
+        case TALENT_TREE_ROGUE_OUTLAW:
         case TALENT_TREE_DEATH_KNIGHT_FROST:
         case TALENT_TREE_DEATH_KNIGHT_UNHOLY:
         case TALENT_TREE_SHAMAN_ENHANCEMENT:
         case TALENT_TREE_DRUID_FERAL_COMBAT:
+        case TALENT_TREE_MAGE_SPELLBLADE:
             return true;
         default:
             break;
@@ -15954,6 +15958,7 @@ bool Player::HasCasterSpec()
     switch (GetSpec(GetActiveSpec()))
     {
         case TALENT_TREE_PRIEST_SHADOW:
+        case TALENT_TREE_PRIEST_ABSOLUTION:
         case TALENT_TREE_SHAMAN_ELEMENTAL:
         case TALENT_TREE_MAGE_ARCANE:
         case TALENT_TREE_MAGE_FIRE:
@@ -15965,6 +15970,8 @@ bool Player::HasCasterSpec()
         case TALENT_TREE_HUNTER_BEAST_MASTERY:
         case TALENT_TREE_HUNTER_MARKSMANSHIP:
         case TALENT_TREE_HUNTER_SURVIVAL:
+        case TALENT_TREE_HUNTER_DARK_RANGER:
+        case TALENT_TREE_PALADIN_INQUISITOR:
             return true;
         default:
             break;
@@ -15981,6 +15988,7 @@ bool Player::HasHealSpec()
         case TALENT_TREE_PRIEST_HOLY:
         case TALENT_TREE_SHAMAN_RESTORATION:
         case TALENT_TREE_DRUID_RESTORATION:
+        case TALENT_TREE_DEATH_KNIGHT_SOULWEAVER:
             return true;
         default:
             break;

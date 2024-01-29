@@ -50,6 +50,8 @@ enum DeathKnightSpells
     RUNE_DK_KORPSKRIEG_DAMAGE = 600956,
     RUNE_DK_VIRAL_LOAD_PROC = 601043,
     RUNE_DK_HIGH_METABOLISM_PROC = 601116,
+    RUNE_DK_EBON_CURSE_PROC = 601129,
+    RUNE_DK_RESPLENDENT_RENEWAL_PROC = 601136,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -2200,6 +2202,78 @@ class rune_dk_high_metabolism_health_check : public AuraScript
     }
 };
 
+class rune_dk_ebon_curse : public AuraScript
+{
+    PrepareAuraScript(rune_dk_ebon_curse);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+
+        if (!healInfo || !healInfo->GetHeal())
+            return false;
+
+        if (healInfo->GetHeal() < 0)
+            return false;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DK_EBON_CURSE_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_ebon_curse::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_ebon_curse::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_resplendent_renewal : public AuraScript
+{
+    PrepareAuraScript(rune_dk_resplendent_renewal);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+
+        if (!healInfo || !healInfo->GetHeal())
+            return false;
+
+        if (healInfo->GetHeal() < 0)
+            return false;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+
+        GetCaster()->CastCustomSpell(RUNE_DK_RESPLENDENT_RENEWAL_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_resplendent_renewal::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_resplendent_renewal::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     RegisterSpellScript(rune_dk_permafrost);
@@ -2272,4 +2346,6 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_inhuman_assault);
     RegisterSpellScript(rune_dk_high_metabolism);
     RegisterSpellScript(rune_dk_high_metabolism_health_check);
+    RegisterSpellScript(rune_dk_ebon_curse);
+    RegisterSpellScript(rune_dk_resplendent_renewal);
 }
