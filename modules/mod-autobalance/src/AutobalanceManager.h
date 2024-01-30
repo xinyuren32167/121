@@ -21,6 +21,7 @@ class AutoBalanceManager {
 
 private:
     static std::map<uint8, AutobalanceScalingInfo> m_ScalingPerSpecialization;
+    static std::map<uint32, float> m_ScalingPerSpecializationValueHealth;
     static std::map<uint32, AutobalanceScalingInfo> m_OverrideScalingPerCreatureId;
     static std::map<uint32, std::map<Difficulty, AutobalanceScalingInfo>> m_ScalingDungeonDifficulty;
 public:
@@ -31,7 +32,8 @@ public:
     static AutobalanceScalingInfo GetScalingInfo(Map* map, Unit* creature);
     static void ApplyScalingHealthAndMana(Map* map, Creature* creature);
     static float CalculateHealthRaidScaling(uint8 playerCount, double healthScaling);
-    static float CalculateHealthDungeonScaling(uint8 playerCount, double healthScaling);
+    static float CalculateHealthDungeonScaling(Map* map);
+    static float GetPlayerValueScaling(Player* player);
 
     static bool SomeoneIsTooHighLevel(Map* map);
     static void SendMessageScalingInfo(Map* map);

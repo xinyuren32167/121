@@ -4,6 +4,10 @@
 #include "Chat.h"
 
 std::map<uint8, AutobalanceScalingInfo> AutoBalanceManager::m_ScalingPerSpecialization = {};
+std::map<uint32, float> AutoBalanceManager::m_ScalingPerSpecializationValueHealth = {
+    { }
+
+};
 std::map<uint32, AutobalanceScalingInfo> AutoBalanceManager::m_OverrideScalingPerCreatureId = {};
 std::map<uint32, std::map<Difficulty, AutobalanceScalingInfo>> AutoBalanceManager::m_ScalingDungeonDifficulty = {};
 
@@ -45,6 +49,8 @@ void AutoBalanceManager::SendMessageScalingInfo(Map* map)
 void AutoBalanceManager::InitializeScalingPerSpecialization()
 {
     m_ScalingPerSpecialization = {};
+
+
 
     QueryResult result = WorldDatabase.Query("SELECT * FROM scalings_per_specialization");
 
@@ -100,7 +106,6 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Unit* creatu
     uint8 playerCount = map->GetPlayers().getSize();
 
     if (playerCount <= 1 && !isRaid) {
-
         auto mapPlayer = map->GetPlayers().getFirst();
         Player* player = mapPlayer->GetSource();
 
@@ -119,13 +124,6 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Unit* creatu
 
         return {};
     }
-
-    uint32 creatureId = creature->GetEntry();
-
-    auto match = m_OverrideScalingPerCreatureId.find(creatureId);
-
-    if (match != m_OverrideScalingPerCreatureId.end())
-        return match->second;
 
     if (playerCount > 1) {
         auto match = m_ScalingDungeonDifficulty.find(map->GetId());
@@ -188,12 +186,12 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
         if (map->IsRaid())
         {
             double totalReduction = CalculateHealthRaidScaling(playerCount, scaling.healthModifier);
-            scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
+            scaledHealth = creature->prevMaxHealth * totalReduction;
         }
         else
         {
-            double totalReduction = CalculateHealthDungeonScaling(playerCount, scaling.healthModifier);
-            scaledHealth = creature->prevMaxHealth - (totalReduction * creature->prevMaxHealth);
+            double totalReduction = CalculateHealthDungeonScaling(map);
+            scaledHealth = creature->prevMaxHealth * totalReduction;
         }
     }
 
@@ -206,17 +204,73 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
 
 float AutoBalanceManager::CalculateHealthRaidScaling(uint8 totalPlayerInRaid, double healthScaling)
 {
-    return healthScaling / 1.5;
+    if (totalPlayerInRaid < 10)
+        totalPlayerInRaid = 10;
+
+    return ((totalPlayerInRaid - 10) * 0.10) + 1;
 }
 
-float AutoBalanceManager::CalculateHealthDungeonScaling(uint8 totalPlayerInDungeon, double healthScaling)
+float AutoBalanceManager::CalculateHealthDungeonScaling(Map* map)
 {
-    if (totalPlayerInDungeon == 5)
-        return healthScaling / 3.7;
-    if (totalPlayerInDungeon == 4)
-        return healthScaling / 3.0;
-    if (totalPlayerInDungeon == 3)
-        return healthScaling / 2.3;
-    if (totalPlayerInDungeon == 2)
-        return healthScaling / 1.2;
+    std::list<Player*> players = GetPlayersMap(map);
+
+    float healthScaling = 0;
+
+    for (auto const& i : players) {
+        const float value = GetPlayerValueScaling(i);
+        healthScaling += value;
+    }
+
+    return healthScaling;
+}
+
+float AutoBalanceManager::GetPlayerValueScaling(Player* player)
+{
+    uint32 specId = PlayerSpecialization::GetCurrentSpecId(player);
+
+    if (!specId)
+        return 0.25;
+
+    switch (specId) {
+        case WARRIOR_ARMS: return 0.25;
+        case WARRIOR_FURY: return 0.25;
+        case WARRIOR_PROTECTION: return 0.15;
+        case WARRIOR_HOPLITE: return 0.25;
+        case MAGE_ARCANE: return 0.25;
+        case MAGE_FIRE: return 0.25;
+        case MAGE_FROST: return 0.25;
+        case MAGE_SPELLBLADE: return 0.25;
+        case DK_BLOOD: return 0.15;
+        case DK_FROST: return 0.25;
+        case DK_UNHOLY: return 0.25;
+        case DK_SOULWEAVER: return 0.10;
+        case DRUID_BALANCE: return 0.25;
+        case DRUID_FERAL: return 0.25;
+        case DRUID_RESTO: return 0.10;
+        case DRUID_GUARDIAN: return 0.15;
+        case HUNTER_BEAST: return 0.25;
+        case HUNTER_MARSKMANSHIP: return 0.25;
+        case HUNTER_SURVIVAL: return 0.25;
+        case HUNTER_DARK_RANGER: return 0.25;
+        case PALADIN_HOLY: return 0.10;
+        case PALADIN_PROTECTION: return 0.15;
+        case PALADIN_RETRIBUTION: return 0.25;
+        case PALADIN_INQUISITOR: return 0.25;
+        case ROGUE_ASSASSINATION: return 0.25;
+        case ROGUE_COMBAT: return 0.25;
+        case ROGUE_SUBTLETY: return 0.25;
+        case ROGUE_OUTLAW: return 0.25;
+        case SHAMAN_ELEMENTAL: return 0.25;
+        case SHAMAN_ENCHANCEMENT: return 0.25;
+        case SHAMAN_RESTORATION: return 0.10;
+        case SHAMAN_SPIRIT_MASTER: return 0.25;
+        case WARLOCK_AFFLICTION: return 0.25;
+        case WARLOCK_DEMONOLOGY: return 0.25;
+        case WARLOCK_DESTRUCTION: return 0.25;
+        case WARLOCK_DEMONBOUND: return 0.25;
+        case PRIEST_DISCI: return 0.10;
+        case PRIEST_HOLY: return 0.10;
+        case PRIEST_SHADOW: return 0.25;
+        case PRIEST_ABSOLUTION: return 0.25;
+    }
 }

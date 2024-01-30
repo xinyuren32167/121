@@ -3101,10 +3101,11 @@ int32 Unit::GetMechanicResistChance(SpellInfo const* spell)
     return resist_mech;
 }
 
-bool Unit::CheckIfIsSpellMiss(Unit* victim)
+float Unit::GetChanceSpellHit(Unit* victim)
 {
     int32 levelDiff = int32(victim->getLevelForTarget(this)) - int32(this->getLevelForTarget(victim));
     float chance = levelDiff > 4 ? 25.0f + levelDiff * 1.0f : 0.0f; // Base 5% miss chance + 0.1% per level difference
+
     chance = std::max<float>(chance, 0.0f); // Minimum miss chance is 0%
     chance = std::min<float>(chance, 100.f); // Maximum miss chance is 95%
     return roll_chance_f(chance);
@@ -3147,7 +3148,9 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
     // Roll miss
     uint32 tmp = missChance;
 
-    if (CheckIfIsSpellMiss(victim))
+    float chance = GetChanceSpellHit(victim);
+
+    if (roll_chance_i(chance))
         return SPELL_MISS_MISS;
 
     bool canDodge = !spellInfo->HasAttribute(SPELL_ATTR7_NO_ATTACK_DODGE);
@@ -3322,7 +3325,10 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit* victim, SpellInfo const* spellInfo
 
     int32 rand = irand(1, 10000); // Needs to be  1 to 10000 to avoid the 1/10000 chance to miss on 100% hit rating
 
-    if (CheckIfIsSpellMiss(victim))
+    float chance = GetChanceSpellHit(victim);
+    chance += victim->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_ATTACKER_SPELL_HIT_CHANCE, schoolMask);
+
+    if (roll_chance_i(chance))
         return SPELL_MISS_MISS;
 
     // Chance resist mechanic (select max value from every mechanic spell effect)

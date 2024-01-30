@@ -91,18 +91,6 @@ public:
         damage = _Modifer_DealDamage(target, attacker, damage);
     }
 
-    float GetDamageReductionForRaid(uint8 playerCountInRaid, double damageScaling) {
-
-        if (playerCountInRaid <= 10)
-            return damageScaling / 3; 
-        if (playerCountInRaid > 10 && playerCountInRaid <= 15)
-            return damageScaling / 2; 
-        if (playerCountInRaid > 15 && playerCountInRaid <= 20)
-            return damageScaling;  
-
-        return 1.0f; // We have 5 healers no scaling.
-    }
-
     float GetDamageReductionForDungeon(uint8 playerCountDungeon, double damageScaling) {
 
         // Full slot, we have a healer
@@ -145,9 +133,7 @@ public:
         if (playerCount == 1 && !map->IsRaid())
             return damage *= scaling.meleeDamageModifier;
 
-        if (map->IsRaid())
-            return damage *= GetDamageReductionForRaid(playerCount, scaling.meleeDamageModifier);
-        else
+        if (!map->IsRaid())
             return damage *= GetDamageReductionForDungeon(playerCount, scaling.meleeDamageModifier);
 
         return damage;
@@ -159,23 +145,7 @@ class AutoBalance_AllMapScript : public AllMapScript
 {
 public:
     AutoBalance_AllMapScript() : AllMapScript("AutoBalance_AllMapScript") { }
-
-    void OnPlayerEnterAll(Map* map, Player* player)
-    {
-        if (player->IsGameMaster())
-            return;
-
-
-        AutoBalanceManager::SendMessageScalingInfo(map);
-    }
-
-    void OnPlayerLeaveAll(Map* map, Player* player)
-    {
-        if (player->IsGameMaster())
-            return;
-
-        AutoBalanceManager::SendMessageScalingInfo(map);
-    }
+  
 };
 
 

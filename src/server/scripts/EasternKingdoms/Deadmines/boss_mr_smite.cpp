@@ -21,7 +21,9 @@
 
 enum Spells
 {
-    SPELL_SMITE_STOMP       = 6432,
+    SPELL_SMITE_STOMP        = 6432,
+    SPELL_SMITE_STOMP_MYTHIC = 2000023,
+
     SPELL_SMITE_SLAM        = 6435,
 
     EQUIP_SWORD             = 1,
@@ -89,7 +91,12 @@ public:
                 case EVENT_CHECK_HEALTH1:
                     if (me->HealthBelowPct(67) && !health67)
                     {
-                        me->CastSpell(me, SPELL_SMITE_STOMP, false);
+
+                        if (me->GetMap()->GetDifficulty() >= DUNGEON_DIFFICULTY_EPIC)
+                            me->CastSpell(me, SPELL_SMITE_STOMP_MYTHIC, false);
+                        else
+                            me->CastSpell(me, SPELL_SMITE_STOMP, false);
+
                         events.DelayEvents(10000);
                         me->GetMotionMaster()->Clear();
                         me->GetMotionMaster()->MovePoint(EQUIP_TWO_SWORDS, 1.859f, -780.72f, 9.831f);
@@ -104,7 +111,11 @@ public:
                 case EVENT_CHECK_HEALTH2:
                     if (me->HealthBelowPct(34) && !health34)
                     {
-                        me->CastSpell(me, SPELL_SMITE_STOMP, false);
+                        if (me->GetMap()->GetDifficulty() >= DUNGEON_DIFFICULTY_EPIC)
+                            me->CastSpell(me, SPELL_SMITE_STOMP_MYTHIC, false);
+                        else
+                            me->CastSpell(me, SPELL_SMITE_STOMP, false);
+
                         events.DelayEvents(10000);
                         me->GetMotionMaster()->Clear();
                         me->GetMotionMaster()->MovePoint(EQUIP_MACE, 1.859f, -780.72f, 9.831f);
