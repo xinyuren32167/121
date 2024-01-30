@@ -196,7 +196,7 @@ enum WarlockPets
     GUARDIAN_WARLOCK_BILESCOURGE = 600607,
     GUARDIAN_WARLOCK_DARKGLARE = 600604,
     GUARDIAN_WARLOCK_DEMONIC_TYRAN = 600603,
-    GUARDIAN_WARLOCK_DOOMGUARD = 11859,
+    GUARDIAN_WARLOCK_DOOMGUARD = 600616,
     GUARDIAN_WARLOCK_DREADSTALKER = 600600,
     GUARDIAN_WARLOCK_FELGUARD_GRIMOIRE = 600605,
     GUARDIAN_WARLOCK_INFERNAL = 89,
@@ -1625,12 +1625,12 @@ class spell_warl_curse_of_doom : public AuraScript
         if (!GetCaster())
             return;
 
-        AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+        /*AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
         if (removeMode != AURA_REMOVE_BY_DEATH || !IsExpired())
             return;
 
         if (GetCaster()->ToPlayer()->isHonorOrXPTarget(GetTarget()))
-            GetCaster()->CastSpell(GetTarget(), SPELL_WARLOCK_CURSE_OF_DOOM_EFFECT, true, nullptr, aurEff);
+            GetCaster()->CastSpell(GetTarget(), SPELL_WARLOCK_CURSE_OF_DOOM_EFFECT, true, nullptr, aurEff);*/
     }
 
     void Register() override
@@ -5140,6 +5140,39 @@ class spell_warlock_improved_felhunter_proc : public AuraScript
     }
 };
 
+class spell_warlock_flame_nourish_target : public SpellScript
+{
+    PrepareSpellScript(spell_warlock_flame_nourish_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        targets.remove(pet);
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+        
+        auto controlledList = caster->m_Controlled;
+
+        targets.remove_if([&](WorldObject* target) -> bool
+            {
+                Unit* unit = target->ToUnit();
+        return controlledList.find(unit) == controlledList.end();
+            });
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_flame_nourish_target::FilterTargets, EFFECT_ALL, TARGET_UNIT_DEST_AREA_ALLY);
+    }
+};
+
 
 
 void AddSC_warlock_spell_scripts()
@@ -5252,8 +5285,9 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_felhunter_shadow_bite);
     RegisterSpellScript(spell_warlock_improved_felhunter);
     RegisterSpellScript(spell_warlock_improved_felhunter_proc);
+    RegisterSpellScript(spell_warlock_flame_nourish_target);
 
-
+    
 
     
 

@@ -10671,7 +10671,7 @@ void Unit::SetMinion(Minion* minion, bool apply)
                                  || minion->GetEntry() == 416  /*IMP*/
                                  || minion->GetEntry() == 1863  /*SUCCUBUS*/
                                  || minion->GetEntry() == 1860  /*VOIDWALKER*/
-                                 || minion->GetEntry() == 11859  /*DOOMGUARD*/)
+                                 || minion->GetEntry() == 600616  /*DOOMGUARD*/)
             minion->setPowerType(POWER_ENERGY);
 
         if (GetTypeId() == TYPEID_PLAYER)
