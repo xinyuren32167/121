@@ -1883,12 +1883,28 @@ class spell_warlock_summon_gargoyle : public SpellScript
     void HandleCast()
     {
         Player* player = GetCaster()->ToPlayer();
+        Unit* target = player->GetSelectedUnit();
+
+        if (!target)
+            return;
 
         int32 duration = GetSpellInfo()->GetDuration();
-        TempSummon* summon = GetCaster()->SummonCreatureGuardian(GUARDIAN_WARLOCK_BILESCOURGE, player->GetSelectedUnit(), player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-        if (summon)
-            summon->AI()->AttackStart(player->GetSelectedUnit());
 
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+
+        Map* map = player->GetMap();
+
+        Position pos = target->GetNearPosition(3.f, 1.f);
+
+        if (TempSummon* summon = map->SummonCreature(GUARDIAN_WARLOCK_BILESCOURGE, pos, properties, duration))
+        {
+            summon->SetTempSummonType(TEMPSUMMON_TIMED_DESPAWN);
+
+            summon->GetMotionMaster()->Clear(false);
+            summon->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE, MOTION_SLOT_ACTIVE);
+            ((Guardian*)summon)->InitStatsForLevel(player->getLevel());
+            summon->AI()->AttackStart(player->GetSelectedUnit());
+        }
     }
 
     void Register() override

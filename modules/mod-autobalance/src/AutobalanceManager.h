@@ -33,7 +33,7 @@ public:
     static void ApplyScalingHealthAndMana(Map* map, Creature* creature);
     static float CalculateHealthRaidScaling(uint8 playerCount, double healthScaling);
     static float CalculateHealthDungeonScaling(Map* map);
-    static float GetPlayerValueScaling(Player* player);
+    static float GetPlayerSpecializationValueForScalingHealth(Player* player);
 
     static bool SomeoneIsTooHighLevel(Map* map);
     static void SendMessageScalingInfo(Map* map);

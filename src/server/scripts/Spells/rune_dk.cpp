@@ -1980,18 +1980,36 @@ class rune_dk_korpskrieg : public SpellScript
 
     void HandleCast()
     {
-        if (GetCaster())
-            if (Player* player = GetCaster()->ToPlayer())
-                if (player && player->IsAlive())
-                    if (Aura* runeAura = GetRuneAura(player))
-                        for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
-                            if (Unit* undeadPet = (*itr))
-                                if (undeadPet->IsAlive() && undeadPet->GetOwnerGUID() == player->GetGUID() && undeadPet->GetEntry() == 24207 && undeadPet->IsWithinDist(player, 100.0f, false))
-                                {
-                                    int32 damage = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), runeAura->GetEffect(EFFECT_0)->GetAmount());
-                                    undeadPet->CastCustomSpell(RUNE_DK_KORPSKRIEG_DAMAGE, SPELLVALUE_BASE_POINT0, damage, undeadPet, TRIGGERED_FULL_MASK, nullptr, nullptr, player->GetGUID());
-                                    return;
-                                }
+        Unit* caster = GetCaster();
+
+        if (!caster)
+            return;
+
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player || !player->IsAlive())
+            return;
+
+        Aura* runeAura = GetRuneAura(player);
+
+        if (!runeAura)
+            return;
+
+        for (Unit::ControlSet::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+        {
+            Unit* undeadPet = (*itr);
+
+            if (!undeadPet || !undeadPet->IsAlive())
+                continue;
+
+            if (undeadPet->GetEntry() == 24207 && undeadPet->IsWithinDist(player, 100.0f, false))
+            {
+                int32 damage = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), runeAura->GetEffect(EFFECT_0)->GetAmount());
+                undeadPet->CastCustomSpell(RUNE_DK_KORPSKRIEG_DAMAGE, SPELLVALUE_BASE_POINT0, damage, undeadPet, TRIGGERED_FULL_MASK, nullptr, nullptr, player->GetGUID());
+                return;
+            }
+        }
+
     }
 
     void Register() override

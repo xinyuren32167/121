@@ -627,6 +627,13 @@ struct npc_pet_warlock_bomber : public ScriptedAI
 
     void InitializeAI() override
     {
+        me->SetCanFly(true);
+        me->SetDisableGravity(true);
+
+        float tz = me->GetMapHeight(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), true, MAX_FALL_DISTANCE);
+        me->GetMotionMaster()->MoveCharge(me->GetPositionX(), me->GetPositionY(), tz, 7.0f, 1);
+
+
         if (Player* player = me->GetCharmerOrOwnerPlayerOrPlayerItself())
         {
             // Add a Stack of Demonic Servitude from Reign of Tyranny
@@ -1864,7 +1871,6 @@ void AddSC_warlock_pet_scripts()
     RegisterCreatureAI(npc_pet_warlock_infernal);
     RegisterCreatureAI(npc_pet_warlock_inquisitors_eye);
     RegisterCreatureAI(npc_pet_warlock_pit_lord);
-
 
 
 

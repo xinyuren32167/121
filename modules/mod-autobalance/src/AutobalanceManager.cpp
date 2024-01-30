@@ -217,14 +217,14 @@ float AutoBalanceManager::CalculateHealthDungeonScaling(Map* map)
     float healthScaling = 0;
 
     for (auto const& i : players) {
-        const float value = GetPlayerValueScaling(i);
+        const float value = GetPlayerSpecializationValueForScalingHealth(i);
         healthScaling += value;
     }
 
     return healthScaling;
 }
 
-float AutoBalanceManager::GetPlayerValueScaling(Player* player)
+float AutoBalanceManager::GetPlayerSpecializationValueForScalingHealth(Player* player)
 {
     uint32 specId = PlayerSpecialization::GetCurrentSpecId(player);
 
@@ -273,4 +273,6 @@ float AutoBalanceManager::GetPlayerValueScaling(Player* player)
         case PRIEST_SHADOW: return 0.25;
         case PRIEST_ABSOLUTION: return 0.25;
     }
+
+    return 0.25;
 }
