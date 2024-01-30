@@ -55,6 +55,7 @@ enum WarlockSpells
     SPELL_SHADOW_BLAST = 83208,
     SPELL_ACIDE_BOMB = 83058,
     SPELL_FEL_FLAME_BREATH = 83220,
+    SPELL_DOOM_BOLT = 83211,
 
     // Runes
     RUNE_WARLOCK_INQUISITORS_GAZE_AURA = 800106,
@@ -1393,7 +1394,7 @@ private:
     int32 shadow;
 };
 
-// 11859 - Doomguard - PET
+// 600616 - Doomguard - PET
 struct npc_pet_warlock_doomguard : public ScriptedAI
 {
     npc_pet_warlock_doomguard(Creature* creature) : ScriptedAI(creature) { }
@@ -1428,6 +1429,86 @@ struct npc_pet_warlock_doomguard : public ScriptedAI
         }
     }
 
+    void AttackTarget(Unit* target)
+    {
+        AttackStart(target);
+    }
+
+    void Reset() override
+    {
+        if (me->IsAlive())
+        {
+            float angle = me->ToTempSummon()->GetAngle();
+            float dist = me->ToTempSummon()->GetDist();
+
+            if (Unit* unit = me->GetCharmerOrOwnerPlayerOrPlayerItself()) {
+                me->GetMotionMaster()->Clear(false);
+                me->GetMotionMaster()->MoveFollow(unit, dist, angle, MOTION_SLOT_ACTIVE);
+            }
+        }
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        if (_initAttack)
+        {
+            if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+            {
+                if (Unit* target = owner->GetSelectedUnit())
+                {
+                    if (me->CanCreatureAttack(target) && owner->IsInCombat())
+                    {
+                        AttackTarget(target);
+                        _initAttack = false;
+                    }
+                }
+            }
+        }
+
+        _events.Update(diff);
+
+        while (uint32 eventId = _events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case EVENT_TRY_ATTACK_NEW_TARGET:
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                {
+                    if (Unit* newTarget = owner->GetSelectedUnit())
+                    {
+                        if (Unit* victim = me->GetVictim()) {
+                            if (victim->GetGUID() != newTarget->GetGUID() && owner->IsInCombatWith(victim))
+                            {
+                                if (me->CanCreatureAttack(newTarget))
+                                    AttackTarget(newTarget);
+                            }
+                        }
+                    }
+                }
+                _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
+                break;
+            case EVENT_WARLOCK_CAST_SPELL:
+                if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
+                {
+                    if (Unit* target = owner->GetSelectedUnit())
+                    {
+                        if (me->CanCreatureAttack(target))
+                        {
+                            me->CastSpell(target, SPELL_DOOM_BOLT);
+                        }
+                    }
+                }
+                _events.ScheduleEvent(EVENT_WARLOCK_CAST_SPELL, 6000);
+                break;
+            }
+        }
+
+        if (!UpdateVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+
     void JustDespawned() override
     {
         if (Player* owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
@@ -1442,6 +1523,11 @@ struct npc_pet_warlock_doomguard : public ScriptedAI
             }
         }
     }
+
+private:
+    EventMap _events;
+    bool _initAttack;
+    Player* owner;
 };
 
 // 89 - Infernal - PET
