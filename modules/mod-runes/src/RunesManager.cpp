@@ -4,6 +4,7 @@
 #include "ElunaIncludes.h"
 #include "LuaEngine.h"
 #include "boost/iterator/counting_iterator.hpp"
+#include "PlayerSpecialization.h"
 
 std::map<uint32 /* SpellId */, Rune> RunesManager::m_Runes = {};
 std::unordered_multimap<uint32 /* groupId */, Rune> RunesManager::m_unorderedRunes = {};
@@ -507,6 +508,9 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
             SendChat(player, "|cff11ff00 You have 3 lucky runes activated. Open cards to get your lucky runes!");
         }
     }
+
+    sEluna->EnableLuckyRune(player, runeSpellId);
+
 }
 
 void RunesManager::SpellConversion(uint32 runeId, Player* player, bool apply)
@@ -1301,6 +1305,12 @@ void RunesManager::ResetAllSlots(Player* player)
     if (!player)
         return;
 
+    if (player->IsInCombat())
+    {
+        SendPlayerMessage(player, "You cannot activate more of this rune.");
+        return;
+    }
+
     uint64 activeId = GetActiveLoadoutId(player);
 
     if (activeId <= 0)
@@ -1315,6 +1325,8 @@ void RunesManager::ResetAllSlots(Player* player)
         }
         match->second.clear();
     }
+
+
 
     sEluna->RefreshSlotsRune(player);
 }

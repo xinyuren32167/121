@@ -237,6 +237,7 @@ namespace Hooks
         PLAYER_EVENT_REMOVE_RUNE = 67,       // (event, player, spellId)
         PLAYER_EVENT_OPEN_FORGE_RUNE_UI = 68,       // (event, player, rune)
 
+        PLAYER_EVENT_ENABLE_LUCKY_RUNE = 69,       // (event, player, oldLevel)
 
 
         PLAYER_EVENT_COUNT

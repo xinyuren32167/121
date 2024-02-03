@@ -152,6 +152,13 @@ namespace LuaPlayer
         return 0;
     }
 
+    int ActivatePreferedSpecialization(lua_State* L, Player* player)
+    {
+        uint32 specMask = Eluna::CHECKVAL<uint32>(L, 2);
+        PlayerSpecialization::SetPreferedSpecId(player, specMask);
+        return 0;
+    }
+
     int EnableOrDisableAutorefund(lua_State* L, Player* player)
     {
         uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);

@@ -99,9 +99,14 @@ enum DruidSpells
     SPELL_DRUID_BERSERK_BEAR = 80566,
 };
 
+struct Spec {
+    uint32 specId;
+    uint32 preferedSpecId;
+};
+
 class PlayerSpecialization {
 public:
-    static std::map<uint64 /* guid */, uint32 /* specId */> m_PlayersSpecialization;
+    static std::map<uint64 /* guid */, Spec> m_PlayersSpecialization;
     static std::map<uint32 /* specId */, Specialization> m_Specializations;
     static std::map<uint32 /* specId */, std::vector<uint32>> m_SpecSpells;
     static void LoadAllSpecsPlayers();
@@ -113,5 +118,7 @@ public:
     static bool Exception(Player* player, uint32 spellId);
     static void RemoveSpellsAndAuras(Player* player);
     static uint32 GetCurrentSpecId(Player* player);
+    static uint32 GetPreferedSpecId(Player* player);
+    static void SetPreferedSpecId(Player* player, uint32 specMask);
     static std::vector<std::string> GetSpecializations(Player* player);
 };

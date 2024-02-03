@@ -240,6 +240,15 @@ void Eluna::RefreshSlotsRune(Player* pPlayer)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::EnableLuckyRune(Player* pPlayer, uint32 spellId)
+{
+    START_HOOK(PLAYER_EVENT_ENABLE_LUCKY_RUNE);
+    Push(pPlayer);
+    Push(spellId);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+
 void Eluna::PushRune(Player* pPlayer, std::string rune)
 {
     START_HOOK(PLAYER_EVENT_PUSH_RUNE);

@@ -5,7 +5,7 @@
 #include "LuaEngine.h"
 #include "boost/iterator/counting_iterator.hpp"
 
-std::map<uint64 /* guid */, uint32 /* specId */> PlayerSpecialization::m_PlayersSpecialization = {};
+std::map<uint64 /* guid */, Spec> PlayerSpecialization::m_PlayersSpecialization = {};
 std::map<uint32 /* specId */, Specialization> PlayerSpecialization::m_Specializations = {};
 std::map<uint32 /* specId */, std::vector<uint32>> PlayerSpecialization::m_SpecSpells = {};
 
@@ -14,7 +14,7 @@ void PlayerSpecialization::LoadAllSpecsPlayers()
 
     m_PlayersSpecialization = {};
 
-    QueryResult result = CharacterDatabase.Query("SELECT guid, specId FROM characters");
+    QueryResult result = CharacterDatabase.Query("SELECT guid, specId, preferedSpecId FROM characters");
 
     if (!result)
         return;
@@ -24,7 +24,8 @@ void PlayerSpecialization::LoadAllSpecsPlayers()
         Field* fields = result->Fetch();
         uint64 guid = fields[0].Get<uint64>();
         uint32 specId = fields[1].Get<uint32>();
-        m_PlayersSpecialization[guid] = specId;
+        uint32 preferedSpecId = fields[2].Get<uint32>();
+        m_PlayersSpecialization[guid] = { specId, preferedSpecId };
     } while (result->NextRow());
 
 }
@@ -181,11 +182,17 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
 {
     std::vector<std::string> elements = {};
     uint32 currentSpecId = GetCurrentSpecId(player);
+    uint32 preferedSpecId = GetPreferedSpecId(player);
 
     std::stringstream fmt;
     fmt << currentSpecId;
 
+    std::stringstream specFmt;
+    specFmt << preferedSpecId;
+
+
     elements.push_back(fmt.str());
+    elements.push_back(specFmt.str());
 
     for (auto const& spec : m_Specializations) {
         Specialization specialization = spec.second;
@@ -204,7 +211,7 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
 
 int32 PlayerSpecialization::GetSpecMask(Player* player) {
 
-    uint32 currentSpec = PlayerSpecialization::GetCurrentSpecId(player);
+    uint32 currentSpec = PlayerSpecialization::GetPreferedSpecId(player);
 
     if (!currentSpec)
         return -1;
@@ -261,7 +268,26 @@ uint32 PlayerSpecialization::GetCurrentSpecId(Player* player)
     auto match = m_PlayersSpecialization.find(player->GetGUID().GetCounter());
 
     if (match != m_PlayersSpecialization.end())
-        specId = match->second;
+        specId = match->second.specId;
 
     return specId;
+}
+
+uint32 PlayerSpecialization::GetPreferedSpecId(Player* player)
+{
+    uint32 specId = 0;
+    auto match = m_PlayersSpecialization.find(player->GetGUID().GetCounter());
+
+    if (match != m_PlayersSpecialization.end())
+        specId = match->second.preferedSpecId;
+
+    return specId;
+}
+
+void PlayerSpecialization::SetPreferedSpecId(Player* player, uint32 specMask)
+{
+    auto match = m_PlayersSpecialization.find(player->GetGUID().GetCounter());
+
+    if (match != m_PlayersSpecialization.end())
+        match->second.preferedSpecId = specMask;
 }

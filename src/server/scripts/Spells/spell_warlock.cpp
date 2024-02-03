@@ -1895,11 +1895,11 @@ class spell_warlock_summon_gargoyle : public SpellScript
         Map* map = player->GetMap();
 
         Position pos = target->GetNearPosition(3.f, 1.f);
+        pos.m_positionZ += 5.0f;
 
-        if (TempSummon* summon = map->SummonCreature(GUARDIAN_WARLOCK_BILESCOURGE, pos, properties, duration))
+        if (TempSummon* summon = map->SummonCreature(GUARDIAN_WARLOCK_BILESCOURGE, pos, properties, duration, GetCaster(), GetSpellInfo()->Id))
         {
             summon->SetTempSummonType(TEMPSUMMON_TIMED_DESPAWN);
-
             summon->GetMotionMaster()->Clear(false);
             summon->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE, MOTION_SLOT_ACTIVE);
             ((Guardian*)summon)->InitStatsForLevel(player->getLevel());
@@ -2760,6 +2760,8 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
         }
         else
             return false;
+
+        return false;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -4028,7 +4030,10 @@ class spell_warl_frailty : public AuraScript
         }
         else
             return false;
+
+        return false;
     }
+
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Unit* actor = eventInfo.GetActor()) {
@@ -4223,6 +4228,8 @@ class spell_warl_demon_spikes : public AuraScript
         }
         else
             return false;
+
+        return false;
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -4308,6 +4315,8 @@ class spell_warl_archdemon_proc : public AuraScript
         }
         else
             return false;
+
+        return false;
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

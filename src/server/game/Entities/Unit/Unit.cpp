@@ -2822,6 +2822,10 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(Unit const* victim, WeaponAttackTy
     chance = std::max<float>(chance, 0.0f); // Minimum miss chance is 0%
     chance = std::min<float>(chance, 100.f); // Maximum miss chance is 95%
 
+    if (miss_chance > 0 && roll < (sum += miss_chance)) {
+        return MELEE_HIT_MISS;
+    }
+
     if (roll_chance_f(chance)) {
         return MELEE_HIT_MISS;
     }

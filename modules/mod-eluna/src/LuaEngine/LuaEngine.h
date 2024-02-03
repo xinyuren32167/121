@@ -459,6 +459,7 @@ public:
     // Runes
 
     void RefreshSlotsRune(Player* pPlayer);
+    void EnableLuckyRune(Player* pPlayer, uint32 spellId);
     void OpenForgeRune(Player* pPlayer);
     void PushRune(Player* pPlayer, std::string rune);
     void RemoveRune(Player* pPlayer, std::string str);

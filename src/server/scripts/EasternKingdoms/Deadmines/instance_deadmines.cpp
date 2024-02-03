@@ -113,7 +113,24 @@ public:
     }
 };
 
+class spell_fan_of_knife : public SpellScript
+{
+    PrepareSpellScript(spell_fan_of_knife);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        targets.remove_if(Acore::UnitAuraCheck(true, 2000028));
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fan_of_knife::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+
 void AddSC_instance_deadmines()
 {
     new instance_deadmines();
+    RegisterSpellScript(spell_fan_of_knife);
 }

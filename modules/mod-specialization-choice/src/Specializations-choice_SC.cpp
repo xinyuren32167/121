@@ -190,7 +190,7 @@ class spell_activate_specialization : public SpellScript
 
         player->AutoUnequipOffhandIfNeed();
 
-        PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = newSpecId;
+        PlayerSpecialization::m_PlayersSpecialization[player->GetGUID().GetCounter()] = { newSpecId, newSpecId };
         CharacterDatabase.Execute("UPDATE characters SET specId = {} WHERE guid = {}", newSpecId, player->GetGUID().GetCounter());
         sEluna->OnActivateSpec(player, "Specialization " + newSpec.name + " successfully activated!", true, newSpecId);
         player->UpdateMastery();
