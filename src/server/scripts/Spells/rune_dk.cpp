@@ -52,6 +52,15 @@ enum DeathKnightSpells
     RUNE_DK_HIGH_METABOLISM_PROC = 601116,
     RUNE_DK_EBON_CURSE_PROC = 601129,
     RUNE_DK_RESPLENDENT_RENEWAL_PROC = 601136,
+    RUNE_DK_VEIL_OF_RESILIENCE_PROC = 601197,
+    RUNE_DK_ETHEREAL_SURGE_PROC = 601204,
+    RUNE_DK_BOLT_OF_DEVASTATION_PROC = 601241,
+    RUNE_DK_BOLT_OF_REJUVENATION_PROC = 601248,
+    RUNE_DK_LEECHCRAZE_PROC = 601280,
+    RUNE_DK_FULFILLING_STRIKE_PROC = 601299,
+    RUNE_DK_PACT_FULFILLED_PROC = 601366,
+    RUNE_DK_SOUL_PROTECTION_PROC = 601373,
+    RUNE_DK_COPY_BURST_PROC = 601417,
 
     SPELL_DK_DEATH_AND_DECAY = 49938,
     SPELL_DK_FROST_FEVER = 55095,
@@ -73,6 +82,11 @@ enum DeathKnightSpells
     SPELL_DK_APOCALYPSE = 80406,
     SPELL_DK_EPIDEMIC = 80375,
     SPELL_DK_UNHOLY_ASSAULT = 80379,
+    SPELL_DK_FACE_OF_DEATH = 87006,
+    SPELL_DK_LEECHING_STRIKE = 87009,
+    SPELL_DK_FLOOD_OF_DARKNESS = 87022,
+    SPELL_DK_FLOOD_OF_DARKNESS_DAMAGE = 87024,
+    SPELL_DK_DEATHS_EMBRACE = 87001,
 };
 
 class rune_dk_permafrost : public AuraScript
@@ -1189,6 +1203,11 @@ class rune_dk_red_thirst : public AuraScript
 {
     PrepareAuraScript(rune_dk_red_thirst);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
@@ -1213,6 +1232,7 @@ class rune_dk_red_thirst : public AuraScript
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(rune_dk_red_thirst::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_dk_red_thirst::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -1632,12 +1652,15 @@ class rune_dk_cold_demons_gaze : public AuraScript
         int32 hasteBuff = aurEff->GetAmount();
         int32 critBuff = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
 
-        int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+        {
+            int32 procSpell = eventInfo.GetProcSpell()->GetSpellInfo()->Id;
 
-        if (procSpell == SPELL_DK_OBLITERATE)
-            caster->CastSpell(caster, hasteBuff, TRIGGERED_FULL_MASK);
-        else
-            caster->CastSpell(caster, critBuff, TRIGGERED_FULL_MASK);
+            if (procSpell == SPELL_DK_OBLITERATE)
+                caster->CastSpell(caster, hasteBuff, TRIGGERED_FULL_MASK);
+            else
+                caster->CastSpell(caster, critBuff, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register() override
@@ -2292,6 +2315,448 @@ class rune_dk_resplendent_renewal : public AuraScript
     }
 };
 
+class rune_dk_ebon_saviour : public AuraScript
+{
+    PrepareAuraScript(rune_dk_ebon_saviour);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+        {
+            Unit* target = eventInfo.GetActionTarget();
+
+            if (target->GetHealthPct() <= aurEff->GetAmount())
+                GetCaster()->EnergizeBySpell(GetCaster(), GetSpellInfo()->Id, aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount(), POWER_RUNIC_POWER);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_ebon_saviour::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_ebon_saviour::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_veil_of_resilience : public SpellScript
+{
+    PrepareSpellScript(rune_dk_veil_of_resilience);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 601191; i < 601197; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleCast()
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player && player->IsAlive())
+                if (Aura* rune = GetRuneAura(player))
+                {
+                    int32 amount = CalculatePct(GetCaster()->GetMaxHealth(), rune->GetEffect(EFFECT_0)->GetAmount());
+
+                    GetCaster()->CastCustomSpell(RUNE_DK_VEIL_OF_RESILIENCE_PROC, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+                }
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(rune_dk_veil_of_resilience::HandleCast);
+    }
+};
+
+class rune_dk_ethereal_surge : public AuraScript
+{
+    PrepareAuraScript(rune_dk_ethereal_surge);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 601198; i < 601204; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player && player->IsAlive())
+                if (Aura* rune = GetRuneAura(player))
+                {
+                    int32 damage = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), rune->GetEffect(EFFECT_0)->GetAmount());
+                    int32 heal = CalculatePct(player->GetTotalAttackPowerValue(BASE_ATTACK), rune->GetEffect(EFFECT_1)->GetAmount());
+
+                    player->CastCustomSpell(player, RUNE_DK_ETHEREAL_SURGE_PROC, &damage, &heal, nullptr, true, nullptr);
+                }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_ethereal_surge::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_dk_bolt_of_devastation : public AuraScript
+{
+    PrepareAuraScript(rune_dk_bolt_of_devastation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = (CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount() / 4));
+        GetCaster()->CastCustomSpell(RUNE_DK_BOLT_OF_DEVASTATION_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_bolt_of_devastation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_bolt_of_devastation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_bolt_of_rejuvenation : public AuraScript
+{
+    PrepareAuraScript(rune_dk_bolt_of_rejuvenation);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+
+        if (!healInfo || !healInfo->GetHeal())
+            return false;
+
+        if (healInfo->GetHeal() < 0)
+            return false;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = (CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount() / 4));
+        GetCaster()->CastCustomSpell(RUNE_DK_BOLT_OF_REJUVENATION_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_bolt_of_rejuvenation::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_bolt_of_rejuvenation::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_definitely_not_scary_bolt : public AuraScript
+{
+    PrepareAuraScript(rune_dk_definitely_not_scary_bolt);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return GetCaster() && GetCaster()->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_FACE_OF_DEATH, aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_definitely_not_scary_bolt::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_definitely_not_scary_bolt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_leechcraze : public AuraScript
+{
+    PrepareAuraScript(rune_dk_leechcraze);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (damageInfo->GetDamage() < 0)
+            return false;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        caster->CastSpell(eventInfo.GetActionTarget(), RUNE_DK_LEECHCRAZE_PROC, TRIGGERED_FULL_MASK);
+        caster->AddAura(SPELL_DK_LEECHING_STRIKE, caster);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_leechcraze::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_leechcraze::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_fulfilling_strike : public AuraScript
+{
+    PrepareAuraScript(rune_dk_fulfilling_strike);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+
+        int32 amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), aurEff->GetAmount());
+        caster->CastCustomSpell(RUNE_DK_FULFILLING_STRIKE_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+        caster->EnergizeBySpell(caster, RUNE_DK_FULFILLING_STRIKE_PROC, aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount(), POWER_RUNIC_POWER);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_fulfilling_strike::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_fulfilling_strike::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_soul_feast : public AuraScript
+{
+    PrepareAuraScript(rune_dk_soul_feast);
+
+    void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            target->ModifySpellCooldown(SPELL_DK_LEECHING_STRIKE , aurEff->GetAmount());
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(rune_dk_soul_feast::HandleEffectProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_pact_fulfilled : public AuraScript
+{
+    PrepareAuraScript(rune_dk_pact_fulfilled);
+
+    Aura* GetRuneAura(Unit* caster)
+    {
+        for (size_t i = 601360; i < 601366; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+        return nullptr;
+    }
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        if (Player* player = GetCaster()->ToPlayer())
+            if (player && player->IsAlive())
+                if (Aura* rune = GetRuneAura(player))
+                {
+                    Unit* target = GetAura()->GetOwner()->ToUnit();
+
+                    if (!target || target->isDead())
+                        return;
+
+                    int32 heal = player->CountPctFromMaxHealth(rune->GetEffect(EFFECT_0)->GetAmount());
+                    player->CastCustomSpell(RUNE_DK_PACT_FULFILLED_PROC, SPELLVALUE_BASE_POINT0, heal, target, TRIGGERED_FULL_MASK);
+                }
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(rune_dk_pact_fulfilled::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class rune_dk_soul_protection : public AuraScript
+{
+    PrepareAuraScript(rune_dk_soul_protection);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+
+        if (!healInfo || !healInfo->GetHeal())
+            return false;
+
+        if (healInfo->GetHeal() < 0)
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+        GetCaster()->CastCustomSpell(RUNE_DK_SOUL_PROTECTION_PROC, SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_soul_protection::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_soul_protection::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_depths_of_darkness : public AuraScript
+{
+    PrepareAuraScript(rune_dk_depths_of_darkness);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+        {
+            int32 spellRunic = spellInfo->CalcPowerCost(GetCaster(), SpellSchoolMask(spellInfo->SchoolMask));
+
+            LOG_ERROR("error", "spell runic is {}", spellRunic);
+
+            if (spellRunic <= 0)
+                return;
+
+            int32 runicAccumulated = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount() + spellRunic;
+            LOG_ERROR("error", "runicAccumulated is {}", runicAccumulated);
+            int32 runicThreshold = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
+            LOG_ERROR("error", "runicThreshold is {}", runicThreshold);
+
+            if (runicAccumulated >= runicThreshold)
+            {
+                GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_FLOOD_OF_DARKNESS, aurEff->GetAmount());
+                aurEff->GetBase()->GetEffect(EFFECT_2)->SetAmount(runicAccumulated - runicThreshold);
+            }
+            else
+                aurEff->GetBase()->GetEffect(EFFECT_2)->SetAmount(runicAccumulated);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_depths_of_darkness::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_depths_of_darkness::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_darkstate: public AuraScript
+{
+    PrepareAuraScript(rune_dk_darkstate);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+        {
+            if (spellInfo->Id == SPELL_DK_FLOOD_OF_DARKNESS_DAMAGE)
+            {
+                GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_DEATHS_EMBRACE, aurEff->GetAmount());
+                GetCaster()->ToPlayer()->ModifySpellCooldown(SPELL_DK_FACE_OF_DEATH, aurEff->GetAmount());
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_darkstate::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_darkstate::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class rune_dk_copy_burst : public AuraScript
+{
+    PrepareAuraScript(rune_dk_copy_burst);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+
+        if (!healInfo || !healInfo->GetHeal())
+            return false;
+
+        if (healInfo->GetHeal() < 0)
+            return false;
+
+        Unit* target = eventInfo.GetActionTarget();
+
+        if (!target || target->isDead())
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        int32 amount = (CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount() / 10));
+        GetCaster()->CastCustomSpell(RUNE_DK_COPY_BURST_PROC, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_dk_copy_burst::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_dk_copy_burst::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_perks_scripts()
 {
     RegisterSpellScript(rune_dk_permafrost);
@@ -2366,4 +2831,18 @@ void AddSC_deathknight_perks_scripts()
     RegisterSpellScript(rune_dk_high_metabolism_health_check);
     RegisterSpellScript(rune_dk_ebon_curse);
     RegisterSpellScript(rune_dk_resplendent_renewal);
+    RegisterSpellScript(rune_dk_ebon_saviour);
+    RegisterSpellScript(rune_dk_veil_of_resilience);
+    RegisterSpellScript(rune_dk_ethereal_surge);
+    RegisterSpellScript(rune_dk_bolt_of_devastation);
+    RegisterSpellScript(rune_dk_bolt_of_rejuvenation);
+    RegisterSpellScript(rune_dk_definitely_not_scary_bolt);
+    RegisterSpellScript(rune_dk_leechcraze);
+    RegisterSpellScript(rune_dk_fulfilling_strike);
+    RegisterSpellScript(rune_dk_soul_feast);
+    RegisterSpellScript(rune_dk_pact_fulfilled);
+    RegisterSpellScript(rune_dk_soul_protection);
+    RegisterSpellScript(rune_dk_depths_of_darkness);
+    RegisterSpellScript(rune_dk_darkstate);
+    RegisterSpellScript(rune_dk_copy_burst);
 }

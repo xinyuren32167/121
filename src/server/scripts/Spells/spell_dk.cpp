@@ -3730,7 +3730,7 @@ class spell_dk_deaths_embrace : public AuraScript
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_dk_deaths_embrace::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_dk_deaths_embrace::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_dk_deaths_embrace::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3958,6 +3958,7 @@ class spell_dk_soul_barrier : public AuraScript
     }
 };
 
+//Fate Link
 class spell_dk_soul_link : public AuraScript
 {
     PrepareAuraScript(spell_dk_soul_link);
@@ -4009,7 +4010,7 @@ class spell_dk_soul_link : public AuraScript
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_dk_soul_link::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_dk_soul_link::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_dk_soul_link::HandleProc, EFFECT_2, SPELL_AURA_DUMMY);
     }
 };
 
@@ -4056,7 +4057,7 @@ class spell_dk_soulbolt : public AuraScript
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_dk_soulbolt::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_dk_soulbolt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_dk_soulbolt::HandleProc, EFFECT_2, SPELL_AURA_DUMMY);
     }
 };
 

@@ -1181,6 +1181,9 @@ class spell_rog_blade_flurry_triggered : public SpellScript
             Unit* caster = GetCaster();
             SpellInfo const* flurry = sSpellMgr->AssertSpellInfo(SPELL_ROGUE_BLADE_FLURRY);
 
+            if (!caster || caster->isDead() || !spell || !flurry)
+                return;
+
             std::list<WorldObject*> targets;
             spell->SearchAreaTargets(targets, 5.0f, target, caster, TARGET_OBJECT_TYPE_UNIT, TARGET_CHECK_ENEMY, nullptr);
             targets.remove(target);
@@ -1195,7 +1198,6 @@ class spell_rog_blade_flurry_triggered : public SpellScript
                     if (targetsQte >= 0)
                         runeAura->GetEffect(EFFECT_2)->SetAmount(targetsQte);
                 }
-
 
                 for (auto const& enemy : targets)
                     if (Unit* creatureTarget = enemy->ToUnit())
