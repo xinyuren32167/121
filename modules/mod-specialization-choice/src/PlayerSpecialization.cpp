@@ -14,7 +14,7 @@ void PlayerSpecialization::LoadAllSpecsPlayers()
 
     m_PlayersSpecialization = {};
 
-    QueryResult result = CharacterDatabase.Query("SELECT guid, specId, PreferredSpecId FROM characters");
+    QueryResult result = CharacterDatabase.Query("SELECT guid, specId, preferedSpecId FROM characters");
 
     if (!result)
         return;
