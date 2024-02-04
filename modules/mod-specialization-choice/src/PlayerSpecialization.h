@@ -101,7 +101,7 @@ enum DruidSpells
 
 struct Spec {
     uint32 specId;
-    uint32 preferedSpecId;
+    uint32 PreferredSpecId;
 };
 
 class PlayerSpecialization {
@@ -118,7 +118,7 @@ public:
     static bool Exception(Player* player, uint32 spellId);
     static void RemoveSpellsAndAuras(Player* player);
     static uint32 GetCurrentSpecId(Player* player);
-    static uint32 GetPreferedSpecId(Player* player);
-    static void SetPreferedSpecId(Player* player, uint32 specMask);
+    static uint32 GetPreferredSpecId(Player* player);
+    static void SetPreferredSpecId(Player* player, uint32 specMask);
     static std::vector<std::string> GetSpecializations(Player* player);
 };
