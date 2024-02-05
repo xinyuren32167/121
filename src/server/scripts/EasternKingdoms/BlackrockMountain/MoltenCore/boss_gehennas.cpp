@@ -21,10 +21,12 @@
 
 enum Spells
 {
-    SPELL_GEHENNAS_CURSE        = 19716,
-    SPELL_RAIN_OF_FIRE          = 19717,
-    SPELL_SHADOW_BOLT_RANDOM    = 19728,
-    SPELL_SHADOW_BOLT_VICTIM    = 19729,
+    SPELL_GEHENNAS_CURSE = 19716,
+    SPELL_RAIN_OF_FIRE = 19717,
+    SPELL_SHADOW_BOLT_RANDOM = 19728,
+    SPELL_SHADOW_BOLT_VICTIM = 19729,
+    SPELL_HELLFIRE = 2000054,
+    SPELL_INNER_FIRE = 2000057,
 };
 
 enum Events
@@ -32,6 +34,7 @@ enum Events
     EVENT_GEHENNAS_CURSE    = 1,
     EVENT_RAIN_OF_FIRE,
     EVENT_SHADOW_BOLT,
+    EVENT_INNERFIRE,
 };
 
 class boss_gehennas : public CreatureScript
@@ -101,7 +104,46 @@ public:
     }
 };
 
+class spell_effect_remove_hellfire : public AuraScript
+{
+    PrepareAuraScript(spell_effect_remove_hellfire)
+
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        target->CastSpell(target, SPELL_HELLFIRE_SOAKING_FINDER);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_effect_remove_hellfire::HandleEffectRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_soaking_hellfire_finder : public SpellScript
+{
+    PrepareSpellScript(spell_soaking_hellfire_finder);
+
+    void SelectTarget(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+        if (targets.empty())
+        {
+            caster->CastSpell(caster, SPELL_FIRE_NOVA);
+        }
+
+        caster->ToTempSummon()->DespawnOrUnsummon();
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_soaking_hellfire_finder::SelectTarget, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 void AddSC_boss_gehennas()
 {
     new boss_gehennas();
+    // RegisterSpellScript(spell_effect_remove_hellfire);
+    // RegisterSpellScript(spell_soaking_hellfire_finder);
 }

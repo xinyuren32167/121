@@ -233,7 +233,7 @@ enum AuraType
     SPELL_AURA_DETECT_AMORE                                 = 170,
     SPELL_AURA_MOD_SPEED_NOT_STACK                          = 171,
     SPELL_AURA_MOD_MOUNTED_SPEED_NOT_STACK                  = 172,
-    SPELL_AURA_173                                          = 173, // old SPELL_AURA_ALLOW_CHAMPION_SPELLS
+    SPELL_AURA_MOD_SPELL_POWER_PERCENT                      = 173, // old SPELL_AURA_ALLOW_CHAMPION_SPELLS
     SPELL_AURA_MOD_SPELL_DAMAGE_OF_STAT_PERCENT             = 174, // by defeult intelect, dependent from SPELL_AURA_MOD_SPELL_HEALING_OF_STAT_PERCENT
     SPELL_AURA_MOD_SPELL_HEALING_OF_STAT_PERCENT            = 175,
     SPELL_AURA_SPIRIT_OF_REDEMPTION                         = 176,
@@ -241,7 +241,7 @@ enum AuraType
     SPELL_AURA_MOD_DEBUFF_RESISTANCE                        = 178,
     SPELL_AURA_MOD_ATTACKER_SPELL_CRIT_CHANCE               = 179,
     SPELL_AURA_MOD_FLAT_SPELL_DAMAGE_VERSUS                 = 180,
-    SPELL_AURA_181                                          = 181, // old SPELL_AURA_MOD_FLAT_SPELL_CRIT_DAMAGE_VERSUS - possible flat spell crit damage versus
+    SPELL_AURA_MOD_HEALING_POWER_PERCENT                    = 181, // old SPELL_AURA_MOD_FLAT_SPELL_CRIT_DAMAGE_VERSUS - possible flat spell crit damage versus
     SPELL_AURA_MOD_RESISTANCE_OF_STAT_PERCENT               = 182,
     SPELL_AURA_MOD_CRITICAL_THREAT                          = 183,
     SPELL_AURA_MOD_ATTACKER_MELEE_HIT_CHANCE                = 184,

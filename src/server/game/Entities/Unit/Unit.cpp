@@ -11907,6 +11907,15 @@ int32 Unit::SpellBaseDamageBonusDone(SpellSchoolMask schoolMask)
                 DoneAdvertisedBenefit += int32(CalculatePct(GetStat(usedStat), (*i)->GetAmount()));
             }
         }
+
+        // Damage bonus %
+        AuraEffectList const& mDamageDonePercent = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_POWER_PERCENT);
+        for (AuraEffectList::const_iterator i = mDamageDoneOfStatPercent.begin(); i != mDamageDoneOfStatPercent.end(); ++i)
+        {
+            if ((*i)->GetMiscValue() & schoolMask)
+                DoneAdvertisedBenefit += int32(CalculatePct(ToPlayer()->GetBaseSpellPowerBonus(), (*i)->GetAmount()));
+        }
+
         // ... and attack power
         AuraEffectList const& mDamageDonebyAP = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_DAMAGE_OF_ATTACK_POWER);
         for (AuraEffectList::const_iterator i = mDamageDonebyAP.begin(); i != mDamageDonebyAP.end(); ++i)
@@ -12682,6 +12691,12 @@ int32 Unit::SpellBaseHealingBonusDone(SpellSchoolMask schoolMask)
             // stat used dependent from misc value (stat index)
             Stats usedStat = Stats((*i)->GetSpellInfo()->Effects[(*i)->GetEffIndex()].MiscValue);
             AdvertisedBenefit += int32(CalculatePct(GetStat(usedStat), (*i)->GetAmount()));
+        }
+
+        AuraEffectList const& mHealingDoneOfStatPercent = GetAuraEffectsByType(SPELL_AURA_MOD_HEALING_POWER_PERCENT);
+        for (AuraEffectList::const_iterator i = mHealingDoneOfStatPercent.begin(); i != mHealingDoneOfStatPercent.end(); ++i)
+        {
+            AdvertisedBenefit += int32(CalculatePct(ToPlayer()->GetBaseSpellPowerBonus(), (*i)->GetAmount()));
         }
 
         // ... and attack power

@@ -29,6 +29,7 @@ enum Spells
 {
     SPELL_FRENZY                    = 19451,
     SPELL_MAGMA_SPIT                = 19449,
+    SPELL_MORTAL_WOUND              = 2000053,
     SPELL_PANIC                     = 19408,
     SPELL_LAVA_BOMB                 = 19411,                    // This calls a dummy server side effect that cast spell 20494 to spawn GO 177704 for 30s
     SPELL_LAVA_BOMB_EFFECT          = 20494,                    // Spawns trap GO 177704 which triggers 19428
@@ -42,6 +43,8 @@ enum Events
     EVENT_PANIC,
     EVENT_LAVA_BOMB,
     EVENT_LAVA_BOMB_RANGED,
+    EVENT_MORTAL_WOUND,
+
 };
 
 constexpr float MELEE_TARGET_LOOKUP_DIST = 10.0f;
@@ -58,6 +61,7 @@ public:
         void EnterCombat(Unit* /*victim*/) override
         {
             _EnterCombat();
+            events.ScheduleEvent(EVENT_MORTAL_WOUND, 5500);
             events.ScheduleEvent(EVENT_FRENZY, 8500);
             events.ScheduleEvent(EVENT_PANIC, 9500);
             events.ScheduleEvent(EVENT_LAVA_BOMB, 12000);
@@ -81,6 +85,12 @@ public:
                     events.RepeatEvent(urand(31000, 38000));
                     break;
                 }
+                case EVENT_MORTAL_WOUND:
+                {
+                    DoCastVictim(SPELL_MORTAL_WOUND);
+                    events.RepeatEvent(12500);
+                    break;
+                }
                 case EVENT_LAVA_BOMB:
                 {
                     if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, MELEE_TARGET_LOOKUP_DIST, true))
@@ -88,11 +98,13 @@ public:
                         DoCast(target, SPELL_LAVA_BOMB);
                     }
 
-                    events.RepeatEvent(urand(12000, 15000));
+                    events.RepeatEvent(11000);
                     break;
                 }
                 case EVENT_LAVA_BOMB_RANGED:
                 {
+                    uint32 playerCount = me->GetMap()->GetPlayers().getSize();
+
                     std::list<Unit*> targets;
                     SelectTargetList(targets, [this](Unit* target)
                     {
@@ -103,7 +115,7 @@ public:
                     {
                         DoCast(targets.front() , SPELL_LAVA_BOMB_RANGED);
                     }
-                    events.RepeatEvent(urand(12000, 15000));
+                    events.RepeatEvent(12000);
                     break;
                 }
             }
