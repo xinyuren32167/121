@@ -111,7 +111,6 @@ class spell_effect_remove_hellfire : public AuraScript
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* target = GetTarget();
-        target->CastSpell(target, SPELL_HELLFIRE_SOAKING_FINDER);
     }
 
     void Register() override
@@ -129,7 +128,6 @@ class spell_soaking_hellfire_finder : public SpellScript
         Unit* caster = GetCaster();
         if (targets.empty())
         {
-            caster->CastSpell(caster, SPELL_FIRE_NOVA);
         }
 
         caster->ToTempSummon()->DespawnOrUnsummon();

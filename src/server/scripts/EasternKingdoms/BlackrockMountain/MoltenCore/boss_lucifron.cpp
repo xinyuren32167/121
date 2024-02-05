@@ -27,11 +27,8 @@ enum Spells
     SPELL_LUCIFRON_CURSE           = 19703,
     SPELL_SHADOW_MARK              = 2000050,
     SPELL_SHADOW_MARK_MYTHIC       = 2000051,
-    SPELL_DEATH_AND_DECAY          = 2000052,
 
     SPELL_SHADOW_SHOCK             = 20603,
-
-    NPC_FLAMEWAKLER = 12119,
 };
 
 enum Events
@@ -66,9 +63,6 @@ public:
             events.ScheduleEvent(EVENT_IMPENDING_DOOM, urand(6000, 11000));
             events.ScheduleEvent(EVENT_LUCIFRON_CURSE, urand(11000, 14000));
             events.ScheduleEvent(EVENT_SHADOW_SHOCK, 5000);
-            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
-                events.ScheduleEvent(EVENT_SUMMON_FLAMWAKLER_PROTECTOR, 60000);
-            }
         }
 
         void ExecuteEvent(uint32 eventId) override
@@ -106,13 +100,6 @@ public:
                     events.RepeatEvent(13000);
                     break;
                 }
-                case EVENT_SUMMON_FLAMWAKLER_PROTECTOR:
-                {
-                    TempSummon* summon = me->SummonCreature(NPC_FLAMEWAKLER, me->GetPosition(), TEMPSUMMON_TIMED_DESPAWN_OOC_ALIVE, 5000);
-                    summon->AI()->DoZoneInCombat();
-                    events.RepeatEvent(60000);
-                    break;
-                }
             }
         }
     };
@@ -134,8 +121,6 @@ class spell_impending_doom : public AuraScript
 
         if (!caster)
             return;
-
-        caster->CastSpell(GetTarget(), SPELL_DEATH_AND_DECAY, true);
     }
 
     void Register() override

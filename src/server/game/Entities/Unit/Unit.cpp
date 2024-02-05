@@ -12693,8 +12693,8 @@ int32 Unit::SpellBaseHealingBonusDone(SpellSchoolMask schoolMask)
             AdvertisedBenefit += int32(CalculatePct(GetStat(usedStat), (*i)->GetAmount()));
         }
 
-        AuraEffectList const& mHealingDoneOfStatPercent = GetAuraEffectsByType(SPELL_AURA_MOD_HEALING_POWER_PERCENT);
-        for (AuraEffectList::const_iterator i = mHealingDoneOfStatPercent.begin(); i != mHealingDoneOfStatPercent.end(); ++i)
+        AuraEffectList const& mHealingDonePercent = GetAuraEffectsByType(SPELL_AURA_MOD_HEALING_POWER_PERCENT);
+        for (AuraEffectList::const_iterator i = mHealingDonePercent.begin(); i != mHealingDonePercent.end(); ++i)
         {
             AdvertisedBenefit += int32(CalculatePct(ToPlayer()->GetBaseSpellPowerBonus(), (*i)->GetAmount()));
         }
