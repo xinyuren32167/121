@@ -9,6 +9,12 @@
 #include "UnitAI.h"
 #include "Log.h"
 
+enum GeneralRuneSpells
+{
+    RUNE_GENERAL_DYING_BREATH_HEAL  = 100104,
+    RUNE_GENERAL_DYING_BREATH_COOLDOWN  = 100105,
+};
+
 class spell_second_wind : public AuraScript
 {
     PrepareAuraScript(spell_second_wind);
@@ -305,53 +311,37 @@ class spell_dying_breath : public AuraScript
 {
     PrepareAuraScript(spell_dying_breath);
 
-    Aura* GetRuneAura()
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
-        if (GetCaster()->HasAura(100098))
-            return GetCaster()->GetAura(100098);
-
-        if (GetCaster()->HasAura(100099))
-            return GetCaster()->GetAura(100099);
-
-        if (GetCaster()->HasAura(100100))
-            return GetCaster()->GetAura(100100);
-
-        if (GetCaster()->HasAura(100101))
-            return GetCaster()->GetAura(100101);
-
-        if (GetCaster()->HasAura(100102))
-            return GetCaster()->GetAura(100102);
-
-        if (GetCaster()->HasAura(100103))
-            return GetCaster()->GetAura(100103);
-
-        return nullptr;
+        amount = -1;
     }
 
-    int GetDamagePct()
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
+        Unit* victim = GetTarget();
 
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-    }
+        if (!victim || victim->isDead())
+            return;
 
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        if (!GetCaster()->HasAura(100105))
+        if (Aura* cooldown = victim->GetAura(RUNE_GENERAL_DYING_BREATH_COOLDOWN))
+            return;
+
+        int32 remainingHealth = victim->GetHealth() - dmgInfo.GetDamage();
+        uint32 allowedHealth = victim->CountPctFromMaxHealth(20);
+
+        int32 healAmount = victim->CountPctFromMaxHealth(aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount());
+
+        if ((remainingHealth < int32(allowedHealth)))   
         {
-            int32 amount = int32(CalculatePct(GetTarget()->GetMaxHealth(), GetDamagePct()));
-
-            GetCaster()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, amount, GetCaster(), TRIGGERED_FULL_MASK);
-            GetCaster()->AddAura(100105, GetCaster());
+            victim->CastCustomSpell(RUNE_GENERAL_DYING_BREATH_HEAL, SPELLVALUE_BASE_POINT0, healAmount, victim, TRIGGERED_FULL_MASK);
+            victim->CastSpell(victim, RUNE_GENERAL_DYING_BREATH_COOLDOWN);
         }
     }
 
     void Register() override
     {
-        OnEffectProc += AuraEffectProcFn(spell_dying_breath::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dying_breath::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_dying_breath::Absorb, EFFECT_0);
     }
 };
 
@@ -505,66 +495,20 @@ class spell_mittelschmerz_blood_magic : public AuraScript
 {
     PrepareAuraScript(spell_mittelschmerz_blood_magic);
 
-    Aura* GetRuneAura()
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(100121))
-            return GetCaster()->GetAura(100121);
-
-        if (GetCaster()->HasAura(100122))
-            return GetCaster()->GetAura(100122);
-
-        if (GetCaster()->HasAura(100123))
-            return GetCaster()->GetAura(100123);
-
-        if (GetCaster()->HasAura(100124))
-            return GetCaster()->GetAura(100124);
-
-        if (GetCaster()->HasAura(100125))
-            return GetCaster()->GetAura(100125);
-
-        if (GetCaster()->HasAura(100126))
-            return GetCaster()->GetAura(100126);
-
-        if (GetCaster()->HasAura(100127))
-            return GetCaster()->GetAura(100127);
-
-        if (GetCaster()->HasAura(100128))
-            return GetCaster()->GetAura(100128);
-
-        if (GetCaster()->HasAura(100129))
-            return GetCaster()->GetAura(100129);
-
-        if (GetCaster()->HasAura(100130))
-            return GetCaster()->GetAura(100130);
-
-        if (GetCaster()->HasAura(100131))
-            return GetCaster()->GetAura(100131);
-
-        if (GetCaster()->HasAura(100132))
-            return GetCaster()->GetAura(100132);
-
-        return nullptr;
+        return (GetCaster() && GetCaster()->IsAlive());
     }
 
-    int GetDamagePct()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        uint32 damage = CalculatePct(GetCaster()->GetMaxHealth(), GetDamagePct());
-
+        uint32 damage = GetCaster()->CountPctFromCurHealth(aurEff->GetAmount());
         GetCaster()->DealDamage(GetCaster(), GetCaster(), damage);
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_mittelschmerz_blood_magic::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_mittelschmerz_blood_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
