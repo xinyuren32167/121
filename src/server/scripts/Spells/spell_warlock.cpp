@@ -119,6 +119,7 @@ enum WarlockSpells
     SPELL_WARLOCK_DEMON_CHARGE = 54785,
     SPELL_WARLOCK_SHROUD_OF_DARKNESS = 83114,
     SPELL_WARLOCK_DEMONIC_ASCENSION = 83110,
+    SPELL_WARLOCK_DEMONIC_DEVASTATION_HEAL = 83222,
     SPELL_WARLOCK_DEMONIC_PROTECTION = 83111,
     SPELL_WARLOCK_DEMONIC_PROTECTION_MASTERY_BUFF = 83116,
     SPELL_WARLOCK_FRACTURE_ENERGY = 83107,
@@ -4668,6 +4669,33 @@ class spell_warl_demonic_devastation : public AuraScript
     }
 };
 
+// 83113 - Demonic Devastation Damage
+class spell_warl_demonic_devastation_damage : public SpellScript
+{
+    PrepareSpellScript(spell_warl_demonic_devastation_damage);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->CastSpell(caster, SPELL_WARLOCK_DEMONIC_DEVASTATION_HEAL, TRIGGERED_FULL_MASK);
+
+        int32 damage = GetHitDamage();
+
+        
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_demonic_devastation_damage::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 // 83110 - Demonic Ascension
 class spell_warl_demonic_ascension : public AuraScript
 {
@@ -5300,9 +5328,10 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_rain_of_fire_damage);
     RegisterSpellScript(spell_warl_demonic_strength);
     RegisterSpellScript(spell_warl_demonic_devastation);
+    RegisterSpellScript(spell_warl_demonic_devastation_damage);
     RegisterSpellScript(spell_warl_demonic_ascension);
     RegisterSpellScript(spell_warl_fiery_symbol);
-    RegisterSpellScript(spell_warl_immolation_aura);
+    RegisterSpellScript(spell_warl_immolation_aura); 
     RegisterSpellScript(spell_warlock_shadow_cleave);
     RegisterSpellScript(spell_warlock_voidwalker_sacrifice_shield);
     RegisterSpellScript(spell_warlock_darkglare_shadow_blast);
