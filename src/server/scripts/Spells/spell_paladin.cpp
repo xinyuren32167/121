@@ -1247,9 +1247,7 @@ class spell_pal_holy_power : public SpellScript
     {
         Unit* caster = GetCaster();
         if (caster->GetPower(POWER_ENERGY) < 5)
-        {
             caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
-        }
     }
 
     void Register()

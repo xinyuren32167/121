@@ -1,3 +1,5 @@
+#pragma once
+
 #include "PlayerSpecialization.h"
 #include "boost/bind.hpp"
 #include "Config.h"
@@ -11,7 +13,6 @@ std::map<uint32 /* specId */, std::vector<uint32>> PlayerSpecialization::m_SpecS
 
 void PlayerSpecialization::LoadAllSpecsPlayers()
 {
-
     m_PlayersSpecialization = {};
 
     QueryResult result = CharacterDatabase.Query("SELECT guid, specId, preferedSpecId FROM characters");
@@ -27,7 +28,6 @@ void PlayerSpecialization::LoadAllSpecsPlayers()
         uint32 PreferredSpecId = fields[2].Get<uint32>();
         m_PlayersSpecialization[guid] = { specId, PreferredSpecId };
     } while (result->NextRow());
-
 }
 
 void PlayerSpecialization::LoadAllSpecsSpells()
