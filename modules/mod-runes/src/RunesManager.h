@@ -31,6 +31,7 @@ struct Rune {
     int32 specMask;
     bool isLucky;
     bool isAutorefund;
+    uint8 type;
 
     bool operator !()
     {

@@ -99,6 +99,12 @@ enum DruidSpells
     SPELL_DRUID_BERSERK_BEAR = 80566,
 };
 
+struct SpecValue {
+    int32 specMask;
+    // 0 : all, 1 is melee, 2 is for caster
+    int32 type;
+};
+
 struct Spec {
     uint32 specId;
     uint32 PreferredSpecId;
@@ -114,7 +120,7 @@ public:
     static void InitializeSpecializations();
     static void ActivateSpecialization(Player* player, uint32 specId);
     static void UpdateMastery(Player* player, uint32 rating);
-    static int32 GetSpecMask(Player* player);
+    static SpecValue GetSpecValue(Player* player);
     static bool Exception(Player* player, uint32 spellId);
     static void RemoveSpellsAndAuras(Player* player);
     static uint32 GetCurrentSpecId(Player* player);

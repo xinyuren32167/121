@@ -49,7 +49,7 @@ void RunesManager::LoadAllRunes()
 {
     RunesManager::m_Runes = {};
 
-    QueryResult result = WorldDatabase.Query("SELECT id, groupId, allowableClass, allowableRace, quality, maxStack, keywords, specMask FROM runes");
+    QueryResult result = WorldDatabase.Query("SELECT id, groupId, allowableClass, allowableRace, quality, maxStack, keywords, specMask, type FROM runes");
 
     if (!result)
         return;
@@ -64,7 +64,8 @@ void RunesManager::LoadAllRunes()
         int8 maxStacks = fields[5].Get<int8>();
         std::string keywords = fields[6].Get<std::string>();
         int32 specMask = fields[7].Get<int32>();
-        Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, keywords, specMask };
+        uint8 type = fields[8].Get<uint8>();
+        Rune rune = { id, groupId, allowableClass, allowableRace, quality, maxStacks, keywords, specMask, false, false, type };
         m_Runes.insert(std::make_pair(id, rune));
         m_unorderedRunes.insert(std::make_pair(groupId, rune));
     } while (result->NextRow());
@@ -646,9 +647,15 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
         }
     }
 
-    for (const auto& pair : m_Runes)
-        if (pair.second.quality == quality && (pair.second.allowableClass & player->getClassMask()) && (pair.second.specMask & PlayerSpecialization::GetSpecMask(player)))
+    for (const auto& pair : m_Runes) {
+        bool isClassAllowed = pair.second.allowableClass & player->getClassMask();
+        SpecValue specValue = PlayerSpecialization::GetSpecValue(player);
+        bool isSpecAllowed = pair.second.specMask & specValue.specMask;
+        bool isTypeAllowed = pair.second.type == 0 || pair.second.type == specValue.type;
+        if (pair.second.quality == quality && isClassAllowed && isSpecAllowed && isTypeAllowed)
             possibleRunes.push_back(pair.second);
+    }
+        
 
     if (possibleRunes.empty())
         return {};
@@ -876,7 +883,7 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, u
     rune.isAutorefund = IsSpellIdAutoRefund(player, rune.spellId);
 
     std::string fmt =
-            std::to_string(rune.spellId)
+        std::to_string(rune.spellId)
         + ";" + std::to_string(rune.quality)
         + ";" + std::to_string(rune.maxStack)
         + ";" + rune.keywords
@@ -885,7 +892,8 @@ std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, u
         + ";" + std::to_string(config.debug ? true : known)
         + ";" + std::to_string(rune.specMask)
         + ";" + std::to_string(rune.isLucky)
-        + ";" + std::to_string(rune.isAutorefund);
+        + ";" + std::to_string(rune.isAutorefund)
+        + ";" + std::to_string(rune.type);
 
     return fmt;
 }
@@ -1272,7 +1280,11 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
         return;
     }
 
-    if((rune.allowableClass & player->getClassMask()) == 0)
+    SpecValue specValue = PlayerSpecialization::GetSpecValue(player);
+    bool isSpecAllowed = rune.specMask & specValue.specMask;
+    bool isTypeAllowed = rune.type == 0 || rune.type == specValue.type;
+
+    if((rune.allowableClass & player->getClassMask()) == 0 || !isTypeAllowed || !isSpecAllowed)
     {
         SendPlayerMessage(player, "You cannot activate this rune.");
         return;
