@@ -318,7 +318,13 @@ class rune_pal_fires_of_justice : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->GetPower(POWER_ENERGY) < 5)
+            caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
     }
 
     void Register()
@@ -333,7 +339,13 @@ class rune_pal_sanctification : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        Player* caster = GetCaster()->ToPlayer();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->GetPower(POWER_ENERGY) < 5)
+            caster->SetPower(POWER_ENERGY, caster->GetPower(POWER_ENERGY) + 1);
     }
 
     void Register()
@@ -1415,14 +1427,16 @@ class rune_pal_tower_of_radiance : public AuraScript
             return;
 
         if (victim->HasAura(SPELL_PALADIN_BEACON_OF_LIGHT) || victim->HasAura(SPELL_PALADIN_BEACON_OF_VIRTUE) || victim->HasAura(SPELL_PALADIN_BEACON_OF_FAITH))
-            GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+            if (GetCaster()->GetPower(POWER_ENERGY) < 5)
+                GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
         else
         {
             int32 healthPct = 100 - victim->GetHealthPct();
             uint32 random = urand(1, 100);
 
             if (random <= healthPct)
-                GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+                if (GetCaster()->GetPower(POWER_ENERGY) < 5)
+                    GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
         }
     }
 
@@ -1651,7 +1665,8 @@ class rune_pal_inflorescence_of_the_sunwell : public AuraScript
 
         if (holyLightNumber == 1)
         {
-            GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+            if (GetCaster()->GetPower(POWER_ENERGY) < 5)
+                GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
             return;
         }
 
@@ -1661,7 +1676,8 @@ class rune_pal_inflorescence_of_the_sunwell : public AuraScript
         if (currentStacks < holyLightNumber)
             return;
 
-        GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
+        if (GetCaster()->GetPower(POWER_ENERGY) < 5)
+            GetCaster()->SetPower(POWER_ENERGY, GetCaster()->GetPower(POWER_ENERGY) + 1);
         GetCaster()->RemoveAura(RUNE_PALADIN_INFLORESCENCE_OF_THE_SUNWELL_POWER);
     }
 

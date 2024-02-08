@@ -12,6 +12,8 @@
 enum SetSpells
 {
     SPELL_SET_GENERAL_VOLCANIC_ARMOR_DAMAGE = 9057,
+    SPELL_SET_GENERAL_VESTMENTS_OF_THE_DEVOUT_SHIELD = 27779,
+
 };
 
 // 41676 - Prisoner's Shackle
@@ -45,35 +47,46 @@ class spell_set_prisoners_shackle : public AuraScript
     }
 };
 
-// 27779 - Vestments of the Devout Shield
-class spell_set_vestments_of_the_devout_shield : public AuraScript
+// 27778 - Vestments of the Devout
+class spell_set_vestments_of_the_devout : public AuraScript
 {
-    PrepareAuraScript(spell_set_vestments_of_the_devout_shield);
+    PrepareAuraScript(spell_set_vestments_of_the_devout);
 
-    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& canBeRecalculated)
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
 
         if (!caster || caster->isDead())
             return;
 
-        canBeRecalculated = false;
-        float ratio = GetEffect(EFFECT_1)->GetAmount();
-        float newAmount = CalculatePct(caster->SpellBaseHealingBonusDone(GetSpellInfo()->GetSchoolMask()), ratio);
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 ratio = aurEff->GetAmount();
+        float amount = CalculatePct(caster->SpellBaseHealingBonusDone(GetSpellInfo()->GetSchoolMask()), ratio);
 
         // Improved PW: Shield: its weird having a SPELLMOD_ALL_EFFECTS here but its blizzards doing :)
         // Improved PW: Shield is only applied at the spell healing bonus because it was already applied to the base value in CalculateSpellDamage
-        newAmount = caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), newAmount);
-        newAmount *= caster->CalculateLevelPenalty(GetSpellInfo());
+        amount = caster->ApplyEffectModifiers(GetSpellInfo(), aurEff->GetEffIndex(), amount);
+        amount *= caster->CalculateLevelPenalty(GetSpellInfo());
 
-        amount = int32(newAmount);
+        caster->CastCustomSpell(SPELL_SET_GENERAL_VESTMENTS_OF_THE_DEVOUT_SHIELD, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_set_vestments_of_the_devout_shield::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+        DoCheckProc += AuraCheckProcFn(spell_set_vestments_of_the_devout::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_vestments_of_the_devout::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
+
 
 // 9233 - Volcanic Armor Damage
 class spell_set_volcanic_armor : public AuraScript
@@ -159,13 +172,13 @@ class spell_set_regalia_of_undead_cleansing : public AuraScript
 void AddSC_item_set_bonus_scripts()
 {
     RegisterSpellScript(spell_set_prisoners_shackle);
-    RegisterSpellScript(spell_set_vestments_of_the_devout_shield);
+    RegisterSpellScript(spell_set_vestments_of_the_devout);
     RegisterSpellScript(spell_set_volcanic_armor);
     RegisterSpellScript(spell_set_green_dragon_mail);
     RegisterSpellScript(spell_set_regalia_of_undead_cleansing);
 
 
-    
-    
+
+
 
 }
