@@ -92,6 +92,7 @@ enum PaladinSpells
     // Talents
     TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC = 86555,
     TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC = 86604,
+    TALENT_PALADIN_SHIELD_MASTERY_BUFF       = 87128,
 };
 
 enum PaladinSpellIcons
@@ -2705,7 +2706,28 @@ class spell_pal_shield_of_the_righteous : public SpellScript
     }
 };
 
+class spell_pal_shield_mastery : public AuraScript
+{
+    PrepareAuraScript(spell_pal_shield_mastery);
 
+    void HandlePeriodic(AuraEffect* aurEff)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player || player->isDead())
+            return;
+
+        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (item)
+            if (item->IsFitToSpellRequirements(GetSpellInfo()))
+                player->CastCustomSpell(TALENT_PALADIN_SHIELD_MASTERY_BUFF, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), player, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectUpdatePeriodic += AuraEffectUpdatePeriodicFn(spell_pal_shield_mastery::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
 
 void AddSC_paladin_spell_scripts()
 {
@@ -2782,7 +2804,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_divine_zeal);
     RegisterSpellScript(spell_pal_avengers_shield);
     RegisterSpellScript(spell_pal_shield_of_the_righteous);
-
-
-    
+    RegisterSpellScript(spell_pal_shield_mastery);
 }
