@@ -11,7 +11,6 @@ std::map<uint32 /* specId */, std::vector<uint32>> PlayerSpecialization::m_SpecS
 
 void PlayerSpecialization::LoadAllSpecsPlayers()
 {
-
     m_PlayersSpecialization = {};
 
     QueryResult result = CharacterDatabase.Query("SELECT guid, specId, preferedSpecId FROM characters");
@@ -284,4 +283,6 @@ void PlayerSpecialization::SetPreferredSpecId(Player* player, uint32 specMask)
 
     if (match != m_PlayersSpecialization.end())
         match->second.PreferredSpecId = specMask;
+
+    CharacterDatabase.Query("UPDATE characters SET preferedSpecId = {} WHERE guid = {}", specMask, player->GetGUID().GetCounter());
 }
