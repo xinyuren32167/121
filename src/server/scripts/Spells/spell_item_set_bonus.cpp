@@ -167,6 +167,130 @@ class spell_set_regalia_of_undead_cleansing : public AuraScript
     }
 };
 
+// 41736 - Staff Intellect
+class spell_set_staff_intellect : public AuraScript
+{
+    PrepareAuraScript(spell_set_staff_intellect);
+
+    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
+                if (!item->IsFitToSpellRequirements(GetSpellInfo()))
+                    GetEffect(EFFECT_0)->ChangeAmount(0);
+    }
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 value = GetEffect(EFFECT_1)->GetAmount();
+            int32 amount = aurEff->GetAmount();
+
+            if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
+            {
+                if (item->IsFitToSpellRequirements(GetSpellInfo()))
+                    if (amount == value)
+                        return;
+                    else
+                        amount = value;
+            }
+            else
+                if (amount == 0)
+                    return;
+                else
+                    amount = 0;
+
+            GetEffect(EFFECT_0)->ChangeAmount(amount);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_set_staff_intellect::HandleEffectApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_staff_intellect::CalcPeriodic, EFFECT_0, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_staff_intellect::HandlePeriodic, EFFECT_0, SPELL_AURA_ANY);
+    }
+};
+
+// 41736 - Shield Intellect
+class spell_set_shield_intellect : public AuraScript
+{
+    PrepareAuraScript(spell_set_shield_intellect);
+
+    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+                if (!item->IsFitToSpellRequirements(GetSpellInfo()))
+                    GetEffect(EFFECT_0)->ChangeAmount(0);
+    }
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 value = GetEffect(EFFECT_1)->GetAmount();
+            int32 amount = aurEff->GetAmount();
+
+            if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+            {
+                if (item->IsFitToSpellRequirements(GetSpellInfo()))
+                    if (amount == value)
+                        return;
+                    else
+                        amount = value;
+            }
+            else
+                if (amount == 0)
+                    return;
+                else
+                    amount = 0;
+
+            GetEffect(EFFECT_0)->ChangeAmount(amount);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_set_shield_intellect::HandleEffectApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_shield_intellect::CalcPeriodic, EFFECT_0, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_shield_intellect::HandlePeriodic, EFFECT_0, SPELL_AURA_ANY);
+    }
+};
+
 
 
 void AddSC_item_set_bonus_scripts()
@@ -176,6 +300,8 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_volcanic_armor);
     RegisterSpellScript(spell_set_green_dragon_mail);
     RegisterSpellScript(spell_set_regalia_of_undead_cleansing);
+    RegisterSpellScript(spell_set_staff_intellect);
+    RegisterSpellScript(spell_set_shield_intellect);
 
 
 
