@@ -11912,7 +11912,6 @@ int32 Unit::SpellBaseDamageBonusDone(SpellSchoolMask schoolMask)
         AuraEffectList const& mDamageDonePercent = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_POWER_PERCENT);
         for (AuraEffectList::const_iterator i = mDamageDonePercent.begin(); i != mDamageDonePercent.end(); ++i)
         {
-            LOG_ERROR("HERE", "HERE 3");
             if ((*i)->GetMiscValue() & schoolMask)
             {
                 DoneAdvertisedBenefit += int32(CalculatePct(DoneAdvertisedBenefit, (*i)->GetAmount()));
