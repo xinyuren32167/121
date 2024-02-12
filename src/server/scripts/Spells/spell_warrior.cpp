@@ -71,6 +71,7 @@ enum WarriorSpells
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1 = 12723,
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2 = 26654,
     SPELL_WARRIOR_TAUNT = 355,
+    SPELL_WARRIOR_THUNDERCLAP_SON_OF_THUNDER = 84663,
     SPELL_WARRIOR_TITANS_GRIP = 46917,
     SPELL_WARRIOR_TITANS_GRIP_BUFF = 49152,
     SPELL_WARRIOR_TITANS_GRIP_SHIELD = 50483,
@@ -112,6 +113,14 @@ enum WarriorSpells
     MASTERY_WARRIOR_DEEP_WOUNDS_DOT = 200001,
     MASTERY_WARRIOR_UNSHACKLED_FURY = 200003,
     MASTERY_WARRIOR_UNSHACKLED_FURY_BUFF = 200004,
+
+    // Item Sets
+    T1_WARRIOR_ARMS_BONUS2 = 95000,
+    T1_WARRIOR_ARMS_BONUS4 = 95001,
+    T1_WARRIOR_ARMS_BONUS4_DAMAGE_BUFF = 95002,
+    T1_WARRIOR_FURY_BONUS2_VISUAL = 95102,
+    T1_WARRIOR_PROT_BONUS4 = 95201,
+    T1_WARRIOR_PROT_BONUS4_BUFF = 95202,
 };
 
 enum WarriorSpellIcons
@@ -293,6 +302,28 @@ class spell_warr_last_stand : public SpellScript
     void Register() override
     {
         OnEffectHit += SpellEffectFn(spell_warr_last_stand::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 12976 - Last Stand Aura
+class spell_warr_last_stand_aura : public AuraScript
+{
+    PrepareAuraScript(spell_warr_last_stand_aura);
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes  /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* T1protWarr = caster->GetAura(T1_WARRIOR_PROT_BONUS4))
+            caster->AddAura(T1_WARRIOR_PROT_BONUS4_BUFF, caster);
+    }
+
+    void Register() override
+    {
+        AfterEffectRemove += AuraEffectRemoveFn(spell_warr_last_stand_aura::HandleRemove, EFFECT_0, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -517,39 +548,51 @@ class spell_warr_execute : public SpellScript
     void HandleEffect(SpellEffIndex effIndex)
     {
         Unit* caster = GetCaster();
-        if (Unit* target = GetHitUnit())
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        SpellInfo const* spellInfo = GetSpellInfo();
+        int32 spellCost = spellInfo->CalcPowerCost(caster, SpellSchoolMask(spellInfo->SchoolMask));
+        int32 maxRage = spellInfo->GetEffect(EFFECT_1).CalcValue(caster) - spellCost;
+        int32 rageAmount = caster->GetPower(POWER_RAGE) - spellCost;
+        rage = spellCost;
+
+        rage += std::min<int32>(maxRage, rageAmount);
+
+        float amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue());
+        int32 minimumRageKept = 0;
+
+        // Sudden Death rage save
+        if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_GENERIC, WARRIOR_ICON_ID_SUDDEN_DEATH, EFFECT_0))
+            minimumRageKept = aurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue(caster);
+
+        int32 newRage = std::max<int32>(minimumRageKept, caster->GetPower(POWER_RAGE) - rage);
+        caster->SetPower(POWER_RAGE, newRage);
+
+        // Glyph of Execution bonus
+        /*if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
+            rage += aurEff->GetAmount() * 10;*/
+
+        amount *= rage / 10;
+
+        caster->CastCustomSpell(SPELL_WARRIOR_EXECUTE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+
+        if (caster->HasAura(T1_WARRIOR_ARMS_BONUS4))
         {
-            SpellInfo const* spellInfo = GetSpellInfo();
-            int32 spellCost = spellInfo->CalcPowerCost(caster, SpellSchoolMask(spellInfo->SchoolMask));
-            int32 maxRage = spellInfo->GetEffect(EFFECT_1).CalcValue(caster) - spellCost;
-            int32 rageAmount = caster->GetPower(POWER_RAGE) - spellCost;
-            rage = spellCost;
-
-            rage += std::min<int32>(maxRage, rageAmount);
-
-            float amount = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue());
-            int32 minimumRageKept = 0;
-
-            // Sudden Death rage save
-            if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_GENERIC, WARRIOR_ICON_ID_SUDDEN_DEATH, EFFECT_0))
-                minimumRageKept = aurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue(caster);
-
-            int32 newRage = std::max<int32>(minimumRageKept, caster->GetPower(POWER_RAGE) - rage);
-            caster->SetPower(POWER_RAGE, newRage);
-
-            // Glyph of Execution bonus
-            /*if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
-                rage += aurEff->GetAmount() * 10;*/
-
-            amount *= rage / 10;
-
-            caster->CastCustomSpell(SPELL_WARRIOR_EXECUTE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            caster->AddAura(T1_WARRIOR_ARMS_BONUS4_DAMAGE_BUFF, caster);
+            caster->CastSpell(target, SPELL_WARRIOR_THUNDERCLAP_SON_OF_THUNDER, TRIGGERED_FULL_MASK);
         }
     }
 
     void HandleAfterHit()
     {
-        Unit* caster = GetCaster();  
+        Unit* caster = GetCaster();
         if (Aura* runeAura = GetImprovedExecuteAura(caster))
             if (GetExplTargetUnit()->IsAlive())
             {
@@ -567,7 +610,7 @@ class spell_warr_execute : public SpellScript
     }
 
 private:
-   int32 rage = 0;
+    int32 rage = 0;
 };
 
 // 12809 - Concussion Blow
@@ -636,9 +679,21 @@ class spell_warr_bloodthirst : public SpellScript
         SetHitDamage(damage);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* T1bonus2Visual = caster->GetAura(T1_WARRIOR_FURY_BONUS2_VISUAL))
+            T1bonus2Visual->ModStackAmount(-1);
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warr_bloodthirst::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_warr_bloodthirst::HandleAfterHit);
     }
 };
 
@@ -2225,7 +2280,7 @@ class spell_warr_true_grit : public AuraScript
         if (!caster || !caster->IsAlive() || !caster->IsInCombat())
             return;
 
-        if(caster->GetHealthPct() < 50)
+        if (caster->GetHealthPct() < 50)
             caster->CastSpell(caster, TALENT_WARRIOR_FIGHT_MANAGEMENT_HEALTH, TRIGGERED_FULL_MASK);
         if (caster->GetPower(POWER_RAGE) < 30)
             caster->CastSpell(caster, TALENT_WARRIOR_FIGHT_MANAGEMENT_RAGE, TRIGGERED_FULL_MASK);
@@ -2375,6 +2430,38 @@ class spell_avatar_freedom : public SpellScript
     }
 };
 
+// 29723 - 29724 - 29725 - Sudden Death
+class spell_warr_sudden_death : public AuraScript
+{
+    PrepareAuraScript(spell_warr_sudden_death);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        if (eventInfo.GetDamageInfo()->GetDamageType() == DOT)
+            if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_WARRIOR_REND)
+                return caster->HasAura(T1_WARRIOR_ARMS_BONUS2);
+            else
+                return false;
+
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_warr_sudden_death::CheckProc);
+    }
+};
+
+
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -2394,8 +2481,9 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_glyph_of_sunder_armor);
     RegisterSpellScript(spell_warr_intimidating_shout);
     RegisterSpellScript(spell_warr_last_stand);
+    RegisterSpellScript(spell_warr_last_stand_aura);
     RegisterSpellScript(spell_warr_commanding_shout);
-    RegisterSpellScript(spell_warr_overpower);
+    RegisterSpellScript(spell_warr_overpower); 
     //RegisterSpellScript(spell_warr_rend);
     //RegisterSpellScript(spell_warr_rend_direct_damage);
     //RegisterSpellScript(spell_warr_retaliation);
@@ -2442,6 +2530,10 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_slam_and_thrust);
     RegisterSpellScript(spell_sword_and_spear_board_reset);
     RegisterSpellScript(spell_avatar_freedom);
+    RegisterSpellScript(spell_warr_sudden_death);
     //RegisterSpellScript(spell_warr_heroic_leap);
+
+
+
     RegisterCreatureAI(npc_pet_ravager);
 }

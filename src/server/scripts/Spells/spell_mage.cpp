@@ -39,6 +39,8 @@ enum MageSpells
     SPELL_MAGE_ARCANE_CHARGE_BUFF1 = 81501,
     SPELL_MAGE_ARCANE_CHARGE_BUFF2 = 81502,
     SPELL_MAGE_ARCANE_CHARGE_VISUAL = 81503,
+    SPELL_MAGE_ARCANE_MISSILE = 42843,
+    SPELL_MAGE_ARCANE_MISSILE_MOVING = 300924,
     SPELL_MAGE_ARCANE_ORB = 80016,
     SPELL_MAGE_ARCANE_ORB_DAMAGE = 80017,
     SPELL_MAGE_ARCANE_SURGE_DAMAGE = 81519,
@@ -166,6 +168,16 @@ enum MageSpells
     RUNE_MAGE_SIPHON_STORM_BUFF = 301034,
     RUNE_MAGE_MANA_ADEPT_ENERGIZE = 301158,
     RUNE_MAGE_FRACTURED_FROST_BUFF = 301358,
+
+    // Item Sets
+    T1_MAGE_ARCANE_BONUS2 = 95500,
+    T1_MAGE_ARCANE_BONUS2_BUFF = 95501,
+    T1_MAGE_ARCANE_BONUS4 = 95502,
+    T1_MAGE_ARCANE_BONUS4_LISTENER = 95503,
+    T1_MAGE_ARCANE_BONUS4_MAIN_BUFF = 95504,
+    T1_MAGE_ARCANE_BONUS4_SECONDARY_BUFF = 95505,
+    T1_MAGE_FROST_BONUS4 = 95702,
+    T1_MAGE_MAGEBLADE_BONUS4_BUFF = 95803,
 };
 
 class npc_mage_spell_arcane_orbs : public CreatureScript
@@ -870,9 +882,13 @@ class spell_mage_brain_freeze : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
     {
-        Player* player = GetCaster()->ToPlayer();
+        Unit* caster = GetCaster();
 
-        player->RemoveSpellCooldown(SPELL_MAGE_FLURRY, true);
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = GetCaster()->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_MAGE_FLURRY, true);
     }
 
     void Register() override
@@ -1939,6 +1955,49 @@ class spell_mage_arcane_missiles_aura : public AuraScript
 {
     PrepareAuraScript(spell_mage_arcane_missiles_aura);
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* setBonus = caster->GetAura(T1_MAGE_ARCANE_BONUS4))
+            if (Aura* listener = caster->GetAura(T1_MAGE_ARCANE_BONUS4_LISTENER))
+                if (listener->GetStackAmount() >= setBonus->GetEffect(EFFECT_0)->GetAmount())
+                {
+                    listener->Remove();
+                    int32 additionalTargets = setBonus->GetEffect(EFFECT_1)->GetAmount();
+                    caster->AddAura(T1_MAGE_ARCANE_BONUS4_MAIN_BUFF, target);
+
+                    auto const& threatList = caster->getAttackers();
+
+                    for (auto const& targets : threatList)
+                        if (targets->IsAlive())
+                        {
+                            if (targets == target)
+                                continue;
+
+                            float distance = targets->GetDistance(target->GetPosition());
+
+                            if (distance > 12)
+                                continue;
+
+                            caster->AddAura(T1_MAGE_ARCANE_BONUS4_SECONDARY_BUFF, targets);
+                            caster->CastSpell(targets, SPELL_MAGE_ARCANE_MISSILE_MOVING, TRIGGERED_FULL_MASK);
+                            additionalTargets--;
+
+                            if (additionalTargets <= 0)
+                                break;
+                        }
+                }
+    }
+
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
     {
         Unit* caster = GetCaster();
@@ -1959,7 +2018,65 @@ class spell_mage_arcane_missiles_aura : public AuraScript
 
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_mage_arcane_missiles_aura::HandleApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_mage_arcane_missiles_aura::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 42844 - Arcane Missile Damage
+class spell_mage_arcane_missile_damage : public SpellScript
+{
+    PrepareSpellScript(spell_mage_arcane_missile_damage);
+
+    void HandleDummy(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        if (Aura* buffAura = target->GetAura(T1_MAGE_ARCANE_BONUS4_MAIN_BUFF))
+            AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
+
+        if (Aura* buffAura = target->GetAura(T1_MAGE_ARCANE_BONUS4_SECONDARY_BUFF))
+            AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
+
+        SetHitDamage(damage);
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_MAGE_ARCANE_MISSILE) && !caster->HasAura(SPELL_MAGE_ARCANE_MISSILE_MOVING))
+        {
+            if (target->HasAura(T1_MAGE_ARCANE_BONUS4_MAIN_BUFF))
+                target->RemoveAura(T1_MAGE_ARCANE_BONUS4_MAIN_BUFF);
+
+            if (target->HasAura(T1_MAGE_ARCANE_BONUS4_SECONDARY_BUFF))
+                target->RemoveAura(T1_MAGE_ARCANE_BONUS4_SECONDARY_BUFF);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_mage_arcane_missile_damage::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterHit += SpellHitFn(spell_mage_arcane_missile_damage::HandleAfterHit);
     }
 };
 
@@ -2458,10 +2575,34 @@ class spell_mage_ice_lance : public SpellScript
         return nullptr;
     }
 
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* T1bonus4 = caster->GetAura(T1_MAGE_FROST_BONUS4))
+            if (roll_chance_i(T1bonus4->GetEffect(EFFECT_0)->GetAmount()))
+            {
+                if (Player* player = GetCaster()->ToPlayer())
+                    player->RemoveSpellCooldown(SPELL_MAGE_FLURRY, true);
+
+                caster->CastSpell(caster, SPELL_MAGE_BRAIN_FREEZE_BUFF, TRIGGERED_FULL_MASK);
+            }              
+    }
+
     void HandleAfterHit()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
 
         if (Aura* fingerOfFrost = caster->GetAura(SPELL_MAGE_FINGERS_OF_FROST_VISUAL))
         {
@@ -2481,6 +2622,7 @@ class spell_mage_ice_lance : public SpellScript
 
     void Register() override
     {
+        OnCast += SpellCastFn(spell_mage_ice_lance::HandleCast);
         AfterHit += SpellHitFn(spell_mage_ice_lance::HandleAfterHit);
     }
 };
@@ -3313,6 +3455,10 @@ class spell_mage_enchant_conduit : public AuraScript
                 return;
 
             int32 amount = CalculatePct(caster->GetMaxPower(POWER_MANA), 0.5);
+
+            if (Aura* T1B4buff = caster->GetAura(T1_MAGE_MAGEBLADE_BONUS4_BUFF))
+                AddPct(amount, T1B4buff->GetEffect(EFFECT_0)->GetAmount());
+
             caster->CastCustomSpell(SPELL_MAGE_ENCHANT_CONDUIT_PROC, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
         }
     }
@@ -3337,6 +3483,10 @@ class spell_mage_enchant_deflection : public AuraScript
                 return;
 
             int32 amount = caster->CountPctFromMaxHealth(aurEff->GetAmount());
+
+            if (Aura* T1B4buff = caster->GetAura(T1_MAGE_MAGEBLADE_BONUS4_BUFF))
+                AddPct(amount, T1B4buff->GetEffect(EFFECT_0)->GetAmount());
+
             if (Aura* shield = caster->GetAura(SPELL_MAGE_ENCHANT_DEFLECTION_PROC))
             {
                 shield->GetEffect(EFFECT_0)->SetAmount(amount);
@@ -4015,6 +4165,33 @@ class spell_mage_ice_nova_target_select : public SpellScript
     }
 };
 
+// 12536 - Clearcasting
+class spell_mage_clearcasting : public AuraScript
+{
+    PrepareAuraScript(spell_mage_clearcasting);
+
+    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_MAGE_ARCANE_BONUS2))
+            caster->CastSpell(caster, T1_MAGE_ARCANE_BONUS2_BUFF, TRIGGERED_FULL_MASK);
+
+        if (caster->HasAura(T1_MAGE_ARCANE_BONUS4))
+            caster->CastSpell(caster, T1_MAGE_ARCANE_BONUS4_LISTENER, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_mage_clearcasting::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
+
 void AddSC_mage_spell_scripts()
 {
     new npc_mage_spell_frozen_orbs();
@@ -4060,6 +4237,7 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_arcane_charge);
     RegisterSpellScript(spell_mage_arcane_explosion);
     RegisterSpellScript(spell_mage_arcane_missiles_aura);
+    RegisterSpellScript(spell_mage_arcane_missile_damage);
     RegisterSpellScript(spell_mage_blink_displacement);
     RegisterSpellScript(spell_mage_displacement);
     RegisterSpellScript(spell_mage_greater_invisibility);
@@ -4113,4 +4291,10 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_frostbolt);
     RegisterSpellScript(spell_mage_icy_veins);
     RegisterSpellScript(spell_mage_ice_nova_target_select);
+    RegisterSpellScript(spell_mage_clearcasting);
+
+
+
+
+
 }
