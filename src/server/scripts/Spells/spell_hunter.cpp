@@ -118,6 +118,11 @@ enum HunterSpells
 
     // Runes
     RUNE_HUNTER_EVASIVE_MANEUVERS_SHIELD = 501732,
+
+    // Sets
+    T1_HUNTER_SURVIVAL_2PC_BUFF = 96801,
+    T1_HUNTER_SURVIVAL_4PC = 96802,
+    T1_HUNTER_SURVIVAL_4PC_BUFF = 96803,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -3300,13 +3305,29 @@ class spell_hun_twilight_piercer : public SpellScript
     void HandleProc()
     {
         Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
         if (caster->HasAura(SPELL_HUNTER_INVIS_ACTIVATOR))
             caster->CastSpell(GetExplTargetUnit(), SPELL_HUNTER_TWILIGHT_PIERCER_STUN, TRIGGERED_FULL_MASK);
+    }
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_HUNTER_SURVIVAL_2PC_BUFF))
+            caster->RemoveAura(T1_HUNTER_SURVIVAL_2PC_BUFF);
     }
 
     void Register() override
     {
         BeforeCast += SpellCastFn(spell_hun_twilight_piercer::HandleProc);
+        AfterHit += SpellHitFn(spell_hun_twilight_piercer::HandleAfterCast);
     }
 };
 
@@ -3810,6 +3831,10 @@ class spell_hun_crescent_veil : public AuraScript
 
             caster->AddAura(procSpell, caster);
         }
+
+        // Grant T1 4pc buff
+        if (caster->HasAura(T1_HUNTER_SURVIVAL_4PC))
+            caster->AddAura(T1_HUNTER_SURVIVAL_4PC_BUFF, caster);
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -3832,6 +3857,10 @@ class spell_hun_crescent_veil : public AuraScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove T1 4pc buff
+        if (caster->HasAura(T1_HUNTER_SURVIVAL_4PC_BUFF))
+            caster->RemoveAura(T1_HUNTER_SURVIVAL_4PC_BUFF);
     }
 
     void Register() override

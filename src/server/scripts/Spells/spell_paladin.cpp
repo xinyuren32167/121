@@ -93,6 +93,10 @@ enum PaladinSpells
     TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC = 86555,
     TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC = 86604,
     TALENT_PALADIN_SHIELD_MASTERY_BUFF       = 87128,
+
+    // Sets
+    T1_PALADIN_INQUISITOR_2PC = 96300,
+    T1_PALADIN_INQUISITOR_2PC_BUFF = 96301,
 };
 
 enum PaladinSpellIcons
@@ -2591,6 +2595,10 @@ class spell_pal_divine_zeal : public AuraScript
 
         if (!caster || caster->isDead())
             return;
+
+        // Add T1 2pc buff
+        if (caster->HasAura(T1_PALADIN_INQUISITOR_2PC))
+            caster->AddAura(T1_PALADIN_INQUISITOR_2PC_BUFF, caster);
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -2606,6 +2614,10 @@ class spell_pal_divine_zeal : public AuraScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove T1 2pc buff
+        if (caster->HasAura(T1_PALADIN_INQUISITOR_2PC_BUFF))
+            caster->RemoveAura(T1_PALADIN_INQUISITOR_2PC_BUFF);
     }
 
     void Register() override

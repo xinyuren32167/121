@@ -164,6 +164,7 @@ enum DeathKnightSpells
     SPELL_DK_DEATHS_EMBRACE_HEAL                = 87002,
     SPELL_DK_DEATHS_EMBRACE_LISTENER            = 87003,
     SPELL_DK_EBON_RENEWAL_HEAL                  = 87005,
+    SPELL_DK_LEECHING_STRIKE                    = 87009,
     SPELL_DK_LEECHING_STRIKE_ENERGY             = 87011,
     SPELL_DK_NECROTIC_BLESSING_HEAL             = 87013,
     SPELL_DK_SOUL_BARRIER_HEAL                  = 87015,
@@ -191,6 +192,14 @@ enum DeathKnightSpells
     //RUNE
     RUNE_DK_SPLINTERING_SHIELD_PROC             = 600572,
     RUNE_DK_LIGHT_AND_DARK_VALKYR               = 600943,
+
+    // Sets
+    T1_DEATHKNIGHT_BLOOD_4PC = 97001,
+    T1_DEATHKNIGHT_BLOOD_4PC_BUFF = 97002,
+    T1_DEATHKNIGHT_UNHOLY_2PC = 97200,
+    T1_DEATHKNIGHT_UNHOLY_2PC_BUFF = 97201,
+    T1_DEATHKNIGHT_SOULWEAVER_2PC = 97300,
+    T1_DEATHKNIGHT_SOULWEAVER_2PC_BUFF = 97301,
 };
 
 enum DeathKnightSpellIcons
@@ -2229,6 +2238,17 @@ class spell_dk_vampiric_blood : public AuraScript
 {
     PrepareAuraScript(spell_dk_vampiric_blood);
 
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_DEATHKNIGHT_BLOOD_4PC))
+            caster->AddAura(T1_DEATHKNIGHT_BLOOD_4PC_BUFF, caster);
+    }
+
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
         amount = GetUnitOwner()->CountPctFromMaxHealth(amount);
@@ -2236,6 +2256,7 @@ class spell_dk_vampiric_blood : public AuraScript
 
     void Register() override
     {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_vampiric_blood::HandleApply, EFFECT_1, SPELL_AURA_MOD_INCREASE_HEALTH, AURA_EFFECT_HANDLE_REAL);
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_vampiric_blood::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_INCREASE_HEALTH);
     }
 };
@@ -2425,10 +2446,21 @@ class spell_dk_festering_wound : public AuraScript
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (!GetCaster() || GetCaster()->isDead())
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
             return;
 
-        GetCaster()->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+        caster->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+
+        if (Player* player = caster->ToPlayer())
+            if (player->HasAura(T1_DEATHKNIGHT_UNHOLY_2PC))
+            {
+                Pet* pet = player->GetPet();
+
+                if (pet && pet->IsAlive())
+                    player->AddAura(T1_DEATHKNIGHT_UNHOLY_2PC_BUFF, pet);
+            }      
     }
 
     void Register() override
@@ -3871,6 +3903,21 @@ class spell_dk_lifedrain_bolt : public SpellScript
 {
     PrepareSpellScript(spell_dk_lifedrain_bolt);
 
+    void HandleCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_DEATHKNIGHT_SOULWEAVER_2PC))
+            if (Aura* leechingStrike = caster->GetAura(SPELL_DK_LEECHING_STRIKE))
+            {
+                int32 stacks = leechingStrike->GetStackAmount();
+                caster->CastCustomSpell(T1_DEATHKNIGHT_SOULWEAVER_2PC_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+            }
+    }
+
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         targets.remove_if(Acore::RaidCheck(GetCaster(), false));
@@ -3886,6 +3933,7 @@ class spell_dk_lifedrain_bolt : public SpellScript
 
     void Register() override
     {
+        BeforeCast += SpellCastFn(spell_dk_lifedrain_bolt::HandleCast);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dk_lifedrain_bolt::FilterTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ALLY);
     }
 };
