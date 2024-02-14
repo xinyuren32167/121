@@ -33,6 +33,20 @@ enum SetSpells
     // Death Knight
     SPELL_DEATHKNIGHT_PILLAR_OF_FROST = 80303,
     SPELL_DEATHKNIGHT_VAMPIRIC_BLOOD = 55233,
+    // Druid
+    SPELL_DRUID_EFFLORESCENCE_HEAL = 80579,
+    SPELL_DRUID_LIFEBLOOM = 48451,
+    SPELL_DRUID_LIFEBLOOM_EXPIRE = 80588,
+    SPELL_DRUID_NATURES_SWIFTNESS = 17116,
+    SPELL_DRUID_RAGE_OF_THE_SLEEPER = 80570,
+    SPELL_DRUID_STARFALL_DAMAGE = 53198,
+    // Warlock
+    SPELL_WARLOCK_FIERY_SYMBOL = 83108,
+    // Priest
+    SPELL_PRIEST_HOLY_WORD_SANCTIFY = 81029,
+    SPELL_PRIEST_HOLY_WORD_SERENITY = 81025,
+    SPELL_PRIEST_RENEW = 48068,
+
 
 
 
@@ -57,6 +71,17 @@ enum SetSpells
     SPELL_SET_T1_DEATHKNIGHT_UNHOLY_2PC_PETBUFF = 97201,
     SPELL_SET_T1_DEATHKNIGHT_UNHOLY_4PC_PETBUFF = 97203,
     SPELL_SET_T1_DEATHKNIGHT_UNHOLY_4PC_BUFF = 97204,
+    // Druid
+    SPELL_SET_T1_DRUID_FERAL_2PC_BUFF = 97601,
+    SPELL_SET_T1_DRUID_FERAL_4PC_DOT = 97603,
+    SPELL_SET_T1_DRUID_GUARDIAN_2PC = 97700,
+    SPELL_SET_T1_DRUID_GUARDIAN_4PC_SHIELD = 97703,
+    SPELL_SET_T1_DRUID_GUARDIAN_4PC_DAMAGE = 97704,
+    SPELL_SET_T1_DRUID_RESTORATION_4PC_BUFF = 97802,
+    // Warlock
+    SPELL_SET_T1_WARLOCK_AFFLI_4PC_BUFF = 98002,
+    SPELL_SET_T1_WARLOCK_AFFLI_4PC_LISTENER = 98003,
+    SPELL_SET_T1_WARLOCK_DESTRU_4PC_DOT = 98204,
 
 };
 
@@ -1240,6 +1265,479 @@ class spell_set_deathknight_soulweaver_T1_4pc : public AuraScript
     }
 };
 
+// --------------------------------------------------------------------------- Druid Sets ---------------------------------------------------------------------------
+
+// 97500 - Elune Raiment Balance T1 2pc
+class spell_set_druid_balance_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_druid_balance_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        return eventInfo.GetSpellInfo()->Id != SPELL_DRUID_STARFALL_DAMAGE;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_druid_balance_T1_2pc::CheckProc);
+    }
+};
+
+// 97602 - Malfurion Raiment Feral T1 4pc
+class spell_set_druid_feral_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_druid_feral_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_SET_T1_DRUID_FERAL_4PC_DOT)
+            return false;
+
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() >= 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (!caster->HasAura(SPELL_SET_T1_DRUID_FERAL_2PC_BUFF))
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+        int32 amount = CalculatePct(damage, aurEff->GetAmount());
+
+        if (AuraEffect* dotAura = target->GetAura(SPELL_SET_T1_DRUID_FERAL_4PC_DOT)->GetEffect(EFFECT_0))
+        {
+            int32 remainingAmount = dotAura->GetAmount() * dotAura->GetRemaningTicks();
+            amount += remainingAmount;
+            dotAura->GetBase()->Remove();
+        }
+
+        amount /= 10;
+
+        caster->CastCustomSpell(SPELL_SET_T1_DRUID_FERAL_4PC_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_druid_feral_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_druid_feral_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 97101 - Ursoc Raiment Guardian T1 2pc
+class spell_set_druid_guardian_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_druid_guardian_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* rageofTheSleeper = caster->GetAura(SPELL_DRUID_RAGE_OF_THE_SLEEPER))
+        {
+            if (eventInfo.GetSpellInfo()->PowerType != POWER_RAGE)
+                return;
+
+            int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
+
+            if (spellRage <= 0)
+                return;
+
+            rageAccumulated += spellRage;
+            int32 rageThreshold = aurEff->GetAmount();
+            int32 attackPower = GetEffect(EFFECT_1)->GetAmount();
+            ApplyPct(attackPower, caster->GetTotalAttackPowerValue(BASE_ATTACK));
+            int32 currentMaxShield = GetEffect(EFFECT_2)->GetAmount();
+
+            for (rageAccumulated; rageAccumulated > rageThreshold; rageAccumulated -= rageThreshold)
+                currentMaxShield += attackPower;
+
+            GetAura()->GetEffect(EFFECT_2)->SetAmount(currentMaxShield);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_druid_guardian_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_druid_guardian_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+private:
+    int32 rageAccumulated = 0;
+};
+
+// 97101 - Ursoc Raiment Guardian T1 2pc Shield
+class spell_set_druid_guardian_T1_2pc_shield : public AuraScript
+{
+    PrepareAuraScript(spell_set_druid_guardian_T1_2pc_shield);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        // Set absorbtion amount to unlimited
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = dmgInfo.GetAttacker();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Aura* set2pc = caster->GetAura(SPELL_SET_T1_DRUID_GUARDIAN_2PC))
+        {
+            int32 absorbPct = GetEffect(EFFECT_1)->GetAmount();
+            int32 absorb = CalculatePct(dmgInfo.GetDamage(), absorbPct);
+            int32 maxShield = set2pc->GetEffect(EFFECT_2)->GetAmount();
+
+            if (maxShield <= absorb)
+            {
+                absorbAmount = maxShield;
+                set2pc->GetEffect(EFFECT_2)->SetAmount(0);
+                SetDuration(10);
+            }
+            else
+            {
+                absorbAmount = absorb;
+                maxShield -= absorb;
+                set2pc->GetEffect(EFFECT_2)->SetAmount(maxShield);
+            }
+
+            if (GetSpellInfo()->Id == SPELL_SET_T1_DRUID_GUARDIAN_4PC_SHIELD)
+            {
+                int32 amount = CalculatePct(absorbAmount, GetEffect(EFFECT_2)->GetAmount());
+                caster->CastCustomSpell(SPELL_SET_T1_DRUID_GUARDIAN_4PC_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+            }
+
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_set_druid_guardian_T1_2pc_shield::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_set_druid_guardian_T1_2pc_shield::Absorb, EFFECT_0);
+    }
+};
+
+// 97101 - Ursoc Raiment Guardian T1 4pc
+class spell_set_druid_guardian_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_druid_guardian_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Aura* rageofTheSleeper = caster->GetAura(SPELL_DRUID_RAGE_OF_THE_SLEEPER))
+        {
+            if (eventInfo.GetSpellInfo()->PowerType != POWER_RAGE)
+                return;
+
+            int32 spellRage = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
+
+            if (spellRage <= 0)
+                return;
+
+            int32 rageAccumulated = GetAura()->GetEffect(EFFECT_2)->GetAmount() + spellRage;
+            int32 rageThreshold = aurEff->GetAmount();
+            int32 duration = rageofTheSleeper->GetDuration() + GetEffect(EFFECT_1)->GetAmount();
+
+            for (rageAccumulated; rageAccumulated > rageThreshold; rageAccumulated -= rageThreshold)
+                rageofTheSleeper->SetDuration(duration);
+
+            GetAura()->GetEffect(EFFECT_2)->SetAmount(rageAccumulated);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_druid_guardian_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_druid_guardian_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 97801 - Cenarion Raiment Resto T1 Bonus 4
+class spell_set_druid_restoration_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_druid_restoration_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetHealInfo() && eventInfo.GetHealInfo()->GetHeal() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+        int32 cooldown = aurEff->GetAmount();
+
+        if (spellID == SPELL_DRUID_EFFLORESCENCE_HEAL)
+            caster->CastSpell(caster, SPELL_SET_T1_DRUID_RESTORATION_4PC_BUFF, TRIGGERED_FULL_MASK);
+
+        if (spellID == SPELL_DRUID_LIFEBLOOM || spellID == SPELL_DRUID_LIFEBLOOM_EXPIRE)
+                if (Player* player = caster->ToPlayer())
+                    player->ModifySpellCooldown(SPELL_DRUID_NATURES_SWIFTNESS, -cooldown);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_druid_restoration_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_druid_restoration_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// --------------------------------------------------------------------------- Warlock Sets ---------------------------------------------------------------------------
+
+// 98001 - Cursed Raiment Affli T1 Bonus 4
+class spell_set_warlock_affliction_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_warlock_affliction_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 stacks = aurEff->GetAmount();
+
+        caster->CastCustomSpell(SPELL_SET_T1_WARLOCK_AFFLI_4PC_LISTENER, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_warlock_affliction_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_warlock_affliction_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 98003 - Cursed Raiment Affli T1 Bonus 4
+class spell_set_warlock_affliction_T1_4pc_visual : public AuraScript
+{
+    PrepareAuraScript(spell_set_warlock_affliction_T1_4pc_visual);
+
+    void ApplyEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        caster->AddAura(SPELL_SET_T1_WARLOCK_AFFLI_4PC_BUFF, caster);
+    }
+
+    void RemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_SET_T1_WARLOCK_AFFLI_4PC_BUFF))
+            caster->RemoveAura(SPELL_SET_T1_WARLOCK_AFFLI_4PC_BUFF);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_set_warlock_affliction_T1_4pc_visual::ApplyEffect, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_set_warlock_affliction_T1_4pc_visual::RemoveEffect, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 98203 - Chaotic Raiment Destru T1 Bonus 4
+class spell_set_warlock_destruction_T1_4pc_proc : public AuraScript
+{
+    PrepareAuraScript(spell_set_warlock_destruction_T1_4pc_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        amount /= 4;
+        caster->CastCustomSpell(SPELL_SET_T1_WARLOCK_DESTRU_4PC_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_warlock_destruction_T1_4pc_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_warlock_destruction_T1_4pc_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 98300 - Felheart Raiment Demonbound T1 2pc
+class spell_set_warlock_demonbound_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_warlock_demonbound_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;;
+
+        if (!eventInfo.GetDamageInfo())
+            return false;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return false;
+
+        return target->HasAura(SPELL_WARLOCK_FIERY_SYMBOL);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_warlock_demonbound_T1_2pc::CheckProc);
+    }
+};
+
+// 98302 - Felheart Raiment Demonbound T1 4pc
+class spell_set_warlock_demonbound_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_warlock_demonbound_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            if (eventInfo.GetSpellInfo()->PowerType != POWER_ENERGY)
+                return;
+
+            int32 spellSoulPower = eventInfo.GetSpellInfo()->CalcPowerCost(caster, eventInfo.GetSchoolMask()) / 10;
+
+            if (spellSoulPower <= 0)
+                return;
+
+            soulPowerAccumulated += spellSoulPower;
+            int32 soulPowerThreshold = aurEff->GetAmount();
+            int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
+
+            for (soulPowerAccumulated; soulPowerAccumulated > soulPowerThreshold; soulPowerAccumulated -= soulPowerThreshold)
+                player->ModifySpellCooldown(SPELL_WARLOCK_FIERY_SYMBOL, -cooldown);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_warlock_demonbound_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_warlock_demonbound_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+private:
+    int32 soulPowerAccumulated = 0;
+};
+
+// --------------------------------------------------------------------------- Priest Sets ---------------------------------------------------------------------------
+
+// 98600 - Vestments of Light Holy T1 2pc
+class spell_set_priest_holy_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_priest_holy_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (spellID == SPELL_PRIEST_HOLY_WORD_SANCTIFY)
+        {
+            int32 duration = aurEff->GetAmount();
+            caster->CastCustomSpell(SPELL_PRIEST_RENEW, SPELLVALUE_AURA_DURATION, duration, target, TRIGGERED_FULL_MASK);
+        }
+
+        if (spellID == SPELL_PRIEST_HOLY_WORD_SERENITY)
+            caster->CastSpell(target, SPELL_PRIEST_RENEW, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_priest_holy_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_priest_holy_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_item_set_bonus_scripts()
@@ -1281,8 +1779,23 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_deathknight_unholy_T1_4pc_proc);
     RegisterSpellScript(spell_set_deathknight_soulweaver_T1_4pc);
 
+    RegisterSpellScript(spell_set_druid_balance_T1_2pc);
+    RegisterSpellScript(spell_set_druid_feral_T1_4pc);
+    RegisterSpellScript(spell_set_druid_guardian_T1_2pc);
+    RegisterSpellScript(spell_set_druid_guardian_T1_2pc_shield);
+    RegisterSpellScript(spell_set_druid_guardian_T1_4pc);
+    RegisterSpellScript(spell_set_druid_restoration_T1_4pc);
+
+    RegisterSpellScript(spell_set_warlock_affliction_T1_4pc);
+    RegisterSpellScript(spell_set_warlock_affliction_T1_4pc_visual);
+    RegisterSpellScript(spell_set_warlock_destruction_T1_4pc_proc);
+    RegisterSpellScript(spell_set_warlock_demonbound_T1_2pc);
+    RegisterSpellScript(spell_set_warlock_demonbound_T1_4pc);
+
+    RegisterSpellScript(spell_set_priest_holy_T1_2pc);
 
     
     
-
+    
+    
 }

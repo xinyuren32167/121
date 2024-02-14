@@ -141,6 +141,9 @@ enum PriestSpells
     RUNE_PRIEST_MENTAL_FORTITUDE_SHIELD = 901156,
     RUNE_PRIEST_HOLY_BLOOD_SHIELD = 901428,
     RUNE_PRIEST_LIGHTS_WARD_SHIELD = 901620,
+
+    // Sets
+    T1_PRIEST_DISCI_4PC = 98501,
 };
 
 enum PriestSpellIcons
@@ -2024,6 +2027,11 @@ class spell_pri_power_word_radiance : public SpellScript
 
         Aura* atonement = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA);
         int32 duration = CalculatePct(atonement->GetMaxDuration(), durationPct);
+
+        // Add T1 4pc duration increase.
+        if (Aura* set_T1_4pc = caster->GetAura(T1_PRIEST_DISCI_4PC))
+            duration += set_T1_4pc->GetEffect(EFFECT_1)->GetAmount();
+
         atonement->SetDuration(duration);
     }
 

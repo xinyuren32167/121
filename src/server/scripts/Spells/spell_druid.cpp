@@ -160,6 +160,15 @@ enum DruidSpells
     SPELL_DRUID_RADIANT_MOON_AURA           = 700910,
     SPELL_DRUID_APEX_PREDATORS_CRAVING_RUNE_BUFF = 701042,
     SPELL_DRUID_VERDANCY_EFFLORESCENCE_LISTENER = 701601,
+
+    // Sets
+    T1_DRUID_BALANCE_2PC_BUFF               = 97501,
+    T1_DRUID_GUARDIAN_2PC                   = 97700,
+    T1_DRUID_GUARDIAN_2PC_BUFF              = 97701,
+    T1_DRUID_GUARDIAN_4PC                   = 97702,
+    T1_DRUID_GUARDIAN_4PC_BUFF              = 97703,
+    T1_DRUID_RESTORATION_4PC                = 97801,
+    T1_DRUID_RESTORATION_4PC_BUFF           = 97802,
 };
 
 // 1178 - Bear Form (Passive)
@@ -1223,10 +1232,23 @@ class spell_dru_wild_growth : public SpellScript
         targets = _targets;
     }
 
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 4pc buff
+        if (caster->HasAura(T1_DRUID_RESTORATION_4PC))
+            caster->RemoveAura(T1_DRUID_RESTORATION_4PC_BUFF);
+    }
+
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_wild_growth::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ALLY);
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dru_wild_growth::SetTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ALLY);
+        AfterCast += SpellCastFn(spell_dru_wild_growth::HandleAfterCast);
     }
 
 private:
@@ -1496,12 +1518,26 @@ class spell_dru_wrath : public SpellScript
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_DRUID_BALANCE_2PC_BUFF))
+            caster->RemoveAura(T1_DRUID_BALANCE_2PC_BUFF);
+    }
+
     void Register() override
     {
         OnCast += SpellCastFn(spell_dru_wrath::HandleCast);
+        AfterHit += SpellHitFn(spell_dru_wrath::HandleAfterHit);
     }
 };
 
+// 48465 - Starfire
 class spell_dru_starfire : public SpellScript
 {
     PrepareSpellScript(spell_dru_starfire);
@@ -1531,6 +1567,29 @@ class spell_dru_starfire : public SpellScript
     void Register() override
     {
         OnCast += SpellCastFn(spell_dru_starfire::HandleCast);
+    }
+};
+
+// 80506 - Starfire (AOE)
+class spell_dru_starfire_aoe : public SpellScript
+{
+    PrepareSpellScript(spell_dru_starfire_aoe);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_DRUID_BALANCE_2PC_BUFF))
+            caster->RemoveAura(T1_DRUID_BALANCE_2PC_BUFF);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_dru_starfire_aoe::HandleAfterCast);
     }
 };
 
@@ -2516,6 +2575,7 @@ class spell_dru_guardian_of_ursoc : public AuraScript
     }
 };
 
+// 80570 - Rage of the Sleeper
 class spell_dru_rage_sleeper : public AuraScript
 {
     PrepareAuraScript(spell_dru_rage_sleeper);
@@ -2535,6 +2595,17 @@ class spell_dru_rage_sleeper : public AuraScript
 
         if (caster->HasAura(SPELL_DRUID_RAGE_SLEEPER_BUFFS))
             caster->RemoveAura(SPELL_DRUID_RAGE_SLEEPER_BUFFS);
+
+        // Check for T1 2pc and 4 pc Bonus
+        if (caster->HasAura(T1_DRUID_GUARDIAN_2PC))
+        {
+            int32 procSpell = T1_DRUID_GUARDIAN_2PC_BUFF;
+
+            if (caster->HasAura(T1_DRUID_GUARDIAN_4PC))
+                procSpell = T1_DRUID_GUARDIAN_4PC_BUFF;
+
+            caster->AddAura(procSpell, caster);
+        }
     }
 
     void Register() override
@@ -3129,8 +3200,9 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_thorns);
     RegisterSpellScript(spell_dru_wrath);
     RegisterSpellScript(spell_dru_starfire);
+    RegisterSpellScript(spell_dru_starfire_aoe);
     RegisterSpellScript(spell_dru_force_of_nature);
-    RegisterSpellScript(spell_dru_berserk_cat);
+    RegisterSpellScript(spell_dru_berserk_cat); 
     RegisterSpellScript(spell_dru_rake);
     RegisterSpellScript(spell_dru_eclipse);
     RegisterSpellScript(spell_dru_berserk_combo_adder);

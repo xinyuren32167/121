@@ -65,6 +65,10 @@ enum WarlockSpells
     RUNE_WARLOCK_DEMONIC_SERVITUDE = 800856,
     RUNE_WARLOCK_GULDANS_AMBITION_LISTENER = 800876,
     RUNE_WARLOCK_GULDANS_AMBITION_BUFF = 800877,
+
+    // Sets
+    T1_WARLOCK_DEMONO_4PC = 98101,
+    T1_WARLOCK_DEMONO_4PC_GRIMOIRE_BUFF = 98102,
 };
 
 enum PET_WARLOCKS {
@@ -1070,6 +1074,9 @@ struct npc_pet_warlock_felguard_grimoire : public ScriptedAI
 
         if (!owner)
             return;
+
+        if (owner->HasAura(T1_WARLOCK_DEMONO_4PC))
+            owner->AddAura(T1_WARLOCK_DEMONO_4PC_GRIMOIRE_BUFF, me);
 
         // Add a Stack of Demonic Servitude from Reign of Tyranny
         if (Aura* runeAura = GetReignofTyrannyAura(owner))

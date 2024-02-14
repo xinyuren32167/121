@@ -148,7 +148,8 @@ enum WarlockSpells
     MASTERY_WARLOCK_MASTER_DEMONOLOGIST = 1100020,
 
     SPELL_WARLOCK_GRIMOIRE_OF_SACRIFICE_DAMAGE = 83055,
-    SPELL_WARLOCK_GRIMOIRE_FELGUARD = 83031,
+    SPELL_WARLOCK_GRIMOIRE_FELGUARD = 83009,
+    SPELL_WARLOCK_GRIMOIRE_FELGUARD_BUFF = 83031,
     SPELL_WARLOCK_CHARGE_FELGUARD = 25821,
 
     SPELL_WARLOCK_IMPLOSSION = 83038,
@@ -182,6 +183,13 @@ enum WarlockSpells
     RUNE_WARLOCK_GULDANS_AMBITION_BUFF = 800877,
     RUNE_WARLOCK_CALCIFIED_SHIELD_BUFF = 801264,
     RUNE_WARLOCK_REVEL_IN_PAIN_SHIELD = 801302,
+
+    // Sets
+    T1_WARLOCK_AFFLI_4PC_LISTENER = 98003,
+    T1_WARLOCK_DEMONO_4PC = 98101,
+    T1_WARLOCK_DEMONO_4PC_PET_BUFF = 98103,
+    T1_WARLOCK_DEMONBOUND_4PC = 98302,
+    T1_WARLOCK_DEMONBOUND_4PC_DAMAGE = 98303,
 };
 
 enum WarlockPets
@@ -374,7 +382,7 @@ class spell_warl_improved_demonic_tactics : public AuraScript
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool&  /*canBeRecalculated*/)
     {
         /*if (aurEff->GetEffIndex() == EFFECT_0)*/
-            amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + static_cast<uint8>(SPELL_SCHOOL_SHADOW)), GetSpellInfo()->Effects[EFFECT_0].CalcValue());
+        amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + static_cast<uint8>(SPELL_SCHOOL_SHADOW)), GetSpellInfo()->Effects[EFFECT_0].CalcValue());
         /*else
             amount = CalculatePct<int32, float>(GetUnitOwner()->ToPlayer()->GetFloatValue(PLAYER_CRIT_PERCENTAGE), GetSpellInfo()->Effects[EFFECT_0].CalcValue());*/
     }
@@ -598,7 +606,7 @@ class spell_warl_generic_scaling : public AuraScript
             PetStats stat = GetSpApStamina(m_scriptSpellId);
             int32 fire = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
             int32 shadow = owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-            int32 maximum = (fire > shadow) ? fire : shadow;           
+            int32 maximum = (fire > shadow) ? fire : shadow;
             amount = CalculatePct(std::max<int32>(0, maximum), stat.sp_to_ap);
         }
     }
@@ -2005,12 +2013,55 @@ class spell_warlock_summon_felguard : public SpellScript
 
         if (summon)
             summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-
     }
 
     void Register() override
     {
         OnCast += SpellCastFn(spell_warlock_summon_felguard::HandleCast);
+    }
+};
+
+// 83031 - Grimoire : Felguard aura
+class spell_warl_grimoire_felguard_aura : public AuraScript
+{
+    PrepareAuraScript(spell_warl_grimoire_felguard_aura);
+
+    void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_WARLOCK_DEMONO_4PC))
+            caster->AddAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF, caster);
+    }
+
+    void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF))
+            caster->RemoveAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_warl_grimoire_felguard_aura::OnApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_warl_grimoire_felguard_aura::OnRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAPPLY);
     }
 };
 
@@ -2305,7 +2356,7 @@ class spell_warl_nether_portal_proc : public AuraScript
                         if (Aura* guldanListener = caster->GetAura(RUNE_WARLOCK_GULDANS_AMBITION_LISTENER))
                         {
                             if (guldanListener->GetStackAmount() < guldanMaxStacks)
-                                guldanListener->ModStackAmount(1);                           
+                                guldanListener->ModStackAmount(1);
                         }
                         else
                             caster->CastSpell(caster, RUNE_WARLOCK_GULDANS_AMBITION_LISTENER, TRIGGERED_FULL_MASK);
@@ -2352,8 +2403,8 @@ class spell_warl_nether_portal_proc : public AuraScript
                 {
                     int32 duration = runeAura->GetEffect(EFFECT_1)->GetAmount();
                     player->SummonCreatureGuardian(RUNE_GUARDIAN_WARLOCK_PIT_LORD, player, player, duration, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + urand(1, 5));
-                }                   
-        }    
+                }
+        }
     }
 
     void Register() override
@@ -2809,6 +2860,29 @@ class spell_warl_seed_of_corruption_handler : public AuraScript
         DoCheckProc += AuraCheckProcFn(spell_warl_seed_of_corruption_handler::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_warl_seed_of_corruption_handler::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_seed_of_corruption_handler::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 47834 - Seed of Corruption (Explosion)
+class spell_warl_seed_of_corruption_explosion : public SpellScript
+{
+    PrepareSpellScript(spell_warl_seed_of_corruption_explosion);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // remove one stack of T1 4pc listener.
+        if (Aura* crashingChaosListener = caster->GetAura(T1_WARLOCK_AFFLI_4PC_LISTENER))
+            crashingChaosListener->ModStackAmount(-1);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_warl_seed_of_corruption_explosion::HandleAfterCast);
     }
 };
 
@@ -3308,6 +3382,19 @@ class spell_warl_malefic_rapture : public SpellScript
         if (threatList.size() <= 0)
             return;
 
+        int32 durationIncrease = 0;
+
+        // Check for T1 4pc listener and remove stack/listener accordingly.
+        if (Aura* T14pcListener = caster->GetAura(T1_WARLOCK_AFFLI_4PC_LISTENER))
+        {
+            durationIncrease = T14pcListener->GetEffect(EFFECT_0)->GetAmount();
+
+            if (T14pcListener->GetStackAmount() > 1)
+                T14pcListener->ModStackAmount(-1);
+            else
+                T14pcListener->SetDuration(50);
+        }
+
         for (auto const& target : threatList)
         {
             if (target)
@@ -3323,11 +3410,16 @@ class spell_warl_malefic_rapture : public SpellScript
                         SpellInfo const* auraInfo = aura->GetSpellInfo();
 
                         if (auraInfo->SpellFamilyFlags[2] & 0x80000000 && auraInfo->SpellFamilyName == SPELLFAMILY_WARLOCK)
+                        {
                             caster->CastSpell(target, SPELL_WARLOCK_MALEFIC_RAPTURE_DAMAGE, TRIGGERED_FULL_MASK);
+
+                            if (durationIncrease > 0)
+                                aura->SetDuration(aura->GetDuration() + durationIncrease);
+                        }
                     }
                 }
             }
-        };
+        }
     }
 
     void Register() override
@@ -4433,6 +4525,24 @@ class spell_warl_demonbolt : public SpellScript
         return nullptr;
     }
 
+    void HandleBeforeCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            // Check T1 2pc and reduce Grimoire: Felguard cooldown.
+            if (Aura* setT1_2pc = player->GetAura(RUNE_WARLOCK_STOLEN_POWER_BUFF))
+            {
+                int32 cooldown = setT1_2pc->GetEffect(EFFECT_0)->GetAmount();
+                player->ModifySpellCooldown(SPELL_WARLOCK_GRIMOIRE_FELGUARD, -cooldown);
+            }
+        }
+    }
+
     void HandleHit(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
@@ -4493,6 +4603,7 @@ class spell_warl_demonbolt : public SpellScript
 
     void Register() override
     {
+        BeforeCast += SpellCastFn(spell_warl_demonbolt::HandleBeforeCast);
         OnEffectHitTarget += SpellEffectFn(spell_warl_demonbolt::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
         AfterHit += SpellHitFn(spell_warl_demonbolt::HandleAfterHit);
     }
@@ -4685,7 +4796,7 @@ class spell_warl_demonic_devastation_damage : public SpellScript
 
         int32 damage = GetHitDamage();
 
-        
+
 
         SetHitDamage(damage);
     }
@@ -4796,6 +4907,31 @@ class spell_warl_fiery_symbol : public AuraScript
         }
     }
 
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetUnitOwner();
+
+        if (!target || target->isDead())
+            return;
+
+        // T1 4pc, when it procs deal damage + shatter a Soul Fragment.
+        if (Aura* setT1_4pc = caster->GetAura(T1_WARLOCK_DEMONBOUND_4PC))
+        {
+            int32 procChance = setT1_4pc->GetEffect(EFFECT_2)->GetAmount();
+
+            if (roll_chance_i(procChance))
+            {
+                caster->CastSpell(target, T1_WARLOCK_DEMONBOUND_4PC_DAMAGE, TRIGGERED_FULL_MASK);
+                caster->CastSpell(caster, SPELL_WARLOCK_SOUL_COLLECTOR_FRAGMENT, TRIGGERED_FULL_MASK);
+            }
+        }
+    }
+
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
@@ -4827,6 +4963,7 @@ class spell_warl_fiery_symbol : public AuraScript
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_warl_fiery_symbol::HandleApply, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_warl_fiery_symbol::HandlePeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE);
         OnEffectRemove += AuraEffectRemoveFn(spell_warl_fiery_symbol::HandleRemove, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
@@ -5210,7 +5347,7 @@ class spell_warlock_flame_nourish_target : public SpellScript
 
         if (!caster || caster->isDead())
             return;
-        
+
         auto controlledList = caster->m_Controlled;
 
         targets.remove_if([&](WorldObject* target) -> bool
@@ -5253,6 +5390,8 @@ void AddSC_warlock_spell_scripts()
     //RegisterSpellScript(spell_warl_life_tap);
     RegisterSpellScript(spell_warl_ritual_of_doom_effect);
     RegisterSpellScript(spell_warl_seed_of_corruption);
+    RegisterSpellScript(spell_warl_seed_of_corruption_handler);
+    RegisterSpellScript(spell_warl_seed_of_corruption_explosion);
     RegisterSpellScript(spell_warl_shadow_ward);
     RegisterSpellScript(spell_warl_siphon_life);
     RegisterSpellScript(spell_warl_soulshatter);
@@ -5264,17 +5403,17 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_hand_of_guldan);
     RegisterSpellScript(spell_warlock_summon_felboar);
     RegisterSpellScript(spell_warlock_summon_felguard);
-    RegisterSpellScript(spell_warlock_summon_demonic_tyrant);
+    RegisterSpellScript(spell_warl_grimoire_felguard_aura);
+    RegisterSpellScript(spell_warlock_summon_demonic_tyrant); 
     RegisterSpellScript(spell_warl_agony);
     RegisterSpellScript(spell_warlock_dark_pact);
     RegisterSpellScript(spell_warl_demon_armor);
     RegisterSpellScript(spell_warl_fel_armor);
     RegisterSpellScript(spell_warl_health_funnel_new);
     RegisterSpellScript(spell_warl_haunt);
-    RegisterSpellScript(spell_warl_seed_of_corruption_handler);
     RegisterSpellScript(spell_warl_chaos_bolt);
     RegisterSpellScript(spell_warl_conflagrate);
-    RegisterSpellScript(spell_warl_immolate_energy);
+    RegisterSpellScript(spell_warl_immolate_energy); 
     RegisterSpellScript(spell_warl_incinerate);
     RegisterSpellScript(spell_warl_incinerate_energy);
     RegisterSpellScript(spell_warl_shadowburn);
@@ -5290,7 +5429,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_summon_nether_portal);
     RegisterSpellScript(spell_warl_pit_lord_scaling);
     RegisterSpellScript(spell_warlock_implosion);
-    RegisterSpellScript(spell_warl_power_siphon); 
+    RegisterSpellScript(spell_warl_power_siphon);
     RegisterSpellScript(spell_warlock_summon_gargoyle);
     RegisterSpellScript(spell_warl_havoc);
     RegisterSpellScript(spell_warl_soul_power);
@@ -5331,7 +5470,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_demonic_devastation_damage);
     RegisterSpellScript(spell_warl_demonic_ascension);
     RegisterSpellScript(spell_warl_fiery_symbol);
-    RegisterSpellScript(spell_warl_immolation_aura); 
+    RegisterSpellScript(spell_warl_immolation_aura);
     RegisterSpellScript(spell_warlock_shadow_cleave);
     RegisterSpellScript(spell_warlock_voidwalker_sacrifice_shield);
     RegisterSpellScript(spell_warlock_darkglare_shadow_blast);
@@ -5341,8 +5480,8 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_improved_felhunter_proc);
     RegisterSpellScript(spell_warlock_flame_nourish_target);
 
-    
 
-    
+
+
 
 }
