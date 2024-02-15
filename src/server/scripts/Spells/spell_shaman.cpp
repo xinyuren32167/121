@@ -183,6 +183,23 @@ enum ShamanSpells
     SUMMON_SHAMAN_FIRE_ELEMENTAL = 15438,
     SUMMON_SHAMAN_STORM_ELEMENTAL = 400408,
     SUMMON_SHAMAN_FERAL_SPIRITS = 29264,
+
+    // Sets
+    T1_SHAMAN_ELEM_2PC = 99000,
+    T1_SHAMAN_ELEM_2PC_BUFF = 99001,
+    T1_SHAMAN_ELEM_2PC_EARTHQUAKEBUFF = 99002,
+    T1_SHAMAN_ENH_4PC = 99102,
+    T1_SHAMAN_ENH_4PC_BUFF = 99103,
+    T1_SHAMAN_SPIRIT_2PC = 99300,
+    T1_SHAMAN_SPIRIT_2PC_BUFF_FIRE = 99301,
+    T1_SHAMAN_SPIRIT_2PC_BUFF_STORM = 99302,
+    T1_SHAMAN_SPIRIT_2PC_BUFF_EARTH = 99303,
+    T1_SHAMAN_SPIRIT_2PC_BUFF_WATER = 99304,
+    T1_SHAMAN_SPIRIT_4PC = 99305,
+    T1_SHAMAN_SPIRIT_4PC_BUFF_FIRE = 99306,
+    T1_SHAMAN_SPIRIT_4PC_BUFF_STORM = 99307,
+    T1_SHAMAN_SPIRIT_4PC_BUFF_EARTH = 99308,
+    T1_SHAMAN_SPIRIT_4PC_BUFF_WATER = 99309,
 };
 
 enum ShamanSpellIcons
@@ -1085,7 +1102,7 @@ class spell_sha_earthliving_weapon_hot : public AuraScript
         return nullptr;
     }
 
-    void HandlePeriodic(AuraEffect const*  aurEff)
+    void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
 
@@ -1709,7 +1726,6 @@ class spell_sha_frostbrand_weapon : public SpellScript
     }
 };
 
-// All Maelstrom Generation EFFECT_2 On Cast
 class spell_sha_gust_of_wind : public SpellScript
 {
     PrepareSpellScript(spell_sha_gust_of_wind);
@@ -2468,9 +2484,22 @@ class spell_sha_elemental_blast : public SpellScript
         caster->AddAura(highestRating->spellId, caster);
     }
 
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_SHAMAN_ELEM_2PC_BUFF))
+            caster->RemoveAura(T1_SHAMAN_ELEM_2PC_BUFF);
+    }
+
     void Register() override
     {
         OnCast += SpellCastFn(spell_sha_elemental_blast::HandleProc);
+        AfterHit += SpellHitFn(spell_sha_elemental_blast::HandleAfterHit);
     }
 };
 
@@ -2963,15 +2992,70 @@ class spell_sha_fury_of_the_elements : public SpellScript
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH, TRIGGERED_FULL_MASK);
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER, TRIGGERED_FULL_MASK);
+
+            // Add T1 2pc bonus
+            if (caster->HasAura(T1_SHAMAN_SPIRIT_2PC))
+            {
+                if (caster->HasAura(T1_SHAMAN_SPIRIT_4PC))
+                {
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_FIRE, caster);
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_STORM, caster);
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_EARTH, caster);
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_WATER, caster);
+                }
+                else
+                {
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_FIRE, caster);
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_STORM, caster);
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_EARTH, caster);
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_WATER, caster);
+                }
+            }
         }
         else if (form == FORM_SPIRIT_OF_FIRE)
+        {
             caster->CastSpell(target, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_FIRE, TRIGGERED_FULL_MASK);
+
+            // Add T1 2pc bonus
+            if (caster->HasAura(T1_SHAMAN_SPIRIT_2PC))
+                if (caster->HasAura(T1_SHAMAN_SPIRIT_4PC))
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_FIRE, caster);
+                else
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_FIRE, caster);
+        }
         else if (form == FORM_SPIRIT_OF_STORM)
+        {
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_STORM, TRIGGERED_FULL_MASK);
+
+            // Add T1 2pc bonus
+            if (caster->HasAura(T1_SHAMAN_SPIRIT_2PC))
+                if (caster->HasAura(T1_SHAMAN_SPIRIT_4PC))
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_STORM, caster);
+                else
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_STORM, caster);
+        }
         else if (form == FORM_SPIRIT_OF_EARTH)
+        {
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH, TRIGGERED_FULL_MASK);
+
+            // Add T1 2pc bonus
+            if (caster->HasAura(T1_SHAMAN_SPIRIT_2PC))
+                if (caster->HasAura(T1_SHAMAN_SPIRIT_4PC))
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_EARTH, caster);
+                else
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_EARTH, caster);
+        }
         else if (form == FORM_SPIRIT_OF_WATER)
+        {
             caster->CastSpell(caster, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_WATER, TRIGGERED_FULL_MASK);
+
+            // Add T1 2pc bonus
+            if (caster->HasAura(T1_SHAMAN_SPIRIT_2PC))
+                if (caster->HasAura(T1_SHAMAN_SPIRIT_4PC))
+                    caster->AddAura(T1_SHAMAN_SPIRIT_4PC_BUFF_WATER, caster);
+                else
+                    caster->AddAura(T1_SHAMAN_SPIRIT_2PC_BUFF_WATER, caster);
+        }
     }
 
     void Register()
@@ -3122,7 +3206,7 @@ class spell_sha_fury_of_the_elements_earth : public SpellScript
                                 unit->CastSpell(initialTarget, SPELL_SHAMAN_FURY_OF_THE_ELEMENTS_EARTH_GRIP, TRIGGERED_FULL_MASK);
                     }
                 }
-                    
+
             if (GetEarthsGraspAura(initialTarget))
             {
                 int32 buffSpell = GetEarthsGraspAura(initialTarget)->GetEffect(EFFECT_0)->GetAmount();
@@ -3271,16 +3355,16 @@ class spell_sha_focus_thine_foe : public AuraScript
                 auto targetAuras = target->GetAuraEffectsByType(SPELL_AURA_PERIODIC_DAMAGE);
 
                 targetAuras.remove_if([&](AuraEffect const* effect) -> bool
-                {
-                    return effect->GetCasterGUID() != GetCaster()->GetGUID();
-                });
+                    {
+                        return effect->GetCasterGUID() != GetCaster()->GetGUID();
+                    });
 
                 for (auto itj = targetAuras.begin(); itj != targetAuras.end(); ++itj) {
                     if (AuraEffect const* effect = (*itj))
                     {
                         if (effect->GetBase()->GetId() == GetId())
                             continue;
-                        
+
                         int32 remainingTicks = effect->GetRemaningTicks();
                         int32 amount = remainingTicks * effect->GetAmount();
                         damage += amount;
@@ -4223,6 +4307,14 @@ class spell_sha_maelstrom_weapon_buff : public AuraScript
                     caster->GetAura(RUNE_SHAMAN_LEGACY_OF_THE_FROST_WITCH_LISTENER)->SetStackAmount(stackAmount);
                 }
             }
+
+            // T1 4pc buff handling
+            if (player->HasAura(T1_SHAMAN_ENH_4PC))
+            {
+                int32 stackAmount = GetStackAmount();
+
+                caster->CastCustomSpell(T1_SHAMAN_ENH_4PC_BUFF, SPELLVALUE_AURA_STACK, stackAmount, player, TRIGGERED_FULL_MASK);
+            }
         }
     }
 
@@ -4467,7 +4559,7 @@ class spell_sha_healing_tide_totem_heal : public SpellScript
             int32 healPct = GetTideTurnerAura(caster)->GetEffect(EFFECT_0)->GetAmount();
 
             if (target->HasAura(procSpell))
-                AddPct(heal, healPct);            
+                AddPct(heal, healPct);
         }
 
         SetHitHeal(heal);
@@ -4544,7 +4636,7 @@ class spell_sha_tidal_wave_consumed : public SpellScript
     }
 };
 
-class spell_sha_storm_proficiency: public AuraScript
+class spell_sha_storm_proficiency : public AuraScript
 {
     PrepareAuraScript(spell_sha_storm_proficiency);
 
@@ -4646,6 +4738,57 @@ class spell_sha_liquid_magma_eruption : public SpellScript
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_liquid_magma_eruption::FindTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
     }
 };
+
+// 49231 - Earth Shock
+class spell_sha_earth_shock : public SpellScript
+{
+    PrepareSpellScript(spell_sha_earth_shock);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_SHAMAN_ELEM_2PC_BUFF))
+            caster->RemoveAura(T1_SHAMAN_ELEM_2PC_BUFF);
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_sha_earth_shock::HandleAfterHit);
+    }
+};
+
+// 84014 - Earthquake
+class spell_sha_earthquake : public AuraScript
+{
+    PrepareAuraScript(spell_sha_earthquake);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 2pc Buff + add Earthquake only Buff
+        if (caster->HasAura(T1_SHAMAN_ELEM_2PC_BUFF))
+        {
+            caster->RemoveAura(T1_SHAMAN_ELEM_2PC_BUFF);
+            caster->AddAura(T1_SHAMAN_ELEM_2PC_EARTHQUAKEBUFF, caster);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_sha_earthquake::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 
 void AddSC_shaman_spell_scripts()
 {
@@ -4753,4 +4896,11 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ascendancy_morphs);
     RegisterSpellScript(spell_sha_chain_lightning);
     RegisterSpellScript(spell_sha_liquid_magma_eruption);
+    RegisterSpellScript(spell_sha_earth_shock);
+    RegisterSpellScript(spell_sha_earthquake);
+
+
+
+
+
 }

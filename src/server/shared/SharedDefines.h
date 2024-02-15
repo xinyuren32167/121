@@ -3521,7 +3521,7 @@ enum SpellFamilyNames
     SPELLFAMILY_DEATHKNIGHT = 15,
     // 16 - unused
     SPELLFAMILY_PET         = 17,
-    SPELLFAMILY_WARLOCK_PET = 18
+    SPELLFAMILY_WARLOCK_PET = 18,
 };
 
 enum TradeStatus

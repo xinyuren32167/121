@@ -139,6 +139,12 @@ enum RogueSpells
     RUNE_ROGUE_BLINDSIDE_BUFF = 1100880,
     RUNE_ROGUE_ACE_UP_YOUR_SLEEVE_BUFF = 1101336,
     RUNE_ROGUE_LOADED_DICE_BUFF = 1101430,
+
+    // Sets
+    T1_ROGUE_ASSA_2PC = 99500,
+    T1_ROGUE_ASSA_2PC_BUFF = 99501,
+    T1_ROGUE_OUTLAW_2PC_BUFF = 99801,
+    T1_ROGUE_OUTLAW_4PC_BUFF = 99803,
 };
 
 class spell_rog_savage_combat : public AuraScript
@@ -1073,6 +1079,10 @@ class spell_rog_envenom_aura : public AuraScript
 
             caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
         }
+
+        // add T1 2pc Buff
+        if (caster->HasAura(T1_ROGUE_ASSA_2PC))
+            caster->AddAura(T1_ROGUE_ASSA_2PC_BUFF, caster);
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -1088,6 +1098,10 @@ class spell_rog_envenom_aura : public AuraScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_ROGUE_ASSA_2PC_BUFF))
+            caster->RemoveAura(T1_ROGUE_ASSA_2PC_BUFF);
     }
 
     void Register() override
@@ -1884,6 +1898,10 @@ class spell_rog_sinister_strike : public SpellScript
             if (caster->HasAura(i))
                 caster->RemoveAura(i);
         }
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_ROGUE_OUTLAW_2PC_BUFF))
+            caster->RemoveAura(T1_ROGUE_OUTLAW_2PC_BUFF);
     }
 
     void Register() override
@@ -2015,6 +2033,9 @@ class spell_rog_retaliation : public AuraScript
 
         uint32 chance = CalculatePct(caster->GetUnitParryChance(), aurEff->GetAmount());
 
+        if (!roll_chance_i(chance))
+            return;
+
         if (Aura* runeAura = GetQuickRiposteAura(caster))
         {
             int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
@@ -2027,10 +2048,6 @@ class spell_rog_retaliation : public AuraScript
             caster->AddAura(procSpell, caster);
         }
 
-        if (!roll_chance_i(chance))
-        {
-            return;
-        }
         caster->RemoveSpellCooldown(SPELL_ROGUE_RIPOSTE, true);
     }
 
@@ -2273,6 +2290,10 @@ class spell_rog_dispatch : public SpellScript
             if (caster->GetComboPoints() >= comboThreshold)
                 caster->CastSpell(caster, procSpell, TRIGGERED_FULL_MASK);
         }
+
+        // Remove T1 4pc Buff
+        if (caster->HasAura(T1_ROGUE_OUTLAW_4PC_BUFF))
+            caster->RemoveAura(T1_ROGUE_OUTLAW_4PC_BUFF);
     }
 
     void Register() override
@@ -2366,7 +2387,7 @@ class spell_rog_sea_of_strikes : public AuraScript
         {
             int32 procSpell = runeAura->GetEffect(EFFECT_0)->GetAmount();
             caster->AddAura(procSpell, caster);
-        }          
+        }
     }
 
     void Register() override
@@ -2485,7 +2506,7 @@ class spell_rog_roll_the_bones : public SpellScript
             numberOfBuffs = 3;
         else if (rand > twoMatchesChance)
             numberOfBuffs = 2;
-        
+
         // Loaded Dice rune guarantee at least 2 buffs.
         if (Aura* LoadedAura = caster->GetAura(RUNE_ROGUE_LOADED_DICE_BUFF))
         {
@@ -2839,6 +2860,10 @@ class spell_rog_ambush : public SpellScript
         // Remove Opportunity Buff
         if (caster->HasAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH))
             caster->RemoveAura(TALENT_ROGUE_OPPORTUNITY_BUFF_AMBUSH);
+
+        // Remove T1 2pc Buff
+        if (caster->HasAura(T1_ROGUE_OUTLAW_2PC_BUFF))
+            caster->RemoveAura(T1_ROGUE_OUTLAW_2PC_BUFF);
     }
 
     void Register() override
@@ -3339,7 +3364,7 @@ void AddSC_rogue_spell_scripts()
     RegisterSpellScript(spell_rog_scimitar_rush);
     RegisterSpellScript(spell_rog_scimitar_rush_target_select);
     RegisterSpellScript(spell_rog_dispatch);
-    RegisterSpellScript(spell_rog_dreadblades); 
+    RegisterSpellScript(spell_rog_dreadblades);
     RegisterSpellScript(spell_rog_opportunity);
     RegisterSpellScript(spell_rog_sea_of_strikes);
     RegisterSpellScript(spell_rogue_sea_of_strikes);

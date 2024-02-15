@@ -43,9 +43,22 @@ enum SetSpells
     // Warlock
     SPELL_WARLOCK_FIERY_SYMBOL = 83108,
     // Priest
+    SPELL_PRIEST_HOLY_ERUPTION = 86204,
+    SPELL_PRIEST_HOLY_MIGHT = 86208,
     SPELL_PRIEST_HOLY_WORD_SANCTIFY = 81029,
     SPELL_PRIEST_HOLY_WORD_SERENITY = 81025,
+    SPELL_PRIEST_PRESCIENCE = 86217,
     SPELL_PRIEST_RENEW = 48068,
+    // Shaman
+    SPELL_SHAMAN_EARTH_SHOCK = 49231,
+    SPELL_SHAMAN_EARTHQUAKE = 84014,
+    SPELL_SHAMAN_ELEMENTAL_BLAST = 84022,
+    SPELL_SHAMAN_HEALING_SURGE = 84004,
+    SPELL_SHAMAN_HEALING_WAVE = 49273,
+    SPELL_SHAMAN_RIPTIDE = 61301,
+    // ROGUE
+    SPELL_ROGUE_OPPORTUNITY_BUFF = 82086,
+    SPELL_ROGUE_RIPOSTE = 82064,
 
 
 
@@ -82,6 +95,16 @@ enum SetSpells
     SPELL_SET_T1_WARLOCK_AFFLI_4PC_BUFF = 98002,
     SPELL_SET_T1_WARLOCK_AFFLI_4PC_LISTENER = 98003,
     SPELL_SET_T1_WARLOCK_DESTRU_4PC_DOT = 98204,
+    // Priest
+    SPELL_SET_T1_PRIEST_SHADOW_2PC_SHADOW_WORD_DEATH = 98701,
+    SPELL_SET_T1_PRIEST_ABSOLUTION_4PC_HOLY_ERUPTION = 98803,
+    // Shaman
+    SPELL_SET_T1_SHAMAN_RESTORATION_2PC_BUFF = 99201,
+    SPELL_SET_T1_SHAMAN_RESTORATION_2PC_HEAL = 99202,
+    // Rogue
+    SPELL_SET_T1_ROGUE_SUB_2PC_BUFF = 97701,
+    SPELL_SET_T1_ROGUE_OUTLAW_2PC_BUFF = 97801,
+
 
 };
 
@@ -1512,8 +1535,8 @@ class spell_set_druid_restoration_T1_4pc : public AuraScript
             caster->CastSpell(caster, SPELL_SET_T1_DRUID_RESTORATION_4PC_BUFF, TRIGGERED_FULL_MASK);
 
         if (spellID == SPELL_DRUID_LIFEBLOOM || spellID == SPELL_DRUID_LIFEBLOOM_EXPIRE)
-                if (Player* player = caster->ToPlayer())
-                    player->ModifySpellCooldown(SPELL_DRUID_NATURES_SWIFTNESS, -cooldown);
+            if (Player* player = caster->ToPlayer())
+                player->ModifySpellCooldown(SPELL_DRUID_NATURES_SWIFTNESS, -cooldown);
     }
 
     void Register()
@@ -1738,6 +1761,403 @@ class spell_set_priest_holy_T1_2pc : public AuraScript
     }
 };
 
+// 98700 - Vestments of Death Shadow T1 2pc
+class spell_set_priest_shadow_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_priest_shadow_T1_2pc);
+
+    Aura* GetDeathspeakerBuff(Unit* caster)
+    {
+        for (size_t i = 900668; i < 900674; i++)
+        {
+            if (caster->HasAura(i))
+                return caster->GetAura(i);
+        }
+
+        return nullptr;
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id != SPELL_SET_T1_PRIEST_SHADOW_2PC_SHADOW_WORD_DEATH && eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 number = aurEff->GetAmount();
+
+        if (target->HealthBelowPct(20) || GetDeathspeakerBuff(caster))
+            number++;
+
+        while (number > 0)
+        {
+            caster->CastSpell(target, SPELL_SET_T1_PRIEST_SHADOW_2PC_SHADOW_WORD_DEATH, TRIGGERED_FULL_MASK);
+            number--;
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_priest_shadow_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_priest_shadow_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 98801 - Vestments of Prophecy Absolution T1 4pc
+class spell_set_priest_absolution_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_priest_absolution_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_PRESCIENCE;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_priest_absolution_T1_4pc::CheckProc);
+    }
+};
+
+// 98802 - Vestments of Prophecy Absolution T1 4pc proc
+class spell_set_priest_absolution_T1_4pc_proc : public AuraScript
+{
+    PrepareAuraScript(spell_set_priest_absolution_T1_4pc_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_HOLY_ERUPTION && eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 number = 0;
+            int32 cooldown = aurEff->GetAmount();
+
+            if (caster->HasAura(SPELL_PRIEST_PRESCIENCE))
+                number++;
+
+            if (Group* playerGroup = player->GetGroup())
+            {
+                Position casterPos = player->GetPosition();
+                auto const& allyList = playerGroup->GetMemberSlots();
+
+                for (auto const& target : allyList)
+                {
+                    Player* ally = ObjectAccessor::FindPlayer(target.guid);
+                    if (ally && ally->IsAlive())
+                    {
+                        float distance = ally->GetDistance(casterPos);
+
+                        if (distance <= 60 && ally->HasAura(SPELL_PRIEST_PRESCIENCE))
+                            number++;
+                    }
+                }
+            }
+
+            while (number > 0)
+            {
+                caster->CastSpell(target, SPELL_SET_T1_PRIEST_ABSOLUTION_4PC_HOLY_ERUPTION, TRIGGERED_FULL_MASK);
+                player->ModifySpellCooldown(SPELL_PRIEST_HOLY_MIGHT, -cooldown);
+                number--;
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_priest_absolution_T1_4pc_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_priest_absolution_T1_4pc_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// --------------------------------------------------------------------------- Shaman Sets ---------------------------------------------------------------------------
+
+// 99003 - The Firerage Elemental T1 4pc
+class spell_set_shaman_elemental_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_shaman_elemental_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
+        return eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_EARTH_SHOCK
+            || eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_EARTHQUAKE
+            || eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_ELEMENTAL_BLAST;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_shaman_elemental_T1_4pc::CheckProc);
+    }
+};
+
+// 99200 - The Tidalsurge Restoration T1 2pc
+class spell_set_shaman_restoration_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_shaman_restoration_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (spellID == SPELL_SHAMAN_HEALING_SURGE || spellID == SPELL_SHAMAN_HEALING_WAVE)
+        {
+            caster->CastSpell(target, SPELL_SET_T1_SHAMAN_RESTORATION_2PC_BUFF, TRIGGERED_FULL_MASK);
+            return;
+        }
+
+        if (spellID != SPELL_SHAMAN_RIPTIDE || eventInfo.GetHealInfo()->GetHeal() <= 0)
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+
+            if (Group* playerGroup = player->GetGroup())
+            {
+                Position casterPos = target->GetPosition();
+                auto const& allyList = playerGroup->GetMemberSlots();
+
+                for (auto const& target : allyList)
+                {
+                    Player* ally = ObjectAccessor::FindPlayer(target.guid);
+                    if (ally && ally->IsAlive())
+                    {
+                        float distance = ally->GetDistance(casterPos);
+
+                        if (distance <= 60 && ally->HasAura(SPELL_SET_T1_SHAMAN_RESTORATION_2PC_BUFF))
+                            caster->CastCustomSpell(SPELL_SET_T1_SHAMAN_RESTORATION_2PC_HEAL, SPELLVALUE_BASE_POINT0, amount, ally, TRIGGERED_FULL_MASK);
+                    }
+                }
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_shaman_restoration_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_shaman_restoration_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 99202 - The Tidalsurge Restoration T1 4pc
+class spell_set_shaman_restoration_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_shaman_restoration_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo() && eventInfo.GetHealInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetHealInfo()->GetTarget();
+
+        if (!target || target->isDead())
+            return;
+
+        if (!target->HasAura(SPELL_SET_T1_SHAMAN_RESTORATION_2PC_BUFF))
+            return;
+
+        if (!roll_chance_i(aurEff->GetAmount()))
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+
+            if (Group* playerGroup = player->GetGroup())
+            {
+                std::list <Unit*> targetAvailable;
+                Position casterPos = target->GetPosition();
+                auto const& allyList = playerGroup->GetMemberSlots();
+
+                for (auto const& target : allyList)
+                {
+                    Player* ally = ObjectAccessor::FindPlayer(target.guid);
+                    if (ally && ally->IsAlive())
+                    {
+                        float distance = ally->GetDistance(casterPos);
+
+                        if (distance <= 40)
+                            targetAvailable.push_back(ally);
+                    }
+                }
+
+                targetAvailable.sort(Acore::HealthPctOrderPred());
+
+                for (auto const& riptTarget : targetAvailable)
+                {
+                    if (!riptTarget || riptTarget->isDead())
+                        continue;
+
+                    caster->AddAura(SPELL_SHAMAN_RIPTIDE, riptTarget);
+                    break;
+                }
+            }
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_shaman_restoration_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_shaman_restoration_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// --------------------------------------------------------------------------- Rogue Sets ---------------------------------------------------------------------------
+
+// 99600 - Bladeslayer Armor Combat T1 2pc
+class spell_set_rogue_combat_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_rogue_combat_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+            player->RemoveSpellCooldown(SPELL_ROGUE_RIPOSTE, true);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_rogue_combat_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_rogue_combat_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 99700 - Nightslayer Armor Sublety T1 2pc
+class spell_set_rogue_sublety_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_rogue_sublety_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 stacks = caster->GetComboPoints();
+        caster->CastCustomSpell(SPELL_SET_T1_ROGUE_SUB_2PC_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_rogue_sublety_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_rogue_sublety_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 99800 - Crewslayer Armor Outlaw T1 2pc
+class spell_set_rogue_outlaw_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_rogue_outlaw_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 stacks = caster->GetComboPoints();
+        caster->CastCustomSpell(SPELL_SET_T1_ROGUE_OUTLAW_2PC_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_rogue_outlaw_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_rogue_outlaw_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 99800 - Crewslayer Armor Outlaw T1 4pc
+class spell_set_rogue_outlaw_T1_4pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_rogue_outlaw_T1_4pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        return caster->HasAura(SPELL_ROGUE_OPPORTUNITY_BUFF);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_rogue_outlaw_T1_4pc::CheckProc);
+    }
+};
+
 
 
 void AddSC_item_set_bonus_scripts()
@@ -1793,6 +2213,18 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_warlock_demonbound_T1_4pc);
 
     RegisterSpellScript(spell_set_priest_holy_T1_2pc);
+    RegisterSpellScript(spell_set_priest_shadow_T1_2pc);
+    RegisterSpellScript(spell_set_priest_absolution_T1_4pc);
+    RegisterSpellScript(spell_set_priest_absolution_T1_4pc_proc);
+
+    RegisterSpellScript(spell_set_shaman_elemental_T1_4pc);
+    RegisterSpellScript(spell_set_shaman_restoration_T1_2pc);
+    RegisterSpellScript(spell_set_shaman_restoration_T1_4pc);
+
+    RegisterSpellScript(spell_set_rogue_combat_T1_2pc);
+    RegisterSpellScript(spell_set_rogue_sublety_T1_2pc);
+    RegisterSpellScript(spell_set_rogue_outlaw_T1_2pc);
+    RegisterSpellScript(spell_set_rogue_outlaw_T1_4pc);
 
     
     

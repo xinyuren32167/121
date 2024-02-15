@@ -144,6 +144,9 @@ enum PriestSpells
 
     // Sets
     T1_PRIEST_DISCI_4PC = 98501,
+    T1_PRIEST_SHADOW_4PC = 98705,
+    T1_PRIEST_SHADOW_4PC_BUFF = 98706,
+    T1_PRIEST_ABSOLUTION_2PC = 98800,
 };
 
 enum PriestSpellIcons
@@ -1323,19 +1326,28 @@ class spell_pri_shadow_word_death : public SpellScript
             return;
 
         Unit* target = GetHitUnit();
-        int32 damage = GetHitDamage();
 
-        if (!target)
+        if (!target || target->isDead())
             return;
 
-        int32 targetHealthPct = target->GetHealthPct();
+        int32 damage = GetHitDamage();
+
         if (target->HealthBelowPct(20) || GetDeathspeakerBuff(caster))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).BonusMultiplier;
         else if (target->HealthBelowPct(50))
             damage *= GetSpellInfo()->GetEffect(EFFECT_1).DamageMultiplier;
+
         SetHitDamage(damage);
 
-        GetCaster()->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
+        int32 amount = damage;
+
+        if (Aura* afterDamageAura = caster->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
+        {
+            amount += afterDamageAura->GetEffect(EFFECT_0)->GetAmount();
+            afterDamageAura->Remove();
+        }
+           
+        caster ->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1413,7 +1425,12 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
             return;
 
         if (!GetDeathspeakerBuff(caster))
+        {
             caster->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_SELFDAMAGE, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+
+            if (caster->HasAura(T1_PRIEST_SHADOW_4PC))
+                caster->CastSpell(caster, T1_PRIEST_SHADOW_4PC_BUFF, TRIGGERED_FULL_MASK);           
+        }            
         else
             GetDeathspeakerBuff(caster)->Remove();
     }
@@ -4090,9 +4107,22 @@ class spell_pri_shadow_word_pain : public SpellScript
         SetHitDamage(damage);
     }
 
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 4pc buff
+        if (caster->HasAura(T1_PRIEST_SHADOW_4PC_BUFF))
+            caster->RemoveAura(T1_PRIEST_SHADOW_4PC_BUFF);
+    }
+
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_pri_shadow_word_pain::HandleHitDamage, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+        AfterCast += SpellCastFn(spell_pri_shadow_word_pain::HandleAfterCast);
     }
 };
 
@@ -4509,6 +4539,26 @@ class spell_pri_prescience : public AuraScript
             if (roll_chance_i(procChance))
                 caster->AddAura(TALENT_PRIEST_HOLY_BURST_PROC, caster);
         }
+
+        if (Aura* set_T1_2pc = caster->GetAura(T1_PRIEST_ABSOLUTION_2PC))
+        {
+            int32 totalNumber = set_T1_2pc->GetEffect(EFFECT_0)->GetAmount();
+            int32 prescienceNumber = set_T1_2pc->GetEffect(EFFECT_2)->GetAmount() + 1;
+            
+            if (prescienceNumber < totalNumber)
+                set_T1_2pc->GetEffect(EFFECT_2)->SetAmount(prescienceNumber);
+            else
+            {
+                int32 duration = GetMaxDuration();
+                int32 durationIncrease = set_T1_2pc->GetEffect(EFFECT_1)->GetAmount();
+                AddPct(duration, durationIncrease);
+
+                SetMaxDuration(duration);
+                RefreshDuration();
+
+                set_T1_2pc->GetEffect(EFFECT_2)->SetAmount(0);
+            }
+        }
     }
 
     void HandleRemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -4570,6 +4620,31 @@ class spell_pri_holy_eruption : public SpellScript
         BeforeCast += SpellCastFn(spell_pri_holy_eruption::HandleCast);
     }
 };
+
+// 81051 - Shadow Crash damage  
+class spell_pri_shadow_crash_damage : public SpellScript
+{
+    PrepareSpellScript(spell_pri_shadow_crash_damage);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        // Remove T1 4pc buff
+        if (caster->HasAura(T1_PRIEST_SHADOW_4PC_BUFF))
+            caster->RemoveAura(T1_PRIEST_SHADOW_4PC_BUFF);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_pri_shadow_crash_damage::HandleAfterCast);
+    }
+};
+
+
 
 void AddSC_priest_spell_scripts()
 {
@@ -4664,6 +4739,9 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_blistering_barriers);
     RegisterSpellScript(spell_pri_prescience);
     RegisterSpellScript(spell_pri_holy_eruption);
+    RegisterSpellScript(spell_pri_shadow_crash_damage);
 
+
+    
     new npc_pri_shadowy_apparitions();
 }
