@@ -679,7 +679,7 @@ class spell_warr_bloodthirst : public SpellScript
         SetHitDamage(damage);
     }
 
-    void HandleAfterHit()
+    void HandleAfterCast()
     {
         Unit* caster = GetCaster();
 
@@ -693,7 +693,7 @@ class spell_warr_bloodthirst : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_warr_bloodthirst::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-        AfterHit += SpellHitFn(spell_warr_bloodthirst::HandleAfterHit);
+        AfterCast += SpellCastFn(spell_warr_bloodthirst::HandleAfterCast);
     }
 };
 
