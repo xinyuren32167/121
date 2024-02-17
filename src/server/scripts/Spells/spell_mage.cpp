@@ -175,7 +175,13 @@ enum MageSpells
     T1_MAGE_ARCANE_4PC = 95502,
     T1_MAGE_ARCANE_4PC_LISTENER = 95503,
     T1_MAGE_ARCANE_4PC_MAIN_BUFF = 95504,
-    T1_MAGE_ARCANE_4PC_SECONDARY_BUFF = 95505,
+    T1_MAGE_ARCANE_4PC_MISSILE1 = 95505,
+    T1_MAGE_ARCANE_4PC_MISSILE2 = 95506,
+    T1_MAGE_ARCANE_4PC_MISSILE3 = 95507,
+    T1_MAGE_ARCANE_4PC_MISSILE4 = 95508,
+    T1_MAGE_FIRE_2PC_BUFF = 95601,
+    T1_MAGE_FIRE_4PC = 95602,
+    T1_MAGE_FIRE_4PC_BUFF = 95603,
     T1_MAGE_FROST_4PC = 95702,
     T1_MAGE_MAGEBLADE_4PC_BUFF = 95803,
 };
@@ -325,6 +331,21 @@ class spell_mage_combustion : public AuraScript
             caster->CastSpell(caster, allyBuff, TRIGGERED_FULL_MASK);
 
             caster->RemoveAura(allyBuff);
+        }
+
+        if (caster->HasAura(T1_MAGE_FIRE_4PC))
+        {
+            int32 stacks = 0;
+            if (Aura* buff = caster->GetAura(T1_MAGE_FIRE_2PC_BUFF))
+            {
+                stacks = buff->GetStackAmount();
+                buff->Remove();
+            }
+
+            caster->AddAura(T1_MAGE_FIRE_4PC_BUFF, caster);
+
+            if (stacks > 0)
+                caster->CastCustomSpell(T1_MAGE_FIRE_2PC_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
         }
     }
 
@@ -1973,6 +1994,9 @@ class spell_mage_arcane_missiles_aura : public AuraScript
                 {
                     listener->Remove();
                     int32 additionalTargets = setBonus->GetEffect(EFFECT_1)->GetAmount();
+                    int32 procSpell = T1_MAGE_ARCANE_4PC_MISSILE1;
+
+                    caster->AddAura(95510, caster);
                     caster->AddAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF, target);
 
                     auto const& threatList = caster->getAttackers();
@@ -1980,24 +2004,33 @@ class spell_mage_arcane_missiles_aura : public AuraScript
                     if (threatList.size() <= 0)
                         return;
 
-                    for (auto const& targets : threatList)
+                    /*for (auto const& targets : threatList)
                         if (targets->IsAlive())
                         {
                             if (targets == target)
                                 continue;
 
                             float distance = targets->GetDistance(target->GetPosition());
-
-                            if (distance > 12)
+                            LOG_ERROR("error", "distance = {}", distance);
+                            if (distance > 20)
                                 continue;
-
-                            caster->AddAura(T1_MAGE_ARCANE_4PC_SECONDARY_BUFF, targets);
-                            caster->CastSpell(targets, SPELL_MAGE_ARCANE_MISSILE_MOVING, TRIGGERED_FULL_MASK);
+                            LOG_ERROR("error", "additionalTargets = {}", additionalTargets);
+                            LOG_ERROR("error", "procSpell = {}", procSpell);
+                            caster->CastSpell(targets, procSpell, TRIGGERED_FULL_MASK);
                             additionalTargets--;
 
-                            if (additionalTargets <= 0)
+                            if (additionalTargets <= 0 || procSpell == T1_MAGE_ARCANE_4PC_MISSILE4)
                                 break;
-                        }
+
+                            if (procSpell == T1_MAGE_ARCANE_4PC_MISSILE3)
+                                procSpell = T1_MAGE_ARCANE_4PC_MISSILE4;
+
+                            if (procSpell == T1_MAGE_ARCANE_4PC_MISSILE2)
+                                procSpell = T1_MAGE_ARCANE_4PC_MISSILE3;
+
+                            if (procSpell == T1_MAGE_ARCANE_4PC_MISSILE1)
+                                procSpell = T1_MAGE_ARCANE_4PC_MISSILE2;
+                        }*/
                 }
     }
 
@@ -2048,9 +2081,6 @@ class spell_mage_arcane_missile_damage : public SpellScript
         if (Aura* buffAura = target->GetAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF))
             AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
 
-        if (Aura* buffAura = target->GetAura(T1_MAGE_ARCANE_4PC_SECONDARY_BUFF))
-            AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
-
         SetHitDamage(damage);
     }
 
@@ -2070,9 +2100,6 @@ class spell_mage_arcane_missile_damage : public SpellScript
         {
             if (target->HasAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF))
                 target->RemoveAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF);
-
-            if (target->HasAura(T1_MAGE_ARCANE_4PC_SECONDARY_BUFF))
-                target->RemoveAura(T1_MAGE_ARCANE_4PC_SECONDARY_BUFF);
         }
     }
 
@@ -2592,7 +2619,7 @@ class spell_mage_ice_lance : public SpellScript
                     player->RemoveSpellCooldown(SPELL_MAGE_FLURRY, true);
 
                 caster->CastSpell(caster, SPELL_MAGE_BRAIN_FREEZE_BUFF, TRIGGERED_FULL_MASK);
-            }              
+            }
     }
 
     void HandleAfterHit()
