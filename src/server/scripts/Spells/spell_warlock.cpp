@@ -1228,6 +1228,7 @@ class spell_warl_havoc : public AuraScript
     {
         Unit* havocTarget = nullptr;
         auto const& threatList = GetCaster()->getAttackers();
+
         for (auto const& threat : threatList)
         {
             if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), threat->GetGUID())) {

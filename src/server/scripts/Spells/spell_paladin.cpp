@@ -1111,11 +1111,12 @@ class spell_pal_exorcism : public SpellScript
 
     std::list <Unit*> FindCreatures(Creature* creature)
     {
-        auto const& threatlist = GetCaster()->getAttackers();
+        auto const& threatList = GetCaster()->getAttackers();
+
         Position creaturepos = creature->GetPosition();
         std::list <Unit*> targetAvailable;
 
-        for (auto const& target : threatlist)
+        for (auto const& target : threatList)
         {
             Position targetpos = target->GetPosition();
             float distance = creature->GetDistance(targetpos);
@@ -1801,10 +1802,11 @@ class spell_pal_glimmer_of_light_damage : public AuraScript
 
     std::list <Unit*> FindTargets()
     {
-        auto const& threatlist = GetCaster()->getAttackers();
+        auto const& threatList = GetCaster()->getAttackers();
+
         std::list <Unit*> targetAvailable;
 
-        for (auto const& target : threatlist)
+        for (auto const& target : threatList)
         {
             if (target)
                 if (target->HasAura(80087))
@@ -1988,10 +1990,11 @@ class spell_pal_beacon_of_wrath : public AuraScript
 
     std::list <Unit*> FindTargets()
     {
-        auto const& threatlist = GetCaster()->getAttackers();
+        auto const& threatList = GetCaster()->getAttackers();
+
         std::list <Unit*> targetAvailable;
 
-        for (auto const& target : threatlist)
+        for (auto const& target : threatList)
         {
             if (target)
                 if (target->HasAura(SPELL_PALADIN_BEACON_OF_WRATH))

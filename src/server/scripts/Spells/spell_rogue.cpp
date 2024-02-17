@@ -2402,10 +2402,11 @@ class spell_rogue_sea_of_strikes : public AuraScript
 
     std::list <Unit*> FindTargets()
     {
-        auto const& threatlist = GetCaster()->getAttackers();
+        auto const& threatList = GetCaster()->getAttackers();
+
         std::list <Unit*> targetAvailable;
 
-        for (auto const& target : threatlist)
+        for (auto const& target : threatList)
         {
             if (target)
                 if (target->HasAura(SPELL_ROGUE_SEA_OF_STRIKES_DEBUFF))

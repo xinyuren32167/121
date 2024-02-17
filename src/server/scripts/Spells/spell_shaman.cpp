@@ -1949,12 +1949,12 @@ class spell_sha_ascendance_flame : public SpellScript
     void HandleProc()
     {
         Unit* caster = GetCaster();
-        auto const& threatlist = caster->getAttackers();
+        auto const& threatList = caster->getAttackers();
 
-        if (threatlist.empty())
+        if (threatList.empty())
             return;
 
-        for (auto itr = threatlist.begin(); itr != threatlist.end(); ++itr)
+        for (auto itr = threatList.begin(); itr != threatList.end(); ++itr)
         {
             Unit* treath = (*itr);
 
