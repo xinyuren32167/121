@@ -567,11 +567,11 @@ class spell_set_mage_frost_T1_B2 : public AuraScript
         if (!target || target->isDead())
             return;
 
-        if (!target->HasAuraState(AURA_STATE_FROZEN, sSpellMgr->AssertSpellInfo(SPELL_MAGE_ICE_LANCE), caster))
-            return;
-
-        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
-        caster->CastCustomSpell(SPELL_SET_T1_MAGE_FROST_BONUS2_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        if (target->HasAuraState(AURA_STATE_FROZEN))
+        {
+            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+            caster->CastCustomSpell(SPELL_SET_T1_MAGE_FROST_BONUS2_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
     }
 
     void Register()
@@ -598,6 +598,29 @@ class spell_set_mage_frost_T1_B2_target : public SpellScript
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_set_mage_frost_T1_B2_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+// 95800 - Arcaneblade Regalia Spellblade T1 Bonus 2
+class spell_set_mage_spellblade_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_mage_spellblade_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
+
+        if (Player* player = caster->ToPlayer())
+            return player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_MAGE, DISPEL_NONE);
+        else return false;     
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_mage_spellblade_T1_2pc::CheckProc);
     }
 };
 
@@ -2178,7 +2201,8 @@ void AddSC_item_set_bonus_scripts()
 
     RegisterSpellScript(spell_set_mage_frost_T1_B2);
     RegisterSpellScript(spell_set_mage_frost_T1_B2_target);
-
+    RegisterSpellScript(spell_set_mage_spellblade_T1_2pc);
+    
     RegisterSpellScript(spell_set_paladin_prot_T1_B2);
     RegisterSpellScript(spell_set_paladin_prot_T1_B4);
     RegisterSpellScript(spell_set_paladin_ret_T1_B2B4);
@@ -2226,8 +2250,8 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_rogue_outlaw_T1_2pc);
     RegisterSpellScript(spell_set_rogue_outlaw_T1_4pc);
 
-    
-    
-    
-    
+
+
+
+
 }
