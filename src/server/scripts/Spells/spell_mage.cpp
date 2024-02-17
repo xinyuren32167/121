@@ -1999,10 +1999,11 @@ class spell_mage_arcane_missiles_aura : public AuraScript
                     caster->AddAura(95510, caster);
                     caster->AddAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF, target);
 
-                    auto const& threatList = caster->getAttackers();
+                    /*auto const& threatList = caster->getAttackers();
 
                     if (threatList.size() <= 0)
                         return;
+                    */
 
                     /*for (auto const& targets : threatList)
                         if (targets->IsAlive())
