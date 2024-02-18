@@ -1999,10 +1999,11 @@ class spell_mage_arcane_missiles_aura : public AuraScript
                     caster->AddAura(95510, caster);
                     caster->AddAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF, target);
 
-                    auto const& threatList = caster->getAttackers();
+                    /*auto const& threatList = caster->getAttackers();
 
                     if (threatList.size() <= 0)
                         return;
+                    */
 
                     /*for (auto const& targets : threatList)
                         if (targets->IsAlive())
@@ -3120,11 +3121,12 @@ class spell_mage_blackhole : public SpellScript
 
     std::list <Unit*> FindCreatures(Creature* creature)
     {
-        auto const& threatlist = GetCaster()->getAttackers();
+        auto const& threatList = GetCaster()->getAttackers();
+
         Position creaturepos = creature->GetPosition();
         std::list <Unit*> targetAvailable;
 
-        for (auto const& target : threatlist)
+        for (auto const& target : threatList)
         {
             Position targetpos = target->GetPosition();
             float distance = creature->GetDistance(targetpos);

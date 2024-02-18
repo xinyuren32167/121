@@ -423,6 +423,10 @@ class rune_pri_psychic_link : public AuraScript
             return;
 
         auto const& threatList = caster->getAttackers();
+
+        if (threatList.size() <= 0)
+            return;
+
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
 
@@ -1944,6 +1948,9 @@ class rune_pri_screams_of_the_void : public AuraScript
 
         auto const& threatList = caster->getAttackers();
 
+        if (threatList.size() <= 0)
+            return;
+
         for (auto const& targets : threatList)
             if (targets->IsAlive())
             {
@@ -1969,6 +1976,9 @@ class rune_pri_screams_of_the_void : public AuraScript
             return;
 
         auto const& threatList = caster->getAttackers();
+
+        if (threatList.size() <= 0)
+            return;
 
         for (auto const& targets : threatList)
             if (targets->IsAlive())
@@ -2022,6 +2032,9 @@ class rune_pri_idol_of_cthun : public AuraScript
 
         auto const& threatList = caster->getAttackers();
         int32 targetNbr = 0;
+
+        if (threatList.size() <= 0)
+            return;
 
         for (auto const& targets : threatList)
             if (targets->IsAlive())
