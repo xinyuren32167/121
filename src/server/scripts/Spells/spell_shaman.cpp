@@ -2399,7 +2399,7 @@ class spell_sha_stormkeeper : public AuraScript
 
         // damage + maelstrom nerf
         caster->AddAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF, caster);
-        caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
+        // caster->CastSpell(target, spellID, TRIGGERED_FULL_MASK);
         caster->RemoveAura(MASTERY_SHAMAN_ELEMENTAL_OVERLOAD_BUFF);
     }
 
