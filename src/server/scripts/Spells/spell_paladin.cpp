@@ -1105,6 +1105,25 @@ class spell_pal_forbearance : public SpellScript
     }
 };
 
+class spell_pal_forbearance_check : public SpellScript
+{
+    PrepareSpellScript(spell_pal_forbearance_check);
+
+    SpellCastResult CheckTarget()
+    {
+        Unit* target = GetExplTargetUnit();
+        if (!target || target->HasAura(SPELL_PALADIN_FORBEARANCE))
+            return SPELL_FAILED_TARGET_AURASTATE;
+
+        return SPELL_CAST_OK;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_pal_forbearance_check::CheckTarget);
+    }
+};
+
 class spell_pal_exorcism : public SpellScript
 {
     PrepareSpellScript(spell_pal_exorcism);
@@ -2772,6 +2791,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_righteous_defense);
     RegisterSpellScript(spell_pal_seal_of_righteousness);
     RegisterSpellScript(spell_pal_forbearance);
+    RegisterSpellScript(spell_pal_forbearance_check);
     RegisterSpellScript(spell_pal_seraphim);
     RegisterSpellScript(spell_pal_exorcism);
     RegisterSpellScript(spell_pal_consecration);
