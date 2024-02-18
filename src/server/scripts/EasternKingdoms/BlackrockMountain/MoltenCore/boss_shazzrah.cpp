@@ -23,12 +23,18 @@
 
 enum Spells
 {
-    SPELL_ARCANE_EXPLOSION              = 19712,
-    SPELL_SHAZZRAH_CURSE                = 19713,
-    SPELL_MAGIC_GROUNDING               = 19714,
-    SPELL_COUNTERSPELL                  = 19715,
-    SPELL_SHAZZRAH_GATE_DUMMY           = 23138, // Teleports to and attacks a random target. About every 45 seconds Shazzrah will blink to random target causing a wipe of the threat list (source: wowwwiki)
-    SPELL_SHAZZRAH_GATE                 = 23139,
+    SPELL_ARCANE_EXPLOSION = 19712,
+    SPELL_SHAZZRAH_CURSE = 19713,
+    SPELL_COUNTERSPELL = 19715,
+    SPELL_SHAZZRAH_GATE_DUMMY = 23138, // Teleports to and attacks a random target. About every 45 seconds Shazzrah will blink to random target causing a wipe of the threat list (source: wowwwiki)
+    SPELL_SHAZZRAH_GATE = 23139,
+
+    SPELL_PERIODIC_ARCANE_EXPLOSION = 2000088,
+    SPELL_ARCANIC_SLASH             = 2000082,
+    SPELL_ARCANE_ZONE           = 2000083,
+    SPELL_SOAKING_ARCANE_EXPLOSION  = 2000085,
+    SPELL_SOAKING_ARCANE_ZONE_PERIODIC_TRIGGER = 2000086
+
 };
 
 enum Events
@@ -38,6 +44,14 @@ enum Events
     EVENT_MAGIC_GROUNDING,
     EVENT_COUNTERSPELL,
     EVENT_SHAZZRAH_GATE,
+    EVENT_ARCANIC_SLASH,
+    EVENT_ZONE_ARCANE
+};
+
+
+enum Npc
+{
+    NPC_CLONE_OF_SHAZZRAH = 226226,
 };
 
 class boss_shazzrah : public CreatureScript
@@ -54,15 +68,22 @@ public:
             _EnterCombat();
             events.ScheduleEvent(EVENT_ARCANE_EXPLOSION, urand(2000, 4000));
             events.ScheduleEvent(EVENT_SHAZZRAH_CURSE, urand(7000, 11000));
-            events.ScheduleEvent(EVENT_MAGIC_GROUNDING, urand(14000, 19000));
             events.ScheduleEvent(EVENT_COUNTERSPELL, urand(9000, 10000));
             events.ScheduleEvent(EVENT_SHAZZRAH_GATE, 30000);
+            events.ScheduleEvent(EVENT_ARCANIC_SLASH, 5500);
+            events.ScheduleEvent(EVENT_ZONE_ARCANE, 35000);
         }
 
         void ExecuteEvent(uint32 eventId) override
         {
             switch (eventId)
             {
+                case EVENT_ARCANIC_SLASH:
+                {
+                    DoCastVictim(SPELL_ARCANIC_SLASH);
+                    events.RepeatEvent(12500);
+                    break;
+                }
                 case EVENT_ARCANE_EXPLOSION:
                 {
                     DoCastVictim(SPELL_ARCANE_EXPLOSION);
@@ -78,23 +99,44 @@ public:
                     events.RepeatEvent(urand(23000, 26000));
                     break;
                 }
-                case EVENT_MAGIC_GROUNDING:
-                {
-                    DoCastSelf(SPELL_MAGIC_GROUNDING);
-                    events.RepeatEvent(urand(7000, 9000));
-                    break;
-                }
-                case EVENT_COUNTERSPELL:
-                {
-                    DoCastAOE(SPELL_COUNTERSPELL);
-                    events.RepeatEvent(urand(15000, 18000));
-                    break;
-                }
                 case EVENT_SHAZZRAH_GATE:
                 {
+                    TempSummon* summon = me->SummonCreature(NPC_CLONE_OF_SHAZZRAH, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 90000);
+
+                    if (summon) {
+                        summon->StopMoving();
+                        summon->SetUnitFlag(UNIT_FLAG_DISABLE_MOVE);
+                        summon->SetUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+                        summon->AddAura(SPELL_PERIODIC_ARCANE_EXPLOSION, summon);
+                    }
+
                     DoCastAOE(SPELL_SHAZZRAH_GATE_DUMMY);
                     events.RescheduleEvent(EVENT_ARCANE_EXPLOSION, urand(3000, 6000));
                     events.RepeatEvent(45000);
+                    break;
+                }   
+                case EVENT_ZONE_ARCANE:
+                {
+                    std::list<Unit*> targets;
+                    SelectTargetList(targets, 3, SelectTargetMethod::Random);
+
+                    for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
+                    {
+                        Unit* unit = (*itr);
+
+                        if (!unit)
+                            continue;
+
+                        Position position = unit->GetNearPosition(urand(8, 15), 1);
+                        TempSummon* summon = me->SummonCreature(WORLD_TRIGGER, position, TEMPSUMMON_TIMED_DESPAWN, 10000);
+                        if (summon) {
+                            summon->SetFaction(FACTION_MONSTER);
+                            summon->CastSpell(summon, SPELL_ARCANE_ZONE);
+                            summon->AddAura(SPELL_SOAKING_ARCANE_ZONE_PERIODIC_TRIGGER, summon);
+                        }
+                    }
+
+                    events.RepeatEvent(35000);
                     break;
                 }
             }
@@ -190,10 +232,33 @@ public:
     }
 };
 
+class spell_soaking_arcane_zone_finder : public SpellScript
+{
+    PrepareSpellScript(spell_soaking_arcane_zone_finder);
+
+    void SelectTarget(std::list<WorldObject*>& targets)
+    {
+        Unit* caster = GetCaster();
+
+        if (targets.empty())
+        {
+            caster->CastSpell(caster, SPELL_SOAKING_ARCANE_EXPLOSION);
+        }
+
+        // caster->ToTempSummon()->DespawnOrUnsummon();
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_soaking_arcane_zone_finder::SelectTarget, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
 void AddSC_boss_shazzrah()
 {
     new boss_shazzrah();
 
     // Spells
     new spell_shazzrah_gate_dummy();
+    RegisterSpellScript(spell_soaking_arcane_zone_finder);
 }

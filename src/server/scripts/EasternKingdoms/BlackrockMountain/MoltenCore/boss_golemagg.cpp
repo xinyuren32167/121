@@ -29,15 +29,29 @@ enum Spells
 {
     // Golemagg
     SPELL_PYROBLAST             = 20228,
+    SPELL_IGNITED               = 2000068,
+
     SPELL_EARTHQUAKE            = 19798,
-    SPELL_ATTRACK_RAGER         = 20544,
-    SPELL_MAGMASPLASH           = 13879,
-    SPELL_GOLEMAGG_TRUST_AURA   = 20556,
-    SPELL_DOUBLE_ATTACK         = 18943,
+    SPELL_EARTHQUAKE_MYTHIC     = 2000077,
+
+    SPELL_GELOMAG_JUMP_TARGET   = 2000078,
+    SPELL_PRE_CAST_STOMP        = 2000073,
+    SPELL_STOMP                 = 2000072,
 
     // Core Rager
     SPELL_MANGLE                = 19820,
     SPELL_FULL_HEAL             = 17683,
+    SPELL_RAGE                  = 2000079,
+
+};
+
+
+enum Events {
+    EVENT_PYROBLAST = 1,
+    EVENT_TARGET_JUMP_ON_PLAYER,
+    EVENT_JUMP_ON_PLAYER,
+    EVENT_STOMP_ON_PLAYER,
+    EVENT_IGNITED,
 };
 
 class boss_golemagg : public CreatureScript
@@ -48,77 +62,103 @@ public:
     struct boss_golemaggAI : public BossAI
     {
         boss_golemaggAI(Creature* creature) : BossAI(creature, DATA_GOLEMAGG),
-            earthquakeTimer(0),
-            pyroblastTimer(0),
             enraged(false)
         {}
 
         void Reset() override
         {
             _Reset();
-            earthquakeTimer = 0;
-            pyroblastTimer = urand(3000, 7000);
             enraged = false;
-            DoCastSelf(SPELL_MAGMASPLASH);
-            DoCastSelf(SPELL_GOLEMAGG_TRUST_AURA);
-            DoCastSelf(SPELL_DOUBLE_ATTACK);
+        }
+
+        void EnterCombat(Unit* /*attacker*/) override
+        {
+            _EnterCombat();
+            events.ScheduleEvent(EVENT_PYROBLAST, urand(3000, 7000));
+            events.ScheduleEvent(EVENT_IGNITED, 5500);
+            events.ScheduleEvent(EVENT_TARGET_JUMP_ON_PLAYER, 32000);
         }
 
         void DamageTaken(Unit*, uint32& damage, DamageEffectType, SpellSchoolMask) override
         {
             if (!enraged && me->HealthBelowPctDamaged(10, damage))
             {
-                DoCastSelf(SPELL_ATTRACK_RAGER, true);
-                DoCastAOE(SPELL_EARTHQUAKE, true);
-                earthquakeTimer = 5000;
+                uint32 spellEarthquake = GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC ? SPELL_EARTHQUAKE_MYTHIC : SPELL_EARTHQUAKE;
+                DoCastAOE(spellEarthquake, true);
                 enraged = true;
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void ExecuteEvent(uint32 eventId) override
         {
-            if (!UpdateVictim())
+            switch (eventId)
             {
-                return;
-            }
-
-            // Should not get impact by cast state (cast should always happen)
-            if (earthquakeTimer)
-            {
-                if (earthquakeTimer <= diff)
+                case EVENT_IGNITED:
                 {
-                    DoCastSelf(SPELL_EARTHQUAKE, true);
-                    earthquakeTimer = 5000;
+                    DoCastVictim(SPELL_IGNITED);
+                    events.RepeatEvent(12500);
+                    break;
                 }
-                else
+                case EVENT_PYROBLAST:
                 {
-                    earthquakeTimer -= diff;
+                    DoCastRandomTarget(SPELL_PYROBLAST);
+                    events.RepeatEvent(5000);
+                    break;
+                }
+                case EVENT_TARGET_JUMP_ON_PLAYER:
+                {
+                    std::list<Unit*> targets;
+                    SelectTargetList(targets, [this](Unit* target)
+                    {
+                        return target && target->IsPlayer() && target->GetDistance(me) > 10.f && target->GetDistance(me) < 100.0f;
+                    }, 1, SelectTargetMethod::Random);
+
+                    if (!targets.empty())
+                    {
+                        events.Reset();
+                        Unit* target = targets.front();
+                        jumpPosition = target->GetPosition();
+                        me->CastSpell(target, SPELL_GELOMAG_JUMP_TARGET);
+                        DoCastSelf(SPELL_PRE_CAST_STOMP);
+                        events.ScheduleEvent(EVENT_JUMP_ON_PLAYER, 4000);
+                    }
+                    break;
+                }
+                case EVENT_JUMP_ON_PLAYER:
+                {
+                    float distance = me->GetDistance(jumpPosition);
+                    float x = jumpPosition.GetPositionX();
+                    float y = jumpPosition.GetPositionY();
+                    float z = jumpPosition.GetPositionZ();
+
+                    float speedZ = 12.f;
+                    float speedXY = 40.0f;
+                    float gravity = Movement::gravity;
+
+                    float timeOfFlightVertical = (2 * speedZ) / gravity;
+                    float timeToCoverDistance = distance / speedXY;
+                    float totalTimeOfFlight = std::max(timeOfFlightVertical, timeToCoverDistance);
+                    me->GetMotionMaster()->MoveJump(x, y, z, speedXY, speedZ);
+                    events.ScheduleEvent(EVENT_STOMP_ON_PLAYER, (totalTimeOfFlight * 1000) + 100);
+                    break;
+                }
+
+                case EVENT_STOMP_ON_PLAYER:
+                {
+                    DoCastSelf(SPELL_STOMP);
+                    events.ScheduleEvent(EVENT_PYROBLAST, urand(3000, 7000));
+                    events.ScheduleEvent(EVENT_IGNITED, 5500);
+                    if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                        events.ScheduleEvent(EVENT_TARGET_JUMP_ON_PLAYER, 32000);
+                    }
+                    break;
                 }
             }
-
-            if (me->HasUnitState(UNIT_STATE_CASTING))
-            {
-                return;
-            }
-
-            if (pyroblastTimer <= diff)
-            {
-                DoCastRandomTarget(SPELL_PYROBLAST);
-
-                pyroblastTimer = 7000;
-            }
-            else
-            {
-                pyroblastTimer -= diff;
-            }
-
-            DoMeleeAttackIfReady();
         }
 
     private:
-        uint32 earthquakeTimer;
-        uint32 pyroblastTimer;
         bool enraged;
+        Position jumpPosition;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -137,34 +177,26 @@ public:
         npc_core_ragerAI(Creature* creature) : ScriptedAI(creature),
             instance(creature->GetInstanceScript()),
             mangleTimer(7000),
-            rangeCheckTimer(1000)
+            rangeCheckTimer(1000),
+            timerNewVictim(12000)
         {
+            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                me->SetReactState(REACT_PASSIVE);
+            }
         }
 
         void Reset() override
         {
             mangleTimer = 7000;               // These times are probably wrong
             rangeCheckTimer = 1000;
-
-            if (instance->GetBossState(DATA_GOLEMAGG) == DONE)
-            {
-                DoCastSelf(SPELL_CORE_RAGER_QUIET_SUICIDE, true);
-            }
+            timerNewVictim = 12000;
         }
 
-        void DamageTaken(Unit* /*attacker*/, uint32& damage, DamageEffectType /*dmgType*/, SpellSchoolMask /*school*/) override
+        void JustDied(Unit* /*killer*/) override
         {
-            // Just in case if something will go bad, let players to kill this creature
-            if (instance->GetBossState(DATA_GOLEMAGG) == DONE)
-            {
-                return;
-            }
-
-            if (me->HealthBelowPctDamaged(50, damage))
-            {
-                damage = 0;
-                DoCastSelf(SPELL_FULL_HEAL, true);
-                Talk(EMOTE_LOWHP);
+            Creature* creature = me->FindNearestCreature(11672, 100.f, true);
+            if (creature) {
+                creature->AddAura(SPELL_RAGE, creature);
             }
         }
 
@@ -208,6 +240,21 @@ public:
                 mangleTimer -= diff;
             }
 
+            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                if (timerNewVictim <= diff)
+                {
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 30.f, true))
+                    {
+                        me->AI()->AttackStart(target);
+                    }
+                    timerNewVictim = 12000;
+                }
+                else
+                {
+                    timerNewVictim -= diff;
+                }
+            }
+
             DoMeleeAttackIfReady();
         }
 
@@ -215,6 +262,7 @@ public:
         InstanceScript* instance;
         uint32 mangleTimer;
         uint32 rangeCheckTimer;
+        uint32 timerNewVictim;
     };
 
     CreatureAI* GetAI(Creature* creature) const override

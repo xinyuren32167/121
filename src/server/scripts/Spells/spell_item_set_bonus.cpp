@@ -615,7 +615,8 @@ class spell_set_mage_spellblade_T1_2pc : public AuraScript
 
         if (Player* player = caster->ToPlayer())
             return player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_MAGE, DISPEL_NONE);
-        else return false;     
+
+        return false;     
     }
 
     void Register()

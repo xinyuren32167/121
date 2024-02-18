@@ -27,7 +27,9 @@ enum Texts
 
 enum Spells
 {
-    SPELL_FRENZY                    = 19451,
+    SPELL_FRENZY                    = 2000064,
+    SPELL_STOMP                     = 2000072,
+
     SPELL_MAGMA_SPIT                = 19449,
     SPELL_MORTAL_WOUND              = 2000053,
     SPELL_PANIC                     = 19408,
@@ -35,6 +37,9 @@ enum Spells
     SPELL_LAVA_BOMB_EFFECT          = 20494,                    // Spawns trap GO 177704 which triggers 19428
     SPELL_LAVA_BOMB_RANGED          = 20474,                    // This calls a dummy server side effect that cast spell 20495 to spawn GO 177704 for 60s
     SPELL_LAVA_BOMB_RANGED_EFFECT   = 20495,                    // Spawns trap GO 177704 which triggers 19428
+
+    SPELL_MAGMADAR_JUMP_TARGET      = 2000071,
+    SPELL_PRE_CAST_STOMP            = 2000073,
 };
 
 enum Events
@@ -44,6 +49,11 @@ enum Events
     EVENT_LAVA_BOMB,
     EVENT_LAVA_BOMB_RANGED,
     EVENT_MORTAL_WOUND,
+
+    EVENT_JUMP_ON_PLAYER,
+    EVENT_TARGET_JUMP_ON_PLAYER,
+
+    EVENT_STOMP_ON_PLAYER,
 
 };
 
@@ -56,27 +66,119 @@ public:
 
     struct boss_magmadarAI : public BossAI
     {
+
         boss_magmadarAI(Creature* creature) : BossAI(creature, DATA_MAGMADAR) {}
+
+        void ScheduleEvents() {
+            events.ScheduleEvent(EVENT_MORTAL_WOUND, 5500);
+            events.ScheduleEvent(EVENT_FRENZY, 19000);
+            events.ScheduleEvent(EVENT_PANIC, 9500);
+            events.ScheduleEvent(EVENT_LAVA_BOMB, 12000);
+            events.ScheduleEvent(EVENT_LAVA_BOMB_RANGED, 15000);
+            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                events.ScheduleEvent(EVENT_TARGET_JUMP_ON_PLAYER, 32000);
+            }
+        }
 
         void EnterCombat(Unit* /*victim*/) override
         {
             _EnterCombat();
-            events.ScheduleEvent(EVENT_MORTAL_WOUND, 5500);
-            events.ScheduleEvent(EVENT_FRENZY, 8500);
-            events.ScheduleEvent(EVENT_PANIC, 9500);
-            events.ScheduleEvent(EVENT_LAVA_BOMB, 12000);
-            events.ScheduleEvent(EVENT_LAVA_BOMB_RANGED, 15000);
+            ScheduleEvents();
+        }
+
+        void DamageTaken(Unit*, uint32& damage, DamageEffectType, SpellSchoolMask) override
+        {
+            if (GetDifficulty() != RAID_DIFFICULTY_10_25MAN_MYTHIC)
+                return;
+
+            if (me->HealthBelowPctDamaged(75, damage) && !firstSummon)
+            {
+                for (size_t i = 0; i < 2; i++)
+                {
+                    TempSummon* summon = me->SummonCreature(11671, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
+                    summon->AI()->DoZoneInCombat();
+                }
+
+                firstSummon = true;
+            }
+
+            if (me->HealthBelowPctDamaged(50, damage) && !secondSummon)
+            {
+                for (size_t i = 0; i < 2; i++)
+                {
+                    TempSummon* summon = me->SummonCreature(11671, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
+                    summon->AI()->DoZoneInCombat();
+                }
+                secondSummon = true;
+            }
+
+            if (me->HealthBelowPctDamaged(25, damage) && !lastSummon)
+            {
+                for (size_t i = 0; i < 2; i++)
+                {
+                    TempSummon* summon = me->SummonCreature(11671, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
+                    summon->AI()->DoZoneInCombat();
+                }
+
+                lastSummon = true;
+            }
         }
 
         void ExecuteEvent(uint32 eventId) override
         {
             switch (eventId)
             {
+                case EVENT_TARGET_JUMP_ON_PLAYER:
+                {
+                    events.Reset();
+                    std::list<Unit*> targets;
+                    SelectTargetList(targets, [this](Unit* target)
+                    {
+                        return target && target->IsPlayer() && target->GetDistance(me) > MELEE_TARGET_LOOKUP_DIST && target->GetDistance(me) < 100.0f;
+                    }, 1, SelectTargetMethod::Random);
+
+                    if (!targets.empty())
+                    {
+                        Unit* target = targets.front();
+                        jumpPosition = target->GetPosition();
+                        me->CastSpell(target, SPELL_MAGMADAR_JUMP_TARGET);
+                        DoCastSelf(SPELL_PRE_CAST_STOMP);
+                        events.ScheduleEvent(EVENT_JUMP_ON_PLAYER, 4000);
+                    }
+                    break;
+                }
+                case EVENT_JUMP_ON_PLAYER:
+                {
+                    float distance = me->GetDistance(jumpPosition);
+
+                    float x = jumpPosition.GetPositionX();
+                    float y = jumpPosition.GetPositionY();
+                    float z = jumpPosition.GetPositionZ();
+
+                    float speedZ = 12.f;
+                    float speedXY = 40.0f;
+                    float gravity = Movement::gravity;
+
+                    float timeOfFlightVertical = (2 * speedZ) / gravity;
+                    float timeToCoverDistance = distance / speedXY;
+                    float totalTimeOfFlight = std::max(timeOfFlightVertical, timeToCoverDistance);
+                    me->GetMotionMaster()->MoveJump(x, y, z, speedXY, speedZ);
+                    events.ScheduleEvent(EVENT_STOMP_ON_PLAYER, (totalTimeOfFlight * 1000) + 100);
+                    break;
+                }
+                    
+                case EVENT_STOMP_ON_PLAYER:
+                {
+                    Talk(EMOTE_FRENZY);
+                    DoCastSelf(SPELL_STOMP);
+                    ScheduleEvents();
+                    break;
+                }
                 case EVENT_FRENZY:
                 {
                     Talk(EMOTE_FRENZY);
                     DoCastSelf(SPELL_FRENZY);
-                    events.RepeatEvent(urand(15000, 20000));
+                    events.RepeatEvent(19000);
                     break;
                 }
                 case EVENT_PANIC:
@@ -120,6 +222,12 @@ public:
                 }
             }
         }
+
+        private:
+            Position jumpPosition;
+            bool firstSummon;
+            bool secondSummon;
+            bool lastSummon;
     };
 
     CreatureAI* GetAI(Creature* creature) const override

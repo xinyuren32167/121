@@ -22,13 +22,18 @@
 enum Spells
 {
     SPELL_IMPENDING_DOOM           = 19702,
-    SPELL_IMPENDING_DOOM_MYTHIC    = 2000049,
-
     SPELL_LUCIFRON_CURSE           = 19703,
-    SPELL_SHADOW_MARK              = 2000050,
-    SPELL_SHADOW_MARK_MYTHIC       = 2000051,
-
     SPELL_SHADOW_SHOCK             = 20603,
+    SPELL_WELL_OF_SOUL             = 2000061,
+
+
+
+    // ads
+    SPELL_DOMINATE_MIND = 20604,
+    SPELL_CLEAVE = 20605,
+    SPELL_INCREASE_DAMAGE = 2000060,
+    SPELL_VOLCANO_ERUPTION = 2000062,
+
 };
 
 enum Events
@@ -37,7 +42,13 @@ enum Events
     EVENT_LUCIFRON_CURSE    = 2,
     EVENT_SHADOW_SHOCK      = 3,
     EVENT_SHADOW_MARK       = 4,
-    EVENT_SUMMON_FLAMWAKLER_PROTECTOR = 5,
+
+    // Adds
+    EVENT_DOMINATE_MIND,
+    EVENT_CLEAVE,
+    EVENT_INCREASE_DAMAGE,
+    EVENT_TARGET_VOLCANO_ERUPTION
+
 };
 
 class boss_lucifron : public CreatureScript
@@ -59,10 +70,12 @@ public:
         void EnterCombat(Unit* /*victim*/) override
         {
             _EnterCombat();
-            events.ScheduleEvent(EVENT_SHADOW_MARK, 5500);
             events.ScheduleEvent(EVENT_IMPENDING_DOOM, urand(6000, 11000));
-            events.ScheduleEvent(EVENT_LUCIFRON_CURSE, urand(11000, 14000));
             events.ScheduleEvent(EVENT_SHADOW_SHOCK, 5000);
+
+            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                events.ScheduleEvent(EVENT_LUCIFRON_CURSE, urand(11000, 14000));
+            }
         }
 
         void ExecuteEvent(uint32 eventId) override
@@ -71,11 +84,7 @@ public:
             {
                 case EVENT_IMPENDING_DOOM:
                 {
-                    if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC)
-                        DoCastRandomTarget(SPELL_IMPENDING_DOOM_MYTHIC);
-                    else
-                        DoCastRandomTarget(SPELL_IMPENDING_DOOM);
-
+                    DoCastRandomTarget(SPELL_IMPENDING_DOOM);
                     events.RepeatEvent(20000);
                     break;
                 }
@@ -91,15 +100,6 @@ public:
                     events.RepeatEvent(5000);
                     break;
                 }
-                case EVENT_SHADOW_MARK:
-                {
-                    if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC)
-                        DoCastRandomTarget(SPELL_SHADOW_MARK_MYTHIC);
-                    else
-                        DoCastRandomTarget(SPELL_SHADOW_MARK);
-                    events.RepeatEvent(13000);
-                    break;
-                }
             }
         }
     };
@@ -110,9 +110,130 @@ public:
     }
 };
 
-class spell_impending_doom : public AuraScript
+
+class npc_flamewaker_protector : public CreatureScript
 {
-    PrepareAuraScript(spell_impending_doom);
+public:
+    npc_flamewaker_protector() : CreatureScript("npc_flamewaker_protector") {}
+
+    struct npc_flamewakerAI : public ScriptedAI
+    {
+        npc_flamewakerAI(Creature* creature) : ScriptedAI(creature) {}
+
+        void Reset() override
+        {
+            events.Reset();
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*victim*/) override
+        {
+            events.ScheduleEvent(EVENT_DOMINATE_MIND, 10000);
+            events.ScheduleEvent(EVENT_CLEAVE, urand(5000, 10000));
+            events.ScheduleEvent(EVENT_INCREASE_DAMAGE, 19500);
+
+            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                events.ScheduleEvent(EVENT_TARGET_VOLCANO_ERUPTION, 12000);
+            }
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (!UpdateVictim())
+            {
+                return;
+            }
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+            {
+                return;
+            }
+
+            while (uint32 const eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_DOMINATE_MIND:
+                {
+
+                    Unit* target = SelectTarget(SelectTargetMethod::Random, 0, [&](Unit* target) -> bool
+                    {
+                        if (target->GetTypeId() != TYPEID_PLAYER)
+                            return false;
+
+                        if (me->IsWithinMeleeRange(target) || me->GetVictim() == target)
+                            return false;
+
+                        return true;
+                    });
+
+                    if (target) {
+                        DoCastVictim(SPELL_DOMINATE_MIND);
+                    }
+
+                    events.RepeatEvent(10000);
+                    break;
+                }
+                case EVENT_CLEAVE:
+                {
+                    DoCastVictim(SPELL_CLEAVE);
+                    events.RepeatEvent(urand(5000, 10000));
+                    break;
+                }
+                case EVENT_INCREASE_DAMAGE:
+                {
+                    DoCastSelf(SPELL_INCREASE_DAMAGE);
+                    events.RepeatEvent(19000);
+                    break;
+                }
+                case EVENT_TARGET_VOLCANO_ERUPTION:
+                {
+
+                    Unit* target = SelectTarget(SelectTargetMethod::Random, 0, [&](Unit* target) -> bool
+                    {
+                        if (target->GetTypeId() != TYPEID_PLAYER)
+                            return false;
+
+                        if (me->GetVictim() == target)
+                            return false;
+
+                        if (target->HasAura(SPELL_VOLCANO_ERUPTION))
+                            return false;
+
+                        return true;
+                    });
+
+                    if (target) {
+                        DoCast(target, SPELL_VOLCANO_ERUPTION);
+                    }
+
+                    events.RepeatEvent(15000);
+                    break;
+                }
+                }
+                DoMeleeAttackIfReady();
+            }
+        }
+
+    private:
+        EventMap events;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return GetMoltenCoreAI<npc_flamewakerAI>(creature);
+    }
+};
+
+class spell_impending_doom_expired : public AuraScript
+{
+    PrepareAuraScript(spell_impending_doom_expired);
 
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
@@ -121,16 +242,36 @@ class spell_impending_doom : public AuraScript
 
         if (!caster)
             return;
+
+        caster->CastSpell(GetTarget(), SPELL_WELL_OF_SOUL);
     }
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(spell_impending_doom::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_impending_doom_expired::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
+
+class spell_volcano_eruption : public AuraScript
+{
+    PrepareAuraScript(spell_volcano_eruption);
+
+    void HandlePeriodic(AuraEffect const*  /*aurEff*/)
+    {
+        GetCaster()->CastSpell(GetTarget(), 2000063);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_volcano_eruption::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 
 void AddSC_boss_lucifron()
 {
     new boss_lucifron();
-    RegisterSpellScript(spell_impending_doom);
+    new npc_flamewaker_protector();
+    RegisterSpellScript(spell_impending_doom_expired);
+    RegisterSpellScript(spell_volcano_eruption);
 }

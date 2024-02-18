@@ -21,20 +21,36 @@
 
 enum Spells
 {
-    SPELL_GEHENNAS_CURSE = 19716,
+    SPELL_SHADOW_IMPACT = 19716,
     SPELL_RAIN_OF_FIRE = 19717,
     SPELL_SHADOW_BOLT_RANDOM = 19728,
     SPELL_SHADOW_BOLT_VICTIM = 19729,
     SPELL_HELLFIRE = 2000054,
     SPELL_INNER_FIRE = 2000057,
+
+    // Ads
+
+    SPELL_STRIKE = 19730,
+    SPELL_FIST_OF_RAGNAROS = 20277,
+    SPELL_SUNDER_ARMOR = 15502,
+    SPELL_INCREASE_DAMAGE = 2000060,
+    SPELL_VOLCANO_ERUPTION = 2000062,
 };
 
 enum Events
 {
-    EVENT_GEHENNAS_CURSE    = 1,
+    EVENT_SHADOW_IMPACT    = 1,
     EVENT_RAIN_OF_FIRE,
     EVENT_SHADOW_BOLT,
     EVENT_INNERFIRE,
+
+
+    EVENT_STRIKE,
+    EVENT_FIST_OF_RAGNAROS,
+    EVENT_SUNDER_ARMOR,
+    EVENT_INCREASE_DAMAGE,
+    EVENT_TARGET_VOLCANO_ERUPTION,
+
 };
 
 class boss_gehennas : public CreatureScript
@@ -49,7 +65,7 @@ public:
         void EnterCombat(Unit* /*attacker*/) override
         {
             _EnterCombat();
-            events.ScheduleEvent(EVENT_GEHENNAS_CURSE, urand(6000, 9000));
+            events.ScheduleEvent(EVENT_SHADOW_IMPACT, 25000);
             events.ScheduleEvent(EVENT_RAIN_OF_FIRE, 10000);
             events.ScheduleEvent(EVENT_SHADOW_BOLT, urand(3000, 5000));
         }
@@ -58,10 +74,17 @@ public:
         {
             switch (eventId)
             {
-                case EVENT_GEHENNAS_CURSE:
+                case EVENT_SHADOW_IMPACT:
                 {
-                    DoCastVictim(SPELL_GEHENNAS_CURSE);
-                    events.RepeatEvent(urand(25000, 30000));
+                    std::list<Unit*> targets;
+                    SelectTargetList(targets, 5, SelectTargetMethod::MinThreat, 100.0f, true);
+                    if (!targets.empty())
+                        for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
+                            if ((*itr) != me->GetVictim()) {
+                                me->CastSpell(*itr, SPELL_SHADOW_IMPACT, true);
+                            }
+
+                    events.RepeatEvent(25000);
                     break;
                 }
                 case EVENT_RAIN_OF_FIRE:
@@ -104,6 +127,119 @@ public:
     }
 };
 
+
+class npc_flamewaker : public CreatureScript
+{
+public:
+    npc_flamewaker() : CreatureScript("npc_flamewaker") {}
+
+    struct npc_flamewakerAI : public ScriptedAI
+    {
+        npc_flamewakerAI(Creature* creature) : ScriptedAI(creature) {}
+
+        void Reset() override
+        {
+            events.Reset();
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*victim*/) override
+        {
+            events.ScheduleEvent(EVENT_STRIKE, urand(3000, 8000));
+            events.ScheduleEvent(EVENT_FIST_OF_RAGNAROS, urand(3000, 6000));
+            events.ScheduleEvent(EVENT_SUNDER_ARMOR, urand(4000, 9000));
+            events.ScheduleEvent(EVENT_INCREASE_DAMAGE, 19500);
+
+            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                events.ScheduleEvent(EVENT_TARGET_VOLCANO_ERUPTION, 12000);
+            }
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (!UpdateVictim())
+            {
+                return;
+            }
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+            {
+                return;
+            }
+
+            while (uint32 const eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_STRIKE:
+                    {
+                        DoCastVictim(SPELL_STRIKE);
+                        events.RepeatEvent(urand(3000, 8000));
+                        break;
+                    }
+                    case EVENT_FIST_OF_RAGNAROS:
+                    {
+                        DoCastVictim(SPELL_FIST_OF_RAGNAROS);
+                        events.RepeatEvent(20000);
+                        break;
+                    }
+                    case EVENT_SUNDER_ARMOR:
+                    {
+                        DoCastVictim(SPELL_SUNDER_ARMOR);
+                        events.RepeatEvent(urand(4000, 9000));
+                        break;
+                    }
+                    case EVENT_INCREASE_DAMAGE:
+                    {
+                        DoCastSelf(SPELL_INCREASE_DAMAGE);
+                        events.RepeatEvent(19000);
+                        break;
+                    }
+                    case EVENT_TARGET_VOLCANO_ERUPTION:
+                    {
+                        Unit* target = SelectTarget(SelectTargetMethod::Random, 0, [&](Unit* target) -> bool
+                        {
+                            if (target->GetTypeId() != TYPEID_PLAYER)
+                                return false;
+
+                            if (me->GetVictim() == target)
+                                return false;
+
+                            if (target->HasAura(SPELL_VOLCANO_ERUPTION))
+                                return false;
+
+                            return true;
+                        });
+
+                        if (target) {
+                            DoCast(target, SPELL_VOLCANO_ERUPTION);
+                        }
+
+                        events.RepeatEvent(15000);
+                        break;
+                    }
+                }
+                DoMeleeAttackIfReady();
+            }
+        }
+
+    private:
+        EventMap events;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return GetMoltenCoreAI<npc_flamewakerAI>(creature);
+    }
+};
+
+
 class spell_effect_remove_hellfire : public AuraScript
 {
     PrepareAuraScript(spell_effect_remove_hellfire)
@@ -142,6 +278,7 @@ class spell_soaking_hellfire_finder : public SpellScript
 void AddSC_boss_gehennas()
 {
     new boss_gehennas();
+    new npc_flamewaker();
     // RegisterSpellScript(spell_effect_remove_hellfire);
     // RegisterSpellScript(spell_soaking_hellfire_finder);
 }

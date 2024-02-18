@@ -43,12 +43,16 @@ enum Spells
     SPELL_MASSIVE_ERUPTION              = 20483,    // Deals fire aoe damage, knockbacks nearby enemies and kills caster
     SPELL_ERUPTION_TRIGGER              = 20482,    // Removes banish auras and applied immunity to banish (server side)
     SPELL_ENRAGE_TRIGGER                = 19515,    // Server side. Triggers 19516 on hit
+    SPELL_METEOR_STRIKE                 = 2000066,
+    SPELL_SMALL_ERUPTION                = 2000065,
+    SPELL_EARTHQUAKE                    = 2000074,
 };
 
 enum Events
 {
-    EVENT_ANTIMAGIC_PULSE               = 1,
     EVENT_MAGMA_SHACKLES,
+    EVENT_SMALL_ERUPTION,
+    EVENT_EARTHQUAKE,
 };
 
 class boss_garr : public CreatureScript
@@ -73,8 +77,9 @@ public:
         {
             _EnterCombat();
             DoCastSelf(SPELL_SEPARATION_ANXIETY, true);
-            events.ScheduleEvent(EVENT_ANTIMAGIC_PULSE, 15000);
             events.ScheduleEvent(EVENT_MAGMA_SHACKLES, 10000);
+            events.ScheduleEvent(EVENT_SMALL_ERUPTION, 32000);
+            events.ScheduleEvent(EVENT_EARTHQUAKE, 12000);
             massEruptionTimer = 600000; // 10 mins
         }
 
@@ -108,16 +113,22 @@ public:
             {
                 switch (eventId)
                 {
-                    case EVENT_ANTIMAGIC_PULSE:
-                    {
-                        DoCastSelf(SPELL_ANTIMAGIC_PULSE);
-                        events.RepeatEvent(20000);
-                        break;
-                    }
                     case EVENT_MAGMA_SHACKLES:
                     {
                         DoCastSelf(SPELL_MAGMA_SHACKLES);
                         events.RepeatEvent(15000);
+                        break;
+                    }
+                    case EVENT_SMALL_ERUPTION:
+                    {
+                        DoCastVictim(SPELL_SMALL_ERUPTION);
+                        events.RepeatEvent(32000);
+                        break;
+                    }
+                    case EVENT_EARTHQUAKE:
+                    {
+                        DoCastRandomTarget(SPELL_EARTHQUAKE);
+                        events.RepeatEvent(12000);
                         break;
                     }
                 }
@@ -150,6 +161,50 @@ public:
     {
         npc_garr_fireswornAI(Creature* creature) : ScriptedAI(creature) {}
 
+        void SummonCrossPattern(Position pos, uint32 distance = 5.f, uint32 count = 10)
+        {
+            for (uint32 i = 1; i <= count; ++i) {
+                Position newPos = pos;
+                newPos.m_positionY = newPos.m_positionY + i * distance;
+                TempSummon* summon = me->SummonCreature(WORLD_TRIGGER, newPos, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                if (summon) {
+                    summon->SetFaction(FACTION_MONSTER);
+                    summon->CastSpell(summon, SPELL_METEOR_STRIKE);
+                }
+            }
+
+            for (uint32 i = 1; i <= count; ++i) {
+                Position newPos = pos;
+                newPos.m_positionY = newPos.m_positionY - i * distance;
+                TempSummon* summon = me->SummonCreature(WORLD_TRIGGER, newPos, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                if (summon) {
+                    summon->SetFaction(FACTION_MONSTER);
+                    summon->CastSpell(summon, SPELL_METEOR_STRIKE);
+                }
+            }
+
+            for (uint32 i = 1; i <= count; ++i) {
+                Position newPos = pos;
+                newPos.m_positionX = newPos.m_positionX + i * distance;
+                TempSummon* summon = me->SummonCreature(WORLD_TRIGGER, newPos, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                if (summon) {
+                    summon->SetFaction(FACTION_MONSTER);
+                    summon->CastSpell(summon, SPELL_METEOR_STRIKE);
+                }
+            }
+
+            for (uint32 i = 1; i <= count; ++i) {
+                Position newPos = pos;
+                newPos.m_positionX = newPos.m_positionX - i * distance;
+                TempSummon* summon = me->SummonCreature(WORLD_TRIGGER, newPos, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                if (summon) {
+                    summon->SetFaction(FACTION_MONSTER);
+                    summon->CastSpell(summon, SPELL_METEOR_STRIKE);
+                }
+            }
+        }
+
+
         void DamageTaken(Unit* attacker, uint32& damage, DamageEffectType /*damagetype*/, SpellSchoolMask /*damageSchoolMask*/ ) override
         {
             if (damage >= me->GetHealth())
@@ -161,6 +216,10 @@ public:
                 }
 
                 DoCastAOE(SPELL_ENRAGE_TRIGGER);
+
+                if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
+                    SummonCrossPattern(me->GetPosition());
+                }
             }
         }
     };

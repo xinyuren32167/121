@@ -26,12 +26,16 @@ enum Spells
     SPELL_INSPIRE               = 19779,
     SPELL_KNOCKDOWN             = 19780,
     SPELL_FLAMESPEAR            = 19781,
+    SPELL_METEOR_STRIKE         = 2000066,
+    SPELL_INFUSE_SPEAR         = 2000090,
+
 
     // Adds
     SPELL_DARK_MENDING          = 19775,
     SPELL_SHADOW_WORD_PAIN      = 19776,
     SPELL_DARK_STRIKE           = 19777,
     SPELL_IMMOLATE              = 20294,
+    SPELL_SHADOW_IMPACT         = 2000089
 };
 
 enum Events
@@ -40,6 +44,8 @@ enum Events
     EVENT_INSPIRE,
     EVENT_KNOCKDOWN,
     EVENT_FLAMESPEAR,
+    EVENT_FIRE_WEAPON_INFUSE,
+    EVENT_FIRE_METEOR_STRIKE,
 
     EVENT_DARK_MENDING,
     EVENT_SHADOW_WORD_PAIN,
@@ -60,31 +66,37 @@ public:
         {
             _EnterCombat();
             events.ScheduleEvent(EVENT_DEMORALIZING_SHOUT, urand(6000, 20000));
-            events.ScheduleEvent(EVENT_INSPIRE, urand(7000, 10000));
             events.ScheduleEvent(EVENT_KNOCKDOWN, 6000);
             events.ScheduleEvent(EVENT_FLAMESPEAR, 2000);
+            events.ScheduleEvent(EVENT_FIRE_METEOR_STRIKE, 2000);
+            events.ScheduleEvent(EVENT_FIRE_WEAPON_INFUSE, 60000);
         }
 
         void ExecuteEvent(uint32 eventId) override
         {
             switch (eventId)
             {
+                case EVENT_FIRE_METEOR_STRIKE:
+                {
+                    Position position = me->GetRandomNearPosition(30.f);
+                    TempSummon* summon = me->SummonCreature(WORLD_TRIGGER, position, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                    if (summon) {
+                        summon->SetFaction(FACTION_MONSTER);
+                        summon->CastSpell(summon, SPELL_METEOR_STRIKE);
+                    }
+                    events.RepeatEvent(4000);
+                    break;
+                }
+                case EVENT_FIRE_WEAPON_INFUSE:
+                {
+                    DoCastVictim(SPELL_INFUSE_SPEAR);
+                    events.RepeatEvent(60000);
+                    break;
+                }
                 case EVENT_DEMORALIZING_SHOUT:
                 {
                     DoCastVictim(SPELL_DEMORALIZING_SHOUT);
                     events.RepeatEvent(urand(12000, 18000));
-                    break;
-                }
-                case EVENT_INSPIRE:
-                {
-                    std::list<Creature*> healers = DoFindFriendlyMissingBuff(45.0f, SPELL_INSPIRE);
-                    if (!healers.empty())
-                    {
-                        DoCast(Acore::Containers::SelectRandomContainerElement(healers), SPELL_INSPIRE);
-                    }
-
-                    DoCastSelf(SPELL_INSPIRE);
-                    events.RepeatEvent(urand(13000, 20000));
                     break;
                 }
                 case EVENT_KNOCKDOWN:
@@ -126,12 +138,13 @@ public:
         void JustDied(Unit* /*killer*/) override
         {
             events.Reset();
+            DoCastSelf(SPELL_SHADOW_IMPACT);
         }
 
         void EnterCombat(Unit* /*victim*/) override
         {
             events.ScheduleEvent(EVENT_DARK_STRIKE, urand(4000, 7000));
-            events.ScheduleEvent(EVENT_DARK_MENDING, urand(15000, 30000));
+            events.ScheduleEvent(EVENT_DARK_MENDING, 19000);
             events.ScheduleEvent(EVENT_SHADOW_WORD_PAIN, urand(2000, 4000));
             events.ScheduleEvent(EVENT_IMMOLATE, urand(3500, 6000));
         }
@@ -169,7 +182,7 @@ public:
                                 DoCast(target, SPELL_DARK_MENDING);
                             }
                         }
-                        events.RepeatEvent(urand(15000, 20000));
+                        events.RepeatEvent(19000);
                         break;
                     }
                     case EVENT_SHADOW_WORD_PAIN:
