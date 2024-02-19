@@ -26,6 +26,7 @@ enum ShamanSpells
     SPELL_SHAMAN_CAPACITOR_TOTEM = 84069,
     SPELL_SHAMAN_CHAIN_HEAL = 55459,
     SPELL_SHAMAN_CHAIN_LIGHTNING = 49271,
+    SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD = 84056,
     SPELL_SHAMAN_CLOUDBURST_TOTEM = 84082,
     SPELL_SHAMAN_CRASH_LIGHTNING = 84032,
     SPELL_SHAMAN_DOOM_WINDS = 84029,
@@ -67,6 +68,8 @@ enum ShamanSpells
     SPELL_SHAMAN_LAVA_BURST = 60043,
     SPELL_SHAMAN_LAVA_LASH = 60103,
     SPELL_SHAMAN_LIGHTNING_BOLT = 49238,
+    SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD = 84057,
+    SPELL_SHAMAN_LAVA_BEAM_OVERLOAD = 84058,
     SPELL_SHAMAN_LIGHTNING_LASSO = 84013,
     SPELL_SHAMAN_LIGHTNING_SHIELD = 49281,
     SPELL_SHAMAN_MANA_TIDE_TOTEM = 16190,
@@ -2441,7 +2444,28 @@ class rune_sha_charging_attacks : public AuraScript
     }
 };
 
+class rune_sha_power_of_the_maelstrom : public AuraScript
+{
+    PrepareAuraScript(rune_sha_power_of_the_maelstrom);
 
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        int32 spellID = eventInfo.GetSpellInfo()->Id;
+
+        if (!spellID)
+            return false;
+
+        if (spellID == SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD || spellID == SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD || spellID == SPELL_SHAMAN_LAVA_BEAM_OVERLOAD)
+            return false;
+
+        return true;
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(rune_sha_power_of_the_maelstrom::CheckProc);
+    }
+};
 
 void AddSC_shaman_perks_scripts()
 {
@@ -2508,8 +2532,6 @@ void AddSC_shaman_perks_scripts()
     RegisterSpellScript(rune_sha_invoke_elements);
     RegisterSpellScript(rune_sha_deeply_rooted_earth);
     RegisterSpellScript(rune_sha_charging_attacks);
-
-
-    
+    RegisterSpellScript(rune_sha_power_of_the_maelstrom);
 }
 
