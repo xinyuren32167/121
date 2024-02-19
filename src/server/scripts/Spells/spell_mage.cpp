@@ -162,6 +162,7 @@ enum MageSpells
     // Passives
     PASSIVE_MAGE_HOT_STREAK = 44448,
     PASSIVE_MAGE_HOT_STREAK_BUFF = 48108,
+    PASSIVE_MAGE_MISSILE_BARRAGE_BUFF = 44401,
 
     // Runes
     RUNE_MAGE_SEARING_TOUCH_BUFF = 300747,
@@ -174,11 +175,7 @@ enum MageSpells
     T1_MAGE_ARCANE_2PC_BUFF = 95501,
     T1_MAGE_ARCANE_4PC = 95502,
     T1_MAGE_ARCANE_4PC_LISTENER = 95503,
-    T1_MAGE_ARCANE_4PC_MAIN_BUFF = 95504,
-    T1_MAGE_ARCANE_4PC_MISSILE1 = 95505,
-    T1_MAGE_ARCANE_4PC_MISSILE2 = 95506,
-    T1_MAGE_ARCANE_4PC_MISSILE3 = 95507,
-    T1_MAGE_ARCANE_4PC_MISSILE4 = 95508,
+    T1_MAGE_ARCANE_4PC_BUFF = 95504,
     T1_MAGE_FIRE_2PC_BUFF = 95601,
     T1_MAGE_FIRE_4PC = 95602,
     T1_MAGE_FIRE_4PC_BUFF = 95603,
@@ -1983,56 +1980,25 @@ class spell_mage_arcane_missiles_aura : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        Unit* target = GetUnitOwner();
+        if (caster->HasAura(T1_MAGE_ARCANE_4PC_BUFF))
+            caster->RemoveAura(T1_MAGE_ARCANE_4PC_BUFF);
 
-        if (!target || target->isDead())
-            return;
+        if (caster->HasAura(T1_MAGE_ARCANE_2PC))
+            if (caster->HasAura(PASSIVE_MAGE_MISSILE_BARRAGE_BUFF))
+                caster->CastSpell(caster, T1_MAGE_ARCANE_2PC_BUFF, TRIGGERED_FULL_MASK);
 
         if (Aura* setBonus = caster->GetAura(T1_MAGE_ARCANE_4PC))
+        {
+            if (caster->HasAura(PASSIVE_MAGE_MISSILE_BARRAGE_BUFF))
+                caster->CastSpell(caster, T1_MAGE_ARCANE_4PC_LISTENER, TRIGGERED_FULL_MASK);
+
             if (Aura* listener = caster->GetAura(T1_MAGE_ARCANE_4PC_LISTENER))
                 if (listener->GetStackAmount() >= setBonus->GetEffect(EFFECT_0)->GetAmount())
                 {
                     listener->Remove();
-                    int32 additionalTargets = setBonus->GetEffect(EFFECT_1)->GetAmount();
-                    int32 procSpell = T1_MAGE_ARCANE_4PC_MISSILE1;
-
-                    caster->AddAura(95510, caster);
-                    caster->AddAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF, target);
-
-                    /*auto const& threatList = caster->getAttackers();
-
-                    if (threatList.size() <= 0)
-                        return;
-                    */
-
-                    /*for (auto const& targets : threatList)
-                        if (targets->IsAlive())
-                        {
-                            if (targets == target)
-                                continue;
-
-                            float distance = targets->GetDistance(target->GetPosition());
-                            LOG_ERROR("error", "distance = {}", distance);
-                            if (distance > 20)
-                                continue;
-                            LOG_ERROR("error", "additionalTargets = {}", additionalTargets);
-                            LOG_ERROR("error", "procSpell = {}", procSpell);
-                            caster->CastSpell(targets, procSpell, TRIGGERED_FULL_MASK);
-                            additionalTargets--;
-
-                            if (additionalTargets <= 0 || procSpell == T1_MAGE_ARCANE_4PC_MISSILE4)
-                                break;
-
-                            if (procSpell == T1_MAGE_ARCANE_4PC_MISSILE3)
-                                procSpell = T1_MAGE_ARCANE_4PC_MISSILE4;
-
-                            if (procSpell == T1_MAGE_ARCANE_4PC_MISSILE2)
-                                procSpell = T1_MAGE_ARCANE_4PC_MISSILE3;
-
-                            if (procSpell == T1_MAGE_ARCANE_4PC_MISSILE1)
-                                procSpell = T1_MAGE_ARCANE_4PC_MISSILE2;
-                        }*/
+                    caster->AddAura(T1_MAGE_ARCANE_4PC_BUFF, caster);
                 }
+        }
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes  /*mode*/)
@@ -2079,9 +2045,6 @@ class spell_mage_arcane_missile_damage : public SpellScript
 
         int32 damage = GetHitDamage();
 
-        if (Aura* buffAura = target->GetAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF))
-            AddPct(damage, buffAura->GetEffect(EFFECT_0)->GetAmount());
-
         SetHitDamage(damage);
     }
 
@@ -2091,17 +2054,6 @@ class spell_mage_arcane_missile_damage : public SpellScript
 
         if (!caster || caster->isDead())
             return;
-
-        Unit* target = GetHitUnit();
-
-        if (!target || target->isDead())
-            return;
-
-        if (!caster->HasAura(SPELL_MAGE_ARCANE_MISSILE) && !caster->HasAura(SPELL_MAGE_ARCANE_MISSILE_MOVING))
-        {
-            if (target->HasAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF))
-                target->RemoveAura(T1_MAGE_ARCANE_4PC_MAIN_BUFF);
-        }
     }
 
     void Register() override
@@ -4197,31 +4149,6 @@ class spell_mage_ice_nova_target_select : public SpellScript
     }
 };
 
-// 12536 - Clearcasting
-class spell_mage_clearcasting : public AuraScript
-{
-    PrepareAuraScript(spell_mage_clearcasting);
-
-    void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (caster->HasAura(T1_MAGE_ARCANE_2PC))
-            caster->CastSpell(caster, T1_MAGE_ARCANE_2PC_BUFF, TRIGGERED_FULL_MASK);
-
-        if (caster->HasAura(T1_MAGE_ARCANE_4PC))
-            caster->CastSpell(caster, T1_MAGE_ARCANE_4PC_LISTENER, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectRemove += AuraEffectRemoveFn(spell_mage_clearcasting::HandleRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
 
 
 void AddSC_mage_spell_scripts()
@@ -4323,7 +4250,6 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_frostbolt);
     RegisterSpellScript(spell_mage_icy_veins);
     RegisterSpellScript(spell_mage_ice_nova_target_select);
-    RegisterSpellScript(spell_mage_clearcasting);
 
 
 

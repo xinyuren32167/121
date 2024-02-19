@@ -20,6 +20,12 @@ enum SetSpells
     SPELL_WARRIOR_SHIELD_VAULT = 84559,
     // Mage
     SPELL_MAGE_ICE_LANCE = 42914,
+    SPELL_MAGE_WEAPON_ENCHANT_ARCANIZE_AURA = 81572,
+    SPELL_MAGE_WEAPON_ENCHANT_CONDUIT_AURA = 81575,
+    SPELL_MAGE_WEAPON_ENCHANT_DEFLECTION_AURA = 81578,
+    SPELL_MAGE_WEAPON_ENCHANT_FORCE_AURA = 81580,
+    SPELL_MAGE_WEAPON_ENCHANT_IGNIS_AURA = 81583,
+    SPELL_MAGE_WEAPON_ENCHANT_SNOWBOUND_AURA = 81586,
     // Paladin
     SPELL_PALADIN_AVENGERS_SHIELD = 48827,
     SPELL_PALADIN_DIVINE_ZEAL = 86508,
@@ -71,6 +77,8 @@ enum SetSpells
     SPELL_SET_T1_WARRIOR_FURY_BONUS2_BUFF = 95101,
     SPELL_SET_T1_WARRIOR_FURY_BONUS2_VISUAL = 95102,
     // Mage
+    SPELL_SET_T1_MAGE_ARCANE_4PC_LISTENER = 95503,
+    SPELL_SET_T1_MAGE_ARCANE_4PC_DAMAGE = 95505,
     SPELL_SET_T1_MAGE_FROST_BONUS2_DAMAGE = 95701,
     // Paladin
     SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT = 96101,
@@ -545,10 +553,10 @@ class spell_set_warrior_hoplite_T1_B4 : public AuraScript
 
 // --------------------------------------------------------------------------- Mage Sets ---------------------------------------------------------------------------
 
-// 95700 - Frostweaver Regalia Frost T1 Bonus 2
-class spell_set_mage_frost_T1_B2 : public AuraScript
+// 95504 - Arcanist Regalia Arcane T1 4pc buff
+class spell_set_mage_arcane_T1_4pc : public AuraScript
 {
-    PrepareAuraScript(spell_set_mage_frost_T1_B2);
+    PrepareAuraScript(spell_set_mage_arcane_T1_4pc);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -567,23 +575,21 @@ class spell_set_mage_frost_T1_B2 : public AuraScript
         if (!target || target->isDead())
             return;
 
-        if (target->HasAuraState(AURA_STATE_FROZEN))
-        {
-            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
-            caster->CastCustomSpell(SPELL_SET_T1_MAGE_FROST_BONUS2_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
-        }
+        int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+        caster->CastCustomSpell(SPELL_SET_T1_MAGE_ARCANE_4PC_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(spell_set_mage_frost_T1_B2::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_set_mage_frost_T1_B2::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_set_mage_arcane_T1_4pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_mage_arcane_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
-class spell_set_mage_frost_T1_B2_target : public SpellScript
+// 95505 - Arcanist Regalia Arcane T1 4pc damage
+class spell_set_mage_arcane_T1_4pc_target : public SpellScript
 {
-    PrepareSpellScript(spell_set_mage_frost_T1_B2_target);
+    PrepareSpellScript(spell_set_mage_arcane_T1_4pc_target);
 
     void FilterTargets(std::list<WorldObject*>& targets)
     {
@@ -597,7 +603,63 @@ class spell_set_mage_frost_T1_B2_target : public SpellScript
 
     void Register() override
     {
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_set_mage_frost_T1_B2_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_set_mage_arcane_T1_4pc_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+    }
+};
+
+// 95700 - Frostweaver Regalia Frost T1 2pc
+class spell_set_mage_frost_T1_2pc : public AuraScript
+{
+    PrepareAuraScript(spell_set_mage_frost_T1_2pc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (target->HasAuraState(AURA_STATE_FROZEN, sSpellMgr->AssertSpellInfo(SPELL_MAGE_ICE_LANCE), caster))
+        {
+            int32 amount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
+            caster->CastCustomSpell(SPELL_SET_T1_MAGE_FROST_BONUS2_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+        }
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_set_mage_frost_T1_2pc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_set_mage_frost_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_set_mage_frost_T1_2pc_target : public SpellScript
+{
+    PrepareSpellScript(spell_set_mage_frost_T1_2pc_target);
+
+    void FilterTargets(std::list<WorldObject*>& targets)
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget());
+
+        if (!target || target->isDead())
+            return;
+
+        targets.remove(target);
+    }
+
+    void Register() override
+    {
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_set_mage_frost_T1_2pc_target::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
     }
 };
 
@@ -612,11 +674,29 @@ class spell_set_mage_spellblade_T1_2pc : public AuraScript
 
         if (!caster || caster->isDead())
             return false;
-
+        LOG_ERROR("error", "caster check");
         if (Player* player = caster->ToPlayer())
-            return player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_MAGE, DISPEL_NONE);
+        {
+            LOG_ERROR("error", "player check");
+            return player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_ARCANIZE_AURA)
+                || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_CONDUIT_AURA)
+                || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_DEFLECTION_AURA)
+                || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_FORCE_AURA)
+                || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_IGNIS_AURA)
+                || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_SNOWBOUND_AURA);
 
-        return false;     
+            /*if (uint32 enchantID = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_MAGE, DISPEL_NONE))
+            {
+                LOG_ERROR("error", "enchantID = {}", enchantID);
+                return (enchantID == SPELL_MAGE_WEAPON_ENCHANT_ARCANIZE_AURA
+                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_CONDUIT_AURA
+                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_DEFLECTION_AURA
+                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_FORCE_AURA
+                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_IGNIS_AURA
+                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_SNOWBOUND_AURA);
+            }*/
+        }
+        else return false;
     }
 
     void Register()
@@ -2200,10 +2280,12 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_warrior_prot_T1_B2);
     RegisterSpellScript(spell_set_warrior_hoplite_T1_B4);
 
-    RegisterSpellScript(spell_set_mage_frost_T1_B2);
-    RegisterSpellScript(spell_set_mage_frost_T1_B2_target);
+    RegisterSpellScript(spell_set_mage_arcane_T1_4pc);
+    RegisterSpellScript(spell_set_mage_arcane_T1_4pc_target);
+    RegisterSpellScript(spell_set_mage_frost_T1_2pc);
+    RegisterSpellScript(spell_set_mage_frost_T1_2pc_target);
     RegisterSpellScript(spell_set_mage_spellblade_T1_2pc);
-    
+
     RegisterSpellScript(spell_set_paladin_prot_T1_B2);
     RegisterSpellScript(spell_set_paladin_prot_T1_B4);
     RegisterSpellScript(spell_set_paladin_ret_T1_B2B4);
