@@ -1966,7 +1966,13 @@ class spell_pri_atonement : public AuraScript
 
         if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_FLASH_HEAL || eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_RENEW)
         {
-            caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+            if (!target->HasAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                caster->AddAura(SPELL_PRIEST_AUTONEMENT_AURA, target);
+
+            if (Aura* atonementAura = target->GetAura(SPELL_PRIEST_AUTONEMENT_AURA))
+                if (atonementAura->GetDuration() <= 8000)
+                    atonementAura->RefreshDuration();
+
             return;
         }
 
