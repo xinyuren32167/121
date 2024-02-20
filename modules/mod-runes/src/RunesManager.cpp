@@ -1281,7 +1281,8 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
     }
 
     SpecValue specValue = PlayerSpecialization::GetSpecValue(player);
-    bool isSpecAllowed = rune.specMask & specValue.specMask && (rune.type == 0 || rune.type == specValue.type);
+
+    bool isSpecAllowed = (rune.specMask & specValue.specMask || specValue.specMask == 0) && (rune.type == 0 || rune.type == specValue.type);
 
     if ((rune.allowableClass & player->getClassMask()) == 0 || (!isSpecAllowed))
     {

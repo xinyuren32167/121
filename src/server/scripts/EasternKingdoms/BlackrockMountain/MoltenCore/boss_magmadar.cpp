@@ -75,9 +75,7 @@ public:
             events.ScheduleEvent(EVENT_PANIC, 9500);
             events.ScheduleEvent(EVENT_LAVA_BOMB, 12000);
             events.ScheduleEvent(EVENT_LAVA_BOMB_RANGED, 15000);
-            if (GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC) {
-                events.ScheduleEvent(EVENT_TARGET_JUMP_ON_PLAYER, 32000);
-            }
+            events.ScheduleEvent(EVENT_TARGET_JUMP_ON_PLAYER, 32000);
         }
 
         void EnterCombat(Unit* /*victim*/) override
@@ -91,9 +89,13 @@ public:
             if (GetDifficulty() != RAID_DIFFICULTY_10_25MAN_MYTHIC)
                 return;
 
+            uint32 playerCount = me->GetMap()->GetPlayers().getSize();
+            uint8 count = playerCount > 20 ? 5 : 2;
+
+
             if (me->HealthBelowPctDamaged(75, damage) && !firstSummon)
             {
-                for (size_t i = 0; i < 2; i++)
+                for (size_t i = 0; i < count; i++)
                 {
                     TempSummon* summon = me->SummonCreature(11671, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
                     summon->AI()->DoZoneInCombat();
@@ -104,7 +106,7 @@ public:
 
             if (me->HealthBelowPctDamaged(50, damage) && !secondSummon)
             {
-                for (size_t i = 0; i < 2; i++)
+                for (size_t i = 0; i < count; i++)
                 {
                     TempSummon* summon = me->SummonCreature(11671, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
                     summon->AI()->DoZoneInCombat();
@@ -114,7 +116,7 @@ public:
 
             if (me->HealthBelowPctDamaged(25, damage) && !lastSummon)
             {
-                for (size_t i = 0; i < 2; i++)
+                for (size_t i = 0; i < count; i++)
                 {
                     TempSummon* summon = me->SummonCreature(11671, me->GetPosition(), TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
                     summon->AI()->DoZoneInCombat();
@@ -130,11 +132,10 @@ public:
             {
                 case EVENT_TARGET_JUMP_ON_PLAYER:
                 {
-                    events.Reset();
                     std::list<Unit*> targets;
                     SelectTargetList(targets, [this](Unit* target)
                     {
-                        return target && target->IsPlayer() && target->GetDistance(me) > MELEE_TARGET_LOOKUP_DIST && target->GetDistance(me) < 100.0f;
+                        return target && target->IsPlayer() && target->GetDistance(me) > 10.f && target->GetDistance(me) < 100.0f;
                     }, 1, SelectTargetMethod::Random);
 
                     if (!targets.empty())
@@ -150,7 +151,6 @@ public:
                 case EVENT_JUMP_ON_PLAYER:
                 {
                     float distance = me->GetDistance(jumpPosition);
-
                     float x = jumpPosition.GetPositionX();
                     float y = jumpPosition.GetPositionY();
                     float z = jumpPosition.GetPositionZ();
@@ -166,12 +166,10 @@ public:
                     events.ScheduleEvent(EVENT_STOMP_ON_PLAYER, (totalTimeOfFlight * 1000) + 100);
                     break;
                 }
-                    
                 case EVENT_STOMP_ON_PLAYER:
                 {
-                    Talk(EMOTE_FRENZY);
                     DoCastSelf(SPELL_STOMP);
-                    ScheduleEvents();
+                    events.ScheduleEvent(EVENT_TARGET_JUMP_ON_PLAYER, 32000);
                     break;
                 }
                 case EVENT_FRENZY:

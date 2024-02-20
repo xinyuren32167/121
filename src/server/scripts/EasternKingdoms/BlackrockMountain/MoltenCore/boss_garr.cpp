@@ -127,7 +127,16 @@ public:
                     }
                     case EVENT_EARTHQUAKE:
                     {
-                        DoCastRandomTarget(SPELL_EARTHQUAKE);
+                        std::list<Unit*> targets;
+                        SelectTargetList(targets, [this](Unit* target)
+                        {
+                            return target && target->IsPlayer() && target->GetDistance(me) > 10.f && target->GetDistance(me) < 100.0f;
+                        }, 1, SelectTargetMethod::Random);
+
+                        if (!targets.empty())
+                        {
+                            DoCast(targets.front(), SPELL_EARTHQUAKE);
+                        }
                         events.RepeatEvent(12000);
                         break;
                     }

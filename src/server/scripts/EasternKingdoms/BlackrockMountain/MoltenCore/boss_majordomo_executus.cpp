@@ -339,14 +339,7 @@ public:
                         {
                             case EVENT_SHIELD_REFLECTION:
                             {
-                                if (rand_chance() <= 50.f)
-                                {
-                                    DoCastSelf(SPELL_MAGIC_REFLECTION);
-                                }
-                                else
-                                {
-                                    DoCastSelf(SPELL_DAMAGE_REFLECTION);
-                                }
+                                DoCastSelf(SPELL_DAMAGE_REFLECTION);
                                 events.RepeatEvent(30000);
                                 break;
                             }

@@ -77,7 +77,7 @@ public:
                 case EVENT_SHADOW_IMPACT:
                 {
                     std::list<Unit*> targets;
-                    SelectTargetList(targets, 5, SelectTargetMethod::MinThreat, 100.0f, true);
+                    SelectTargetList(targets, 3, SelectTargetMethod::MinThreat, 100.0f, true);
                     if (!targets.empty())
                         for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
                             if ((*itr) != me->GetVictim()) {
@@ -150,7 +150,7 @@ public:
         void EnterCombat(Unit* /*victim*/) override
         {
             events.ScheduleEvent(EVENT_STRIKE, urand(3000, 8000));
-            events.ScheduleEvent(EVENT_FIST_OF_RAGNAROS, urand(3000, 6000));
+            events.ScheduleEvent(EVENT_FIST_OF_RAGNAROS, 9000);
             events.ScheduleEvent(EVENT_SUNDER_ARMOR, urand(4000, 9000));
             events.ScheduleEvent(EVENT_INCREASE_DAMAGE, 19500);
 

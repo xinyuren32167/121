@@ -4334,6 +4334,9 @@ void Spell::_handle_finish_phase()
 
 void Spell::SendSpellCooldown()
 {
+    if (_triggeredCastFlags & TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD)
+        return;
+
     // xinef: properly add creature cooldowns
     if (m_caster->GetTypeId() != TYPEID_PLAYER)
     {
@@ -4368,7 +4371,7 @@ void Spell::SendSpellCooldown()
     }
 
     // have infinity cooldown but set at aura apply                  // do not set cooldown for triggered spells (needed by reincarnation)
-    if (m_spellInfo->IsCooldownStartedOnEvent() || m_spellInfo->IsPassive() || ((_triggeredCastFlags & TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD) && !m_CastItem))
+    if (m_spellInfo->IsCooldownStartedOnEvent() || m_spellInfo->IsPassive() && !m_CastItem)
         return;
 
     _player->AddSpellAndCategoryCooldowns(m_spellInfo, m_CastItem ? m_CastItem->GetEntry() : 0, this);

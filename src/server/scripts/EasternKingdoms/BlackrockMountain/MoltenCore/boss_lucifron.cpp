@@ -26,8 +26,6 @@ enum Spells
     SPELL_SHADOW_SHOCK             = 20603,
     SPELL_WELL_OF_SOUL             = 2000061,
 
-
-
     // ads
     SPELL_DOMINATE_MIND = 20604,
     SPELL_CLEAVE = 20605,
@@ -88,9 +86,17 @@ public:
                     events.RepeatEvent(20000);
                     break;
                 }
+
                 case EVENT_LUCIFRON_CURSE:
                 {
-                    DoCastRandomTarget(SPELL_LUCIFRON_CURSE);
+                    std::list<Unit*> targets;
+                    SelectTargetList(targets, 3, SelectTargetMethod::MinThreat, 100.0f, true);
+                    if (!targets.empty())
+                        for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
+                            if ((*itr) != me->GetVictim()) {
+                                me->CastSpell(*itr, SPELL_LUCIFRON_CURSE, true);
+                            }
+
                     events.RepeatEvent(20000);
                     break;
                 }

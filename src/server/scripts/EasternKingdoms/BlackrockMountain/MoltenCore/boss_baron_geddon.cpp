@@ -35,6 +35,7 @@ enum Spells
     SPELL_FIRE_NOVA                 = 2000070,
     SPELL_IGNITED                   = 2000068,
     SPELL_HELLFIRE                   = 2000076,
+    SPELL_FIRE_AURA_MYTHIC          = 2000092
 };
 
 enum Npc {
@@ -74,7 +75,7 @@ public:
         void EnterCombat(Unit* /*attacker*/) override
         {
             _EnterCombat();
-            DoCastSelf(SPELL_FIRE_AURA);
+            DoCastSelf(GetDifficulty() == RAID_DIFFICULTY_10_25MAN_MYTHIC ? SPELL_FIRE_AURA_MYTHIC : SPELL_FIRE_AURA);
             events.ScheduleEvent(EVENT_IGNITE_MANA, urand(7000, 19000));
             events.ScheduleEvent(EVENT_LIVING_BOMB, 15000);
             events.ScheduleEvent(EVENT_IGNITED, 5500);
@@ -110,7 +111,7 @@ public:
                 }
                 case EVENT_FIRE_NOVA:
                 {
-                    DoCastVictim(2000070);
+                    DoCastVictim(SPELL_FIRE_NOVA);
                     events.RepeatEvent(30000);
                     break;
                 }

@@ -42,7 +42,6 @@ enum Spells
     SPELL_MANGLE                = 19820,
     SPELL_FULL_HEAL             = 17683,
     SPELL_RAGE                  = 2000079,
-
 };
 
 

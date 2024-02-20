@@ -92,10 +92,15 @@ public:
                 }
                 case EVENT_SHAZZRAH_CURSE:
                 {
-                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true, -SPELL_SHAZZRAH_CURSE))
-                    {
-                        DoCast(target, SPELL_SHAZZRAH_CURSE);
-                    }
+
+                    std::list<Unit*> targets;
+                    SelectTargetList(targets, 3, SelectTargetMethod::MinThreat, 100.0f, true);
+                    if (!targets.empty())
+                        for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
+                            if ((*itr) != me->GetVictim()) {
+                                me->CastSpell(*itr, SPELL_SHAZZRAH_CURSE, true);
+                            }
+
                     events.RepeatEvent(urand(23000, 26000));
                     break;
                 }
