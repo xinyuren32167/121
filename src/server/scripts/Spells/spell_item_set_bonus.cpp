@@ -34,7 +34,6 @@ enum SetSpells
     SPELL_PALADIN_INSPIRING_VANGUARD_BUFF = 80104,
     // Hunter
     SPELL_HUNTER_BESTIAL_WRATH = 80133,
-    SPELL_HUNTER_CRESCENT_VEIL = 85009,
     SPELL_HUNTER_TWILIGHT_PIERCER = 85006,
     // Death Knight
     SPELL_DEATHKNIGHT_PILLAR_OF_FROST = 80303,
@@ -83,9 +82,12 @@ enum SetSpells
     // Paladin
     SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT = 96101,
     SPELL_SET_T1_PALADIN_PROT_BONUS2_HEAL = 96102,
+    SPELL_SET_T1_PALADIN_RET_4PC = 96201,
     // Hunter
     SPELL_SET_T1_HUNTER_MM_4PC_BUFF = 96602,
-    SPELL_SET_T1_HUNTER_SURV_4PC_BUFF = 96701,
+    SPELL_SET_T1_HUNTER_MM_2PC_DEBUFF = 96603,
+    SPELL_SET_T1_HUNTER_SURV_2PC_BUFF = 96701,
+    SPELL_SET_T1_HUNTER_SURV_4PC_BUFF = 96703,
     // Death Knight
     SPELL_SET_T1_DEATHKNIGHT_BLOOD_4PC_BUFF = 97002,
     SPELL_SET_T1_DEATHKNIGHT_FROST_4PC_BUFF = 97102,
@@ -720,8 +722,8 @@ class spell_set_paladin_prot_T1_B2 : public AuraScript
         if (!eventInfo.GetSpellInfo())
             return false;
 
-        if (eventInfo.GetDamageInfo()->GetDamageType() == DOT)
-            return eventInfo.GetSpellInfo()->Id == SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT;
+        /*if (eventInfo.GetDamageInfo()->GetDamageType() == DOT)
+            return eventInfo.GetSpellInfo()->Id == SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT;*/
 
         if (eventInfo.GetDamageInfo()->GetDamageType() == SPELL_DIRECT_DAMAGE)
             return eventInfo.GetSpellInfo()->Id == SPELL_PALADIN_AVENGERS_SHIELD;
@@ -755,11 +757,11 @@ class spell_set_paladin_prot_T1_B2 : public AuraScript
             caster->CastCustomSpell(SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
 
-        if (spellID == SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT)
+        /*if (spellID == SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT)
         {
             int32 amount = CalculatePct(damage, GetEffect(EFFECT_1)->GetAmount());
             caster->CastCustomSpell(SPELL_SET_T1_PALADIN_PROT_BONUS2_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
-        }
+        }*/
     }
 
     void Register()
@@ -838,13 +840,16 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
         if (!target || target->isDead())
             return;
 
-        if (Aura* bonus4 = caster->GetAura(96201))
+        if (Aura* bonus4 = caster->GetAura(SPELL_SET_T1_PALADIN_RET_4PC))
         {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
             int32 amount = CalculatePct(damage, aurEff->GetAmount());
             int32 additionalTargets = bonus4->GetEffect(EFFECT_1)->GetAmount();
 
             auto const& threatList = caster->getAttackers();
+
+            if (threatList.size() <= 0)
+                return;
 
             for (auto const& targets : threatList)
                 if (targets->IsAlive())
@@ -857,7 +862,7 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
                     if (distance > 12)
                         continue;
 
-                    target->CastCustomSpell(SPELL_PALADIN_HAMMER_OF_WRATH, SPELLVALUE_BASE_POINT0, amount, targets, TRIGGERED_FULL_MASK, nullptr, nullptr, caster->GetGUID());
+                    caster->CastCustomSpell(SPELL_PALADIN_HAMMER_OF_WRATH, SPELLVALUE_BASE_POINT0, amount, targets, TRIGGERED_FULL_MASK);
                     additionalTargets--;
 
                     if (additionalTargets <= 0)
@@ -880,7 +885,7 @@ class spell_set_paladin_inquisitor_T1_4pc : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetSpellInfo();
+        return eventInfo.GetDamageInfo();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -947,12 +952,16 @@ class spell_set_hunter_marksman_T1_2pc : public AuraScript
         if (!caster || caster->isDead())
             return false;
 
-        for (size_t i = 500512; i < 500518; i++)
-        {
-            if (caster->HasAura(i))
-                return true;
-        }
+        if (caster->HasAura(SPELL_SET_T1_HUNTER_MM_2PC_DEBUFF))
+            return false;
 
+        for (size_t i = 500512; i < 500518; i++)
+            if (caster->HasAura(i))
+            {
+                caster->AddAura(96604, caster);
+                return true;
+            }
+                
         return false;
     }
 
@@ -1029,44 +1038,41 @@ class spell_set_hunter_surv_T1_2pc : public AuraScript
             if (!pet || pet->isDead())
                 return;
 
-            player->AddAura(SPELL_SET_T1_HUNTER_SURV_4PC_BUFF, pet);
+            player->AddAura(SPELL_SET_T1_HUNTER_SURV_2PC_BUFF, pet);
         }
     }
 
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_set_hunter_surv_T1_2pc::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_set_hunter_surv_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        OnEffectProc += AuraEffectProcFn(spell_set_hunter_surv_T1_2pc::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
     }
 };
 
-// 96802 - Shadowstalker Armor Dark Ranger T1 4pc
-class spell_set_hunter_dark_ranger_T1_4pc : public AuraScript
+// 96702 - Tracker Armor Survival T1 4pc
+class spell_set_hunter_surv_T1_4pc : public AuraScript
 {
-    PrepareAuraScript(spell_set_hunter_dark_ranger_T1_4pc);
+    PrepareAuraScript(spell_set_hunter_surv_T1_4pc);
 
     bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetSpellInfo();
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
 
         if (!caster || caster->isDead())
-            return;
+            return false;
 
-        int32 cooldown = aurEff->GetAmount();
+        if (!eventInfo.GetSpellInfo() || eventInfo.GetSpellInfo()->Id != 80194)
+            return false;
 
-        if (Player* player = caster->ToPlayer())
-            player->ModifySpellCooldown(SPELL_HUNTER_CRESCENT_VEIL, -cooldown);
+        if (Aura* buff = caster->AddAura(SPELL_SET_T1_HUNTER_SURV_4PC_BUFF, caster))
+            return true;
+        else
+            return false;
     }
 
-    void Register()
+    void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(spell_set_hunter_dark_ranger_T1_4pc::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_set_hunter_dark_ranger_T1_4pc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_set_hunter_surv_T1_4pc::CheckProc);
     }
 };
 
@@ -2295,7 +2301,7 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_hunter_marksman_T1_2pc);
     RegisterSpellScript(spell_set_hunter_marksman_T1_4pc);
     RegisterSpellScript(spell_set_hunter_surv_T1_2pc);
-    RegisterSpellScript(spell_set_hunter_dark_ranger_T1_4pc);
+    RegisterSpellScript(spell_set_hunter_surv_T1_4pc);
     RegisterSpellScript(spell_set_hunter_dark_ranger_T1_4pc_buff);
 
     RegisterSpellScript(spell_set_deathknight_blood_T1_2pc);

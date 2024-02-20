@@ -66,6 +66,7 @@ enum HunterSpells
     SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1 = 64418,
 
     // Ours
+    SPELL_HUNTER_CRESCENT_VEIL = 85009,
     SPELL_HUNTER_WYVERN_STING_DOT = 80156,
     SPELL_HUNTER_WILDFIRE_BOMB = 80188,
     SPELL_HUNTER_KILL_SHOT = 61006,
@@ -120,9 +121,10 @@ enum HunterSpells
     RUNE_HUNTER_EVASIVE_MANEUVERS_SHIELD = 501732,
 
     // Sets
-    T1_HUNTER_SURVIVAL_2PC_BUFF = 96801,
-    T1_HUNTER_SURVIVAL_4PC = 96802,
-    T1_HUNTER_SURVIVAL_4PC_BUFF = 96803,
+    T1_HUNTER_SURVIVAL_4PC_BUFF = 96704,
+    T1_HUNTER_DARKRANGER_2PC_BUFF = 96801,
+    T1_HUNTER_DARKRANGER_4PC = 96802,
+    T1_HUNTER_DARKRANGER_4PC_BUFF = 96803,
 };
 
 class spell_hun_check_pet_los : public SpellScript
@@ -1378,7 +1380,7 @@ class spell_hun_predators_thirst : public AuraScript
         if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
             Unit* pet = GetCaster();
 
-            if (!pet|| pet->isDead())
+            if (!pet || pet->isDead())
                 return;
 
             Unit* master = GetCaster()->GetOwner();
@@ -3320,8 +3322,23 @@ class spell_hun_twilight_piercer : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        if (caster->HasAura(T1_HUNTER_SURVIVAL_2PC_BUFF))
-            caster->RemoveAura(T1_HUNTER_SURVIVAL_2PC_BUFF);
+        if (Player* player = caster->ToPlayer())
+        {
+            if (caster->HasAura(T1_HUNTER_DARKRANGER_2PC_BUFF))
+            {
+                caster->RemoveAura(T1_HUNTER_DARKRANGER_2PC_BUFF);
+
+                if (Aura* T1_4pc = caster->GetAura(T1_HUNTER_DARKRANGER_4PC))
+                {
+                    int32 cooldown = T1_4pc->GetEffect(EFFECT_0)->GetAmount();
+
+                    if (caster->HasAura(SPELL_HUNTER_CRESCENT_VEIL))
+                        cooldown *= 2;
+
+                    player->ModifySpellCooldown(SPELL_HUNTER_CRESCENT_VEIL, -cooldown);
+                }
+            }
+        }
     }
 
     void Register() override
@@ -3833,8 +3850,8 @@ class spell_hun_crescent_veil : public AuraScript
         }
 
         // Grant T1 4pc buff
-        if (caster->HasAura(T1_HUNTER_SURVIVAL_4PC))
-            caster->AddAura(T1_HUNTER_SURVIVAL_4PC_BUFF, caster);
+        if (caster->HasAura(T1_HUNTER_DARKRANGER_4PC))
+            caster->AddAura(T1_HUNTER_DARKRANGER_4PC_BUFF, caster);
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -3859,8 +3876,8 @@ class spell_hun_crescent_veil : public AuraScript
         }
 
         // Remove T1 4pc buff
-        if (caster->HasAura(T1_HUNTER_SURVIVAL_4PC_BUFF))
-            caster->RemoveAura(T1_HUNTER_SURVIVAL_4PC_BUFF);
+        if (caster->HasAura(T1_HUNTER_DARKRANGER_4PC_BUFF))
+            caster->RemoveAura(T1_HUNTER_DARKRANGER_4PC_BUFF);
     }
 
     void Register() override
@@ -4060,6 +4077,46 @@ class spell_hun_withering_fire_aura : public AuraScript
     }
 };
 
+// 80188 - Wildfire Bomb
+class spell_hun_wildfire_bomb : public SpellScript
+{
+    PrepareSpellScript(spell_hun_wildfire_bomb);
+
+    void HandleHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+
+        // Increase damage on main target.
+        if (Aura* buff = caster->GetAura(T1_HUNTER_SURVIVAL_4PC_BUFF))
+        {
+            Unit* mainTarget = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
+
+            if (mainTarget && target == mainTarget)
+            {
+                int32 damageIncrease = buff->GetEffect(EFFECT_0)->GetAmount();
+                AddPct(damage, damageIncrease);
+            }
+        }
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_hun_wildfire_bomb::HandleHit, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 
 
 void AddSC_hunter_spell_scripts()
@@ -4167,10 +4224,11 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_blend);
     RegisterSpellScript(spell_hun_shadow_empowerment);
     RegisterSpellScript(spell_hun_withering_fire_aura);
+    RegisterSpellScript(spell_hun_wildfire_bomb);
 
 
-    
-    
+
+
     new Hunter_AllMapScript();
     new npc_hunter_spell_stampeded();
 }
