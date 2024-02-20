@@ -1642,11 +1642,11 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     break;
                 switch(GetId())
                 {
-                    case 61987: // Avenging Wrath
+                    /*case 61987: // Avenging Wrath
                         // Remove the immunity shield marker on Avenging Wrath removal if Forbearance is not present
                         if (target->HasAura(61988) && !target->HasAura(25771))
                             target->RemoveAura(61988);
-                        break;
+                        break;*/
                     case 72368: // Shared Suffering
                     case 72369:
                         if (AuraEffect* aurEff = GetEffect(0))
@@ -1927,8 +1927,8 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 break;
             case SPELLFAMILY_PALADIN:
                 // Remove the immunity shield marker on Forbearance removal if AW marker is not present
-                if (GetId() == 25771 && target->HasAura(61988) && !target->HasAura(61987))
-                    target->RemoveAura(61988);
+                /*if (GetId() == 25771 && target->HasAura(61988) && !target->HasAura(61987))
+                    target->RemoveAura(61988);*/
                 break;
             case SPELLFAMILY_HUNTER:
                 // Glyph of Freezing Trap

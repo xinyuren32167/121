@@ -51,6 +51,7 @@ enum PaladinSpells
     SPELL_PALADIN_FORBEARANCE = 25771,
     SPELL_PALADIN_GLYPH_OF_SALVATION = 63225,
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
+    SPELL_PALADIN_HAMMER_OF_WRATH_BUFF = 400068,
     SPELL_PALADIN_HOLY_SHOCK_R1 = 48825,
     SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE = 25912,
     SPELL_PALADIN_HOLY_SHOCK_R1_HEALING = 25914,
@@ -1111,7 +1112,7 @@ class spell_pal_forbearance_check : public SpellScript
 
     SpellCastResult CheckTarget()
     {
-        Unit* target = GetExplTargetUnit();
+        Unit* target = GetCaster();
         if (!target || target->HasAura(SPELL_PALADIN_FORBEARANCE))
             return SPELL_FAILED_TARGET_AURASTATE;
 
@@ -1121,6 +1122,26 @@ class spell_pal_forbearance_check : public SpellScript
     void Register() override
     {
         OnCheckCast += SpellCheckCastFn(spell_pal_forbearance_check::CheckTarget);
+    }
+};
+
+class spell_pal_forbearance_preventer_remover : public SpellScript
+{
+    PrepareSpellScript(spell_pal_forbearance_preventer_remover);
+
+    void HandleProc()
+    {
+        Unit* target = GetCaster();
+        if (!target)
+            return;
+
+        target->RemoveAura(61987);
+        target->RemoveAura(61988);
+    }
+
+    void Register()
+    {
+        AfterCast += SpellCastFn(spell_pal_forbearance_preventer_remover::HandleProc);
     }
 };
 
@@ -2763,6 +2784,28 @@ class spell_pal_shield_mastery : public AuraScript
     }
 };
 
+// 48806 - Hammer of Wrath
+class spell_pal_hammer_of_wrath : public SpellScript
+{
+    PrepareSpellScript(spell_pal_hammer_of_wrath);
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(SPELL_PALADIN_HAMMER_OF_WRATH_BUFF))
+            caster->RemoveAura(SPELL_PALADIN_HAMMER_OF_WRATH_BUFF);
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_pal_hammer_of_wrath::HandleAfterHit);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -2792,6 +2835,7 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_seal_of_righteousness);
     RegisterSpellScript(spell_pal_forbearance);
     RegisterSpellScript(spell_pal_forbearance_check);
+    RegisterSpellScript(spell_pal_forbearance_preventer_remover);
     RegisterSpellScript(spell_pal_seraphim);
     RegisterSpellScript(spell_pal_exorcism);
     RegisterSpellScript(spell_pal_consecration);
@@ -2840,4 +2884,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_avengers_shield);
     RegisterSpellScript(spell_pal_shield_of_the_righteous);
     RegisterSpellScript(spell_pal_shield_mastery);
+    RegisterSpellScript(spell_pal_hammer_of_wrath);
+    
 }

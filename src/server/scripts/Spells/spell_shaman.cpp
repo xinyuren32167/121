@@ -2360,8 +2360,6 @@ class spell_sha_stormkeeper : public AuraScript
     void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
-        Unit* target = GetUnitOwner();
-
         if (!caster)
             return;
 
