@@ -252,23 +252,6 @@ void Mythic::GiveRewards()
 
 }
 
-
-
-void Mythic::SendStart(Player* player)
-{
-
-}
-
-void Mythic::SendUpdateBossKill()
-{
-
-}
-
-void Mythic::SendEnemyForces()
-{
-
-}
-
 int8 Mythic::CalculateUpgradeKey()
 {
     uint8 upgrade = 1;

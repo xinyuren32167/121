@@ -50,11 +50,6 @@ private:
     void SetBossDead(uint32 creatureId);
     uint32 GetBossIndex(uint32 creatureId);
 
-    // Addon Messages;
-    void SendStart(Player* player);
-    void SendUpdateBossKill();
-    void SendEnemyForces();
-
     int8 CalculateUpgradeKey();
 
     void SetRespawnPosition(Position position) { LastestPosition = position; };

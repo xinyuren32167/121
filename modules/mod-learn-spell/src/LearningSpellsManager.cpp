@@ -92,7 +92,7 @@ bool LearningSpellsManager::Exception(Player* player, uint32 spellId)
         return false;
 
     // Mage
-    if (spellId == SPELL_MAGE_ARCANE_MISSILES || spellId == SPELL_MAGE_EVOCATION && (player->HasSpell(RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM) || player->HasSpell(RUNE_MAGE_EVOCATION_SLIPSTREAM)))
+    if ((spellId == SPELL_MAGE_ARCANE_MISSILES || spellId == SPELL_MAGE_EVOCATION) && (player->HasSpell(RUNE_MAGE_ARCANE_MISSILES_SLIPSTREAM) || player->HasSpell(RUNE_MAGE_EVOCATION_SLIPSTREAM)))
         return false;
 
     return true;

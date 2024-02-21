@@ -122,7 +122,6 @@ void MythicManager::InitializeRewardsPlayersBag()
 
 void MythicManager::InitializeCreatureKillingCount()
 {
-
 }
 
 void MythicManager::InitializeMultipliers()
@@ -183,7 +182,7 @@ void MythicManager::HandleChangeDungeonDifficulty(Player* _player, uint8 mode)
 
 void MythicManager::SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level)
 {
-    CharacterDatabase.Query("UPDATE character_mythic_key SET dungeonId = {}, level = {} WHERE guid = {}", newDungeonId, level, player->GetGUID().GetCounter());
+    CharacterDatabase.Query("REPLACE INTO `character_mythic_key` (`guid`, `dungeonId`, `level`) VALUES ({}, {}, {})", player->GetGUID().GetCounter(), newDungeonId, level);
 }
 
 uint8 MythicManager::GetBossIndex(uint32 dungeonId, uint32 creatureId)
@@ -284,7 +283,7 @@ void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
             item->SetEnchantment(PERM_ENCHANTMENT_SLOT, enchantId, 0, 0, player->GetGUID());
         }
 
-       //  sMythicMgr->SaveMythicKey(player, dungeonId, key->level);
+       SaveMythicKey(player, dungeonId, key->level);
     }
 
 }
@@ -355,6 +354,28 @@ void MythicManager::GetMythicDungeonByDungeonId(uint32 dungeonId, MythicDungeon&
     for (auto const& dg : MythicDungeonStore)
         if (dg.id == dungeonId)
             dungeon = dg;
+}
+
+void MythicManager::GenerateFirstRandomMythicKey(Player* player)
+{
+    uint32 dungeonId = sMythicMgr->GetRandomMythicDungeonForPlayer(player);
+
+    MythicKey key = { dungeonId, 1 };
+    MythicPlayerKeyStore[player->GetGUID().GetCounter()] = key;
+
+    if (uint32 newItemId = sMythicMgr->GetItemIdWithDungeonId(dungeonId)) {
+
+        player->AddItem(newItemId, 1);
+
+        Item* item = player->GetItemByEntry(newItemId);
+
+        if (item) {
+            uint32 enchantId = sMythicMgr->GetEnchantByMythicLevel(1);
+            item->SetEnchantment(PERM_ENCHANTMENT_SLOT, enchantId, 0, 0, player->GetGUID());
+        }
+
+        SaveMythicKey(player, dungeonId, 1);
+    }
 }
 
 MythicKey* MythicManager::GetCurrentPlayerMythicKey(Player* player)

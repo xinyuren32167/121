@@ -101,6 +101,7 @@ public:
     void InitializeMultipliers();
     void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     void SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level);
+    void GenerateFirstRandomMythicKey(Player* player);
 
     void UpdatePlayerKey(Player* player, uint8 upgrade);
     bool ForceCompleteMythic(Player* player);

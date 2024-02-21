@@ -81,7 +81,6 @@ public:
 
         Map* map = sMapMgr->FindBaseMap(foundDungeon.mapId);
 
-
         if (!map) {
             ChatHandler(player->GetSession()).SendSysMessage("You can't use that here.");
             return false;
@@ -103,7 +102,6 @@ public:
             sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
         else
             ChatHandler(player->GetSession()).SendSysMessage("it seems you don't have any Mythic Key Active.");
-      
 
         return true;
     }
@@ -146,6 +144,7 @@ public:
         {
             { "updateKey",  HandleUpdateKey, SEC_MODERATOR,     Console::No },
             { "forceCompleteKey",  HandleForceCompleteKeystone, SEC_MODERATOR,     Console::No },
+            { "generateMythicKey",  HandleCreateKey, SEC_MODERATOR,     Console::No },
         };
         return commandTable;
     }
@@ -153,7 +152,22 @@ public:
     static bool HandleUpdateKey(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         Player* selectedPlayer = handler->getSelectedPlayer();
+
+        if (!selectedPlayer)
+            return false;
+
         sMythicMgr->UpdatePlayerKey(selectedPlayer, 3);
+        return true;
+    }
+
+    static bool HandleCreateKey(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    {
+        Player* selectedPlayer = handler->getSelectedPlayer();
+
+        if (!selectedPlayer)
+            return false;
+
+        sMythicMgr->GenerateFirstRandomMythicKey(selectedPlayer);
         return true;
     }
 
@@ -161,6 +175,10 @@ public:
     {
         Player* selectedPlayer = handler->getSelectedPlayer();
         Player* moderator = handler->GetPlayer();
+
+        if (!selectedPlayer)
+            return false;
+
         if(sMythicMgr->ForceCompleteMythic(selectedPlayer))
             ChatHandler(moderator->GetSession()).SendSysMessage("Success : Key completed.");
         else
