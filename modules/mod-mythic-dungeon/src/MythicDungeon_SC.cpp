@@ -64,6 +64,18 @@ class Mythic_Keystone_Item : public ItemScript
 public:
     Mythic_Keystone_Item() : ItemScript("Mythic_Keystone_Item") { }
 
+
+    bool isNearTheStart(const Position& pos1, const Position& pos2, float distanceMax)
+    {
+        float deltaX = pos2.GetPositionX() - pos1.GetPositionX();
+        float deltaY = pos2.GetPositionY() - pos1.GetPositionY();
+        float deltaZ = pos2.GetPositionZ() - pos1.GetPositionZ();
+
+        float distance = std::sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+
+        return distance <= distanceMax;
+    }
+
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
     {
         uint32 itemId = item->GetEntry();
@@ -87,11 +99,6 @@ public:
         }
 
         std::string name = map->GetMapName();
-
-        if (map->GetId() != foundDungeon.mapId) {
-            ChatHandler(player->GetSession()).SendSysMessage("You can only activate this Mythic Keystone in " + name);
-            return false;
-        }
 
         if (player->GetDungeonDifficulty() != DUNGEON_DIFFICULTY_EPIC) {
             ChatHandler(player->GetSession()).SendSysMessage("You are not in Mythic Difficulty!");

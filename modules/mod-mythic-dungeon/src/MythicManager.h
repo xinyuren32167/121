@@ -137,6 +137,7 @@ public:
 
     uint32 GetDungeonKeyLevelPreperation(Player* player);
     void PreparationMythicDungeon(Player* player);
+    void ResetPlayerInstanceBound(Player* player, uint32 mapId);
     void ListenCreationMythicOnMapChanged(Player* player);
     bool ShouldShowMythicUI(Player* player);
     void OnKill(Player* player, Creature* killed);

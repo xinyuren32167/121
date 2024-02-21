@@ -66,6 +66,7 @@ void MythicManager::InitializeMythicDungeons()
 void MythicManager::InitializePlayerMythicKeys()
 {
     MythicPlayerKeyStore = {};
+
     QueryResult result = CharacterDatabase.Query("SELECT * FROM character_mythic_key");
 
     if (!result)
@@ -284,6 +285,7 @@ void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
         }
 
        SaveMythicKey(player, dungeonId, key->level);
+       player->SaveToDB(false, false);
     }
 
 }
@@ -360,21 +362,22 @@ void MythicManager::GenerateFirstRandomMythicKey(Player* player)
 {
     uint32 dungeonId = sMythicMgr->GetRandomMythicDungeonForPlayer(player);
 
-    MythicKey key = { dungeonId, 1 };
+    MythicKey key = { dungeonId, 2 };
+
     MythicPlayerKeyStore[player->GetGUID().GetCounter()] = key;
 
-    if (uint32 newItemId = sMythicMgr->GetItemIdWithDungeonId(dungeonId)) {
+    if (uint32 newItemId = GetItemIdWithDungeonId(dungeonId)) {
 
         player->AddItem(newItemId, 1);
 
         Item* item = player->GetItemByEntry(newItemId);
 
         if (item) {
-            uint32 enchantId = sMythicMgr->GetEnchantByMythicLevel(1);
+            uint32 enchantId = GetEnchantByMythicLevel(2);
             item->SetEnchantment(PERM_ENCHANTMENT_SLOT, enchantId, 0, 0, player->GetGUID());
         }
 
-        SaveMythicKey(player, dungeonId, 1);
+        SaveMythicKey(player, dungeonId, 2);
     }
 }
 
@@ -541,25 +544,24 @@ void MythicManager::Update(Creature* creature)
 
     creature->CastCustomSpell(creature, 90000, &damage, &health, nullptr, true);
 
-    creature->ShouldRecalculate = true;
+    // creature->ShouldRecalculate = true;
 }
 
 void MythicManager::PrepareAndTeleportGroupMembers(Player* player, MythicDungeon dungeon)
 {
     if (Group* group = player->GetGroup()) {
-
-        group->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
-
         auto const& allyList = group->GetMemberSlots();
 
         for (auto const& target : allyList)
         {
             Player* member = ObjectAccessor::FindPlayer(target.guid);
             if (member) {
+
+
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
                 if (group->GetLeaderGUID() != player->GetGUID()) {
-                    member->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
+                    ResetPlayerInstanceBound(member, dungeon.mapId);
                     member->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
                 }
             }
@@ -567,9 +569,6 @@ void MythicManager::PrepareAndTeleportGroupMembers(Player* player, MythicDungeon
     }
 }
 
-
-
-// Received when the player click on Start the Mythic dungeon in the game.
 
 void MythicManager::PreparationMythicDungeon(Player* leader)
 {
@@ -593,6 +592,14 @@ void MythicManager::PreparationMythicDungeon(Player* leader)
 
     leader->ClearUnitState(UNIT_STATE_ROOT);
     leader->SetControlled(true, UNIT_STATE_ROOT);
-
+    ResetPlayerInstanceBound(leader, dungeon.mapId);
     leader->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+}
+
+void MythicManager::ResetPlayerInstanceBound(Player* player, uint32 mapId)
+{
+    for (uint8 i = 0; i < MAX_DIFFICULTY; ++i)
+    {
+      sInstanceSaveMgr->PlayerUnbindInstance(player->GetGUID(), mapId, Difficulty(i), true, player);
+    }
 }

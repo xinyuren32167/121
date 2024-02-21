@@ -101,9 +101,16 @@ void Mythic::SaveMythicDungeon()
 
 void Mythic::SetBossDead(uint32 creatureId)
 {
-    for (MythicBossState& boss : StateBossMythicStore)
-        if (boss.creatureId == creatureId)
-            boss.alive = false;
+
+    LOG_ERROR("creatureId", "creatureId {}", creatureId);
+    for (auto ij = StateBossMythicStore.begin(); ij != StateBossMythicStore.end(); ++ij)
+    {
+        if (ij->creatureId == creatureId)
+        {
+            LOG_ERROR("creatureId", "BOSS FOUND creatureId {}", creatureId);
+            ij->alive = false;
+        }
+    }
 }
 
 uint32 Mythic::GetBossIndex(uint32 creatureId)
@@ -121,7 +128,6 @@ void Mythic::OnCompleteMythicDungeon(Player* player)
     Done = true;
 
     uint8 upgrade = CalculateUpgradeKey();
-
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
@@ -228,8 +234,10 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
     bool allBossesAreDead = true;
 
     for (auto ij = StateBossMythicStore.begin(); ij != StateBossMythicStore.end(); ++ij)
-        if (ij->alive == false)
+        if (ij->alive == true)
+        {
             allBossesAreDead = false;
+        }
 
     return allBossesAreDead && EnemyForces >= 100.0f;
 }
@@ -237,7 +245,6 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 void Mythic::GiveRewards()
 {
     uint8 upgrade = CalculateUpgradeKey();
-    uint32 totalCoins = GetLevel() * (GetLevel() + upgrade);
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
