@@ -476,14 +476,7 @@ void MythicManager::ListenCreationMythicOnMapChanged(Player* leader)
         return;
 
     Mythic* mythic = new Mythic(leader, it->second->dungeonId, it->second->level);
-
     AddMythicDungeon(leader->GetInstanceId(), mythic);
-
-    MythicDungeon dungeon;
-    GetMythicDungeonByDungeonId(it->second->dungeonId, dungeon);
-
-    if(Group* group = leader->GetGroup())
-        PrepareAndTeleportGroupMembers(leader, dungeon);
 
     AsyncCreationMythic.erase(it);
 }
@@ -547,22 +540,20 @@ void MythicManager::Update(Creature* creature)
     // creature->ShouldRecalculate = true;
 }
 
-void MythicManager::PrepareAndTeleportGroupMembers(Player* player, MythicDungeon dungeon)
+void MythicManager::PrepareAndTeleportGroupMembers(Player* leader, MythicDungeon dungeon)
 {
-    if (Group* group = player->GetGroup()) {
+    if (Group* group = leader->GetGroup()) {
         auto const& allyList = group->GetMemberSlots();
 
         for (auto const& target : allyList)
         {
             Player* member = ObjectAccessor::FindPlayer(target.guid);
             if (member) {
-
-
                 member->ClearUnitState(UNIT_STATE_ROOT);
                 member->SetControlled(true, UNIT_STATE_ROOT);
-                if (group->GetLeaderGUID() != player->GetGUID()) {
+                if (group->GetLeaderGUID() != leader->GetGUID()) {
                     ResetPlayerInstanceBound(member, dungeon.mapId);
-                    member->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+                    member->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, false);
                 }
             }
         }
@@ -578,6 +569,7 @@ void MythicManager::PreparationMythicDungeon(Player* leader)
         return;
 
     MythicDungeon dungeon;
+
     GetMythicDungeonByDungeonId(mythicKey->dungeonId, dungeon);
 
     if(!dungeon)
@@ -585,15 +577,37 @@ void MythicManager::PreparationMythicDungeon(Player* leader)
 
     Group* group = leader->GetGroup();
 
-    if (!group)
-        leader->SetDungeonDifficulty(DUNGEON_DIFFICULTY_EPIC_PLUS);
-
     AsyncCreationMythic[leader->GetGUID()] = mythicKey;
 
-    leader->ClearUnitState(UNIT_STATE_ROOT);
-    leader->SetControlled(true, UNIT_STATE_ROOT);
-    ResetPlayerInstanceBound(leader, dungeon.mapId);
-    leader->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+    if (!group) {
+        ResetPlayerInstanceBound(leader, dungeon.mapId);
+        leader->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+    }
+
+    if (Group* group = leader->GetGroup()) {
+        auto const& allyList = group->GetMemberSlots();
+        for (auto const& target : allyList)
+        {
+            Player* member = ObjectAccessor::FindPlayer(target.guid);
+            if (member) {
+                member->ClearUnitState(UNIT_STATE_ROOT);
+                member->SetControlled(true, UNIT_STATE_ROOT);
+                ResetPlayerInstanceBound(member, dungeon.mapId);
+            }
+        }
+    }
+
+    if (Group* group = leader->GetGroup()) {
+        auto const& allyList = group->GetMemberSlots();
+        for (auto const& target : allyList)
+        {
+            Player* member = ObjectAccessor::FindPlayer(target.guid);
+            if (member) {
+                member->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+            }
+        }
+    }
+
 }
 
 void MythicManager::ResetPlayerInstanceBound(Player* player, uint32 mapId)
