@@ -1125,26 +1125,6 @@ class spell_pal_forbearance_check : public SpellScript
     }
 };
 
-class spell_pal_forbearance_preventer_remover : public SpellScript
-{
-    PrepareSpellScript(spell_pal_forbearance_preventer_remover);
-
-    void HandleProc()
-    {
-        Unit* target = GetCaster();
-        if (!target)
-            return;
-
-        target->RemoveAura(61987);
-        target->RemoveAura(61988);
-    }
-
-    void Register()
-    {
-        AfterCast += SpellCastFn(spell_pal_forbearance_preventer_remover::HandleProc);
-    }
-};
-
 class spell_pal_exorcism : public SpellScript
 {
     PrepareSpellScript(spell_pal_exorcism);
@@ -2835,7 +2815,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_seal_of_righteousness);
     RegisterSpellScript(spell_pal_forbearance);
     RegisterSpellScript(spell_pal_forbearance_check);
-    RegisterSpellScript(spell_pal_forbearance_preventer_remover);
     RegisterSpellScript(spell_pal_seraphim);
     RegisterSpellScript(spell_pal_exorcism);
     RegisterSpellScript(spell_pal_consecration);
