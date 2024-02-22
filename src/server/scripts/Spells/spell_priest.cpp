@@ -84,6 +84,7 @@ enum PriestSpells
     SPELL_PRIEST_PRAYER_OF_HEALING = 48072,
     SPELL_PRIEST_PRAYER_OF_MENDING = 48113,
     SPELL_PRIEST_PRAYER_OF_MENDING_HEAL = 48111,
+    SPELL_PRIEST_PRESCIENCE = 86217,
     SPELL_PRIEST_PURGE_THE_WICKED = 81017,
     SPELL_PRIEST_PURGE_THE_WICKED_AOE = 81018,
     SPELL_PRIEST_RAPTURE = 81019,
@@ -144,9 +145,14 @@ enum PriestSpells
 
     // Sets
     T1_PRIEST_DISCI_4PC = 98501,
+    T1_PRIEST_SHADOW_2PC_DEATH_AURA1 = 98702,
+    T1_PRIEST_SHADOW_2PC_DEATH_AURA2 = 98703,
+    T1_PRIEST_SHADOW_2PC_DEATH_AURA3 = 98704,
     T1_PRIEST_SHADOW_4PC = 98705,
     T1_PRIEST_SHADOW_4PC_BUFF = 98706,
     T1_PRIEST_ABSOLUTION_2PC = 98800,
+    T1_PRIEST_ABSOLUTION_4PC_BUFF = 98802,
+    T1_PRIEST_ABSOLUTION_4PC_DAMAGE = 98803,
 };
 
 enum PriestSpellIcons
@@ -1346,8 +1352,19 @@ class spell_pri_shadow_word_death : public SpellScript
             amount += afterDamageAura->GetEffect(EFFECT_0)->GetAmount();
             afterDamageAura->Remove();
         }
-           
-        caster ->CastCustomSpell(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+
+        int32 damageAura = SPELL_PRIEST_SHADOW_WORD_DEATH_AURA;
+
+        if (!target->HasAura(SPELL_PRIEST_SHADOW_WORD_DEATH_AURA))
+            damageAura = SPELL_PRIEST_SHADOW_WORD_DEATH_AURA;
+        else if (!target->HasAura(T1_PRIEST_SHADOW_2PC_DEATH_AURA1))
+            damageAura = T1_PRIEST_SHADOW_2PC_DEATH_AURA1;
+        else if (!target->HasAura(T1_PRIEST_SHADOW_2PC_DEATH_AURA2))
+            damageAura = T1_PRIEST_SHADOW_2PC_DEATH_AURA2;
+        else if (!target->HasAura(T1_PRIEST_SHADOW_2PC_DEATH_AURA3))
+            damageAura = T1_PRIEST_SHADOW_2PC_DEATH_AURA3;
+
+        caster->CastCustomSpell(damageAura, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1432,7 +1449,7 @@ class spell_pri_shadow_word_death_after_damage : public AuraScript
                 caster->CastSpell(caster, T1_PRIEST_SHADOW_4PC_BUFF, TRIGGERED_FULL_MASK);           
         }            
         else
-            GetDeathspeakerBuff(caster)->Remove();
+            GetDeathspeakerBuff(caster)->SetDuration(50);
     }
 
     void Register() override
@@ -4594,6 +4611,7 @@ class spell_pri_prescience : public AuraScript
     }
 };
 
+// 86204 - Holy Eruption
 class spell_pri_holy_eruption : public SpellScript
 {
     PrepareSpellScript(spell_pri_holy_eruption);
@@ -4621,9 +4639,67 @@ class spell_pri_holy_eruption : public SpellScript
                 caster->AddAura(runeAura->GetEffect(EFFECT_0)->GetAmount(), caster);          
     }
 
+    void HandleHit(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            Unit* mainTarget = ObjectAccessor::GetUnit(*caster, caster->GetTarget());
+
+            if (mainTarget && target == mainTarget)
+            {
+                if (Aura* tier1_4pc_buff = caster->GetAura(T1_PRIEST_ABSOLUTION_4PC_BUFF))
+                {
+                    int32 number = 0;
+                    int32 cooldown = tier1_4pc_buff->GetEffect(EFFECT_0)->GetAmount();
+
+                    if (caster->HasAura(SPELL_PRIEST_PRESCIENCE))
+                        number++;
+
+                    if (Group* playerGroup = player->GetGroup())
+                    {
+                        Position casterPos = player->GetPosition();
+                        auto const& allyList = playerGroup->GetMemberSlots();
+
+                        for (auto const& target : allyList)
+                        {
+                            Player* ally = ObjectAccessor::FindPlayer(target.guid);
+                            if (ally && ally->IsAlive())
+                            {
+                                float distance = ally->GetDistance(casterPos);
+
+                                if (distance <= 60 && ally->HasAura(SPELL_PRIEST_PRESCIENCE))
+                                    number++;
+                            }
+                        }
+                    }
+
+                    while (number > 0)
+                    {
+                        caster->CastSpell(target, T1_PRIEST_ABSOLUTION_4PC_DAMAGE, TRIGGERED_FULL_MASK);
+                        player->ModifySpellCooldown(SPELL_PRIEST_HOLY_MIGHT, -cooldown);
+                        number--;
+                    }
+
+                    tier1_4pc_buff->Remove();
+                }
+            }           
+        }
+    }
+
     void Register() override
     {
         BeforeCast += SpellCastFn(spell_pri_holy_eruption::HandleCast);
+        OnEffectHitTarget += SpellEffectFn(spell_pri_holy_eruption::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 

@@ -163,6 +163,8 @@ enum DruidSpells
 
     // Sets
     T1_DRUID_BALANCE_2PC_BUFF               = 97501,
+    T1_DRUID_BALANCE_4PC                    = 97502,
+    T1_DRUID_BALANCE_4PC_BUFF               = 97503,
     T1_DRUID_GUARDIAN_2PC                   = 97700,
     T1_DRUID_GUARDIAN_2PC_BUFF              = 97701,
     T1_DRUID_GUARDIAN_4PC                   = 97702,
@@ -1268,12 +1270,19 @@ class spell_dru_wild_growth_periodic : public AuraScript
 
         int32 amount = aurEff->GetAmount();
         float drop = 20.0f;
-
+        int32 remainingTicks = aurEff->GetRemaningTicks();
+        
         // Rune - Unstoppable Growth
         for (size_t i = 701756; i < 701760; i++)
         {
             if (AuraEffect* eff = caster->GetAuraEffect(i, 0))
                 AddPct(drop, -eff->GetAmount());
+        }
+
+        if (isFirstTick)
+        {
+            isFirstTick = false;
+            drop = 0;
         }
 
         int32 const finalAmount = amount * (1 - drop * 0.01f);
@@ -1284,6 +1293,8 @@ class spell_dru_wild_growth_periodic : public AuraScript
     {        
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_dru_wild_growth_periodic::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
     }
+private:
+    bool isFirstTick = true;
 };
 
 // -50334 - Berserk
@@ -1564,17 +1575,6 @@ class spell_dru_starfire : public SpellScript
         caster->ModifyPower(POWER_RUNIC_POWER, astralPower);
     }
 
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_dru_starfire::HandleCast);
-    }
-};
-
-// 80506 - Starfire (AOE)
-class spell_dru_starfire_aoe : public SpellScript
-{
-    PrepareSpellScript(spell_dru_starfire_aoe);
-
     void HandleAfterCast()
     {
         Unit* caster = GetCaster();
@@ -1589,7 +1589,8 @@ class spell_dru_starfire_aoe : public SpellScript
 
     void Register() override
     {
-        AfterCast += SpellCastFn(spell_dru_starfire_aoe::HandleAfterCast);
+        OnCast += SpellCastFn(spell_dru_starfire::HandleCast);
+        AfterCast += SpellCastFn(spell_dru_starfire::HandleAfterCast);
     }
 };
 
@@ -1673,6 +1674,50 @@ class spell_dru_eclipse : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_dru_eclipse::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 80502 - Eclipse (Solar)
+class spell_dru_eclipse_solar : public AuraScript
+{
+    PrepareAuraScript(spell_dru_eclipse_solar);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_DRUID_BALANCE_4PC))
+            caster->AddAura(T1_DRUID_BALANCE_4PC_BUFF, caster);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_eclipse_solar::HandleApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 80505 - Eclipse (Lunar)
+class spell_dru_eclipse_lunar : public AuraScript
+{
+    PrepareAuraScript(spell_dru_eclipse_lunar);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_DRUID_BALANCE_4PC))
+            caster->AddAura(T1_DRUID_BALANCE_4PC_BUFF, caster);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dru_eclipse_lunar::HandleApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -3200,14 +3245,15 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_thorns);
     RegisterSpellScript(spell_dru_wrath);
     RegisterSpellScript(spell_dru_starfire);
-    RegisterSpellScript(spell_dru_starfire_aoe);
     RegisterSpellScript(spell_dru_force_of_nature);
     RegisterSpellScript(spell_dru_berserk_cat); 
     RegisterSpellScript(spell_dru_rake);
     RegisterSpellScript(spell_dru_eclipse);
+    RegisterSpellScript(spell_dru_eclipse_solar);
+    RegisterSpellScript(spell_dru_eclipse_lunar);
     RegisterSpellScript(spell_dru_berserk_combo_adder);
-    RegisterSpellScript(spell_dru_cat_form);
-    RegisterSpellScript(spell_dru_lifebloom_new);
+    RegisterSpellScript(spell_dru_cat_form); 
+    RegisterSpellScript(spell_dru_lifebloom_new); 
     RegisterSpellScript(spell_dru_swiftmend);
     RegisterSpellScript(spell_dru_wild_charge);
     RegisterSpellScript(spell_dru_tiger_dash);
