@@ -92,7 +92,6 @@ void RunesManager::LoadSpellsConversion()
     } while (result->NextRow());
 }
 
-
 void RunesManager::LoadRewardsAchievement()
 {
     RunesManager::m_RewardAchievement = {};
@@ -251,7 +250,6 @@ void RunesManager::LoadCharacterDraws()
     } while (result->NextRow());
 }
 
-
 void RunesManager::LoadAllSlotRune()
 {
     RunesManager::m_SlotRune = {};
@@ -350,7 +348,7 @@ void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
 
     if (rune.quality > 1)
     {
-        SendChat(player, "|cffff0000 You can only activate auto recycle for Common Quality Rune!");
+        SendChat(player, "|cffff0000 You can only activate Auto-Recycle for Common quality Runes!");
         return;
     }
 
@@ -361,7 +359,7 @@ void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
     {
         CharacterDatabase.Query("INSERT INTO character_autorefund_runes (guid, spellId) VALUES ({}, {}) ", guid, runeSpellId);
         m_CharacterAutoRefundRunes[guid].push_back(runeSpellId);
-        SendChat(player, "|cff11ff00 You have enabled auto-recycle on [" + spellName + "]");
+        SendChat(player, "|cff11ff00 You have enabled Auto-Recycle on [" + spellName + "]");
     }
     else {
         auto ij = std::find_if(match->second.begin(), match->second.end(),
@@ -372,18 +370,17 @@ void RunesManager::ApplyAutorefund(Player* player, uint32 runeSpellId)
         if (ij != match->second.end()) {
             CharacterDatabase.Query("DELETE FROM character_autorefund_runes WHERE guid = {} AND spellId = {} LIMIT 1", guid, runeSpellId);
             match->second.erase(ij);
-            SendChat(player, "|cff11ff00 You have disabled auto-recycle on [" + spellName + "]");
+            SendChat(player, "|cff11ff00 You have disabled Auto-Recycle on [" + spellName + "]");
         }
         else {
             match->second.push_back(runeSpellId);
             CharacterDatabase.Query("INSERT INTO character_autorefund_runes (guid, spellId) VALUES ({}, {}) ", guid, runeSpellId);
-            SendChat(player, "|cff11ff00 You have enabled auto-recycle on [" + spellName + "]");
+            SendChat(player, "|cff11ff00 You have enabled Auto-Recycle on [" + spellName + "]");
         }
     }
 
    
 }
-
 
 bool RunesManager::IsSpellIdLuckyRune(Player* player, uint32 spellId)
 {
@@ -440,7 +437,6 @@ bool RunesManager::IsSpellIdAutoRefund(Player* player, uint32 spellId)
     return false;
 }
 
-
 void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
 {
     uint32 guid = player->GetGUID().GetCounter();
@@ -450,7 +446,7 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
 
     if (rune.quality > 1)
     {
-        SendChat(player, "|cffff0000 You can only activate rune from Common Quality!");
+        SendChat(player, "|cffff0000 You can only activate Runes of Common quality!");
         return;
     }
 
@@ -503,10 +499,10 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
         }
 
         if (count < 3) {
-            SendChat(player, "|cff11ff00 You have activated " + std::to_string(count) + " lucky rune(s), you need " + std::to_string(3 - count) + " more lucky runes to fully benefit from the lucky runes.");
+            SendChat(player, "|cff11ff00 You have activated " + std::to_string(count) + " Lucky Rune(s), you need " + std::to_string(3 - count) + " more Lucky Runes to be able to benefit from the system.");
         }
         else {
-            SendChat(player, "|cff11ff00 You have 3 lucky runes activated. Open cards to get your lucky runes!");
+            SendChat(player, "|cff11ff00 You have 3 Lucky Runes activated. Open Sealed Rune Cards to get them!");
         }
     }
 
@@ -667,7 +663,6 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
     return rune;
 }
 
-
 int RunesManager::GetPreviousWeekFromBuyingRuneWithGold(Player* player)
 {
     uint32 guid = player->GetGUID().GetCounter();
@@ -754,7 +749,6 @@ uint32 RunesManager::CalculateGoldCostToBuyRune(Player* player)
     return std::min(newCost, sWorld->GetValue("CONFIG_GOLD_CAP_BUYING_RUNE"));
 }
 
-
 std::vector<std::string> RunesManager::GetRunesByPlayerName(std::string name)
 {
     std::vector<std::string> elements = {};
@@ -778,7 +772,6 @@ std::vector<std::string> RunesManager::GetRunesByPlayerName(std::string name)
 
     return elements;
 }
-
 
 void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
 {
@@ -875,7 +868,6 @@ void RunesManager::AddRunesPlayer(Player* player, std::vector<Rune> runes)
         sEluna->PushRune(player, str);
     }
 }
-
 
 std::string RunesManager::RuneForClient(Player* player, Rune rune, bool known, uint32 count)
 {
@@ -976,7 +968,6 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
     return elements;
 }
 
-
 std::vector<std::string> RunesManager::LoadoutCachingForClient(Player* player)
 {
     std::vector<std::string> elements = {};
@@ -1068,7 +1059,6 @@ bool RunesManager::IsRuneUpgradable(Player* player, Rune targetRune, uint32 coun
     return false;
 }
 
-
 Rune RunesManager::GetRuneBySpellId(uint32 runeId)
 {
     auto it = m_Runes.find(runeId);
@@ -1147,7 +1137,6 @@ void RunesManager::ApplyRunesOnLogin(Player* player)
             if (!player->HasAura(slot.runeSpellId) && slot.id)
                 player->AddAura(slot.runeSpellId, player);
 }
-
 
 bool RunesManager::RuneAlreadyActivated(Player* player, uint64 runeId)
 {
@@ -1262,21 +1251,21 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
         return;
 
     if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) && player->getLevel() > 10) {
-        SendPlayerMessage(player, "You may only change your runes inside resting areas or while under level 10.");
+        SendPlayerMessage(player, "You may only change your Runes inside resting areas or while under level 10.");
         return;
     }
 
     bool knownRune = KnowRuneId(player, spellId);
 
     if (!knownRune) {
-        SendPlayerMessage(player, "You do not know this rune.");
+        SendPlayerMessage(player, "You do not know this Rune.");
         return;
     }
 
     Rune rune = GetRuneBySpellId(spellId);
 
     if (!rune) {
-        SendPlayerMessage(player, "This rune does not exist.");
+        SendPlayerMessage(player, "This Rune does not exist.");
         return;
     }
 
@@ -1286,7 +1275,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
 
     if ((rune.allowableClass & player->getClassMask()) == 0 || (!isSpecAllowed))
     {
-        SendPlayerMessage(player, "You cannot activate this rune.");
+        SendPlayerMessage(player, "You cannot activate this Rune.");
         return;
     }
    
@@ -1294,7 +1283,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
 
     if (GetCountActivatedRune(player) >= progression->second.unlockedSlotRunes)
     {
-        SendPlayerMessage(player, "You have reached the maximum amount of runes.");
+        SendPlayerMessage(player, "You have reached the maximum amount of Runes.");
         return;
     }
 
@@ -1303,14 +1292,13 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
 
     if (tooMuchStack)
     {
-        SendPlayerMessage(player, "You cannot activate more of this rune.");
+        SendPlayerMessage(player, "You cannot activate more of this Rune.");
         return;
     }
 
 
     player->CastCustomSpell(79850, SPELLVALUE_BASE_POINT0, spellId, player, TRIGGERED_NONE);
 }
-
 
 void RunesManager::ResetAllSlots(Player* player)
 {
@@ -1319,7 +1307,7 @@ void RunesManager::ResetAllSlots(Player* player)
 
     if (player->IsInCombat())
     {
-        SendPlayerMessage(player, "You cannot activate more of this rune.");
+        SendPlayerMessage(player, "You cannot activate more of this Rune.");
         return;
     }
 
@@ -1388,27 +1376,27 @@ void RunesManager::DisableRune(Player* player, uint64 runeSpellId)
         return;
 
     if (!player->HasPlayerFlag(PLAYER_FLAGS_RESTING) && player->getLevel() > 10) {
-        SendPlayerMessage(player, "You may only change your runes inside resting areas or while under level 10.");
+        SendPlayerMessage(player, "You may only change your Runes inside resting areas or while under level 10.");
         return;
     }
 
     bool knownRune = KnowRuneId(player, runeSpellId);
 
     if (!knownRune) {
-        SendPlayerMessage(player, "You do not know this rune.");
+        SendPlayerMessage(player, "You do not know this Rune.");
         return;
     }
 
     Rune rune = GetRuneBySpellId(runeSpellId);
 
     if (!rune) {
-        SendPlayerMessage(player, "This rune does not exist.");
+        SendPlayerMessage(player, "This Rune does not exist.");
         return;
     }
 
     if (!RuneAlreadyActivated(player, runeSpellId))
     {
-        SendPlayerMessage(player, "This rune is not activated.");
+        SendPlayerMessage(player, "This Rune is not activated.");
         return;
     }
 
@@ -1426,20 +1414,20 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
     bool knownRune = KnowRuneId(player, runeSpellId);
 
     if (!knownRune) {
-        SendPlayerMessage(player, "You do not know this rune.");
+        SendPlayerMessage(player, "You do not know this Rune.");
         return;
     }
 
     Rune rune = GetRuneBySpellId(runeSpellId);
 
     if (!rune) {
-        SendPlayerMessage(player, "This rune does not exist.");
+        SendPlayerMessage(player, "This Rune does not exist.");
         return;
     }
 
     if (RuneAlreadyActivated(player, runeSpellId))
     {
-        SendPlayerMessage(player, "You cannot refund this rune, you have one or more of these runes activated.");
+        SendPlayerMessage(player, "You cannot refund Rhis rune, you have one or more of these Runes activated.");
         return;
     }
 
@@ -1494,7 +1482,7 @@ void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
 
     if (RuneAlreadyActivated(player, runeSpellId))
     {
-        SendPlayerMessage(player, "You cannot upgrade this rune, you have one or more of these runes activated.");
+        SendPlayerMessage(player, "You cannot upgrade this Rune, you have one or more of these Runes activated.");
         return;
     }
 
@@ -1502,7 +1490,7 @@ void RunesManager::UpgradeRune(Player* player, uint32 runeSpellId)
     bool isUpgradable = IsRuneUpgradable(player, nextRune, ij->count);
 
     if (!isUpgradable) {
-        return SendPlayerMessage(player, "You do not meet the requirement to upgrade this rune.");
+        return SendPlayerMessage(player, "You do not meet the requirements to upgrade this Rune.");
     }
 
 
@@ -1551,7 +1539,6 @@ void RunesManager::AddRuneToSlot(Player* player, Rune rune)
     sEluna->RefreshSlotsRune(player);
 }
 
-
 void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 {
     uint64 activeId = GetActiveLoadoutId(player);
@@ -1563,7 +1550,7 @@ void RunesManager::RemoveRuneFromSlots(Player* player, Rune rune)
 
     if (match == m_SlotRune.end())
     {
-        LOG_ERROR("Error", "Could not find the Slot rune.");
+        LOG_ERROR("Error", "Could not find the Rune slot.");
         return;
     }
 
