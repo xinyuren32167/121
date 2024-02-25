@@ -154,7 +154,7 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
-        LOG_INFO("Runes", "Initialize Runes...");
+        LOG_INFO("Runes", "Initializing Runes...");
         RunesManager::SetupConfig();
         RunesManager::LoadAllRunes();
         RunesManager::LoadAccountsRunes();
