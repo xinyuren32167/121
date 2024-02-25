@@ -4773,10 +4773,11 @@ class spell_sha_earthquake : public AuraScript
             return;
 
         // Remove T1 2pc Buff + add Earthquake only Buff
-        if (caster->HasAura(T1_SHAMAN_ELEM_2PC_BUFF))
+        if (Aura* t1_2pc_buff = caster->GetAura(T1_SHAMAN_ELEM_2PC_BUFF))
         {
-            caster->RemoveAura(T1_SHAMAN_ELEM_2PC_BUFF);
-            caster->AddAura(T1_SHAMAN_ELEM_2PC_EARTHQUAKEBUFF, caster);
+            int32 stacks = t1_2pc_buff->GetStackAmount();
+            caster->CastCustomSpell(T1_SHAMAN_ELEM_2PC_EARTHQUAKEBUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
+            t1_2pc_buff->Remove();
         }
     }
 

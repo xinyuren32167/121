@@ -185,7 +185,9 @@ enum WarlockSpells
     RUNE_WARLOCK_REVEL_IN_PAIN_SHIELD = 801302,
 
     // Sets
+    T1_WARLOCK_AFFLI_4PC_BUFF = 98002,
     T1_WARLOCK_AFFLI_4PC_LISTENER = 98003,
+    T1_WARLOCK_DEMONO_2PC = 98100,
     T1_WARLOCK_DEMONO_4PC = 98101,
     T1_WARLOCK_DEMONO_4PC_PET_BUFF = 98103,
     T1_WARLOCK_DEMONBOUND_4PC = 98302,
@@ -2029,7 +2031,7 @@ class spell_warl_grimoire_felguard_aura : public AuraScript
 
     void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* pet = GetCaster();
+        Unit* pet = GetUnitOwner();
 
         if (!pet || pet->isDead())
             return;
@@ -2043,26 +2045,9 @@ class spell_warl_grimoire_felguard_aura : public AuraScript
             caster->AddAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF, caster);
     }
 
-    void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        Unit* pet = GetCaster();
-
-        if (!pet || pet->isDead())
-            return;
-
-        Unit* caster = pet->GetOwner();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (caster->HasAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF))
-            caster->RemoveAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF);
-    }
-
     void Register() override
     {
         OnEffectApply += AuraEffectApplyFn(spell_warl_grimoire_felguard_aura::OnApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
-        OnEffectRemove += AuraEffectRemoveFn(spell_warl_grimoire_felguard_aura::OnRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAPPLY);
     }
 };
 
@@ -3388,7 +3373,8 @@ class spell_warl_malefic_rapture : public SpellScript
         // Check for T1 4pc listener and remove stack/listener accordingly.
         if (Aura* T14pcListener = caster->GetAura(T1_WARLOCK_AFFLI_4PC_LISTENER))
         {
-            durationIncrease = T14pcListener->GetEffect(EFFECT_0)->GetAmount();
+            if (Aura* t1_4pc_buff = caster->GetAura(T1_WARLOCK_AFFLI_4PC_BUFF))
+                durationIncrease = t1_4pc_buff->GetEffect(EFFECT_0)->GetAmount();
 
             if (T14pcListener->GetStackAmount() > 1)
                 T14pcListener->ModStackAmount(-1);
@@ -4558,12 +4544,19 @@ class spell_warl_demonbolt : public SpellScript
 
         int32 damage = GetHitDamage();
 
-
-        if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONIC_CORE_BUFF))
-            aura->ModCharges(-1);
-
         if (Player* player = caster->ToPlayer())
         {
+            if (Aura* aura = caster->GetAura(SPELL_WARLOCK_DEMONIC_CORE_BUFF))
+            {
+                aura->ModCharges(-1);
+
+                if (Aura* set_T1_2pc = caster->GetAura(T1_WARLOCK_DEMONO_2PC))
+                {
+                    int32 cooldown = set_T1_2pc->GetEffect(EFFECT_0)->GetAmount();
+                    player->ModifySpellCooldown(SPELL_WARLOCK_GRIMOIRE_FELGUARD, -cooldown);
+                }
+            }
+
             // Check for Sacrificed Souls Rune Buff and apply damage increase per demon summoned.
             if (Aura* runeAura = GetSacrificedSoulsAura(caster))
             {
@@ -5405,7 +5398,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warlock_summon_felboar);
     RegisterSpellScript(spell_warlock_summon_felguard);
     RegisterSpellScript(spell_warl_grimoire_felguard_aura);
-    RegisterSpellScript(spell_warlock_summon_demonic_tyrant); 
+    RegisterSpellScript(spell_warlock_summon_demonic_tyrant);
     RegisterSpellScript(spell_warl_agony);
     RegisterSpellScript(spell_warlock_dark_pact);
     RegisterSpellScript(spell_warl_demon_armor);
@@ -5414,7 +5407,7 @@ void AddSC_warlock_spell_scripts()
     RegisterSpellScript(spell_warl_haunt);
     RegisterSpellScript(spell_warl_chaos_bolt);
     RegisterSpellScript(spell_warl_conflagrate);
-    RegisterSpellScript(spell_warl_immolate_energy); 
+    RegisterSpellScript(spell_warl_immolate_energy);
     RegisterSpellScript(spell_warl_incinerate);
     RegisterSpellScript(spell_warl_incinerate_energy);
     RegisterSpellScript(spell_warl_shadowburn);

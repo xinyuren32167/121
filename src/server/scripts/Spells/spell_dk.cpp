@@ -196,6 +196,8 @@ enum DeathKnightSpells
     // Sets
     T1_DEATHKNIGHT_BLOOD_4PC = 97001,
     T1_DEATHKNIGHT_BLOOD_4PC_BUFF = 97002,
+    T1_DEATHKNIGHT_FROST_4PC = 97101,
+    T1_DEATHKNIGHT_FROST_4PC_BUFF = 97102,
     T1_DEATHKNIGHT_UNHOLY_2PC = 97200,
     T1_DEATHKNIGHT_UNHOLY_2PC_BUFF = 97201,
     T1_DEATHKNIGHT_SOULWEAVER_2PC = 97300,
@@ -439,6 +441,17 @@ class spell_dk_pillar_of_frost : public AuraScript
 {
     PrepareAuraScript(spell_dk_pillar_of_frost);
 
+    void HandleAfterApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (caster->HasAura(T1_DEATHKNIGHT_FROST_4PC_BUFF))
+            caster->RemoveAura(T1_DEATHKNIGHT_FROST_4PC_BUFF);
+    }
+
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         Unit* caster = GetCaster();
@@ -471,6 +484,7 @@ class spell_dk_pillar_of_frost : public AuraScript
 
     void Register() override
     {
+        AfterEffectApply += AuraEffectApplyFn(spell_dk_pillar_of_frost::HandleAfterApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectProc += AuraEffectProcFn(spell_dk_pillar_of_frost::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -4118,12 +4132,12 @@ class spell_dk_vitality_burst : public SpellScript
         if (Unit* target = GetHitUnit())
         {
             Unit* caster = GetCaster();
-            int32 heal = GetEffectValue();
-
-            heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), heal);
+            //int32 heal = GetEffectValue();
+            int32 heal = GetHitHeal();
+            /*heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), heal);
 
             heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
-            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
+            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);*/
 
             if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
             {

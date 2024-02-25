@@ -69,6 +69,7 @@ enum WarlockSpells
     // Sets
     T1_WARLOCK_DEMONO_4PC = 98101,
     T1_WARLOCK_DEMONO_4PC_GRIMOIRE_BUFF = 98102,
+    T1_WARLOCK_DEMONO_4PC_PET_BUFF = 98103,
 };
 
 enum PET_WARLOCKS {
@@ -1067,7 +1068,6 @@ struct npc_pet_warlock_felguard_grimoire : public ScriptedAI
     void InitializeAI() override
     {
         _events.Reset();
-        me->CastSpell(me, 83031);
         _events.ScheduleEvent(EVENT_TRY_ATTACK_NEW_TARGET, 1500);
 
         Unit* owner = me->GetOwner();
@@ -1075,9 +1075,11 @@ struct npc_pet_warlock_felguard_grimoire : public ScriptedAI
         if (!owner)
             return;
 
-        if (owner->HasAura(T1_WARLOCK_DEMONO_4PC))
-            owner->AddAura(T1_WARLOCK_DEMONO_4PC_GRIMOIRE_BUFF, me);
+        owner->AddAura(SPELL_GRIMOIRE_FELGUARD_INCREASE_DAMAGE, me);
 
+        if (owner->HasAura(T1_WARLOCK_DEMONO_4PC)) 
+            owner->AddAura(T1_WARLOCK_DEMONO_4PC_GRIMOIRE_BUFF, me);
+           
         // Add a Stack of Demonic Servitude from Reign of Tyranny
         if (Aura* runeAura = GetReignofTyrannyAura(owner))
         {
@@ -1174,6 +1176,10 @@ struct npc_pet_warlock_felguard_grimoire : public ScriptedAI
                 if (Aura* demonicServitude = owner->GetAura(RUNE_WARLOCK_DEMONIC_SERVITUDE))
                     demonicServitude->ModStackAmount(-stackDecrease);
             }
+
+            // Remove T1 4pc buff
+            if (owner->HasAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF))
+                owner->RemoveAura(T1_WARLOCK_DEMONO_4PC_PET_BUFF);
         }
     }
 
