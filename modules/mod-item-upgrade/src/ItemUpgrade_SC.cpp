@@ -6,9 +6,9 @@
 #include "Player.h"
 #include "Config.h"
 #include "Chat.h"
-#include "RunesManager.h"
 #include "LuaEngine.h"
 #include "Spell.h"
+#include "ItemUpgradeManager.h"
 
 // Add player scripts
 class ItemUpgrade_PlayerScripts : public PlayerScript
@@ -21,6 +21,18 @@ public:
     }
 
     void OnFirstLogin(Player* player) {
+    }
+};
+
+class ItemUpgrade_WorldScript : public WorldScript
+{
+public:
+    ItemUpgrade_WorldScript() : WorldScript("ItemUpgrade_WorldScript") { }
+
+    void OnBeforeConfigLoad(bool reload) override
+    {
+        LOG_INFO("Runes", "Initialize Runes...");
+        ItemUpgradeManager::LoadCosts();
     }
 };
 
