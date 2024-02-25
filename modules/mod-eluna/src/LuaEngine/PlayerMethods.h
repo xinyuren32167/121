@@ -10,6 +10,7 @@
 #include "GameTime.h"
 #include "PlayerSpecialization.h"
 #include "MythicManager.h"
+#include "ItemUpgradeManager.h"
 
 /***
  * Inherits all methods from: [Object], [WorldObject], [Unit]
@@ -130,6 +131,13 @@ namespace LuaPlayer
         return 0;
     }
 
+    int UpgradeItem(lua_State* L, Player* player)
+    {
+        uint32 entry = Eluna::CHECKVAL<uint32>(L, 2);
+        ItemUpgradeManager::UpgradeItem(player, entry);
+        return 0;
+    }
+
     int GetMythicData(lua_State* L, Player* player)
     {
         lua_newtable(L);
@@ -169,7 +177,8 @@ namespace LuaPlayer
     int EnableOrDisableLuckyRunes(lua_State* L, Player* player)
     {
         uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        RunesManager::ApplyLuckyRune(player, spellId);
+        bool enabled = Eluna::CHECKVAL<bool>(L, 3);
+        RunesManager::ApplyLuckyRune(player, spellId, enabled);
         return 0;
     }
 

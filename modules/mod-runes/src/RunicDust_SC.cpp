@@ -42,31 +42,6 @@ public:
         return skillLevel / 10 + pourcentageInitial;
     }
 
-    void AddMetarial(Loot* loot, uint32 skillLevel)
-    {
-        double lootChanceItem1 = calculatePourcentage(skillLevel, 25.f);
-        double lootChanceItem2 = calculatePourcentage(skillLevel, 5.f);
-        double lootChanceItem3 = calculatePourcentage(skillLevel, 1.f);
-
-        if (roll_chance_i(lootChanceItem1))
-        {
-            LootStoreItem storeItem(70010, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
-        }
-
-        if (roll_chance_i(lootChanceItem2))
-        {
-            LootStoreItem storeItem(70011, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
-        }
-
-        if (roll_chance_i(lootChanceItem3))
-        {
-            LootStoreItem storeItem(70012, 0, 100, 0, LOOT_MODE_DEFAULT, 0, 1, 1);
-            loot->AddItem(storeItem);
-        }
-    }
-
     void AddBonusRunicDust(Creature* creature, Player* player, Loot* loot) {
 
         if (creature->getLevel() < player->getLevel())
@@ -134,10 +109,8 @@ public:
                     {
                         if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(skillId))
                         {
-                            AddMetarial(loot, pureSkillValue);
                             int valueFromMinningAndHerborsimMin = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MIN");
                             int valueFromMinningAndHerborsimMax = sWorld->GetValue("CONFIG_MINNING_AND_HERBORISM_RUNIC_DUST_MAX");
-
                             AddRunicDustToLoot(valueFromMinningAndHerborsimMin, valueFromMinningAndHerborsimMax, loot);
                         }
                     }
@@ -152,7 +125,6 @@ public:
             {
                 if (uint32 pureSkillValue = lootOwner->GetPureSkillValue(SKILL_SKINNING) && creature->getLevel() >= lootOwner->getLevel())
                 {
-                    AddMetarial(loot, pureSkillValue);
                     int valueFromSkinningMin = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MIN");
                     int valueFromSkinningMax = sWorld->GetValue("CONFIG_SKINNING_RUNIC_DUST_MAX");
                     AddRunicDustToLoot(valueFromSkinningMin, valueFromSkinningMax, loot);

@@ -185,7 +185,7 @@ public:
     static void DisableRune(Player* player, uint64 runeId);
     static std::vector<std::string> GetRunesByPlayerName(std::string name);
     static void RefundRune(Player* player, uint32 runeSpellId);
-    static void ApplyLuckyRune(Player* player, uint32 runeSpellId);
+    static void ApplyLuckyRune(Player* player, uint32 runeSpellId, bool enabled);
     static void ApplyAutorefund(Player* player, uint32 runeSpellId);
     static void UpgradeRune(Player* player, uint32 runeSpellId);
     static void AddRuneToSlot(Player* player, Rune rune);

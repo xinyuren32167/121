@@ -107,7 +107,7 @@ struct SpecValue {
 
 struct Spec {
     uint32 specId;
-    uint32 PreferredSpecId;
+    int32 PreferredSpecId;
 };
 
 class PlayerSpecialization {
@@ -120,7 +120,7 @@ public:
     static void InitializeSpecializations();
     static void ActivateSpecialization(Player* player, uint32 specId);
     static void UpdateMastery(Player* player, uint32 rating);
-    static SpecValue GetSpecValue(Player* player);
+    static SpecValue GetSpecValue(uint32 specId);
     static bool Exception(Player* player, uint32 spellId);
     static void RemoveSpellsAndAuras(Player* player);
     static uint32 GetCurrentSpecId(Player* player);

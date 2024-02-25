@@ -472,6 +472,7 @@ ElunaRegister<Player> PlayerMethods[] =
     { "EnableOrDisableAutorefund", &LuaPlayer::EnableOrDisableAutorefund },
     { "EnableOrDisableLuckyRunes", &LuaPlayer::EnableOrDisableLuckyRunes },
     { "ActivatePreferredSpecialization", &LuaPlayer::ActivatePreferredSpecialization },
+    { "UpgradeItem", &LuaPlayer::UpgradeItem },
 
 
     { "GetSelection", &LuaPlayer::GetSelection },

@@ -239,6 +239,8 @@ namespace Hooks
 
         PLAYER_EVENT_ENABLE_LUCKY_RUNE = 69,       // (event, player, oldLevel)
 
+        PLAYER_EVENT_ITEM_UPGRADE_SUCCESS = 70,       // (event, player, oldLevel)
+
 
         PLAYER_EVENT_COUNT
     };

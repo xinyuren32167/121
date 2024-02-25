@@ -33,16 +33,6 @@ void RunesManager::SetupConfig()
     config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_LEGENDARY")));
     config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_MYTHICAL")));
 
-    config.costMineralToUpgradeToEpic = sWorld->GetValue("CONFIG_COST_MINERAL_EPIC");
-    config.costMineralToUpgradeToLegendary = sWorld->GetValue("CONFIG_COST_MINERAL_LEGENDARY");
-    config.costMineralToUpgradeToMythic = sWorld->GetValue("CONFIG_COST_MINERAL_MYTHICAL");
-
-    config.costSkullUpgradeRankLegendary = sWorld->GetValue("CONFIG_COST_TOKEN_UPGRADE_LEGENDARY");
-    config.costSkullUpgradeRankMythic = sWorld->GetValue("CONFIG_COST_TOKEN_UPGRADE_MYTHICAL");
-
-    config.costBetterSkullUpgradeRankLegendary = sWorld->GetValue("CONFIG_COST_UPPER_TOKEN_UPGRADE_LEGENDARY");
-    config.costBetterSkullUpgradeRankMythic = sWorld->GetValue("CONFIG_COST_UPPER_TOKEN_UPGRADE_MYTHICAL");
-
 }
 
 void RunesManager::LoadAllRunes()
@@ -441,7 +431,7 @@ bool RunesManager::IsSpellIdAutoRefund(Player* player, uint32 spellId)
 }
 
 
-void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
+void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId, bool enabled)
 {
     uint32 guid = player->GetGUID().GetCounter();
     auto match = m_CharacterLuckyRunes.find(guid);
@@ -510,8 +500,10 @@ void RunesManager::ApplyLuckyRune(Player* player, uint32 runeSpellId)
         }
     }
 
-    sEluna->EnableLuckyRune(player, runeSpellId);
 
+    if (enabled) {
+        sEluna->EnableLuckyRune(player, runeSpellId);
+    }
 }
 
 void RunesManager::SpellConversion(uint32 runeId, Player* player, bool apply)
@@ -646,13 +638,13 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
             }
         }
     }
+    uint32 currentSpec = PlayerSpecialization::GetCurrentSpecId(player);
+    SpecValue specValue = PlayerSpecialization::GetSpecValue(currentSpec);
 
     for (const auto& pair : m_Runes) {
         bool isClassAllowed = pair.second.allowableClass & player->getClassMask();
-        SpecValue specValue = PlayerSpecialization::GetSpecValue(player);
-        bool isSpecAllowed = pair.second.specMask & specValue.specMask;
-        bool isTypeAllowed = pair.second.type == 0 || pair.second.type == specValue.type;
-        if (pair.second.quality == quality && isClassAllowed && isSpecAllowed && isTypeAllowed)
+        bool isSpecAllowed = ((pair.second.specMask & specValue.specMask) || specValue.specMask == 0) && (pair.second.type == 0 || pair.second.type == specValue.type);
+        if (pair.second.quality == quality && isClassAllowed && isSpecAllowed)
             possibleRunes.push_back(pair.second);
     }
         
@@ -808,31 +800,6 @@ void RunesManager::RemoveNecessaryItemsForUpgrade(Player* player, Rune nextRune)
         player->DestroyItemCount(70009, cost, true);
     }
 
-    if (nextRune.quality == EPIC_QUALITY) {
-        int8 cost = config.costMineralToUpgradeToEpic;
-        player->DestroyItemCount(70010, cost, true);
-    }
-
-    if (nextRune.quality == LEGENDARY_QUALITY) {
-        int8 costMineralToUpgradeToLegendary = config.costMineralToUpgradeToLegendary;
-        int8 costSkullUpgradeRankLegendary = config.costSkullUpgradeRankLegendary;
-        int8 costBetterSkullUpgradeRankLegendary = config.costBetterSkullUpgradeRankLegendary;
-
-        player->DestroyItemCount(70011, costMineralToUpgradeToLegendary, true);
-        player->DestroyItemCount(70013, costSkullUpgradeRankLegendary, true);
-        player->DestroyItemCount(70014, costBetterSkullUpgradeRankLegendary, true);
-    }
-
-    if (nextRune.quality == MYTHICAL_QUALITY) {
-        int8 costMineralToUpgradeToMythic = config.costMineralToUpgradeToMythic;
-        int8 costSkullUpgradeRankMythic = config.costSkullUpgradeRankMythic;
-        int8 costBetterSkullUpgradeRankMythic = config.costBetterSkullUpgradeRankMythic;
-
-        player->DestroyItemCount(70012, costMineralToUpgradeToMythic, true);
-        player->DestroyItemCount(70013, costSkullUpgradeRankMythic, true);
-        player->DestroyItemCount(70014, costBetterSkullUpgradeRankMythic, true);
-    }
-
     std::stringstream fmt;
 
     fmt << std::to_string(previousRune.spellId);
@@ -956,19 +923,7 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
         fmt << knownRune.rune.spellId << "," << knownRune.count << "," << 3 << "," << std::to_string(knownRune.rune.quality);
 
         fmt << "|" << nextRune.spellId << "," << std::to_string(nextQuality);
-
-        if(nextQuality == RARE_QUALITY)
-            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality];
-        if (nextQuality == EPIC_QUALITY)
-            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70010"
-            << "," << std::to_string(config.costMineralToUpgradeToEpic);
-        if (nextQuality == LEGENDARY_QUALITY)
-            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";" << "70011" << "," << std::to_string(config.costMineralToUpgradeToLegendary)
-            << ";" << "70013" << "," << std::to_string(config.costSkullUpgradeRankLegendary) << ";" << "70014" << "," << std::to_string(config.costBetterSkullUpgradeRankLegendary);
-        if (nextQuality == MYTHICAL_QUALITY)
-            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality] << ";"  << "70012" << "," << std::to_string(config.costMineralToUpgradeToMythic)
-            << ";" << "70013" << "," << std::to_string(config.costSkullUpgradeRankMythic) << ";" << "70014" << "," << std::to_string(config.costBetterSkullUpgradeRankMythic);
-
+        fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality];
 
         elements.push_back(fmt.str());
     }
@@ -1053,17 +1008,8 @@ bool RunesManager::IsRuneUpgradable(Player* player, Rune targetRune, uint32 coun
     if (nextQuality == UNCOMMON_QUALITY)
         return didHasRunes;
 
-    if (nextQuality == RARE_QUALITY)
-        return didHasRunes && player->HasItemCount(70009, 200);
-
-    if (nextQuality == EPIC_QUALITY)
-        return didHasRunes && player->HasItemCount(70009, 500) && player->HasItemCount(70010, 6);
-
-    if (nextQuality == LEGENDARY_QUALITY)
-        return didHasRunes && player->HasItemCount(70009, 1500) && player->HasItemCount(70011, 20) && player->HasItemCount(70013, 3) && player->HasItemCount(70014, 1);
-
-    if (nextQuality == MYTHICAL_QUALITY)
-        return didHasRunes && player->HasItemCount(70009, 2500) && player->HasItemCount(70012, 100) && player->HasItemCount(70013, 3) && player->HasItemCount(70014, 5);
+    if (nextQuality >= RARE_QUALITY)
+        return didHasRunes && config.upgradeCostRunicEssence[nextQuality];
 
     return false;
 }
@@ -1280,7 +1226,8 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
         return;
     }
 
-    SpecValue specValue = PlayerSpecialization::GetSpecValue(player);
+    uint32 currentSpec = PlayerSpecialization::GetCurrentSpecId(player);
+    SpecValue specValue = PlayerSpecialization::GetSpecValue(currentSpec);
 
     bool isSpecAllowed = (rune.specMask & specValue.specMask || specValue.specMask == 0) && (rune.type == 0 || rune.type == specValue.type);
 

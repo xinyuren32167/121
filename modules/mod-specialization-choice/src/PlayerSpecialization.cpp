@@ -25,7 +25,7 @@ void PlayerSpecialization::LoadAllSpecsPlayers()
         Field* fields = result->Fetch();
         uint64 guid = fields[0].Get<uint64>();
         uint32 specId = fields[1].Get<uint32>();
-        uint32 PreferredSpecId = fields[2].Get<uint32>();
+        int32 PreferredSpecId = fields[2].Get<int32>();
         m_PlayersSpecialization[guid] = { specId, PreferredSpecId };
     } while (result->NextRow());
 }
@@ -204,9 +204,7 @@ std::vector<std::string> PlayerSpecialization::GetSpecializations(Player* player
     return elements;
 }
 
-SpecValue PlayerSpecialization::GetSpecValue(Player* player) {
-
-    uint32 currentSpec = PlayerSpecialization::GetPreferredSpecId(player);
+SpecValue PlayerSpecialization::GetSpecValue(uint32 currentSpec) {
 
     if (!currentSpec)
         return { -1, 0 };

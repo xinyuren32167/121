@@ -582,6 +582,7 @@ void MythicManager::PreparationMythicDungeon(Player* leader)
     if (!group) {
         ResetPlayerInstanceBound(leader, dungeon.mapId);
         leader->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, true);
+        return;
     }
 
     if (Group* group = leader->GetGroup()) {
