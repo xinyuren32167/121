@@ -31,6 +31,7 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
+        LOG_INFO("Runes", "Initializing Runes...");
         ItemUpgradeManager::LoadCosts();
     }
 };
