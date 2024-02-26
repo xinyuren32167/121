@@ -31,7 +31,6 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
-        LOG_INFO("Runes", "Initialize Runes...");
         ItemUpgradeManager::LoadCosts();
     }
 };
@@ -40,5 +39,6 @@ public:
 void AddSC_ItemUpgrade()
 {
     new ItemUpgrade_PlayerScripts();
+    new ItemUpgrade_WorldScript();
 }
 

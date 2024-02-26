@@ -9,7 +9,7 @@ void ItemUpgradeManager::LoadCosts()
 {
     m_CostUpgrade = {};
 
-    QueryResult result = WorldDatabase.Query("SELECT * type FROM item_upgrade_cost");
+    QueryResult result = WorldDatabase.Query("SELECT * FROM item_upgrade_cost");
 
     if (!result)
         return;
@@ -34,14 +34,14 @@ void ItemUpgradeManager::UpgradeItem(Player* player, uint32 entry)
 {
     const ItemTemplate* itemTemplate = sObjectMgr->GetItemTemplate(entry);
 
-    if (entry < 100000 || itemTemplate->Class != ITEM_CLASS_WEAPON || itemTemplate->Class != ITEM_CLASS_ARMOR)
-    {
-        RunesManager::SendChat(player, "You can't upgrade this item.");
-        return;
-    }
-
     if (!itemTemplate)
         return;
+
+    if (entry < 100000 || (itemTemplate->Class != ITEM_CLASS_WEAPON && itemTemplate->Class != ITEM_CLASS_ARMOR))
+    {
+        RunesManager::SendChat(player, "This item is not upgradable.");
+        return;
+    }
 
     uint32 nextEntry = entry + 1;
 
@@ -60,7 +60,7 @@ void ItemUpgradeManager::UpgradeItem(Player* player, uint32 entry)
 
     if (itemUpgrade->Name1 != itemTemplate->Name1)
     {
-        RunesManager::SendChat(player, "You can't upgrade this item.");
+        RunesManager::SendChat(player, "You can't do that.");
         return;
     }
 
@@ -68,7 +68,7 @@ void ItemUpgradeManager::UpgradeItem(Player* player, uint32 entry)
 
     if (find == m_CostUpgrade.end())
     {
-        RunesManager::SendChat(player, "You can't upgrade this item.");
+        RunesManager::SendChat(player, "You can't upgrade this item anymore.");
         return;
     }
 
