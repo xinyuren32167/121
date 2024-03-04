@@ -4841,6 +4841,7 @@ class rune_druid_flashing_claws : public AuraScript
     }
 };
 
+// Thrashing Around
 class rune_druid_rend_and_tear : public AuraScript
 {
     PrepareAuraScript(rune_druid_rend_and_tear);
@@ -4897,13 +4898,15 @@ class rune_druid_rend_and_tear : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-
         WorldObject* owner = GetAura()->GetOwner();
 
         if (!owner)
             return;
 
         Unit* caster = owner->ToUnit();
+
+        if (!caster || caster->isDead())
+            return;
 
         for (size_t i = 701464; i < 701470; i++)
         {
@@ -5435,6 +5438,7 @@ class rune_druid_elunes_favored_buff : public AuraScript
     }
 };
 
+//Nature's Wrath
 class rune_druid_astral_fury : public AuraScript
 {
     PrepareAuraScript(rune_druid_astral_fury);
