@@ -40,10 +40,10 @@ public:
     bool IsAllowedTimeOver() { return !ChestDecrapeted; };
     void OnCompleteMythicDungeon(Player* player);
     uint32 GetDungeonMapId() { return Dungeon->GetId(); };
+    void OnPlayerRelease(Player* player);
 
 private:
 
-    void OnPlayerRelease();
     bool MeetTheConditionsToCompleteTheDungeon();
     void GiveRewards();
     void SaveMythicDungeon();

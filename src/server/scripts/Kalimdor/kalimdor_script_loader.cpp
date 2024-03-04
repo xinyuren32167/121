@@ -95,11 +95,13 @@ void AddSC_thousand_needles();
 void AddSC_thunder_bluff();
 void AddSC_ungoro_crater();
 void AddSC_winterspring();
+void AddSC_instance_ragefire_chasm();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddKalimdorScripts()
 {
+    AddSC_instance_ragefire_chasm();
     AddSC_instance_blackfathom_deeps();     //Blackfathom Depths
     AddSC_hyjal();                          //CoT Battle for Mt. Hyjal
     AddSC_boss_archimonde();

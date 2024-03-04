@@ -558,7 +558,6 @@ Rune RunesManager::GetRandomRune(Player* player, uint8 quality)
     auto match = m_CharacterRuneDraw.find(guid);
 
     if (match == m_CharacterRuneDraw.end()) {
-        LOG_ERROR("SpecMask", "m_CharacterRuneDraw not found");
         return {};
     }
 
@@ -916,7 +915,9 @@ std::vector<std::string> RunesManager::RunesUpgradeForClient(Player* player)
         fmt << knownRune.rune.spellId << "," << knownRune.count << "," << 3 << "," << std::to_string(knownRune.rune.quality);
 
         fmt << "|" << nextRune.spellId << "," << std::to_string(nextQuality);
-        fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality];
+
+        if(nextQuality >= RARE_QUALITY)
+            fmt << "|" << "70009" << "," << config.upgradeCostRunicEssence[nextQuality];
 
         elements.push_back(fmt.str());
     }
@@ -1219,7 +1220,7 @@ void RunesManager::ActivateRune(Player* player, uint32 index, uint64 spellId)
     uint32 currentSpec = PlayerSpecialization::GetCurrentSpecId(player);
     SpecValue specValue = PlayerSpecialization::GetSpecValue(currentSpec);
 
-    bool isSpecAllowed = (rune.specMask & specValue.specMask || specValue.specMask == 0) && (rune.type == 0 || rune.type == specValue.type);
+    bool isSpecAllowed = ((rune.specMask & specValue.specMask) || specValue.specMask == 0) && (rune.type == 0 || rune.type == specValue.type);
 
     if ((rune.allowableClass & player->getClassMask()) == 0 || (!isSpecAllowed))
     {

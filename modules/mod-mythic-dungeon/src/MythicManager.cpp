@@ -83,11 +83,10 @@ void MythicManager::InitializePlayerMythicKeys()
     } while (result->NextRow());
 }
 
-void MythicManager::InitializeRewardsDungeons()
+void MythicManager::InitializeRewards()
 {
-    MythicDungeonLootStore = {};
-
-    QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic_rewards");
+    MythicDungeonRewardStore = {};
+    QueryResult result = WorldDatabase.Query("SELECT * FROM mythic_token_rewards");
 
     if (!result)
         return;
@@ -95,34 +94,16 @@ void MythicManager::InitializeRewardsDungeons()
     do
     {
         Field* fields = result->Fetch();
-        uint32 mapId = fields[0].Get<uint32>();
-        uint32 itemId = fields[1].Get<uint32>();
-        uint32 level = fields[2].Get<uint32>();
-        int32 classMask = fields[3].Get<int32>();
-        MythicReward reward = { itemId, level, classMask };
-        MythicDungeonLootStore[mapId].push_back(reward);
-    } while (result->NextRow());
-}
-
-void MythicManager::InitializeRewardsPlayersBag()
-{
-    MythicDungeonBagRewardStore = {};
-    QueryResult result = CharacterDatabase.Query("SELECT * FROM character_mythic_rewards");
-
-    if (!result)
-        return;
-
-    do
-    {
-        Field* fields = result->Fetch();
-        uint64 itemGUID = fields[0].Get<uint64>();
-        uint32 itemId = fields[1].Get<uint32>();
-        MythicDungeonBagRewardStore[itemGUID].push_back(itemId);
+        uint32 level = fields[0].Get<uint32>();
+        uint32 runicEssence = fields[1].Get<uint32>();
+        uint32 runicDust = fields[2].Get<uint32>();
+        MythicDungeonRewardStore[level] = { level, runicEssence, runicDust };
     } while (result->NextRow());
 }
 
 void MythicManager::InitializeCreatureKillingCount()
 {
+
 }
 
 void MythicManager::InitializeMultipliers()
@@ -225,24 +206,6 @@ uint32 MythicManager::GetRandomMythicDungeonForPlayer(Player* player)
     return MythicDungeonStore[urand(0, MythicDungeonStore.size() - 1)].id;
 }
 
-uint32 MythicManager::GetRandomLoot(Player* player, uint32 dungeonId, uint32 level)
-{
-    std::vector<MythicReward> loots = {};
-
-    auto itr = MythicDungeonLootStore.find(dungeonId);
-    if (itr != MythicDungeonLootStore.end())
-        for (auto item : itr->second)
-            if ((item.classMask & player->getClassMask() || item.classMask == -1) && item.level == level)
-                loots.push_back(item);
-
-
-    if (loots.empty())
-        return 0;
-
-    uint32 rand = urand(0, loots.size() - 1);
-
-    return loots[rand].itemId;
-}
 
 uint32 MythicManager::GetItemIdWithDungeonId(uint32 dungeonId)
 {
@@ -256,6 +219,17 @@ uint32 MythicManager::GetItemIdWithDungeonId(uint32 dungeonId)
 uint32 MythicManager::GetEnchantByMythicLevel(uint32 level)
 {
     return level + 4006;
+}
+
+MythicRewardToken MythicManager::GetMythicRewardTokenByLevel(uint32 level)
+{
+    auto find = MythicDungeonRewardStore.find(level);
+
+    if (find == MythicDungeonRewardStore.end())
+        return {};
+
+
+    return find->second;
 }
 
 void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)

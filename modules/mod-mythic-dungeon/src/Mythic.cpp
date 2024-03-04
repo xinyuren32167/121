@@ -224,9 +224,12 @@ void Mythic::OnPlayerKilledByCreature()
             sEluna->SendMythicUpdateDeath(player, Deaths);
 }
 
-void Mythic::OnPlayerRelease()
+void Mythic::OnPlayerRelease(Player* player)
 {
-
+    MythicDungeon dungeon;
+    sMythicMgr->GetMythicDungeonByDungeonId(DungeonId, dungeon);
+    player->ResurrectPlayer(25.f, false);
+    player->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, false);
 }
 
 bool Mythic::MeetTheConditionsToCompleteTheDungeon()
@@ -244,18 +247,17 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 
 void Mythic::GiveRewards()
 {
-    uint8 upgrade = CalculateUpgradeKey();
-
+    MythicRewardToken reward = sMythicMgr->GetMythicRewardTokenByLevel(Level);
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
-    if (playerList.IsEmpty())
-        return;
-
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
+    {
         if (Player* player = playerIteration->GetSource())
         {
-
+            player->AddItem(70008, reward.runicDust);
+            player->AddItem(70009, reward.runicEssence);
         }
+    }
 
 }
 

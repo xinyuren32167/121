@@ -85,8 +85,6 @@ struct boss_bazzalan : public BossAI
     }
 };
 
-
-
 void AddSC_boss_bazzalan()
 {
     RegisterRageFireChasmCreatureAI(boss_bazzalan);

@@ -56,6 +56,16 @@ public:
         sMythicMgr->OnPlayerDie(killed, killer);
     }
 
+
+    void OnPlayerReleasedGhost(Player* player)
+    {
+        Mythic* mythic = sMythicMgr->GetMythicPlayer(player);
+
+        if (!mythic)
+            return;
+
+        mythic->OnPlayerRelease(player);
+    }
 };
 
 
@@ -124,10 +134,9 @@ public:
     {
         sMythicMgr->InitializeCreatureKillingCount();
         sMythicMgr->InitializeMultipliers();
-        sMythicMgr->InitializeRewardsDungeons();
+        sMythicMgr->InitializeRewards();
         sMythicMgr->InitializePlayerMythicKeys();
         sMythicMgr->InitializeMythicDungeons();
-        sMythicMgr->InitializeRewardsPlayersBag();
         sMythicMgr->InitializeMythicDungeonBosses();
     }
 

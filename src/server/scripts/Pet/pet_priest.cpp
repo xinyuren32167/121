@@ -326,7 +326,6 @@ struct npc_pri_idol_of_yogg_saron : public ScriptedAI
                 if (Unit* target = owner->GetSelectedUnit())
                 {
                     int32 amount = owner->CalculateDamageAmount(owner, target, SPELL_SCHOOL_MASK_SHADOW, 86.15, RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE);
-
                     me->CastCustomSpell(RUNE_PRIEST_IDOL_OF_YOGG_SARON_VOID_SPIKE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_IGNORE_POWER_AND_REAGENT_COST);
                 }
 

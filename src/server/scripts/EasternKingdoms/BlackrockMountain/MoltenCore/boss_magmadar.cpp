@@ -90,7 +90,7 @@ public:
                 return;
 
             uint32 playerCount = me->GetMap()->GetPlayers().getSize();
-            uint8 count = playerCount > 20 ? 5 : 2;
+            uint8 count = playerCount > 20 ? 5 : 3;
 
 
             if (me->HealthBelowPctDamaged(75, damage) && !firstSummon)

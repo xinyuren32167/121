@@ -66,10 +66,10 @@ struct MythicKey {
     uint32 level;
 };
 
-struct MythicReward {
+struct MythicRewardToken {
     uint32 level;
-    uint32 itemId;
-    int32 classMask;
+    uint32 runicEssence;
+    uint32 runicDust;
 };
 
 class MythicManager
@@ -87,7 +87,7 @@ public:
     typedef std::map<uint64, std::vector<uint32>> MythicBagRewardPlayerContainer;
     typedef std::map<uint32, std::vector<MythicBoss>> MythicDungeonBossContainer;
     typedef std::vector<MythicDungeon> MythicDungeonContainer;
-    typedef std::map<uint32, std::vector<MythicReward>> MythicRewardsContainer;
+    typedef std::map<uint32, MythicRewardToken> MythicRewardsContainer;
     typedef std::map<uint64, MythicKey> MythicPlayerKeyContainer;
     typedef std::map<ObjectGuid, MythicKey*> MythicAsyncCreationContainer;
 
@@ -95,10 +95,9 @@ public:
     void InitializeMythicDungeonBosses();
     void InitializeMythicDungeons();
     void InitializePlayerMythicKeys();
-    void InitializeRewardsDungeons();
-    void InitializeRewardsPlayersBag();
     void InitializeCreatureKillingCount();
     void InitializeMultipliers();
+    void InitializeRewards();
     void HandleChangeDungeonDifficulty(Player* _player, uint8 mode);
     void SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level);
     void GenerateFirstRandomMythicKey(Player* player);
@@ -107,9 +106,10 @@ public:
     bool ForceCompleteMythic(Player* player);
 
     uint32 GetRandomMythicDungeonForPlayer(Player* player);
-    uint32 GetRandomLoot(Player* player, uint32 dungeonId, uint32 level);
     uint32 GetItemIdWithDungeonId(uint32 dungeonId);
     uint32 GetEnchantByMythicLevel(uint32 level);
+
+    MythicRewardToken GetMythicRewardTokenByLevel(uint32 level);
 
 
     uint8 GetBossIndex(uint32 dungeonId, uint32 creatureId);
@@ -156,8 +156,7 @@ private:
     MythicDungeonContainer MythicDungeonStore;
     MythicPlayerKeyContainer MythicPlayerKeyStore;
     MythicAsyncCreationContainer AsyncCreationMythic;
-    MythicRewardsContainer MythicDungeonLootStore;
-    MythicBagRewardPlayerContainer MythicDungeonBagRewardStore;
+    MythicRewardsContainer MythicDungeonRewardStore;
 };
 
 #define sMythicMgr MythicManager::instance()
