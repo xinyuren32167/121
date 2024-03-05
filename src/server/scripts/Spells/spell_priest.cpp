@@ -2501,7 +2501,9 @@ class spell_pri_holy_fire_aura : public AuraScript
 
         if (Aura* runeAura = GetHolyHellstoneAura(caster))
             if (Unit* nearTarget = findNearestTarget(caster, target))
-                caster->AddAura(SPELL_PRIEST_HOLY_FIRE, nearTarget);
+                if (GetAura()->GetEffect(EFFECT_2)->GetAmount() == 0)
+                    if (Aura* newHolyFire = caster->AddAura(SPELL_PRIEST_HOLY_FIRE, nearTarget))
+                        newHolyFire->GetEffect(EFFECT_2)->ChangeAmount(1);
     }
 
     void Register() override
