@@ -1387,6 +1387,9 @@ void RunesManager::RefundRune(Player* player, uint32 runeSpellId)
 
     auto it = m_KnownRunes.find(accountId);
 
+    if (it == m_KnownRunes.end())
+        return;
+
     auto ij = std::find_if(it->second.begin(), it->second.end(),
         [&](const KnownRune& accountRune) {
         return accountRune.rune.quality == rune.quality && accountRune.rune.spellId == rune.spellId;
