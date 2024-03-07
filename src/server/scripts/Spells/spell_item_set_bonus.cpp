@@ -118,8 +118,6 @@ enum SetSpells
     // Rogue
     SPELL_SET_T1_ROGUE_SUB_2PC_BUFF = 99701,
     SPELL_SET_T1_ROGUE_OUTLAW_2PC_BUFF = 99801,
-
-
 };
 
 // --------------------------------------------------------------------------- General Sets ---------------------------------------------------------------------------
@@ -280,19 +278,6 @@ class spell_set_staff_intellect : public AuraScript
 {
     PrepareAuraScript(spell_set_staff_intellect);
 
-    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (Player* player = caster->ToPlayer())
-            if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
-                if (!item->IsFitToSpellRequirements(GetSpellInfo()))
-                    GetEffect(EFFECT_0)->ChangeAmount(0);
-    }
-
     void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
     {
         isPeriodic = true;
@@ -308,8 +293,8 @@ class spell_set_staff_intellect : public AuraScript
 
         if (Player* player = caster->ToPlayer())
         {
-            int32 value = GetEffect(EFFECT_1)->GetAmount();
-            int32 amount = aurEff->GetAmount();
+            int32 value = aurEff->GetAmount();
+            int32 amount = GetEffect(EFFECT_0)->GetAmount();
 
             if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
             {
@@ -326,14 +311,14 @@ class spell_set_staff_intellect : public AuraScript
                     amount = 0;
 
             GetEffect(EFFECT_0)->ChangeAmount(amount);
+            GetEffect(EFFECT_1)->ChangeAmount(amount);
         }
     }
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectApplyFn(spell_set_staff_intellect::HandleEffectApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_staff_intellect::CalcPeriodic, EFFECT_0, SPELL_AURA_ANY);
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_staff_intellect::HandlePeriodic, EFFECT_0, SPELL_AURA_ANY);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_staff_intellect::CalcPeriodic, EFFECT_2, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_staff_intellect::HandlePeriodic, EFFECT_2, SPELL_AURA_ANY);
     }
 };
 
@@ -342,19 +327,6 @@ class spell_set_shield_intellect : public AuraScript
 {
     PrepareAuraScript(spell_set_shield_intellect);
 
-    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (Player* player = caster->ToPlayer())
-            if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
-                if (!item->IsFitToSpellRequirements(GetSpellInfo()))
-                    GetEffect(EFFECT_0)->ChangeAmount(0);
-    }
-
     void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
     {
         isPeriodic = true;
@@ -370,8 +342,8 @@ class spell_set_shield_intellect : public AuraScript
 
         if (Player* player = caster->ToPlayer())
         {
-            int32 value = GetEffect(EFFECT_1)->GetAmount();
-            int32 amount = aurEff->GetAmount();
+            int32 value = aurEff->GetAmount();
+            int32 amount = GetEffect(EFFECT_0)->GetAmount();
 
             if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
@@ -388,14 +360,14 @@ class spell_set_shield_intellect : public AuraScript
                     amount = 0;
 
             GetEffect(EFFECT_0)->ChangeAmount(amount);
+            GetEffect(EFFECT_1)->ChangeAmount(amount);
         }
     }
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectApplyFn(spell_set_shield_intellect::HandleEffectApply, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
-        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_shield_intellect::CalcPeriodic, EFFECT_0, SPELL_AURA_ANY);
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_shield_intellect::HandlePeriodic, EFFECT_0, SPELL_AURA_ANY);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_shield_intellect::CalcPeriodic, EFFECT_2, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_shield_intellect::HandlePeriodic, EFFECT_2, SPELL_AURA_ANY);
     }
 };
 
