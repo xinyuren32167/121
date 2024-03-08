@@ -337,6 +337,9 @@ class rune_rog_venomous_wounds : public AuraScript
         if (!target || target->isDead())
             return false;
 
+        if (target->HasAura(GetAura()->GetEffect(EFFECT_0)->GetAmount()))
+            return false;
+
         if (target->HasAura(POISON_ROGUE_NUMBING_POISON_AURA))
             return true;
 
@@ -358,9 +361,15 @@ class rune_rog_venomous_wounds : public AuraScript
         return false;
     }
 
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(GetCaster(), GetAura()->GetEffect(EFFECT_0)->GetAmount(), TRIGGERED_FULL_MASK);
+    }
+
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(rune_rog_venomous_wounds::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_rog_venomous_wounds::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -1906,9 +1915,6 @@ class rune_rog_quick_draw : public AuraScript
     }
 };
 
-
-
-
 void AddSC_rogue_perks_scripts()
 {
     RegisterSpellScript(rune_rog_venom_rush);
@@ -1965,10 +1971,4 @@ void AddSC_rogue_perks_scripts()
     RegisterSpellScript(rune_rog_count_the_odds);
     RegisterSpellScript(rune_rog_fan_the_hammer);
     RegisterSpellScript(rune_rog_quick_draw);
-
-    
-    
-    
-    
 }
-
