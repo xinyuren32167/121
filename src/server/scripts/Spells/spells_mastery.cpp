@@ -1685,8 +1685,8 @@ class spell_mastery_sha_enhanced_elements : public SpellScript
             int32 bonus1 = aura->GetEffect(EFFECT_0)->GetAmount() + mastery;
 
             // Storm's Wrath Rune proc chance increase
-            if (GetStormsWrathAura(caster))
-                AddPct(bonus1, GetStormsWrathAura(caster)->GetEffect(EFFECT_0)->GetAmount());
+            if (Aura* runeAura = GetStormsWrathAura(caster))
+                bonus1 += runeAura->GetEffect(EFFECT_0)->GetAmount();
 
             // elemental damage increase
             int32 bonus2 = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
