@@ -2425,7 +2425,7 @@ class spell_hun_flanking_strike : public SpellScript
 
         Position targetPos = GetExplTargetUnit()->GetPosition();
 
-        pet->GetMotionMaster()->MoveJump(targetPos, 15.0f, 15.0f);
+        pet->GetMotionMaster()->MoveJump(targetPos, 40.0f, 15.0f);
         pet->CastCustomSpellTrigger(80198, SPELLVALUE_BASE_POINT0, damage, target, TRIGGERED_FULL_MASK);
     }
 
