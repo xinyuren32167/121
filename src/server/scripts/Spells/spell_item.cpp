@@ -3891,6 +3891,66 @@ class spell_item_second_wind : public AuraScript
     }
 };
 
+// 9591 - Dragon's Call's Emerald Dragon Whelp's Acid Spit damage
+class spell_item_acid_spit : public SpellScript
+{
+    PrepareSpellScript(spell_item_acid_spit);
+
+    void HandleDamage(SpellEffIndex  /*effIndex*/)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+        int32 increase = CalculatePct(35, caster->GetTotalAttackPowerValue(BASE_ATTACK));
+        damage += increase;
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_item_acid_spit::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 9591 - Cannonball Runner's Crimson Cannon's Cannon Fire damage
+class spell_item_cannon_fire : public SpellScript
+{
+    PrepareSpellScript(spell_item_cannon_fire);
+
+    void HandleDamage(SpellEffIndex  /*effIndex*/)
+    {
+        Unit* pet = GetCaster();
+
+        if (!pet || pet->isDead())
+            return;
+
+        Unit* caster = pet->GetOwner();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = GetHitDamage();
+        int32 increase = CalculatePct(25, caster->GetTotalAttackPowerValue(BASE_ATTACK)) + CalculatePct(25, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE));
+        damage += increase;
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_item_cannon_fire::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 
 
 void AddSC_item_spell_scripts()
@@ -4013,9 +4073,11 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_naglering);
     RegisterSpellScript(spell_item_force_of_will);
     RegisterSpellScript(spell_item_second_wind);
+    RegisterSpellScript(spell_item_acid_spit);
+    RegisterSpellScript(spell_item_cannon_fire);
 
 
-
+    
     
     
 }
