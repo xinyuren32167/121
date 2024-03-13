@@ -3792,7 +3792,11 @@ class spell_item_mark_of_dragon_lord : public AuraScript
             return;
 
         int32 absorbPct = GetEffect(EFFECT_1)->GetAmount();
-        int32 absorb = std::min<uint8>(CalculatePct(dmgInfo.GetDamage(), absorbPct), caster->GetPower(POWER_MANA));
+        int32 absorb = CalculatePct(dmgInfo.GetDamage(), absorbPct);
+        int32 currentMana = caster->GetPower(POWER_MANA);
+
+        if (currentMana < absorb)
+            absorb = currentMana;
 
         absorbAmount = absorb;
         caster->EnergizeBySpell(caster, GetSpellInfo()->Id, -absorb, POWER_MANA);
@@ -3806,32 +3810,34 @@ class spell_item_mark_of_dragon_lord : public AuraScript
 };
 
 // 15438 - Naglering - ITEM : 11669
-class spell_item_naglering : public SpellScript
+class spell_item_naglering : public AuraScript
 {
-    PrepareSpellScript(spell_item_naglering);
+    PrepareAuraScript(spell_item_naglering);
 
-    void HandleDamage(SpellEffIndex  /*effIndex*/)
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
     {
         Unit* caster = GetCaster();
 
         if (!caster || caster->isDead())
             return;
 
-        Unit* target = GetHitUnit();
-
-        if (!target || target->isDead())
-            return;
-
-        int32 armorPct = GetEffectValue();
+        float armorPct = 0.5;
         int32 amount = CalculatePct(armorPct, caster->GetResistance(SPELL_SCHOOL_MASK_NORMAL));
-        amount /= 10;
 
-        SetHitDamage(amount);
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+
     }
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_item_naglering::HandleDamage, EFFECT_0, SPELL_AURA_DAMAGE_SHIELD);
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_item_naglering::CalcPeriodic, EFFECT_0, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_item_naglering::HandlePeriodic, EFFECT_0, SPELL_AURA_ANY);
     }
 };
 
@@ -3844,11 +3850,6 @@ enum ForceOfWill
 class spell_item_force_of_will : public AuraScript
 {
     PrepareAuraScript(spell_item_force_of_will);
-
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetSpellInfo();
-    }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -3863,7 +3864,6 @@ class spell_item_force_of_will : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(spell_item_force_of_will::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_item_force_of_will::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -3948,6 +3948,47 @@ class spell_item_cannon_fire : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_item_cannon_fire::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+// 17506 - Soul Breaker - ITEM : 13408
+class spell_item_soul_breaker : public AuraScript
+{
+    PrepareAuraScript(spell_item_soul_breaker);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        int32 amount = aurEff->GetAmount();
+        GetEffect(EFFECT_1)->ChangeAmount(amount);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_item_soul_breaker::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+// 11657 - Jang'thraze the Protector - ITEM : 11086
+class spell_item_jang_thraze : public AuraScript
+{
+    PrepareAuraScript(spell_item_jang_thraze);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 apRatio = 84;
+        int32 SpRatio = 84;
+        int32 amount = CalculatePct(apRatio, caster->GetTotalAttackPowerValue(BASE_ATTACK)) + CalculatePct(SpRatio, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW));
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_item_jang_thraze::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
     }
 };
 
@@ -4075,9 +4116,11 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_second_wind);
     RegisterSpellScript(spell_item_acid_spit);
     RegisterSpellScript(spell_item_cannon_fire);
+    RegisterSpellScript(spell_item_soul_breaker);
+    RegisterSpellScript(spell_item_jang_thraze);
 
 
     
-    
+
     
 }
