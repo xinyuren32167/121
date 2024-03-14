@@ -2956,8 +2956,8 @@ class spell_sha_invoke_essence_water : public AuraScript
 
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
-        int32 absorbPct = GetAura()->GetEffect(EFFECT_1)->GetAmount();
-        amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), absorbPct) + CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE), absorbPct);;
+        float ratio = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), ratio) + CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE), ratio);;
     }
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
