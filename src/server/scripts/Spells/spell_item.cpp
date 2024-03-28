@@ -3992,6 +3992,92 @@ class spell_item_jang_thraze : public AuraScript
     }
 };
 
+// 27518 - Obsidian Mail Tunic - ITEM : 22191
+class spell_item_obsidian_mail_tunic : public AuraScript
+{
+    PrepareAuraScript(spell_item_obsidian_mail_tunic);
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 staminaPct = GetEffect(EFFECT_1)->GetAmount();
+        int32 amount = CalculatePct(staminaPct, caster->GetStat(STAT_STAMINA));
+
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+
+    }
+
+    void Register() override
+    {
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_item_obsidian_mail_tunic::CalcPeriodic, EFFECT_0, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_item_obsidian_mail_tunic::HandlePeriodic, EFFECT_0, SPELL_AURA_ANY);
+    }
+};
+
+// 10618 - Dragonscale Breastplate - ITEM : 8367
+class spell_item_dragonscale_breastplate : public AuraScript
+{
+    PrepareAuraScript(spell_item_dragonscale_breastplate);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 ratio = GetEffect(EFFECT_1)->GetAmount();
+        int32 apAmount = CalculatePct(ratio, caster->GetTotalAttackPowerValue(BASE_ATTACK));
+        int32 spRatio = CalculatePct(ratio, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE));
+        int32 stamRatio = CalculatePct(ratio, caster->GetStat(STAT_STAMINA));
+        int32 amount = apAmount + spRatio + stamRatio;
+
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_item_dragonscale_breastplate::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+// 27539 - Thick Obsidian Breastplate - ITEM : 22196
+class spell_item_thick_obsidian_breastplate : public AuraScript
+{
+    PrepareAuraScript(spell_item_thick_obsidian_breastplate);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 ratio = GetEffect(EFFECT_1)->GetAmount();
+        int32 apAmount = CalculatePct(ratio, caster->GetTotalAttackPowerValue(BASE_ATTACK));
+        int32 spRatio = CalculatePct(ratio, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY));
+        int32 stamRatio = CalculatePct(ratio, caster->GetStat(STAT_STAMINA));
+        int32 amount = apAmount + spRatio + stamRatio;
+
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_item_thick_obsidian_breastplate::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
 
 
 void AddSC_item_spell_scripts()
@@ -4118,9 +4204,12 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_cannon_fire);
     RegisterSpellScript(spell_item_soul_breaker);
     RegisterSpellScript(spell_item_jang_thraze);
+    RegisterSpellScript(spell_item_obsidian_mail_tunic);
+    RegisterSpellScript(spell_item_dragonscale_breastplate);
+    RegisterSpellScript(spell_item_thick_obsidian_breastplate);
 
 
     
-
+    
     
 }
