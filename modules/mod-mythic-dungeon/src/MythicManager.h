@@ -70,6 +70,8 @@ struct MythicRewardToken {
     uint32 level;
     uint32 runicEssence;
     uint32 runicDust;
+    uint32 tokenId;
+    uint32 tokenCount;
 };
 
 class MythicManager

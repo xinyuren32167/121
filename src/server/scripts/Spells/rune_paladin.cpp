@@ -252,7 +252,7 @@ class rune_pal_zealots_paragon : public AuraScript
         if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_AVENGING_WRATH))
         {
             uint32 duration = (std::min<int32>(auraEff->GetDuration() + aurEff->GetAmount(), auraEff->GetMaxDuration() + 5000));
-
+            
             auraEff->SetDuration(duration);
         }
     }

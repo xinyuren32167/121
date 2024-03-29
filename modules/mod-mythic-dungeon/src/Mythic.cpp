@@ -256,6 +256,7 @@ void Mythic::GiveRewards()
         {
             player->AddItem(70008, reward.runicDust);
             player->AddItem(70009, reward.runicEssence);
+            player->AddItem(reward.tokenId, reward.tokenCount);
         }
     }
 

@@ -3715,6 +3715,48 @@ class spell_item_snowman : public SpellScript
     }
 };
 
+
+class spell_item_roop : public SpellScript
+{
+    PrepareSpellScript(spell_item_roop);
+
+    SpellCastResult CheckCast()
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            if (Unit* target = caster->GetSelectedUnit())
+            {
+                if(target->GetEntry()  == 10000005)
+                    return SPELL_CAST_OK;
+            }
+        }
+
+        return SPELL_FAILED_NO_VALID_TARGETS;
+    }
+
+
+    void HandleDummy(SpellEffIndex /* effIndex */)
+    {
+        Unit* caster = GetCaster();
+        Unit* unit = GetHitUnit();
+
+        if (unit)
+        {
+            if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(3))
+            {
+               caster->ToPlayer()->KilledMonster(creatureInfo, ObjectGuid::Empty);
+            }
+        }
+    }
+
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_item_roop::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnCheckCast += SpellCheckCastFn(spell_item_roop::CheckCast);
+    }
+};
+
 // https://www.wowhead.com/wotlk/spell=16028 Freeze Rookery Egg - Prototype
 // https://www.wowhead.com/wotlk/spell=15748 Freeze Rookery Egg
 class spell_item_freeze_rookery_egg : public SpellScript
@@ -3853,4 +3895,5 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_mirrens_drinking_hat);
     RegisterSpellScript(spell_item_snowman);
     RegisterSpellScript(spell_item_freeze_rookery_egg);
+    RegisterSpellScript(spell_item_roop);
 }

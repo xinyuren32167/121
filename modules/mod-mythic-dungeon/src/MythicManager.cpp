@@ -86,7 +86,7 @@ void MythicManager::InitializePlayerMythicKeys()
 void MythicManager::InitializeRewards()
 {
     MythicDungeonRewardStore = {};
-    QueryResult result = WorldDatabase.Query("SELECT * FROM mythic_token_rewards");
+    QueryResult result = WorldDatabase.Query("SELECT * FROM dungeon_mythic_token_rewards");
 
     if (!result)
         return;
@@ -97,7 +97,10 @@ void MythicManager::InitializeRewards()
         uint32 level = fields[0].Get<uint32>();
         uint32 runicEssence = fields[1].Get<uint32>();
         uint32 runicDust = fields[2].Get<uint32>();
-        MythicDungeonRewardStore[level] = { level, runicEssence, runicDust };
+        uint32 tokenId = fields[3].Get<uint32>();
+        uint32 tokenCount = fields[4].Get<uint32>();
+
+        MythicDungeonRewardStore[level] = { level, runicEssence, runicDust, tokenId, tokenCount };
     } while (result->NextRow());
 }
 
@@ -223,7 +226,13 @@ uint32 MythicManager::GetEnchantByMythicLevel(uint32 level)
 
 MythicRewardToken MythicManager::GetMythicRewardTokenByLevel(uint32 level)
 {
-    auto find = MythicDungeonRewardStore.find(level);
+    uint32 levelKey = level;
+    uint32 maxLevelKey = sWorld->GetValue("CONFIG_UNLOCK_MYTHIC_LEVEL");
+
+    if (levelKey > maxLevelKey)
+        levelKey = maxLevelKey;
+
+    auto find = MythicDungeonRewardStore.find(levelKey);
 
     if (find == MythicDungeonRewardStore.end())
         return {};
@@ -246,6 +255,11 @@ void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
 
     key->dungeonId = dungeonId;
     key->level += upgrade;
+
+    uint32 maxLevelKey = sWorld->GetValue("CONFIG_UNLOCK_MYTHIC_LEVEL");
+
+    if (key->level > maxLevelKey)
+        key->level = maxLevelKey;
 
     if (uint32 newItemId = sMythicMgr->GetItemIdWithDungeonId(dungeonId)) {
 
