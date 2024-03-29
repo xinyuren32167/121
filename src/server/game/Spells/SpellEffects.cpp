@@ -1131,10 +1131,10 @@ void Spell::EffectJumpDest(SpellEffIndex effIndex)
         speedXY = 50.0f;
     }
 
-    if (m_spellInfo->Id == 61241 || m_spellInfo->Id == 83091)
+    if (m_spellInfo->Id == 61241 || m_spellInfo->Id == 83091 || m_spellInfo->Id == 82084)
     {
         speedZ = 15.0f;
-        speedXY = 23.0f;
+        speedXY = 40.0f;
     }
 
     // crash fix?

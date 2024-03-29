@@ -1880,7 +1880,7 @@ class spell_dk_death_strike : public SpellScript
             if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_DEATH_STRIKE, EFFECT_0))
                 AddPct(bp, caster->CalculateSpellDamage(caster, aurEff->GetSpellInfo(), 2));
 
-            GetCaster()->CastCustomSpell(SPELL_DK_DEATH_STRIKE_HEAL, SPELLVALUE_BASE_POINT0, bp, caster);
+            caster->CastCustomSpell(SPELL_DK_DEATH_STRIKE_HEAL, SPELLVALUE_BASE_POINT0, bp, caster, TRIGGERED_FULL_MASK);
         }
     }
 

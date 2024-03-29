@@ -2242,7 +2242,7 @@ class spell_warr_shield_vault : public SpellScript
                 if (!target || !target->IsAlive())
                     return;
 
-                caster->GetMotionMaster()->MoveJump(targetPos, 20.0f, 12.0f);
+                caster->GetMotionMaster()->MoveJump(targetPos, 40.0f, 12.0f);
             }
         }
     }

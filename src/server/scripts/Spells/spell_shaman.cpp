@@ -2954,6 +2954,12 @@ class spell_sha_invoke_essence_water : public AuraScript
 {
     PrepareAuraScript(spell_sha_invoke_essence_water);
 
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        float ratio = GetSpellInfo()->GetEffect(EFFECT_1).CalcValue(GetCaster());
+        amount = CalculatePct(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK), ratio) + CalculatePct(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE), ratio);;
+    }
+
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
         Unit* caster = GetCaster();
@@ -2971,6 +2977,7 @@ class spell_sha_invoke_essence_water : public AuraScript
     void Register() override
     {
         OnEffectRemove += AuraEffectRemoveFn(spell_sha_invoke_essence_water::HandleRemove, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_invoke_essence_water::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
     }
 };
 
@@ -4786,8 +4793,6 @@ class spell_sha_earthquake : public AuraScript
         OnEffectApply += AuraEffectApplyFn(spell_sha_earthquake::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
     }
 };
-
-
 
 void AddSC_shaman_spell_scripts()
 {

@@ -1917,7 +1917,8 @@ class rune_pri_trail_of_light : public AuraScript
                     caster->AddAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER, target);
 
                     if (oldTarget != target)
-                        oldTarget->RemoveAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER);
+                        if (oldTarget->HasAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER))
+                            oldTarget->RemoveAura(RUNE_PRIEST_TRAIL_OF_LIGHT_LISTENER);
                 }
 
                 if (oldTarget == target || oldTarget->isDead())
