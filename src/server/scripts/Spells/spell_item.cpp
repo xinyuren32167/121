@@ -4120,6 +4120,56 @@ class spell_item_thick_obsidian_breastplate : public AuraScript
     }
 };
 
+// 9800 - Truesilver Champion - ITEM : 7960
+class spell_item_truesilver_champion : public AuraScript
+{
+    PrepareAuraScript(spell_item_truesilver_champion);
+
+    void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 ratio = GetEffect(EFFECT_1)->GetAmount();
+        int32 apAmount = CalculatePct(ratio, caster->GetTotalAttackPowerValue(BASE_ATTACK));
+        int32 spRatio = CalculatePct(ratio, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY));
+
+        int32 amount = apAmount + spRatio;
+
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_item_truesilver_champion::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+// 22600 - Force Reactive Disk - Item : 18168
+class spell_item_force_reactive_disk : public SpellScript
+{
+    PrepareSpellScript(spell_item_force_reactive_disk);
+
+    void HandleDamage(SpellEffIndex  /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = CalculatePct(5, caster->GetResistance(SPELL_SCHOOL_NORMAL));
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_item_force_reactive_disk::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 
 
 void AddSC_item_spell_scripts()
@@ -4250,5 +4300,11 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_dragonscale_breastplate);
     RegisterSpellScript(spell_item_thick_obsidian_breastplate);
     RegisterSpellScript(spell_item_roop);
+    RegisterSpellScript(spell_item_truesilver_champion);
+    RegisterSpellScript(spell_item_force_reactive_disk);
+
+
+    
+    
     
 }
