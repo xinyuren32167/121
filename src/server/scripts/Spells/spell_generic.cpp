@@ -1606,46 +1606,53 @@ class spell_gen_obsidian_armor : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetSpellInfo())
-        {
-            return false;
-        }
-
-        if (GetFirstSchoolInMask(eventInfo.GetSchoolMask()) == SPELL_SCHOOL_NORMAL)
-            return false;
-
-        return true;
+        return eventInfo.GetSpellInfo();
+        //if (GetFirstSchoolInMask(eventInfo.GetSchoolMask()) == SPELL_SCHOOL_NORMAL)
+          //  return false;
     }
 
     void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        PreventDefaultAction();
+        Unit* caster = GetUnitOwner();
+
+        if (!caster || caster->isDead())
+            return;
 
         uint32 spellId = 0;
-        switch (GetFirstSchoolInMask(eventInfo.GetSchoolMask()))
+
+        switch (eventInfo.GetSpellInfo()->GetSchoolMask())
         {
-            case SPELL_SCHOOL_HOLY:
+            case SPELL_SCHOOL_MASK_HOLY:
                 spellId = SPELL_GEN_OBSIDIAN_ARMOR_HOLY;
                 break;
-            case SPELL_SCHOOL_FIRE:
+            case SPELL_SCHOOL_MASK_FIRE:
                 spellId = SPELL_GEN_OBSIDIAN_ARMOR_FIRE;
                 break;
-            case SPELL_SCHOOL_NATURE:
+            case SPELL_SCHOOL_MASK_NATURE:
                 spellId = SPELL_GEN_OBSIDIAN_ARMOR_NATURE;
                 break;
-            case SPELL_SCHOOL_FROST:
+            case SPELL_SCHOOL_MASK_FROST:
                 spellId = SPELL_GEN_OBSIDIAN_ARMOR_FROST;
                 break;
-            case SPELL_SCHOOL_SHADOW:
+            case SPELL_SCHOOL_MASK_SHADOW:
                 spellId = SPELL_GEN_OBSIDIAN_ARMOR_SHADOW;
                 break;
-            case SPELL_SCHOOL_ARCANE:
+            case SPELL_SCHOOL_MASK_ARCANE:
                 spellId = SPELL_GEN_OBSIDIAN_ARMOR_ARCANE;
                 break;
             default:
                 return;
         }
-        GetTarget()->CastSpell(GetTarget(), spellId, true, nullptr, aurEff);
+
+        int32 ratio = GetEffect(EFFECT_1)->GetAmount();
+        int32 apAmount = CalculatePct(ratio, caster->GetTotalAttackPowerValue(BASE_ATTACK));
+        int32 spRatio = CalculatePct(ratio, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY));
+        int32 stamRatio = CalculatePct(ratio, caster->GetStat(STAT_STAMINA));
+        int32 amount = apAmount + spRatio + stamRatio;
+
+        GetEffect(EFFECT_0)->ChangeAmount(amount);
+        caster->CastCustomSpell(spellId, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
+        //caster->CastSpell(caster, spellId, true, nullptr, aurEff);
     }
 
     void Register() override
