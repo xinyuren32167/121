@@ -431,21 +431,20 @@ class rune_pri_psychic_link : public AuraScript
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
 
         for (auto const& targets : threatList)
-            if (targets->IsAlive())
+        {
+            if (target->IsValidAttackTarget(targets))
             {
-                if (!targets->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
-                    continue;
+                if (targets->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
+                {
+                    float distance = targets->GetDistance(target->GetPosition());
 
-                if (targets == target)
-                    continue;
+                    if (distance > 40)
+                        continue;
 
-                float distance = targets->GetDistance(target->GetPosition());
-
-                if (distance > 40)
-                    continue;
-
-                caster->CastCustomSpell(RUNE_PRIEST_PSYCHIC_LINK_DAMAGE, SPELLVALUE_BASE_POINT0, amount, targets, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(RUNE_PRIEST_PSYCHIC_LINK_DAMAGE, SPELLVALUE_BASE_POINT0, amount, targets, TRIGGERED_FULL_MASK);
+                }
             }
+        }
     }
 
     void Register()
