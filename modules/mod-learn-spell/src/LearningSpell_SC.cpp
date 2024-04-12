@@ -26,8 +26,8 @@ public:
         }
     }
 
-    void OnFirstLogin(Player* player) {
-
+    void OnFirstLogin(Player* player)
+    {
         AchievementEntry const* entry = sAchievementMgr->GetAchievement(6496);
 
         if (entry) {

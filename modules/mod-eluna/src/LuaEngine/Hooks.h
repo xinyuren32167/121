@@ -241,6 +241,8 @@ namespace Hooks
 
         PLAYER_EVENT_ITEM_UPGRADE_SUCCESS = 70,       // (event, player, oldLevel)
 
+        PLAYER_EVENT_OPEN_ITEM_UPGRADE_UI = 71,       // (event, player, rune)
+
 
         PLAYER_EVENT_COUNT
     };

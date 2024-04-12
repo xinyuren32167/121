@@ -271,6 +271,13 @@ void Eluna::OpenForgeRune(Player* pPlayer)
     CallAllFunctions(PlayerEventBindings, key);
 }
 
+void Eluna::OpenItemUpgrade(Player* pPlayer)
+{
+    START_HOOK(PLAYER_EVENT_OPEN_ITEM_UPGRADE_UI);
+    Push(pPlayer);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
 
 void Eluna::RemoveRune(Player* pPlayer, std::string str)
 {

@@ -9,6 +9,7 @@
 #include "LuaEngine.h"
 #include "Spell.h"
 #include "ItemUpgradeManager.h"
+#include "ScriptedGossip.h"
 
 // Add player scripts
 class ItemUpgrade_PlayerScripts : public PlayerScript
@@ -37,10 +38,24 @@ public:
     }
 };
 
+class npc_item_upgrader : public CreatureScript
+{
+public:
+    npc_item_upgrader() : CreatureScript("npc_item_upgrader") { }
+
+    bool OnGossipHello(Player* player, Creature* creature) override 
+    {
+        sEluna->OpenItemUpgrade(player);
+        return true;
+    }
+};
+
+
 // Add all scripts in one
 void AddSC_ItemUpgrade()
 {
     new ItemUpgrade_PlayerScripts();
     new ItemUpgrade_WorldScript();
+    new npc_item_upgrader();
 }
 
