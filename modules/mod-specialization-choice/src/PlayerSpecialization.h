@@ -103,6 +103,7 @@ struct SpecValue {
     int32 specMask;
     // 0 : all, 1 is melee, 2 is for caster
     int32 type;
+    uint32 statType;
 };
 
 struct Spec {

@@ -83,6 +83,9 @@ void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
 
     sScriptMgr->OnPlayerReleasedGhost(GetPlayer());
 
+    if (!sScriptMgr->CanResurrectThroughSpirit(GetPlayer()))
+        return;
+
     GetPlayer()->BuildPlayerRepop();
     GetPlayer()->RepopAtGraveyard();
 }

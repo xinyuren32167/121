@@ -13,11 +13,24 @@
 #include "InstanceScript.h"
 #include "MapMgr.h"
 #include "MythicManager.h"
+#include "ScriptedGossip.h"
+
  // Add player scripts
 class MythicDungeon_PlayerScripts : public PlayerScript
 {
 public:
     MythicDungeon_PlayerScripts() : PlayerScript("MythicDungeon_PlayerScripts") { }
+
+
+    bool CanResurrectThroughSpirit(Player* player)
+    {
+        Mythic* mythic = sMythicMgr->GetMythicPlayer(player);
+
+        if (mythic)
+            return false;
+
+        return true;
+    }
 
     void OnLogin(Player* player) override
     {
@@ -74,18 +87,6 @@ class Mythic_Keystone_Item : public ItemScript
 public:
     Mythic_Keystone_Item() : ItemScript("Mythic_Keystone_Item") { }
 
-
-    bool isNearTheStart(const Position& pos1, const Position& pos2, float distanceMax)
-    {
-        float deltaX = pos2.GetPositionX() - pos1.GetPositionX();
-        float deltaY = pos2.GetPositionY() - pos1.GetPositionY();
-        float deltaZ = pos2.GetPositionZ() - pos1.GetPositionZ();
-
-        float distance = std::sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-
-        return distance <= distanceMax;
-    }
-
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
     {
         uint32 itemId = item->GetEntry();
@@ -134,10 +135,11 @@ public:
     {
         sMythicMgr->InitializeCreatureKillingCount();
         sMythicMgr->InitializeMultipliers();
-        sMythicMgr->InitializeRewards();
         sMythicMgr->InitializePlayerMythicKeys();
         sMythicMgr->InitializeMythicDungeons();
         sMythicMgr->InitializeMythicDungeonBosses();
+        sMythicMgr->InitializeRewardsToken();
+        sMythicMgr->InitializeRewardsItems();
     }
 
     void OnUpdate(uint32 diff)
@@ -205,6 +207,34 @@ public:
 };
 
 
+class npc_mythic_generate_key : public CreatureScript
+{
+public:
+    npc_mythic_generate_key() : CreatureScript("npc_mythic_generate_key") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        ClearGossipMenuFor(player);
+        MythicKey* mythicKey = sMythicMgr->GetCurrentPlayerMythicKey(player);
+
+        if (mythicKey)
+            return false;
+
+        sMythicMgr->GenerateFirstRandomMythicKey(player);
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Give me a random Mythic+ key.", GOSSIP_SENDER_MAIN, 16);
+        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Bye.", GOSSIP_SENDER_MAIN, 17);
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+        return true;
+    }
+};
+
+
+
 // Add all scripts in one
 void AddSC_MythicDungeons()
 {
@@ -212,4 +242,5 @@ void AddSC_MythicDungeons()
     new MythicDungeon_WorldScript();
     new MythicDungeon_commandsScript();
     new Mythic_Keystone_Item();
+    new npc_mythic_generate_key();
 }

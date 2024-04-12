@@ -1373,6 +1373,22 @@ bool ScriptMgr::CanEnterMap(Player* player, MapEntry const* entry, InstanceTempl
     return true;
 }
 
+bool ScriptMgr::CanResurrectThroughSpirit(Player* player)
+{
+    auto ret = IsValidBoolScript<PlayerScript>([&](PlayerScript* script)
+    {
+        return !script->CanResurrectThroughSpirit(player);
+    });
+
+    if (ret && *ret)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
 bool ScriptMgr::CanInitTrade(Player* player, Player* target)
 {
     auto ret = IsValidBoolScript<PlayerScript>([&](PlayerScript* script)

@@ -3,6 +3,7 @@
 
 
 std::map<uint32 /* itemLevel */, Upgrade> ItemUpgradeManager::m_CostUpgrade = {};
+std::map<uint32 /* itemLevel */, uint32> ItemUpgradeManager::m_ItemsUpgrade = {};
 
 
 void ItemUpgradeManager::LoadCosts()
@@ -30,6 +31,28 @@ void ItemUpgradeManager::LoadCosts()
     } while (result->NextRow());
 }
 
+void ItemUpgradeManager::LoadItemsUpgrade()
+{
+    m_ItemsUpgrade = {};
+
+    QueryResult result = WorldDatabase.Query("SELECT * FROM item_upgrade");
+
+    if (!result)
+        return;
+
+    do
+    {
+
+        Field* fields = result->Fetch();
+        uint32 item1 = fields[0].Get<uint32>();
+        uint32 item2 = fields[1].Get<uint32>();
+        m_ItemsUpgrade[item1] = item2;
+
+    } while (result->NextRow());
+}
+
+
+
 void ItemUpgradeManager::UpgradeItem(Player* player, uint32 entry)
 {
     const ItemTemplate* itemTemplate = sObjectMgr->GetItemTemplate(entry);
@@ -37,13 +60,28 @@ void ItemUpgradeManager::UpgradeItem(Player* player, uint32 entry)
     if (!itemTemplate)
         return;
 
-    if (entry < 100000 || (itemTemplate->Class != ITEM_CLASS_WEAPON && itemTemplate->Class != ITEM_CLASS_ARMOR))
+    if ((itemTemplate->Class != ITEM_CLASS_WEAPON && itemTemplate->Class != ITEM_CLASS_ARMOR))
     {
         RunesManager::SendChat(player, "This item is not upgradable.");
         return;
     }
 
-    uint32 nextEntry = entry + 1;
+    uint32 nextEntry = 0;
+
+    if (entry >= 100000) {
+        nextEntry = entry + 1;
+    }
+    else {
+        auto itr = m_ItemsUpgrade.find(nextEntry);
+        if (itr != m_ItemsUpgrade.end())
+        {
+            nextEntry = itr->second;
+        }
+        else {
+            RunesManager::SendChat(player, "This item is not upgradable.");
+            return;
+        }
+    }
 
     const ItemTemplate* itemUpgrade = sObjectMgr->GetItemTemplate(nextEntry);
 
@@ -54,7 +92,7 @@ void ItemUpgradeManager::UpgradeItem(Player* player, uint32 entry)
 
     if (itemLevel > sWorld->GetValue("CONFIG_MAX_ITEM_LEVEL_UPGRADE"))
     {
-        RunesManager::SendChat(player, "You can't upgrade this item anymore");
+        RunesManager::SendChat(player, "You can't upgrade this item anymore.");
         return;
     }
 

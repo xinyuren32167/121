@@ -90,24 +90,29 @@ void Mythic::Update(uint32 diff)
 
 void Mythic::SaveMythicDungeon()
 {
+    LOG_ERROR("SAVE", "SAVE");
+    uint32 config = sWorld->GetValue("CONFIG_PATCH");
+    uint8 upgrade = CalculateUpgradeKey();
+
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
-    if (playerList.IsEmpty())
-        return;
-
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
-        if (Player* player = playerIteration->GetSource()) {}
+    {
+        if (Player* player = playerIteration->GetSource())
+        {
+            CharacterDatabase.Query("INSERT INTO `character_mythic_completed` (`guid`, `mapId`, `level`, `timer`, `upgrade`, `createdAt`, `patch`) VALUES ({}, {}, {}, {}, NOW(), {})",
+                player->GetGUID().GetCounter(), Dungeon->GetEntry()->MapID, Level, (TimeToComplete - ElapsedTime), upgrade, config);
+        }
+    }
+    
 }
 
 void Mythic::SetBossDead(uint32 creatureId)
 {
-
-    LOG_ERROR("creatureId", "creatureId {}", creatureId);
     for (auto ij = StateBossMythicStore.begin(); ij != StateBossMythicStore.end(); ++ij)
     {
         if (ij->creatureId == creatureId)
         {
-            LOG_ERROR("creatureId", "BOSS FOUND creatureId {}", creatureId);
             ij->alive = false;
         }
     }
@@ -124,7 +129,6 @@ uint32 Mythic::GetBossIndex(uint32 creatureId)
 
 void Mythic::OnCompleteMythicDungeon(Player* player)
 {
-    // Send Addon Mythic Completion;
     Done = true;
 
     uint8 upgrade = CalculateUpgradeKey();
@@ -248,12 +252,15 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 void Mythic::GiveRewards()
 {
     MythicRewardToken reward = sMythicMgr->GetMythicRewardTokenByLevel(Level);
+
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
     {
         if (Player* player = playerIteration->GetSource())
         {
+            uint32 itemId = sMythicMgr->GetMythicRewardItemByLevel(player, Level);
+            player->AddItem(itemId, 1);
             player->AddItem(70008, reward.runicDust);
             player->AddItem(70009, reward.runicEssence);
             player->AddItem(reward.tokenId, reward.tokenCount);

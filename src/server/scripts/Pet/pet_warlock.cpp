@@ -548,6 +548,8 @@ struct npc_pet_warlock_wildimp : public ScriptedAI
                 break;
             }
         }
+
+        DoMeleeAttackIfReady();
     }
 
     void JustDespawned() override

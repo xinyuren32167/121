@@ -33,6 +33,7 @@ public:
     {
         LOG_INFO("Runes", "Initializing Runes...");
         ItemUpgradeManager::LoadCosts();
+        ItemUpgradeManager::LoadItemsUpgrade();
     }
 };
 
