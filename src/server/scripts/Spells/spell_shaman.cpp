@@ -3952,6 +3952,9 @@ class spell_sha_stormbrand_totem : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_STORMBRAND_TOTEM_PROC))
+            return false;
+
         return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0;
     }
 
