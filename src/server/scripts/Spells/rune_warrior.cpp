@@ -60,6 +60,7 @@ enum SpellsWarrior
     RUNE_WARR_GLADIATORS_TORMENT_PROC = 201051,
     RUNE_WARR_UNYIELDING_WRATH_MIGTY_THROW = 201401,
     RUNE_WARR_PLANNED_BATTLE_BUFF = 201058,
+    RUNE_WARR_BLOODTHIRST_BLOODCRAZE = 201408,
 };
 
 class spell_cut_the_veins : public AuraScript
@@ -3132,6 +3133,39 @@ class rune_planned_battle_expire : public AuraScript
     }
 };
 
+class rune_bloodcraze : public AuraScript
+{
+    PrepareAuraScript(rune_bloodcraze);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (target == GetCaster())
+            return false;
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), RUNE_WARR_BLOODTHIRST_BLOODCRAZE, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_bloodcraze::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_bloodcraze::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(rune_improved_execute);
@@ -3227,4 +3261,5 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(rune_unyielding_wrath);
     RegisterSpellScript(rune_planned_battle);
     RegisterSpellScript(rune_planned_battle_expire);
+    RegisterSpellScript(rune_bloodcraze);
 }
