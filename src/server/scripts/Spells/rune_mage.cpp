@@ -2196,12 +2196,12 @@ class rune_mage_siphoning_strikes : public AuraScript
 
         if (spellID == SPELL_MAGE_MAGIC_STRIKE)
             caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
-        else
+        /*else
         {
             int32 amount = eventInfo.GetDamageInfo()->GetDamage();
 
             caster->CastCustomSpell(RUNE_MAGE_SIPHONING_STRIKES_HEAL, SPELLVALUE_BASE_POINT0, amount, caster, TRIGGERED_FULL_MASK);
-        }
+        }*/
     }
 
     void Register() override
