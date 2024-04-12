@@ -61,6 +61,7 @@ enum SpellsWarrior
     RUNE_WARR_UNYIELDING_WRATH_MIGTY_THROW = 201401,
     RUNE_WARR_PLANNED_BATTLE_BUFF = 201058,
     RUNE_WARR_BLOODTHIRST_BLOODCRAZE = 201408,
+    RUNE_WARR_CRUSHING_STRIKE_FLURRY = 201310,
 };
 
 class spell_cut_the_veins : public AuraScript
@@ -3166,6 +3167,39 @@ class rune_bloodcraze : public AuraScript
     }
 };
 
+class rune_flurry_of_strikes : public AuraScript
+{
+    PrepareAuraScript(rune_flurry_of_strikes);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* target = eventInfo.GetActionTarget();
+        if (!target)
+            return false;
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+
+        if (!damageInfo || !damageInfo->GetDamage())
+            return false;
+
+        if (target == GetCaster())
+            return false;
+
+        return target->IsAlive();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), RUNE_WARR_CRUSHING_STRIKE_FLURRY, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_flurry_of_strikes::CheckProc);
+        OnEffectProc += AuraEffectProcFn(rune_flurry_of_strikes::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_warrior_perks_scripts()
 {
     RegisterSpellScript(rune_improved_execute);
@@ -3262,4 +3296,5 @@ void AddSC_warrior_perks_scripts()
     RegisterSpellScript(rune_planned_battle);
     RegisterSpellScript(rune_planned_battle_expire);
     RegisterSpellScript(rune_bloodcraze);
+    RegisterSpellScript(rune_flurry_of_strikes);
 }
