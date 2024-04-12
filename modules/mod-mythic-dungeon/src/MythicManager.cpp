@@ -577,6 +577,9 @@ std::vector<MythicBossState> MythicManager::GetMythicBossesByDungeonId(uint32 du
     std::vector<MythicBossState> bosses = {};
     auto itr = MythicDungeonBossStore.find(dungeonId);
 
+    if (itr == MythicDungeonBossStore.end())
+        return;
+
     for (auto const& boss : itr->second)
         bosses.push_back({ boss.creatureId, true, boss.order + 1 });
 
