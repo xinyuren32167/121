@@ -3726,7 +3726,7 @@ class spell_item_roop : public SpellScript
         {
             if (Unit* target = caster->GetSelectedUnit())
             {
-                if(target->GetEntry()  == 10000005)
+                if (target->GetEntry() == 10000005)
                     return SPELL_CAST_OK;
             }
         }
@@ -3744,7 +3744,7 @@ class spell_item_roop : public SpellScript
         {
             if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(3))
             {
-               caster->ToPlayer()->KilledMonster(creatureInfo, ObjectGuid::Empty);
+                caster->ToPlayer()->KilledMonster(creatureInfo, ObjectGuid::Empty);
             }
         }
     }
@@ -4055,8 +4055,7 @@ class spell_item_obsidian_mail_tunic : public AuraScript
         int32 staminaPct = GetEffect(EFFECT_1)->GetAmount();
         int32 amount = CalculatePct(staminaPct, caster->GetStat(STAT_STAMINA));
 
-        GetEffect(EFFECT_0)->ChangeAmount(amount);
-
+        GetEffect(EFFECT_0)->ChangeAmount(-amount);
     }
 
     void Register() override
@@ -4093,10 +4092,10 @@ class spell_item_dragonscale_breastplate : public AuraScript
     }
 };
 
-// 27539 - Thick Obsidian Breastplate - ITEM : 22196
-class spell_item_thick_obsidian_breastplate : public AuraScript
+// 9800 - Truesilver Champion - ITEM : 7960
+class spell_item_truesilver_champion : public AuraScript
 {
-    PrepareAuraScript(spell_item_thick_obsidian_breastplate);
+    PrepareAuraScript(spell_item_truesilver_champion);
 
     void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
@@ -4108,15 +4107,153 @@ class spell_item_thick_obsidian_breastplate : public AuraScript
         int32 ratio = GetEffect(EFFECT_1)->GetAmount();
         int32 apAmount = CalculatePct(ratio, caster->GetTotalAttackPowerValue(BASE_ATTACK));
         int32 spRatio = CalculatePct(ratio, caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY));
-        int32 stamRatio = CalculatePct(ratio, caster->GetStat(STAT_STAMINA));
-        int32 amount = apAmount + spRatio + stamRatio;
+
+        int32 amount = apAmount + spRatio;
 
         GetEffect(EFFECT_0)->ChangeAmount(amount);
     }
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectApplyFn(spell_item_thick_obsidian_breastplate::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        AfterEffectApply += AuraEffectApplyFn(spell_item_truesilver_champion::HandleApply, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
+// 22600 - Force Reactive Disk - Item : 18168
+class spell_item_force_reactive_disk : public SpellScript
+{
+    PrepareSpellScript(spell_item_force_reactive_disk);
+
+    void HandleDamage(SpellEffIndex  /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        int32 damage = CalculatePct(5, caster->GetResistance(SPELL_SCHOOL_NORMAL));
+
+        SetHitDamage(damage);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_item_force_reactive_disk::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
+enum HunterSpellWithCooldown
+{
+    SPELL_HUNTER_A_MURDER_OF_CROWS = 80176,
+    SPELL_HUNTER_AIMED_SHOT = 49050,
+    SPELL_HUNTER_ASPECT_OF_THE_CHEETAH = 80128,
+    SPELL_HUNTER_ASPECT_OF_THE_EAGLE = 80159,
+    SPELL_HUNTER_ASPECT_OF_THE_TURTLE = 19263,
+    SPELL_HUNTER_ASPECT_OF_THE_WILD = 80130,
+    SPELL_HUNTER_BARBED_SHOT = 80172,
+    SPELL_HUNTER_BARRAGE = 80169,
+    SPELL_HUNTER_BESTIAL_WRATH = 80133,
+    SPELL_HUNTER_BLACK_ARROW = 63672,
+    SPELL_HUNTER_BLACK_CURSE = 85004,
+    SPELL_HUNTER_BLOODSHED = 80180,
+    SPELL_HUNTER_BURSTING_SHOT = 80184,
+    SPELL_HUNTER_BUTCHERY = 80191,
+    SPELL_HUNTER_CALL_OF_THE_WILD = 80186,
+    SPELL_HUNTER_CAMOUFLAGE = 80163,
+    SPELL_HUNTER_CARVE = 80192,
+    SPELL_HUNTER_CONCUSSIVE_SHOT = 5116,
+    SPELL_HUNTER_COORDINATED_ASSAULT = 80200,
+    SPELL_HUNTER_COUNTER_SHOT = 80199,
+    SPELL_HUNTER_CRESCENT_VEIL = 85009,
+    SPELL_HUNTER_DEATH_CHAKRAM = 80167,
+    SPELL_HUNTER_DESACRATING_SHOTS = 85010,
+    SPELL_HUNTER_DIRE_BEAST = 80183,
+    SPELL_HUNTER_DISENGAGE = 781,
+    SPELL_HUNTER_EVANESCENCE = 85020,
+    SPELL_HUNTER_EXHILARATION = 80161,
+    SPELL_HUNTER_EXPLOSIVE_SHOT = 60053,
+    SPELL_HUNTER_EXPLOSIVE_TRAP = 49067,
+    SPELL_HUNTER_FEIGN_DEATH = 5384,
+    SPELL_HUNTER_FLANKING_STRIKE = 80197,
+    SPELL_HUNTER_FREEZING_ARROW = 80140,
+    SPELL_HUNTER_FREEZING_TRAP = 80139,
+    SPELL_HUNTER_FROST_TRAP = 13809,
+    SPELL_HUNTER_FURY_OF_THE_EAGLE = 80194,
+    SPELL_HUNTER_HARPOON = 80190,
+    SPELL_HUNTER_IMMOLATION_TRAP = 49056,
+    SPELL_HUNTER_INTIMIDATION = 19577,
+    SPELL_HUNTER_KILL_COMMAND = 80141,
+    SPELL_HUNTER_KILL_SHOT = 61006,
+    SPELL_HUNTER_LORD_OF_SHADOWS = 85013,
+    SPELL_HUNTER_MASTERS_CALL = 53271,
+    SPELL_HUNTER_RAPID_FIRE = 80146,
+    SPELL_HUNTER_SCATTER_SHOT = 19503,
+    SPELL_HUNTER_SCORPION_STING = 80153,
+    SPELL_HUNTER_SHADOW_EMPOWERMENT = 85014,
+    SPELL_HUNTER_SHADOW_MOVEMENT = 85015,
+    SPELL_HUNTER_SILENCING_SHOT = 34490,
+    SPELL_HUNTER_SNAKE_TRAP = 34600,
+    SPELL_HUNTER_SPEARHEAD = 80206,
+    SPELL_HUNTER_SPECTRAL_SHOT = 85019,
+    SPELL_HUNTER_STAMPEDE = 80165,
+    SPELL_HUNTER_SURVIVAL_OF_THE_FITTEST = 80162,
+    SPELL_HUNTER_TRANQUILIZING_SHOT = 19801,
+    SPELL_HUNTER_TRUESHOT = 80148,
+    SPELL_HUNTER_TWILIGHT_PIERCER = 85006,
+    SPELL_HUNTER_VOLLEY = 58434,
+    SPELL_HUNTER_WAILING_ARROW = 80149,
+    SPELL_HUNTER_WILDFIRE_BOMB = 80188,
+    SPELL_HUNTER_WITHERING_FIRE = 85002,
+    SPELL_HUNTER_WYVERN_STING = 80155,
+};
+
+// 1500015 - Rhok'delar, Longbow of the Ancient Keepers - ITEM : 18713
+class spell_item_rhokdelar_whispered_thruths : public AuraScript
+{
+    PrepareAuraScript(spell_item_rhokdelar_whispered_thruths);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        std::vector<uint32> spellIds = {
+            SPELL_HUNTER_A_MURDER_OF_CROWS, SPELL_HUNTER_AIMED_SHOT, SPELL_HUNTER_ASPECT_OF_THE_CHEETAH, SPELL_HUNTER_ASPECT_OF_THE_EAGLE, SPELL_HUNTER_ASPECT_OF_THE_TURTLE,
+            SPELL_HUNTER_ASPECT_OF_THE_WILD, SPELL_HUNTER_BARBED_SHOT, SPELL_HUNTER_BARRAGE, SPELL_HUNTER_BESTIAL_WRATH, SPELL_HUNTER_BLACK_ARROW, SPELL_HUNTER_BLACK_CURSE,
+            SPELL_HUNTER_BLOODSHED, SPELL_HUNTER_BURSTING_SHOT, SPELL_HUNTER_BUTCHERY, SPELL_HUNTER_CALL_OF_THE_WILD, SPELL_HUNTER_CAMOUFLAGE, SPELL_HUNTER_CARVE,
+            SPELL_HUNTER_CONCUSSIVE_SHOT, SPELL_HUNTER_COORDINATED_ASSAULT, SPELL_HUNTER_COUNTER_SHOT, SPELL_HUNTER_CRESCENT_VEIL, SPELL_HUNTER_DEATH_CHAKRAM,
+            SPELL_HUNTER_DESACRATING_SHOTS, SPELL_HUNTER_DIRE_BEAST, SPELL_HUNTER_DISENGAGE, SPELL_HUNTER_EVANESCENCE, SPELL_HUNTER_EXHILARATION, SPELL_HUNTER_EXPLOSIVE_SHOT,
+            SPELL_HUNTER_EXPLOSIVE_TRAP, SPELL_HUNTER_FEIGN_DEATH, SPELL_HUNTER_FLANKING_STRIKE, SPELL_HUNTER_FREEZING_ARROW, SPELL_HUNTER_FREEZING_TRAP, SPELL_HUNTER_FROST_TRAP,
+            SPELL_HUNTER_FURY_OF_THE_EAGLE, SPELL_HUNTER_HARPOON, SPELL_HUNTER_IMMOLATION_TRAP, SPELL_HUNTER_INTIMIDATION, SPELL_HUNTER_KILL_COMMAND, SPELL_HUNTER_KILL_SHOT,
+            SPELL_HUNTER_LORD_OF_SHADOWS, SPELL_HUNTER_MASTERS_CALL, SPELL_HUNTER_RAPID_FIRE, SPELL_HUNTER_SCATTER_SHOT, SPELL_HUNTER_SCORPION_STING,
+            SPELL_HUNTER_SHADOW_EMPOWERMENT, SPELL_HUNTER_SHADOW_MOVEMENT, SPELL_HUNTER_SILENCING_SHOT, SPELL_HUNTER_SNAKE_TRAP, SPELL_HUNTER_SPEARHEAD, SPELL_HUNTER_SPECTRAL_SHOT,
+            SPELL_HUNTER_STAMPEDE, SPELL_HUNTER_SURVIVAL_OF_THE_FITTEST, SPELL_HUNTER_TRANQUILIZING_SHOT, SPELL_HUNTER_TRUESHOT, SPELL_HUNTER_TWILIGHT_PIERCER, SPELL_HUNTER_VOLLEY,
+            SPELL_HUNTER_WAILING_ARROW, SPELL_HUNTER_WILDFIRE_BOMB, SPELL_HUNTER_WITHERING_FIRE, SPELL_HUNTER_WYVERN_STING };
+
+        std::vector<uint32> validSpells = {};
+
+        for (auto const& spell : spellIds)
+        {
+            if (!caster->HasSpell(spell))
+                continue;
+
+            if (caster->HasSpellCooldown(spell))
+                validSpells.push_back(spell);
+        }
+
+        uint32 rand = urand(0, validSpells.size() - 1);
+        uint32 chosenSpell = validSpells[rand];
+        int32 cooldown = aurEff->GetAmount();
+
+        if (Player* player = caster->ToPlayer())
+            player->ModifySpellCooldown(chosenSpell, -cooldown);
+    }
+
+    void Register()
+    {
+        OnEffectProc += AuraEffectProcFn(spell_item_rhokdelar_whispered_thruths::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -4248,7 +4385,13 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_jang_thraze);
     RegisterSpellScript(spell_item_obsidian_mail_tunic);
     RegisterSpellScript(spell_item_dragonscale_breastplate);
-    RegisterSpellScript(spell_item_thick_obsidian_breastplate);
     RegisterSpellScript(spell_item_roop);
+    RegisterSpellScript(spell_item_truesilver_champion);
+    RegisterSpellScript(spell_item_force_reactive_disk);
+    RegisterSpellScript(spell_item_rhokdelar_whispered_thruths);
+
+
+
     
+
 }
