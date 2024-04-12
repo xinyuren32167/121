@@ -2450,6 +2450,9 @@ class rune_sha_power_of_the_maelstrom : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!eventInfo.GetSpellInfo())
+            return false;
+
         int32 spellID = eventInfo.GetSpellInfo()->Id;
 
         if (!spellID)

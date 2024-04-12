@@ -199,7 +199,9 @@ uint8 MythicManager::GetBossIndex(uint32 dungeonId, uint32 creatureId)
 void MythicManager::Update(uint32 diff)
 {
     for (auto mythic : MythicStore)
-        mythic.second->Update(diff);
+        if (mythic.second) {
+            mythic.second->Update(diff);
+        }
 }
 
 void MythicManager::AddMythicDungeon(uint32 instanceId, Mythic* m)
@@ -378,7 +380,7 @@ bool MythicManager::IsStatTypeAllowableSpec(uint32 currentSpec, uint32 statType)
         case WARRIOR_ARMS: return statType == ITEM_MOD_STRENGTH;
         case WARRIOR_FURY: return statType == ITEM_MOD_STRENGTH;
         case WARRIOR_PROTECTION: return statType == ITEM_MOD_STRENGTH;
-        case WARRIOR_HOPLITE: return statType == ITEM_MOD_STRENGTH;
+        case WARRIOR_HOPLITE: return statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY;
         case MAGE_ARCANE: return statType == ITEM_MOD_INTELLECT;
         case MAGE_FIRE: return statType == ITEM_MOD_INTELLECT;
         case MAGE_FROST: return statType == ITEM_MOD_INTELLECT;
@@ -574,6 +576,9 @@ std::vector<MythicBossState> MythicManager::GetMythicBossesByDungeonId(uint32 du
 {
     std::vector<MythicBossState> bosses = {};
     auto itr = MythicDungeonBossStore.find(dungeonId);
+
+    if (itr == MythicDungeonBossStore.end())
+        return;
 
     for (auto const& boss : itr->second)
         bosses.push_back({ boss.creatureId, true, boss.order + 1 });

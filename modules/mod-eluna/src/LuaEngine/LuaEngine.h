@@ -462,6 +462,7 @@ public:
     void EnableLuckyRune(Player* pPlayer, uint32 spellId);
     void UpgradeItemSuccess(Player* pPlayer);
     void OpenForgeRune(Player* pPlayer);
+    void OpenItemUpgrade(Player* pPlayer);
     void PushRune(Player* pPlayer, std::string rune);
     void RemoveRune(Player* pPlayer, std::string str);
 

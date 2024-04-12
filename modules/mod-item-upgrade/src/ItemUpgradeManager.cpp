@@ -1,10 +1,8 @@
 #include "ItemUpgradeManager.h"
 #include "RunesManager.h"
 
-
 std::map<uint32 /* itemLevel */, Upgrade> ItemUpgradeManager::m_CostUpgrade = {};
 std::map<uint32 /* itemLevel */, uint32> ItemUpgradeManager::m_ItemsUpgrade = {};
-
 
 void ItemUpgradeManager::LoadCosts()
 {
