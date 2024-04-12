@@ -100,7 +100,7 @@ void Mythic::SaveMythicDungeon()
     {
         if (Player* player = playerIteration->GetSource())
         {
-            CharacterDatabase.Query("INSERT INTO `character_mythic_completed` (`guid`, `mapId`, `level`, `timer`, `upgrade`, `createdAt`, `patch`) VALUES ({}, {}, {}, {}, NOW(), {})",
+            CharacterDatabase.Query("INSERT INTO `character_mythic_completed` (`guid`, `mapId`, `level`, `timer`, `upgrade`, `patch`, `createdAt`) VALUES ({}, {}, {}, {}, {}, {}, NOW())",
                 player->GetGUID().GetCounter(), Dungeon->GetEntry()->MapID, Level, (TimeToComplete - ElapsedTime), upgrade, config);
         }
     }
