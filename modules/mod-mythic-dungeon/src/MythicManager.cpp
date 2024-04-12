@@ -199,7 +199,9 @@ uint8 MythicManager::GetBossIndex(uint32 dungeonId, uint32 creatureId)
 void MythicManager::Update(uint32 diff)
 {
     for (auto mythic : MythicStore)
-        mythic.second->Update(diff);
+        if (mythic.second) {
+            mythic.second->Update(diff);
+        }
 }
 
 void MythicManager::AddMythicDungeon(uint32 instanceId, Mythic* m)
