@@ -6482,22 +6482,17 @@ class rune_druid_deep_rooted : public AuraScript
 
     void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
     {
-        Unit* caster = GetAura()->GetCaster();
+        Unit* caster = GetCaster();
 
         if (!caster || caster->isDead())
             return;
 
-        WorldObject* owner = GetAura()->GetOwner();
-
-        if (!owner)
+        if (!GetRuneAura(caster))
             return;
 
-        Unit* target = owner->ToUnit();
+        Unit* target = GetUnitOwner();
 
         if (!target || target->isDead())
-            return;
-
-        if (!GetRuneAura(caster))
             return;
 
         int32 healthPct = target->GetHealthPct();
@@ -6506,7 +6501,7 @@ class rune_druid_deep_rooted : public AuraScript
         if (healthPct > healthThreshold)
             return;
 
-        int32 auraId = GetAura()->GetId();
+        int32 auraId = GetSpellInfo()->Id;
 
         caster->AddAura(auraId, target);
     }
