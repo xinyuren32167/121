@@ -4257,6 +4257,42 @@ class spell_item_rhokdelar_whispered_thruths : public AuraScript
     }
 };
 
+// 1500015 - Rhok'delar, Longbow of the Ancient Keepers - ITEM : 18713
+class spell_item_ranged_attack_proc : public AuraScript
+{
+    PrepareAuraScript(spell_item_ranged_attack_proc);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetDamageInfo();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = eventInfo.GetDamageInfo()->GetVictim();
+
+        if (!target || target->isDead())
+            return;
+
+        if (target == caster)
+            return;
+
+        int32 procSpell = aurEff->GetAmount();
+        caster->CastSpell(target, procSpell, TRIGGERED_FULL_MASK);
+    }
+
+    void Register()
+    {
+        DoCheckProc += AuraCheckProcFn(spell_item_ranged_attack_proc::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_item_ranged_attack_proc::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 
 void AddSC_item_spell_scripts()
@@ -4389,9 +4425,10 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_truesilver_champion);
     RegisterSpellScript(spell_item_force_reactive_disk);
     RegisterSpellScript(spell_item_rhokdelar_whispered_thruths);
+    RegisterSpellScript(spell_item_ranged_attack_proc);
 
 
 
     
-
+    
 }

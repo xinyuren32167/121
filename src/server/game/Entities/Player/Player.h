@@ -3060,7 +3060,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T& bas
             }
 
             // xinef: those two mods should be multiplicative (Glyph of Renew)
-            if (mod->op == SPELLMOD_DAMAGE || mod->op == SPELLMOD_DOT)
+            if (mod->op == SPELLMOD_DAMAGE || mod->op == SPELLMOD_DOT || mod->op == SPELLMOD_ACTIVATION_TIME)
             {
                 totalmul *= CalculatePct(1.0f, 100.0f + mod->value);
             }
