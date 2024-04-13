@@ -341,6 +341,7 @@ public:
 
             owner->AddAura(SPELL_DK_PET_SCALING_04, me);
 
+            /*
             if (owner->HasAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_MASTER_AURA))
                 owner->AddAura(SPELL_DK_RUNE_OF_THE_APOCALYPSE_PET_AURA, me);
 
@@ -349,7 +350,7 @@ public:
             else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R2))
                 owner->AddAura(SPELL_DK_INFECTED_CLAWS_R2_PET, me);
             else if (owner->HasAura(SPELL_DK_INFECTED_CLAWS_R3))
-                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R3_PET, me);
+                owner->AddAura(SPELL_DK_INFECTED_CLAWS_R3_PET, me);*/
         }
     };
 
