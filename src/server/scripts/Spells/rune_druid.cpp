@@ -6508,7 +6508,7 @@ class rune_druid_deep_rooted : public AuraScript
 
     void Register() override
     {
-        OnEffectRemove += AuraEffectRemoveFn(rune_druid_deep_rooted::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(rune_druid_deep_rooted::HandleRemove, EFFECT_0, SPELL_AURA_PERIODIC_HEAL, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
