@@ -3114,7 +3114,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T& bas
     float diff = 0.0f;
     if (op == SPELLMOD_CASTING_TIME || op == SPELLMOD_DURATION || op == SPELLMOD_ACTIVATION_TIME)
     {
-        diff = ((float)basevalue + totalflat) * (totalmul - 1.0f);
+        diff = ((float)basevalue + totalflat) * (totalmul - 1.0f) + (float)totalflat;
     }
     else
     {
