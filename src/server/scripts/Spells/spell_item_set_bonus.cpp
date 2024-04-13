@@ -652,10 +652,8 @@ class spell_set_mage_spellblade_T1_2pc : public AuraScript
 
         if (!caster || caster->isDead())
             return false;
-        LOG_ERROR("error", "caster check");
         if (Player* player = caster->ToPlayer())
         {
-            LOG_ERROR("error", "player check");
             return player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_ARCANIZE_AURA)
                 || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_CONDUIT_AURA)
                 || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_DEFLECTION_AURA)
