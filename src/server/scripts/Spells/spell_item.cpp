@@ -4230,18 +4230,19 @@ class spell_item_rhokdelar_whispered_thruths : public AuraScript
             SPELL_HUNTER_LORD_OF_SHADOWS, SPELL_HUNTER_MASTERS_CALL, SPELL_HUNTER_RAPID_FIRE, SPELL_HUNTER_SCATTER_SHOT, SPELL_HUNTER_SCORPION_STING,
             SPELL_HUNTER_SHADOW_EMPOWERMENT, SPELL_HUNTER_SHADOW_MOVEMENT, SPELL_HUNTER_SILENCING_SHOT, SPELL_HUNTER_SNAKE_TRAP, SPELL_HUNTER_SPEARHEAD, SPELL_HUNTER_SPECTRAL_SHOT,
             SPELL_HUNTER_STAMPEDE, SPELL_HUNTER_SURVIVAL_OF_THE_FITTEST, SPELL_HUNTER_TRANQUILIZING_SHOT, SPELL_HUNTER_TRUESHOT, SPELL_HUNTER_TWILIGHT_PIERCER, SPELL_HUNTER_VOLLEY,
-            SPELL_HUNTER_WAILING_ARROW, SPELL_HUNTER_WILDFIRE_BOMB, SPELL_HUNTER_WITHERING_FIRE, SPELL_HUNTER_WYVERN_STING };
+            SPELL_HUNTER_WAILING_ARROW, SPELL_HUNTER_WILDFIRE_BOMB, SPELL_HUNTER_WITHERING_FIRE, SPELL_HUNTER_WYVERN_STING
+        };
 
         std::vector<uint32> validSpells = {};
 
         for (auto const& spell : spellIds)
         {
-            if (!caster->HasSpell(spell))
-                continue;
-
-            if (caster->HasSpellCooldown(spell))
+            if (caster->HasSpellCooldown(spell) && caster->HasSpell(spell))
                 validSpells.push_back(spell);
         }
+
+        if (validSpells.empty())
+            return;
 
         uint32 rand = urand(0, validSpells.size() - 1);
         uint32 chosenSpell = validSpells[rand];

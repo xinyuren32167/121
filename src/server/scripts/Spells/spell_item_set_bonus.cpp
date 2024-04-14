@@ -652,6 +652,7 @@ class spell_set_mage_spellblade_T1_2pc : public AuraScript
 
         if (!caster || caster->isDead())
             return false;
+
         if (Player* player = caster->ToPlayer())
         {
             return player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_ARCANIZE_AURA)
@@ -660,19 +661,9 @@ class spell_set_mage_spellblade_T1_2pc : public AuraScript
                 || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_FORCE_AURA)
                 || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_IGNIS_AURA)
                 || player->HasAura(SPELL_MAGE_WEAPON_ENCHANT_SNOWBOUND_AURA);
-
-            /*if (uint32 enchantID = player->GetItemEnchant(EQUIPMENT_SLOT_MAINHAND, SPELLFAMILY_MAGE, DISPEL_NONE))
-            {
-                LOG_ERROR("error", "enchantID = {}", enchantID);
-                return (enchantID == SPELL_MAGE_WEAPON_ENCHANT_ARCANIZE_AURA
-                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_CONDUIT_AURA
-                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_DEFLECTION_AURA
-                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_FORCE_AURA
-                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_IGNIS_AURA
-                    || enchantID == SPELL_MAGE_WEAPON_ENCHANT_SNOWBOUND_AURA);
-            }*/
         }
-        else return false;
+
+        return false;
     }
 
     void Register()

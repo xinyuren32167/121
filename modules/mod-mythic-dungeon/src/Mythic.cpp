@@ -90,7 +90,6 @@ void Mythic::Update(uint32 diff)
 
 void Mythic::SaveMythicDungeon()
 {
-    LOG_ERROR("SAVE", "SAVE");
     uint32 config = sWorld->GetValue("CONFIG_PATCH");
     uint8 upgrade = CalculateUpgradeKey();
 
