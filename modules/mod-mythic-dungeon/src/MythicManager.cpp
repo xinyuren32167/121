@@ -198,15 +198,21 @@ uint8 MythicManager::GetBossIndex(uint32 dungeonId, uint32 creatureId)
 
 void MythicManager::Update(uint32 diff)
 {
-    for (auto mythic : MythicStore)
-        if (mythic.second) {
-            mythic.second->Update(diff);
+    for (auto it = MythicStore.begin(); it != MythicStore.end(); ) {
+        if (it->second) {
+            it->second->Update(diff);
         }
+        ++it;
+    }
+
 }
 
 void MythicManager::AddMythicDungeon(uint32 instanceId, Mythic* m)
 {
-    MythicStore[instanceId] = m;
+    auto it = MythicStore.find(instanceId);
+    if (it == MythicStore.end()) {
+        MythicStore[instanceId] = std::unique_ptr<Mythic>(m);
+    }
 }
 
 void MythicManager::RemoveMythic(uint32 instanceId)
@@ -475,8 +481,8 @@ Mythic* MythicManager::GetMythicPlayer(Player* player)
     auto itr = MythicStore.find(player->GetInstanceId());
 
     if (itr != MythicStore.end())
-        if(itr->second->GetDungeonMapId() == player->GetMapId())
-            return itr->second;
+        if(itr->second && itr->second->GetDungeonMapId() == player->GetMapId())
+            return itr->second.get();
 
     return nullptr;
 }
@@ -486,7 +492,7 @@ Mythic* MythicManager::GetMythicInMap(Map* map)
     auto itr = MythicStore.find(map->GetInstanceId());
 
     if (itr != MythicStore.end())
-          return itr->second;
+          return itr->second.get();
 
     return nullptr;
 }
@@ -654,6 +660,9 @@ void MythicManager::ListenCreationMythicOnMapChanged(Player* leader)
 
 bool MythicManager::ShouldShowMythicUI(Player* player)
 {
+    if (!player)
+        return false;
+
     Mythic* mythic = GetMythicPlayer(player);
 
     if (!mythic)

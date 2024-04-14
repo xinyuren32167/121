@@ -57,7 +57,9 @@ public:
 
         if (showUI) {
             Mythic* mythic = sMythicMgr->GetMythicPlayer(player);
-            sEluna->SendShowMythicUI(player, true, mythic->IsDungeonStarted());
+            if (mythic) {
+                sEluna->SendShowMythicUI(player, true, mythic->IsDungeonStarted());
+            }
         }
         else
             sEluna->SendShowMythicUI(player, false, false);

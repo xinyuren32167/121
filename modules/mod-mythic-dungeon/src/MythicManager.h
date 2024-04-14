@@ -92,7 +92,7 @@ public:
 
 
     static MythicManager* instance();
-    typedef std::map<uint32, Mythic*> RunMythicDungeonContainer;
+    typedef std::map<uint32, std::unique_ptr<Mythic>> RunMythicDungeonContainer;
     typedef std::map<uint32, MythicMultiplier> MythicMutiplierContainer;
     typedef std::map<uint32, float> MythicKillCounterContainer;
     typedef std::map<uint64, std::vector<uint32>> MythicBagRewardPlayerContainer;
