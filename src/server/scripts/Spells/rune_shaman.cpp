@@ -1852,8 +1852,8 @@ class rune_sha_primal_tide_core : public AuraScript
             if (caster->GetAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER)->GetStackAmount() < aurEff->GetAmount())
                 return;
 
-            caster->CastSpell(target, RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, TRIGGERED_FULL_MASK);
-            caster->AddSpellCooldown(RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, 0, 6000);
+            caster->CastSpell(target, RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE);
+            //caster->AddSpellCooldown(RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, 0, 6000);
 
             caster->RemoveAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER);
         }
