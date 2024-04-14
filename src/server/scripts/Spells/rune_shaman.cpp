@@ -1853,8 +1853,6 @@ class rune_sha_primal_tide_core : public AuraScript
                 return;
 
             caster->CastSpell(target, RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE);
-            //caster->AddSpellCooldown(RUNE_SHAMAN_PRIMAL_TIDE_CORE_AOE, 0, 6000);
-
             caster->RemoveAura(RUNE_SHAMAN_PRIMAL_TIDE_CORE_LISTENER);
         }
     }
@@ -1890,6 +1888,16 @@ class rune_sha_primal_tide_core_proc : public SpellScript
         {
             targets.sort(Acore::HealthPctOrderPred());
             targets.resize(maxTargets);
+        }
+
+        for (auto const& healTarget : targets)
+        {
+            Unit* target = healTarget->ToUnit();
+
+            if (target->isDead())
+                continue;
+
+            GetCaster()->AddAura(SPELL_SHAMAN_RIPTIDE, target);
         }
     }
 
