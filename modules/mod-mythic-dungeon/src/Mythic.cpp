@@ -130,7 +130,7 @@ void Mythic::OnCompleteMythicDungeon(Player* player)
 {
     Done = true;
 
-    uint8 upgrade = CalculateUpgradeKey();
+   int8 upgrade = CalculateUpgradeKey();
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
     for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
@@ -194,7 +194,6 @@ void Mythic::OnKillCreature(Player* player, Creature* killed)
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
-    killed->loot.clear();
 
     if (playerList.IsEmpty())
         return;
@@ -270,9 +269,14 @@ void Mythic::GiveRewards()
 
 int8 Mythic::CalculateUpgradeKey()
 {
+    if (ChestDecrapeted) {
+        return 0;
+    }
+
     uint8 upgrade = 1;
 
-    uint32 difference = TimeToComplete - ElapsedTime;
+    uint32 difference = std::max<uint32>(0, TimeToComplete - ElapsedTime);
+
     float pourcentage = (difference / ElapsedTime) * 100;
 
     if (pourcentage >= 65.0f)

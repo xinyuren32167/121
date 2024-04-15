@@ -98,7 +98,6 @@ public:
 
         if (!foundDungeon)
         {
-
             std::string message = "We could not find the Id " + std::to_string(itemId) + ", if you see this message, contact a gamemaster.";
             ChatHandler(player->GetSession()).SendSysMessage(message);
             return false;

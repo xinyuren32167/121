@@ -217,14 +217,29 @@ float AutoBalanceManager::CalculateHealthDungeonScaling(Map* map)
     float healthScaling = 0;
 
     for (auto const& i : players) {
-        const float value = GetPlayerSpecializationValueForScalingHealth(i);
+        const float value = GetPlayerSpecializationHealthValueForScaling(i);
         healthScaling += value;
     }
 
     return healthScaling;
 }
 
-float AutoBalanceManager::GetPlayerSpecializationValueForScalingHealth(Player* player)
+float AutoBalanceManager::CalculateDamageDungeonScaling(Map* map)
+{
+    std::list<Player*> players = GetPlayersMap(map);
+
+    float damageScaling = 0;
+
+    for (auto const& i : players) {
+        const float value = GetPlayerSpecializationDamageValueForScaling(i);
+        damageScaling += value;
+    }
+
+    return damageScaling;
+}
+
+
+float AutoBalanceManager::GetPlayerSpecializationHealthValueForScaling(Player* player)
 {
     uint32 specId = PlayerSpecialization::GetCurrentSpecId(player);
 
@@ -276,3 +291,57 @@ float AutoBalanceManager::GetPlayerSpecializationValueForScalingHealth(Player* p
 
     return 0.25;
 }
+
+float AutoBalanceManager::GetPlayerSpecializationDamageValueForScaling(Player* player)
+{
+    uint32 specId = PlayerSpecialization::GetCurrentSpecId(player);
+
+    if (!specId)
+        return 0.25;
+
+    switch (specId) {
+    case WARRIOR_ARMS: return 0.25;
+    case WARRIOR_FURY: return 0.25;
+    case WARRIOR_PROTECTION: return 0.15;
+    case WARRIOR_HOPLITE: return 0.25;
+    case MAGE_ARCANE: return 0.25;
+    case MAGE_FIRE: return 0.25;
+    case MAGE_FROST: return 0.25;
+    case MAGE_SPELLBLADE: return 0.25;
+    case DK_BLOOD: return 0.15;
+    case DK_FROST: return 0.25;
+    case DK_UNHOLY: return 0.25;
+    case DK_SOULWEAVER: return 0.10;
+    case DRUID_BALANCE: return 0.25;
+    case DRUID_FERAL: return 0.25;
+    case DRUID_RESTO: return 0.10;
+    case DRUID_GUARDIAN: return 0.15;
+    case HUNTER_BEAST: return 0.25;
+    case HUNTER_MARSKMANSHIP: return 0.25;
+    case HUNTER_SURVIVAL: return 0.25;
+    case HUNTER_DARK_RANGER: return 0.25;
+    case PALADIN_HOLY: return 0.10;
+    case PALADIN_PROTECTION: return 0.15;
+    case PALADIN_RETRIBUTION: return 0.25;
+    case PALADIN_INQUISITOR: return 0.25;
+    case ROGUE_ASSASSINATION: return 0.25;
+    case ROGUE_COMBAT: return 0.25;
+    case ROGUE_SUBTLETY: return 0.25;
+    case ROGUE_OUTLAW: return 0.25;
+    case SHAMAN_ELEMENTAL: return 0.25;
+    case SHAMAN_ENCHANCEMENT: return 0.25;
+    case SHAMAN_RESTORATION: return 0.10;
+    case SHAMAN_SPIRIT_MASTER: return 0.25;
+    case WARLOCK_AFFLICTION: return 0.25;
+    case WARLOCK_DEMONOLOGY: return 0.25;
+    case WARLOCK_DESTRUCTION: return 0.25;
+    case WARLOCK_DEMONBOUND: return 0.25;
+    case PRIEST_DISCI: return 0.10;
+    case PRIEST_HOLY: return 0.10;
+    case PRIEST_SHADOW: return 0.25;
+    case PRIEST_ABSOLUTION: return 0.25;
+    }
+
+    return 0.25;
+}
+

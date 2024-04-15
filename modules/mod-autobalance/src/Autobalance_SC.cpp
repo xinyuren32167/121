@@ -91,17 +91,8 @@ public:
         damage = _Modifer_DealDamage(target, attacker, damage);
     }
 
-    float GetDamageReductionForDungeon(uint8 playerCountDungeon, double damageScaling) {
-
-        // Full slot, we have a healer
-        if (playerCountDungeon >= 5)
-            return 1.0f;
-
-        // We dont have a healer probably.
-        if (playerCountDungeon <= 4)
-            return damageScaling;
-
-        return 1.0f;
+    float GetDamageReductionForDungeon(Map* map) {
+        return AutoBalanceManager::CalculateDamageDungeonScaling(map);
     }
 
     uint32 _Modifer_DealDamage(Unit* target, Unit* attacker, uint32 damage)
@@ -124,17 +115,9 @@ public:
         Map* map = target->GetMap();
 
         uint8 playerCount = map->GetPlayers().getSize();
-             
-        AutobalanceScalingInfo scaling = AutoBalanceManager::GetScalingInfo(map, target);
-
-        if (scaling.meleeDamageModifier <= 0)
-            return damage;
-
-        if (playerCount == 1 && !map->IsRaid())
-            return damage *= scaling.meleeDamageModifier;
 
         if (!map->IsRaid())
-            return damage *= GetDamageReductionForDungeon(playerCount, scaling.meleeDamageModifier);
+            return damage *= GetDamageReductionForDungeon(target->GetMap());
 
         return damage;
     }

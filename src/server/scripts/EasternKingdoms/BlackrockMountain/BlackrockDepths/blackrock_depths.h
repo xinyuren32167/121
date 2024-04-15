@@ -128,7 +128,19 @@ enum Creatures
     NPC_EVISCERATOR     = 9029,
     NPC_OKTHOR          = 9030,
     NPC_ANUBSHIAH       = 9031,
-    NPC_HEDRUM          = 9032
+    NPC_HEDRUM          = 9032,
+    NPC_GOROSH_HM       = 109027,
+    NPC_GRIZZLE_HM      = 109028,
+    NPC_EVISCERATOR_HM  = 109029,
+    NPC_OKTHOR_HM       = 109030,
+    NPC_ANUBSHIAH_HM    = 109031,
+    NPC_HEDRUM_HM       = 109032,
+    NPC_GOROSH_MM = 209027,
+    NPC_GRIZZLE_MM = 209028,
+    NPC_EVISCERATOR_MM = 209029,
+    NPC_OKTHOR_MM = 209030,
+    NPC_ANUBSHIAH_MM = 209031,
+    NPC_HEDRUM_MM = 209032,
 };
 
 enum eChallenge

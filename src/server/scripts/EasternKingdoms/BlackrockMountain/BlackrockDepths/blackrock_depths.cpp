@@ -134,7 +134,8 @@ static Wave RingMobs[] = // different amounts based on the type
     {NPC_DARK_SCREECHER, 3},
     {NPC_THUNDERSNOUT, 2},
     {NPC_CAVE_CREEPER, 3},
-    {NPC_BORER_BEETLE, 6}};
+    {NPC_BORER_BEETLE, 6}
+};
 
 uint32 RingBoss[] =
 {
@@ -144,6 +145,26 @@ uint32 RingBoss[] =
     NPC_OKTHOR,
     NPC_ANUBSHIAH,
     NPC_HEDRUM
+};
+
+uint32 RingBossHM[] =
+{
+    NPC_GOROSH_HM,
+    NPC_GRIZZLE_HM,
+    NPC_EVISCERATOR_HM,
+    NPC_OKTHOR_HM,
+    NPC_ANUBSHIAH_HM,
+    NPC_HEDRUM_HM
+};
+
+uint32 RingBossMM[] =
+{
+    NPC_GOROSH_MM,
+    NPC_GRIZZLE_MM,
+    NPC_EVISCERATOR_MM,
+    NPC_OKTHOR_MM,
+    NPC_ANUBSHIAH_MM,
+    NPC_HEDRUM_MM
 };
 
 class at_ring_of_law : public AreaTriggerScript
@@ -282,6 +303,9 @@ public:
 
         void SummonBoss()
         {
+
+
+
             if (me->FindNearestGameObject(GO_BANNER_OF_PROVOCATION, 100.0f))
             {
                 theldrenEvent = true;
@@ -290,8 +314,17 @@ public:
                 for (uint8 i = rand; i < rand + 4; ++i)
                     me->SummonCreature(theldrenTeam[i], 644.300f, -175.989f, -53.739f, 3.418f, TEMPSUMMON_DEAD_DESPAWN, 0);
             }
-            else
-                me->SummonCreature(RingBoss[BossSpawnId], 644.300f, -175.989f, -53.739f, 3.418f, TEMPSUMMON_DEAD_DESPAWN, 0);
+            else {
+                if (me->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_NORMAL) {
+                    me->SummonCreature(RingBoss[BossSpawnId], 644.300f, -175.989f, -53.739f, 3.418f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                }
+                if (me->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_HEROIC) {
+                    me->SummonCreature(RingBossHM[BossSpawnId], 644.300f, -175.989f, -53.739f, 3.418f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                }
+                if (me->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_EPIC) {
+                    me->SummonCreature(RingBossMM[BossSpawnId], 644.300f, -175.989f, -53.739f, 3.418f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                }
+            }
             resetTimer = 30000;
         }
 

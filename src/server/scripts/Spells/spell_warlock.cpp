@@ -2210,8 +2210,10 @@ class spell_warlock_hand_of_guldan : public SpellScript
 {
     PrepareSpellScript(spell_warlock_hand_of_guldan);
 
-    void HandleHitTarget(SpellEffIndex /*effIndex*/)
+    void HandleHitTarget()
     {
+        int32 damage = GetHitDamage();
+
         Unit* caster = GetCaster();
         Player* player = caster->ToPlayer();
 
@@ -2231,7 +2233,9 @@ class spell_warlock_hand_of_guldan : public SpellScript
             maxSummon = 1;
 
         for (size_t i = 1; i < maxSummon; i++)
+        {
             caster->CastSpell(caster, SPELL_WARLOCK_HAND_OF_GULDAN_ADDITIONAL_COST);
+        }
 
         if (Unit* target = GetHitUnit()) {
             for (size_t i = 0; i < maxSummon; i++)
@@ -2240,7 +2244,10 @@ class spell_warlock_hand_of_guldan : public SpellScript
                 if (summon)
                     summon->SetPositionReset(PET_FOLLOW_DIST, PET_FOLLOW_ANGLE + i);
             }
+            damage += damage;
         }
+
+        SetHitDamage(damage);
     }
 
     void FilterTargets(std::list<WorldObject*>& targets)
@@ -2252,7 +2259,7 @@ class spell_warlock_hand_of_guldan : public SpellScript
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warlock_hand_of_guldan::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
-        OnEffectHitTarget += SpellEffectFn(spell_warlock_hand_of_guldan::HandleHitTarget, EFFECT_0, SPELL_EFFECT_TRIGGER_MISSILE);
+        OnHit += SpellHitFn(spell_warlock_hand_of_guldan::HandleHitTarget);
     }
 };
 
