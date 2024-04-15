@@ -106,6 +106,7 @@ enum PriestSpells
     SPELL_PRIEST_VOID_ERUPTION = 81042,
     SPELL_PRIEST_VOID_ERUPTION_DAMAGE = 81043,
     SPELL_PRIEST_VOIDFORM = 81044,
+    SPELL_PRIEST_WAVE_OF_LIGHT_SHIELD = 86307,
     SPELL_PRIEST_HOLY_FLAME_DAMAGE = 86206,
     SPELL_PRIEST_HOLY_FLAME_HEAL = 86207,
     SPELL_PRIEST_HOLY_MIGHT = 86208,
@@ -133,7 +134,12 @@ enum PriestSpells
     TALENT_PRIEST_HOLY_BURST_PROC = 86281,
     TALENT_PRIEST_DEFY_FATE_HEAL = 86286,
     TALENT_PRIEST_DEFY_FATE_COOLDOWN = 86287,
-    TALENT_PRIEST_CELERITY = 86246,
+    TALENT_PRIEST_CELERITY_R1 = 86246,
+    TALENT_PRIEST_CELERITY_R2 = 86247,
+    TALENT_PRIEST_CELERITY_R3 = 86248,
+    TALENT_PRIEST_CELERITY_R1_BUFF = 86308,
+    TALENT_PRIEST_CELERITY_R2_BUFF = 86309,
+    TALENT_PRIEST_CELERITY_R3_BUFF = 86310,
 
     // Runes
     RUNE_PRIEST_CRYSTALLINE_REFLECTION_DAMAGE = 900366,
@@ -3422,6 +3428,13 @@ class spell_pri_holy_might : public SpellScript
                 caster->CastCustomSpell(target, SPELL_PRIEST_HOLY_MIGHT_INTELLECT, &buffAmount, &speedAmount, nullptr, true, nullptr);
             else
                 caster->CastCustomSpell(target, SPELL_PRIEST_HOLY_MIGHT_SPIRIT, &buffAmount, &speedAmount, nullptr, true, nullptr);
+
+            if (caster->HasAura(TALENT_PRIEST_CELERITY_R1))
+                caster->AddAura(TALENT_PRIEST_CELERITY_R1_BUFF, caster);
+            if (caster->HasAura(TALENT_PRIEST_CELERITY_R2))
+                caster->AddAura(TALENT_PRIEST_CELERITY_R2_BUFF, caster);
+            if (caster->HasAura(TALENT_PRIEST_CELERITY_R3))
+                caster->AddAura(TALENT_PRIEST_CELERITY_R3_BUFF, caster);
         }
     }
 
@@ -3527,9 +3540,27 @@ class spell_pri_wave_of_light : public SpellScript
         }
     }
 
+    void HandleEffectHit(SpellEffIndex effIndex)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 amount = CalculatePct(GetSpellInfo()->GetEffect(EFFECT_2).CalcValue(caster), caster->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_HOLY));
+        
+        caster->CastCustomSpell(SPELL_PRIEST_WAVE_OF_LIGHT_SHIELD, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+    }
+
     void Register() override
     {
         OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_pri_wave_of_light::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
+        OnEffectHitTarget += SpellEffectFn(spell_pri_wave_of_light::HandleEffectHit, EFFECT_2, TARGET_UNIT_DEST_AREA_ALLY);
     }
 };
 
@@ -4513,57 +4544,6 @@ class spell_pri_blistering_barriers : public AuraScript
     }
 };
 
-enum Specializations
-{
-    // DPS
-    WARRIOR_ARMS = 1,
-    WARRIOR_FURY = 2,
-    MAGE_ARCANE = 4,
-    MAGE_FIRE = 5,
-    MAGE_FROST = 6,
-    DK_FROST = 8,
-    DK_UNHOLY = 9,
-    DRUID_BALANCE = 10,
-    DRUID_FERAL = 11,
-    HUNTER_BEAST = 14,
-    HUNTER_MARSKMANSHIP = 15,
-    HUNTER_SURVIVAL = 16,
-    PALADIN_RETRIBUTION = 19,
-    ROGUE_ASSASSINATION = 20,
-    ROGUE_COMBAT = 21,
-    ROGUE_SUBTLETY = 22,
-    SHAMAN_ELEMENTAL = 23,
-    SHAMAN_ENCHANCEMENT = 24,
-    WARLOCK_AFFLICTION = 26,
-    WARLOCK_DEMONOLOGY = 27,
-    WARLOCK_DESTRUCTION = 28,
-    PRIEST_SHADOW = 31,
-    WARRIOR_HOPLITE = 33,
-    MAGE_SPELLBLADE = 34,
-    HUNTER_DARK_RANGER = 35,
-    PALADIN_INQUISITOR = 37,
-    ROGUE_OUTLAW = 38,
-
-    // Tank
-    WARRIOR_PROTECTION = 3,
-    DK_BLOOD = 7,
-    DRUID_GUARDIAN = 13,
-    PALADIN_PROTECTION = 18,
-    SHAMAN_SPIRIT_MASTER = 32,
-    WARLOCK_DEMONBOUND = 40,
-
-    // Heal
-    DRUID_RESTO = 12,
-    PALADIN_HOLY = 17,
-    SHAMAN_RESTORATION = 25,
-    PRIEST_DISCI = 29,
-    PRIEST_HOLY = 30,
-    PRIEST_ABSOLUTION = 36,
-    DK_SOULWEAVER = 39,
-
-    
-};
-
 // 86217 - Prescience
 class spell_pri_prescience_cast : public SpellScript
 {
@@ -4602,117 +4582,8 @@ class spell_pri_prescience_cast : public SpellScript
                         if (distance > maxDistance && ally->HasAura(SPELL_PRIEST_PRESCIENCE))
                             continue;
 
-                        if (ally->GetSpec() == WARRIOR_ARMS || ally->GetSpec() == WARRIOR_FURY || ally->GetSpec() == MAGE_ARCANE || ally->GetSpec() == MAGE_FIRE ||
-                            ally->GetSpec() == MAGE_FROST || ally->GetSpec() == DK_FROST || ally->GetSpec() == DK_UNHOLY || ally->GetSpec() == DRUID_BALANCE ||
-                            ally->GetSpec() == DRUID_FERAL || ally->GetSpec() == HUNTER_BEAST || ally->GetSpec() == HUNTER_MARSKMANSHIP || ally->GetSpec() == HUNTER_SURVIVAL ||
-                            ally->GetSpec() == PALADIN_RETRIBUTION || ally->GetSpec() == ROGUE_ASSASSINATION || ally->GetSpec() == ROGUE_COMBAT || ally->GetSpec() == ROGUE_SUBTLETY ||
-                            ally->GetSpec() == SHAMAN_ELEMENTAL || ally->GetSpec() == SHAMAN_ENCHANCEMENT || ally->GetSpec() == WARLOCK_AFFLICTION || ally->GetSpec() == WARLOCK_DEMONOLOGY ||
-                            ally->GetSpec() == WARLOCK_DESTRUCTION || ally->GetSpec() == PRIEST_SHADOW || ally->GetSpec() == WARRIOR_HOPLITE || ally->GetSpec() == MAGE_SPELLBLADE ||
-                            ally->GetSpec() == HUNTER_DARK_RANGER || ally->GetSpec() == PALADIN_INQUISITOR || ally->GetSpec() == ROGUE_OUTLAW)
-                        {
-                            target = ally;
-                            return;
-                        }                                               
-                    }
-                }
-
-                for (auto const& allyHeal : allyList)
-                {
-                    Player* ally = ObjectAccessor::FindPlayer(allyHeal.guid);
-                    if (ally && ally->IsAlive())
-                    {
-                        float distance = ally->GetDistance(casterPos);
-
-                        if (distance > maxDistance && ally->HasAura(SPELL_PRIEST_PRESCIENCE))
-                            continue;
-
-                        if (ally->GetSpec() == DRUID_RESTO || ally->GetSpec() == PALADIN_HOLY || ally->GetSpec() == SHAMAN_RESTORATION || ally->GetSpec() == PRIEST_DISCI ||
-                            ally->GetSpec() == PRIEST_HOLY || ally->GetSpec() == PRIEST_ABSOLUTION || ally->GetSpec() == DK_SOULWEAVER)
-                        {
-                            target = ally;
-                            return;
-                        }
-                    }
-                }
-
-                for (auto const& allyTank : allyList)
-                {
-                    Player* ally = ObjectAccessor::FindPlayer(allyTank.guid);
-                    if (ally && ally->IsAlive())
-                    {
-                        float distance = ally->GetDistance(casterPos);
-
-                        if (distance > maxDistance && ally->HasAura(SPELL_PRIEST_PRESCIENCE))
-                            continue;
-
-                        if (ally->GetSpec() == WARRIOR_PROTECTION || ally->GetSpec() == DK_BLOOD || ally->GetSpec() == PALADIN_PROTECTION ||
-                            ally->GetSpec() == DRUID_GUARDIAN || ally->GetSpec() == SHAMAN_SPIRIT_MASTER || ally->GetSpec() == WARLOCK_DEMONBOUND)
-                        {
-                            target = ally;
-                            return;
-                        }
-                    } 
-                }
-
-                for (auto const& allyDps : allyList)
-                {
-                    Player* ally = ObjectAccessor::FindPlayer(allyDps.guid);
-                    if (ally && ally->IsAlive())
-                    {
-                        float distance = ally->GetDistance(casterPos);
-
-                        if (distance > maxDistance)
-                            continue;
-
-                        if (ally->GetSpec() == WARRIOR_ARMS || ally->GetSpec() == WARRIOR_FURY || ally->GetSpec() == MAGE_ARCANE || ally->GetSpec() == MAGE_FIRE ||
-                            ally->GetSpec() == MAGE_FROST || ally->GetSpec() == DK_FROST || ally->GetSpec() == DK_UNHOLY || ally->GetSpec() == DRUID_BALANCE ||
-                            ally->GetSpec() == DRUID_FERAL || ally->GetSpec() == HUNTER_BEAST || ally->GetSpec() == HUNTER_MARSKMANSHIP || ally->GetSpec() == HUNTER_SURVIVAL ||
-                            ally->GetSpec() == PALADIN_RETRIBUTION || ally->GetSpec() == ROGUE_ASSASSINATION || ally->GetSpec() == ROGUE_COMBAT || ally->GetSpec() == ROGUE_SUBTLETY ||
-                            ally->GetSpec() == SHAMAN_ELEMENTAL || ally->GetSpec() == SHAMAN_ENCHANCEMENT || ally->GetSpec() == WARLOCK_AFFLICTION || ally->GetSpec() == WARLOCK_DEMONOLOGY ||
-                            ally->GetSpec() == WARLOCK_DESTRUCTION || ally->GetSpec() == PRIEST_SHADOW || ally->GetSpec() == WARRIOR_HOPLITE || ally->GetSpec() == MAGE_SPELLBLADE ||
-                            ally->GetSpec() == HUNTER_DARK_RANGER || ally->GetSpec() == PALADIN_INQUISITOR || ally->GetSpec() == ROGUE_OUTLAW)
-                        {
-                            target = ally;
-                            return;
-                        }
-                    }
-                }
-
-                for (auto const& allyHeal : allyList)
-                {
-                    Player* ally = ObjectAccessor::FindPlayer(allyHeal.guid);
-                    if (ally && ally->IsAlive())
-                    {
-                        float distance = ally->GetDistance(casterPos);
-
-                        if (distance > maxDistance)
-                            continue;
-
-                        if (ally->GetSpec() == DRUID_RESTO || ally->GetSpec() == PALADIN_HOLY || ally->GetSpec() == SHAMAN_RESTORATION || ally->GetSpec() == PRIEST_DISCI ||
-                            ally->GetSpec() == PRIEST_HOLY || ally->GetSpec() == PRIEST_ABSOLUTION || ally->GetSpec() == DK_SOULWEAVER)
-                        {
-                            target = ally;
-                            return;
-                        }
-                    }
-                }
-
-                for (auto const& allyTank : allyList)
-                {
-                    Player* ally = ObjectAccessor::FindPlayer(allyTank.guid);
-                    if (ally && ally->IsAlive())
-                    {
-                        float distance = ally->GetDistance(casterPos);
-
-                        if (distance > maxDistance)
-                            continue;
-
-                        if (ally->GetSpec() == WARRIOR_PROTECTION || ally->GetSpec() == DK_BLOOD || ally->GetSpec() == PALADIN_PROTECTION ||
-                            ally->GetSpec() == DRUID_GUARDIAN || ally->GetSpec() == SHAMAN_SPIRIT_MASTER || ally->GetSpec() == WARLOCK_DEMONBOUND)
-                        {
-                            target = ally;
-                            return;
-                        }
+                        target = ally;
+                        return;
                     }
                 }
             }
@@ -4725,7 +4596,7 @@ class spell_pri_prescience_cast : public SpellScript
     }
 };
 
-// 86307 - Prescience
+// 86217 - Prescience
 class spell_pri_prescience : public AuraScript
 {
     PrepareAuraScript(spell_pri_prescience);
@@ -5034,8 +4905,9 @@ void AddSC_priest_spell_scripts()
     RegisterSpellScript(spell_pri_mind_flay);
     RegisterSpellScript(spell_pri_mind_spike);
     RegisterSpellScript(spell_pri_blistering_barriers);
+    RegisterSpellScript(spell_pri_prescience_cast);
     RegisterSpellScript(spell_pri_prescience);
-    RegisterSpellScript(spell_pri_holy_eruption);
+    RegisterSpellScript(spell_pri_holy_eruption); 
     RegisterSpellScript(spell_pri_shadow_crash_damage);
 
 
