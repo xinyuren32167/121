@@ -164,11 +164,6 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
 
     creature->AutobalancePlayerCount = playerCount;
 
-    AutobalanceScalingInfo scaling = GetScalingInfo(map, creature);
-
-    if (!scaling.healthModifier)
-        return;
-
     CreatureTemplate const* creatureTemplate = creature->GetCreatureTemplate();
 
     if (!creatureTemplate)
@@ -180,19 +175,15 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     uint32 scaledHealth = 0;
     creature->ShouldRecalculate = false;
 
-    if (playerCount == 1)
-        scaledHealth = creature->prevMaxHealth * scaling.healthModifier;
-    else {
-        if (map->IsRaid())
-        {
-            double totalReduction = CalculateHealthRaidScaling(playerCount, scaling.healthModifier);
-            scaledHealth = creature->prevMaxHealth * totalReduction;
-        }
-        else
-        {
-            double totalReduction = CalculateHealthDungeonScaling(map);
-            scaledHealth = creature->prevMaxHealth * totalReduction;
-        }
+    if (map->IsRaid())
+    {
+        double totalReduction = CalculateHealthRaidScaling(playerCount);
+        scaledHealth = creature->prevMaxHealth * totalReduction;
+    }
+    else
+    {
+        double totalReduction = CalculateHealthDungeonScaling(map);
+        scaledHealth = creature->prevMaxHealth * totalReduction;
     }
 
     creature->SetMaxHealth(scaledHealth);
@@ -202,7 +193,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     creature->SetHealth(scaledHealth);
 }
 
-float AutoBalanceManager::CalculateHealthRaidScaling(uint8 totalPlayerInRaid, double healthScaling)
+float AutoBalanceManager::CalculateHealthRaidScaling(uint8 totalPlayerInRaid)
 {
     if (totalPlayerInRaid < 10)
         totalPlayerInRaid = 10;
