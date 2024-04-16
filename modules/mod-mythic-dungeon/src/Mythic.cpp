@@ -257,8 +257,11 @@ void Mythic::GiveRewards()
     {
         if (Player* player = playerIteration->GetSource())
         {
-            uint32 itemId = sMythicMgr->GetMythicRewardItemByLevel(player, Level);
-            player->AddItem(itemId, 1);
+            if (uint32 itemId = sMythicMgr->GetMythicRewardItemByLevel(player, Level))
+            {
+                player->AddItem(itemId, 1);
+            }
+
             player->AddItem(70008, reward.runicDust);
             player->AddItem(70009, reward.runicEssence);
             player->AddItem(reward.tokenId, reward.tokenCount);

@@ -285,7 +285,9 @@ uint32 MythicManager::GetMythicRewardItemByLevel(Player* player, uint32 level)
     uint8 currentSpec = PlayerSpecialization::GetCurrentSpecId(player);
 
     for (auto& item : itemsCopy) {
-        if (IsItemAllowableClass(player->getClass(), item.classId, item.subClassId) && (IsStatTypeAllowableSpec(currentSpec, item.statType1) || item.statType1 == 0)) {
+        if (IsItemAllowableClass(player->getClass(), item.classId, item.subClassId) && (IsStatTypeAllowableSpec(currentSpec, item.statType1) ||
+            item.statType1 == ITEM_MOD_MANA ||
+            item.statType1 == ITEM_MOD_STAMINA)) {
             items.push_back(item.itemId);
         }
     }
@@ -382,6 +384,9 @@ bool MythicManager::IsItemAllowableClass(uint32 classPlayer, uint32 classId, uin
 
 bool MythicManager::IsStatTypeAllowableSpec(uint32 currentSpec, uint32 statType)
 {
+    if (statType == )
+        return true;
+
     switch (currentSpec) {
         case WARRIOR_ARMS: return statType == ITEM_MOD_STRENGTH;
         case WARRIOR_FURY: return statType == ITEM_MOD_STRENGTH;
@@ -708,6 +713,9 @@ void MythicManager::Update(Creature* creature)
         return;
 
     if (creature->HasAura(90000))
+        return;
+
+    if (mythic->GetLevel() == 2)
         return;
 
     MythicMultiplier multi = GetMultplierByLevel(mythic->GetLevel());
