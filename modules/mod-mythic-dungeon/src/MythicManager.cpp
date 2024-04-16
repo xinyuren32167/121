@@ -384,9 +384,6 @@ bool MythicManager::IsItemAllowableClass(uint32 classPlayer, uint32 classId, uin
 
 bool MythicManager::IsStatTypeAllowableSpec(uint32 currentSpec, uint32 statType)
 {
-    if (statType == )
-        return true;
-
     switch (currentSpec) {
         case WARRIOR_ARMS: return statType == ITEM_MOD_STRENGTH;
         case WARRIOR_FURY: return statType == ITEM_MOD_STRENGTH;
