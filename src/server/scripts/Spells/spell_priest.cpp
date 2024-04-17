@@ -3408,7 +3408,7 @@ class spell_pri_holy_might : public SpellScript
         int32 buffAmount = CalculatePct(highestCasterStat, statPct);
         int32 speedAmount = 0;
 
-        if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_PRIEST_CELERITY, EFFECT_0))
+        if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(TALENT_PRIEST_CELERITY_R1, EFFECT_0))
             speedAmount = aurEff->GetAmount();
 
         for (auto const& object : targets)
