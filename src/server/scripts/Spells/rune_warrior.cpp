@@ -63,6 +63,7 @@ enum SpellsWarrior
     RUNE_WARR_BLOODTHIRST_BLOODCRAZE = 201408,
     RUNE_WARR_CRUSHING_STRIKE_FLURRY = 201310,
     RUNE_WARR_CUT_THE_VEIN_PROC = 200044,
+    RUNE_WARR_VEIN_CUTTER_PROC = 200114,
 };
 
 class spell_cut_the_veins : public AuraScript
@@ -71,8 +72,6 @@ class spell_cut_the_veins : public AuraScript
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        PreventDefaultAction();
-
         Unit* caster = GetCaster();
         Unit* target = eventInfo.GetActionTarget();
 
@@ -184,63 +183,22 @@ class spell_vein_cutter : public AuraScript
 {
     PrepareAuraScript(spell_vein_cutter);
 
-    Aura* GetRuneAura()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(200108))
-            return GetCaster()->GetAura(200108);
+        Unit* caster = GetCaster();
+        Unit* target = eventInfo.GetActionTarget();
 
-        if (GetCaster()->HasAura(200109))
-            return GetCaster()->GetAura(200109);
+        if (!caster || !target)
+            return;
 
-        if (GetCaster()->HasAura(200110))
-            return GetCaster()->GetAura(200110);
+        if (caster->isDead() || target->isDead())
+            return;
 
-        if (GetCaster()->HasAura(200111))
-            return GetCaster()->GetAura(200111);
-
-        if (GetCaster()->HasAura(200112))
-            return GetCaster()->GetAura(200112);
-
-        if (GetCaster()->HasAura(200113))
-            return GetCaster()->GetAura(200113);
-
-        return nullptr;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints;
-    }
-
-    int GetDamagePct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        if (GetRuneAura())
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage())
         {
-            int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetDamagePct()) / totalTicks);
-            int32 maxAmount = int32(CalculatePct(GetCaster()->GetMaxHealth(), 50));
+            int32 damageAmount = CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount());
 
-            if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
-            {
-                int32 remainingTicks = totalTicks - protEff->GetTickNumber();
-                int32 remainingAmount = protEff->GetAmount() * remainingTicks;
-                int32 remainingAmountPerTick = remainingAmount / totalTicks;
-
-                amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
-            }
-
-            if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
-                return;
-
-            if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
-                return;
-
-            eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+            GetCaster()->CastCustomSpell(RUNE_WARR_VEIN_CUTTER_PROC, SPELLVALUE_BASE_POINT0, damageAmount, target, TRIGGERED_FULL_MASK);
         }
     }
 
