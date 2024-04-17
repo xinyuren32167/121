@@ -3075,6 +3075,8 @@ class spell_mage_blackhole : public SpellScript
     {
         auto const& threatList = GetCaster()->getAttackers();
 
+        if (threatList.empty()) return {};
+
         Position creaturepos = creature->GetPosition();
         std::list <Unit*> targetAvailable;
 

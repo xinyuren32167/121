@@ -805,13 +805,13 @@ class spell_last_defender : public AuraScript
         if (!caster || caster->isDead())
             return 0;
 
-        auto const& threatlist = caster->getAttackers();
+        auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        if (threatlist.empty()) {
+        if (threatListCopy.empty())
             return 0;
-        }
 
-        for (auto itr = threatlist.begin(); itr != threatlist.end(); ++itr)
+        for (auto itr = threatListCopy.begin(); itr != threatListCopy.end(); ++itr)
         {
             Unit* treath = (*itr);
 

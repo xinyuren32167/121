@@ -380,12 +380,15 @@ class rune_rog_scent_of_blood : public AuraScript
     int32 GetRuptureTargetNbr(Unit* caster)
     {
         auto const& threatList = caster->getAttackers();
-        int32 targetNbr = 0;
+        auto threatListCopy = threatList;
+        uint32 targetNbr = 0;
 
-        for (auto const& threat : threatList)
-            if (threat->IsAlive())
+        if (threatListCopy.empty()) return 0;
+
+        for (auto const& target : threatListCopy)
+            if (target->IsAlive())
             {
-                if (threat->HasAura(SPELL_ROGUE_RUPTURE))
+                if (target->HasAura(SPELL_ROGUE_RUPTURE))
                     targetNbr++;
             }
 

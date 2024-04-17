@@ -423,27 +423,22 @@ class rune_pri_psychic_link : public AuraScript
             return;
 
         auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        if (threatList.size() <= 0)
-            return;
+        if (threatListCopy.empty()) return;
 
         int32 damage = eventInfo.GetDamageInfo()->GetDamage();
         int32 amount = CalculatePct(damage, aurEff->GetAmount());
 
-        for (auto const& targets : threatList)
-        {
-            if (targets != nullptr) {
-                if (targets->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
-                {
-                    float distance = targets->GetDistance(target->GetPosition());
-
-                    if (distance > 40)
-                        continue;
-
-                    caster->CastCustomSpell(RUNE_PRIEST_PSYCHIC_LINK_DAMAGE, SPELLVALUE_BASE_POINT0, amount, targets, TRIGGERED_FULL_MASK);
-                }
+        for (auto const& treathTarget : threatListCopy) {
+            if (treathTarget != nullptr && target->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH)) {
+                float distance = target->GetDistance(caster->GetPosition()); 
+                if (distance > 40)
+                    continue;
+                caster->CastCustomSpell(RUNE_PRIEST_PSYCHIC_LINK_DAMAGE, SPELLVALUE_BASE_POINT0, amount, treathTarget, TRIGGERED_FULL_MASK);
             }
         }
+
     }
 
     void Register()
@@ -1946,11 +1941,11 @@ class rune_pri_screams_of_the_void : public AuraScript
             return;
 
         auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        if (threatList.size() <= 0)
-            return;
+        if (threatListCopy.empty()) return;
 
-        for (auto const& targets : threatList)
+        for (auto const& targets : threatListCopy)
             if (targets->IsAlive())
             {
                 if (Aura* vampiric = targets->GetAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
@@ -1975,11 +1970,11 @@ class rune_pri_screams_of_the_void : public AuraScript
             return;
 
         auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        if (threatList.size() <= 0)
-            return;
+        if (threatListCopy.empty()) return;
 
-        for (auto const& targets : threatList)
+        for (auto const& targets : threatListCopy)
             if (targets->IsAlive())
             {
                 if (Aura* vampiric = targets->GetAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
@@ -2030,12 +2025,12 @@ class rune_pri_idol_of_cthun : public AuraScript
             return;
 
         auto const& threatList = caster->getAttackers();
-        int32 targetNbr = 0;
+        auto threatListCopy = threatList;
+        uint32 targetNbr = 0;
 
-        if (threatList.size() <= 0)
-            return;
+        if (threatListCopy.empty()) return;
 
-        for (auto const& targets : threatList)
+        for (auto const& targets : threatListCopy)
             if (targets->IsAlive())
             {
                 if (target == targets)

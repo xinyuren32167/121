@@ -1950,11 +1950,12 @@ class spell_sha_ascendance_flame : public SpellScript
     {
         Unit* caster = GetCaster();
         auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
         if (threatList.empty())
             return;
 
-        for (auto itr = threatList.begin(); itr != threatList.end(); ++itr)
+        for (auto itr = threatListCopy.begin(); itr != threatListCopy.end(); ++itr)
         {
             Unit* treath = (*itr);
 

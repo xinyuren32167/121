@@ -1230,10 +1230,13 @@ class spell_warl_havoc : public AuraScript
     {
         Unit* havocTarget = nullptr;
         auto const& threatList = GetCaster()->getAttackers();
+        auto threatListCopy = threatList;
 
-        for (auto const& threat : threatList)
+        if (threatListCopy.empty()) return nullptr;
+
+        for (auto const& treathTarget : threatListCopy)
         {
-            if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), threat->GetGUID())) {
+            if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), treathTarget->GetGUID())) {
                 if (target->HasAura(SPELL_WARLOCK_HAVOC_AURA))
                     havocTarget = target;
             }
@@ -2756,10 +2759,14 @@ class spell_warl_haunt : public AuraScript
         for (size_t i = 800492; i < 800498; i++)
             if (caster->HasAura(i))
             {
-                auto const& enemyList = caster->getAttackers();
+                auto const& threatList = caster->getAttackers();
+                auto threatListCopy = threatList;
+
+                if (threatListCopy.empty()) continue;
+
                 int32 hauntedEnemiesNbr = 0;
 
-                for (auto const& enemy : enemyList)
+                for (auto const& enemy : threatListCopy)
                 {
                     if (enemy->isDead())
                         continue;
@@ -3371,9 +3378,9 @@ class spell_warl_malefic_rapture : public SpellScript
             return;
 
         auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        if (threatList.size() <= 0)
-            return;
+        if (threatListCopy.empty()) return;
 
         int32 durationIncrease = 0;
 
@@ -3389,7 +3396,7 @@ class spell_warl_malefic_rapture : public SpellScript
                 T14pcListener->SetDuration(50);
         }
 
-        for (auto const& target : threatList)
+        for (auto const& target : threatListCopy)
         {
             if (target)
             {

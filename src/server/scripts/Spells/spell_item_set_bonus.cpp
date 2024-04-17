@@ -812,27 +812,29 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
             int32 additionalTargets = bonus4->GetEffect(EFFECT_1)->GetAmount();
 
             auto const& threatList = caster->getAttackers();
+            auto threatListCopy = threatList;
 
-            if (threatList.size() <= 0)
-                return;
+            if (threatListCopy.empty()) return;
 
-            for (auto const& targets : threatList)
-                if (targets->IsAlive())
+            for (auto const& treathTarget : threatListCopy)
+            {
+                if (treathTarget->IsAlive())
                 {
-                    if (targets == target)
+                    if (treathTarget == target)
                         continue;
 
-                    float distance = targets->GetDistance(target->GetPosition());
+                    float distance = treathTarget->GetDistance(target->GetPosition());
 
                     if (distance > 12)
                         continue;
 
-                    caster->CastCustomSpell(SPELL_PALADIN_HAMMER_OF_WRATH, SPELLVALUE_BASE_POINT0, amount, targets, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(SPELL_PALADIN_HAMMER_OF_WRATH, SPELLVALUE_BASE_POINT0, amount, treathTarget, TRIGGERED_FULL_MASK);
                     additionalTargets--;
 
                     if (additionalTargets <= 0)
                         break;
                 }
+            }
         }
     }
 

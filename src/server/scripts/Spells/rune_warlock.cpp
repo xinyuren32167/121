@@ -393,9 +393,11 @@ class rune_warl_funerary_ceremony_apply : public AuraScript
         Player* caster = GetCaster()->ToPlayer();
         std::list <Unit*> targetAvailable;
         Position casterPos = caster->GetPosition();
-        auto const& enemyList = caster->getAttackers();
+        auto const& threatList = caster->getAttackers();
 
-        for (auto const& target : enemyList)
+        if (threatList.empty()) return {};
+
+        for (auto const& target : threatList)
         {
             if (target->IsAlive())
             {
@@ -815,14 +817,17 @@ class rune_warl_haunted_soul : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        auto const& enemyList = caster->getAttackers();
+        auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        for (auto const& enemy : enemyList)
+        if (threatListCopy.empty()) return;
+
+        for (auto const& target : threatListCopy)
         {
-            if (enemy->isDead())
+            if (target->isDead())
                 continue;
 
-            auto targetAuras = enemy->GetAppliedAuras();
+            auto targetAuras = target->GetAppliedAuras();
 
             for (auto itr = targetAuras.begin(); itr != targetAuras.end(); ++itr)
                 if (Aura* aura = itr->second->GetBase())

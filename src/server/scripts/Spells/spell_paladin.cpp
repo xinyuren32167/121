@@ -1133,6 +1133,9 @@ class spell_pal_exorcism : public SpellScript
     {
         auto const& threatList = GetCaster()->getAttackers();
 
+        if (threatList.empty()) return {};
+
+
         Position creaturepos = creature->GetPosition();
         std::list <Unit*> targetAvailable;
 
@@ -1823,6 +1826,9 @@ class spell_pal_glimmer_of_light_damage : public AuraScript
     std::list <Unit*> FindTargets()
     {
         auto const& threatList = GetCaster()->getAttackers();
+
+        if (threatList.empty()) return {};
+
 
         std::list <Unit*> targetAvailable;
 

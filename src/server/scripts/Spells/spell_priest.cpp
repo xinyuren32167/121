@@ -2470,8 +2470,11 @@ class spell_pri_holy_fire_aura : public AuraScript
     {
         Unit* nearTarget = nullptr;
         auto const& threatList = caster->getAttackers();
+        auto threatListCopy = threatList;
 
-        for (auto const& threat : threatList)
+        if (threatListCopy.empty()) return nullptr;
+
+        for (auto const& threat : threatListCopy)
             if (threat->IsAlive())
             {
                 if (threat->HasAura(SPELL_PRIEST_HOLY_FIRE))
@@ -3924,8 +3927,9 @@ class spell_pri_mind_sear_aura : public AuraScript
             if (target->HasAura(SPELL_PRIEST_SHADOW_WORD_PAIN) && target->HasAura(SPELL_PRIEST_VAMPIRIC_TOUCH))
             {
                 auto const& threatList = caster->getAttackers();
+                auto threatListCopy = threatList;
 
-                for (auto const& victim : threatList)
+                for (auto const& victim : threatListCopy)
                     if (victim->IsAlive())
                     {
                         if (victim == target)
