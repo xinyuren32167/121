@@ -29,7 +29,7 @@ enum SetSpells
     // Paladin
     SPELL_PALADIN_AVENGERS_SHIELD = 48827,
     SPELL_PALADIN_DIVINE_ZEAL = 86508,
-    SPELL_PALADIN_HAMMER_OF_WRATH = 48806,
+    SPELL_PALADIN_JUDGEMENT_DAMAGE = 54158,
     SPELL_PALADIN_INSPIRING_VANGUARD = 80105,
     SPELL_PALADIN_INSPIRING_VANGUARD_BUFF = 80104,
     // Hunter
@@ -86,6 +86,7 @@ enum SetSpells
     SPELL_SET_T1_PALADIN_PROT_BONUS2_DOT = 96101,
     SPELL_SET_T1_PALADIN_PROT_BONUS2_HEAL = 96102,
     SPELL_SET_T1_PALADIN_RET_4PC = 96201,
+    SPELL_SET_T1_PALADIN_RET_4PC_HAMMER_OF_WRATH = 96203,
     // Hunter
     SPELL_SET_T1_HUNTER_MM_4PC_BUFF = 96602,
     SPELL_SET_T1_HUNTER_MM_2PC_DEBUFF = 96603,
@@ -790,6 +791,9 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (eventInfo.GetActionTarget() == GetCaster())
+            return false;
+
         return eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() >= 0;
     }
 
@@ -804,6 +808,9 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
 
         if (!target || target->isDead())
             return;
+
+        caster->CastSpell(target, SPELL_PALADIN_JUDGEMENT_DAMAGE, TRIGGERED_FULL_MASK);
+
 
         if (Aura* bonus4 = caster->GetAura(SPELL_SET_T1_PALADIN_RET_4PC))
         {
@@ -828,7 +835,7 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
                     if (distance > 12)
                         continue;
 
-                    caster->CastCustomSpell(SPELL_PALADIN_HAMMER_OF_WRATH, SPELLVALUE_BASE_POINT0, amount, treathTarget, TRIGGERED_FULL_MASK);
+                    caster->CastCustomSpell(SPELL_SET_T1_PALADIN_RET_4PC_HAMMER_OF_WRATH, SPELLVALUE_BASE_POINT0, amount, treathTarget, TRIGGERED_FULL_MASK);
                     additionalTargets--;
 
                     if (additionalTargets <= 0)
@@ -841,7 +848,7 @@ class spell_set_paladin_ret_T1_B2B4 : public AuraScript
     void Register()
     {
         DoCheckProc += AuraCheckProcFn(spell_set_paladin_ret_T1_B2B4::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_set_paladin_ret_T1_B2B4::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_set_paladin_ret_T1_B2B4::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
