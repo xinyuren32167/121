@@ -138,9 +138,8 @@ class spell_tide_of_blood : public AuraScript
 {
     PrepareAuraScript(spell_tide_of_blood);
 
-    void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        Aura* aura = GetAura();
         Unit* caster = GetCaster();
         Unit* target = GetTarget();
 
@@ -150,21 +149,18 @@ class spell_tide_of_blood : public AuraScript
         if (!target || GetCaster()->isDead())
             return;
 
-        if (!aura)
-            return;
-
         Aura* auraStack = caster->GetAura(200107);
 
         if (!auraStack)
             return;
 
         uint32 stacksAmount = auraStack->GetStackAmount();
-        uint32 requireStacks = aura->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
+        uint32 requireStacks = aurEff->GetAmount();
 
         if (stacksAmount < requireStacks)
             return;
 
-        int32 damage = aura->GetSpellInfo()->GetEffect(EFFECT_1).BasePoints + 1;
+        int32 damage = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
         ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK));
 
         damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, 0);
@@ -547,12 +543,12 @@ class spell_storm_of_swords : public AuraScript
         if (GetCaster()->HasAura(1719))
         {
             float remainingDuration = GetCaster()->GetAura(1719)->GetDuration();
-            GetCaster()->GetAura(1719)->SetDuration(remainingDuration + 2000);
+            GetCaster()->GetAura(1719)->SetDuration(remainingDuration + 1000);
         }
         else
         {
             GetCaster()->CastSpell(GetCaster(), 1719, TRIGGERED_FULL_MASK);
-            GetCaster()->GetAura(1719)->SetDuration(5000);
+            GetCaster()->GetAura(1719)->SetDuration(3000);
         }
     }
 
@@ -754,7 +750,7 @@ class spell_true_rage : public AuraScript
             if (GetCaster()->HasAura(200004))
             {
                 float remainingDuration = GetCaster()->GetAura(200004)->GetDuration();
-                GetCaster()->GetAura(200004)->SetDuration(remainingDuration + 4000);
+                GetCaster()->GetAura(200004)->SetDuration(remainingDuration + 2000);
             }
             else
             {
@@ -3038,7 +3034,7 @@ class rune_planned_battle_expire : public AuraScript
             int32 threshshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
             int32 rageAccumulated = runeAura->GetEffect(EFFECT_1)->GetAmount();
             runeAura->GetEffect(EFFECT_1)->SetAmount(0);
-            int32 calculatedStack = static_cast<int32>(rageAccumulated / threshshold);
+            int32 calculatedStack = std::min(10, (rageAccumulated / threshshold));
             GetCaster()->CastCustomSpell(RUNE_WARR_PLANNED_BATTLE_BUFF, SPELLVALUE_BASE_POINT0, calculatedStack, GetCaster(), TRIGGERED_FULL_MASK);
         }
     }

@@ -2185,7 +2185,7 @@ class spell_warr_colossal_thrust : public SpellScript
     {
         Unit* caster = GetCaster();
         Unit* target = GetExplTargetUnit();
-        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 184);
+        int32 damage = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), GetEffectValue());
 
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_COLOSSAL_THRUST);
         uint32 slowBonus = value->GetEffect(EFFECT_1).CalcValue(caster);
