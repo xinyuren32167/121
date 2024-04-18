@@ -194,6 +194,7 @@ void Mythic::OnKillCreature(Player* player, Creature* killed)
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
 
+    killed->loot.clear();
 
     if (playerList.IsEmpty())
         return;

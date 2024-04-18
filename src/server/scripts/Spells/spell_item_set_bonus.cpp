@@ -1425,17 +1425,6 @@ class spell_set_druid_feral_T1_2pc_buff : public AuraScript
         {
             int32 damage = eventInfo.GetDamageInfo()->GetDamage();
             int32 amount = CalculatePct(damage, set_4pc->GetEffect(EFFECT_0)->GetAmount());
-
-            if (Aura* dotAura = target->GetAura(SPELL_SET_T1_DRUID_FERAL_4PC_DOT))
-                if (AuraEffect* effectAura = dotAura->GetEffect(EFFECT_0))
-                {
-                    int32 remainingAmount = effectAura->GetAmount() * effectAura->GetRemaningTicks();
-                    amount += remainingAmount;
-                    dotAura->Remove();
-                }
-
-            amount /= 10;
-
             caster->CastCustomSpell(SPELL_SET_T1_DRUID_FERAL_4PC_DOT, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
         }
     }

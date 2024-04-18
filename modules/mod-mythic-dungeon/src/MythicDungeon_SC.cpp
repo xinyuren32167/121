@@ -44,6 +44,11 @@ public:
             sEluna->SendShowMythicUI(player, false, false);
     }
 
+    void OnCreatureKilledByPet(Player* PetOwner, Creature* killed)
+    {
+        sMythicMgr->OnKill(PetOwner, killed);
+    }
+
     void OnCreatureKill(Player* killer, Creature* killed)
     {
         sMythicMgr->OnKill(killer, killed);
@@ -118,7 +123,10 @@ public:
         }
 
         if (uint32 keyLevel = sMythicMgr->GetDungeonKeyLevelPreperation(player))
-            sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel);
+        {
+            MythicMultiplier multi = sMythicMgr->GetMultplierByLevel(keyLevel);
+            sEluna->SendPreperationMythicDungeon(player, name, foundDungeon.timeToComplete, keyLevel, multi.damage, multi.hp);
+        }
         else
             ChatHandler(player->GetSession()).SendSysMessage("it seems you don't have any Mythic Key Active.");
 

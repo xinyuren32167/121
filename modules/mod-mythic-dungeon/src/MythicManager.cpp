@@ -6,6 +6,7 @@
 #include "Config.h"
 #include "Player.h"
 #include "LuaEngine.h"
+#include "Loot/LootMgr.h"
 
 MythicManager::~MythicManager()
 {
@@ -631,6 +632,7 @@ std::vector<std::string> MythicManager::GetDataMythicBag(Item* item)
     return elements;
 }
 
+
 uint32 MythicManager::GetDungeonKeyLevelPreperation(Player* player)
 {
     MythicKey* mythicKey = GetCurrentPlayerMythicKey(player);
@@ -721,8 +723,6 @@ void MythicManager::Update(Creature* creature)
     int32 health = multi.hp;
 
     creature->CastCustomSpell(creature, 90000, &damage, &health, nullptr, true);
-
-    // creature->ShouldRecalculate = true;
 }
 
 void MythicManager::PrepareAndTeleportGroupMembers(Player* leader, MythicDungeon dungeon)

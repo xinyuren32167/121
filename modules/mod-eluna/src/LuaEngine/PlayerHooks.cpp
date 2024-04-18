@@ -330,13 +330,15 @@ void Eluna::SendCompletedMythicDungeon(Player* pPlayer, uint32 timer, uint8 upgr
     CallAllFunctions(PlayerEventBindings, key);
 }
 
-void Eluna::SendPreperationMythicDungeon(Player* pPlayer, std::string name, uint32 timer, uint32 level)
+void Eluna::SendPreperationMythicDungeon(Player* pPlayer, std::string name, uint32 timer, uint32 level, float damage, float health)
 {
     START_HOOK(PLAYER_SEND_MYTHIC_UPDATE_PREPERATION);
     Push(pPlayer);
     Push(name);
     Push(timer);
     Push(level);
+    Push(damage);
+    Push(health);
     CallAllFunctions(PlayerEventBindings, key);
 }
 

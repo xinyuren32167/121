@@ -4074,7 +4074,7 @@ class spell_mage_frostbolt : public SpellScript
         // Deep Shatter damage increase
         if (GetDeepShatterAura(caster))
         {
-            if (target->HasAuraState(AURA_STATE_FROZEN))
+            if (target->HasAuraState(AURA_STATE_FROZEN) || target->HasAura(81535))
             {
                 int32 damageIncrease = GetDeepShatterAura(caster)->GetEffect(EFFECT_0)->GetAmount();
                 AddPct(damage, damageIncrease);

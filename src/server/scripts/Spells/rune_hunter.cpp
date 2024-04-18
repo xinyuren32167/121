@@ -3595,8 +3595,7 @@ class rune_hunter_windrunners_barrage : public AuraScript
         if (victim->HasAura(SPELL_HUNTER_WIND_ARROW))
             duration += victim->GetAura(SPELL_HUNTER_WIND_ARROW)->GetDuration();
 
-        GetCaster()->CastSpell(victim, SPELL_HUNTER_WIND_ARROW, TRIGGERED_FULL_MASK);
-        victim->GetAura(SPELL_HUNTER_WIND_ARROW)->SetDuration(duration);
+        GetCaster()->CastCustomSpell(SPELL_HUNTER_WIND_ARROW, SPELLVALUE_AURA_DURATION, duration, victim, TRIGGERED_FULL_MASK);
     }
 
     void Register()

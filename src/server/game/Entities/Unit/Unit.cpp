@@ -9913,8 +9913,19 @@ void Unit::setPowerType(Powers new_powertype)
             SetPower(POWER_FOCUS, uint32(std::ceil(GetCreatePowers(POWER_FOCUS) * powerMultiplier)));
             break;
         case POWER_ENERGY:
-            SetMaxPower(POWER_ENERGY, uint32(std::ceil(GetCreatePowers(POWER_ENERGY) * powerMultiplier)));
+        {
+            int32 amount = 100;
+            for (size_t spellId = 700944; spellId <= 700949; spellId++)
+            {
+                if (Aura* tirelessEnergy = GetAura(spellId))
+                {
+                    amount += tirelessEnergy->GetEffect(EFFECT_0)->GetAmount();
+                }
+            }
+            SetMaxPower(POWER_ENERGY, uint32(std::ceil(amount * powerMultiplier)));
             break;
+        }
+          
         case POWER_HAPPINESS:
             SetMaxPower(POWER_HAPPINESS, uint32(std::ceil(GetCreatePowers(POWER_HAPPINESS) * powerMultiplier)));
             SetPower(POWER_HAPPINESS, uint32(std::ceil(GetCreatePowers(POWER_HAPPINESS) * powerMultiplier)));
@@ -11438,14 +11449,14 @@ float Unit::SpellPctDamageModsDone(Unit* victim, SpellInfo const* spellProto, Da
                 }
 
                 if (subzeroRuneRank != 0)
-                    if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
+                    if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this) || victim->HasAura(81535))
                         AddPct(DoneTotalMod, owner->GetAura(subzeroRuneRank)->GetEffect(EFFECT_0)->GetAmount());                      
             }
 
             // Ice Lance
             if (spellProto->Id == 42914)
             {
-                if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
+                if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this) || victim->HasAura(81535))
                 {
                     // Glyph of Ice Lance
                     if (owner->HasAura(56377) && victim->getLevel() > owner->getLevel())
@@ -12076,9 +12087,10 @@ float Unit::SpellTakenCritChance(Unit const* caster, SpellInfo const* spellProto
                             case 849:
                                 modChance += 17;
                                 modChance += CalculatePct(caster->GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + SPELL_SCHOOL_FROST), modChance);
-                                if (!HasAuraState(AURA_STATE_FROZEN, spellProto, caster))
-                                    break;
-                                crit_chance += modChance;
+                                if (HasAuraState(AURA_STATE_FROZEN, spellProto, caster) || HasAura(81535))
+                                {
+                                    crit_chance += modChance;
+                                }
                                 break;
                             case 7917: // Glyph of Shadowburn
                                 if (HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT, spellProto, caster))
@@ -15586,7 +15598,9 @@ uint32 Unit::GetCreatePowers(Powers power) const
         case POWER_FOCUS:
             return 100;
         case POWER_ENERGY:
+        {
             return 100;
+        }
         case POWER_HAPPINESS:
             return (GetTypeId() == TYPEID_PLAYER || !((Creature const*)this)->IsPet() || ((Pet const*)this)->getPetType() != HUNTER_PET ? 0 : 1050000);
         case POWER_RUNIC_POWER:

@@ -41,7 +41,15 @@ public:
 
         if (currentSpecId == 0 && player->getLevel() >= 10)
             sEluna->ShowWarningSpecialization(player);
+
+        player->UpdateVersatility();
     }
+
+    void OnMapChanged(Player* player)
+    {
+        player->UpdateVersatility();
+    }
+
 
     void IniatializeWarlockOnLogin(Player* player) {
 
@@ -73,6 +81,7 @@ public:
     void OnUpdateMastery(Player* player, uint32 value)
     {
         PlayerSpecialization::UpdateMastery(player, value);
+        player->UpdateVersatility();
     }
 
 
