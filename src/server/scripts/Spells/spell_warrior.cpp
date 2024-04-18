@@ -1161,7 +1161,9 @@ class spell_warr_heroic_throw : public SpellScript
     }
 };
 
+
 // 47486 - Mortal Strike
+/*
 class spell_warr_mortal_strike : public SpellScript
 {
     PrepareSpellScript(spell_warr_mortal_strike);
@@ -1183,7 +1185,7 @@ class spell_warr_mortal_strike : public SpellScript
     {
         OnEffectHitTarget += SpellEffectFn(spell_warr_mortal_strike::HandleHit, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
-};
+};*/
 
 class spell_ap_to_hit_damage : public SpellScript
 {
@@ -2460,8 +2462,6 @@ class spell_warr_sudden_death : public AuraScript
     }
 };
 
-
-
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_mocking_blow);
@@ -2493,7 +2493,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_vigilance_trigger);
     RegisterSpellScript(spell_warr_t3_prot_8p_bonus);
     RegisterSpellScript(spell_warr_heroic_throw);
-    RegisterSpellScript(spell_warr_mortal_strike);
     RegisterSpellScript(spell_ap_to_hit_damage);
     RegisterSpellScript(spell_warr_whirlwind);
     RegisterSpellScript(spell_healing_deep_wound);
