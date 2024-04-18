@@ -2491,7 +2491,7 @@ class rune_test_of_might_expire : public AuraScript
             {
                 int32 threadshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
                 int32 rageAccumulated = mightCounter->GetEffect(EFFECT_0)->GetAmount();
-                int32 calculatedStack = static_cast<int32>(rageAccumulated / threadshold);
+                int32 calculatedStack = std::min(10, (rageAccumulated / threadshold));
                 GetCaster()->CastCustomSpell(RUNE_WARR_TEST_OF_MIGHT_BUFF, SPELLVALUE_BASE_POINT0, calculatedStack, GetCaster(), TRIGGERED_FULL_MASK);
                 mightCounter->Remove();
             }

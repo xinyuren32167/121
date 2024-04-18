@@ -1457,7 +1457,7 @@ class rune_dk_torment_expire : public AuraScript
             int32 threshold = runeAura->GetEffect(EFFECT_0)->GetAmount();
             int32 rageAccumulated = runeAura->GetEffect(EFFECT_1)->GetAmount();
             runeAura->GetEffect(EFFECT_1)->SetAmount(0);
-            int32 calculatedStack = static_cast<int32>(3 * (rageAccumulated / threshold));
+            int32 calculatedStack = std::min(9, (3 * (rageAccumulated / threshold)));
             if (calculatedStack > 0)
                 GetCaster()->CastCustomSpell(RUNE_DK_TORMENT_PROC, SPELLVALUE_BASE_POINT0, calculatedStack, GetCaster(), TRIGGERED_FULL_MASK);
         }
