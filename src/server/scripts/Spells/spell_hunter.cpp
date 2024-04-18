@@ -1795,21 +1795,6 @@ class spell_hun_mongoose_fury : public SpellScript
     }
 };
 
-class spell_hun_wailing_arrow : public SpellScript
-{
-    PrepareSpellScript(spell_hun_wailing_arrow);
-
-    void HandleBuff()
-    {
-        GetCaster()->CastSpell(GetExplTargetUnit(), 80150, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_hun_wailing_arrow::HandleBuff);
-    }
-};
-
 class spell_hun_readiness_trigger : public AuraScript
 {
     PrepareAuraScript(spell_hun_readiness_trigger);
@@ -4161,7 +4146,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_explosive_shot);
     RegisterSpellScript(spell_hun_kill_command);
     RegisterSpellScript(spell_hun_mongoose_fury);
-    RegisterSpellScript(spell_hun_wailing_arrow);
     RegisterSpellScript(spell_hun_readiness_trigger);
     RegisterSpellScript(spell_hun_trueshot);
     RegisterSpellScript(spell_hun_bear_applier);
