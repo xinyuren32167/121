@@ -78,11 +78,6 @@ void Mythic::Update(uint32 diff)
 
         if (ElapsedTime >= TimeToComplete && !ChestDecrapeted && !Done) {
             ChestDecrapeted = true;
-            Map::PlayerList const& playerList = Dungeon->GetPlayers();
-            if (!playerList.IsEmpty())
-                for (auto playerIteration = playerList.begin(); playerIteration != playerList.end(); ++playerIteration)
-                    if (Player* player = playerIteration->GetSource())
-                        sEluna->SendMythicUpdateChestDecrapeted(player);
         }
     }
 }
@@ -273,9 +268,8 @@ void Mythic::GiveRewards()
 
 int8 Mythic::CalculateUpgradeKey()
 {
-    if (ChestDecrapeted) {
+    if (ChestDecrapeted)
         return 0;
-    }
 
     uint8 upgrade = 1;
 

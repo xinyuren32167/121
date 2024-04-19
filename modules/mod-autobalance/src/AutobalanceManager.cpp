@@ -139,6 +139,7 @@ AutobalanceScalingInfo AutoBalanceManager::GetScalingInfo(Map* map, Unit* creatu
 
 void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
 {
+
     if (!creature || !creature->GetMap())
         return;
 

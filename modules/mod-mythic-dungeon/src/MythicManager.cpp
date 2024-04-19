@@ -443,12 +443,19 @@ void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
     uint32 dungeonId = sMythicMgr->GetRandomMythicDungeonForPlayer(player);
 
     key->dungeonId = dungeonId;
+
+    if (upgrade == 0)
+        upgrade -= 1;
+
     key->level += upgrade;
 
     uint32 maxLevelKey = sWorld->GetValue("CONFIG_UNLOCK_MYTHIC_LEVEL");
 
     if (key->level > maxLevelKey)
         key->level = maxLevelKey;
+
+    if (key->level < 2)
+        key->level = 2;
 
     if (uint32 newItemId = sMythicMgr->GetItemIdWithDungeonId(dungeonId)) {
 
@@ -680,7 +687,14 @@ bool MythicManager::ShouldShowMythicUI(Player* player)
 
 void MythicManager::OnKill(Player* player, Creature* killed)
 {
+    if (!killed)
+        return;
+
+    if (!player)
+        return;
+
     Map* map = player->GetMap();
+
     Mythic* mythic = GetMythicPlayer(player);
 
     if (!mythic)
