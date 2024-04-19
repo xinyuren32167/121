@@ -497,6 +497,9 @@ class spell_mittelschmerz_blood_magic : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == 47818)
+            return false;
+
         return (GetCaster() && GetCaster()->IsAlive());
     }
 
