@@ -7097,40 +7097,6 @@ class rune_druid_waking_dream_apply : public AuraScript
     }
 };
 
-class rune_druid_tireless_energy : public SpellScript
-{
-    PrepareSpellScript(rune_druid_tireless_energy);
-
-    Aura* GetRuneAura(Unit* caster)
-    {
-        for (size_t i = 700944; i < 700950; i++)
-        {
-            if (caster->HasAura(i))
-                return caster->GetAura(i);
-        }
-        return nullptr;
-    }
-
-    void HandleAfterCast()
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        if (Aura* runeAura = GetRuneAura(caster))
-        {
-            int8 energyAmount = 100 + runeAura->GetEffect(EFFECT_0)->GetAmount();
-            caster->SetPower(POWER_ENERGY, energyAmount);
-        }
-    }
-
-    void Register() override
-    {
-        AfterCast += SpellCastFn(rune_druid_tireless_energy::HandleAfterCast);
-    }
-};
-
 void AddSC_druid_rune_scripts()
 {
     RegisterSpellScript(rune_druid_lycara_fleeting_glimpse);
@@ -7293,5 +7259,4 @@ void AddSC_druid_rune_scripts()
     RegisterSpellScript(rune_druid_i_is_groot);
     RegisterSpellScript(rune_druid_waking_dream);
     RegisterSpellScript(rune_druid_waking_dream_apply);
-    RegisterSpellScript(rune_druid_tireless_energy);
 }
