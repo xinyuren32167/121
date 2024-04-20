@@ -229,8 +229,8 @@ class spell_mastery_critical_block_on_remove : public AuraScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (GetCaster()->HasAura(190750))
-            GetCaster()->RemoveAura(190750);
+        if (GetCaster()->HasAura(MASTERY_WARRIOR_CRITICAL_BLOCK_BUFF))
+            GetCaster()->RemoveAura(MASTERY_WARRIOR_CRITICAL_BLOCK_BUFF);
     }
 
     void Register() override
