@@ -13,6 +13,8 @@
 enum Masteries
 {
     // Warrior
+    MASTERY_WARRIOR_CRITICAL_BLOCK = 200005,
+    MASTERY_WARRIOR_CRITICAL_BLOCK_BUFF = 200006,
     MASTERY_WARRIOR_PHALANX_DOMINANCE_BUFF = 199999,
 
     // Mage
@@ -201,22 +203,18 @@ class spell_mastery_critical_block : public SpellScript
 {
     PrepareSpellScript(spell_mastery_critical_block);
 
-    int GetEffectAmount(SpellEffIndex effect)
-    {
-        return GetCaster()->GetAura(200005)->GetEffect(effect)->GetAmount();
-    }
-
     void HandleCast()
     {
         if (Player* caster = GetCaster()->ToPlayer())
-        {
-            float mastery = caster->GetMastery();
-            int32 blockAmount = GetEffectAmount(EFFECT_0) + mastery / 3;
-            int32 critBlockChance = GetEffectAmount(EFFECT_1) + mastery + GetCaster()->GetFloatValue(PLAYER_CRIT_PERCENTAGE);
-            int32 powerAmount = GetEffectAmount(EFFECT_2) + mastery / 1.5;
-            caster->RemoveAura(200006);
-            caster->CastCustomSpell(caster, 200006, &blockAmount, &critBlockChance, &powerAmount, TRIGGERED_FULL_MASK);
-        }
+            if (Aura* aura = caster->GetAura(MASTERY_WARRIOR_CRITICAL_BLOCK))
+            {
+                float mastery = caster->GetMastery();
+                int32 blockAmount = aura->GetEffect(EFFECT_0)->GetAmount() + mastery / 3;
+                int32 critBlockChance = aura->GetEffect(EFFECT_1)->GetAmount() + mastery + GetCaster()->GetFloatValue(PLAYER_CRIT_PERCENTAGE);
+                int32 powerAmount = aura->GetEffect(EFFECT_2)->GetAmount() + mastery / 1.5;
+
+                caster->CastCustomSpell(caster, MASTERY_WARRIOR_CRITICAL_BLOCK_BUFF, &blockAmount, &critBlockChance, &powerAmount, TRIGGERED_FULL_MASK);
+            }
     }
 
     void Register() override
@@ -2001,6 +1999,7 @@ class spell_mastery_rog_main_gauche : public AuraScript
 
                 int32 power = caster->GetTotalAttackPowerValue(OFF_ATTACK);
                 int32 pct = aurEff->GetAmount() + caster->GetMastery();
+                
                 int32 amount = CalculatePct(power, pct);
 
                 caster->CastCustomSpell(MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
