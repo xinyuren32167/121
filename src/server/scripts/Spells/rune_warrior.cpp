@@ -2762,7 +2762,7 @@ class rune_steel_resonance_revenge : public SpellScript
                 return;
 
             int32 damagePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
-            int32 damageAmount = CalculatePct(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 20), damagePct);
+            int32 damageAmount = CalculatePct(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 45), damagePct);
 
             caster->CastCustomSpell(RUNE_WARR_STEEL_RESONANCE_REVENGE, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
         }
@@ -2802,7 +2802,7 @@ class rune_steel_resonance_whirlwind : public SpellScript
                 return;
 
             int32 damagePct = runeAura->GetEffect(EFFECT_0)->GetAmount();
-            int32 damageAmount = CalculatePct(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 20), damagePct);
+            int32 damageAmount = CalculatePct(CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), 15), damagePct);
 
             caster->CastCustomSpell(RUNE_WARR_STEEL_RESONANCE_WHIRLWIND, SPELLVALUE_BASE_POINT0, damageAmount, caster, TRIGGERED_FULL_MASK);
         }

@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Scripts for spells with SPELLFAMILY_DEATHKNIGHT and SPELLFAMILY_GENERIC spells used by deathknight players.
- * Ordered alphabetically using scriptname.
- * Scriptnames of files in this file should be prefixed with "spell_dk_".
- */
+ /*
+  * Scripts for spells with SPELLFAMILY_DEATHKNIGHT and SPELLFAMILY_GENERIC spells used by deathknight players.
+  * Ordered alphabetically using scriptname.
+  * Scriptnames of files in this file should be prefixed with "spell_dk_".
+  */
 
 #include "PetDefines.h"
 #include "Player.h"
@@ -34,164 +34,164 @@
 
 enum DeathKnightSpells
 {
-    SPELL_DK_DEATH_AND_DECAY_TRIGGER            = 52212,
-    SPELL_DK_GLYPH_OF_SCOURGE_STRIKE            = 58642,
-    SPELL_DK_WANDERING_PLAGUE_TRIGGER           = 50526,
-    SPELL_DK_GLYPH_OF_THE_GHOUL                 = 58686,
-    SPELL_SHADOWMOURNE_CHAOS_BANE_DAMAGE        = 71904,
-    SPELL_SHADOWMOURNE_SOUL_FRAGMENT            = 71905,
-    SPELL_SHADOWMOURNE_CHAOS_BANE_BUFF          = 73422,
-    SPELL_DK_ANTI_MAGIC_SHELL_TALENT            = 51052,
-    SPELL_DK_BLACK_ICE_R1                       = 49140,
-    SPELL_DK_BLOOD_BOIL_TRIGGERED               = 65658,
-    SPELL_DK_BLOOD_GORGED                       = 50453,
-    SPELL_DK_BLOOD_GORGED_HEAL                  = 50454,
-    SPELL_DK_UNHOLY_PRESENCE                    = 48266,
-    SPELL_DK_CORPSE_EXPLOSION_TRIGGERED         = 43999,
-    SPELL_DK_CORPSE_EXPLOSION_VISUAL            = 51270,
-    SPELL_DK_DEATH_COIL_DAMAGE                  = 47632,
-    SPELL_DK_DEATH_COIL_HEAL                    = 47633,
-    SPELL_DK_DEATH_STRIKE_HEAL                  = 45470,
-    SPELL_DK_FROST_FEVER                        = 55095,
-    SPELL_DK_BLOOD_PRESENCE                     = 48263,
+    SPELL_DK_DEATH_AND_DECAY_TRIGGER = 52212,
+    SPELL_DK_GLYPH_OF_SCOURGE_STRIKE = 58642,
+    SPELL_DK_WANDERING_PLAGUE_TRIGGER = 50526,
+    SPELL_DK_GLYPH_OF_THE_GHOUL = 58686,
+    SPELL_SHADOWMOURNE_CHAOS_BANE_DAMAGE = 71904,
+    SPELL_SHADOWMOURNE_SOUL_FRAGMENT = 71905,
+    SPELL_SHADOWMOURNE_CHAOS_BANE_BUFF = 73422,
+    SPELL_DK_ANTI_MAGIC_SHELL_TALENT = 51052,
+    SPELL_DK_BLACK_ICE_R1 = 49140,
+    SPELL_DK_BLOOD_BOIL_TRIGGERED = 65658,
+    SPELL_DK_BLOOD_GORGED = 50453,
+    SPELL_DK_BLOOD_GORGED_HEAL = 50454,
+    SPELL_DK_UNHOLY_PRESENCE = 48266,
+    SPELL_DK_CORPSE_EXPLOSION_TRIGGERED = 43999,
+    SPELL_DK_CORPSE_EXPLOSION_VISUAL = 51270,
+    SPELL_DK_DEATH_COIL_DAMAGE = 47632,
+    SPELL_DK_DEATH_COIL_HEAL = 47633,
+    SPELL_DK_DEATH_STRIKE_HEAL = 45470,
+    SPELL_DK_FROST_FEVER = 55095,
+    SPELL_DK_BLOOD_PRESENCE = 48263,
     //SPELL_DK_BLOOD_PRESENCE_TRIGGERED           = 61261,
-    SPELL_DK_GHOUL_EXPLODE                      = 47496,
-    SPELL_DK_GLYPH_OF_DISEASE                   = 63334,
-    SPELL_DK_GLYPH_OF_ICEBOUND_FORTITUDE        = 58625,
-    SPELL_DK_IMPROVED_BLOOD_PRESENCE_R1         = 50365,
-    SPELL_DK_IMPROVED_FROST_PRESENCE_R1         = 50384,
-    SPELL_DK_IMPROVED_UNHOLY_PRESENCE_R1        = 50391,
-    SPELL_DK_IMPROVED_BLOOD_PRESENCE_TRIGGERED  = 63611,
+    SPELL_DK_GHOUL_EXPLODE = 47496,
+    SPELL_DK_GLYPH_OF_DISEASE = 63334,
+    SPELL_DK_GLYPH_OF_ICEBOUND_FORTITUDE = 58625,
+    SPELL_DK_IMPROVED_BLOOD_PRESENCE_R1 = 50365,
+    SPELL_DK_IMPROVED_FROST_PRESENCE_R1 = 50384,
+    SPELL_DK_IMPROVED_UNHOLY_PRESENCE_R1 = 50391,
+    SPELL_DK_IMPROVED_BLOOD_PRESENCE_TRIGGERED = 63611,
     SPELL_DK_IMPROVED_UNHOLY_PRESENCE_TRIGGERED = 63622,
-    SPELL_DK_ITEM_SIGIL_VENGEFUL_HEART          = 64962,
-    SPELL_DK_ITEM_T8_MELEE_4P_BONUS             = 64736,
-    SPELL_DK_MASTER_OF_GHOULS                   = 52143,
-    SPELL_DK_BLOOD_PLAGUE                       = 59879,
-    SPELL_DK_RAISE_DEAD_USE_REAGENT             = 48289,
-    SPELL_DK_RUNIC_POWER_ENERGIZE               = 49088,
-    SPELL_DK_SCENT_OF_BLOOD                     = 50422,
-    SPELL_DK_SCOURGE_STRIKE_TRIGGERED           = 70890,
-    SPELL_DK_FROST_PRESENCE                     = 48265,
+    SPELL_DK_ITEM_SIGIL_VENGEFUL_HEART = 64962,
+    SPELL_DK_ITEM_T8_MELEE_4P_BONUS = 64736,
+    SPELL_DK_MASTER_OF_GHOULS = 52143,
+    SPELL_DK_BLOOD_PLAGUE = 59879,
+    SPELL_DK_RAISE_DEAD_USE_REAGENT = 48289,
+    SPELL_DK_RUNIC_POWER_ENERGIZE = 49088,
+    SPELL_DK_SCENT_OF_BLOOD = 50422,
+    SPELL_DK_SCOURGE_STRIKE_TRIGGERED = 70890,
+    SPELL_DK_FROST_PRESENCE = 48265,
     //SPELL_DK_FROST_PRESENCE_TRIGGERED           = 49772,
-    SPELL_DK_WILL_OF_THE_NECROPOLIS_TALENT_R1   = 49189,
-    SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
+    SPELL_DK_WILL_OF_THE_NECROPOLIS_TALENT_R1 = 49189,
+    SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1 = 52284,
 
     //NEW STUFF
-    SPELL_DK_DEATH_PACT                         = 48473,
-    SPELL_DK_HEALING_ABSORB_DEATH_PACT          = 80301,
-    SPELL_DK_GLACIAL_ADVANCE_DAMAGE             = 80305,
+    SPELL_DK_DEATH_PACT = 48473,
+    SPELL_DK_HEALING_ABSORB_DEATH_PACT = 80301,
+    SPELL_DK_GLACIAL_ADVANCE_DAMAGE = 80305,
     SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE = 80310,
-    SPELL_DK_GLACIAL_CHILL_STREAK_TICK          = 80309,
-    SPELL_DK_FROSTWHYRM                         = 80311,
-    SPELL_DK_FROST_FEVER_RUNIC                  = 59921,
-    SPELL_DK_LICHBORNE_LEECH                    = 80316,
-    SPELL_DK_BLOOD_TAP                          = 45529,
-    SPELL_DK_BONE_SHIELD                        = 49222,
-    SPELL_DK_PLAGUE_STRIKE                      = 49921,
-    SPELL_DK_OBLITERATE                         = 51425,
-    SPELL_DK_FESTERING_WOUND                    = 80322,
-    SPELL_DK_FESTERING_WOUND_PROC               = 80323,
-    SPELL_DK_SCOURGE_STRIKE_SHADOW              = 80325,
-    SPELL_DK_SUMMON_GARGOYLE_ENERGY             = 80326,
-    SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF        = 80327,
-    SPELL_DK_SUMMON_GARGOYLE_LISTENER           = 80328,
-    SPELL_DK_VIRULENT_PLAGUE_PROC               = 80333,
-    SPELL_DK_BREATH_OF_SINDRAGOSA               = 80314,
-    SPELL_DK_DEATH_STRIKE                       = 49924,
-    SPELL_DK_IMPROVED_DEATH_STRIKE              = 62905,
-    SPELL_DK_SACRIFICAL_PACT_BASE               = 80335,
-    SPELL_DK_SACRIFICAL_PACT_EXPLOSION          = 80336,
-    SPELL_DK_RUNIC_CORRUPTION                   = 80342,
-    SPELL_DK_SOUL_REAPER_PERIODIC               = 80343,
-    SPELL_DK_RUNE_OF_SANGUINATION               = 80345,
-    SPELL_DK_RUNE_OF_SANGUINATION_HEAL          = 80346,
-    SPELL_DK_RUNE_OF_SPELLWARDING_SHIELD        = 80347,
-    SPELL_DK_RUNE_APOCALYPSE_PET_AURA           = 80350,
-    SPELL_DK_RUNE_APOCALYPSE_DEATH              = 80351,
-    SPELL_DK_RUNE_APOCALYPSE_WAR                = 80352,
-    SPELL_DK_RUNE_APOCALYPSE_FAMINE             = 80353,
-    SPELL_DK_RUNE_APOCALYPSE_PESTILENCE         = 80354,
-    SPELL_DK_DEATHS_CARESS                      = 80361,
-    SPELL_DK_MARROWREND                         = 80362,
-    SPELL_DK_GOREFIENDS_GRASP_PULL              = 80364,
-    SPELL_DK_TOMBSTONE_BUFF                     = 80366,
-    SPELL_DK_BONESTORM                          = 80367,
-    SPELL_DK_BONESTORM_HEAL                     = 80369,
-    SPELL_DK_DARK_TRANSFORMATION_DAMAGE         = 80401,
-    SPELL_DK_DARK_TRANSFORMATION_POWERUP        = 80402,
-    SPELL_DK_EPIDEMIC_SINGLE                    = 80376,
-    SPELL_DK_EPIDEMIC_AOE                       = 80377,
-    SPELL_DK_VIRULENT_PLAGUE                    = 80332,
-    SPELL_DK_BLOOD_PRESENCE_ADDITIONAL          = 61261,
-    SPELL_DK_FROST_PRESENCE_ADDITIONAL          = 49772,
-    SPELL_DK_UNHOLY_PRESENCE_HEAL               = 50475,
-    SPELL_DK_MIGHT_OF_MOGRAINE                  = 49023,
-    SPELL_DK_DANCING_RUNE_WEAPON                = 49028,
-    SPELL_DK_IMPROVED_BLOODWORMS                = 80391,
-    SPELL_DK_IMPROVED_BLOODWORMS_DEATH          = 80390,
-    SPELL_DK_IMPROVED_BLOODWORMS_HEAL           = 80394,
-    SPELL_DK_IMPROVED_BLOODWORMS_OWNER          = 80395,
-    SPELL_DK_IMPROVED_BLOODWORMS_R1             = 80391,
-    SPELL_DK_IMPROVED_BLOODWORMS_R2             = 80392,
-    SPELL_DK_IMPROVED_BLOODWORMS_R3             = 80393,
-	SPELL_DK_ANNIHILATION                       = 51468,
-    SPELL_DK_DEATHCHILL_TALENT                  = 80397,
-    SPELL_DK_DEATHCHILL_AOE                     = 80398,
-    SPELL_DK_DEATHCHILL_SINGLE                  = 80399,
-    SPELL_DK_REMORSELESS_WINTER                 = 80306,
-    SPELL_DK_CHAINS_OF_ICE                      = 80334,
-    SPELL_DK_FROSTSCYTHE                        = 80302,
-    SPELL_DK_RIME_PROC                          = 59052,
-	SPELL_DK_ARMY_OF_THE_DEAD                   = 42651,
-    SPELL_DK_SENSITIZATION_FROST                = 80412,
-    SPELL_DK_SENSITIZATION_SHADOW               = 80413,
-    SPELL_DK_SENSITIZATION_FIRE                 = 80414,
-    SPELL_DK_SENSITIZATION_NATURE               = 80415,
-    SPELL_DK_SENSITIZATION_HOLY                 = 80416,
-    SPELL_DK_SENSITIZATION_ARCANE               = 80417,
-    SPELL_DK_CONTAGIOUS_TARGET_INCREASE         = 80421,
-    SPELL_DK_DEATH_AND_DECAY                    = 49938,
-    SPELL_DK_DEFILE                             = 80405,
-    SPELL_DK_DEATH_STRIKE_THASSARIAN            = 66953,
-    SPELL_DK_FROST_STRIKE_THASSARIAN            = 66962,
-    SPELL_DK_OBLITERATE_THASSARIAN              = 66974,
-    SPELL_DK_PLAGUE_STRIKE_THASSARIAN           = 66992,
-    SPELL_DK_FROSTSCYTHE_THASSARIAN             = 80407,
-    SPELL_DK_FROST_STRIKE                       = 55268,
-    MASTERY_DK_UNHOLY                           = 600005,
-    NPC_CONTAGION_AREA                          = 500508,
-    SPELL_DK_DEATHS_EMBRACE                     = 87001,
-    SPELL_DK_DEATHS_EMBRACE_HEAL                = 87002,
-    SPELL_DK_DEATHS_EMBRACE_LISTENER            = 87003,
-    SPELL_DK_EBON_RENEWAL_HEAL                  = 87005,
-    SPELL_DK_LEECHING_STRIKE                    = 87009,
-    SPELL_DK_LEECHING_STRIKE_ENERGY             = 87011,
-    SPELL_DK_NECROTIC_BLESSING_HEAL             = 87013,
-    SPELL_DK_SOUL_BARRIER_HEAL                  = 87015,
-    SPELL_DK_SOUL_LINK                          = 87016,
-    SPELL_DK_SOUL_LINK_LISTENER                 = 87017,
-    SPELL_DK_SOUL_LINK_HEAL                     = 87018,
-    SPELL_DK_SOULBOLT_HEAL                      = 87021,
-    SPELL_DK_SOUL_PRESENCE                      = 87000,
+    SPELL_DK_GLACIAL_CHILL_STREAK_TICK = 80309,
+    SPELL_DK_FROSTWHYRM = 80311,
+    SPELL_DK_FROST_FEVER_RUNIC = 59921,
+    SPELL_DK_LICHBORNE_LEECH = 80316,
+    SPELL_DK_BLOOD_TAP = 45529,
+    SPELL_DK_BONE_SHIELD = 49222,
+    SPELL_DK_PLAGUE_STRIKE = 49921,
+    SPELL_DK_OBLITERATE = 51425,
+    SPELL_DK_FESTERING_WOUND = 80322,
+    SPELL_DK_FESTERING_WOUND_PROC = 80323,
+    SPELL_DK_SCOURGE_STRIKE_SHADOW = 80325,
+    SPELL_DK_SUMMON_GARGOYLE_ENERGY = 80326,
+    SPELL_DK_SUMMON_GARGOYLE_DAMAGE_BUFF = 80327,
+    SPELL_DK_SUMMON_GARGOYLE_LISTENER = 80328,
+    SPELL_DK_VIRULENT_PLAGUE_PROC = 80333,
+    SPELL_DK_BREATH_OF_SINDRAGOSA = 80314,
+    SPELL_DK_DEATH_STRIKE = 49924,
+    SPELL_DK_IMPROVED_DEATH_STRIKE = 62905,
+    SPELL_DK_SACRIFICAL_PACT_BASE = 80335,
+    SPELL_DK_SACRIFICAL_PACT_EXPLOSION = 80336,
+    SPELL_DK_RUNIC_CORRUPTION = 80342,
+    SPELL_DK_SOUL_REAPER_PERIODIC = 80343,
+    SPELL_DK_RUNE_OF_SANGUINATION = 80345,
+    SPELL_DK_RUNE_OF_SANGUINATION_HEAL = 80346,
+    SPELL_DK_RUNE_OF_SPELLWARDING_SHIELD = 80347,
+    SPELL_DK_RUNE_APOCALYPSE_PET_AURA = 80350,
+    SPELL_DK_RUNE_APOCALYPSE_DEATH = 80351,
+    SPELL_DK_RUNE_APOCALYPSE_WAR = 80352,
+    SPELL_DK_RUNE_APOCALYPSE_FAMINE = 80353,
+    SPELL_DK_RUNE_APOCALYPSE_PESTILENCE = 80354,
+    SPELL_DK_DEATHS_CARESS = 80361,
+    SPELL_DK_MARROWREND = 80362,
+    SPELL_DK_GOREFIENDS_GRASP_PULL = 80364,
+    SPELL_DK_TOMBSTONE_BUFF = 80366,
+    SPELL_DK_BONESTORM = 80367,
+    SPELL_DK_BONESTORM_HEAL = 80369,
+    SPELL_DK_DARK_TRANSFORMATION_DAMAGE = 80401,
+    SPELL_DK_DARK_TRANSFORMATION_POWERUP = 80402,
+    SPELL_DK_EPIDEMIC_SINGLE = 80376,
+    SPELL_DK_EPIDEMIC_AOE = 80377,
+    SPELL_DK_VIRULENT_PLAGUE = 80332,
+    SPELL_DK_BLOOD_PRESENCE_ADDITIONAL = 61261,
+    SPELL_DK_FROST_PRESENCE_ADDITIONAL = 49772,
+    SPELL_DK_UNHOLY_PRESENCE_HEAL = 50475,
+    SPELL_DK_MIGHT_OF_MOGRAINE = 49023,
+    SPELL_DK_DANCING_RUNE_WEAPON = 49028,
+    SPELL_DK_IMPROVED_BLOODWORMS = 80391,
+    SPELL_DK_IMPROVED_BLOODWORMS_DEATH = 80390,
+    SPELL_DK_IMPROVED_BLOODWORMS_HEAL = 80394,
+    SPELL_DK_IMPROVED_BLOODWORMS_OWNER = 80395,
+    SPELL_DK_IMPROVED_BLOODWORMS_R1 = 80391,
+    SPELL_DK_IMPROVED_BLOODWORMS_R2 = 80392,
+    SPELL_DK_IMPROVED_BLOODWORMS_R3 = 80393,
+    SPELL_DK_ANNIHILATION = 51468,
+    SPELL_DK_DEATHCHILL_TALENT = 80397,
+    SPELL_DK_DEATHCHILL_AOE = 80398,
+    SPELL_DK_DEATHCHILL_SINGLE = 80399,
+    SPELL_DK_REMORSELESS_WINTER = 80306,
+    SPELL_DK_CHAINS_OF_ICE = 80334,
+    SPELL_DK_FROSTSCYTHE = 80302,
+    SPELL_DK_RIME_PROC = 59052,
+    SPELL_DK_ARMY_OF_THE_DEAD = 42651,
+    SPELL_DK_SENSITIZATION_FROST = 80412,
+    SPELL_DK_SENSITIZATION_SHADOW = 80413,
+    SPELL_DK_SENSITIZATION_FIRE = 80414,
+    SPELL_DK_SENSITIZATION_NATURE = 80415,
+    SPELL_DK_SENSITIZATION_HOLY = 80416,
+    SPELL_DK_SENSITIZATION_ARCANE = 80417,
+    SPELL_DK_CONTAGIOUS_TARGET_INCREASE = 80421,
+    SPELL_DK_DEATH_AND_DECAY = 49938,
+    SPELL_DK_DEFILE = 80405,
+    SPELL_DK_DEATH_STRIKE_THASSARIAN = 66953,
+    SPELL_DK_FROST_STRIKE_THASSARIAN = 66962,
+    SPELL_DK_OBLITERATE_THASSARIAN = 66974,
+    SPELL_DK_PLAGUE_STRIKE_THASSARIAN = 66992,
+    SPELL_DK_FROSTSCYTHE_THASSARIAN = 80407,
+    SPELL_DK_FROST_STRIKE = 55268,
+    MASTERY_DK_UNHOLY = 600005,
+    NPC_CONTAGION_AREA = 500508,
+    SPELL_DK_DEATHS_EMBRACE = 87001,
+    SPELL_DK_DEATHS_EMBRACE_HEAL = 87002,
+    SPELL_DK_DEATHS_EMBRACE_LISTENER = 87003,
+    SPELL_DK_EBON_RENEWAL_HEAL = 87005,
+    SPELL_DK_LEECHING_STRIKE = 87009,
+    SPELL_DK_LEECHING_STRIKE_ENERGY = 87011,
+    SPELL_DK_NECROTIC_BLESSING_HEAL = 87013,
+    SPELL_DK_SOUL_BARRIER_HEAL = 87015,
+    SPELL_DK_SOUL_LINK = 87016,
+    SPELL_DK_SOUL_LINK_LISTENER = 87017,
+    SPELL_DK_SOUL_LINK_HEAL = 87018,
+    SPELL_DK_SOULBOLT_HEAL = 87021,
+    SPELL_DK_SOUL_PRESENCE = 87000,
 
     //MASTERY
-    SPELL_DK_LIFE_AND_DEATH                     = 590005,
-    SPELL_DK_LIFE_AND_DEATH_SHIELD              = 590006,
+    SPELL_DK_LIFE_AND_DEATH = 590005,
+    SPELL_DK_LIFE_AND_DEATH_SHIELD = 590006,
 
     //TALENT
-    TALENT_DK_NECROTIC_PRESENCE_PROC            = 87056,
-    TALENT_DK_IMPROVED_LEECHING_STRIKE_PROC     = 87081,
-    TALENT_DK_NECROTIC_VENGEANCE_HEAL_BUFF      = 87090,
-    TALENT_DK_NECROTIC_VENGEANCE_DAMAGE_BUFF    = 87091,
-    TALENT_DK_MERCIFUL_COMBAT                   = 87092,
-    TALENT_DK_SUDDEN_SALVATION_LIFEBOLT         = 87108,
-    TALENT_DK_DEATH_AND_RENEW                   = 87109,
-    TAlENT_DK_DEATH_AND_RENEW_HEAL              = 87110,
-    TALENT_DK_NECROTIC_PROTECTION_PROC          = 87114,
+    TALENT_DK_NECROTIC_PRESENCE_PROC = 87056,
+    TALENT_DK_IMPROVED_LEECHING_STRIKE_PROC = 87081,
+    TALENT_DK_NECROTIC_VENGEANCE_HEAL_BUFF = 87090,
+    TALENT_DK_NECROTIC_VENGEANCE_DAMAGE_BUFF = 87091,
+    TALENT_DK_MERCIFUL_COMBAT = 87092,
+    TALENT_DK_SUDDEN_SALVATION_LIFEBOLT = 87108,
+    TALENT_DK_DEATH_AND_RENEW = 87109,
+    TAlENT_DK_DEATH_AND_RENEW_HEAL = 87110,
+    TALENT_DK_NECROTIC_PROTECTION_PROC = 87114,
 
     //RUNE
-    RUNE_DK_SPLINTERING_SHIELD_PROC             = 600572,
-    RUNE_DK_LIGHT_AND_DARK_VALKYR               = 600943,
+    RUNE_DK_SPLINTERING_SHIELD_PROC = 600572,
+    RUNE_DK_LIGHT_AND_DARK_VALKYR = 600943,
 
     // Sets
     T1_DEATHKNIGHT_BLOOD_4PC = 97001,
@@ -206,15 +206,15 @@ enum DeathKnightSpells
 
 enum DeathKnightSpellIcons
 {
-    DK_ICON_ID_IMPROVED_DEATH_STRIKE            = 2751
+    DK_ICON_ID_IMPROVED_DEATH_STRIKE = 2751
 };
 
 enum Misc
 {
-    NPC_DK_GHOUL                                = 26125
+    NPC_DK_GHOUL = 26125
 };
 
-class spell_dk_death_pact: public SpellScript
+class spell_dk_death_pact : public SpellScript
 {
     PrepareSpellScript(spell_dk_death_pact);
 
@@ -339,7 +339,7 @@ public:
         {
             Position pos = me->GetFirstCollisionPosition(1.f + tick, 0);
 
-            if(!pos.IsPositionValid())
+            if (!pos.IsPositionValid())
                 me->DespawnOrUnsummon();
 
             if (tick > 100)
@@ -391,7 +391,7 @@ public:
         {
             if (update >= 250) {
                 if (Unit* owner = me->ToTempSummon()->GetSummonerUnit()) {
-                   me->CastSpell(me, SPELL_DK_FROSTWHYRM, true, nullptr, nullptr, owner->GetGUID());
+                    me->CastSpell(me, SPELL_DK_FROSTWHYRM, true, nullptr, nullptr, owner->GetGUID());
                 }
                 update = 0;
             }
@@ -915,9 +915,9 @@ class spell_dk_bone_shield : public AuraScript
 
         Player* caster = GetCaster()->ToPlayer();
 
-        if (!caster|| caster->isDead())
+        if (!caster || caster->isDead())
             return;
-        
+
         SpellInfo const* value = sSpellMgr->AssertSpellInfo(SPELL_DK_BLOOD_TAP);
         uint32 reduction = value->GetEffect(EFFECT_1).CalcValue(GetCaster());
 
@@ -925,7 +925,7 @@ class spell_dk_bone_shield : public AuraScript
 
         if (AuraEffect const* aurEff = caster->GetAuraEffectOfRankedSpell(SPELL_DK_MIGHT_OF_MOGRAINE, EFFECT_1))
         {
-            int32 dancingReduction = aurEff->GetAmount(); 
+            int32 dancingReduction = aurEff->GetAmount();
             caster->ModifySpellCooldown(SPELL_DK_DANCING_RUNE_WEAPON, dancingReduction);
         }
 
@@ -1039,7 +1039,7 @@ class spell_dk_dancing_rune_weapon : public AuraScript
         SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
         if (!spellInfo)
             return true;
-         
+
         // Death Coil exception, Check if spell is from spellbook
         if (spellInfo->Id != SPELL_DK_DEATH_COIL_DAMAGE && !eventInfo.GetActor()->ToPlayer()->HasActiveSpell(spellInfo->Id))
             return false;
@@ -1538,7 +1538,7 @@ class spell_dk_blood_gorged : public AuraScript
 
         /* /if (GetTarget()->HasAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH))
             GetTarget()->GetAura(SPELL_DK_IMPROVED_BLOODWORMS_DEATH)->ModStackAmount(bp); */
-    } 
+    }
 
     void Register() override
     {
@@ -1560,8 +1560,8 @@ public:
         if (Unit* target = obj->ToUnit())
         {
             if ((target->isDead() || (_allowGhoul && target->GetEntry() == NPC_DK_GHOUL && target->GetOwnerGUID() == _casterGUID))
-                    && !(target->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL)
-                    && target->GetDisplayId() == target->GetNativeDisplayId())
+                && !(target->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL)
+                && target->GetDisplayId() == target->GetNativeDisplayId())
                 return false;
         }
 
@@ -1763,38 +1763,38 @@ class spell_dk_death_grip : public SpellScript
         switch (targetCreature->GetEntry())
         {
             //Alliance Faction Champions
-            case 34461:
-            case 34460:
-            case 34469:
-            case 34467:
-            case 34468:
-            case 34465:
-            case 34471:
-            case 34466:
-            case 34473:
-            case 34472:
-            case 34470:
-            case 34463:
-            case 34474:
-            case 34475:
+        case 34461:
+        case 34460:
+        case 34469:
+        case 34467:
+        case 34468:
+        case 34465:
+        case 34471:
+        case 34466:
+        case 34473:
+        case 34472:
+        case 34470:
+        case 34463:
+        case 34474:
+        case 34475:
 
             //Horde Faction Champions
-            case 34458:
-            case 34451:
-            case 34459:
-            case 34448:
-            case 34449:
-            case 34445:
-            case 34456:
-            case 34447:
-            case 34441:
-            case 34454:
-            case 34444:
-            case 34455:
-            case 34450:
-            case 34453:
-                return entry;
-                break;
+        case 34458:
+        case 34451:
+        case 34459:
+        case 34448:
+        case 34449:
+        case 34445:
+        case 34456:
+        case 34447:
+        case 34441:
+        case 34454:
+        case 34444:
+        case 34455:
+        case 34450:
+        case 34453:
+            return entry;
+            break;
         }
         return 0;
     }
@@ -2008,9 +2008,9 @@ public:
         if (Unit* target = obj->ToUnit())
         {
             if (!target->IsAlive()
-                    && _caster->isHonorOrXPTarget(target)
-                    && target->GetCreatureType() == CREATURE_TYPE_HUMANOID
-                    && target->GetDisplayId() == target->GetNativeDisplayId())
+                && _caster->isHonorOrXPTarget(target)
+                && target->GetCreatureType() == CREATURE_TYPE_HUMANOID
+                && target->GetDisplayId() == target->GetNativeDisplayId())
                 return false;
         }
 
@@ -2474,7 +2474,7 @@ class spell_dk_festering_wound : public AuraScript
 
                 if (pet && pet->IsAlive())
                     player->AddAura(T1_DEATHKNIGHT_UNHOLY_2PC_BUFF, pet);
-            }      
+            }
     }
 
     void Register() override
@@ -2531,7 +2531,7 @@ class spell_dk_summon_gargoyle_energy : public SpellScript
         caster->CastSpell(caster, SPELL_DK_SUMMON_GARGOYLE_ENERGY, TRIGGERED_FULL_MASK);
         caster->CastSpell(caster, SPELL_DK_SUMMON_GARGOYLE_LISTENER, TRIGGERED_FULL_MASK);
 
-        if(Aura* rune = GetRuneAura())
+        if (Aura* rune = GetRuneAura())
             caster->CastSpell(caster, RUNE_DK_LIGHT_AND_DARK_VALKYR, TRIGGERED_FULL_MASK);
     }
 
@@ -2702,7 +2702,7 @@ class spell_dk_dark_transformation : public SpellScript
 class spell_dk_dark_transformation_expire : public AuraScript {
 
     PrepareAuraScript(spell_dk_dark_transformation_expire);
-  
+
     void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* target = GetTarget();
@@ -3096,7 +3096,7 @@ class spell_dk_bonestorm_duration : public AuraScript
 {
     PrepareAuraScript(spell_dk_bonestorm_duration);
 
-    void HandleEffectApply(AuraEffect const*  aurEff, AuraEffectHandleModes /*mode*/)
+    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
         int32 duration = caster->GetPower(POWER_RUNIC_POWER) / aurEff->GetBase()->GetEffect(EFFECT_0)->GetAmount();
@@ -3119,7 +3119,7 @@ class spell_dk_festering_strike : public SpellScript
     {
         Unit* target = GetExplTargetUnit();
 
-        uint32 randomAmount = urand(1,2);
+        uint32 randomAmount = urand(1, 2);
 
         if (Aura* aura = target->GetAura(SPELL_DK_FESTERING_WOUND))
         {
@@ -3186,7 +3186,7 @@ class spell_dk_vile_contagion : public SpellScript
         _targetCount = targetList.size();
 
         Unit* initialTarget = GetExplTargetUnit();
-        
+
         if (_targetCount > 0)
         {
             for (auto const& target : targetList)
@@ -3289,7 +3289,7 @@ class spell_dk_frost_presence : public AuraScript
 
     void Register() override
     {
-        OnEffectApply += AuraEffectApplyFn(spell_dk_frost_presence::HandleEffectApply, EFFECT_0, SPELL_AURA_MOD_MELEE_HASTE , AURA_EFFECT_HANDLE_REAL);
+        OnEffectApply += AuraEffectApplyFn(spell_dk_frost_presence::HandleEffectApply, EFFECT_0, SPELL_AURA_MOD_MELEE_HASTE, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_dk_frost_presence::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_MELEE_HASTE, AURA_EFFECT_HANDLE_REAL);
     }
 };
@@ -3379,7 +3379,7 @@ class spell_dk_apocalyspe : public SpellScript
 class spell_dk_improved_bloodworms_health_low : public AuraScript
 {
     PrepareAuraScript(spell_dk_improved_bloodworms_health_low);
-    
+
     void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
         // Set absorbtion amount to unlimited
@@ -3568,7 +3568,7 @@ class spell_dk_rime : public AuraScript
         if (procSpell == SPELL_DK_FROSTSCYTHE)
             if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount()))
                 caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
-        else
+            else
                 if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()))
                     caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
     }
@@ -3823,25 +3823,22 @@ class spell_dk_ebon_renewal : public SpellScript
             heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), HEAL, effIndex);
             heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), HEAL);
 
-            if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
-            {
-                if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
-                {
-                    int32 mastery = caster->ToPlayer()->GetMastery();
-                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
-                    int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
-                    int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
+            if (Player* player = caster->ToPlayer())
+                if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
+                    if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
+                    {
+                        int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + player->GetMastery() / 3.3333;
+                        int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
+                        int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
+                        int32 amount = std::min(consumeAmount, shieldAmount);
 
-                    int32 amount = std::min(consumeAmount, shieldAmount);
+                        heal += amount;
 
-                    heal += CalculatePct(heal, amount);
-
-                    shield->GetEffect(EFFECT_0)->ChangeAmount(-amount);
-
-                    if (shield->GetEffect(EFFECT_0)->GetAmount() <= 0)
-                        shield->Remove();
-                }
-            }
+                        if (shieldAmount <= consumeAmount)
+                            shield->Remove();
+                        else
+                            shield->GetEffect(EFFECT_0)->ChangeAmount(shieldAmount-amount);
+                    }
 
             if (AuraEffect const* mercifulCombat = caster->GetAuraEffectOfRankedSpell(TALENT_DK_MERCIFUL_COMBAT, EFFECT_0))
             {
@@ -3958,41 +3955,39 @@ class spell_dk_necrotic_blessing : public SpellScript
 
     void HandleHit(SpellEffIndex effIndex)
     {
-        if (GetHitUnit()->HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
-            GetCaster()->CastSpell(GetCaster(), SPELL_DK_NECROTIC_BLESSING_HEAL, TRIGGERED_FULL_MASK);
+        Unit* caster = GetCaster();
 
-        if (Unit* target = GetHitUnit())
-        {
-            Unit* caster = GetCaster();
-            int32 heal = GetEffectValue();
+        if (!caster || caster->isDead())
+            return;
 
-            heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), heal);
+        Unit* target = GetHitUnit();
 
-            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
-            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);
+        if (!target || target->isDead())
+            return;
 
+        if (target->HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
+            caster->CastSpell(caster, SPELL_DK_NECROTIC_BLESSING_HEAL, TRIGGERED_FULL_MASK);
+
+        int32 heal = GetHitHeal();
+
+        if (Player* player = caster->ToPlayer())
             if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
-            {
                 if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
                 {
-                    int32 mastery = caster->ToPlayer()->GetMastery();
-                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + player->GetMastery() / 3.3333;
                     int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
                     int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
-
                     int32 amount = std::min(consumeAmount, shieldAmount);
 
-                    heal += CalculatePct(heal, amount);
+                    heal += amount;
 
-                    shield->GetEffect(EFFECT_0)->ChangeAmount(-amount);
-
-                    if (shield->GetEffect(EFFECT_0)->GetAmount() <= 0)
+                    if (shieldAmount <= consumeAmount)
                         shield->Remove();
+                    else
+                        shield->GetEffect(EFFECT_0)->ChangeAmount(shieldAmount - amount);
                 }
-            }
 
-            SetHitHeal(heal);
-        }
+        SetHitHeal(heal);
     }
 
     void Register() override
@@ -4111,7 +4106,7 @@ class spell_dk_soulbolt : public AuraScript
             uint32 count = eventInfo.GetActionTarget()->GetDiseasesByCaster(GetCaster()->GetGUID());
             int32 amount = aurEff->GetAmount() * count;
             int32 heal = CalculatePct(damage, amount);
-            
+
             GetCaster()->CastCustomSpell(SPELL_DK_SOULBOLT_HEAL, SPELLVALUE_BASE_POINT0, heal, GetCaster(), true, nullptr);
         }
     }
@@ -4129,47 +4124,45 @@ class spell_dk_vitality_burst : public SpellScript
 
     void HandleHeal(SpellEffIndex effIndex)
     {
-        if (Unit* target = GetHitUnit())
-        {
-            Unit* caster = GetCaster();
-            //int32 heal = GetEffectValue();
-            int32 heal = GetHitHeal();
-            /*heal = CalculatePct(caster->GetTotalAttackPowerValue(BASE_ATTACK), heal);
+        Unit* caster = GetCaster();
 
-            heal = caster->SpellHealingBonusDone(target, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE, effIndex);
-            heal = target->SpellHealingBonusTaken(caster, GetSpellInfo(), uint32(heal), SPELL_DIRECT_DAMAGE);*/
+        if (!caster || caster->isDead())
+            return;
 
+        Unit* target = GetHitUnit();
+
+        if (!target || target->isDead())
+            return;
+
+        int32 heal = GetHitHeal();
+
+        if (Player* player = caster->ToPlayer())
             if (Aura* shield = caster->GetAura(SPELL_DK_LIFE_AND_DEATH_SHIELD))
-            {
                 if (Aura* aura = caster->GetAura(SPELL_DK_LIFE_AND_DEATH))
                 {
-                    int32 mastery = caster->ToPlayer()->GetMastery();
-                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + mastery;
+                    int32 consumePct = aura->GetEffect(EFFECT_1)->GetAmount() + player->GetMastery() / 3.3333;
                     int32 shieldAmount = shield->GetEffect(EFFECT_0)->GetAmount();
                     int32 consumeAmount = caster->CountPctFromMaxHealth(consumePct);
-
                     int32 amount = std::min(consumeAmount, shieldAmount);
 
-                    heal += CalculatePct(heal, amount);
+                    heal += amount;
 
-                    shield->GetEffect(EFFECT_0)->ChangeAmount(-amount);
-
-                    if (shield->GetEffect(EFFECT_0)->GetAmount() <= 0)
+                    if (shieldAmount <= consumeAmount)
                         shield->Remove();
+                    else
+                        shield->GetEffect(EFFECT_0)->ChangeAmount(shieldAmount - amount);
                 }
-            }
 
-            if (AuraEffect const* mercifulCombat = caster->GetAuraEffectOfRankedSpell(TALENT_DK_MERCIFUL_COMBAT, EFFECT_0))
+        if (AuraEffect const* mercifulCombat = caster->GetAuraEffectOfRankedSpell(TALENT_DK_MERCIFUL_COMBAT, EFFECT_0))
+        {
+            if (target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
             {
-                if (target->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT))
-                {
-                    int32 bonus = mercifulCombat->GetAmount();
-                    heal += CalculatePct(heal, bonus);
-                }
+                int32 bonus = mercifulCombat->GetAmount();
+                heal += CalculatePct(heal, bonus);
             }
-
-            SetHitHeal(heal);
         }
+
+        SetHitHeal(heal);
     }
 
     void Register() override
@@ -4186,7 +4179,7 @@ class spell_dk_necrotic_presence : public AuraScript
     {
         Unit* caster = GetCaster();
 
-         if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == TALENT_DK_NECROTIC_PRESENCE_PROC)
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == TALENT_DK_NECROTIC_PRESENCE_PROC)
             return false;
 
         return (caster && caster->IsAlive());
@@ -4414,9 +4407,9 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_might_of_mograine);
     RegisterSpellScript(spell_dk_improved_bloodworms_health_low);
     RegisterSpellScript(spell_dk_improved_bloodworms_death);
-	RegisterSpellScript(spell_dk_deathchill);
+    RegisterSpellScript(spell_dk_deathchill);
     RegisterSpellScript(spell_dk_rime);
-	RegisterSpellScript(spell_dk_apocalyspe);
+    RegisterSpellScript(spell_dk_apocalyspe);
     RegisterSpellScript(spell_dk_sensitization);
     RegisterSpellScript(spell_dk_apocalyspe);
     RegisterSpellScript(spell_dk_contagions_periodic_tick);
