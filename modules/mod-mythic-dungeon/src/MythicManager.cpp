@@ -189,6 +189,9 @@ void MythicManager::SaveMythicKey(Player* player, uint32 newDungeonId, uint32 le
 
 void MythicManager::Update(uint32 diff)
 {
+    if (MythicStore.empty())
+        return;
+
     for (auto it = MythicStore.begin(); it != MythicStore.end(); ) {
         if (it->second) {
             it->second->Update(diff);
@@ -467,7 +470,7 @@ void MythicManager::UpdatePlayerKey(Player* player, int8 upgrade)
 bool MythicManager::ForceCompleteMythic(Player* player)
 {
     if (!player)
-        return;
+        return false;
 
     if (MythicStore.empty())
         return false;

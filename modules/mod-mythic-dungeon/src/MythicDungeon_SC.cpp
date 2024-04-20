@@ -145,7 +145,6 @@ public:
 
     void OnBeforeConfigLoad(bool reload) override
     {
-        sMythicMgr->InitializeCreatureKillingCount();
         sMythicMgr->InitializeMultipliers();
         sMythicMgr->InitializePlayerMythicKeys();
         sMythicMgr->InitializeMythicDungeons();
