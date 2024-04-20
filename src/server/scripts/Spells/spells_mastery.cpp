@@ -1999,10 +1999,19 @@ class spell_mastery_rog_main_gauche : public AuraScript
 
                 int32 power = caster->GetTotalAttackPowerValue(OFF_ATTACK);
                 int32 pct = aurEff->GetAmount() + caster->GetMastery();
-                
-                int32 amount = CalculatePct(power, pct);
 
-                caster->CastCustomSpell(MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                if (Item* item = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+                {
+                    float   DamageMin = item->GetTemplate()->Damage[0].DamageMin;
+                    float   DamageMax = item->GetTemplate()->Damage[0].DamageMax;
+                    int32 weaponDamage = (DamageMin + DamageMax) / 2;
+                    LOG_ERROR("error", "DamageMin = {}, DamageMax = {}, weaponDamage = {}", DamageMin, DamageMax, weaponDamage);
+                    int32 amount = power + weaponDamage;
+                    LOG_ERROR("error", "power = {}, weaponDamage = {}, amount = {}", power, weaponDamage, amount);
+                    ApplyPct(amount, pct);
+                    LOG_ERROR("error", "pct = {}, amount = {}", pct, amount);
+                    caster->CastCustomSpell(MASTERY_ROGUE_MAIN_GAUCHE_DAMAGE, SPELLVALUE_BASE_POINT0, amount, target, TRIGGERED_FULL_MASK);
+                }
             }
         }
     }
