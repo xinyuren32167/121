@@ -34,6 +34,9 @@ public:
 
     void OnLogin(Player* player) override
     {
+        if (!player)
+            return;
+
         bool showUI = sMythicMgr->ShouldShowMythicUI(player);
 
         if (showUI) {

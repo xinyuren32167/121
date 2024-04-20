@@ -126,11 +126,6 @@ void MythicManager::InitializeRewardsItems()
     } while (result->NextRow());
 }
 
-void MythicManager::InitializeCreatureKillingCount()
-{
-
-}
-
 void MythicManager::InitializeMultipliers()
 {
     MythicMultiplierStore = {};
@@ -190,11 +185,6 @@ void MythicManager::HandleChangeDungeonDifficulty(Player* _player, uint8 mode)
 void MythicManager::SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level)
 {
     CharacterDatabase.Query("REPLACE INTO `character_mythic_key` (`guid`, `dungeonId`, `level`) VALUES ({}, {}, {})", player->GetGUID().GetCounter(), newDungeonId, level);
-}
-
-uint8 MythicManager::GetBossIndex(uint32 dungeonId, uint32 creatureId)
-{
-    return uint8();
 }
 
 void MythicManager::Update(uint32 diff)
@@ -430,7 +420,7 @@ bool MythicManager::IsStatTypeAllowableSpec(uint32 currentSpec, uint32 statType)
 }
 
 
-void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
+void MythicManager::UpdatePlayerKey(Player* player, int8 upgrade)
 {
     MythicKey* key = sMythicMgr->GetCurrentPlayerMythicKey(player);
 
@@ -441,7 +431,7 @@ void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
     player->DestroyItemCount(currentItemId, 1, true);
 
     uint32 dungeonId = sMythicMgr->GetRandomMythicDungeonForPlayer(player);
-
+    
     key->dungeonId = dungeonId;
 
     if (upgrade == 0)
@@ -476,7 +466,14 @@ void MythicManager::UpdatePlayerKey(Player* player, uint8 upgrade)
 
 bool MythicManager::ForceCompleteMythic(Player* player)
 {
+    if (!player)
+        return;
+
+    if (MythicStore.empty())
+        return false;
+
     Mythic* mythic = GetMythicPlayer(player);
+
     if (!mythic)
         return false;
 
@@ -488,6 +485,9 @@ bool MythicManager::ForceCompleteMythic(Player* player)
 
 Mythic* MythicManager::GetMythicPlayer(Player* player)
 {
+    if (MythicStore.empty())
+        return nullptr;
+
     auto itr = MythicStore.find(player->GetInstanceId());
 
     if (itr != MythicStore.end())
@@ -499,6 +499,9 @@ Mythic* MythicManager::GetMythicPlayer(Player* player)
 
 Mythic* MythicManager::GetMythicInMap(Map* map)
 {
+    if (MythicStore.empty())
+        return nullptr;
+
     auto itr = MythicStore.find(map->GetInstanceId());
 
     if (itr != MythicStore.end())
@@ -658,6 +661,9 @@ uint32 MythicManager::GetDungeonKeyLevelPreperation(Player* player)
 
 void MythicManager::ListenCreationMythicOnMapChanged(Player* leader)
 {
+    if (AsyncCreationMythic.empty())
+        return;
+
     auto it = AsyncCreationMythic.find(leader->GetGUID());
 
     if (it == AsyncCreationMythic.end())
@@ -738,27 +744,6 @@ void MythicManager::Update(Creature* creature)
 
     creature->CastCustomSpell(creature, 90000, &damage, &health, nullptr, true);
 }
-
-void MythicManager::PrepareAndTeleportGroupMembers(Player* leader, MythicDungeon dungeon)
-{
-    if (Group* group = leader->GetGroup()) {
-        auto const& allyList = group->GetMemberSlots();
-
-        for (auto const& target : allyList)
-        {
-            Player* member = ObjectAccessor::FindPlayer(target.guid);
-            if (member) {
-                member->ClearUnitState(UNIT_STATE_ROOT);
-                member->SetControlled(true, UNIT_STATE_ROOT);
-                if (group->GetLeaderGUID() != leader->GetGUID()) {
-                    ResetPlayerInstanceBound(member, dungeon.mapId);
-                    member->TeleportTo(dungeon.mapId, dungeon.x, dungeon.y, dungeon.z, dungeon.o, 0, nullptr, false);
-                }
-            }
-        }
-    }
-}
-
 
 void MythicManager::PreparationMythicDungeon(Player* leader)
 {

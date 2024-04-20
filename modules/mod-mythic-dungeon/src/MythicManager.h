@@ -107,7 +107,6 @@ public:
     void InitializeMythicDungeonBosses();
     void InitializeMythicDungeons();
     void InitializePlayerMythicKeys();
-    void InitializeCreatureKillingCount();
     void InitializeMultipliers();
     void InitializeRewardsToken();
     void InitializeRewardsItems();
@@ -115,7 +114,7 @@ public:
     void SaveMythicKey(Player* player, uint32 newDungeonId, uint32 level);
     void GenerateFirstRandomMythicKey(Player* player);
 
-    void UpdatePlayerKey(Player* player, uint8 upgrade);
+    void UpdatePlayerKey(Player* player, int8 upgrade);
     bool ForceCompleteMythic(Player* player);
 
     uint32 GetRandomMythicDungeonForPlayer(Player* player);
@@ -127,8 +126,6 @@ public:
 
     bool IsItemAllowableClass(uint32 classPlayer, uint32 classId, uint32 subClassId);
     bool IsStatTypeAllowableSpec(uint32 currentSpec, uint32 statType);
-
-    uint8 GetBossIndex(uint32 dungeonId, uint32 creatureId);
 
     void Update(uint32 diff);
 
@@ -162,8 +159,6 @@ public:
     void Update(Creature* creature);
 
 private:
-
-    void PrepareAndTeleportGroupMembers(Player* player, MythicDungeon dungeon);
 
     RunMythicDungeonContainer MythicStore;
     MythicMutiplierContainer MythicMultiplierStore;

@@ -13,10 +13,8 @@
         Warrior - Protection : 4
         Warrior - Hoplite : 8
     --------------
-
     --------------
     --------------
-
 
 */
 
