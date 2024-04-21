@@ -1357,39 +1357,11 @@ class spell_arcanic_unstability : public AuraScript
 {
     PrepareAuraScript(spell_arcanic_unstability);
 
-    Aura* GetRuneAura()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(300634))
-            return GetCaster()->GetAura(300634);
-
-        if (GetCaster()->HasAura(300635))
-            return GetCaster()->GetAura(300635);
-
-        if (GetCaster()->HasAura(300636))
-            return GetCaster()->GetAura(300636);
-
-        if (GetCaster()->HasAura(300637))
-            return GetCaster()->GetAura(300637);
-
-        if (GetCaster()->HasAura(300638))
-            return GetCaster()->GetAura(300638);
-
-        if (GetCaster()->HasAura(300639))
-            return GetCaster()->GetAura(300639);
-
-        return nullptr;
-    }
-
-    int GetProcPct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0) {
-
-            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), GetProcPct()));
+        if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0)
+        {
+            int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), aurEff->GetAmount()));
             GetCaster()->CastCustomSpell(300640, SPELLVALUE_BASE_POINT0, amount, eventInfo.GetProcTarget(), true);
         }
     }
