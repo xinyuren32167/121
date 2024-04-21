@@ -67,7 +67,7 @@ public:
     {
     }
 
-    uint32 DealDamage(Unit* AttackerUnit, Unit* playerVictim, uint32 damage, DamageEffectType /*damagetype*/) override
+    uint32 DealDamage(Unit* AttackerUnit, Unit* playerVictim, uint32 damage, DamageEffectType damagetype) override
     {
         return _Modifer_DealDamage(playerVictim, AttackerUnit, damage);
     }

@@ -582,6 +582,12 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_DEL_CHAR_PET_BY_SLOT, "DELETE FROM character_pet WHERE owner = ? AND (slot = ? OR slot > ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_REP_CHAR_PET, "REPLACE INTO character_pet (id, entry, owner, modelid, CreatedBySpell, PetType, level, exp, Reactstate, name, renamed, slot, curhealth, curmana, curhappiness, savetime, abdata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 
+    // Combat Log
+
+    PrepareStatement(CHAR_SEL_COMBATLOG_MAXID, "SELECT MAX(id) + 1 FROM character_combat_log", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_INS_COMBATLOG, "INSERT INTO character_combat_log (guid, mapId, specId, totalDamage, totalHealing, createdAt) VALUES (?, ?, ?, ?, ?, NOW())", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_INS_COMBATLOGSPELL, "INSERT INTO character_combat_log_spells (combatLogId, spellId, amount, castedWhen) VALUES (?, ?, ?, FROM_UNIXTIME(?))", CONNECTION_ASYNC);
+
     // PvPstats
     PrepareStatement(CHAR_SEL_PVPSTATS_MAXID, "SELECT MAX(id) FROM pvpstats_battlegrounds", CONNECTION_SYNCH);
     PrepareStatement(CHAR_INS_PVPSTATS_BATTLEGROUND, "INSERT INTO pvpstats_battlegrounds (id, winner_faction, bracket_id, type, date) VALUES (?, ?, ?, ?, NOW())", CONNECTION_ASYNC);

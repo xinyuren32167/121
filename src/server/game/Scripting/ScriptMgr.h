@@ -415,10 +415,10 @@ protected:
 
 public:
     // Called when a unit deals healing to another unit
-    virtual void OnHeal(Unit* /*healer*/, Unit* /*reciever*/, uint32& /*gain*/) { }
+    virtual void OnHeal(Unit* /*healer*/, Unit* /*reciever*/, uint32& /*gain*/, SpellInfo const* /* spellInfo */) { }
 
     // Called when a unit deals damage to another unit
-    virtual void OnDamage(Unit* /*attacker*/, Unit* /*victim*/, uint32& /*damage*/) { }
+    virtual void OnDamage(Unit* /*attacker*/, Unit* /*victim*/, uint32& /*damage*/, SpellInfo const* /*spellProto*/) { }
 
     // Called when DoT's Tick Damage is being Dealt
     // Attacker can be nullptr if he is despawned while the aura still exists on target
@@ -2438,8 +2438,8 @@ public: /* Scheduled scripts */
     bool IsScriptScheduled() const { return _scheduledScripts > 0; }
 
 public: /* UnitScript */
-    void OnHeal(Unit* healer, Unit* reciever, uint32& gain);
-    void OnDamage(Unit* attacker, Unit* victim, uint32& damage);
+    void OnHeal(Unit* healer, Unit* reciever, uint32& gain, SpellInfo const* spellInfo);
+    void OnDamage(Unit* attacker, Unit* victim, uint32& damage, SpellInfo const* spellProto);
     void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage);
     void ModifyMeleeDamage(Unit* target, Unit* attacker, uint32& damage);
     void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage);

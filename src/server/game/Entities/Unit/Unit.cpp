@@ -826,8 +826,8 @@ uint32 Unit::DealDamage(Unit* attacker, Unit* victim, uint32 damage, CleanDamage
             attacker->GetAI()->DamageDealt(victim, damage, damagetype);
     }
 
-    // Hook for OnDamage Event
-    sScriptMgr->OnDamage(attacker, victim, damage);
+    // Hook for OnDamage
+    sScriptMgr->OnDamage(attacker, victim, damage, spellProto);
 
     if (victim->GetTypeId() == TYPEID_PLAYER && attacker != victim)
     {
@@ -10888,7 +10888,7 @@ void Unit::SetCharm(Unit* charm, bool apply)
     }
 }
 
-int32 Unit::DealHeal(Unit* healer, Unit* victim, uint32 addhealth)
+int32 Unit::DealHeal(Unit* healer, Unit* victim, uint32 addhealth, SpellInfo const* spellInfo)
 {
     int32 gain = 0;
 
@@ -10905,7 +10905,7 @@ int32 Unit::DealHeal(Unit* healer, Unit* victim, uint32 addhealth)
         gain = victim->ModifyHealth(int32(addhealth));
 
     // Hook for OnHeal Event
-    sScriptMgr->OnHeal(healer, victim, (uint32&)gain);
+    sScriptMgr->OnHeal(healer, victim, (uint32&)gain, spellInfo);
 
     Unit* unit = healer;
 
@@ -11188,7 +11188,7 @@ int32 Unit::HealBySpell(HealInfo& healInfo, bool critical)
     // calculate heal absorb and reduce healing
     CalcHealAbsorb(healInfo);
 
-    int32 gain = Unit::DealHeal(healInfo.GetHealer(), healInfo.GetTarget(), healInfo.GetHeal());
+    int32 gain = Unit::DealHeal(healInfo.GetHealer(), healInfo.GetTarget(), healInfo.GetHeal(), healInfo.GetSpellInfo());
     SendHealSpellLog(healInfo.GetTarget(), healInfo.GetSpellInfo()->Id, healInfo.GetHeal(), uint32(healInfo.GetHeal() - gain), healInfo.GetAbsorb(), critical);
     return gain;
 }
