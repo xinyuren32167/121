@@ -37,19 +37,19 @@ uint32 ScriptMgr::DealDamage(Unit* AttackerUnit, Unit* pVictim, uint32 damage, D
     return damage;
 }
 
-void ScriptMgr::OnHeal(Unit* healer, Unit* reciever, uint32& gain)
+void ScriptMgr::OnHeal(Unit* healer, Unit* reciever, uint32& gain, SpellInfo const* spellInfo)
 {
     ExecuteScript<UnitScript>([&](UnitScript* script)
     {
-        script->OnHeal(healer, reciever, gain);
+        script->OnHeal(healer, reciever, gain, spellInfo);
     });
 }
 
-void ScriptMgr::OnDamage(Unit* attacker, Unit* victim, uint32& damage)
+void ScriptMgr::OnDamage(Unit* attacker, Unit* victim, uint32& damage, SpellInfo const* spellProto)
 {
     ExecuteScript<UnitScript>([&](UnitScript* script)
     {
-        script->OnDamage(attacker, victim, damage);
+        script->OnDamage(attacker, victim, damage, spellProto);
     });
 }
 

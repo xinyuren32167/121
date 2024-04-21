@@ -6739,7 +6739,7 @@ void AuraEffect::HandlePeriodicHealAurasTick(Unit* target, Unit* caster) const
 
     HealInfo healInfo(caster, target, heal, GetSpellInfo(), GetSpellInfo()->GetSchoolMask());
     Unit::CalcHealAbsorb(healInfo);
-    int32 gain = Unit::DealHeal(caster, target, healInfo.GetHeal());
+    int32 gain = Unit::DealHeal(caster, target, healInfo.GetHeal(), healInfo.GetSpellInfo());
 
     SpellPeriodicAuraLogInfo pInfo(this, healInfo.GetHeal(), healInfo.GetHeal() - gain, healInfo.GetAbsorb(), 0, 0.0f, crit);
     target->SendPeriodicAuraLog(&pInfo);
