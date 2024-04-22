@@ -4151,8 +4151,6 @@ class spell_mage_ice_nova_target_select : public SpellScript
     }
 };
 
-
-
 void AddSC_mage_spell_scripts()
 {
     new npc_mage_spell_frozen_orbs();

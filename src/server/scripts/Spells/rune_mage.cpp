@@ -603,34 +603,24 @@ class spell_improved_brain_freeze_remove : public SpellScript
     }
 };
 
-class spell_lady_vashj_s_grasp_remove : public AuraScript
+class spell_lady_vashj_grasp : public AuraScript
 {
-    PrepareAuraScript(spell_lady_vashj_s_grasp_remove);
+    PrepareAuraScript(spell_lady_vashj_grasp);
 
-    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    void OnPeriodic(AuraEffect const* /*aurEff*/)
     {
-        if (GetCaster()->HasAura(300212))
-            GetCaster()->RemoveAura(300212);
+        Unit* caster = GetCaster();
 
-        if (GetCaster()->HasAura(300213))
-            GetCaster()->RemoveAura(300213);
+        if (!caster || !caster->IsAlive())
+            return;
 
-        if (GetCaster()->HasAura(300214))
-            GetCaster()->RemoveAura(300214);
-
-        if (GetCaster()->HasAura(300215))
-            GetCaster()->RemoveAura(300215);
-
-        if (GetCaster()->HasAura(300216))
-            GetCaster()->RemoveAura(300216);
-
-        if (GetCaster()->HasAura(300217))
-            GetCaster()->RemoveAura(300217);
+        if (caster->HasAura(12472))
+            caster->CastSpell(caster, 74396, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        AfterEffectRemove += AuraEffectRemoveFn(spell_lady_vashj_s_grasp_remove::OnRemove, EFFECT_0, SPELL_AURA_MOD_CASTING_SPEED_NOT_STACK, AURA_EFFECT_HANDLE_REAL);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_lady_vashj_grasp::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
     }
 };
 
@@ -816,47 +806,37 @@ class spell_brain_fire : public SpellScript
     }
 };
 
-class spell_ice_spike : public SpellScript
+class spell_ice_spike : public AuraScript
 {
-    PrepareSpellScript(spell_ice_spike);
+    PrepareAuraScript(spell_ice_spike);
 
-    Aura* GetRuneAura(Unit* caster)
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        for (size_t i = 300402; i < 300408; i++)
-        {
-            if (caster->HasAura(i))
-                return caster->GetAura(i);
-        }
-
-        return nullptr;
-    }
-
-    void HandleProc()
-    {
-        Unit* caster = GetCaster();
-        Unit* target = GetExplTargetUnit();
-
-        if (!caster || caster->isDead() || !GetRuneAura(caster))
-            return;
+        Unit* target = eventInfo.GetActionTarget();
 
         if (!target || target->isDead())
-            return;
+            return false;
+
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return false;
 
         if (!caster->HasAura(57761))
-            return;
+            return false;
 
-        int32 procChance = GetRuneAura(caster)->GetEffect(EFFECT_0)->GetAmount();
-        uint32 random = urand(1, 100);
+        return true;
+    }
 
-        if (random > procChance)
-            return;
-
-        GetCaster()->CastSpell(target, 300408, TRIGGERED_FULL_MASK);
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        GetCaster()->CastSpell(eventInfo.GetActionTarget(), 300408, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        BeforeCast += SpellCastFn(spell_ice_spike::HandleProc);
+        DoCheckProc += AuraCheckProcFn(spell_ice_spike::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_ice_spike::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3152,7 +3132,7 @@ void AddSC_mage_perks_scripts()
     RegisterSpellScript(spell_slick_ice);
     RegisterSpellScript(spell_improved_brain_freeze);
     RegisterSpellScript(spell_improved_brain_freeze_remove);
-    RegisterSpellScript(spell_lady_vashj_s_grasp_remove);
+    RegisterSpellScript(spell_lady_vashj_grasp);
     RegisterSpellScript(spell_forzen_veins);
     RegisterSpellScript(spell_impulsive_veins);
     RegisterSpellScript(spell_flurry);
