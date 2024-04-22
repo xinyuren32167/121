@@ -1024,9 +1024,9 @@ void Player::UpdateVersatility()
     SetUInt32Value(PLAYER_EXPERTISE, amount);
 
     RemoveAura(VERSATILITY_SPELL);
-    int32 damageIncreasesPct = round(amount / 40);
-    int32 healingAndAbsbordIncreasePct = round(amount / 40);
-    int32 damageReductionPct = -(round((amount / 40) * 0.5));
+    int32 damageIncreasesPct = round(amount / 18);
+    int32 healingAndAbsbordIncreasePct = round(amount / 18);
+    int32 damageReductionPct = -(round((amount / 18) * 0.5));
 
     CastCustomSpell(ToUnit(), VERSATILITY_SPELL, &damageReductionPct, &damageIncreasesPct, &healingAndAbsbordIncreasePct, true, nullptr, nullptr, GetGUID());
 }
