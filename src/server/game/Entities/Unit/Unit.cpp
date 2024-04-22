@@ -6965,7 +6965,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
 
                     // can't proc if aoe                    
                     if (procID == 42926 || procID == 42945 || procID == 42950 || procID == 55362 ||
-                        procID == 55355 || procID == 80030 || procID == 81531 || 42891)
+                        procID == 55355 || procID == 80030 || procID == 81531)
                         return true;
 
                     // Count spell criticals in a row
