@@ -302,7 +302,7 @@ public:
     void SendUpdateSockets();
 
     void SendTimeUpdate(Player* owner);
-    void UpdateDuration(Player* owner, uint32 diff);
+    void UpdateDuration(Player* owner, uint32 diff, uint32 itemId = 0);
 
     // spell charges (signed but stored as unsigned)
     [[nodiscard]] int32 GetSpellCharges(uint8 index/*0..5*/ = 0) const { return GetInt32Value(ITEM_FIELD_SPELL_CHARGES + index); }

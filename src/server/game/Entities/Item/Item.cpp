@@ -317,7 +317,7 @@ bool Item::IsNotEmptyBag() const
     return false;
 }
 
-void Item::UpdateDuration(Player* owner, uint32 diff)
+void Item::UpdateDuration(Player* owner, uint32 diff, uint32 itemId)
 {
     if (!GetUInt32Value(ITEM_FIELD_DURATION))
         return;

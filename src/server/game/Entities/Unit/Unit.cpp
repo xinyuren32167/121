@@ -2818,19 +2818,13 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(Unit const* victim, WeaponAttackTy
     int32    roll = urand(0, 10000);
 
     int32 levelDiff = int32(victim->getLevelForTarget(this)) - int32(this->getLevelForTarget(victim));
-    float chance = levelDiff > 4 ? 25.0f + levelDiff * 1.0f : 0.0f; // Base 5% miss chance + 0.1% per level difference
-    chance = std::max<float>(chance, 0.0f); // Minimum miss chance is 0%
-    chance = std::min<float>(chance, 100.f); // Maximum miss chance is 95%
-
-    if (miss_chance > 0 && roll < (sum += miss_chance)) {
-        return MELEE_HIT_MISS;
-    }
+    float chance = levelDiff > 4 ? 25.0f + levelDiff * 1.0f : 0.0f;
+    chance = std::max<float>(chance, 0.0f); 
+    chance = std::min<float>(chance, 100.f);
 
     if (roll_chance_f(chance)) {
         return MELEE_HIT_MISS;
     }
-
-    // Dodge chance
 
     // only players can't dodge if attacker is behind
     if (victim->GetTypeId() == TYPEID_PLAYER && !victim->HasInArc(M_PI, this) && !victim->HasAuraType(SPELL_AURA_IGNORE_HIT_DIRECTION))
@@ -3143,9 +3137,6 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
     uint32 roll = urand(0, 10000);
     uint32 missChance = 25.0f;
 
-    if (getLevel() == 60)
-        missChance = 0.0f;
-
     if ((getLevel() + 4) > victim->getLevel())
         missChance = 25.0f;
 
@@ -3153,6 +3144,9 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
     uint32 tmp = missChance;
 
     float chance = GetChanceSpellHit(victim);
+
+    if (getLevel() == 60)
+        chance = 100.0f;
 
     if (roll_chance_i(chance))
         return SPELL_MISS_MISS;

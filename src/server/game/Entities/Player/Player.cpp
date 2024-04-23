@@ -5125,6 +5125,7 @@ float Player::GetRatingMultiplier(CombatRating cr) const
     GtCombatRatingsEntry const* Rating = sGtCombatRatingsStore.LookupEntry(cr * GT_MAX_LEVEL + level - 1);
     // gtOCTClassCombatRatingScalarStore.dbc starts with 1, CombatRating with zero, so cr+1
     GtOCTClassCombatRatingScalarEntry const* classRating = sGtOCTClassCombatRatingScalarStore.LookupEntry((getClass() - 1) * GT_MAX_RATING + cr + 1);
+
     if (!Rating || !classRating)
         return 1.0f;                                        // By default use minimum coefficient (not must be called)
 
@@ -5191,6 +5192,7 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
     if (cr == CR_HASTE_MELEE || cr == CR_HASTE_RANGED || cr == CR_HASTE_SPELL)
     {
         float const mult = GetRatingMultiplier(cr);
+
         float const oldVal = oldRating * mult;
         float const newVal = m_baseRatingValue[cr] * mult;
         ApplyAttackTimePercentMod(BASE_ATTACK, oldVal, false);

@@ -8,7 +8,7 @@
 #include "Chat.h"
 #include "LuaEngine.h"
 #include "Spell.h"
-#include "CombatLogManager.h"
+#include "combatLogManager.h"
 
 class CombatLog_PlayerScripts : public PlayerScript
 {
