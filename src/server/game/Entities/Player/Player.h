@@ -1355,7 +1355,7 @@ public:
     [[nodiscard]] bool IsTwoHandUsed() const
     {
         Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-        return mainItem && mainItem->GetTemplate()->InventoryType == INVTYPE_2HWEAPON && (!CanTitanGrip() || !IsSpartan());
+        return mainItem && mainItem->GetTemplate()->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip();
     }
     void SendNewItem(Item* item, uint32 count, bool received, bool created, bool broadcast = false, bool sendChatMessage = true);
     bool BuyItemFromVendorSlot(ObjectGuid vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot);
