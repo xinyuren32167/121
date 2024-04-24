@@ -94,6 +94,7 @@ enum PaladinSpells
     TALENT_PALADIN_BREAK_THEIR_KNEECAPS_PROC = 86555,
     TALENT_PALADIN_BLESSED_BY_THE_LIGHT_PROC = 86604,
     TALENT_PALADIN_SHIELD_MASTERY_BUFF       = 87128,
+    TALENT_PALADIN_HOLY_WEAPON_EFFICIENCY_BUFF = 31824,
 
     // Sets
     T1_PALADIN_INQUISITOR_2PC = 96300,
@@ -2792,6 +2793,29 @@ class spell_pal_hammer_of_wrath : public SpellScript
     }
 };
 
+class spell_pal_holy_weapon_efficiency : public AuraScript
+{
+    PrepareAuraScript(spell_pal_holy_weapon_efficiency);
+
+    void HandlePeriodic(AuraEffect* aurEff)
+    {
+        Player* player = GetCaster()->ToPlayer();
+
+        if (!player || player->isDead())
+            return;
+
+        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (item)
+            if (item->IsFitToSpellRequirements(GetSpellInfo()))
+                player->CastCustomSpell(TALENT_PALADIN_HOLY_WEAPON_EFFICIENCY_BUFF, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), player, TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        OnEffectUpdatePeriodic += AuraEffectUpdatePeriodicFn(spell_pal_holy_weapon_efficiency::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 void AddSC_paladin_spell_scripts()
 {
     RegisterSpellAndAuraScriptPair(spell_pal_seal_of_command, spell_pal_seal_of_command_aura);
@@ -2870,5 +2894,5 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_shield_of_the_righteous);
     RegisterSpellScript(spell_pal_shield_mastery);
     RegisterSpellScript(spell_pal_hammer_of_wrath);
-    
+    RegisterSpellScript(spell_pal_holy_weapon_efficiency);
 }
