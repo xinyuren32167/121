@@ -153,6 +153,27 @@ bool PlayerSpecialization::Exception(Player* player, uint32 spellId)
         || (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && spellId == SPELL_WARRIOR_COLOSSUS_SMASH);
 }
 
+uint32 PlayerSpecialization::GetSpellException(Player* player, uint32 spellId)
+{
+
+    if (player->HasAura(SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER) && spellId == SPELL_DRUID_BERSERK_CAT) {
+        return SPELL_DRUID_AVATAR_OF_ASHAMANE_REPLACER;
+    }
+
+    if (player->HasAura(SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER) && spellId == SPELL_DRUID_BERSERK_BEAR) {
+        return SPELL_DRUID_GUARDIAN_OF_URSOC_REPLACER;
+    }
+
+    if (player->HasAura(SPELL_HUNTER_MONGOOSE_BITE_REPLACER) && spellId == SPELL_HUNTER_RAPTOR_STRIKE) {
+        return SPELL_HUNTER_MONGOOSE_BITE_REPLACER;
+    }
+
+    if (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && spellId == SPELL_WARRIOR_COLOSSUS_SMASH) {
+        return SPELL_WARRIOR_WARBREAKER_REPLACER;
+    }
+}
+
+
 void PlayerSpecialization::RemoveSpellsAndAuras(Player* player)
 {
     if (player->HasAura(SPELL_HUNTER_LONE_WOLF))

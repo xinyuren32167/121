@@ -176,9 +176,13 @@ class spell_activate_specialization : public SpellScript
         for (auto const& spellId : PlayerSpecialization::m_SpecSpells[newSpecId])
         {
             if (PlayerSpecialization::Exception(player, spellId))
-                continue;
-
-            player->learnSpell(spellId, false, false);
+            {
+                uint32 otherSpellId = PlayerSpecialization::GetSpellException(player, spellId);
+                player->learnSpell(otherSpellId, false, false);
+            }
+            else {
+                player->learnSpell(spellId, false, false);
+            }
         }
 
         if (newSpec.powerType != POWER_ALL) {

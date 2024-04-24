@@ -14875,7 +14875,6 @@ void Player::_SaveTalents(CharacterDatabaseTransaction trans)
 
 void Player::ActivateSpec(uint8 spec)
 {
-    LOG_ERROR("Spec", "Spec {}", spec);
     // xinef: some basic checks
     if (GetActiveSpec() == spec)
         return;

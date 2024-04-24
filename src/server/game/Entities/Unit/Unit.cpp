@@ -2817,15 +2817,6 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(Unit const* victim, WeaponAttackTy
     int32    sum = 0, tmp = 0;
     int32    roll = urand(0, 10000);
 
-    int32 levelDiff = int32(victim->getLevelForTarget(this)) - int32(this->getLevelForTarget(victim));
-    float chance = levelDiff > 4 ? 25.0f + levelDiff * 1.0f : 0.0f;
-    chance = std::max<float>(chance, 0.0f); 
-    chance = std::min<float>(chance, 100.f);
-
-    if (roll_chance_f(chance)) {
-        return MELEE_HIT_MISS;
-    }
-
     // only players can't dodge if attacker is behind
     if (victim->GetTypeId() == TYPEID_PLAYER && !victim->HasInArc(M_PI, this) && !victim->HasAuraType(SPELL_AURA_IGNORE_HIT_DIRECTION))
     {
