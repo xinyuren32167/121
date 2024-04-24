@@ -38,12 +38,25 @@ public:
 
     void OnHeal(Unit* healer, Unit* reciever, uint32& gain, SpellInfo const* spellInfo)
     {
+        if (!healer)
+            return;
+
+        if (!reciever)
+            return;
+
         if (healer->GetTypeId() == TYPEID_PLAYER)
             CombatLogManager::RecordLog(healer, reciever, gain, spellInfo, true);
     }
 
     void OnDamage(Unit* attacker, Unit* victim, uint32& damage, SpellInfo const* spellProto)
     {
+
+        if (!attacker)
+            return;
+
+        if (!victim)
+            return;
+
         if(attacker->GetTypeId() == TYPEID_PLAYER)
             CombatLogManager::RecordLog(attacker, victim, damage, spellProto, false);
     }
