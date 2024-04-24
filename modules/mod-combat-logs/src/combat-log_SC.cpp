@@ -18,11 +18,19 @@ public:
 
     void OnPlayerEnterCombat(Player* player, Unit* enemy)
     {
+
+        if (!player)
+            return;
+
         CombatLogManager::StartCombat(player);
     }
 
     void OnPlayerLeaveCombat(Player* player)
     {
+
+        if (!player)
+            return;
+
         CombatLogManager::EndCombat(player);
     }
     

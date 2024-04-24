@@ -3127,20 +3127,8 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo
 
     uint32 roll = urand(0, 10000);
     uint32 missChance = 25.0f;
-
-    if ((getLevel() + 4) > victim->getLevel())
-        missChance = 25.0f;
-
     // Roll miss
     uint32 tmp = missChance;
-
-    float chance = GetChanceSpellHit(victim);
-
-    if (getLevel() == 60)
-        chance = 100.0f;
-
-    if (roll_chance_i(chance))
-        return SPELL_MISS_MISS;
 
     bool canDodge = !spellInfo->HasAttribute(SPELL_ATTR7_NO_ATTACK_DODGE);
     bool canParry = !spellInfo->HasAttribute(SPELL_ATTR7_NO_ATTACK_PARRY);
