@@ -497,9 +497,7 @@ class spell_mittelschmerz_blood_magic : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == 47818 || eventInfo.GetSpellInfo()->Id == 42844
-            || eventInfo.GetSpellInfo()->Id == 80001 || eventInfo.GetSpellInfo()->Id == 81522 || eventInfo.GetSpellInfo()->Id == 80012
-            || eventInfo.GetSpellInfo()->Id == 42938 || eventInfo.GetSpellInfo()->Id == 81548))
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->HasAttribute(SPELL_ATTR4_ALLOW_CAST_WHILE_CASTING))
             return false;
 
         return (GetCaster() && GetCaster()->IsAlive());

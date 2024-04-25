@@ -1128,7 +1128,7 @@ class rune_pal_dynamic : public AuraScript
     {
         if (Aura* auraEff = GetCaster()->GetAura(SPELL_PALADIN_DIVINE_ILLUMINATION))
         {
-            uint32 duration = (std::min<int32>(auraEff->GetDuration() + 2000, auraEff->GetMaxDuration() + 5000));
+            uint32 duration = (std::min<int32>(auraEff->GetDuration() + 1000, auraEff->GetMaxDuration() + 5000));
 
             auraEff->SetDuration(duration);
         }
