@@ -13,7 +13,7 @@ Mythic::Mythic(Player* keyOwner, uint32 dungeonId, uint32 level)
     EnemyForces = 0.f;
     DungeonId = dungeonId;
     Dungeon = keyOwner->GetMap();
-    TimeToComplete = sMythicMgr->GetTimeToCompleteByDungeonId(dungeonId);;
+    TimeToComplete = sMythicMgr->GetTimeToCompleteByDungeonId(dungeonId);
     StartTimer = 10 * IN_MILLISECONDS;
     Countdown = 0;
     Iteration = 10;
@@ -178,9 +178,8 @@ void Mythic::OnKillCreature(Player* player, Creature* killed)
     if (Done)
         return;
 
-    uint8 count = sMythicMgr->GetKillCountByCreatureId(killed->GetEntry());
-
-    count = killed->isElite() ? count * 2 : count;
+    float amountToKill = sMythicMgr->GetAmountToKillByDungeonId(DungeonId);
+    float count = (float)100 / amountToKill;
 
     if ((EnemyForces + count) > 100)
         EnemyForces = 100;

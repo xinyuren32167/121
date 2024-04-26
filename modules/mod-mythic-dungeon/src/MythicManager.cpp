@@ -42,7 +42,7 @@ void MythicManager::InitializeMythicDungeons()
 {
     MythicDungeonStore = {};
 
-    QueryResult result = WorldDatabase.Query("SELECT id, timeToComplete, mapId, `name`, position_x, position_y, position_z, orientation, itemId FROM dungeon_mythic WHERE `enable` = 1");
+    QueryResult result = WorldDatabase.Query("SELECT id, amountToKill, timeToComplete, mapId, `name`, position_x, position_y, position_z, orientation, itemId FROM dungeon_mythic WHERE `enable` = 1");
 
     if (!result)
         return;
@@ -51,15 +51,16 @@ void MythicManager::InitializeMythicDungeons()
     {
         Field* fields = result->Fetch();
         uint32 id = fields[0].Get<uint32>();
-        uint32 timeToComplete = fields[1].Get<uint32>();
-        uint32 mapId = fields[2].Get<uint32>();
-        std::string name = fields[3].Get<std::string>();
-        float x = fields[4].Get<float>();
-        float y = fields[5].Get<float>();
-        float z = fields[6].Get<float>();
-        float o = fields[7].Get<float>();
-        uint32 itemId = fields[8].Get<uint32>();
-        MythicDungeon dungeon = { id, timeToComplete, mapId, x, y, z, o, itemId };
+        uint32 amountToKill = fields[1].Get<uint32>();
+        uint32 timeToComplete = fields[2].Get<uint32>();
+        uint32 mapId = fields[3].Get<uint32>();
+        std::string name = fields[4].Get<std::string>();
+        float x = fields[5].Get<float>();
+        float y = fields[6].Get<float>();
+        float z = fields[7].Get<float>();
+        float o = fields[8].Get<float>();
+        uint32 itemId = fields[9].Get<uint32>();
+        MythicDungeon dungeon = { id, amountToKill, timeToComplete, mapId, x, y, z, o, itemId };
         MythicDungeonStore.push_back(dungeon);
     } while (result->NextRow());
 }
@@ -513,12 +514,13 @@ Mythic* MythicManager::GetMythicInMap(Map* map)
     return nullptr;
 }
 
-float MythicManager::GetKillCountByCreatureId(uint32 creatureId)
+uint32 MythicManager::GetAmountToKillByDungeonId(uint32 dungeonId)
 {
-    float count = 1.f;
-    auto itr = MythicKillCounterStore.find(creatureId);
-    if (itr != MythicKillCounterStore.end())
-        count = itr->second;
+    uint32 count = 80;
+
+    for (auto const& dg : MythicDungeonStore)
+        if (dg.id == dungeonId)
+            count = dg.amountToKill;
 
     return count;
 }

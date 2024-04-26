@@ -37,6 +37,7 @@
 
 struct MythicDungeon {
     uint32 id;
+    uint32 amountToKill;
     uint32 timeToComplete;
     uint32 mapId;
     float x;
@@ -136,7 +137,7 @@ public:
     Mythic* GetMythicPlayer(Player* player);
     Mythic* GetMythicInMap(Map* map);
 
-    float GetKillCountByCreatureId(uint32 creatureId);
+    uint32 GetAmountToKillByDungeonId(uint32 dungeonId);
     MythicMultiplier GetMultplierByLevel(uint32 level);
     void GetMythicDungeonByDungeonId(uint32 dungeonId, MythicDungeon& dungeon);
     void FindMythicDungeonByItsKeyItemId(uint32 itemId, MythicDungeon& dungeon);
