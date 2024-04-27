@@ -189,14 +189,14 @@ public:
         return true;
     }
 
-    static bool HandleCreateKey(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    static bool HandleCreateKey(ChatHandler* handler, uint32 dungeonId, uint32 level)
     {
         Player* selectedPlayer = handler->getSelectedPlayer();
 
         if (!selectedPlayer)
             return false;
 
-        sMythicMgr->GenerateFirstRandomMythicKey(selectedPlayer);
+        sMythicMgr->GenerateMythicKeyByLevelAndDungeonId(selectedPlayer, level, dungeonId);
         return true;
     }
 
