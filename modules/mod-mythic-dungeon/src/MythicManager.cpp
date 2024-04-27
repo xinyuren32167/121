@@ -573,6 +573,29 @@ void MythicManager::GenerateFirstRandomMythicKey(Player* player)
     }
 }
 
+void MythicManager::GenerateMythicKeyByLevelAndDungeonId(Player* player, uint32 level, uint32 dungeonId)
+{
+    MythicDungeon dungeon;
+
+    GetMythicDungeonByDungeonId(dungeonId, dungeon);
+
+    if (!dungeon)
+        return;
+
+    MythicKey key = { dungeonId, level };
+
+    MythicPlayerKeyStore[player->GetGUID().GetCounter()] = key;
+
+    player->AddItem(dungeon.itemId, 1);
+    if (Item* item = player->GetItemByEntry(dungeon.itemId))
+    {
+        uint32 enchantId = GetEnchantByMythicLevel(level);
+        item->SetEnchantment(PERM_ENCHANTMENT_SLOT, enchantId, 0, 0, player->GetGUID());
+        SaveMythicKey(player, dungeonId, level);
+    }
+
+}
+
 MythicKey* MythicManager::GetCurrentPlayerMythicKey(Player* player)
 {
     auto itr = MythicPlayerKeyStore.find(player->GetGUID().GetCounter());

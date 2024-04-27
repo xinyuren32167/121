@@ -610,7 +610,7 @@ class spell_holy_aegis : public AuraScript
         if (!eventInfo.GetHealInfo())
             return false;
 
-        if (!eventInfo.GetHealInfo()->GetHeal() < 0)
+        if (eventInfo.GetHealInfo()->GetHeal() < 0)
             return false;
 
         return true;
