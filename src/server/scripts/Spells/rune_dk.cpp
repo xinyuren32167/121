@@ -2667,15 +2667,11 @@ class rune_dk_depths_of_darkness : public AuraScript
         {
             int32 spellRunic = spellInfo->CalcPowerCost(GetCaster(), SpellSchoolMask(spellInfo->SchoolMask));
 
-            LOG_ERROR("error", "spell runic is {}", spellRunic);
-
             if (spellRunic <= 0)
                 return;
 
             int32 runicAccumulated = aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount() + spellRunic;
-            LOG_ERROR("error", "runicAccumulated is {}", runicAccumulated);
             int32 runicThreshold = aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount();
-            LOG_ERROR("error", "runicThreshold is {}", runicThreshold);
 
             if (runicAccumulated >= runicThreshold)
             {

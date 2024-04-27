@@ -52,9 +52,9 @@ enum PaladinSpells
     SPELL_PALADIN_GLYPH_OF_SALVATION = 63225,
     SPELL_PALADIN_HAND_OF_SACRIFICE = 6940,
     SPELL_PALADIN_HAMMER_OF_WRATH_BUFF = 400068,
-    SPELL_PALADIN_HOLY_SHOCK_R1 = 48825,
-    SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE = 25912,
-    SPELL_PALADIN_HOLY_SHOCK_R1_HEALING = 25914,
+    SPELL_PALADIN_HOLY_SHOCK = 48825,
+    SPELL_PALADIN_HOLY_SHOCK_DAMAGE = 25912,
+    SPELL_PALADIN_HOLY_SHOCK_HEALING = 25914,
     SPELL_PALADIN_INFUSION_OF_LIGHT_R1 = 53672,
     SPELL_PALADIN_INFUSION_OF_LIGHT_R2 = 54149,
     SPELL_PALADIN_JUDGEMENT_DAMAGE = 54158,
@@ -806,23 +806,6 @@ class spell_pal_holy_shock : public SpellScript
 {
     PrepareSpellScript(spell_pal_holy_shock);
 
-    bool Validate(SpellInfo const* spellInfo) override
-    {
-        SpellInfo const* firstRankSpellInfo = sSpellMgr->GetSpellInfo(SPELL_PALADIN_HOLY_SHOCK_R1);
-        if (!firstRankSpellInfo)
-            return false;
-
-        // can't use other spell than holy shock due to spell_ranks dependency
-        if (!spellInfo->IsRankOf(firstRankSpellInfo))
-            return false;
-
-        uint8 rank = spellInfo->GetRank();
-        if (!sSpellMgr->GetSpellWithRank(SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE, rank, true) || !sSpellMgr->GetSpellWithRank(SPELL_PALADIN_HOLY_SHOCK_R1_HEALING, rank, true))
-            return false;
-
-        return true;
-    }
-
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
@@ -830,9 +813,9 @@ class spell_pal_holy_shock : public SpellScript
         {
             uint8 rank = GetSpellInfo()->GetRank();
             if (caster->IsFriendlyTo(unitTarget))
-                caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PALADIN_HOLY_SHOCK_R1_HEALING, rank), true);
+                caster->CastSpell(unitTarget, SPELL_PALADIN_HOLY_SHOCK_HEALING, true);
             else
-                caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(SPELL_PALADIN_HOLY_SHOCK_R1_DAMAGE, rank), true);
+                caster->CastSpell(unitTarget, SPELL_PALADIN_HOLY_SHOCK_DAMAGE, true);
         }
     }
 
@@ -1509,7 +1492,7 @@ class spell_pal_justicars_scaling : public SpellScript
 
     void HandleDamage(SpellEffIndex effIndex)
     {
-        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK)), 105);
+        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK)), 80);
         int32 holysp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY)), 70);
 
         int32 sum = std::max<int32>(0, int32(ap + holysp));

@@ -588,55 +588,25 @@ class spell_holy_aegis : public AuraScript
 {
     PrepareAuraScript(spell_holy_aegis);
 
-    Aura* GetRuneAura()
-    {
-        if (GetCaster()->HasAura(100211))
-            return GetCaster()->GetAura(100211);
-
-        if (GetCaster()->HasAura(100212))
-            return GetCaster()->GetAura(100212);
-
-        if (GetCaster()->HasAura(100213))
-            return GetCaster()->GetAura(100213);
-
-        if (GetCaster()->HasAura(100214))
-            return GetCaster()->GetAura(100214);
-
-        if (GetCaster()->HasAura(100215))
-            return GetCaster()->GetAura(100215);
-
-        if (GetCaster()->HasAura(100216))
-            return GetCaster()->GetAura(100216);
-
-        return nullptr;
-    }
-
-    int GetShieldPct()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
-    }
-
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        int32 absorb = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), GetShieldPct()));
+        int32 absorb = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount()));
 
-        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(100217, 0))
         {
-            int32 maxShield = CalculatePct(eventInfo.GetProcTarget()->GetMaxHealth(), 30);
+            int32 maxShield = CalculatePct(eventInfo.GetProcTarget()->GetMaxHealth(), 25);
             protEff->SetAmount(std::min<int32>(protEff->GetAmount() + absorb, maxShield));
             protEff->GetBase()->RefreshDuration();
         }
         else
-            GetTarget()->CastCustomSpell(GetProcSpell(), SPELLVALUE_BASE_POINT0, absorb, eventInfo.GetProcTarget(), true, nullptr, aurEff);
+            GetTarget()->CastCustomSpell(100217, SPELLVALUE_BASE_POINT0, absorb, eventInfo.GetProcTarget(), true, nullptr, aurEff);
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
+
         if (!eventInfo.GetHealInfo())
             return false;
 
@@ -657,58 +627,25 @@ class spell_shadow_pact : public AuraScript
 {
     PrepareAuraScript(spell_shadow_pact);
 
-    Aura* GetRuneAura()
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(100218))
-            return GetCaster()->GetAura(100218);
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
 
-        if (GetCaster()->HasAura(100219))
-            return GetCaster()->GetAura(100219);
-
-        if (GetCaster()->HasAura(100220))
-            return GetCaster()->GetAura(100220);
-
-        if (GetCaster()->HasAura(100221))
-            return GetCaster()->GetAura(100221);
-
-        if (GetCaster()->HasAura(100222))
-            return GetCaster()->GetAura(100222);
-
-        if (GetCaster()->HasAura(100223))
-            return GetCaster()->GetAura(100223);
-
-        return nullptr;
+        return true;
     }
 
-    int GetDamagePct()
+    void HandleProc(AuraEffect const*  aurEff, ProcEventInfo& eventInfo)
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
-
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).Amplitude;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        PreventDefaultAction();
-
-        if (!GetCaster())
-            return;
-
-        if (!GetRuneAura())
-            return;
-
-        int32 maxTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
+        int32 maxTicks = sSpellMgr->AssertSpellInfo(100224)->GetMaxTicks();
 
         uint32 amountHealOrDamage = eventInfo.GetDamageInfo() ? eventInfo.GetDamageInfo()->GetDamage() : eventInfo.GetHealInfo()->GetHeal();
-        uint32 amount = CalculatePct(amountHealOrDamage, GetDamagePct()) / maxTicks;
+        uint32 amount = CalculatePct(amountHealOrDamage, aurEff->GetAmount()) / maxTicks;
 
         if (amount < 0)
             return;
 
-        if (AuraEffect* protEff = GetCaster()->GetAuraEffect(GetProcSpell(), 0))
+        if (AuraEffect* protEff = GetCaster()->GetAuraEffect(100224, 0))
         {
             int32 remainingTicks = maxTicks - protEff->GetTickNumber();
             int32 remainingAmount = protEff->GetAmount() * remainingTicks;
@@ -716,7 +653,7 @@ class spell_shadow_pact : public AuraScript
             amount += remainingAmountPerTick;
         }
 
-        GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), GetProcSpell(), SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
+        GetCaster()->CastDelayedSpellWithPeriodicAmount(GetCaster(), 100224, SPELL_AURA_PERIODIC_DAMAGE, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
