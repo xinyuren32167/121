@@ -1076,7 +1076,17 @@ void Spell::EffectJump(SpellEffIndex effIndex)
 
     float speedXY, speedZ;
     CalculateJumpSpeeds(effIndex, m_caster->GetExactDist2d(unitTarget), speedXY, speedZ);
-    m_caster->GetMotionMaster()->MoveJump(*unitTarget, speedXY, speedZ);
+
+    if (m_spellInfo->Id == 84559 || m_spellInfo->Id == 80190 || m_spellInfo->Id == 80197)
+    {
+        speedZ = 10.0f;
+        speedXY = 40.0f;
+
+        if (m_caster->GetExactDist2d(unitTarget) > 5)
+            m_caster->GetMotionMaster()->MoveJump(*unitTarget, speedXY, speedZ);
+    }
+    else
+        m_caster->GetMotionMaster()->MoveJump(*unitTarget, speedXY, speedZ);
 
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
     {

@@ -2225,36 +2225,6 @@ class spell_warr_colossal_thrust : public SpellScript
     }
 };
 
-class spell_warr_shield_vault : public SpellScript
-{
-    PrepareSpellScript(spell_warr_shield_vault);
-
-    void HandleCast()
-    {
-        if (Player* caster = GetCaster()->ToPlayer())
-        {
-            if (caster->IsAlive())
-            {
-                Unit* target = GetExplTargetUnit();
-                Position targetPos = GetExplTargetUnit()->GetPosition();
-
-                if (!GetCaster() || !GetCaster()->IsAlive())
-                    return;
-
-                if (!target || !target->IsAlive())
-                    return;
-
-                caster->GetMotionMaster()->MoveJump(targetPos, 40.0f, 12.0f);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_warr_shield_vault::HandleCast);
-    }
-};
-
 class spell_warr_leonidas_fury : public SpellScript
 {
     PrepareSpellScript(spell_warr_leonidas_fury);
@@ -2520,7 +2490,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_destabilizing_slam);
     RegisterSpellScript(spell_warr_gladiators_way);
     RegisterSpellScript(spell_warr_colossal_thrust);
-    RegisterSpellScript(spell_warr_shield_vault);
     RegisterSpellScript(spell_warr_leonidas_fury);
     RegisterSpellScript(spell_warr_true_grit);
     RegisterSpellScript(spell_warr_improved_mighty_throw);
