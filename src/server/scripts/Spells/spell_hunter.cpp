@@ -2240,7 +2240,7 @@ class spell_hun_dire_beast : public SpellScript
 
     void HandleSummon()
     {
-        if (!GetCaster() || !GetCaster()->IsAlive())
+        if (!GetCaster() || GetCaster()->isDead())
             return;
 
         std::vector<int32> summons = { 400000,400001,400002 };
@@ -4121,44 +4121,61 @@ class spell_hun_animal_companion_check : public AuraScript
 
     void HandleOnEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (Pet* pet = GetAura()->GetUnitOwner()->ToPet())
-            if (Player* player = pet->GetOwner())
-                if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
-                {
-                    PetStable* petStable = player->GetPetStable();
+        Player* player = GetCaster()->ToPlayer();
 
-                    if (!petStable)
-                        return;
+        if (!player)
+            return;
 
-                    auto firstPet = petStable->StabledPets.at(0);
+        Pet* pet = player->GetPet();
 
-                    if (!firstPet)
-                        return;
+        if (!pet)
+            return;
 
-                    Position const& pos = player->GetPosition();
-                    SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
-                    uint32 displayId = firstPet->DisplayId;
-                    Creature* summon = player->SummonCreature(600612, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
-                    summon->SetDisplayId(displayId);
-                    ApplySecondaryPet(summon, firstPet, player);
-                }
+        if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
+        {
+            PetStable* petStable = player->GetPetStable();
+
+            if (!petStable)
+                return;
+
+            auto firstPet = petStable->StabledPets.at(0);
+
+            if (!firstPet)
+                return;
+
+            Position const& pos = player->GetPosition();
+            SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
+            uint32 displayId = firstPet->DisplayId;
+            Creature* summon = player->SummonCreature(600612, pos, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS, 0, properties);
+            summon->SetDisplayId(displayId);
+            ApplySecondaryPet(summon, firstPet, player);
+        }
     }
 
     void HandleOnEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        if (Pet* pet = GetAura()->GetUnitOwner()->ToPet())
-            if (Player* player = pet->GetOwner())
-                if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
-                {
-                    auto summonedUnits = player->m_Controlled;
 
-                    if (summonedUnits.size() == 0)
-                        return;
+        Player* player = GetCaster()->ToPlayer();
 
-                    for (const auto& unit : summonedUnits)
-                        if (unit->GetCharmInfo() && unit->GetEntry() == 600612)
-                            unit->ToCreature()->DisappearAndDie();
-                }
+        if (!player)
+            return;
+
+        Pet* pet = player->GetPet();
+
+        if (!pet)
+            return;
+
+        if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
+        {
+            auto summonedUnits = player->m_Controlled;
+
+            if (summonedUnits.size() == 0)
+                return;
+
+            for (const auto& unit : summonedUnits)
+                if (unit->GetCharmInfo() && unit->GetEntry() == 600612)
+                    unit->ToCreature()->DespawnOrUnsummon();
+        }
     }
 
     void Register() override

@@ -130,10 +130,6 @@ class rune_hunter_bullseye : public AuraScript
 {
     PrepareAuraScript(rune_hunter_bullseye);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetDamageInfo();
-    }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -158,7 +154,6 @@ class rune_hunter_bullseye : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_hunter_bullseye::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_hunter_bullseye::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -179,12 +174,12 @@ class rune_hunter_50cal : public AuraScript
         if (!victim || victim->isDead())
             return;
 
-        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damageDealt = eventInfo.GetDamageInfo()->GetDamage();
 
         if (damageDealt <= 0)
             return;
 
-        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
         GetCaster()->CastCustomSpell(RUNE_HUNTER_50CAL_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
@@ -1471,9 +1466,6 @@ class rune_hunter_mighty_snake_trap : public AuraScript
             return;
 
         auto summonedUnits = player->m_Controlled;
-
-        if (summonedUnits.empty())
-            return;
 
         for (auto const& unit : summonedUnits)
         {
