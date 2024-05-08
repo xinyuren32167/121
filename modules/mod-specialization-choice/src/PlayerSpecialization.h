@@ -84,8 +84,6 @@ enum WarriorSpells
 enum HunterSpells
 {
     SPELL_HUNTER_LONE_WOLF = 80182,
-    SPELL_HUNTER_MONGOOSE_BITE = 53339,
-    SPELL_HUNTER_RAPTOR_STRIKE = 48996,
 };
 
 enum DruidSpells
