@@ -4121,14 +4121,14 @@ class spell_hun_animal_companion_check : public AuraScript
 
     void HandleOnEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        Player* player = GetUnitOwner()->ToPlayer();
-
-        if (!player)
-            return;
-
-        Pet* pet = player->GetPet();
+        Pet* pet = GetUnitOwner()->ToPet();
 
         if (!pet)
+            return;
+
+        Player* player = pet->GetOwner();
+
+        if (!player)
             return;
 
         if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
@@ -4154,14 +4154,14 @@ class spell_hun_animal_companion_check : public AuraScript
 
     void HandleOnEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        Player* player = GetUnitOwner()->ToPlayer();
-
-        if (!player)
-            return;
-
-        Pet* pet = player->GetPet();
+        Pet* pet = GetUnitOwner()->ToPet();
 
         if (!pet)
+            return;
+
+        Player* player = pet->GetOwner();
+
+        if (!player)
             return;
 
         if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
