@@ -2527,7 +2527,7 @@ class spell_hun_coordinated_bleed : public AuraScript
         if (!eventInfo.GetDamageInfo())
             return false;
 
-        if (eventInfo.GetDamageInfo()->GetDamage() > 0)
+        if (eventInfo.GetDamageInfo()->GetDamage() <= 0)
             return false;
 
         return eventInfo.GetSpellInfo();
