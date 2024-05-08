@@ -853,9 +853,9 @@ void Pet::LoseHappiness()
     uint32 curValue = GetPower(POWER_HAPPINESS);
     if (curValue <= 0)
         return;
-    int32 addvalue = 670;                                   //value is 70/35/17/8/4 (per min) * 1000 / 8 (timer 7.5 secs)
-    if (IsInCombat())                                        //we know in combat happiness fades faster, multiplier guess
-        addvalue = int32(addvalue * 1.5f);
+    int32 addvalue = 335;                                   //value is 70/35/17/8/4 (per min) * 1000 / 8 (timer 7.5 secs) (original 670)
+    if (IsInCombat())                                        //we know in combat happiness fades faster, multiplier guess (original 1.5)
+        addvalue = int32(addvalue * 1.1f);
     ModifyPower(POWER_HAPPINESS, -addvalue);
 }
 
@@ -1133,6 +1133,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
         SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)));
         SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)));
         SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32(sObjectMgr->GetXPForLevel(petlevel) * sWorld->getRate(RATE_XP_PET_NEXT_LEVEL)));
+        owner->AddAura(80246, this); //Animal Companion
         break;
     }
     case SUMMON_PET:
@@ -1502,6 +1503,13 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_FERAL_SPIRIT_SCALING_02, this);
             AddAura(SPELL_FERAL_SPIRIT_SCALING_03, this);
 
+            if (owner->getClass() == CLASS_HUNTER)
+            {
+                AddAura(SPELL_HUNTER_PET_SCALING_01, this);
+                AddAura(SPELL_HUNTER_PET_SCALING_02, this);
+                AddAura(SPELL_HUNTER_PET_SCALING_03, this);
+            }
+
             if (owner->getRace() == RACE_ORC)
             {
                 CastSpell(this, SPELL_ORC_RACIAL_COMMAND_SHAMAN, true, nullptr, nullptr, owner->GetGUID());
@@ -1553,6 +1561,16 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel - 30 + (petlevel / 4) + owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.15f));
             SetReactState(REACT_DEFENSIVE);
             break;
+        }
+        case NPC_ANIMAL_COMPANION:
+        {
+            SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)));
+            SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)));
+            AddAura(TALENT_HUNTER_ANIMAL_COMPANION_DEBUFF, this);
+            AddAura(SPELL_PET_AVOIDANCE, this);
+            AddAura(SPELL_HUNTER_PET_SCALING_01, this);
+            AddAura(SPELL_HUNTER_PET_SCALING_02, this);
+            AddAura(SPELL_HUNTER_PET_SCALING_03, this);
         }
         case NPC_ARMY_OF_THE_DEAD:
         {

@@ -138,8 +138,6 @@ private:
     uint32 _spellTimer;
 };
 
-
-
 struct npc_hunter_wild_pet : public ScriptedAI
 {
     npc_hunter_wild_pet(Creature* creature) : ScriptedAI(creature), _initAttack(true) { }

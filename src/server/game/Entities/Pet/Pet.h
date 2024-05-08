@@ -21,7 +21,7 @@
 #include "PetDefines.h"
 #include "TemporarySummon.h"
 
-constexpr auto PET_LOSE_HAPPINES_INTERVAL = 7500;
+constexpr auto PET_LOSE_HAPPINES_INTERVAL = 20000; //original 7500
 constexpr auto HAPPINESS_LEVEL_SIZE = 333000;
 
 struct PetSpell

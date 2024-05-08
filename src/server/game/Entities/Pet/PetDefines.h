@@ -108,7 +108,6 @@ enum NPCEntries
     NPC_INQUISITORS_GAZE        = 800000,
     NPC_PIT_LORD                = 800001,
 
-
     NPC_EYE_OF_KILROGG          = 4277,
 
     // Mage
@@ -136,6 +135,9 @@ enum NPCEntries
     NPC_BLOODWORM               = 28017,
     NPC_ARMY_OF_THE_DEAD        = 24207,
     NPC_EBON_GARGOYLE           = 27829,
+
+    // Hunter
+    NPC_ANIMAL_COMPANION        = 600612,
 
     // Generic
     NPC_GENERIC_IMP             = 12922,
@@ -316,6 +318,9 @@ enum PetScalingSpells
     SPELL_DK_PET_SCALING_03             = 61697,
     SPELL_DK_PET_SCALING_04             = 600003,
     SPELL_IMPROVED_BLOODWORMS           = 80390,
+
+    // Hunter
+    TALENT_HUNTER_ANIMAL_COMPANION_DEBUFF   = 80224,
 };
 
 #define PET_FOLLOW_DIST  1.0f
