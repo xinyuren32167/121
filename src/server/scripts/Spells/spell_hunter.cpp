@@ -4121,7 +4121,7 @@ class spell_hun_animal_companion_check : public AuraScript
 
     void HandleOnEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        Player* player = GetCaster()->ToPlayer();
+        Player* player = GetUnitOwner()->ToPlayer();
 
         if (!player)
             return;
@@ -4154,8 +4154,7 @@ class spell_hun_animal_companion_check : public AuraScript
 
     void HandleOnEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-
-        Player* player = GetCaster()->ToPlayer();
+        Player* player = GetUnitOwner()->ToPlayer();
 
         if (!player)
             return;
@@ -4168,9 +4167,6 @@ class spell_hun_animal_companion_check : public AuraScript
         if (player->getClass() == CLASS_HUNTER && player->HasAura(SPELL_HUNTER_ANIMAL_COMPANION_TALENT))
         {
             auto summonedUnits = player->m_Controlled;
-
-            if (summonedUnits.size() == 0)
-                return;
 
             for (const auto& unit : summonedUnits)
                 if (unit->GetCharmInfo() && unit->GetEntry() == 600612)
