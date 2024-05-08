@@ -104,7 +104,6 @@ enum HunterSpells
     RUNE_HUNTER_VOLATILE_BOMB_DAMAGE = 501520,
     RUNE_HUNTER_SHRAPNEL_BOMB_DOT = 501534,
     RUNE_HUNTER_TORMENTING_SHADOWS_DAMAGE = 501584,
-    RUNE_HUNTER_CURSE_DRAIN_HEAL = 501614,
     RUNE_HUNTER_VORPAL_SHOT_DOT = 501658,
     RUNE_HUNTER_SHADOW_QUIVER_ENERGIZE = 501848,
     RUNE_HUNTER_BLOOD_MOON_HEAL = 501880,
@@ -4105,28 +4104,6 @@ class rune_hunter_tormenting_shadows : public AuraScript
     }
 };
 
-class rune_hunter_curse_drain_heal : public SpellScript
-{
-    PrepareSpellScript(rune_hunter_curse_drain_heal);
-
-    void HandleDamage(SpellEffIndex effIndex)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        int32 damage = GetHitDamage();
-
-        caster->CastCustomSpell(RUNE_HUNTER_CURSE_DRAIN_HEAL, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(rune_hunter_curse_drain_heal::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
 class rune_hunter_silent_death : public SpellScript
 {
     PrepareSpellScript(rune_hunter_silent_death);
@@ -4606,7 +4583,6 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_shrapnel_bomb);
     RegisterSpellScript(rune_hunter_improved_backshot);
     RegisterSpellScript(rune_hunter_tormenting_shadows);
-    RegisterSpellScript(rune_hunter_curse_drain_heal);
     RegisterSpellScript(rune_hunter_silent_death);
     RegisterSpellScript(rune_hunter_vorpal_shot);
     RegisterSpellScript(rune_hunter_bowmaster);

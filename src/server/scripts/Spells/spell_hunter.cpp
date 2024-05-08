@@ -3264,7 +3264,7 @@ class spell_hun_backshot : public SpellScript
         if (!caster || caster->isDead())
             return;
 
-        // remove Perforated Veins rune Buff
+        // remove Vein Burst rune Buff
         for (size_t i = 501672; i < 501678; i++)
         {
             if (caster->HasAura(i))
@@ -3786,7 +3786,7 @@ class spell_hun_crescent_veil : public AuraScript
 {
     PrepareAuraScript(spell_hun_crescent_veil);
 
-    Aura* GetMoonlessNightAura(Unit* caster)
+    Aura* GetMoonlessSkyAura(Unit* caster)
     {
         for (size_t i = 501684; i < 501690; i++)
         {
@@ -3826,9 +3826,9 @@ class spell_hun_crescent_veil : public AuraScript
         if (!caster || caster->isDead())
             return;
 
-        if (GetMoonlessNightAura(caster))
+        if (GetMoonlessSkyAura(caster))
         {
-            int32 procSpell = GetMoonlessNightAura(caster)->GetEffect(EFFECT_0)->GetAmount();
+            int32 procSpell = GetMoonlessSkyAura(caster)->GetEffect(EFFECT_0)->GetAmount();
 
             caster->AddAura(procSpell, caster);
         }
