@@ -108,6 +108,9 @@ enum HunterSpells
     RUNE_HUNTER_VORPAL_SHOT_DOT = 501658,
     RUNE_HUNTER_SHADOW_QUIVER_ENERGIZE = 501848,
     RUNE_HUNTER_BLOOD_MOON_HEAL = 501880,
+
+    //Talents
+    TALENT_HUNTER_LOCK_AND_LOAD = 56342,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -4475,6 +4478,26 @@ class rune_hunter_soul_reaper : public AuraScript
     }
 };
 
+class rune_hunter_loaded : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_loaded);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead() )
+            return false;
+
+        return caster->GetAuraEffectOfRankedSpell(TALENT_HUNTER_LOCK_AND_LOAD, EFFECT_0);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_loaded::CheckProc);
+    }
+};
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -4595,4 +4618,5 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_blood_moon);
     RegisterSpellScript(rune_hunter_blood_moon_heal);
     RegisterSpellScript(rune_hunter_soul_reaper);
+    RegisterSpellScript(rune_hunter_loaded);
 }
