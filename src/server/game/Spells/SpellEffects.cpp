@@ -3465,10 +3465,10 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
         case SPELLFAMILY_HUNTER:
             {
                 // Kill Shot
-                if( m_spellInfo->SpellFamilyFlags[1] & 0x800000 )
+                /*if (m_spellInfo->SpellFamilyFlags[1] & 0x800000)
                 {
                     spell_bonus += int32(m_caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.4f);
-                }
+                }*/
                 break;
             }
         case SPELLFAMILY_DEATHKNIGHT:

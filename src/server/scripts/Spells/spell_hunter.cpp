@@ -3229,7 +3229,12 @@ class spell_hun_backshot : public SpellScript
         if (!target || target->isDead())
             return;
 
-        int32 damage = GetHitDamage();
+        float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK)), GetEffectValue());
+        int32 sp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW)), GetEffectValue());
+        int32 damage = std::max<int32>(0, int32(ap + sp));
+
+        damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+        damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
 
         if (!target->HasInArc(M_PI, caster))
         {
@@ -3440,6 +3445,16 @@ class spell_hun_shadow_shot : public SpellScript
             SpellInfo const* value = GetSpellInfo();
             uint32 reduction = value->GetEffect(EFFECT_2).CalcValue(caster);
             caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
+
+            int32 damage = GetEffectValue();
+            float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK)), damage);
+            int32 sp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW)), damage);
+            int32 sum = std::max<int32>(0, int32(ap + sp));
+
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+            SetHitDamage(sum);
         }
     }
 
@@ -3533,6 +3548,17 @@ class spell_hun_spectral_shot : public SpellScript
             uint32 focus = value->GetEffect(EFFECT_1).CalcValue(caster);
             caster->ModifySpellCooldown(SPELL_HUNTER_WITHERING_FIRE, reduction);
             caster->EnergizeBySpell(caster, SPELL_HUNTER_SPECTRAL_SHOT, focus, POWER_FOCUS);
+
+
+            int32 damage = GetEffectValue();
+            float ap = CalculatePct(int32(GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK)), damage);
+            int32 sp = CalculatePct(int32(GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW)), damage);
+            int32 sum = std::max<int32>(0, int32(ap + sp));
+
+            damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, effIndex);
+            damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE);
+
+            SetHitDamage(sum);
         }
     }
 
