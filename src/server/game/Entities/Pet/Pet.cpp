@@ -1164,6 +1164,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_WARLOCK_FELGUARD_PET_PASSIVE_01, this);
             AddAura(SPELL_WARLOCK_FELGUARD_PET_PASSIVE_02, this);
             AddAura(SPELL_WARLOCK_FELGUARD_PET_PASSIVE_03, this);
+            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
 
             // xinef: Glyph of Felguard, so ugly im crying... no appropriate spell
             /*if (AuraEffect* aurEff = owner->GetAuraEffectDummy(SPELL_GLYPH_OF_FELGUARD))
@@ -1185,6 +1186,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_WARLOCK_FELHUNTER_PET_PASSIVE_01, this);
             AddAura(SPELL_WARLOCK_FELHUNTER_PET_PASSIVE_02, this);
             AddAura(SPELL_WARLOCK_FELHUNTER_PET_PASSIVE_03, this);
+            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
             break;
         }
         case NPC_IMP:
@@ -1199,6 +1201,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_WARLOCK_IMP_PET_PASSIVE_01, this);
             AddAura(SPELL_WARLOCK_IMP_PET_PASSIVE_02, this);
             AddAura(SPELL_WARLOCK_IMP_PET_PASSIVE_03, this);
+            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
             break;
         }
         case NPC_SUCCUBUS:
@@ -1213,6 +1216,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_WARLOCK_SUCCUBUS_PET_PASSIVE_01, this);
             AddAura(SPELL_WARLOCK_SUCCUBUS_PET_PASSIVE_02, this);
             AddAura(SPELL_WARLOCK_SUCCUBUS_PET_PASSIVE_03, this);
+            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
             break;
         }
         case NPC_VOIDWALKER:
@@ -1227,6 +1231,8 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
             AddAura(SPELL_WARLOCK_VOIDWALKER_PET_PASSIVE_01, this);
             AddAura(SPELL_WARLOCK_VOIDWALKER_PET_PASSIVE_02, this);
             AddAura(SPELL_WARLOCK_VOIDWALKER_PET_PASSIVE_03, this);
+            AddAura(SPELL_WARLOCK_VOIDWALKER_SHADOW_SHIELD, this);
+            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
             break;
         }
         case NPC_WATER_ELEMENTAL_PERM:
