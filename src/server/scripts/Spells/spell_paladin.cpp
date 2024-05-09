@@ -2062,8 +2062,8 @@ class spell_pal_gods_judgement : public AuraScript
             if (eventInfo.GetDamageInfo() && eventInfo.GetDamageInfo()->GetDamage() > 0 && eventInfo.GetSpellInfo() && caster->GetGUID() == GetCaster()->GetGUID())
                 return true;
         }
-        else
-            return false;
+
+        return false;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

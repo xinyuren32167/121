@@ -104,10 +104,12 @@ enum HunterSpells
     RUNE_HUNTER_VOLATILE_BOMB_DAMAGE = 501520,
     RUNE_HUNTER_SHRAPNEL_BOMB_DOT = 501534,
     RUNE_HUNTER_TORMENTING_SHADOWS_DAMAGE = 501584,
-    RUNE_HUNTER_CURSE_DRAIN_HEAL = 501614,
     RUNE_HUNTER_VORPAL_SHOT_DOT = 501658,
     RUNE_HUNTER_SHADOW_QUIVER_ENERGIZE = 501848,
     RUNE_HUNTER_BLOOD_MOON_HEAL = 501880,
+
+    //Talents
+    TALENT_HUNTER_LOCK_AND_LOAD = 56342,
 };
 
 class rune_hunter_exposed_weakness : public AuraScript
@@ -130,10 +132,6 @@ class rune_hunter_bullseye : public AuraScript
 {
     PrepareAuraScript(rune_hunter_bullseye);
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        return eventInfo.GetDamageInfo();
-    }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
@@ -158,7 +156,6 @@ class rune_hunter_bullseye : public AuraScript
 
     void Register()
     {
-        DoCheckProc += AuraCheckProcFn(rune_hunter_bullseye::CheckProc);
         OnEffectProc += AuraEffectProcFn(rune_hunter_bullseye::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
@@ -179,12 +176,12 @@ class rune_hunter_50cal : public AuraScript
         if (!victim || victim->isDead())
             return;
 
-        float damageDealt = eventInfo.GetDamageInfo()->GetDamage();
+        int32 damageDealt = eventInfo.GetDamageInfo()->GetDamage();
 
         if (damageDealt <= 0)
             return;
 
-        float damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
+        int32 damage = CalculatePct(int32(damageDealt), aurEff->GetAmount());
         int32 amount = std::max<int32>(0, damage);
 
         GetCaster()->CastCustomSpell(RUNE_HUNTER_50CAL_DAMAGE, SPELLVALUE_BASE_POINT0, amount, victim, TRIGGERED_FULL_MASK);
@@ -1471,9 +1468,6 @@ class rune_hunter_mighty_snake_trap : public AuraScript
             return;
 
         auto summonedUnits = player->m_Controlled;
-
-        if (summonedUnits.empty())
-            return;
 
         for (auto const& unit : summonedUnits)
         {
@@ -4110,28 +4104,6 @@ class rune_hunter_tormenting_shadows : public AuraScript
     }
 };
 
-class rune_hunter_curse_drain_heal : public SpellScript
-{
-    PrepareSpellScript(rune_hunter_curse_drain_heal);
-
-    void HandleDamage(SpellEffIndex effIndex)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        int32 damage = GetHitDamage();
-
-        caster->CastCustomSpell(RUNE_HUNTER_CURSE_DRAIN_HEAL, SPELLVALUE_BASE_POINT0, damage, caster, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(rune_hunter_curse_drain_heal::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-    }
-};
-
 class rune_hunter_silent_death : public SpellScript
 {
     PrepareSpellScript(rune_hunter_silent_death);
@@ -4483,6 +4455,26 @@ class rune_hunter_soul_reaper : public AuraScript
     }
 };
 
+class rune_hunter_loaded : public AuraScript
+{
+    PrepareAuraScript(rune_hunter_loaded);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead() )
+            return false;
+
+        return caster->GetAuraEffectOfRankedSpell(TALENT_HUNTER_LOCK_AND_LOAD, EFFECT_0);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(rune_hunter_loaded::CheckProc);
+    }
+};
+
 void AddSC_hunter_perks_scripts()
 {
     RegisterSpellScript(rune_hunter_exposed_weakness);
@@ -4591,7 +4583,6 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_shrapnel_bomb);
     RegisterSpellScript(rune_hunter_improved_backshot);
     RegisterSpellScript(rune_hunter_tormenting_shadows);
-    RegisterSpellScript(rune_hunter_curse_drain_heal);
     RegisterSpellScript(rune_hunter_silent_death);
     RegisterSpellScript(rune_hunter_vorpal_shot);
     RegisterSpellScript(rune_hunter_bowmaster);
@@ -4603,4 +4594,5 @@ void AddSC_hunter_perks_scripts()
     RegisterSpellScript(rune_hunter_blood_moon);
     RegisterSpellScript(rune_hunter_blood_moon_heal);
     RegisterSpellScript(rune_hunter_soul_reaper);
+    RegisterSpellScript(rune_hunter_loaded);
 }

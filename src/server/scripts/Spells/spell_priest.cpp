@@ -1761,9 +1761,10 @@ class spell_pri_mass_resurrection : public SpellScript
 
     std::list <Unit*> FindTargets()
     {
+        std::list <Unit*> targetAvailable = {};
+
         if (Player* caster = GetCaster()->ToPlayer())
         {
-            std::list <Unit*> targetAvailable;
             auto const& allyList = caster->GetGroup()->GetMemberSlots();
 
             for (auto const& target : allyList)
@@ -1777,8 +1778,9 @@ class spell_pri_mass_resurrection : public SpellScript
                             targetAvailable.push_back(dummy);
                     }
             }
-            return targetAvailable;
         }
+
+        return targetAvailable;
     }
 
     void HandleProc()

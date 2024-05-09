@@ -3144,8 +3144,8 @@ class spell_dk_epidemic : public SpellScript
             if (target->HasAura(SPELL_DK_VIRULENT_PLAGUE))
                 return SPELL_CAST_OK;
         }
-        else
-            return SPELL_FAILED_BAD_TARGETS;
+
+        return SPELL_FAILED_BAD_TARGETS;
     }
 
     void FindTargets(std::list<WorldObject*>& targets)

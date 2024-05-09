@@ -267,7 +267,6 @@ void TempSummon::InitSummon()
                     aura->SetDuration(aura->GetDuration());
                 }
             }
-            owner->ToPlayer()->AddSummonUnit(this);
         }
     }
 
@@ -312,10 +311,6 @@ void TempSummon::UnSummon(uint32 msTime)
     Unit* owner = GetSummonerUnit();
     if (owner && owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature()->IsAIEnabled)
         owner->ToCreature()->AI()->SummonedCreatureDespawn(this);
-
-    if (owner && owner->GetTypeId() == TYPEID_PLAYER) {
-        owner->ToPlayer()->RemoveSummonedUnit(this);
-    }
 
     AddObjectToRemoveList();
 }
