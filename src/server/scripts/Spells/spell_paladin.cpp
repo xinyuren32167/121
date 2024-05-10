@@ -1675,27 +1675,6 @@ class spell_pal_art_of_the_blade : public AuraScript
     }
 };
 
-class spell_pal_art_of_war : public AuraScript
-{
-    PrepareAuraScript(spell_pal_art_of_war);
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        Player* caster = GetTarget()->ToPlayer();
-
-        if (!caster || !caster->IsAlive())
-            return;
-
-        if (caster)
-            caster->ModifySpellCooldown(48801, -aurEff->GetAmount());
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_pal_art_of_war::HandleProc, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL);
-    }
-};
-
 class spell_pal_shield_of_vengeance_absorb : public SpellScript
 {
     PrepareSpellScript(spell_pal_shield_of_vengeance_absorb);
@@ -2846,7 +2825,6 @@ void AddSC_paladin_spell_scripts()
     RegisterSpellScript(spell_pal_execution_sentence);
     RegisterSpellScript(spell_pal_execution_sentence_listener);
     RegisterSpellScript(spell_pal_art_of_the_blade);
-    RegisterSpellScript(spell_pal_art_of_war);
     RegisterSpellScript(spell_pal_shield_of_vengeance_absorb);
     RegisterSpellScript(spell_pal_shield_of_vengeance_damage);
     RegisterSpellScript(spell_pal_crusaders_might);
