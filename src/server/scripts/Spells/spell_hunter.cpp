@@ -90,6 +90,7 @@ enum HunterSpells
     SPELL_HUNTER_TALENT_TIP_OF_SPEAR_BUFF = 80233,
     SPELL_HUNTER_BACKSHOT = 85001,
     SPELL_HUNTER_WITHERING_FIRE = 85002,
+    SPELL_HUNTER_WITHERING_FIRE_DAMAGE = 85003,
     SPELL_HUNTER_BLACK_CURSE = 85004,
     SPELL_HUNTER_BLACK_CURSE_HEAL = 85005,
     SPELL_HUNTER_TWILIGHT_PIERCER_STUN = 85007,
@@ -3284,6 +3285,22 @@ class spell_hun_backshot : public SpellScript
     }
 };
 
+class spell_hun_withering_fire_energy : public SpellScript
+{
+    PrepareSpellScript(spell_hun_withering_fire_energy);
+
+    void HandleBuff()
+    {
+        int32 energizeAmount = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_WITHERING_FIRE_DAMAGE)->GetEffect(EFFECT_1).CalcValue();
+        GetCaster()->EnergizeBySpell(GetCaster(), SPELL_HUNTER_WITHERING_FIRE, energizeAmount, POWER_FOCUS);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_hun_withering_fire_energy::HandleBuff);
+    }
+};
+
 class spell_hun_black_curse_reset : public AuraScript
 {
     PrepareAuraScript(spell_hun_black_curse_reset);
@@ -4341,6 +4358,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_wildfire_bomb);
     RegisterSpellScript(spell_hun_animal_companion_check);
     RegisterSpellScript(spell_hun_expert_of_the_wilds);
+    RegisterSpellScript(spell_hun_withering_fire_energy);
 
     //new Hunter_AllMapScript();
     new npc_hunter_spell_stampeded();
