@@ -68,7 +68,7 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[HUNTER_BEAST] = { 14, 80132, "Beast Mastery", 3, 500003, 14.27, true,	500006, POWER_ALL };
     m_Specializations[HUNTER_MARSKMANSHIP] = { 15, 80140, "Marksmanship", 3, 500004, 19.45,	true, 500007, POWER_ALL  };
     m_Specializations[HUNTER_SURVIVAL] = { 16, 19306, "Survival", 3, 500005, 16.46,	true, 500002, POWER_ALL };
-    m_Specializations[HUNTER_DARK_RANGER] = { 35, 85012, "Dark Ranger", 3, 499996, 14, true, 499997, POWER_ALL };
+    m_Specializations[HUNTER_DARK_RANGER] = { 35, 85012, "Dark Ranger", 3, 499996, 13.38, true, 499997, POWER_ALL };
 
     m_Specializations[DK_BLOOD] = { 7, 50371, "Blood", 6, 590001, 13.38, true, 590004, POWER_ALL };
     m_Specializations[DK_FROST] = { 8, 50385, "Frost", 6, 600000, 13.38, true, 600002, POWER_ALL };

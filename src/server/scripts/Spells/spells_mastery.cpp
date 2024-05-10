@@ -883,7 +883,7 @@ class spell_mastery_from_the_shadows : public SpellScript
     {
         if (Player* caster = GetCaster()->ToPlayer())
         {
-            int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_HUNTER_FROM_THE_SHADOWS)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + caster->GetMastery() / 1.66667;
+            int32 bonus = sSpellMgr->GetSpellInfo(MASTERY_HUNTER_FROM_THE_SHADOWS)->GetEffect(EFFECT_0).CalcValue(GetCaster()) + caster->GetMastery() / 1.77778;
 
             caster->CastCustomSpell(MASTERY_HUNTER_FROM_THE_SHADOWS_BUFF, SPELLVALUE_BASE_POINT0, bonus, caster, TRIGGERED_FULL_MASK);
         }
