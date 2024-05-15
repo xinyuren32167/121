@@ -77,7 +77,7 @@ enum DeathKnightSpells
     SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1 = 52284,
 
     //NEW STUFF
-    SPELL_DK_DEATH_PACT = 48473,
+    SPELL_DK_DEATH_PACT = 48743,
     SPELL_DK_HEALING_ABSORB_DEATH_PACT = 80301,
     SPELL_DK_GLACIAL_ADVANCE_DAMAGE = 80305,
     SPELL_DK_GLACIAL_CHILL_STREAK_DAMAGE_BOUNCE = 80310,
@@ -173,6 +173,12 @@ enum DeathKnightSpells
     SPELL_DK_SOUL_LINK_HEAL = 87018,
     SPELL_DK_SOULBOLT_HEAL = 87021,
     SPELL_DK_SOUL_PRESENCE = 87000,
+    SPELL_DK_VAMPIRIC_BLOOD = 55233,
+    SPELL_DK_GOREFIENDS_GRASP = 80363,
+    SPELL_DK_BLOODDRINKER = 80370,
+    SPELL_DK_OUTBREAK = 80374,
+    SPELL_DK_UNHOLY_BLIGHT = 80330,
+    SPELL_DK_SUMMON_GARGOYLE = 49206,
 
     //MASTERY
     SPELL_DK_LIFE_AND_DEATH = 590005,
@@ -358,6 +364,14 @@ public:
                 tick += 5.0f;
             }
             timerLastSummonSpick += diff;
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override
+        {
+            if (id == 0)
+            {
+                me->DespawnOrUnsummon();
+            }
         }
     };
 
@@ -3477,7 +3491,8 @@ class spell_dk_contagions_periodic_tick : public AuraScript
         Position position = caster->GetPosition();
         Creature* creature = caster->FindNearestCreature(NPC_CONTAGION_AREA, 10.f, true);
         float radius = GetSpellInfo()->Effects[EFFECT_0].CalcRadius(caster);
-        if (creature) {
+        if (creature)
+        {
             Position pos = creature->GetPosition();
             float distance = caster->GetDistance(pos);
             if (distance <= radius)
@@ -3485,23 +3500,14 @@ class spell_dk_contagions_periodic_tick : public AuraScript
             else
                 caster->RemoveAura(SPELL_DK_CONTAGIOUS_TARGET_INCREASE);
         }
-        else {
+        else
+        {
             caster->RemoveAura(SPELL_DK_CONTAGIOUS_TARGET_INCREASE);
         }
-
-    }
-
-    void HandleEffectRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster)
-            return;
     }
 
     void Register() override
     {
-        // OnEffectRemove += AuraEffectRemoveFn(spell_dk_contagions_periodic_tick::HandleEffectRemove, EFFECT_0, SPELL_AURA_MOD_MASTERY_PCT, AURA_EFFECT_HANDLE_REAL);
         OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_contagions_periodic_tick::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
     }
 };
@@ -4325,6 +4331,66 @@ class spell_dk_necrotic_protection : public AuraScript
     }
 };
 
+class spell_dk_blood_control : public AuraScript
+{
+    PrepareAuraScript(spell_dk_blood_control);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->learnSpell(SPELL_DK_VAMPIRIC_BLOOD);
+        caster->learnSpell(SPELL_DK_BLOODDRINKER);
+        caster->learnSpell(SPELL_DK_GOREFIENDS_GRASP);
+        caster->learnSpell(SPELL_DK_DEATH_PACT);
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->removeSpell(SPELL_DK_VAMPIRIC_BLOOD, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_DK_BLOODDRINKER, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_DK_GOREFIENDS_GRASP, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_DK_DEATH_PACT, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_blood_control::HandleApply, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_blood_control::HandleRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_dk_master_of_the_dead: public AuraScript
+{
+    PrepareAuraScript(spell_dk_master_of_the_dead);
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->learnSpell(SPELL_DK_OUTBREAK);
+        caster->learnSpell(SPELL_DK_UNHOLY_BLIGHT);
+        caster->learnSpell(SPELL_DK_SUMMON_GARGOYLE);
+    }
+
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetUnitOwner()->ToPlayer();
+
+        caster->removeSpell(SPELL_DK_OUTBREAK, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_DK_UNHOLY_BLIGHT, SPEC_MASK_ALL, false);
+        caster->removeSpell(SPELL_DK_SUMMON_GARGOYLE, SPEC_MASK_ALL, false);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_dk_master_of_the_dead::HandleApply, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_dk_master_of_the_dead::HandleRemove, EFFECT_0, SPELL_AURA_ADD_FLAT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -4435,6 +4501,8 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_sudden_salvation);
     RegisterSpellScript(spell_dk_death_and_renew);
     RegisterSpellScript(spell_dk_necrotic_protection);
+    RegisterSpellScript(spell_dk_blood_control);
+    RegisterSpellScript(spell_dk_master_of_the_dead);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }

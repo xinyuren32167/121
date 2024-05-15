@@ -1110,8 +1110,8 @@ class spell_set_deathknight_blood_T1_2pc : public AuraScript
             vampiric->SetDuration(duration);
         }
         else
-            caster->CastCustomSpell(SPELL_DEATHKNIGHT_VAMPIRIC_BLOOD, SPELLVALUE_AURA_DURATION, duration, caster, TRIGGERED_FULL_MASK);
-
+            if (Aura* vampiric = caster->AddAura(SPELL_DEATHKNIGHT_VAMPIRIC_BLOOD, caster))
+                vampiric->SetDuration(duration);
     }
 
     void Register()
@@ -1782,11 +1782,9 @@ class spell_set_warlock_demonbound_T1_4pc : public AuraScript
 
             if (spellSoulPower <= 0)
                 return;
-            LOG_ERROR("error", "spellSoulPower = {}", spellSoulPower);
             soulPowerAccumulated += spellSoulPower;
             int32 soulPowerThreshold = aurEff->GetAmount();
             int32 cooldown = GetEffect(EFFECT_1)->GetAmount();
-            LOG_ERROR("error", "spellSoulPower = {}", spellSoulPower);
             for (soulPowerAccumulated; soulPowerAccumulated > soulPowerThreshold; soulPowerAccumulated -= soulPowerThreshold)
                 player->ModifySpellCooldown(SPELL_WARLOCK_FIERY_SYMBOL, -cooldown);
         }
@@ -1986,7 +1984,7 @@ class spell_set_shaman_restoration_T1_2pc : public AuraScript
 
         if (spellID != SPELL_SHAMAN_RIPTIDE || eventInfo.GetHealInfo()->GetHeal() <= 0)
             return;
-        LOG_ERROR("error", "riptide check");
+
         if (Player* player = caster->ToPlayer())
         {
             int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
@@ -2168,7 +2166,6 @@ class spell_set_rogue_outlaw_T1_2pc : public AuraScript
             return;
 
         int32 stacks = caster->GetComboPoints();
-        LOG_ERROR("error", "stacks = {}", stacks);
         caster->CastCustomSpell(SPELL_SET_T1_ROGUE_OUTLAW_2PC_BUFF, SPELLVALUE_AURA_STACK, stacks, caster, TRIGGERED_FULL_MASK);
     }
 

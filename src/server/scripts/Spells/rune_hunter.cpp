@@ -2613,6 +2613,8 @@ class rune_hunter_double_trouble : public AuraScript
         if (!caster || caster->isDead())
             return;
 
+        summon->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(summon->getLevel() - (summon->getLevel() / 8) + caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.05f));
+        summon->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(summon->getLevel() + (summon->getLevel() / 8) + caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.05f ));
         caster->AddAura(34902, summon);
         caster->AddAura(34903, summon);
         caster->AddAura(34904, summon);

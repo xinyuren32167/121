@@ -13,6 +13,8 @@ enum GeneralRuneSpells
 {
     RUNE_GENERAL_DYING_BREATH_HEAL  = 100104,
     RUNE_GENERAL_DYING_BREATH_COOLDOWN  = 100105,
+    RUNE_GENERAL_MITTELSCHMERZ_DAMAGE = 100133,
+    RUNE_GENERAL_BLOOD_MAGIC_DAMAGE = 100134,
 };
 
 class spell_second_wind : public AuraScript
@@ -491,9 +493,9 @@ class spell_echo_of_light : public AuraScript
     }
 };
 
-class spell_mittelschmerz_blood_magic : public AuraScript
+class spell_mittelschmerz : public AuraScript
 {
-    PrepareAuraScript(spell_mittelschmerz_blood_magic);
+    PrepareAuraScript(spell_mittelschmerz);
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
@@ -506,13 +508,38 @@ class spell_mittelschmerz_blood_magic : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         uint32 damage = GetCaster()->CountPctFromCurHealth(aurEff->GetAmount());
-        GetCaster()->DealDamage(GetCaster(), GetCaster(), damage);
+        GetCaster()->CastCustomSpell(RUNE_GENERAL_MITTELSCHMERZ_DAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
     }
 
     void Register() override
     {
-        DoCheckProc += AuraCheckProcFn(spell_mittelschmerz_blood_magic::CheckProc);
-        OnEffectProc += AuraEffectProcFn(spell_mittelschmerz_blood_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_mittelschmerz::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mittelschmerz::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_blood_magic : public AuraScript
+{
+    PrepareAuraScript(spell_blood_magic);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->HasAttribute(SPELL_ATTR4_ALLOW_CAST_WHILE_CASTING))
+            return false;
+
+        return (GetCaster() && GetCaster()->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        uint32 damage = GetCaster()->CountPctFromCurHealth(aurEff->GetAmount());
+        GetCaster()->CastCustomSpell(RUNE_GENERAL_BLOOD_MAGIC_DAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), TRIGGERED_FULL_MASK);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_blood_magic::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_blood_magic::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -979,7 +1006,8 @@ void AddSC_generals_perks_scripts()
     RegisterSpellScript(spell_ysera_s_gift);
     RegisterSpellScript(spell_ysera_s_gift_target);
     RegisterSpellScript(spell_echo_of_light);
-    RegisterSpellScript(spell_mittelschmerz_blood_magic);
+    RegisterSpellScript(spell_mittelschmerz);
+    RegisterSpellScript(spell_blood_magic);
     RegisterSpellScript(spell_azerite_veins);
     RegisterSpellScript(spell_killing_spree);
     RegisterSpellScript(spell_holy_aegis);

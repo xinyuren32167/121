@@ -990,6 +990,24 @@ class spell_gen_proc_reduced_above_60 : public AuraScript
     }
 };
 
+class spell_hand_of_justice_exception : public AuraScript
+{
+    PrepareAuraScript(spell_hand_of_justice_exception);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->HasAttribute(SPELL_ATTR4_ALLOW_CAST_WHILE_CASTING))
+            return false;
+
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_hand_of_justice_exception::CheckProc);
+    }
+};
+
 /* 21708 - Summon Noxxion's Spawns
    30205 - Shadow Cage
    52249 - Quetz'lun's Hex of Air
@@ -4696,6 +4714,7 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScript(spell_gen_knock_away);
     RegisterSpellScript(spell_gen_mod_radius_by_caster_scale);
     RegisterSpellScript(spell_gen_proc_reduced_above_60);
+    RegisterSpellScript(spell_hand_of_justice_exception);
     RegisterSpellScript(spell_gen_visual_dummy_stun);
     RegisterSpellScript(spell_gen_random_target32);
     RegisterSpellScript(spell_gen_hate_to_zero);

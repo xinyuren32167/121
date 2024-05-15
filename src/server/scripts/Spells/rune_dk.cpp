@@ -768,7 +768,8 @@ class rune_dk_grip_of_the_dead : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (!eventInfo.GetActionTarget()->HasAura(RUNE_DK_GRIP_OF_THE_DEAD_SLOW))
-            GetCaster()->CastCustomSpell(RUNE_DK_GRIP_OF_THE_DEAD_SLOW, SPELLVALUE_AURA_DURATION, aurEff->GetAmount(), eventInfo.GetActionTarget(), TRIGGERED_FULL_MASK);
+            if (Aura* slow = GetCaster()->AddAura(RUNE_DK_GRIP_OF_THE_DEAD_SLOW, eventInfo.GetActionTarget()))
+                slow->SetDuration(aurEff->GetAmount());
     }
 
     void Register() override
@@ -1181,10 +1182,10 @@ class rune_dk_collective_hysteria : public AuraScript
     {
         Unit* caster = GetCaster();
 
-        if (!caster)
+        if (!caster || caster->isDead())
             return;
 
-        if(Aura* aura = GetRuneAura(caster))
+        if (Aura* aura = GetRuneAura(caster))
             if (GetAura()->GetOwner()->ToUnit() != caster)
             {
                 caster->CastSpell(caster, SPELL_DK_HYSTERIA, TRIGGERED_FULL_MASK);
@@ -1325,9 +1326,9 @@ class rune_dk_in_service_of_gorefiend : public AuraScript
     }
 };
 
-class rune_dk_in_service_of_gorefiend_runic : public SpellScript
+class rune_dk_in_service_of_gorefiend_runic : public AuraScript
 {
-    PrepareSpellScript(rune_dk_in_service_of_gorefiend_runic);
+    PrepareAuraScript(rune_dk_in_service_of_gorefiend_runic);
 
     Aura* GetRuneAura(Unit* caster)
     {
@@ -1339,7 +1340,7 @@ class rune_dk_in_service_of_gorefiend_runic : public SpellScript
         return nullptr;
     }
 
-    void HandleProc()
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (Aura* rune = GetRuneAura(GetCaster()))
             GetCaster()->EnergizeBySpell(GetCaster(), SPELL_DK_VAMPIRIC_BLOOD, rune->GetEffect(EFFECT_1)->GetAmount(), POWER_RUNIC_POWER);
@@ -1347,7 +1348,7 @@ class rune_dk_in_service_of_gorefiend_runic : public SpellScript
 
     void Register()
     {
-        OnCast += SpellCastFn(rune_dk_in_service_of_gorefiend_runic::HandleProc);
+        OnEffectApply += AuraEffectApplyFn(rune_dk_in_service_of_gorefiend_runic::HandleApply, EFFECT_0, SPELL_AURA_MOD_HEALING_PCT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1358,11 +1359,11 @@ class rune_dk_hardened_blood : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         if (Aura* vampiric = GetCaster()->GetAura(SPELL_DK_VAMPIRIC_BLOOD))
-            vampiric->SetDuration(vampiric->GetDuration() + 2000);
+            vampiric->SetDuration(vampiric->GetDuration() + 1000);
         else
         {
             if(Aura* aura = GetCaster()->AddAura(SPELL_DK_VAMPIRIC_BLOOD, GetCaster()))
-                aura->SetDuration(4000);
+                aura->SetDuration(3000);
         }
     }
 

@@ -2084,7 +2084,8 @@ class spell_hun_death_chakram : public SpellScript
         if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        GetCaster()->CastSpell(GetCaster(), 80168, TRIGGERED_FULL_MASK);
+        int32 energizeAmount = sSpellMgr->AssertSpellInfo(SPELL_HUNTER_DEATH_CHAKRAM)->GetEffect(EFFECT_2).CalcValue();
+        GetCaster()->EnergizeBySpell(GetCaster(), SPELL_HUNTER_DEATH_CHAKRAM, energizeAmount, POWER_FOCUS);
     }
 
     void Register() override
@@ -2241,21 +2242,24 @@ class spell_hun_dire_beast : public SpellScript
 
     void HandleSummon()
     {
-        if (!GetCaster() || GetCaster()->isDead())
+        Unit* caster = GetCaster();
+        if (!caster || caster->isDead())
             return;
 
         std::vector<int32> summons = { 400000,400001,400002 };
         int32 summonId = summons[rand() % summons.size()];
 
-        Position const& pos = GetCaster()->GetPosition();
+        Position const& pos = caster->GetPosition();
         SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(61);
         int32 duration = GetSpellInfo()->GetDuration();
 
-        Creature* summon = GetCaster()->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
+        Creature* summon = caster->SummonCreature(summonId, pos, TEMPSUMMON_TIMED_DESPAWN, duration, 0, properties);
 
-        GetCaster()->AddAura(34902, summon);
-        GetCaster()->AddAura(34903, summon);
-        GetCaster()->AddAura(34904, summon);
+        summon->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(summon->getLevel() - (summon->getLevel() / 8) + caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.05f));
+        summon->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(summon->getLevel() + (summon->getLevel() / 8) + caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.05f));
+        caster->AddAura(34902, summon);
+        caster->AddAura(34903, summon);
+        caster->AddAura(34904, summon);
 
         if (summon && summon->IsAlive())
             if (Unit* target = ObjectAccessor::GetUnit(*GetCaster(), GetCaster()->GetTarget()))
@@ -2363,6 +2367,8 @@ class spell_hun_call_of_wild_periodic : public SpellScript
                 }
             }
 
+            pet->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(pet->getLevel() - (pet->getLevel() / 8)));
+            pet->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(pet->getLevel() + (pet->getLevel() / 8)));
             pet->AddAura(34902, GetCaster());
             pet->AddAura(34903, GetCaster());
             pet->AddAura(34904, GetCaster());

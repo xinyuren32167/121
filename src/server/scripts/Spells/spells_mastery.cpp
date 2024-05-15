@@ -940,6 +940,7 @@ class spell_mastery_bloodshield : public AuraScript
                 int32 currentAmount = shield->GetEffect(EFFECT_0)->GetAmount();
                 int32 amount = std::min<int32>(shieldBonus + currentAmount, caster->CountPctFromMaxHealth(20));
                 shield->GetEffect(EFFECT_0)->ChangeAmount(amount);
+                shield->RefreshDuration();
             }
             else
             {
