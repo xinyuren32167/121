@@ -152,7 +152,7 @@ void AutoBalanceManager::ApplyScalingHealthAndMana(Map* map, Creature* creature)
     if (!creature->IsAlive())
         return;
 
-    uint8 playerCount = map->GetPlayersCountExceptGMs();
+    uint32 playerCount = map->GetPlayersCountExceptGMs();
     bool isRaid = map->IsRaid();
 
     if (playerCount == 0)
