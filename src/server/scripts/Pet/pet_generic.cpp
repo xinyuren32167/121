@@ -496,7 +496,7 @@ class spell_pet_gen_valkyr_guardian_smite : public SpellScript
         if (!GetCaster()->GetCharmerOrOwner() || GetCaster()->GetCharmerOrOwner()->isDead())
             return;
 
-        int32 damage = CalculatePct(GetCaster()->GetCharmerOrOwner()->GetTotalAttackPowerValue(BASE_ATTACK), 25);
+        int32 damage = CalculatePct(GetCaster()->GetCharmerOrOwner()->GetTotalAttackPowerValue(BASE_ATTACK), 33);
 
         if (Unit* target = GetHitUnit())
         {

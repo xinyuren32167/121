@@ -2468,35 +2468,6 @@ class spell_dk_obliterate : public SpellScript
     }
 };
 
-class spell_dk_festering_wound : public AuraScript
-{
-    PrepareAuraScript(spell_dk_festering_wound);
-
-    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-
-        if (!caster || caster->isDead())
-            return;
-
-        caster->CastSpell(GetTarget(), SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
-
-        if (Player* player = caster->ToPlayer())
-            if (player->HasAura(T1_DEATHKNIGHT_UNHOLY_2PC))
-            {
-                Pet* pet = player->GetPet();
-
-                if (pet && pet->IsAlive())
-                    player->AddAura(T1_DEATHKNIGHT_UNHOLY_2PC_BUFF, pet);
-            }
-    }
-
-    void Register() override
-    {
-        OnEffectRemove += AuraEffectRemoveFn(spell_dk_festering_wound::HandleRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
 class spell_dk_scourge_strike_new : public SpellScript
 {
     PrepareSpellScript(spell_dk_scourge_strike_new);
@@ -2512,6 +2483,15 @@ class spell_dk_scourge_strike_new : public SpellScript
             targetAura->ModStackAmount(-1);
 
             caster->CastSpell(target, SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+
+            if (Player* player = caster->ToPlayer())
+                if (player->HasAura(T1_DEATHKNIGHT_UNHOLY_2PC))
+                {
+                    Pet* pet = player->GetPet();
+
+                    if (pet && pet->IsAlive())
+                        player->AddAura(T1_DEATHKNIGHT_UNHOLY_2PC_BUFF, pet);
+                }
         }
     }
 
@@ -2611,7 +2591,7 @@ class spell_dk_virulent_plague : public AuraScript
         if (!GetCaster() || GetCaster()->isDead())
             return;
 
-        GetCaster()->CastSpell(GetTarget(), SPELL_DK_VIRULENT_PLAGUE_PROC, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(GetTarget()->GetPositionX(), GetTarget()->GetPositionY(), GetTarget()->GetPositionZ(), SPELL_DK_VIRULENT_PLAGUE_PROC, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -3380,6 +3360,15 @@ class spell_dk_apocalyspe : public SpellScript
 
                 GetCaster()->CastCustomSpell(SPELL_DK_ARMY_OF_THE_DEAD, SPELLVALUE_AURA_DURATION, 20000, GetCaster(), TRIGGERED_FULL_MASK);
                 GetCaster()->CastSpell(target, SPELL_DK_FESTERING_WOUND_PROC, TRIGGERED_FULL_MASK);
+
+                if (Player* player = GetCaster()->ToPlayer())
+                    if (player->HasAura(T1_DEATHKNIGHT_UNHOLY_2PC))
+                    {
+                        Pet* pet = player->GetPet();
+
+                        if (pet && pet->IsAlive())
+                            player->AddAura(T1_DEATHKNIGHT_UNHOLY_2PC_BUFF, pet);
+                    }
             }
         }
     }
@@ -3573,10 +3562,11 @@ class spell_dk_rime : public AuraScript
 
         if (procSpell == SPELL_DK_FROSTSCYTHE)
             if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_2)->GetAmount()))
-                caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
-            else
-                if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()))
-                    caster->CastCustomSpell(GetCaster(), SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
+                caster->CastCustomSpell(caster, SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
+
+        if (procSpell == SPELL_DK_OBLITERATE)
+            if (roll_chance_i(aurEff->GetBase()->GetEffect(EFFECT_1)->GetAmount()))
+                caster->CastCustomSpell(caster, SPELL_DK_RIME_PROC, nullptr, &cost, &damageAmount, true, nullptr);
     }
 
     void Register() override
@@ -4440,7 +4430,6 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_lichborne_leech);
     RegisterSpellScript(spell_dk_raise_dead_new);
     RegisterSpellScript(spell_dk_obliterate);
-    RegisterSpellScript(spell_dk_festering_wound);
     RegisterSpellScript(spell_dk_scourge_strike_new);
     RegisterSpellScript(spell_dk_summon_gargoyle_energy);
     RegisterSpellScript(spell_dk_summon_gargoyle_power);
