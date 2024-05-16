@@ -331,27 +331,32 @@ public:
         npc_dk_spell_glacial_advanceAI(Creature* creature) : ScriptedAI(creature) { }
 
         uint32 timerLastSummonSpick = 100;
-        Position oldpos;
         float tick = 1;
+        Position lastPosition;
+
         void Reset() override
         {
             me->CombatStop(true);
             me->AttackStop();
             me->SetReactState(REACT_PASSIVE);
-            oldpos = me->GetPosition();
+            lastPosition = me->GetFirstCollisionPosition(40.f, 0);
         }
 
         void UpdateAI(uint32 diff) override
         {
-            Position pos = me->GetFirstCollisionPosition(1.f + tick, 0);
+            Position pos = me->GetFirstCollisionPosition(tick, 0);
 
-            if (!pos.IsPositionValid())
-                me->DespawnOrUnsummon();
+            if (pos.IsWithinBox(lastPosition, 1.f, 1.f, 1.f))
+                return;
 
             if (tick > 100)
                 me->DespawnOrUnsummon();
 
             if (timerLastSummonSpick >= 150) {
+
+                if (!pos.IsPositionValid())
+                    me->DespawnOrUnsummon();
+
                 timerLastSummonSpick = 0;
                 Unit* owner = me->GetOwner();
 
@@ -362,17 +367,12 @@ public:
                 go->DespawnOrUnsummon(150ms);
                 owner->CastSpell(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), SPELL_DK_GLACIAL_ADVANCE_DAMAGE, true);
                 tick += 5.0f;
+
             }
+
             timerLastSummonSpick += diff;
         }
 
-        void MovementInform(uint32 /*type*/, uint32 id) override
-        {
-            if (id == 0)
-            {
-                me->DespawnOrUnsummon();
-            }
-        }
     };
 
     CreatureAI* GetAI(Creature* creature) const override
