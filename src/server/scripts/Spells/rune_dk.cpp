@@ -648,6 +648,9 @@ class rune_dk_hemoglobin : public AuraScript
         if (healInfo->GetHeal() < 0)
             return false;
 
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->HasAttribute(SPELL_ATTR4_ALLOW_CAST_WHILE_CASTING))
+            return false;
+
         return GetCaster() && GetCaster()->IsAlive();
     }
 
