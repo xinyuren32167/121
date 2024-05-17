@@ -372,6 +372,40 @@ class spell_set_shield_intellect : public AuraScript
     }
 };
 
+// 79417 - Shard of the God
+class spell_set_shard_of_the_god : public AuraScript
+{
+    PrepareAuraScript(spell_set_shard_of_the_god);
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandlePeriodic(AuraEffect const* aurEff)
+    {
+        Unit* caster = GetCaster();
+
+        if (!caster || caster->isDead())
+            return;
+
+        if (Player* player = caster->ToPlayer())
+        {
+            int32 totalVersatility = player->GetUInt32Value(static_cast<uint16>(PLAYER_FIELD_COMBAT_RATING_1) + CR_EXPERTISE);
+            int32 amount = CalculatePct(totalVersatility, aurEff->GetAmount());
+
+            GetEffect(EFFECT_0)->ChangeAmount(amount);
+        }
+    }
+
+    void Register() override
+    {
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_set_shard_of_the_god::CalcPeriodic, EFFECT_1, SPELL_AURA_ANY);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_set_shard_of_the_god::HandlePeriodic, EFFECT_1, SPELL_AURA_ANY);
+    }
+};
+
 // --------------------------------------------------------------------------- Warrior Sets ---------------------------------------------------------------------------
 
 // 95100 - Battlegear of Rage Fury T1 Bonus 2
@@ -2208,7 +2242,8 @@ void AddSC_item_set_bonus_scripts()
     RegisterSpellScript(spell_set_regalia_of_undead_cleansing);
     RegisterSpellScript(spell_set_staff_intellect);
     RegisterSpellScript(spell_set_shield_intellect);
-
+    RegisterSpellScript(spell_set_shard_of_the_god);
+    
     RegisterSpellScript(spell_set_warrior_fury_T1_B2);
     RegisterSpellScript(spell_set_warrior_fury_T1_B2_visual);
     RegisterSpellScript(spell_set_warrior_fury_T1_B4);
