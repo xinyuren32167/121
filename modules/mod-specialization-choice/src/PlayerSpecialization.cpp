@@ -76,26 +76,26 @@ void PlayerSpecialization::InitializeSpecializations()
     m_Specializations[DK_SOULWEAVER] = { 39, 87000, "Soulweaver", 6, 590005, 21.40, false, 0, POWER_ALL };
 
     m_Specializations[DRUID_BALANCE] = { 10, 80536, "Balance", 11, 700000, 23.78, false, 0, POWER_ALL };
-    m_Specializations[DRUID_FERAL] = { 11, 80549, "Feral", 11, 700004, 13.38, true, 700006, POWER_ALL };
+    m_Specializations[DRUID_FERAL] = { 11, 80549, "Feral", 11, 700004, 17.83, true, 700006, POWER_ALL };
     m_Specializations[DRUID_RESTO] = { 12, 53251, "Restoration", 11, 700010, 53.50, false, 0, POWER_ALL };
     m_Specializations[DRUID_GUARDIAN] = { 13, 80510, "Guardian", 11, 700007, 26.75, true, 700009, POWER_ALL };
 
-    m_Specializations[PRIEST_DISCI] = { 29, 48066, "Discipline", 5, 900000, 19.45, true, 900001, POWER_ALL };
+    m_Specializations[PRIEST_DISCI] = { 29, 48066, "Discipline", 5, 900000, 21.40, true, 900001, POWER_ALL };
     m_Specializations[PRIEST_HOLY] = { 30, 48078, "Holy", 5, 900005, 21.40, false, 0, POWER_ALL };
     m_Specializations[PRIEST_SHADOW] = { 31, 81048, "Shadow", 5, 900008, 53.50, false, 0, POWER_ALL };
     m_Specializations[PRIEST_ABSOLUTION] = { 36, 900013, "Absolution", 5, 900010, 53.50, false, 0, POWER_ALL };
 
     m_Specializations[SHAMAN_ELEMENTAL] = { 23, 403, "Elemental", 7, 1000000, 21.40, false, 0, POWER_RUNIC_POWER };
-    m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 324, "Enchancement", 7, 1000002, 13.38, true, 1000003, POWER_MANA };
-    m_Specializations[SHAMAN_RESTORATION] = { 25, 331, "Restoration", 7, 1000005, 8.92, false, 0, POWER_MANA };
+    m_Specializations[SHAMAN_ENCHANCEMENT] = { 24, 324, "Enchancement", 7, 1000002, 16.46, true, 1000003, POWER_MANA };
+    m_Specializations[SHAMAN_RESTORATION] = { 25, 331, "Restoration", 7, 1000005, 11.89, false, 0, POWER_MANA };
     m_Specializations[SHAMAN_SPIRIT_MASTER] = { 32, 84101, "Spirit Master", 7, 1000007, 26.75, true, 1000009, POWER_MANA };
 
-    m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 4, 1100000, 15.29, true, 1100001, POWER_ALL };
+    m_Specializations[ROGUE_ASSASSINATION] = { 20, 57993, "Assassination", 4, 1100000, 16.46, true, 1100001, POWER_ALL };
     m_Specializations[ROGUE_COMBAT] = { 21, 51690, "Combat", 4, 1100003, 11.89, false, 0, POWER_ALL };
-    m_Specializations[ROGUE_SUBTLETY] = { 22, 82016 , "Subtlety", 4, 1100005, 10.70, true, 1100006, POWER_ALL };
+    m_Specializations[ROGUE_SUBTLETY] = { 22, 82016 , "Subtlety", 4, 1100005, 11.89, true, 1100006, POWER_ALL };
     m_Specializations[ROGUE_OUTLAW] = { 38, 82082, "Outlaw", 4, 1099999, 35.67, true, 1099998, POWER_ALL };
 
-    m_Specializations[WARLOCK_AFFLICTION] = { 26, 83051, "Affliction", 9, 1100018, 10.70, true, 1100021, POWER_ALL };
+    m_Specializations[WARLOCK_AFFLICTION] = { 26, 83051, "Affliction", 9, 1100018, 11.89, true, 1100021, POWER_ALL };
     m_Specializations[WARLOCK_DEMONOLOGY] = { 27, 83031, "Demonology", 9, 1100020, 17.83, true, 1100023, POWER_ALL };
     m_Specializations[WARLOCK_DESTRUCTION] = { 28, 47820 , "Destruction", 9, 1100019, 26.75, false, 0, POWER_ALL };
     m_Specializations[WARLOCK_DEMONBOUND] = { 40, 61610, "Demonbound", 9, 1100024, 8.92, true, 1100025, POWER_ALL };
