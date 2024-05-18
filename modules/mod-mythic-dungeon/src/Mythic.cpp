@@ -8,7 +8,7 @@
 #include "Chat.h"
 #include "LuaEngine.h"
 
-Mythic::Mythic(Player* keyOwner, uint32 dungeonId, uint32 level)
+Mythic::Mythic(Player* keyOwner, uint32 dungeonId, uint32 level, uint32 bonusMultiplier)
 {
     EnemyForces = 0.f;
     DungeonId = dungeonId;
@@ -25,6 +25,7 @@ Mythic::Mythic(Player* keyOwner, uint32 dungeonId, uint32 level)
     Level = level;
     m_Group = keyOwner->GetGroup();
     KeyOwner = keyOwner;
+    BonusMultiplier = bonusMultiplier;
     StateBossMythicStore = sMythicMgr->GetMythicBossesByDungeonId(dungeonId);
 }
 
@@ -244,6 +245,8 @@ bool Mythic::MeetTheConditionsToCompleteTheDungeon()
 
 void Mythic::GiveRewards()
 {
+    srand(static_cast<unsigned int>(time(0)));
+
     MythicRewardToken reward = sMythicMgr->GetMythicRewardTokenByLevel(Level);
 
     Map::PlayerList const& playerList = Dungeon->GetPlayers();
@@ -252,17 +255,36 @@ void Mythic::GiveRewards()
     {
         if (Player* player = playerIteration->GetSource())
         {
-            if (uint32 itemId = sMythicMgr->GetMythicRewardItemByLevel(player, Level))
+            uint32 runicDust = reward.runicDust * (BonusMultiplier / 100);
+            uint32 runicEssence = reward.runicEssence * (BonusMultiplier / 100);
+            uint32 tokenCount = reward.tokenCount * (BonusMultiplier / 100);
+
+            player->AddItem(70008, runicDust);
+            player->AddItem(70009, runicEssence);
+            player->AddItem(reward.tokenId, tokenCount);
+
+            int guaranteedRewards = BonusMultiplier / 100;
+            float extraChance = BonusMultiplier % 100;
+
+            for (int i = 0; i < guaranteedRewards; ++i)
             {
-                player->AddItem(itemId, 1);
+                if (uint32 itemId = sMythicMgr->GetMythicRewardItemByLevel(player, Level))
+                {
+                    player->AddItem(itemId, 1);
+                }
             }
 
-            player->AddItem(70008, reward.runicDust);
-            player->AddItem(70009, reward.runicEssence);
-            player->AddItem(reward.tokenId, reward.tokenCount);
+            float randomValue = static_cast<float>(rand()) / RAND_MAX;
+
+            if (randomValue < (extraChance / 100.0))
+            {
+                if (uint32 itemId = sMythicMgr->GetMythicRewardItemByLevel(player, Level))
+                {
+                    player->AddItem(itemId, 1);
+                }
+            }
         }
     }
-
 }
 
 int8 Mythic::CalculateUpgradeKey()

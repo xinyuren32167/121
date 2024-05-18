@@ -102,6 +102,14 @@ public:
         uint32 itemId = item->GetEntry();
         MythicDungeon foundDungeon;
 
+        if (Group* group = player->GetGroup()) {
+            if (group->isRaidGroup())
+                return false;
+        }
+
+        if (Mythic* mythic = sMythicMgr->GetMythicPlayer(player))
+            return false;
+
         sMythicMgr->FindMythicDungeonByItsKeyItemId(itemId, foundDungeon);
 
         if (!foundDungeon)

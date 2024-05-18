@@ -366,6 +366,7 @@ public:
                 GameObject* go = owner->SummonGameObject(188537, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), 0, 0, 0, 0, 0, 1000, false, GO_SUMMON_TIMED_DESPAWN);
                 go->DespawnOrUnsummon(150ms);
                 owner->CastSpell(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), SPELL_DK_GLACIAL_ADVANCE_DAMAGE, true);
+
                 tick += 5.0f;
 
             }

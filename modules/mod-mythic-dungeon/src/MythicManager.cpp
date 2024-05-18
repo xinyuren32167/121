@@ -42,7 +42,7 @@ void MythicManager::InitializeMythicDungeons()
 {
     MythicDungeonStore = {};
 
-    QueryResult result = WorldDatabase.Query("SELECT id, amountToKill, timeToComplete, mapId, `name`, position_x, position_y, position_z, orientation, itemId FROM dungeon_mythic WHERE `enable` = 1");
+    QueryResult result = WorldDatabase.Query("SELECT id, amountToKill, timeToComplete, mapId, `name`, position_x, position_y, position_z, orientation, itemId,`bonus` FROM dungeon_mythic WHERE `enable` = 1");
 
     if (!result)
         return;
@@ -60,7 +60,8 @@ void MythicManager::InitializeMythicDungeons()
         float z = fields[7].Get<float>();
         float o = fields[8].Get<float>();
         uint32 itemId = fields[9].Get<uint32>();
-        MythicDungeon dungeon = { id, amountToKill, timeToComplete, mapId, x, y, z, o, itemId };
+        uint32 bonus = fields[10].Get<uint32>();
+        MythicDungeon dungeon = { id, amountToKill, timeToComplete, mapId, x, y, z, o, itemId, bonus };
         MythicDungeonStore.push_back(dungeon);
     } while (result->NextRow());
 }
@@ -199,7 +200,6 @@ void MythicManager::Update(uint32 diff)
         }
         ++it;
     }
-
 }
 
 void MythicManager::AddMythicDungeon(uint32 instanceId, Mythic* m)
@@ -697,7 +697,15 @@ void MythicManager::ListenCreationMythicOnMapChanged(Player* leader)
     if (it == AsyncCreationMythic.end())
         return;
 
-    Mythic* mythic = new Mythic(leader, it->second->dungeonId, it->second->level);
+    MythicDungeon dungeon;
+
+    GetMythicDungeonByDungeonId(it->second->dungeonId, dungeon);
+
+    if (!dungeon)
+        return;
+
+    Mythic* mythic = new Mythic(leader, it->second->dungeonId, it->second->level, dungeon.bonusMultiplier);
+
     AddMythicDungeon(leader->GetInstanceId(), mythic);
 
     AsyncCreationMythic.erase(it);

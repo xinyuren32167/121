@@ -17224,7 +17224,7 @@ void Unit::ApplyCooldownAndAmplitudeReduction()
 
     float speed = GetFloatValue(UNIT_MOD_CAST_SPEED);
 
-    float initialHaste = 1 - 0.99;
+    float initialHaste = 1 - speed;
     float maxSpeed = std::min(initialHaste * 100, 50.f);
 
     if (speed == 1) {

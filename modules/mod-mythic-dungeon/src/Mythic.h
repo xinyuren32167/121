@@ -19,7 +19,7 @@ struct MythicBossState {
 class Mythic {
 
 public:
-    Mythic(Player* keyOwner, uint32 dungeonId, uint32 level);
+    Mythic(Player* keyOwner, uint32 dungeonId, uint32 level, uint32 bonus);
     ~Mythic();
 
     typedef std::vector<MythicBossState> StateBossMythicContainer;
@@ -72,6 +72,7 @@ private:
     float EnemyForces;
     uint32 Deaths;
     uint32 Level;
+    uint32 BonusMultiplier;
     StateBossMythicContainer StateBossMythicStore;
 };
 #endif

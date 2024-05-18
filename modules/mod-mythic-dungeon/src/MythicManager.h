@@ -45,6 +45,7 @@ struct MythicDungeon {
     float z;
     float o;
     uint32 itemId;
+    uint32 bonusMultiplier;
     explicit operator bool() const
     {
         return id;
