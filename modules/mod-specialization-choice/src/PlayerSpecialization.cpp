@@ -6,6 +6,7 @@
 #include "ElunaIncludes.h"
 #include "LuaEngine.h"
 #include "boost/iterator/counting_iterator.hpp"
+#include "RunesManager.h"
 
 std::map<uint64 /* guid */, Spec> PlayerSpecialization::m_PlayersSpecialization = {};
 std::map<uint32 /* specId */, Specialization> PlayerSpecialization::m_Specializations = {};
@@ -166,6 +167,11 @@ uint32 PlayerSpecialization::GetSpellException(Player* player, uint32 spellId)
     if (player->HasAura(SPELL_WARRIOR_WARBREAKER_REPLACER) && spellId == SPELL_WARRIOR_COLOSSUS_SMASH) {
         return SPELL_WARRIOR_WARBREAKER_REPLACER;
     }
+}
+
+void PlayerSpecialization::RemoveSpellWhenTalentChange(Player* player)
+{
+
 }
 
 

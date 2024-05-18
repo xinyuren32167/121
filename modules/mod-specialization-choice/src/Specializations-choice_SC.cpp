@@ -51,6 +51,12 @@ public:
     }
 
 
+    void OnPlayerTalentsReset(Player* player, bool noCost)
+    {
+        PlayerSpecialization::RemoveSpellWhenTalentChange(player);
+    }
+
+
     void IniatializeWarlockOnLogin(Player* player) {
 
         player->setPowerType(POWER_ENERGY);

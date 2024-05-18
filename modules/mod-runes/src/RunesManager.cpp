@@ -32,7 +32,6 @@ void RunesManager::SetupConfig()
     config.upgradeCostRunicEssence.insert(std::make_pair(EPIC_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_EPIC")));
     config.upgradeCostRunicEssence.insert(std::make_pair(LEGENDARY_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_LEGENDARY")));
     config.upgradeCostRunicEssence.insert(std::make_pair(MYTHICAL_QUALITY, sWorld->GetValue("CONFIG_COST_RUNIC_ESSENCE_MYTHICAL")));
-
 }
 
 void RunesManager::LoadAllRunes()
