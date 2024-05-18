@@ -15,6 +15,7 @@ enum GeneralRuneSpells
     RUNE_GENERAL_DYING_BREATH_COOLDOWN  = 100105,
     RUNE_GENERAL_MITTELSCHMERZ_DAMAGE = 100133,
     RUNE_GENERAL_BLOOD_MAGIC_DAMAGE = 100134,
+    RUNE_GENERAL_ECHO_OF_LIGHT_PROC = 100120,
 };
 
 class spell_second_wind : public AuraScript
@@ -430,46 +431,24 @@ class spell_echo_of_light : public AuraScript
 {
     PrepareAuraScript(spell_echo_of_light);
 
-    Aura* GetRuneAura()
+    bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if (GetCaster()->HasAura(100114))
-            return GetCaster()->GetAura(100114);
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->HasAttribute(SPELL_ATTR4_ALLOW_CAST_WHILE_CASTING))
+            return false;
 
-        if (GetCaster()->HasAura(100115))
-            return GetCaster()->GetAura(100115);
+        if (!GetCaster() || GetCaster()->isDead())
+            return false;
 
-        if (GetCaster()->HasAura(100116))
-            return GetCaster()->GetAura(100116);
-
-        if (GetCaster()->HasAura(100117))
-            return GetCaster()->GetAura(100117);
-
-        if (GetCaster()->HasAura(100118))
-            return GetCaster()->GetAura(100118);
-
-        if (GetCaster()->HasAura(100119))
-            return GetCaster()->GetAura(100119);
-
-        return nullptr;
+        return eventInfo.GetHealInfo();
     }
 
-    int GetHealPct()
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_0).BasePoints + 1;
-    }
+        int32 totalTicks = sSpellMgr->AssertSpellInfo(RUNE_GENERAL_ECHO_OF_LIGHT_PROC)->GetMaxTicks();
+        int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount()) / totalTicks;
+        int32 maxAmount = CalculatePct(eventInfo.GetProcTarget()->GetMaxHealth(), 30);
 
-    int GetProcSpell()
-    {
-        return GetRuneAura()->GetSpellInfo()->GetEffect(EFFECT_1).TriggerSpell;
-    }
-
-    void HandleProc(AuraEffect const*  /*aurEff*/, ProcEventInfo& eventInfo)
-    {
-        int32 totalTicks = sSpellMgr->AssertSpellInfo(GetProcSpell())->GetMaxTicks();
-        int32 amount = int32(CalculatePct(eventInfo.GetHealInfo()->GetHeal(), GetHealPct()) / totalTicks);
-        int32 maxAmount = int32(CalculatePct(eventInfo.GetProcTarget()->GetMaxHealth(), 30));
-
-        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(GetProcSpell(), 0))
+        if (AuraEffect* protEff = eventInfo.GetProcTarget()->GetAuraEffect(RUNE_GENERAL_ECHO_OF_LIGHT_PROC, 0))
         {
             int32 remainingTicks = totalTicks - protEff->GetTickNumber();
             int32 remainingAmount = protEff->GetAmount() * remainingTicks;
@@ -477,18 +456,13 @@ class spell_echo_of_light : public AuraScript
 
             amount = (std::min<int32>(amount + remainingAmountPerTick, maxAmount));
         }
-
-        if (!eventInfo.GetActor() || eventInfo.GetActor()->isDead())
-            return;
-
-        if (!eventInfo.GetProcTarget() || eventInfo.GetProcTarget()->isDead())
-            return;
-
-        eventInfo.GetProcTarget()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActor(), GetProcSpell(), SPELL_AURA_PERIODIC_HEAL, amount, TRIGGERED_IGNORE_AURA_SCALING);
+        else
+            GetCaster()->CastDelayedSpellWithPeriodicAmount(eventInfo.GetActionTarget(), RUNE_GENERAL_ECHO_OF_LIGHT_PROC, SPELL_AURA_PERIODIC_HEAL, amount, TRIGGERED_IGNORE_AURA_SCALING);
     }
 
     void Register() override
     {
+        DoCheckProc += AuraCheckProcFn(spell_echo_of_light::CheckProc);
         OnEffectProc += AuraEffectProcFn(spell_echo_of_light::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };

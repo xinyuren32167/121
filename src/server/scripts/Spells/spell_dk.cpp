@@ -2671,10 +2671,7 @@ class spell_dk_dark_transformation : public SpellScript
         Player* caster = GetCaster()->ToPlayer();
         Pet* pet = caster->GetPet();
 
-        if (!pet)
-            return;
-
-        if (!GetCaster()->GetOwner())
+        if (!pet || pet->isDead())
             return;
 
         if (pet->GetEntry() == NPC_DK_GHOUL)
@@ -3892,21 +3889,6 @@ class spell_dk_face_of_death : public AuraScript
     }
 };
 
-class spell_dk_leeching_strike_energy : public SpellScript
-{
-    PrepareSpellScript(spell_dk_leeching_strike_energy);
-
-    void HandleCast()
-    {
-        GetCaster()->CastSpell(GetCaster(), SPELL_DK_LEECHING_STRIKE_ENERGY, TRIGGERED_FULL_MASK);
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_dk_leeching_strike_energy::HandleCast);
-    }
-};
-
 class spell_dk_lifedrain_bolt : public SpellScript
 {
     PrepareSpellScript(spell_dk_lifedrain_bolt);
@@ -4382,6 +4364,33 @@ class spell_dk_master_of_the_dead: public AuraScript
     }
 };
 
+class spell_dk_soul_catching : public AuraScript
+{
+    PrepareAuraScript(spell_dk_soul_catching);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+
+        return (caster && caster->IsAlive());
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (!GetCaster()->ToPlayer()->HasSpellCooldown(aurEff->GetId()))
+        {
+            GetCaster()->EnergizeBySpell(GetCaster(), aurEff->GetId(), aurEff->GetAmount(), POWER_RUNIC_POWER);
+            GetCaster()->ToPlayer()->AddSpellCooldown(aurEff->GetId(), 0, 100);
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_dk_soul_catching::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_dk_soul_catching::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     RegisterSpellScript(spell_dk_wandering_plague);
@@ -4477,7 +4486,6 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_deaths_embrace_listener);
     RegisterSpellScript(spell_dk_ebon_renewal);
     RegisterSpellScript(spell_dk_face_of_death);
-    RegisterSpellScript(spell_dk_leeching_strike_energy);
     RegisterSpellScript(spell_dk_lifedrain_bolt);
     RegisterSpellScript(spell_dk_necrotic_blessing);
     RegisterSpellScript(spell_dk_soul_barrier);
@@ -4493,6 +4501,7 @@ void AddSC_deathknight_spell_scripts()
     RegisterSpellScript(spell_dk_necrotic_protection);
     RegisterSpellScript(spell_dk_blood_control);
     RegisterSpellScript(spell_dk_master_of_the_dead);
+    RegisterSpellScript(spell_dk_soul_catching);
     new npc_dk_spell_glacial_advance();
     new npc_dk_spell_frostwyrm();
 }
