@@ -191,6 +191,8 @@ class spell_activate_specialization : public SpellScript
             }
         }
 
+        PlayerSpecialization::LearnSpecSpellOnSpecChange(player);
+
         if (newSpec.powerType != POWER_ALL) {
             player->setPowerType(newSpec.powerType);
             player->SetMaxPower(POWER_MANA, player->GetMaxPower(POWER_MANA));

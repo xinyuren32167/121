@@ -174,6 +174,11 @@ void PlayerSpecialization::RemoveSpellWhenTalentChange(Player* player)
 
 }
 
+void PlayerSpecialization::LearnSpecSpellOnSpecChange(Player* player)
+{
+
+}
+
 
 void PlayerSpecialization::RemoveSpellsAndAuras(Player* player)
 {
